@@ -72,7 +72,7 @@ export class CalculatorPage {
 
   /** Zeroes every tax, insurance and fee field, leaving principal and interest only. */
   async clearHousingCosts(): Promise<void> {
-    for (const id of ['property-tax-rate', 'mud-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
+    for (const id of ['school-tax-rate', 'property-tax-rate', 'mud-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
       await this.page.getByTestId(id).fill('0');
     }
   }
@@ -103,6 +103,16 @@ export class CalculatorPage {
     const response = this.page.waitForResponse('**/api/v1/amortization/calculate');
     await this.calculateButton.click();
     await response;
+  }
+
+  /** Sets a form field by its test id. */
+  async set(testId: string, value: number): Promise<void> {
+    await this.page.getByTestId(testId).fill(String(value));
+  }
+
+  /** Returns the monthly amount shown for a category in the payment breakdown, e.g. "School tax". */
+  breakdownAmount(label: string): Locator {
+    return this.breakdown.locator('tr', { hasText: label }).locator('td').first();
   }
 
   /** Switches the table to the standard (no extra payments) schedule. */

@@ -5,6 +5,7 @@ import { toErrorMessages } from '../../core/errors/problem-details';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { BalanceChartComponent } from './balance-chart/balance-chart.component';
+import { CostProjectionComponent } from './cost-projection/cost-projection.component';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { PaymentBreakdownComponent } from './payment-breakdown/payment-breakdown.component';
 import { SavingsSummaryComponent } from './savings-summary/savings-summary.component';
@@ -21,6 +22,7 @@ import { ScheduleTableComponent } from './schedule-table/schedule-table.componen
     SavingsSummaryComponent,
     PaymentBreakdownComponent,
     BalanceChartComponent,
+    CostProjectionComponent,
     ScheduleTableComponent,
   ],
   templateUrl: './calculator-page.component.html',

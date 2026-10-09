@@ -41,8 +41,16 @@ public class AmortizationRequestValidatorTests
             },
             HousingCosts = new HousingCostsRequest
             {
-                PropertyTaxRate = 2.1m,
+                SchoolTaxRate = 1.0m,
+                PropertyTaxRate = 1.1m,
                 MudTaxRate = 0.85m,
+                IsHomestead = true,
+                SchoolHomesteadExemption = 140_000m,
+                LocalHomesteadExemptionPercent = 20m,
+                HomesteadAssessmentCap = 10m,
+                HomeValueGrowthRate = 3m,
+                InsuranceIncreaseRate = 5m,
+                HoaIncreaseRate = 3m,
                 Pid = new PidAssessmentRequest(1_200m, 20),
                 AnnualHomeownersInsurance = 2_400m,
                 MonthlyHoaDues = 75m,
@@ -216,6 +224,14 @@ public class AmortizationRequestValidatorTests
     [TestCase(nameof(HousingCostsRequest.PmiRate), 5.01)]
     [TestCase(nameof(HousingCostsRequest.AnnualHomeownersInsurance), -1)]
     [TestCase(nameof(HousingCostsRequest.MonthlyHoaDues), 75.001)]
+    [TestCase(nameof(HousingCostsRequest.SchoolTaxRate), 10.01)]
+    [TestCase(nameof(HousingCostsRequest.LocalHomesteadExemptionPercent), 100.01)]
+    [TestCase(nameof(HousingCostsRequest.HomesteadAssessmentCap), -1)]
+    [TestCase(nameof(HousingCostsRequest.HomeValueGrowthRate), 25.01)]
+    [TestCase(nameof(HousingCostsRequest.HomeValueGrowthRate), -20.01)]
+    [TestCase(nameof(HousingCostsRequest.InsuranceIncreaseRate), 50.01)]
+    [TestCase(nameof(HousingCostsRequest.HoaIncreaseRate), -20.01)]
+    [TestCase(nameof(HousingCostsRequest.SchoolHomesteadExemption), -1)]
     public void HousingCost_OutOfRangeOrSubCent_IsRejected(string property, decimal value)
     {
         var costs = property switch
@@ -224,6 +240,13 @@ public class AmortizationRequestValidatorTests
             nameof(HousingCostsRequest.MudTaxRate) => new HousingCostsRequest { MudTaxRate = value },
             nameof(HousingCostsRequest.PmiRate) => new HousingCostsRequest { PmiRate = value },
             nameof(HousingCostsRequest.AnnualHomeownersInsurance) => new HousingCostsRequest { AnnualHomeownersInsurance = value },
+            nameof(HousingCostsRequest.SchoolTaxRate) => new HousingCostsRequest { SchoolTaxRate = value },
+            nameof(HousingCostsRequest.LocalHomesteadExemptionPercent) => new HousingCostsRequest { LocalHomesteadExemptionPercent = value },
+            nameof(HousingCostsRequest.HomesteadAssessmentCap) => new HousingCostsRequest { HomesteadAssessmentCap = value },
+            nameof(HousingCostsRequest.HomeValueGrowthRate) => new HousingCostsRequest { HomeValueGrowthRate = value },
+            nameof(HousingCostsRequest.InsuranceIncreaseRate) => new HousingCostsRequest { InsuranceIncreaseRate = value },
+            nameof(HousingCostsRequest.HoaIncreaseRate) => new HousingCostsRequest { HoaIncreaseRate = value },
+            nameof(HousingCostsRequest.SchoolHomesteadExemption) => new HousingCostsRequest { SchoolHomesteadExemption = value },
             _ => new HousingCostsRequest { MonthlyHoaDues = value },
         };
 

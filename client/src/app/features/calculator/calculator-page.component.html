@@ -26,6 +26,9 @@
         </div>
       </div>
       <div class="panel">
+        <app-cost-projection [result]="r" />
+      </div>
+      <div class="panel">
         <app-schedule-table [result]="r" />
       </div>
     } @else if (errors().length === 0) {

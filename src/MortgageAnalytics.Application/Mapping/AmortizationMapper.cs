@@ -49,28 +49,50 @@ internal static class AmortizationMapper
         return rules.Count == 0 ? ExtraPaymentPlan.None : new ExtraPaymentPlan(rules);
     }
 
-    /// <summary>Builds the housing-cost plan. Zero amounts are left out, so each cost is optional.</summary>
-    public static HousingCostPlan ToHousingCostPlan(this HousingCostsRequest? costs, PropertyPurchase purchase)
+    /// <summary>
+    /// Projects the home's market and taxable value. The assessment cap applies only to a homestead.
+    /// Without housing costs the value is held flat.
+    /// </summary>
+    public static PropertyValuation ToValuation(this HousingCostsRequest? costs, PropertyPurchase purchase) =>
+        costs is null
+            ? new PropertyValuation(purchase.HomePrice)
+            : new PropertyValuation(
+                purchase.HomePrice,
+                costs.HomeValueGrowthRate,
+                costs.IsHomestead ? costs.HomesteadAssessmentCap : null);
+
+    /// <summary>
+    /// Builds the housing-cost plan. Zero amounts are left out, so each cost is optional.
+    /// Homestead exemptions apply only when <see cref="HousingCostsRequest.IsHomestead"/> is set.
+    /// </summary>
+    public static HousingCostPlan ToHousingCostPlan(this HousingCostsRequest? costs, PropertyPurchase purchase, PropertyValuation valuation)
     {
         if (costs is null)
             return HousingCostPlan.None;
 
+        var schoolExemption = costs.IsHomestead ? new TaxExemption(amount: costs.SchoolHomesteadExemption) : TaxExemption.None;
+        var localExemption = costs.IsHomestead ? new TaxExemption(percent: costs.LocalHomesteadExemptionPercent) : TaxExemption.None;
+
         var items = new List<IHousingCost>();
 
+        if (costs.SchoolTaxRate > 0)
+            items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption));
+
         if (costs.PropertyTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, purchase.HomePrice, costs.PropertyTaxRate));
+            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, localExemption));
 
         if (costs.MudTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, purchase.HomePrice, costs.MudTaxRate));
+            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate));
 
         if (costs.Pid is { AnnualAssessment: > 0 } pid)
             items.Add(new AnnualFixedCost(HousingCostCategory.PidAssessment, pid.AnnualAssessment, pid.RemainingYears));
 
         if (costs.AnnualHomeownersInsurance > 0)
-            items.Add(new AnnualFixedCost(HousingCostCategory.HomeownersInsurance, costs.AnnualHomeownersInsurance));
+            items.Add(new AnnualFixedCost(
+                HousingCostCategory.HomeownersInsurance, costs.AnnualHomeownersInsurance, annualIncreasePercent: costs.InsuranceIncreaseRate));
 
         if (costs.MonthlyHoaDues > 0)
-            items.Add(new MonthlyFixedCost(HousingCostCategory.HoaDues, costs.MonthlyHoaDues));
+            items.Add(new MonthlyFixedCost(HousingCostCategory.HoaDues, costs.MonthlyHoaDues, costs.HoaIncreaseRate));
 
         if (costs.PmiRate > 0 && purchase.RequiresMortgageInsurance)
             items.Add(new MortgageInsurance(costs.PmiRate, purchase, costs.PmiCancellation));
@@ -79,7 +101,10 @@ internal static class AmortizationMapper
     }
 
     /// <summary>Converts the domain comparison into the API response.</summary>
-    public static AmortizationResponse ToResponse(this LoanComparison comparison, PropertyPurchase purchase) =>
+    /// <param name="comparison">The standard and accelerated schedules with their costs.</param>
+    /// <param name="purchase">The price and down payment.</param>
+    /// <param name="valuation">The home's projected market and taxable values.</param>
+    public static AmortizationResponse ToResponse(this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation) =>
         new(
             new PurchaseResponse(
                 purchase.HomePrice,
@@ -98,7 +123,23 @@ internal static class AmortizationMapper
                 comparison.PaymentsSaved,
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
-                comparison.Accelerated.PayoffDate));
+                comparison.Accelerated.PayoffDate),
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation));
+
+    /// <summary>
+    /// One row per year of the standard schedule. The standard schedule is used because it spans
+    /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early.
+    /// </summary>
+    private static List<YearProjectionResponse> ToProjection(
+        AmortizationSchedule schedule, HousingCostSchedule costs, PropertyValuation valuation) =>
+        costs.ByYear
+            .Select((year, index) => new YearProjectionResponse(
+                index + 1,
+                schedule.Payments[index * 12].DueDate,
+                valuation.MarketValueInYear(index),
+                valuation.AssessedValueInYear(index),
+                ToResponse(year)))
+            .ToList();
 
     private static ScheduleResponse ToResponse(AmortizationSchedule schedule, HousingCostSchedule costs)
     {
@@ -136,6 +177,7 @@ internal static class AmortizationMapper
 
     private static HousingCostsResponse ToResponse(HousingCostBreakdown breakdown) =>
         new(
+            breakdown[HousingCostCategory.SchoolTax],
             breakdown[HousingCostCategory.PropertyTax],
             breakdown[HousingCostCategory.MudTax],
             breakdown[HousingCostCategory.PidAssessment],

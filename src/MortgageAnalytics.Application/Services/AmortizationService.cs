@@ -26,14 +26,15 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     {
         var purchase = request.ToPurchase();
         var loan = request.ToLoanTerms(purchase, FirstOfNextMonth());
+        var valuation = request.HousingCosts.ToValuation(purchase);
 
         var comparison = comparer.Compare(
             loan,
             request.ExtraPayments.ToExtraPaymentPlan(),
             request.ToRecastPolicy(),
-            request.HousingCosts.ToHousingCostPlan(purchase));
+            request.HousingCosts.ToHousingCostPlan(purchase, valuation));
 
-        return comparison.ToResponse(purchase);
+        return comparison.ToResponse(purchase, valuation);
     }
 
     /// <summary>Returns the first day of the month after today (UTC).</summary>

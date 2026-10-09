@@ -92,16 +92,52 @@ public sealed record AnnualExtraPaymentRequest(decimal Amount, int FirstPaymentN
 /// <param name="Amount" example="10000">Extra principal paid.</param>
 public sealed record LumpSumPaymentRequest(int PaymentNumber, decimal Amount);
 
-/// <summary>Recurring costs of owning the home, paid on top of principal and interest.</summary>
+/// <summary>Recurring costs of owning the home, paid on top of principal and interest, and how they change over time.</summary>
+/// <remarks>
+/// Tax rates are annual percentages of the home's taxable value. Texas quotes them "per $100 of value",
+/// and that number is entered as-is: $0.85 per $100 is 0.85.
+/// </remarks>
 public sealed record HousingCostsRequest
 {
-    /// <summary>Combined county, city and school tax rate, as an annual percentage of the home's value.</summary>
-    /// <example>2.1</example>
+    /// <summary>School district tax rate. Kept separate because it has its own homestead exemption.</summary>
+    /// <example>1.0</example>
+    public decimal SchoolTaxRate { get; init; }
+
+    /// <summary>Combined county, city and other local tax rate (everything except school and MUD).</summary>
+    /// <example>1.1</example>
     public decimal PropertyTaxRate { get; init; }
 
-    /// <summary>Municipal Utility District tax rate, as an annual percentage. "$0.85 per $100" is entered as 0.85.</summary>
+    /// <summary>Municipal Utility District tax rate.</summary>
     /// <example>0.85</example>
     public decimal MudTaxRate { get; init; }
+
+    /// <summary>True when the home is the owner's primary residence, which turns on the homestead exemptions and the assessment cap.</summary>
+    /// <example>true</example>
+    public bool IsHomestead { get; init; }
+
+    /// <summary>Dollars of value the school district exempts for a homestead. Texas requires $140,000.</summary>
+    /// <example>140000</example>
+    public decimal SchoolHomesteadExemption { get; init; } = 140_000m;
+
+    /// <summary>Percentage of value the county and city exempt for a homestead. Texas allows up to 20%; many grant none.</summary>
+    /// <example>0</example>
+    public decimal LocalHomesteadExemptionPercent { get; init; }
+
+    /// <summary>The most a homestead's taxable value may rise in one year, as a percentage. Texas caps it at 10%.</summary>
+    /// <example>10</example>
+    public decimal HomesteadAssessmentCap { get; init; } = 10m;
+
+    /// <summary>Expected market appreciation per year, as a percentage. Drives future tax bills. May be negative.</summary>
+    /// <example>3</example>
+    public decimal HomeValueGrowthRate { get; init; }
+
+    /// <summary>Yearly increase in the homeowners insurance premium, as a percentage.</summary>
+    /// <example>5</example>
+    public decimal InsuranceIncreaseRate { get; init; }
+
+    /// <summary>Yearly increase in HOA dues, as a percentage.</summary>
+    /// <example>3</example>
+    public decimal HoaIncreaseRate { get; init; }
 
     /// <summary>Public Improvement District assessment, if the home is in one.</summary>
     public PidAssessmentRequest? Pid { get; init; }

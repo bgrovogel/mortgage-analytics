@@ -65,7 +65,7 @@ public class LoanComparerTests
         // These continue after payoff, so a shorter loan does not avoid them.
         var costs = new HousingCostPlan(
         [
-            new ValueBasedTax(HousingCostCategory.PropertyTax, 250_000m, 2.1m),
+            new ValueBasedTax(HousingCostCategory.PropertyTax, new PropertyValuation(250_000m), 2.1m),
             new AnnualFixedCost(HousingCostCategory.HomeownersInsurance, 2_400m),
             new MonthlyFixedCost(HousingCostCategory.HoaDues, 75m),
         ]);

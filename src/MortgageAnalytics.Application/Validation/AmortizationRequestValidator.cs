@@ -107,8 +107,15 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     {
         public HousingCostsValidator()
         {
+            RuleFor(h => h.SchoolTaxRate).Percentage(max: 10);
             RuleFor(h => h.PropertyTaxRate).Percentage(max: 10);
             RuleFor(h => h.MudTaxRate).Percentage(max: 5);
+            RuleFor(h => h.SchoolHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents();
+            RuleFor(h => h.LocalHomesteadExemptionPercent).Percentage(max: 100);
+            RuleFor(h => h.HomesteadAssessmentCap).Percentage(max: 100);
+            RuleFor(h => h.HomeValueGrowthRate).InclusiveBetween(-20, 25).PrecisionScale(6, 4, ignoreTrailingZeros: true);
+            RuleFor(h => h.InsuranceIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true);
+            RuleFor(h => h.HoaIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true);
             RuleFor(h => h.PmiRate).Percentage(max: 5);
             RuleFor(h => h.PmiCancellation).IsInEnum();
             RuleFor(h => h.AnnualHomeownersInsurance).InclusiveBetween(0, 1_000_000).WholeCents();

@@ -1,6 +1,7 @@
 import { CurrencyPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Schedule } from '../../../core/models/amortization.models';
+import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 
 /** One slice of the monthly payment. */
 interface Slice {
@@ -57,12 +58,7 @@ export class PaymentBreakdownComponent {
     const c = s.monthlyHousingCosts;
     const all: Omit<Slice, 'share'>[] = [
       { label: 'Principal & interest', amount: s.monthlyPayment, color: '--series-1' },
-      { label: 'Property tax', amount: c.propertyTax, color: '--series-2' },
-      { label: 'MUD tax', amount: c.mudTax, color: '--series-3' },
-      { label: 'PID assessment', amount: c.pidAssessment, color: '--series-4' },
-      { label: 'Home insurance', amount: c.homeownersInsurance, color: '--series-5' },
-      { label: 'PMI', amount: c.mortgageInsurance, color: '--series-6' },
-      { label: 'HOA dues', amount: c.hoaDues, color: '--series-7' },
+      ...COST_CATEGORIES.map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
     ];
     const total = s.totalMonthlyPayment || 1;
     return all.filter((x) => x.amount > 0).map((x) => ({ ...x, share: x.amount / total }));

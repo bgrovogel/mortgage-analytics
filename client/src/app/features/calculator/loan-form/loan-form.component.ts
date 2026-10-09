@@ -43,7 +43,8 @@ export class LoanFormComponent implements OnInit {
 
   readonly maxYears = MAX_YEARS;
 
-  // Defaults describe a typical Texas purchase with 5% down, so PMI and MUD tax are visible on load.
+  // Defaults describe a typical Texas homestead purchase with 5% down, so PMI, MUD tax, the $140,000
+  // school exemption and yearly increases are all visible on load.
   readonly form = this.fb.group({
     homePrice: [375_000, [Validators.required, Validators.min(1)]],
     downPayment: [18_750, [Validators.required, Validators.min(0)]],
@@ -51,8 +52,16 @@ export class LoanFormComponent implements OnInit {
     termYears: [30, [Validators.required, Validators.min(1), Validators.max(MAX_YEARS)]],
     firstPaymentDate: [firstOfNextMonth(), Validators.required],
 
-    propertyTaxRate: [2.1, [Validators.min(0), Validators.max(10)]],
+    schoolTaxRate: [1.0, [Validators.min(0), Validators.max(10)]],
+    propertyTaxRate: [1.1, [Validators.min(0), Validators.max(10)]],
     mudTaxRate: [0.85, [Validators.min(0), Validators.max(5)]],
+    isHomestead: [true],
+    schoolHomesteadExemption: [140_000, [Validators.min(0)]],
+    localHomesteadExemptionPercent: [0, [Validators.min(0), Validators.max(100)]],
+    homesteadAssessmentCap: [10, [Validators.min(0), Validators.max(100)]],
+    homeValueGrowthRate: [4, [Validators.min(-20), Validators.max(25)]],
+    insuranceIncreaseRate: [5, [Validators.min(-20), Validators.max(50)]],
+    hoaIncreaseRate: [3, [Validators.min(-20), Validators.max(50)]],
     pidAnnual: [0, [Validators.min(0)]],
     pidYears: [null as number | null, [Validators.min(1), Validators.max(50)]],
     annualInsurance: [2_400, [Validators.min(0)]],
@@ -85,6 +94,9 @@ export class LoanFormComponent implements OnInit {
   readonly pmiApplies = computed(() => this.downPaymentPercent() < 20);
 
   readonly isRecast = computed(() => this.values().strategy === 'Recast');
+
+  /** Homestead exemptions and the assessment cap apply only to a primary residence. */
+  readonly isHomestead = computed(() => this.values().isHomestead === true);
 
   /** The lump-sum rows, typed for the template. */
   get lumpSums(): FormArray<LumpSumForm> {
@@ -143,8 +155,16 @@ export class LoanFormComponent implements OnInit {
         lumpSums: v.lumpSums,
       },
       housingCosts: {
+        schoolTaxRate: v.schoolTaxRate || 0,
         propertyTaxRate: v.propertyTaxRate || 0,
         mudTaxRate: v.mudTaxRate || 0,
+        isHomestead: v.isHomestead,
+        schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
+        localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
+        homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
+        homeValueGrowthRate: v.homeValueGrowthRate || 0,
+        insuranceIncreaseRate: v.insuranceIncreaseRate || 0,
+        hoaIncreaseRate: v.hoaIncreaseRate || 0,
         pid: v.pidAnnual > 0 ? { annualAssessment: v.pidAnnual, remainingYears: v.pidYears || null } : null,
         annualHomeownersInsurance: v.annualInsurance || 0,
         monthlyHoaDues: v.monthlyHoa || 0,

@@ -87,6 +87,35 @@ public class HousingCostPlanTests
     }
 
     [Test]
+    public void ByYear_SumsEachLoanYear_SoIncreasesShowYearOverYear()
+    {
+        var plan = new HousingCostPlan([new AnnualFixedCost(HousingCostCategory.HomeownersInsurance, 2_400m, annualIncreasePercent: 5m)]);
+
+        var costs = plan.ApplyTo(Schedule());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(costs.ByYear, Has.Count.EqualTo(30));
+            Assert.That(costs.ByYear[0][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_400m));
+            Assert.That(costs.ByYear[1][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_520m));
+        });
+    }
+
+    [Test]
+    public void ByYear_EndsWithAPartialYearWhenTheLoanPaysOffMidYear()
+    {
+        var plan = new HousingCostPlan([new MonthlyFixedCost(HousingCostCategory.HoaDues, 100m)]);
+
+        var costs = plan.ApplyTo(Schedule(monthlyExtra: 300m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(costs.ByYear, Has.Count.EqualTo((int)Math.Ceiling(costs.Periods.Count / 12.0)));
+            Assert.That(costs.ByYear.Sum(y => y.Total), Is.EqualTo(costs.Totals.Total));
+        });
+    }
+
+    [Test]
     public void None_ChargesNothing()
     {
         var costs = HousingCostPlan.None.ApplyTo(Schedule());

@@ -3,7 +3,7 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 /// <summary>The kinds of recurring cost paid on top of principal and interest.</summary>
 public enum HousingCostCategory
 {
-    /// <summary>County, city and school district ad valorem tax.</summary>
+    /// <summary>County, city and other local ad valorem taxes (everything except school and MUD).</summary>
     PropertyTax = 0,
 
     /// <summary>Municipal Utility District tax, which funds water, sewer and drainage infrastructure.</summary>
@@ -20,4 +20,7 @@ public enum HousingCostCategory
 
     /// <summary>Homeowners association dues.</summary>
     HoaDues = 5,
+
+    /// <summary>School district ad valorem tax, kept separate because it carries its own homestead exemption.</summary>
+    SchoolTax = 6,
 }

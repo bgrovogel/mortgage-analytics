@@ -2,7 +2,10 @@
 
 A home-purchase and mortgage analysis engine. It builds fixed-rate amortization schedules, compares
 paying off early against **recasting**, and includes the full monthly cost of ownership:
-**property tax, MUD tax, PID assessments, homeowners insurance, PMI and HOA dues**.
+**school, county/city and MUD taxes (with homestead exemptions and the appraisal cap), PID
+assessments, homeowners insurance, PMI and HOA dues**. It then projects all of those costs year
+by year over the life of the loan, so an owner can see where their payment is heading, not just
+where it starts.
 
 It is a .NET 9 API with an Angular 19 dashboard, tested from pure unit tests up to browser E2E.
 
@@ -13,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit: 196 tests across domain, application and in-memory API integration · Playwright: 13 full-stack E2E tests |
+| **Tests** | NUnit: 248 tests across domain, application and in-memory API integration · Playwright: 15 full-stack E2E tests |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -26,7 +29,11 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Principal & interest** | Standard annuity formula in `decimal`, with interest rounded to cents each month. The final payment absorbs rounding drift, so every schedule ends at exactly $0.00. |
 | **Extra payments** | Monthly, annual and one-time lump sums, in any combination. An extra payment that exceeds the remaining balance is capped. |
 | **Recasting** | A lender recasts only after a **single lump sum of at least its minimum** (default $10,000) and charges a fee (default $250). A recast keeps the payoff date and re-amortizes to a lower payment. Smaller extra payments still shorten the term. Each recast is recorded with the old payment, new payment and fee. |
-| **Property & MUD tax** | Annual rate × home value, collected monthly. Texas "per $100 of valuation" rates are entered as-is ($0.85 per $100 = 0.85%). |
+| **Property taxes** | Three taxing units, each an annual rate on the home's taxable value: **school**, **county/city/other** and **MUD**. Texas "per $100 of valuation" rates are entered as-is ($0.85 per $100 = 0.85%). Each year's bill is split into twelve installments that add up to the bill exactly. |
+| **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas). The school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. |
+| **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
+| **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. |
+| **Yearly projection** | Market value, taxable value and every cost category for each year of the term, charted as lines. |
 | **PID assessment** | A fixed annual amount, optionally ending after the district's remaining years. |
 | **Insurance & HOA** | An annual premium and monthly dues. |
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. It stops when the *actual* balance reaches **78%** of the home's value (automatic removal under the Homeowners Protection Act) or **80%** (when the borrower requests removal). Extra payments end PMI sooner. |
@@ -94,8 +101,16 @@ npm run e2e                       # 13 Playwright tests; starts the API and Angu
     "lumpSums": [{ "paymentNumber": 12, "amount": 25000 }]
   },
   "housingCosts": {
-    "propertyTaxRate": 2.1,
+    "schoolTaxRate": 1.0,
+    "propertyTaxRate": 1.1,
     "mudTaxRate": 0.85,
+    "isHomestead": true,
+    "schoolHomesteadExemption": 140000,
+    "localHomesteadExemptionPercent": 0,
+    "homesteadAssessmentCap": 10,
+    "homeValueGrowthRate": 4,
+    "insuranceIncreaseRate": 5,
+    "hoaIncreaseRate": 3,
     "pid": { "annualAssessment": 1200, "remainingYears": 20 },
     "annualHomeownersInsurance": 2400,
     "monthlyHoaDues": 50,
@@ -112,6 +127,7 @@ The response contains:
   interest, a housing-cost breakdown, and the all-in total), lifetime totals, the PMI end date,
   any recasts, and every monthly row.
 - **`savings`**: interest saved, PMI saved, recast fees, net savings, payments saved, and both payoff dates.
+- **`projection`**: one row per loan year with market value, taxable value, and every cost category.
 
 Invalid input returns `400` with field-level errors keyed by JSON path:
 
@@ -155,10 +171,11 @@ src/MortgageAnalytics.Domain/
   ExtraPayments/    IExtraPaymentRule → Monthly / Annual / LumpSum; ExtraPaymentPlan (composite)
   Amortization/     AmortizationCalculator, RecastPolicy, RecastEvent, LoanComparer, LoanComparison
   HousingCosts/     IHousingCost → ValueBasedTax / AnnualFixedCost / MonthlyFixedCost / MortgageInsurance;
-                    HousingCostPlan (composite), HousingCostBreakdown, HousingCostSchedule
+                    PropertyValuation (growth + appraisal cap), TaxExemption, Installments;
+                    HousingCostPlan (composite), HousingCostBreakdown, HousingCostSchedule (monthly + yearly)
 src/MortgageAnalytics.Application/   Contracts, validation, mapping, AmortizationService, DI wiring
 src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handling
-tests/   Domain (138) · Application (49) · Api.IntegrationTests (9)
+tests/   Domain (173) · Application (66) · Api.IntegrationTests (9)
 client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
 ```
 
@@ -187,6 +204,17 @@ client/  src/app/core (models, API service, errors) · src/app/features/calculat
   encodes that, and the tests pin the boundary: a $9,999.99 lump sum does not recast; $10,000 does.
 - **PMI uses the actual balance.** That is what lets extra payments end PMI early, which is a real and
   often-overlooked saving. 78% (automatic) and 80% (borrower-requested) are both supported.
+- **Homestead rules are per taxing unit.** The Texas $140,000 exemption applies only to school
+  district tax, so school tax is a separate unit with its own `TaxExemption`. Applying it to the whole
+  tax bill would understate taxes by thousands of dollars a year.
+- **Market value and taxable value are tracked separately.** `PropertyValuation` grows the market value
+  and applies the homestead appraisal cap to the taxable value. When the market outruns the cap, the
+  owner is taxed on the lower figure, and the "Home value" chart shows that gap directly.
+- **Yearly bills add up exactly.** A $5,000 tax bill is collected as eleven installments of $416.67
+  and a twelfth of $416.63, never $5,000.04. It is the same rule as the loan's final payment, applied
+  in one shared `Installments` helper.
+- **Projections follow the full term.** The yearly projection uses the standard schedule, because
+  taxes, insurance and dues continue whether or not the loan is paid off early.
 - **Savings exclude costs that don't go away.** A shorter loan collects taxes, insurance and dues
   through escrow for fewer months, but the homeowner keeps paying them afterwards. A naive comparison
   would report those as savings. `LoanComparison.NetSavings` counts only interest and PMI, minus
@@ -197,11 +225,11 @@ client/  src/app/core (models, API service, errors) · src/app/features/calculat
 | Principle | Where |
 |---|---|
 | **Single Responsibility** | `PaymentFormula` does the math, `AmortizationCalculator` builds schedules, `HousingCostPlan` applies costs, `LoanComparer` compares, the validator validates, and endpoints handle HTTP and nothing else. |
-| **Open/Closed** | New prepayment kinds are a new `IExtraPaymentRule`, and new ownership costs (flood insurance, special assessments) are a new `IHousingCost`. Neither change touches the calculator. |
+| **Open/Closed** | New prepayment kinds are a new `IExtraPaymentRule`, and new ownership costs (flood insurance, special assessments) are a new `IHousingCost`. Neither change touches the calculator. Adding the school tax unit and yearly growth needed no change to the amortization engine. |
 | **Liskov Substitution** | Every rule and every cost is interchangeable behind its interface, and the composites (`ExtraPaymentPlan`, `HousingCostPlan`) sum whatever they hold. |
 | **Interface Segregation** | Small interfaces with one or two members each: `IExtraPaymentRule`, `IHousingCost`, `IAmortizationCalculator`, `ILoanComparer`, `IAmortizationService`. |
 | **Dependency Inversion** | The service depends on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. |
-| **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. One generic `ValidationFilter<T>` serves every endpoint. Shared rule fragments (`WholeCents`, `Percentage`, `ExtraAmount`) are used everywhere. Light and dark themes are each defined once, as CSS tokens. |
+| **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are each written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and color everywhere. |
 | **KISS / YAGNI** | No MediatR, AutoMapper, repository layer or database: nothing here needs them. There is no *Infrastructure* project because there is no infrastructure yet. |
 
 ### Documentation is enforced, not hoped for
@@ -239,8 +267,9 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
   applies are computed live from the form.
 - **`switchMap` with per-request error handling.** A newer calculation cancels a stale one, and a
   failed request does not break later ones (an E2E test covers this).
-- **Accessible charts.** The payment breakdown is a stacked bar with a labelled table, and the balance
-  chart has a legend and a full table view. Colors come from a colorblind-safe palette validated in both light and dark mode, and are
+- **Accessible charts.** The payment breakdown is a stacked bar with a labelled table, and the line
+  charts have legends, crosshair tooltips and a one-line written takeaway. The schedule table doubles
+  as the data view. Taxable value is dashed, so it stays visible when it overlaps market value. Colors come from a colorblind-safe palette validated in both light and dark mode, and are
   fixed per category so they never shift between results.
 
 ---
@@ -249,10 +278,10 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 | Layer | Tool | What it proves |
 |---|---|---|
-| Domain (138) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Each housing cost on its own. PMI requirement and cancellation at 78% and 80%. Recast minimum boundary, fee and event. Net savings excluding taxes. |
-| Application (49) | NUnit + FluentValidation.TestHelper | Every validation rule and boundary. Request mapping. The first-month cost breakdown. PID end date. PMI end dates and savings. Recast defaults. Injected clock, including the December rollover. |
+| Domain (173) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Each housing cost on its own. Exemptions (fixed, percentage, both, larger than the value). The appraisal cap in rising, slow and falling markets. Installments summing exactly. PMI at 78% and 80%. Recast boundary, fee and event. Net savings excluding taxes. |
+| Application (66) | NUnit + FluentValidation.TestHelper | Every validation rule and boundary. Homestead on and off, and the school exemption not leaking into county/MUD tax. Yearly projection, the cap, and insurance and HOA increases. PMI end dates and savings. Recast defaults. Injected clock, including the December rollover. |
 | API integration (9) | NUnit + `WebApplicationFactory` | The real middleware pipeline: JSON binding (enums as strings), the validation filter, camelCase error keys, malformed bodies, the unknown-route 404, Swagger and health. |
-| End-to-end (13) | Playwright | Real browser and real API: taxes add to the payment but not to savings, PMI ends sooner with extra payments, recast versus a lump sum below the minimum, the no-PMI case at 20% down, client-side validation, server errors, and recovery after a network failure. |
+| End-to-end (15) | Playwright | Real browser and real API: the homestead toggle changing school tax, the projection charts and the cap, taxes adding to the payment but not to savings, PMI ending sooner, recast versus a lump sum below the minimum, the no-PMI case at 20% down, client-side validation, server errors, and recovery after a network failure. |
 
 The E2E suite uses a **page object** (`e2e/calculator.page.ts`), so selectors live in one place and
 the specs read as behavior.
@@ -261,7 +290,8 @@ the specs read as behavior.
 
 ## What I'd add next
 
-- **Escalation over time**: annual growth for property taxes and insurance premiums.
+- **Tax rate changes and over-65 / disability exemptions**: per-year rate schedules and the extra Texas exemptions and tax ceilings.
+- **Equity tracking**: home value minus loan balance, year by year.
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
 - **Adjustable-rate (ARM) loans**: a rate-schedule strategy.

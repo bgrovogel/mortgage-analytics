@@ -5,11 +5,26 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Baseline">The loan with no extra payments.</param>
 /// <param name="Accelerated">The loan with the requested extra payments (and recasts) applied.</param>
 /// <param name="Savings">What the extra payments save, net of recast fees.</param>
+/// <param name="Projection">Home value, taxable value and housing costs for each year of the standard schedule.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
     ScheduleResponse Accelerated,
-    SavingsResponse Savings);
+    SavingsResponse Savings,
+    IReadOnlyList<YearProjectionResponse> Projection);
+
+/// <summary>One loan year of the ownership projection.</summary>
+/// <param name="Year">The 1-based loan year.</param>
+/// <param name="StartDate">Due date of the year's first payment.</param>
+/// <param name="MarketValue">Projected market value of the home.</param>
+/// <param name="TaxableValue">Assessed value after any homestead cap, before exemptions.</param>
+/// <param name="Costs">Housing costs paid during the year, by category.</param>
+public sealed record YearProjectionResponse(
+    int Year,
+    DateOnly StartDate,
+    decimal MarketValue,
+    decimal TaxableValue,
+    HousingCostsResponse Costs);
 
 /// <summary>The purchase and the loan it produces.</summary>
 /// <param name="HomePrice">The purchase price.</param>
@@ -51,8 +66,9 @@ public sealed record ScheduleResponse(
     IReadOnlyList<RecastResponse> Recasts,
     IReadOnlyList<PaymentResponse> Payments);
 
-/// <summary>Housing costs by category, for one month or summed over the loan.</summary>
-/// <param name="PropertyTax">County, city and school tax.</param>
+/// <summary>Housing costs by category, for one month, one year, or summed over the loan.</summary>
+/// <param name="SchoolTax">School district tax, after its homestead exemption.</param>
+/// <param name="PropertyTax">County, city and other local taxes.</param>
 /// <param name="MudTax">Municipal Utility District tax.</param>
 /// <param name="PidAssessment">Public Improvement District assessment.</param>
 /// <param name="HomeownersInsurance">Homeowners insurance.</param>
@@ -60,6 +76,7 @@ public sealed record ScheduleResponse(
 /// <param name="HoaDues">Homeowners association dues.</param>
 /// <param name="Total">The sum of every category.</param>
 public sealed record HousingCostsResponse(
+    decimal SchoolTax,
     decimal PropertyTax,
     decimal MudTax,
     decimal PidAssessment,

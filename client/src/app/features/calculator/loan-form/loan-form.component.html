@@ -48,21 +48,59 @@
   </fieldset>
 
   <fieldset>
-    <legend>Taxes, insurance &amp; fees</legend>
+    <legend>Property taxes</legend>
 
-    <div class="row">
+    <div class="row three">
       <label class="field">
-        <span>Property tax (% / yr)</span>
-        <input type="number" formControlName="propertyTaxRate" min="0" max="10" step="0.05" inputmode="decimal"
+        <span>School (%)</span>
+        <input type="number" formControlName="schoolTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
+               data-testid="school-tax-rate" />
+      </label>
+      <label class="field">
+        <span>County/city (%)</span>
+        <input type="number" formControlName="propertyTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
                data-testid="property-tax-rate" />
       </label>
       <label class="field">
-        <span>MUD tax (% / yr)</span>
-        <input type="number" formControlName="mudTaxRate" min="0" max="5" step="0.05" inputmode="decimal"
+        <span>MUD (%)</span>
+        <input type="number" formControlName="mudTaxRate" min="0" max="5" step="0.01" inputmode="decimal"
                data-testid="mud-tax-rate" />
       </label>
     </div>
-    <p class="hint">Rates quoted "per $100 of value" are entered as-is: $0.85 per $100 = 0.85%.</p>
+    <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
+      <span><strong>Homestead</strong> (primary residence): apply exemptions and the appraisal cap</span>
+    </label>
+
+    @if (isHomestead()) {
+      <div class="row three">
+        <label class="field">
+          <span>School exemption ($)</span>
+          <input type="number" formControlName="schoolHomesteadExemption" min="0" step="5000" inputmode="decimal"
+                 data-testid="school-exemption" />
+        </label>
+        <label class="field">
+          <span>County/city exempt (%)</span>
+          <input type="number" formControlName="localHomesteadExemptionPercent" min="0" max="100" step="1"
+                 data-testid="local-exemption" />
+        </label>
+        <label class="field">
+          <span>Appraisal cap (% / yr)</span>
+          <input type="number" formControlName="homesteadAssessmentCap" min="0" max="100" step="1"
+                 data-testid="assessment-cap" />
+        </label>
+      </div>
+      <p class="hint">
+        Texas: school districts exempt $140,000 of a homestead's value; counties and cities may exempt up to 20%.
+        Taxable value can rise at most 10% a year.
+      </p>
+    }
+  </fieldset>
+
+  <fieldset>
+    <legend>Insurance &amp; fees</legend>
 
     <div class="row">
       <label class="field">
@@ -108,6 +146,28 @@
         No PMI: at least 20% is down.
       }
     </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Future increases (per year)</legend>
+    <div class="row three">
+      <label class="field">
+        <span>Home value (%)</span>
+        <input type="number" formControlName="homeValueGrowthRate" min="-20" max="25" step="0.5" inputmode="decimal"
+               data-testid="home-value-growth" />
+      </label>
+      <label class="field">
+        <span>Insurance (%)</span>
+        <input type="number" formControlName="insuranceIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
+               data-testid="insurance-increase" />
+      </label>
+      <label class="field">
+        <span>HOA (%)</span>
+        <input type="number" formControlName="hoaIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
+               data-testid="hoa-increase" />
+      </label>
+    </div>
+    <p class="hint">Rising home values raise property taxes each year (limited by the appraisal cap for a homestead).</p>
   </fieldset>
 
   <fieldset>

@@ -37,8 +37,16 @@ export interface PidAssessment {
 }
 
 export interface HousingCostsInput {
+  schoolTaxRate: number;
   propertyTaxRate: number;
   mudTaxRate: number;
+  isHomestead: boolean;
+  schoolHomesteadExemption: number;
+  localHomesteadExemptionPercent: number;
+  homesteadAssessmentCap: number;
+  homeValueGrowthRate: number;
+  insuranceIncreaseRate: number;
+  hoaIncreaseRate: number;
   pid: PidAssessment | null;
   annualHomeownersInsurance: number;
   monthlyHoaDues: number;
@@ -68,6 +76,7 @@ export interface Purchase {
 }
 
 export interface HousingCosts {
+  schoolTax: number;
   propertyTax: number;
   mudTax: number;
   pidAssessment: number;
@@ -123,9 +132,19 @@ export interface Savings {
   acceleratedPayoffDate: string;
 }
 
+/** One loan year of the ownership projection (standard schedule). */
+export interface YearProjection {
+  year: number;
+  startDate: string;
+  marketValue: number;
+  taxableValue: number;
+  costs: HousingCosts;
+}
+
 export interface AmortizationResponse {
   purchase: Purchase;
   baseline: Schedule;
   accelerated: Schedule;
   savings: Savings;
+  projection: YearProjection[];
 }

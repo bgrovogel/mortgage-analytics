@@ -66,6 +66,33 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('savings-detail')).toContainText('+ $6,531 PMI');
   });
 
+  test('applies the Texas school homestead exemption only to a homestead', async ({ page }) => {
+    // $300,000 home, 1% school rate: homestead taxes $160,000 ($133.33/mo); otherwise $300,000 ($250.00/mo).
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
+    await calculator.clearHousingCosts();
+    await calculator.set('school-tax-rate', 1);
+    await calculator.set('school-exemption', 140_000);
+
+    await calculator.calculate();
+    await expect(calculator.breakdownAmount('School tax')).toHaveText('$133.33');
+
+    await page.getByTestId('is-homestead').uncheck();
+    await calculator.calculate();
+    await expect(calculator.breakdownAmount('School tax')).toHaveText('$250.00');
+  });
+
+  test('projects yearly costs and shows the appraisal cap holding taxable value down', async ({ page }) => {
+    await calculator.set('home-value-growth', 15);
+    await calculator.set('assessment-cap', 10);
+    await calculator.calculate();
+
+    await expect(page.getByTestId('projection-chart')).toBeVisible();
+    await expect(page.getByTestId('projection-note')).toContainText('Yearly taxes & costs go from');
+
+    await page.getByTestId('projection-value').click();
+    await expect(page.getByTestId('projection-note')).toContainText('the homestead cap keeps');
+  });
+
   test('shows no PMI with 20% down', async ({ page }) => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.calculate();
