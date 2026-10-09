@@ -81,6 +81,24 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdownAmount('School tax')).toHaveText('$250.00');
   });
 
+  test('over 65: adds the extra school exemption and freezes school tax', async ({ page }) => {
+    // $300,000 home, 1% school rate: ($300,000 - $140,000 - $60,000) x 1% = $1,000 a year = $83.33 a month.
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
+    await calculator.clearHousingCosts();
+    await calculator.set('school-tax-rate', 1);
+    await calculator.set('school-exemption', 140_000);
+    await calculator.set('home-value-growth', 10);
+    await page.getByTestId('is-over-65').check();
+    await calculator.set('over-65-year', 1);
+    await calculator.set('over-65-school-exemption', 60_000);
+
+    await calculator.calculate();
+
+    await expect(calculator.breakdownAmount('School tax')).toHaveText('$83.33');
+    // Values rise 10% a year, but the ceiling holds yearly costs flat from year 1 to year 30.
+    await expect(page.getByTestId('projection-note')).toContainText('go from $1,000 in year 1 to $1,000 in year 30');
+  });
+
   test('projects yearly costs and shows the appraisal cap holding taxable value down', async ({ page }) => {
     await calculator.set('home-value-growth', 15);
     await calculator.set('assessment-cap', 10);

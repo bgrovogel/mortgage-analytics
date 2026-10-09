@@ -121,6 +121,21 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(h => h.AnnualHomeownersInsurance).InclusiveBetween(0, 1_000_000).WholeCents();
             RuleFor(h => h.MonthlyHoaDues).InclusiveBetween(0, 100_000).WholeCents();
 
+            RuleFor(h => h.Over65OrDisabled!.QualifiesInYear)
+                .InclusiveBetween(1, LoanTerms.MaxTermInMonths / 12)
+                .OverridePropertyName("Over65OrDisabled.QualifiesInYear").WithName("Qualifying year")
+                .When(h => h.Over65OrDisabled is not null);
+
+            RuleFor(h => h.Over65OrDisabled!.SchoolExemption)
+                .InclusiveBetween(0, 10_000_000).WholeCents()
+                .OverridePropertyName("Over65OrDisabled.SchoolExemption").WithName("Over-65 school exemption")
+                .When(h => h.Over65OrDisabled is not null);
+
+            RuleFor(h => h.Over65OrDisabled!.LocalExemption)
+                .InclusiveBetween(0, 10_000_000).WholeCents()
+                .OverridePropertyName("Over65OrDisabled.LocalExemption").WithName("Over-65 county/city exemption")
+                .When(h => h.Over65OrDisabled is not null);
+
             RuleFor(h => h.Pid!.AnnualAssessment)
                 .InclusiveBetween(0, 1_000_000).WholeCents()
                 .OverridePropertyName("Pid.AnnualAssessment").WithName("PID annual assessment")

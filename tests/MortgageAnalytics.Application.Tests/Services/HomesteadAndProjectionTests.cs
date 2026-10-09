@@ -79,6 +79,80 @@ public class HomesteadAndProjectionTests
     }
 
     [Test]
+    public void Over65_AddsTheExtraSchoolExemption()
+    {
+        // School 1% on ($250,000 - $140,000 - $60,000) = $500 a year.
+        var costs = new HousingCostsRequest
+        {
+            SchoolTaxRate = 1m,
+            IsHomestead = true,
+            Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = 1, SchoolExemption = 60_000m },
+        };
+
+        var projection = _service.Analyze(With(costs)).Projection;
+
+        Assert.That(projection[0].Costs.SchoolTax, Is.EqualTo(500m));
+    }
+
+    [Test]
+    public void Over65_FreezesSchoolTaxFromTheQualifyingYear_ButCountyTaxKeepsRising()
+    {
+        // Value +10% a year. The owner qualifies in year 3; school tax freezes there, county tax does not.
+        var costs = new HousingCostsRequest
+        {
+            SchoolTaxRate = 1m,
+            PropertyTaxRate = 1m,
+            IsHomestead = true,
+            HomeValueGrowthRate = 10m,
+            Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = 3, SchoolExemption = 60_000m },
+        };
+
+        var projection = _service.Analyze(With(costs)).Projection;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projection[2].Costs.SchoolTax, Is.EqualTo(1_025m), "($302,500 - $200,000) x 1% sets the ceiling");
+            Assert.That(projection[10].Costs.SchoolTax, Is.EqualTo(1_025m), "frozen");
+            Assert.That(projection[10].Costs.PropertyTax, Is.GreaterThan(projection[2].Costs.PropertyTax), "no local ceiling");
+        });
+    }
+
+    [Test]
+    public void Over65_LocalCeilingAndExemption_ApplyWhenTheCountyOffersThem()
+    {
+        var costs = new HousingCostsRequest
+        {
+            PropertyTaxRate = 1m,
+            IsHomestead = true,
+            HomeValueGrowthRate = 10m,
+            Over65OrDisabled = new Over65OrDisabledRequest { LocalExemption = 50_000m, LocalTaxCeiling = true },
+        };
+
+        var projection = _service.Analyze(With(costs)).Projection;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projection[0].Costs.PropertyTax, Is.EqualTo(2_000m), "($250,000 - $50,000) x 1%");
+            Assert.That(projection[20].Costs.PropertyTax, Is.EqualTo(2_000m), "frozen by the local ceiling");
+        });
+    }
+
+    [Test]
+    public void Over65_IsIgnoredWhenTheHomeIsNotAHomestead()
+    {
+        var costs = new HousingCostsRequest
+        {
+            SchoolTaxRate = 1m,
+            IsHomestead = false,
+            Over65OrDisabled = new Over65OrDisabledRequest(),
+        };
+
+        var projection = _service.Analyze(With(costs)).Projection;
+
+        Assert.That(projection[0].Costs.SchoolTax, Is.EqualTo(2_500m), "1% of the full $250,000");
+    }
+
+    [Test]
     public void Projection_HasOneRowPerLoanYear_WithStartDates()
     {
         var projection = _service.Analyze(With(new HousingCostsRequest { PropertyTaxRate = 2m })).Projection;

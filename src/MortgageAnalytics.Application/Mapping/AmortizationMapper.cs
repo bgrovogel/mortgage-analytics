@@ -63,7 +63,7 @@ internal static class AmortizationMapper
 
     /// <summary>
     /// Builds the housing-cost plan. Zero amounts are left out, so each cost is optional.
-    /// Homestead exemptions apply only when <see cref="HousingCostsRequest.IsHomestead"/> is set.
+    /// Homestead exemptions and over-65 relief apply only when <see cref="HousingCostsRequest.IsHomestead"/> is set.
     /// </summary>
     public static HousingCostPlan ToHousingCostPlan(this HousingCostsRequest? costs, PropertyPurchase purchase, PropertyValuation valuation)
     {
@@ -72,14 +72,19 @@ internal static class AmortizationMapper
 
         var schoolExemption = costs.IsHomestead ? new TaxExemption(amount: costs.SchoolHomesteadExemption) : TaxExemption.None;
         var localExemption = costs.IsHomestead ? new TaxExemption(percent: costs.LocalHomesteadExemptionPercent) : TaxExemption.None;
+        var senior = costs.IsHomestead ? costs.Over65OrDisabled : null;
+
+        // By law the school ceiling always applies to qualifying owners; the county/city ceiling is a local option.
+        var schoolRelief = senior is null ? null : new SeniorTaxRelief(senior.QualifiesInYear - 1, senior.SchoolExemption, hasTaxCeiling: true);
+        var localRelief = senior is null ? null : new SeniorTaxRelief(senior.QualifiesInYear - 1, senior.LocalExemption, senior.LocalTaxCeiling);
 
         var items = new List<IHousingCost>();
 
         if (costs.SchoolTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption));
+            items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption, schoolRelief));
 
         if (costs.PropertyTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, localExemption));
+            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, localExemption, localRelief));
 
         if (costs.MudTaxRate > 0)
             items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate));

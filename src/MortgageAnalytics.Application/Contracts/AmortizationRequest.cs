@@ -127,6 +127,9 @@ public sealed record HousingCostsRequest
     /// <example>10</example>
     public decimal HomesteadAssessmentCap { get; init; } = 10m;
 
+    /// <summary>Extra relief for an owner who is 65 or older, or disabled. Applies only to a homestead. Omit if neither applies.</summary>
+    public Over65OrDisabledRequest? Over65OrDisabled { get; init; }
+
     /// <summary>Expected market appreciation per year, as a percentage. Drives future tax bills. May be negative.</summary>
     /// <example>3</example>
     public decimal HomeValueGrowthRate { get; init; }
@@ -157,6 +160,31 @@ public sealed record HousingCostsRequest
     /// <summary>Whether PMI comes off automatically at 78% loan-to-value or on request at 80%.</summary>
     /// <example>Automatic</example>
     public MortgageInsuranceCancellation PmiCancellation { get; init; } = MortgageInsuranceCancellation.Automatic;
+}
+
+/// <summary>Homestead relief for an owner who is 65 or older, or disabled.</summary>
+/// <remarks>
+/// Texas school districts must grant both an extra exemption and a tax ceiling that freezes school tax at the
+/// qualifying year's amount. Counties and cities may choose to grant their own extra exemption and ceiling.
+/// MUD taxes have no ceiling.
+/// </remarks>
+public sealed record Over65OrDisabledRequest
+{
+    /// <summary>The loan year in which the owner first qualifies (turns 65 or becomes disabled). 1 means they already qualify.</summary>
+    /// <example>1</example>
+    public int QualifiesInYear { get; init; } = 1;
+
+    /// <summary>Extra school exemption on top of the regular homestead exemption. Texas: $60,000 (since 2025).</summary>
+    /// <example>60000</example>
+    public decimal SchoolExemption { get; init; } = 60_000m;
+
+    /// <summary>Extra county/city exemption in dollars, if the local government grants one.</summary>
+    /// <example>0</example>
+    public decimal LocalExemption { get; init; }
+
+    /// <summary>True if the county/city has adopted a tax ceiling for these owners. The school ceiling always applies.</summary>
+    /// <example>false</example>
+    public bool LocalTaxCeiling { get; init; }
 }
 
 /// <summary>A Public Improvement District assessment.</summary>

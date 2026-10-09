@@ -96,6 +96,38 @@
         Texas: school districts exempt $140,000 of a homestead's value; counties and cities may exempt up to 20%.
         Taxable value can rise at most 10% a year.
       </p>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="isOver65" data-testid="is-over-65" />
+        <span><strong>Over 65 or disabled</strong>: extra exemption and a school tax ceiling</span>
+      </label>
+
+      @if (isOver65()) {
+        <div class="row three">
+          <label class="field">
+            <span>Qualifies in year</span>
+            <input type="number" formControlName="over65Year" min="1" [max]="maxYears" step="1" data-testid="over-65-year" />
+          </label>
+          <label class="field">
+            <span>Extra school ($)</span>
+            <input type="number" formControlName="over65SchoolExemption" min="0" step="5000" inputmode="decimal"
+                   data-testid="over-65-school-exemption" />
+          </label>
+          <label class="field">
+            <span>Extra local ($)</span>
+            <input type="number" formControlName="over65LocalExemption" min="0" step="1000" inputmode="decimal"
+                   data-testid="over-65-local-exemption" />
+          </label>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" formControlName="over65LocalCeiling" data-testid="over-65-local-ceiling" />
+          <span>County/city has also adopted a tax ceiling</span>
+        </label>
+        <p class="hint">
+          From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise.
+          Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies.
+        </p>
+      }
     }
   </fieldset>
 

@@ -59,6 +59,11 @@ export class LoanFormComponent implements OnInit {
     schoolHomesteadExemption: [140_000, [Validators.min(0)]],
     localHomesteadExemptionPercent: [0, [Validators.min(0), Validators.max(100)]],
     homesteadAssessmentCap: [10, [Validators.min(0), Validators.max(100)]],
+    isOver65: [false],
+    over65Year: [1, [Validators.min(1), Validators.max(MAX_YEARS)]],
+    over65SchoolExemption: [60_000, [Validators.min(0)]],
+    over65LocalExemption: [0, [Validators.min(0)]],
+    over65LocalCeiling: [false],
     homeValueGrowthRate: [4, [Validators.min(-20), Validators.max(25)]],
     insuranceIncreaseRate: [5, [Validators.min(-20), Validators.max(50)]],
     hoaIncreaseRate: [3, [Validators.min(-20), Validators.max(50)]],
@@ -97,6 +102,9 @@ export class LoanFormComponent implements OnInit {
 
   /** Homestead exemptions and the assessment cap apply only to a primary residence. */
   readonly isHomestead = computed(() => this.values().isHomestead === true);
+
+  /** Over-65 / disability relief applies only to a homestead. */
+  readonly isOver65 = computed(() => this.isHomestead() && this.values().isOver65 === true);
 
   /** The lump-sum rows, typed for the template. */
   get lumpSums(): FormArray<LumpSumForm> {
@@ -162,6 +170,14 @@ export class LoanFormComponent implements OnInit {
         schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
         localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
         homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
+        over65OrDisabled: v.isHomestead && v.isOver65
+          ? {
+              qualifiesInYear: v.over65Year || 1,
+              schoolExemption: v.over65SchoolExemption || 0,
+              localExemption: v.over65LocalExemption || 0,
+              localTaxCeiling: v.over65LocalCeiling,
+            }
+          : null,
         homeValueGrowthRate: v.homeValueGrowthRate || 0,
         insuranceIncreaseRate: v.insuranceIncreaseRate || 0,
         hoaIncreaseRate: v.hoaIncreaseRate || 0,

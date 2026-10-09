@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit: 248 tests across domain, application and in-memory API integration · Playwright: 15 full-stack E2E tests |
+| **Tests** | NUnit: 263 tests across domain, application and in-memory API integration · Playwright: 16 full-stack E2E tests |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -31,6 +31,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Recasting** | A lender recasts only after a **single lump sum of at least its minimum** (default $10,000) and charges a fee (default $250). A recast keeps the payoff date and re-amortizes to a lower payment. Smaller extra payments still shorten the term. Each recast is recorded with the old payment, new payment and fee. |
 | **Property taxes** | Three taxing units, each an annual rate on the home's taxable value: **school**, **county/city/other** and **MUD**. Texas "per $100 of valuation" rates are entered as-is ($0.85 per $100 = 0.85%). Each year's bill is split into twelve installments that add up to the bill exactly. |
 | **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas). The school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. |
+| **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling; MUD tax has none. |
 | **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
 | **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. |
 | **Yearly projection** | Market value, taxable value and every cost category for each year of the term, charted as lines. |
@@ -108,6 +109,7 @@ npm run e2e                       # 13 Playwright tests; starts the API and Angu
     "schoolHomesteadExemption": 140000,
     "localHomesteadExemptionPercent": 0,
     "homesteadAssessmentCap": 10,
+    "over65OrDisabled": { "qualifiesInYear": 6, "schoolExemption": 60000, "localExemption": 0, "localTaxCeiling": false },
     "homeValueGrowthRate": 4,
     "insuranceIncreaseRate": 5,
     "hoaIncreaseRate": 3,
@@ -171,11 +173,11 @@ src/MortgageAnalytics.Domain/
   ExtraPayments/    IExtraPaymentRule → Monthly / Annual / LumpSum; ExtraPaymentPlan (composite)
   Amortization/     AmortizationCalculator, RecastPolicy, RecastEvent, LoanComparer, LoanComparison
   HousingCosts/     IHousingCost → ValueBasedTax / AnnualFixedCost / MonthlyFixedCost / MortgageInsurance;
-                    PropertyValuation (growth + appraisal cap), TaxExemption, Installments;
+                    PropertyValuation (growth + appraisal cap), TaxExemption, SeniorTaxRelief, Installments;
                     HousingCostPlan (composite), HousingCostBreakdown, HousingCostSchedule (monthly + yearly)
 src/MortgageAnalytics.Application/   Contracts, validation, mapping, AmortizationService, DI wiring
 src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handling
-tests/   Domain (173) · Application (66) · Api.IntegrationTests (9)
+tests/   Domain (181) · Application (73) · Api.IntegrationTests (9)
 client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
 ```
 
@@ -207,6 +209,10 @@ client/  src/app/core (models, API service, errors) · src/app/features/calculat
 - **Homestead rules are per taxing unit.** The Texas $140,000 exemption applies only to school
   district tax, so school tax is a separate unit with its own `TaxExemption`. Applying it to the whole
   tax bill would understate taxes by thousands of dollars a year.
+- **The over-65 ceiling is set in the qualifying year, not at purchase.** `SeniorTaxRelief` takes the
+  loan year the owner turns 65 (or becomes disabled), so a 60-year-old buyer sees normal tax growth for
+  five years and then a freeze. The bill is `min(this year's tax, the qualifying year's tax)`, so it can
+  still fall with values. The school ceiling always applies by law; the county/city ceiling is a setting.
 - **Market value and taxable value are tracked separately.** `PropertyValuation` grows the market value
   and applies the homestead appraisal cap to the taxable value. When the market outruns the cap, the
   owner is taxed on the lower figure, and the "Home value" chart shows that gap directly.
@@ -278,10 +284,10 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 | Layer | Tool | What it proves |
 |---|---|---|
-| Domain (173) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Each housing cost on its own. Exemptions (fixed, percentage, both, larger than the value). The appraisal cap in rising, slow and falling markets. Installments summing exactly. PMI at 78% and 80%. Recast boundary, fee and event. Net savings excluding taxes. |
-| Application (66) | NUnit + FluentValidation.TestHelper | Every validation rule and boundary. Homestead on and off, and the school exemption not leaking into county/MUD tax. Yearly projection, the cap, and insurance and HOA increases. PMI end dates and savings. Recast defaults. Injected clock, including the December rollover. |
+| Domain (181) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Each housing cost on its own. Exemptions (fixed, percentage, both, larger than the value). The appraisal cap in rising, slow and falling markets. Installments summing exactly. Over-65 exemption stacking, the ceiling set in the qualifying year, and taxes falling below the ceiling. PMI at 78% and 80%. Recast boundary, fee and event. Net savings excluding taxes. |
+| Application (73) | NUnit + FluentValidation.TestHelper | Every validation rule and boundary. Homestead on and off, and the school exemption not leaking into county/MUD tax. Over-65 relief, the school freeze versus rising county tax, local ceilings, and relief being ignored for non-homesteads. Yearly projection, the cap, and insurance and HOA increases. PMI end dates and savings. Recast defaults. Injected clock, including the December rollover. |
 | API integration (9) | NUnit + `WebApplicationFactory` | The real middleware pipeline: JSON binding (enums as strings), the validation filter, camelCase error keys, malformed bodies, the unknown-route 404, Swagger and health. |
-| End-to-end (15) | Playwright | Real browser and real API: the homestead toggle changing school tax, the projection charts and the cap, taxes adding to the payment but not to savings, PMI ending sooner, recast versus a lump sum below the minimum, the no-PMI case at 20% down, client-side validation, server errors, and recovery after a network failure. |
+| End-to-end (16) | Playwright | Real browser and real API: the homestead toggle changing school tax, the over-65 freeze holding yearly costs flat, the projection charts and the cap, taxes adding to the payment but not to savings, PMI ending sooner, recast versus a lump sum below the minimum, the no-PMI case at 20% down, client-side validation, server errors, and recovery after a network failure. |
 
 The E2E suite uses a **page object** (`e2e/calculator.page.ts`), so selectors live in one place and
 the specs read as behavior.
@@ -290,7 +296,7 @@ the specs read as behavior.
 
 ## What I'd add next
 
-- **Tax rate changes and over-65 / disability exemptions**: per-year rate schedules and the extra Texas exemptions and tax ceilings.
+- **Tax rate changes**: per-year rate schedules, and the ceiling transfer when a qualifying owner moves.
 - **Equity tracking**: home value minus loan balance, year by year.
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.

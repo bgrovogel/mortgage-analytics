@@ -36,6 +36,14 @@ export interface PidAssessment {
   remainingYears: number | null;
 }
 
+/** Extra homestead relief for an owner who is 65 or older, or disabled. */
+export interface Over65OrDisabled {
+  qualifiesInYear: number;
+  schoolExemption: number;
+  localExemption: number;
+  localTaxCeiling: boolean;
+}
+
 export interface HousingCostsInput {
   schoolTaxRate: number;
   propertyTaxRate: number;
@@ -44,6 +52,7 @@ export interface HousingCostsInput {
   schoolHomesteadExemption: number;
   localHomesteadExemptionPercent: number;
   homesteadAssessmentCap: number;
+  over65OrDisabled: Over65OrDisabled | null;
   homeValueGrowthRate: number;
   insuranceIncreaseRate: number;
   hoaIncreaseRate: number;

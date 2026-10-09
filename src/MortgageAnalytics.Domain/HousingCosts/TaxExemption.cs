@@ -34,6 +34,9 @@ public sealed record TaxExemption
     /// <summary>Percentage of value exempted.</summary>
     public decimal Percent { get; }
 
+    /// <summary>Returns a copy with <paramref name="additionalAmount"/> more dollars exempted, for stacking extra relief.</summary>
+    public TaxExemption Plus(decimal additionalAmount) => new(Amount + additionalAmount, Percent);
+
     /// <summary>Returns the value left to tax after the exemption. It is never negative.</summary>
     /// <param name="assessedValue">The home's assessed value for the year.</param>
     public decimal TaxableValue(decimal assessedValue) =>

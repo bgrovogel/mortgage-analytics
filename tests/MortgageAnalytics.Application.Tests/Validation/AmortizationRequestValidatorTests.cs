@@ -263,6 +263,35 @@ public class AmortizationRequestValidatorTests
         _validator.TestValidate(request).ShouldHaveValidationErrorFor("HousingCosts.Pid.RemainingYears");
     }
 
+    [TestCase(0)]
+    [TestCase(51)]
+    public void Over65QualifyingYear_OutsideTheTerm_IsRejected(int year)
+    {
+        var request = Valid with
+        {
+            HousingCosts = new HousingCostsRequest { Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = year } },
+        };
+
+        _validator.TestValidate(request).ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.QualifiesInYear");
+    }
+
+    [Test]
+    public void Over65Exemptions_Negative_AreRejected()
+    {
+        var request = Valid with
+        {
+            HousingCosts = new HousingCostsRequest
+            {
+                Over65OrDisabled = new Over65OrDisabledRequest { SchoolExemption = -1m, LocalExemption = -1m },
+            },
+        };
+
+        var result = _validator.TestValidate(request);
+
+        result.ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.SchoolExemption");
+        result.ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.LocalExemption");
+    }
+
     [Test]
     public void PmiCancellation_UndefinedEnumValue_IsRejected()
     {
