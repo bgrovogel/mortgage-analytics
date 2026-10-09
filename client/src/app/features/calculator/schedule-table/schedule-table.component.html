@@ -1,0 +1,70 @@
+<div class="header">
+  <h2 id="schedule-title">Amortization schedule</h2>
+  <div class="toggle" role="group" aria-label="Schedule to show">
+    <button type="button" [attr.aria-pressed]="view() === 'accelerated'" (click)="view.set('accelerated')"
+            data-testid="view-accelerated">With extra payments</button>
+    <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
+            data-testid="view-baseline">Standard</button>
+  </div>
+</div>
+
+<div class="table-wrap" tabindex="0" aria-labelledby="schedule-title">
+  <table data-testid="schedule-table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Date</th>
+        <th scope="col">Payment</th>
+        <th scope="col">Principal</th>
+        <th scope="col">Interest</th>
+        <th scope="col">Extra</th>
+        @if (hasHousingCosts()) {
+          <th scope="col">Taxes &amp; fees</th>
+          <th scope="col">Total</th>
+        }
+        <th scope="col">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of schedule().payments; track p.paymentNumber) {
+        <tr [class.has-extra]="p.extraPrincipal > 0">
+          <td>{{ p.paymentNumber }}</td>
+          <td>{{ p.dueDate | date: 'MMM yyyy' }}</td>
+          <td>{{ p.scheduledPayment | currency }}</td>
+          <td>{{ p.principal | currency }}</td>
+          <td>{{ p.interest | currency }}</td>
+          <td class="extra">
+            {{ p.extraPrincipal > 0 ? (p.extraPrincipal | currency) : '—' }}
+            @if (recastAfter().has(p.paymentNumber)) {
+              <span class="tag" data-testid="recast-tag">recast</span>
+            }
+          </td>
+          @if (hasHousingCosts()) {
+            <td>
+              {{ p.housingCosts | currency }}
+              @if (p.mortgageInsurance > 0) {
+                <span class="tag muted" title="Includes PMI">PMI</span>
+              }
+            </td>
+            <td>{{ p.totalOutlay | currency }}</td>
+          }
+          <td>{{ p.remainingBalance | currency }}</td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row" colspan="2">Totals</th>
+        <td>{{ schedule().totalPaid | currency }}</td>
+        <td></td>
+        <td data-testid="total-interest">{{ schedule().totalInterest | currency }}</td>
+        <td></td>
+        @if (hasHousingCosts()) {
+          <td>{{ schedule().totalHousingCosts.total | currency }}</td>
+          <td></td>
+        }
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

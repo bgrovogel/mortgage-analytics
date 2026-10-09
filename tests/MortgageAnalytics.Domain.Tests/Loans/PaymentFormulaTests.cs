@@ -1,0 +1,45 @@
+using MortgageAnalytics.Domain.Loans;
+
+namespace MortgageAnalytics.Domain.Tests.Loans;
+
+[TestFixture]
+public class PaymentFormulaTests
+{
+    // Expected values cross-checked against an independent Python Decimal implementation
+    // and published mortgage tables.
+    [TestCase(200_000, 6.0, 360, 1199.10)]
+    [TestCase(350_000, 6.875, 360, 2299.25)]
+    [TestCase(250_000, 7.5, 180, 2317.53)]
+    [TestCase(1_000, 12.0, 12, 88.85)]
+    [TestCase(100_000, 0.0, 120, 833.33)]
+    public void MonthlyPayment_MatchesKnownValues(decimal principal, decimal annualRate, int months, decimal expected)
+    {
+        var payment = PaymentFormula.MonthlyPayment(principal, annualRate / 100m / 12m, months);
+
+        Assert.That(payment, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void MonthlyPayment_SinglePeriod_IsPrincipalPlusOneMonthOfInterest()
+    {
+        var payment = PaymentFormula.MonthlyPayment(12_000m, 0.01m, 1);
+
+        Assert.That(payment, Is.EqualTo(12_120m));
+    }
+
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void MonthlyPayment_NonPositiveTerm_Throws(int months)
+    {
+        Assert.Throws<DomainValidationException>(() => PaymentFormula.MonthlyPayment(1_000m, 0.01m, months));
+    }
+
+    [TestCase(2, 0, 1)]
+    [TestCase(2, 1, 2)]
+    [TestCase(2, 10, 1024)]
+    [TestCase(1.5, 3, 3.375)]
+    public void Pow_ComputesExactDecimalPowers(decimal value, int exponent, decimal expected)
+    {
+        Assert.That(PaymentFormula.Pow(value, exponent), Is.EqualTo(expected));
+    }
+}

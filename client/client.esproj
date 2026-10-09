@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.6887863">
+  <!--
+    Puts the Angular app in the solution so it shows in Visual Studio / Rider Solution Explorer
+    and can be started alongside the API (set both as startup projects).
+    `dotnet build` of the solution skips npm work; the Angular CLI owns the front-end build.
+  -->
+  <PropertyGroup>
+    <StartupCommand>npm start</StartupCommand>
+    <BuildCommand>npm run build</BuildCommand>
+    <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
+    <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <JavaScriptTestRoot>e2e\</JavaScriptTestRoot>
+    <JavaScriptTestFramework>Playwright</JavaScriptTestFramework>
+    <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\client\browser\</BuildOutputFolder>
+  </PropertyGroup>
+</Project>

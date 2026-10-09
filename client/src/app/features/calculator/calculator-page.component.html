@@ -1,0 +1,35 @@
+<div class="layout">
+  <aside class="panel form-panel">
+    <app-loan-form [busy]="busy()" (calculate)="calculate($event)" />
+  </aside>
+
+  <section class="results" aria-live="polite" [attr.aria-busy]="busy()">
+    @if (errors().length > 0) {
+      <div class="alert" role="alert" data-testid="error-summary">
+        <strong>We couldn't run that calculation.</strong>
+        <ul>
+          @for (message of errors(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (result(); as r) {
+      <app-savings-summary [result]="r" />
+      <div class="charts">
+        <div class="panel">
+          <app-payment-breakdown [schedule]="r.accelerated" />
+        </div>
+        <div class="panel">
+          <app-balance-chart [result]="r" />
+        </div>
+      </div>
+      <div class="panel">
+        <app-schedule-table [result]="r" />
+      </div>
+    } @else if (errors().length === 0) {
+      <div class="panel placeholder">Calculating your schedule…</div>
+    }
+  </section>
+</div>

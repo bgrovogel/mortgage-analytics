@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+coverage/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/

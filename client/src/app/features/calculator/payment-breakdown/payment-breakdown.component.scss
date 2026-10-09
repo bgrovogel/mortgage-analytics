@@ -1,0 +1,63 @@
+h2 {
+  font-size: 1rem;
+  margin: 0 0 0.9rem;
+}
+
+.bar {
+  display: flex;
+  gap: 2px; // surface gap between segments
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+
+  span {
+    flex-basis: 0;
+    min-width: 3px;
+  }
+}
+
+.legend {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.35rem 0;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+
+  td {
+    text-align: right;
+    color: var(--text-primary);
+  }
+
+  .share {
+    width: 3.5rem;
+    color: var(--text-muted);
+  }
+
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 0.55rem;
+    vertical-align: -1px;
+  }
+
+  tfoot th,
+  tfoot td {
+    border-top: 1px solid var(--border);
+    padding-top: 0.55rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
