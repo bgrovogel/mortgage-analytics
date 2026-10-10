@@ -107,7 +107,7 @@ describe('CalculationStores', () => {
       calculator().send({ ...purchase, annualInterestRate: 6 });
 
       expect(refinancePage().loanToApply()).toEqual({
-        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000 },
+        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, start: null },
         from: 'Calculator',
         version: 1,
       });
@@ -158,7 +158,8 @@ describe('CalculationStores', () => {
       calculator().send(existing);
 
       expect(refinancePage().loanToApply()!.loan).toEqual(
-        { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: 250_000 }); // no growth given
+        { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: 250_000, // no growth given
+          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' } });
 
       refinancePage().send(refinance);
       refinancePage().send({ ...refinance, currentBalance: 186_000, currentAnnualInterestRate: 6, remainingTermInMonths: 300 });
@@ -168,6 +169,21 @@ describe('CalculationStores', () => {
       expect(refinancePage().loanToApply()).toBeNull();
     });
 
+    it('hands the original loan between the calculator and Refinance without echoing it back', () => {
+      jest.setSystemTime(new Date(2026, 9, 10));
+      const existing = { ...purchase, homePrice: 250_000, downPayment: 50_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: '2021-11-01' };
+      calculator().send(purchase);
+      calculator().send(existing);
+      const start = refinancePage().loanToApply()!.loan.start;
+      expect(start).toEqual({ amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' });
+
+      // What the refinance form sends once it has taken that loan: the same original loan.
+      refinancePage().send(refinance);
+      refinancePage().send({ ...refinance, currentBalance: 186_108.71, currentAnnualInterestRate: 6, remainingTermInMonths: 300, originalLoan: start });
+
+      expect(calculator().loanToApply()).toBeNull();
+    });
+
     it('treats opening a saved calculation as choosing its loan', () => {
       refinancePage().send(refinance);
       strategyPage().send({ ...strategy, currentBalance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300 });
@@ -175,7 +191,7 @@ describe('CalculationStores', () => {
       stores.of('Purchase').open(saved('Purchase', 'p'));
 
       expect(strategyPage().loanToApply()!.loan).toEqual(
-        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000 });
+        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null });
     });
   });
 

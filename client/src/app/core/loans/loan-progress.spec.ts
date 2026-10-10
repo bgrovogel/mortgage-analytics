@@ -1,4 +1,4 @@
-import { balanceAfter, loanToday, originalAmount, paymentsMade } from './existing-loan';
+import { balanceAfter, loanToday, originalAmount, paymentsMade } from './loan-progress';
 
 describe('existing loan', () => {
   const today = new Date(2026, 9, 10); // Oct 10, 2026

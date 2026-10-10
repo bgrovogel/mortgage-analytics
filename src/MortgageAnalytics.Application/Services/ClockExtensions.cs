@@ -11,7 +11,12 @@ public static class ClockExtensions
     /// <returns>The first of next month: the default date of a first (or next) payment.</returns>
     public static DateOnly FirstOfNextMonth(this TimeProvider clock)
     {
-        var today = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
+        var today = clock.Today();
         return new DateOnly(today.Year, today.Month, 1).AddMonths(1);
     }
+
+    /// <summary>Today's date, in the server's local time zone (see <see cref="FirstOfNextMonth"/>).</summary>
+    /// <param name="clock">The clock to read today from.</param>
+    /// <returns>Today.</returns>
+    public static DateOnly Today(this TimeProvider clock) => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 }

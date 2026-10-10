@@ -50,6 +50,42 @@ public class RefinanceApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Analyze_GivenTheOriginalLoan_StartsFromWhatIsOwedToday()
+    {
+        // Five years ago: what is owed today is less than was borrowed, with fewer payments left. (The exact
+        // figures, on a pinned date, are in RefinanceServiceTests.)
+        var start = DateTime.Today.AddYears(-5);
+        var original = new { amount = 200_000, termInMonths = 360, firstPaymentDate = $"{start:yyyy-MM}-01" };
+        var body = await ReadJsonAsync(await Client.PostAsJsonAsync(AnalyzeUrl, new
+        {
+            currentAnnualInterestRate = 6, originalLoan = original, newAnnualInterestRate = 5, newTermInMonths = 360, closingCosts = 4_000,
+        }));
+        var current = body.GetProperty("current");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(current.GetProperty("loanAmount").GetDecimal(), Is.InRange(180_000m, 190_000m), $"about five years of principal is paid; body: {body}");
+            Assert.That(current.GetProperty("numberOfPayments").GetInt32(), Is.InRange(299, 301), "about 25 years of payments are left");
+            Assert.That(current.GetProperty("monthlyPayment").GetDecimal(), Is.EqualTo(1_199.10m), "the original payment carries on");
+        });
+    }
+
+    [Test]
+    public async Task Analyze_RejectsAnOriginalLoanThatIsAlreadyPaidOff()
+    {
+        var response = await Client.PostAsJsonAsync(AnalyzeUrl, new
+        {
+            currentAnnualInterestRate = 6,
+            originalLoan = new { amount = 200_000, termInMonths = 360, firstPaymentDate = "1990-01-01" },
+            newAnnualInterestRate = 5, newTermInMonths = 360, closingCosts = 0,
+        });
+        await AssertProblemAsync(response, HttpStatusCode.BadRequest, "nothing is left to refinance");
+        var errors = (await ReadJsonAsync(response)).GetProperty("errors");
+
+        Assert.That(errors.TryGetProperty("originalLoan.firstPaymentDate", out _), Is.True, $"the date is the problem; errors: {errors}");
+    }
+
+    [Test]
     public async Task Analyze_RejectsAnInvalidRequest_WithFieldErrors()
     {
         var response = await Client.PostAsJsonAsync(AnalyzeUrl, new { currentBalance = 0, newTermInMonths = 0 });

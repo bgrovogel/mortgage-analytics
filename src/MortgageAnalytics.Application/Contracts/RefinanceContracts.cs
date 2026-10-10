@@ -1,9 +1,13 @@
 namespace MortgageAnalytics.Application.Contracts;
 
-/// <summary>The loan you have today, and the refinance offer to compare it with.</summary>
+/// <summary>
+/// The loan you have today, and the refinance offer to compare it with. The loan today is either what is owed
+/// now (<see cref="CurrentBalance"/>, <see cref="RemainingTermInMonths"/>) or the loan as it was taken out
+/// (<see cref="OriginalLoan"/>), from which the server works out what is owed now.
+/// </summary>
 public sealed record RefinanceRequest
 {
-    /// <summary>The balance still owed on the current loan.</summary>
+    /// <summary>The balance still owed on the current loan. Ignored when <see cref="OriginalLoan"/> is given.</summary>
     /// <example>300000</example>
     public decimal CurrentBalance { get; init; }
 
@@ -11,11 +15,18 @@ public sealed record RefinanceRequest
     /// <example>7</example>
     public decimal CurrentAnnualInterestRate { get; init; }
 
-    /// <summary>How many monthly payments are left on the current loan.</summary>
+    /// <summary>How many monthly payments are left on the current loan. Ignored when <see cref="OriginalLoan"/> is given.</summary>
     /// <example>300</example>
     public int RemainingTermInMonths { get; init; }
 
-    /// <summary>When the next payment is due, on either loan. Defaults to the first day of next month.</summary>
+    /// <summary>
+    /// The current loan as it was taken out, at <see cref="CurrentAnnualInterestRate"/>. When given, what is owed
+    /// now, the payments left and the next due date all come from this loan's own schedule as of today, exactly as
+    /// the purchase calculator would show them.
+    /// </summary>
+    public OriginalLoanRequest? OriginalLoan { get; init; }
+
+    /// <summary>When the next payment is due, on either loan. Defaults to the first day of next month. Ignored when <see cref="OriginalLoan"/> is given.</summary>
     /// <example>2026-11-01</example>
     public DateOnly? NextPaymentDate { get; init; }
 
@@ -34,6 +45,22 @@ public sealed record RefinanceRequest
     /// <summary>True to add the closing costs to the new loan instead of paying them at closing.</summary>
     /// <example>false</example>
     public bool FinanceClosingCosts { get; init; }
+}
+
+/// <summary>A loan as it was taken out.</summary>
+public sealed record OriginalLoanRequest
+{
+    /// <summary>The amount first borrowed.</summary>
+    /// <example>200000</example>
+    public decimal Amount { get; init; }
+
+    /// <summary>The original term, in months.</summary>
+    /// <example>360</example>
+    public int TermInMonths { get; init; }
+
+    /// <summary>When the first payment was due.</summary>
+    /// <example>2021-11-01</example>
+    public DateOnly FirstPaymentDate { get; init; }
 }
 
 /// <summary>Keeping the current loan compared with refinancing it, and what the refinance really saves or costs.</summary>

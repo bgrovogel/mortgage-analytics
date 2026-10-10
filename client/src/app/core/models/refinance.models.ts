@@ -1,6 +1,14 @@
 /** TypeScript mirrors of the refinance contracts (MortgageAnalytics.Application.Contracts). */
 
+/** A loan as it was taken out (mirrors OriginalLoanRequest). */
+export interface OriginalLoan {
+  amount: number;
+  termInMonths: number;
+  firstPaymentDate: string; // ISO date, yyyy-MM-dd
+}
+
 export interface RefinanceRequest {
+  /** Ignored by the API when originalLoan is given: it works out what is owed from that loan's own schedule. */
   currentBalance: number;
   currentAnnualInterestRate: number;
   remainingTermInMonths: number;
@@ -9,6 +17,8 @@ export interface RefinanceRequest {
   newTermInMonths: number;
   closingCosts: number;
   financeClosingCosts: boolean;
+  /** The current loan as it was taken out, when known. */
+  originalLoan?: OriginalLoan | null;
 }
 
 /** One payment on a loan, without housing costs. */

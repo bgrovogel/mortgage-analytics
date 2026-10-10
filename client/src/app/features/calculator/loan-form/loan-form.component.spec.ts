@@ -377,6 +377,24 @@ describe('LoanFormComponent', () => {
       expect(text('existing-loan')).toContain('with about $186,109 owed');
     });
 
+    it('takes a loan whose start another page knows exactly as it started, keeping its own purchase price', () => {
+      fixture = TestBed.createComponent(LoanFormComponent);
+      component = fixture.componentInstance;
+      emitted = [];
+      component.calculate.subscribe((request) => emitted.push(request));
+      fixture.componentRef.setInput('loan', {
+        loan: { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: null,
+          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' } },
+        from: 'Refinance', version: 1,
+      });
+      fixture.detectChanges();
+
+      expect(emitted[0]).toEqual(expect.objectContaining({
+        homePrice: 375_000, downPayment: 175_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: '2021-11-01',
+      }));
+      expect(text('existing-loan')).toContain('payment 61 of 360 is next');
+    });
+
     it('rounds a part-year term, saying how many payments that leaves', () => {
       const request = openOn('2021-11-01', { balance: 180_000, annualInterestRate: 6, remainingTermInMonths: 295, homeValue: null });
 

@@ -81,10 +81,41 @@ test.describe('One loan across the pages', () => {
       .toContainText(`payment ${made + 1} of 360 is next`);
 
     await go(page, 'Refinance');
+    await expect(box(page, 'original-amount'), 'Refinance takes the loan as it started').toHaveValue('200,000');
+    await expect(box(page, 'first-payment-date'), 'from its real first payment').toHaveValue(firstPayment);
+    await expect(box(page, 'original-loan-today'), 'and knows where it stands today')
+      .toContainText(`Payment ${made + 1} of 360 is next, with about ${owed.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} owed`);
+
+    await box(page, 'loan-entry-today').check();
     await expect(box(page, 'current-balance'), 'what is owed today')
       .toHaveValue(owed.toLocaleString('en-US', { maximumFractionDigits: 2 }));
     await expect(box(page, 'years-left'), 'the payments left, in years')
       .toHaveValue(((360 - made) / 12).toLocaleString('en-US', { maximumFractionDigits: 2 }));
+  });
+
+  test('Refinance can start from the original loan, and hands it to the Calculator as it started', async ({ page }) => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 60, 1);
+    const firstPayment = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`;
+    const made = now.getDate() > 1 ? 61 : 60;
+
+    await page.goto('/refinance');
+    await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');
+    await box(page, 'loan-entry-original').check();
+    await box(page, 'original-amount').fill('200000');
+    await box(page, 'original-term').fill('30');
+    await box(page, 'current-rate').fill('6');
+    await box(page, 'first-payment-date').fill(firstPayment);
+
+    await expect(box(page, 'original-loan-today'), 'the form says where the loan stands').toContainText(`Payment ${made + 1} of 360 is next`);
+    await expect(page.getByTestId('results'), 'the comparison has caught up').toHaveAttribute('aria-busy', 'false');
+    await expect(box(page, 'refi-table').locator('tr', { hasText: 'Payments' }).locator('td').first(),
+      "the API worked out the payments left from the loan's own schedule").toHaveText(String(360 - made));
+
+    await go(page, 'Calculator');
+    await expect(box(page, 'first-payment-date'), 'the real start').toHaveValue(firstPayment);
+    await expect(box(page, 'term-years'), 'the original term').toHaveValue('30');
+    await expect(box(page, 'existing-loan'), 'the same loan, as far along').toContainText(`payment ${made + 1} of 360 is next`);
   });
 
   test('just opening a page does not overwrite a loan typed elsewhere', async ({ page }) => {

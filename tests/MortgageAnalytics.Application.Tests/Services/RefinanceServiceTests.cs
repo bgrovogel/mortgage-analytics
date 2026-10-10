@@ -16,7 +16,7 @@ public class RefinanceServiceTests
     private RefinanceService _service = null!;
 
     [SetUp]
-    public void CreateService() => _service = new RefinanceService(new RefinanceAnalyzer(new AmortizationCalculator()), TestClock.Create());
+    public void CreateService() => _service = new RefinanceService(new RefinanceAnalyzer(new AmortizationCalculator()), new AmortizationCalculator(), TestClock.Create());
 
     private static RefinanceRequest Request(bool financeClosingCosts = false, DateOnly? nextPaymentDate = null) => new()
     {
@@ -29,6 +29,31 @@ public class RefinanceServiceTests
         ClosingCosts = ToSixPercentFor30Years.ClosingCosts,
         FinanceClosingCosts = financeClosingCosts,
     };
+
+    [Test]
+    public void Analyze_GivenTheOriginalLoan_StartsFromWhatIsOwedToday_OnThatLoansOwnSchedule()
+    {
+        // The reference loan ($200,000 at 6% over 30 years from January 2026), on the test clock's 9 October 2026:
+        // ten payments made, 197,963.60 owed (computed independently), November's payment next.
+        var request = Request() with
+        {
+            CurrentBalance = 0,
+            RemainingTermInMonths = 0,
+            CurrentAnnualInterestRate = 6m,
+            OriginalLoan = new OriginalLoanRequest { Amount = 200_000m, TermInMonths = 360, FirstPaymentDate = ReferenceLoans.FirstPaymentDate },
+        };
+
+        var current = _service.Analyze(request).Current;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(current.LoanAmount, Is.EqualTo(197_963.60m), "what is owed after ten payments");
+            Assert.That(current.NumberOfPayments, Is.EqualTo(350), "the payments left");
+            Assert.That(current.MonthlyPayment, Is.EqualTo(ReferenceLoans.Standard.MonthlyPayment), "the original payment carries on");
+            Assert.That(current.Payments[0].DueDate, Is.EqualTo(new DateOnly(2026, 11, 1)), "starting with the next due date");
+            Assert.That(current.PayoffDate, Is.EqualTo(ReferenceLoans.Standard.PayoffDate), "and ending when the original loan would");
+        });
+    }
 
     [Test]
     public void Analyze_ReportsTheComparison()

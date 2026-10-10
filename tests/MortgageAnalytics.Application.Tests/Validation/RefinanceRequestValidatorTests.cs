@@ -20,6 +20,31 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
     [Test]
     public void TheReferenceRefinance_IsValid() => AssertValid(Valid, "a typical refinance passes every rule");
 
+    private static readonly OriginalLoanRequest Original = new() { Amount = 200_000m, TermInMonths = 360, FirstPaymentDate = new DateOnly(2021, 11, 1) };
+
+    [Test]
+    public void AnOriginalLoan_TakesThePlaceOfTheBalanceAndPaymentsLeft() =>
+        AssertValid(Valid with { CurrentBalance = 0, RemainingTermInMonths = 0, OriginalLoan = Original },
+            "the server works out what is owed from the original loan");
+
+    [Test]
+    public void AnOriginalLoan_IsCheckedLikeAnyLoan()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(Valid with { OriginalLoan = Original with { Amount = 0 } }, "OriginalLoan.Amount", "something must have been borrowed");
+            AssertInvalid(Valid with { OriginalLoan = Original with { Amount = 100_000_000.01m } }, "OriginalLoan.Amount", "within the loan limit");
+            AssertInvalid(Valid with { OriginalLoan = Original with { TermInMonths = 601 } }, "OriginalLoan.TermInMonths", "at most 50 years");
+            AssertInvalid(Valid with { OriginalLoan = Original with { FirstPaymentDate = new DateOnly(1899, 12, 1) } }, "OriginalLoan.FirstPaymentDate",
+                "within the supported dates");
+        });
+    }
+
+    [Test]
+    public void AnOriginalLoanWithEveryPaymentBehindToday_IsRejected() =>
+        AssertInvalid(Valid with { OriginalLoan = Original with { FirstPaymentDate = new DateOnly(1990, 1, 1) } }, "OriginalLoan.FirstPaymentDate",
+            "a loan already paid off has nothing to refinance");
+
     [Test]
     public void ZeroRatesAndNoClosingCosts_AreValid() =>
         AssertValid(Valid with { CurrentAnnualInterestRate = 0, NewAnnualInterestRate = 0, ClosingCosts = 0 }, "0% loans and free refinances are edge cases, not errors");

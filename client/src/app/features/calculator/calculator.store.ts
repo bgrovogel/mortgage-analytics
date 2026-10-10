@@ -4,7 +4,7 @@ import { AmortizationRequest, AmortizationResponse } from '../../core/models/amo
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
-import { loanToday } from './loan-form/existing-loan';
+import { loanToday, toCents } from '../../core/loans/loan-progress';
 import { wholeYearsOf } from './loan-form/loan-fields';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
@@ -26,7 +26,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
 
   /**
    * The loan as it stands today. A new loan (first payment still ahead) is the price less the down payment, over
-   * the whole term. A loan already being paid shares what is owed now, the payments left, and the home's value now.
+   * the whole term. A loan already being paid shares what is owed now, the payments left, the home's value now,
+   * and how it started.
    */
   protected loanOf(request: AmortizationRequest): SharedLoan {
     const today = this.today(request);
@@ -35,6 +36,9 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
       annualInterestRate: request.annualInterestRate,
       remainingTermInMonths: today.monthsLeft,
       homeValue: today.homeValue,
+      start: today.made > 0 && request.firstPaymentDate
+        ? { amount: toCents(request.homePrice - request.downPayment), termInMonths: request.termInMonths, firstPaymentDate: request.firstPaymentDate }
+        : null,
     };
   }
 
@@ -45,6 +49,13 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
    * own purchase price.
    */
   protected override matchesShared(request: AmortizationRequest, shared: SharedLoan): boolean {
+    if (shared.start) {
+      // The loan as it started: the calculator holds it exactly, but for a term in whole years.
+      return request.firstPaymentDate === shared.start.firstPaymentDate
+        && toCents(request.homePrice - request.downPayment) === shared.start.amount
+        && request.annualInterestRate === shared.annualInterestRate
+        && request.termInMonths === wholeYearsOf(shared.start.termInMonths) * 12;
+    }
     const today = this.today(request);
     return Math.abs(today.balance - shared.balance) < 1
       && request.annualInterestRate === shared.annualInterestRate

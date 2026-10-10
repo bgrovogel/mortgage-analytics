@@ -17,13 +17,14 @@ export class RefinanceStore extends CalculationStore<RefinanceRequest, Refinance
   describe = describeRefinance;
   suggestName = suggestRefinanceName;
 
-  /** The loan today (the one being refinanced). The page does not ask for the home's value. */
+  /** The loan today (the one being refinanced), and how it started when given. The page does not ask for the home's value. */
   protected loanOf(request: RefinanceRequest): SharedLoan {
     return {
       balance: request.currentBalance,
       annualInterestRate: request.currentAnnualInterestRate,
       remainingTermInMonths: request.remainingTermInMonths,
       homeValue: null,
+      start: request.originalLoan ?? null,
     };
   }
 

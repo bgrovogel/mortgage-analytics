@@ -14,7 +14,7 @@ import {
   ExtraPaymentStrategy,
   MortgageInsuranceCancellation,
 } from '../../../core/models/amortization.models';
-import { balanceAfter, originalAmount, paymentsMade, toCents } from './existing-loan';
+import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
@@ -286,12 +286,14 @@ export class LoanFormComponent implements OnInit {
   private startFromSharedLoan(): void {
     const shared = this.loan();
     if (!shared) return;
-    const { balance, annualInterestRate, remainingTermInMonths, homeValue } = shared.loan;
-    // A loan already being paid keeps its start and purchase price; what was first borrowed is worked out from what
-    // is owed now. A new loan is bought today, at the home's value.
-    const made = paymentsMade(this.form.controls.firstPaymentDate.value, new Date());
-    const years = wholeYearsOf(made + remainingTermInMonths);
-    const borrowed = toCents(originalAmount(balance, annualInterestRate, years * 12, made));
+    const { balance, annualInterestRate, remainingTermInMonths, homeValue, start } = shared.loan;
+    // A loan whose start is known is taken as it started. Otherwise, a loan already being paid here keeps its start
+    // and purchase price, and what was first borrowed is worked out from what is owed now; a new loan is bought
+    // today, at the home's value.
+    const firstPaymentDate = start?.firstPaymentDate ?? this.form.controls.firstPaymentDate.value;
+    const made = paymentsMade(firstPaymentDate, new Date());
+    const years = wholeYearsOf(start ? start.termInMonths : made + remainingTermInMonths);
+    const borrowed = start ? start.amount : toCents(originalAmount(balance, annualInterestRate, years * 12, made));
     const price = Math.max(made > 0 ? this.form.controls.homePrice.value : (homeValue ?? this.form.controls.homePrice.value), borrowed);
     const wasPercent = this.form.controls.downPaymentMode.value !== 'amount';
     this.form.controls.downPaymentMode.setValue('amount', { emitEvent: false });
@@ -300,6 +302,7 @@ export class LoanFormComponent implements OnInit {
       downPayment: toCents(price - borrowed),
       annualInterestRate,
       termYears: years,
+      firstPaymentDate,
     });
     // Let the form's derived values (the loan summary, the existing-loan note) see the new numbers, without sending.
     this.restoring = true;
@@ -307,9 +310,10 @@ export class LoanFormComponent implements OnInit {
     this.restoring = false;
     if (changed || wasPercent) {
       const left = years * 12 - made;
+      const wanted = start ? start.termInMonths - made : remainingTermInMonths;
       this.sharedFrom.set({
         from: shared.from,
-        rounded: left === remainingTermInMonths ? null : { from: formatMonths(remainingTermInMonths), to: formatMonths(left) },
+        rounded: left === wanted ? null : { from: formatMonths(wanted), to: formatMonths(left) },
       });
     }
   }

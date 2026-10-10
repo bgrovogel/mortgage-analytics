@@ -1,5 +1,5 @@
 /**
- * The arithmetic of a loan that is already being paid: how many payments are behind it, what is owed now, and,
+ * The arithmetic of a loan that is already being paid (shared by the calculator and the refinance page): how many payments are behind it, what is owed now, and,
  * working backwards, what was first borrowed. Standard annuity formulas; the API's schedule rounds interest to
  * the cent each month, so its balance can differ from these by a few cents.
  */

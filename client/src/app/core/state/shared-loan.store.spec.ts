@@ -16,14 +16,25 @@ describe('SharedLoanStore', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan, balance: 250_000 }, 'Refinance');
 
-    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000 }, from: 'Refinance', version: 2 });
+    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000, start: null }, from: 'Refinance', version: 2 });
   });
 
   it('does not count the same loan sent again as a change', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan }, 'Pay off or invest');
 
-    expect(store.change()).toEqual({ loan, from: 'Calculator', version: 1 });
+    expect(store.change()).toEqual({ loan: { ...loan, start: null }, from: 'Calculator', version: 1 });
+  });
+
+  it('keeps how the loan started while the loan is unchanged, and drops it once a page without it changes the loan', () => {
+    const start = { amount: 300_000, termInMonths: 360, firstPaymentDate: '2021-11-01' };
+    store.update({ ...loan, start }, 'Calculator');
+
+    store.update({ ...loan, homeValue: 420_000 }, 'Pay off or invest'); // only the home value is new
+    expect(store.change()!.loan.start).toEqual(start);
+
+    store.update({ ...loan, balance: 250_000 }, 'Pay off or invest');
+    expect(store.change()!.loan.start).toBeNull();
   });
 
   it("keeps the home's value when a page that does not ask for it sends a loan", () => {

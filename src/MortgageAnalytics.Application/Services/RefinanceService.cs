@@ -1,5 +1,7 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
+using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Refinancing;
 
 namespace MortgageAnalytics.Application.Services;
@@ -14,12 +16,21 @@ public interface IRefinanceService
     RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true);
 }
 
-/// <summary>Maps the request into the domain, runs the analyzer, and maps the result back.</summary>
+/// <summary>
+/// Maps the request into the domain, runs the analyzer, and maps the result back. A loan given as it was taken out
+/// is first brought up to today on its own schedule.
+/// </summary>
 /// <param name="analyzer">The domain refinance comparison.</param>
-/// <param name="clock">Supplies today's date for the default next payment.</param>
-public sealed class RefinanceService(IRefinanceAnalyzer analyzer, TimeProvider clock) : IRefinanceService
+/// <param name="calculator">Builds the original loan's schedule, to find what is owed today.</param>
+/// <param name="clock">Supplies today's date, and the default next payment.</param>
+public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationCalculator calculator, TimeProvider clock) : IRefinanceService
 {
     /// <inheritdoc />
-    public RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true) =>
-        analyzer.Analyze(request.ToCurrentLoan(clock.FirstOfNextMonth()), request.ToOffer()).ToResponse(includePayments);
+    public RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true)
+    {
+        var current = request.ToOriginalLoan() is { } original
+            ? calculator.RemainingAsOf(original, clock.Today())
+            : request.ToCurrentLoan(clock.FirstOfNextMonth());
+        return analyzer.Analyze(current, request.ToOffer()).ToResponse(includePayments);
+    }
 }

@@ -15,6 +15,13 @@ public static class RefinanceMapper
         new(request.CurrentBalance, request.CurrentAnnualInterestRate, request.RemainingTermInMonths,
             request.NextPaymentDate ?? defaultNextPaymentDate);
 
+    /// <summary>The original loan as domain loan terms, or null when the request describes the loan as it is today.</summary>
+    /// <param name="request">A validated request.</param>
+    public static LoanTerms? ToOriginalLoan(this RefinanceRequest request) =>
+        request.OriginalLoan is { } original
+            ? new LoanTerms(original.Amount, request.CurrentAnnualInterestRate, original.TermInMonths, original.FirstPaymentDate)
+            : null;
+
     /// <summary>The refinance offer as a domain value.</summary>
     /// <param name="request">A validated request.</param>
     public static RefinanceOffer ToOffer(this RefinanceRequest request) =>

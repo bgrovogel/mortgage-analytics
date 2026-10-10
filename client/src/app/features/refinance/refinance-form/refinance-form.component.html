@@ -8,12 +8,41 @@
       Shared with the other pages: change it here and they follow.
     </p>
 
-    <app-number-field [control]="form.controls.currentBalance" [rule]="rules.currentBalance" testId="current-balance" />
-
-    <div class="row">
-      <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
-      <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
+    <div class="segmented" role="radiogroup" aria-label="Describe your loan by" data-testid="loan-entry">
+      <label><input type="radio" formControlName="loanEntry" value="today" data-testid="loan-entry-today" /> What I owe now</label>
+      <label><input type="radio" formControlName="loanEntry" value="original" data-testid="loan-entry-original" /> My original loan</label>
     </div>
+
+    @if (byOriginalLoan()) {
+      <div class="row">
+        <app-number-field [control]="form.controls.originalAmount" [rule]="rules.originalAmount" testId="original-amount" />
+        <app-number-field [control]="form.controls.originalTermYears" [rule]="rules.originalTermYears" testId="original-term" label="Term (years)" />
+      </div>
+      <div class="row">
+        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
+        <label class="field">
+          <span>First payment</span>
+          <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
+        </label>
+      </div>
+      @if (loanToday(); as today) {
+        @if (!today.paidOff) {
+          <p class="hint" data-testid="original-loan-today">
+            Payment {{ today.next }} of {{ today.termInMonths }} is next, with about {{ today.balance | currency: 'USD' : 'symbol' : '1.0-0' }} owed.
+            The comparison starts from that loan's own schedule.
+          </p>
+        } @else {
+          <small class="error" data-testid="original-loan-today">{{ paidOffAlready }}</small>
+        }
+      }
+    } @else {
+      <app-number-field [control]="form.controls.currentBalance" [rule]="rules.currentBalance" testId="current-balance" />
+
+      <div class="row">
+        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
+        <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
+      </div>
+    }
   </fieldset>
 
   <fieldset>
