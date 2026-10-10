@@ -183,7 +183,7 @@ internal static class AmortizationMapper
                 p.Interest,
                 p.ExtraPrincipal,
                 costs.Periods[i].Total,
-                costs.Periods[i][HousingCostCategory.MortgageInsurance],
+                ToResponse(costs.Periods[i]),
                 p.TotalPaid + costs.Periods[i].Total,
                 p.RemainingBalance)).ToList());
     }

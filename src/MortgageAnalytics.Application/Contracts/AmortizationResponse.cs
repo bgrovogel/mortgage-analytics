@@ -106,7 +106,7 @@ public sealed record RecastResponse(
 /// <param name="Interest">Interest charged this month.</param>
 /// <param name="ExtraPrincipal">Additional principal prepaid this month.</param>
 /// <param name="HousingCosts">Taxes, insurance, PMI and dues this month.</param>
-/// <param name="MortgageInsurance">The PMI portion of <paramref name="HousingCosts"/>.</param>
+/// <param name="Costs">The same housing costs, by category (school tax, PMI, HOA dues and so on).</param>
 /// <param name="TotalOutlay">Everything paid this month: scheduled payment, extra principal and housing costs.</param>
 /// <param name="RemainingBalance">The loan balance after this payment.</param>
 public sealed record PaymentResponse(
@@ -117,7 +117,7 @@ public sealed record PaymentResponse(
     decimal Interest,
     decimal ExtraPrincipal,
     decimal HousingCosts,
-    decimal MortgageInsurance,
+    HousingCostsResponse Costs,
     decimal TotalOutlay,
     decimal RemainingBalance);
 

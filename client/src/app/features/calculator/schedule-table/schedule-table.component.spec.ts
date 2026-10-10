@@ -6,6 +6,8 @@ import { ScheduleTableComponent } from './schedule-table.component';
 describe('ScheduleTableComponent', () => {
   let fixture: ComponentFixture<ScheduleTableComponent>;
 
+  beforeEach(() => localStorage.clear());
+
   const render = (response: AmortizationResponse) => {
     fixture = TestBed.createComponent(ScheduleTableComponent);
     fixture.componentRef.setInput('result', response);
@@ -48,7 +50,7 @@ describe('ScheduleTableComponent', () => {
   it('adds the taxes and total columns, and tags months that include PMI', () => {
     const accelerated = aSchedule({
       totalHousingCosts: aHousingCosts({ mortgageInsurance: 300 }),
-      payments: [aPayment(1, { housingCosts: 100, mortgageInsurance: 100 }), aPayment(2, { housingCosts: 0 })],
+      payments: [aPayment(1, { housingCosts: 100, costs: aHousingCosts({ mortgageInsurance: 100 }) }), aPayment(2, { housingCosts: 0 })],
     });
     render(aResponse({ accelerated }));
 
@@ -120,5 +122,84 @@ describe('ScheduleTableComponent', () => {
     expect(rows()[0].textContent).toContain('—');
     expect(rows()[1].textContent).toContain('$25,000.00');
     expect(rows()[1].querySelector('[data-testid="recast-tag"]')).not.toBeNull();
+  });
+
+  describe('choosing columns', () => {
+    /** Two payments with school tax and HOA dues, $150 a month in all. */
+    const withCosts = () => aResponse({
+      accelerated: aSchedule({
+        totalHousingCosts: aHousingCosts({ schoolTax: 200, hoaDues: 100 }),
+        payments: [1, 2].map((n) =>
+          aPayment(n, { costs: aHousingCosts({ schoolTax: 100, hoaDues: 50 }), housingCosts: 150, totalOutlay: 1_150 })),
+      }),
+    });
+    const picker = () => fixture.nativeElement.querySelector('[data-testid="column-picker"]') as HTMLElement;
+    const options = () => [...picker().querySelectorAll('label')].map((l) => l.textContent!.trim());
+    const toggle = (label: string) => {
+      const option = [...picker().querySelectorAll('label')].find((l) => l.textContent!.trim() === label)!;
+      option.querySelector('input')!.click();
+      fixture.detectChanges();
+    };
+    const footer = () => [...fixture.nativeElement.querySelectorAll('tfoot td')].map((td: Element) => td.textContent?.trim());
+
+    it('offers every money column, and each cost this loan actually has', () => {
+      render(withCosts());
+
+      expect(options()).toEqual(['Principal', 'Interest', 'Extra', 'School tax', 'HOA dues', 'Taxes & fees', 'Total']);
+    });
+
+    it('starts with the costs rolled up into one Taxes & fees column', () => {
+      render(withCosts());
+
+      expect(headers()).toEqual(['#', 'Date', 'Payment', 'Principal', 'Interest', 'Extra', 'Taxes & fees', 'Total', 'Balance']);
+    });
+
+    it('adds a cost as its own column, with its own total', () => {
+      render(withCosts());
+
+      toggle('School tax');
+
+      expect(headers()).toContain('School tax');
+      expect(rows()[0].textContent).toContain('$100.00');
+      expect(footer()).toContain('$200.00');
+    });
+
+    it('hides a column that is unticked', () => {
+      render(withCosts());
+
+      toggle('Principal');
+
+      expect(headers()).not.toContain('Principal');
+    });
+
+    it('remembers the choice the next time the table is shown', () => {
+      render(withCosts());
+      toggle('HOA dues');
+
+      render(withCosts());
+
+      expect(headers()).toContain('HOA dues');
+    });
+
+    it('still works where browser storage is blocked', () => {
+      const setItem = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      render(withCosts());
+
+      expect(() => toggle('HOA dues')).not.toThrow();
+      expect(headers()).toContain('HOA dues');
+      setItem.mockRestore();
+    });
+
+    it('sums up the whole schedule, every cost included, whatever the columns', () => {
+      render(withCosts());
+      const totals = fixture.nativeElement.querySelector('[data-testid="lifetime-totals"]').textContent.replace(/\s+/g, ' ');
+
+      expect(totals).toContain('Interest $800.00');
+      expect(totals).toContain('School tax $200.00');
+      expect(totals).toContain('HOA dues $100.00');
+      expect(totals).toContain('Everything paid $2,300.00');
+    });
   });
 });

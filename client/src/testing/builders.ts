@@ -44,7 +44,7 @@ export function aPayment(paymentNumber: number, overrides: Partial<Payment> = {}
     interest: 400,
     extraPrincipal: 0,
     housingCosts: 0,
-    mortgageInsurance: 0,
+    costs: aHousingCosts(),
     totalOutlay: 1_000,
     remainingBalance: Math.max(0, 3_000 - paymentNumber * 600),
     ...overrides,

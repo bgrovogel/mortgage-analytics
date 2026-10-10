@@ -111,7 +111,8 @@ export interface Payment {
   interest: number;
   extraPrincipal: number;
   housingCosts: number;
-  mortgageInsurance: number;
+  /** The same housing costs, by category. */
+  costs: HousingCosts;
   totalOutlay: number;
   remainingBalance: number;
 }

@@ -198,6 +198,17 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.chart, 'with its balance chart').toBeVisible();
   });
 
+  test('fits the result tabs without a scrollbar of their own', async ({ calculator, page }) => {
+    await expect(calculator.results, 'the calculator is open').toBeVisible();
+    const tabs = page.getByRole('navigation', { name: 'Results' });
+
+    // Headless Chromium hides scrollbars, so check the cause: content taller than the strip, with
+    // vertical scrolling allowed, is what puts up/down arrows next to the tabs on Windows.
+    const canScrollVertically = await tabs.evaluate(
+      (nav) => nav.scrollHeight > nav.clientHeight && getComputedStyle(nav).overflowY !== 'hidden');
+    expect(canScrollVertically, 'the tab strip never scrolls up and down').toBe(false);
+  });
+
   test('shows no PMI with 20% down', async ({ calculator }) => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.calculate();
@@ -269,6 +280,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.scheduleRows, 'a 30-year loan has 30 yearly rows').toHaveCount(30);
     await expect(await calculator.cell(1, 'Starts'), 'year 1 starts in 2026').toHaveText('2026');
     await expect(await calculator.cell(30, 'Balance'), 'the loan ends at zero').toHaveText('$0.00');
+  });
+
+  test('totals every cost over the whole schedule, and lets you add each as a column', async ({ calculator, page }) => {
+    await calculator.showResults('schedule');
+    const totals = page.getByTestId('lifetime-totals');
+    await expect(totals, 'the lifetime totals include each tax').toContainText('School tax');
+    await expect(totals, 'and what everything adds up to').toContainText('Everything paid');
+    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'categories start rolled up into Taxes & fees').toHaveCount(0);
+
+    await page.getByTestId('column-picker').locator('summary').click();
+    await page.getByRole('checkbox', { name: 'School tax' }).check();
+
+    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'the chosen column appears').toBeVisible();
+    await calculator.showResults('overview');
+    await calculator.showResults('schedule');
+    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'and the choice is remembered').toBeVisible();
   });
 
   test('can switch the table to the standard schedule', async ({ calculator }) => {

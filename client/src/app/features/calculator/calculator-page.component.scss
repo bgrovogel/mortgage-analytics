@@ -45,7 +45,10 @@ router-outlet {
 .result-tabs {
   display: flex;
   gap: 0.25rem;
+  // Scrolls sideways on a narrow phone. The tabs overlap the rule below by 1px, so without
+  // overflow-y: hidden the strip also gets a vertical scrollbar (tiny up/down arrows on Windows).
   overflow-x: auto;
+  overflow-y: hidden;
 
   a {
     display: inline-flex;

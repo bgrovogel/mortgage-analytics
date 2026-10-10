@@ -47,7 +47,7 @@ export class CostProjectionComponent {
       const gap = last.marketValue - last.taxableValue;
       return gap > 0
         ? `By year ${last.year}, the homestead cap keeps ${currency.format(gap)} of value off the tax roll.`
-        : 'Taxable value tracks market value (no homestead cap, or growth below the cap).';
+        : 'The lines overlap: the home value grows slower than the homestead cap allows, so taxable value equals market value.';
     }
     return `Yearly taxes & costs go from ${currency.format(first.costs.total)} in year 1 to ${currency.format(last.costs.total)} in year ${last.year}.`;
   });
@@ -66,7 +66,8 @@ export class CostProjectionComponent {
               labels,
               series: [
                 { label: 'Market value', color: '--series-1', data: projection.map((y) => y.marketValue) },
-                { label: 'Taxable value', color: '--series-2', data: projection.map((y) => y.taxableValue), dashed: true },
+                // Shading down to market value shows the value the homestead cap keeps off the tax roll.
+                { label: 'Taxable value', color: '--series-2', data: projection.map((y) => y.taxableValue), dashed: true, fillToPrevious: true },
               ],
               title: (i, label) => `${label} (from ${startYear(i)})`,
             },

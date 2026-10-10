@@ -13,8 +13,31 @@
       <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
               data-testid="view-baseline">Standard</button>
     </div>
+    <details class="column-picker" data-testid="column-picker">
+      <summary>Columns</summary>
+      <fieldset>
+        <legend>Show these columns</legend>
+        @for (column of available(); track column.key) {
+          <label>
+            <input type="checkbox" [checked]="!hidden().has(column.key)" (change)="toggle(column.key)" />
+            {{ column.label }}
+          </label>
+        }
+      </fieldset>
+    </details>
   </div>
 </div>
+
+@let t = totals();
+<!-- Everything this schedule costs, whichever columns are showing. -->
+<dl class="lifetime" data-testid="lifetime-totals" aria-label="Totals over the whole schedule">
+  @for (column of available(); track column.key) {
+    @if (column.key !== 'housingCosts' && column.key !== 'totalOutlay') {
+      <div><dt>{{ column.label }} </dt><dd>{{ column.value(t) | currency }}</dd></div>
+    }
+  }
+  <div class="all"><dt>Everything paid </dt><dd>{{ t.totalOutlay | currency }}</dd></div>
+</dl>
 
 <!-- The frame holds the "more to the right" fade on small screens; the wrap does the scrolling. -->
 <div class="table-frame">
@@ -25,12 +48,8 @@
           <th scope="col" class="pinned first">{{ period() === 'monthly' ? '#' : 'Year' }}</th>
           <th scope="col" class="pinned second">{{ period() === 'monthly' ? 'Date' : 'Starts' }}</th>
           <th scope="col">Payment</th>
-          <th scope="col">Principal</th>
-          <th scope="col">Interest</th>
-          <th scope="col">Extra</th>
-          @if (hasHousingCosts()) {
-            <th scope="col">Taxes &amp; fees</th>
-            <th scope="col">Total</th>
+          @for (column of columns(); track column.key) {
+            <th scope="col">{{ column.label }}</th>
           }
           <th scope="col">Balance</th>
         </tr>
@@ -41,38 +60,39 @@
             <td class="pinned first">{{ row.number }}</td>
             <td class="pinned second">{{ row.when }}</td>
             <td>{{ row.scheduledPayment | currency }}</td>
-            <td>{{ row.principal | currency }}</td>
-            <td>{{ row.interest | currency }}</td>
-            <td class="extra">
-              {{ row.extraPrincipal > 0 ? (row.extraPrincipal | currency) : '—' }}
-              @if (row.recast) {
-                <span class="tag" data-testid="recast-tag">recast</span>
-              }
-            </td>
-            @if (hasHousingCosts()) {
-              <td>
-                {{ row.housingCosts | currency }}
-                @if (row.includesPmi) {
-                  <span class="tag muted" title="Includes PMI">PMI</span>
+            @for (column of columns(); track column.key) {
+              @switch (column.key) {
+                @case ('extraPrincipal') {
+                  <td class="extra">
+                    {{ row.extraPrincipal > 0 ? (row.extraPrincipal | currency) : '—' }}
+                    @if (row.recast) {
+                      <span class="tag" data-testid="recast-tag">recast</span>
+                    }
+                  </td>
                 }
-              </td>
-              <td>{{ row.totalOutlay | currency }}</td>
+                @case ('housingCosts') {
+                  <td>
+                    {{ row.housingCosts | currency }}
+                    @if (row.includesPmi) {
+                      <span class="tag muted" title="Includes PMI">PMI</span>
+                    }
+                  </td>
+                }
+                @default {
+                  <td>{{ column.value(row) | currency }}</td>
+                }
+              }
             }
             <td>{{ row.remainingBalance | currency }}</td>
           </tr>
         }
       </tbody>
       <tfoot>
-        @let t = totals();
         <tr>
           <th scope="row" colspan="2" class="pinned first">Totals</th>
           <td>{{ t.scheduledPayment | currency }}</td>
-          <td>{{ t.principal | currency }}</td>
-          <td data-testid="table-total-interest">{{ t.interest | currency }}</td>
-          <td>{{ t.extraPrincipal | currency }}</td>
-          @if (hasHousingCosts()) {
-            <td>{{ t.housingCosts | currency }}</td>
-            <td>{{ t.totalOutlay | currency }}</td>
+          @for (column of columns(); track column.key) {
+            <td [attr.data-testid]="column.key === 'interest' ? 'table-total-interest' : null">{{ column.value(t) | currency }}</td>
           }
           <td></td>
         </tr>

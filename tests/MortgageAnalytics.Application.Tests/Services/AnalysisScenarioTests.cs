@@ -94,6 +94,23 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
         });
     }
 
+    [Test]
+    public void EveryPayment_BreaksItsHousingCostsDownByCategory_SoTheScheduleCanShowEach()
+    {
+        var request = A.Request.FivePercentDown().WithHousingCosts(c => c
+            .WithLocalTax(2.1m).WithMudTax(0.85m).WithPid(1_200m, 10)
+            .WithInsurance(2_400m).WithHoa(75m).WithPmi(FivePercentDown.PmiRate));
+
+        var payments = Service.Analyze(request).Baseline.Payments;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(payments[0].Costs, Is.EqualTo(Service.Analyze(request).Baseline.MonthlyHousingCosts), "the first row matches the first-month breakdown");
+            Assert.That(payments.All(p => p.Costs.Total == p.HousingCosts), Is.True, "each row's categories add up to its housing costs");
+            Assert.That(payments[120].Costs.PidAssessment, Is.Zero, "and each category follows its own rules: the PID ends after 10 years");
+        });
+    }
+
     [TestCase(119, 100, TestName = "Payment 120: the last PID installment")]
     [TestCase(120, 0, TestName = "Payment 121: the PID has been repaid")]
     public void PidAssessment_EndsAfterItsRemainingYears(int index, decimal expected)

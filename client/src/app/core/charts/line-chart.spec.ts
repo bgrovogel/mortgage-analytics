@@ -52,6 +52,28 @@ describe('buildLineChart', () => {
     expect(config.data.datasets.every((d) => !d.fill)).toBe(true);
   });
 
+  it('draws later series on top, so a dashed line is never hidden under a solid one it overlaps', () => {
+    const config = buildLineChart(spec, host);
+    const [first, second] = config.data.datasets;
+
+    expect(second.order!).toBeLessThan(first.order!);
+  });
+
+  it('keeps the legend and tooltip in the listed order, whatever the drawing order', () => {
+    const options = buildLineChart(spec, host).options!.plugins!;
+    const legendSort = options.legend!.labels!.sort!;
+    const tooltipSort = options.tooltip!.itemSort!;
+
+    expect(legendSort({ datasetIndex: 0 } as never, { datasetIndex: 1 } as never, {} as never)).toBeLessThan(0);
+    expect(tooltipSort({ datasetIndex: 1 } as never, { datasetIndex: 0 } as never, {} as never)).toBeGreaterThan(0);
+  });
+
+  it('leaves the drawing order alone for stacked areas, where it would change the stacking', () => {
+    const config = buildLineChart({ ...spec, stacked: true }, host);
+
+    expect(config.data.datasets.every((d) => d.order === undefined)).toBe(true);
+  });
+
   it('stacks filled areas when asked, so the top edge is the total', () => {
     const config = buildLineChart({ ...spec, stacked: true }, host);
 

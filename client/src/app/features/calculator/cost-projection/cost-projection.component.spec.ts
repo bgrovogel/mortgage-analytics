@@ -70,6 +70,7 @@ describe('CostProjectionComponent', () => {
       expect([market.label, taxable.label]).toEqual(['Market value', 'Taxable value']);
       expect(charts.lastConfig().options!.scales!['y']!.stacked).toBeFalsy(); // values are compared, not added
       expect(taxable.borderDash).toEqual([6, 4]);
+      expect(taxable.fill).toBe('-1'); // the shaded gap is the value the cap keeps off the tax roll
       expect(tooltip()['title']([{ dataIndex: 0, label: 'Year 1' }])).toBe('Year 1 (from 2026)');
     });
 
@@ -84,7 +85,8 @@ describe('CostProjectionComponent', () => {
       const component = render(aResponse());
       showValue();
 
-      expect(component.note()).toContain('Taxable value tracks market value');
+      expect(component.note()).toBe(
+        'The lines overlap: the home value grows slower than the homestead cap allows, so taxable value equals market value.');
     });
   });
 

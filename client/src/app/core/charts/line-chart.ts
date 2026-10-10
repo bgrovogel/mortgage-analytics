@@ -73,6 +73,9 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
         backgroundColor: spec.stacked || s.fillToPrevious ? tint(s.color) : token(s.color),
         // A stacked band fills down to the band below it; the first one down to zero.
         fill: spec.stacked ? (i === 0 ? 'origin' : '-1') : s.fillToPrevious ? '-1' : false,
+        // Chart.js draws the first series on top. Reverse that, so a later (often dashed) series that
+        // overlaps an earlier one stays visible. Stacked areas keep the default: order changes stacking.
+        order: spec.stacked ? undefined : -i,
         borderWidth: 2,
         borderDash: s.dashed ? [6, 4] : [],
         pointRadius: 0,
@@ -91,9 +94,17 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
         legend: {
           position: 'top',
           align: 'start',
-          labels: { color: token('--text-secondary'), usePointStyle: true, pointStyle: 'line', boxWidth: 24 },
+          labels: {
+            color: token('--text-secondary'),
+            usePointStyle: true,
+            pointStyle: 'line',
+            boxWidth: 24,
+            // The legend follows the drawing order unless told otherwise; keep the listed order.
+            sort: (a, b) => a.datasetIndex! - b.datasetIndex!,
+          },
         },
         tooltip: {
+          itemSort: (a, b) => a.datasetIndex - b.datasetIndex,
           callbacks: {
             title: (items) => spec.title(items[0].dataIndex, items[0].label),
             label: (item) => ` ${item.dataset.label}: ${currency.format(item.parsed.y ?? 0)}`,
