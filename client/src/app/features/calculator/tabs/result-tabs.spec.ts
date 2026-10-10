@@ -53,7 +53,7 @@ describe('result tabs', () => {
     it('shows the yearly costs and the home value side by side, as two charts', () => {
       const root = render(ProjectionTabComponent).nativeElement as HTMLElement;
 
-      expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value vs. taxable value']);
+      expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value, and what each tax is charged on']);
       expect(root.querySelectorAll('canvas')).toHaveLength(2);
     });
   });

@@ -77,7 +77,10 @@ export function aProjectionYear(year: number, overrides: Partial<YearProjection>
     year,
     startDate: `${2025 + year}-01-01`,
     marketValue: 250_000,
-    taxableValue: 250_000,
+    assessedValue: 250_000,
+    schoolTaxableValue: null,
+    localTaxableValue: null,
+    mudTaxableValue: null,
     costs: aHousingCosts(),
     ...overrides,
   };

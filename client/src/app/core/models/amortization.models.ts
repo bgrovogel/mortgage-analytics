@@ -147,7 +147,12 @@ export interface YearProjection {
   year: number;
   startDate: string;
   marketValue: number;
-  taxableValue: number;
+  /** Market value held down by the homestead cap, before any exemption. */
+  assessedValue: number;
+  /** What each tax is charged on, after its own exemptions; null when that tax is not charged. */
+  schoolTaxableValue: number | null;
+  localTaxableValue: number | null;
+  mudTaxableValue: number | null;
   costs: HousingCosts;
 }
 

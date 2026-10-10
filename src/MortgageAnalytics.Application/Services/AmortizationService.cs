@@ -28,12 +28,9 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         var loan = request.ToLoanTerms(purchase, clock.FirstOfNextMonth());
         var valuation = request.HousingCosts.ToValuation(purchase);
 
-        var comparison = comparer.Compare(
-            loan,
-            request.ExtraPayments.ToExtraPaymentPlan(),
-            request.ToRecastPolicy(),
-            request.HousingCosts.ToHousingCostPlan(purchase, valuation));
+        var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation);
+        var comparison = comparer.Compare(loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(), plan);
 
-        return comparison.ToResponse(purchase, valuation);
+        return comparison.ToResponse(purchase, valuation, plan);
     }
 }

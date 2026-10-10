@@ -21,7 +21,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 485 backend tests · Jest: 297 Angular unit tests · Playwright: 42 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 488 backend tests · Jest: 304 Angular unit tests · Playwright: 42 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -39,7 +39,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling; MUD tax has none. |
 | **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
 | **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. |
-| **Yearly projection** | Market value, taxable value and every cost category for each year of the term. Costs are a stacked area (the top edge is the yearly total); home value is two lines. |
+| **Yearly projection** | Market value, the cap-limited assessed value, **what each tax is actually charged on** (school after its homestead exemption, county/city after its own, MUD in full), and every cost category, for each year of the term. Costs are a stacked area (the top edge is the yearly total). |
 | **PID assessment** | A fixed annual amount, optionally ending after the district's remaining years. |
 | **Insurance & HOA** | An annual premium and monthly dues. |
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
@@ -93,10 +93,10 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 485 NUnit tests, including the convention tests
+dotnet test                       # 488 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 297 Jest unit tests; fails below 85% coverage
+npm test                          # 304 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 42 Playwright tests; starts the API and Angular for you
 ```
@@ -233,8 +233,8 @@ src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handl
 tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, ReferenceRefinances, TestClock
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
-  MortgageAnalytics.Domain.Tests/   263 tests
-  MortgageAnalytics.Application.Tests/  149 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Domain.Tests/   264 tests
+  MortgageAnalytics.Application.Tests/  151 tests (unit with NSubstitute, sociable scenarios, architecture)
   MortgageAnalytics.Infrastructure.Tests/  12 tests (real SQLite, built by the real migrations)
   MortgageAnalytics.Api.IntegrationTests/  55 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,history} · e2e/
@@ -398,12 +398,12 @@ Accounts follow the same habit of not trusting the client:
 
 | Layer | Tools | What it proves |
 |---|---|---|
-| Domain (263) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. |
-| Application (149) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Domain (264) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. |
+| Application (151) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | Infrastructure (12) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (both kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
 | API integration (55) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (297) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| Angular (304) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (42) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening both kinds from History, and the refinance comparison against the reference numbers. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).

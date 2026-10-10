@@ -62,31 +62,23 @@ describe('CostProjectionComponent', () => {
   });
 
   describe('home value view', () => {
-    it('plots market value against a dashed taxable value', () => {
-      render(rising);
+    it('plots the home value, the capped assessed value, and what each tax is charged on', () => {
+      render(aResponse({ projection: [
+        aProjectionYear(1, { marketValue: 300_000, assessedValue: 300_000, schoolTaxableValue: 160_000 }),
+        aProjectionYear(2, { marketValue: 345_000, assessedValue: 330_000, schoolTaxableValue: 190_000 }),
+      ] }));
       showValue();
 
-      const [market, taxable] = charts.lastConfig().data.datasets;
-      expect([market.label, taxable.label]).toEqual(['Market value', 'Taxable value']);
+      expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Market value', 'Assessed value (capped)', 'School taxable value']);
       expect(charts.lastConfig().options!.scales!['y']!.stacked).toBeFalsy(); // values are compared, not added
-      expect(taxable.borderDash).toEqual([6, 4]);
-      expect(taxable.fill).toBe('-1'); // the shaded gap is the value the cap keeps off the tax roll
       expect(tooltip()['title']([{ dataIndex: 0, label: 'Year 1' }])).toBe('Year 1 (from 2026)');
     });
 
-    it('says how much value the cap keeps off the tax roll', () => {
-      const component = render(rising);
+    it('explains what each tax is charged on', () => {
+      const component = render(aResponse({ projection: [aProjectionYear(1, { schoolTaxableValue: 110_000 })] }));
       showValue();
 
-      expect(component.note()).toBe('By year 2, the homestead cap keeps $15,000 of value off the tax roll.');
-    });
-
-    it('explains when taxable value simply tracks the market', () => {
-      const component = render(aResponse());
-      showValue();
-
-      expect(component.note()).toBe(
-        'The lines overlap: the home value grows slower than the homestead cap allows, so taxable value equals market value.');
+      expect(component.note()).toBe('In year 1, after homestead exemptions, school tax is charged on $110,000.');
     });
   });
 
@@ -97,7 +89,7 @@ describe('CostProjectionComponent', () => {
 
     showValue();
 
-    expect(caption()).toBe('Home value vs. taxable value');
+    expect(caption()).toBe('Home value, and what each tax is charged on');
     expect(charts.count()).toBe(2);
   });
 

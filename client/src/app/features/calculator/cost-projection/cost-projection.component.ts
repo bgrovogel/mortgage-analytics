@@ -3,6 +3,7 @@ import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart, currency } from '../../../core/charts/line-chart';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { valueLines, valueNote } from './value-lines';
 
 /** The two views of the projection. */
 export type ProjectionView = 'costs' | 'value';
@@ -11,14 +12,15 @@ export type ProjectionView = 'costs' | 'value';
  * The long-term picture, year by year over the full term:
  * - "Yearly costs": stacked areas, one per tax, insurance, PMI and dues category; the top edge is the
  *   total, and rises and drop-offs (PMI ending, a PID paid off) show as bands growing or vanishing.
- * - "Home value": market value against taxable value, which shows the homestead cap at work.
+ * - "Home value": market value, the capped assessed value, and what each tax is charged on after its
+ *   own exemptions (see value-lines.ts).
  * The two views are separate charts because their scales differ by two orders of magnitude.
  */
 @Component({
   selector: 'app-cost-projection',
   template: `
     <figure>
-      <figcaption [id]="'projection-title-' + view()">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value vs. taxable value' }}</figcaption>
+      <figcaption [id]="'projection-title-' + view()">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value, and what each tax is charged on' }}</figcaption>
       <div class="canvas-wrap">
         <canvas #canvas role="img" [attr.aria-labelledby]="'projection-title-' + view()" [attr.data-testid]="'projection-chart-' + view()"></canvas>
       </div>
@@ -43,12 +45,7 @@ export class CostProjectionComponent {
     if (projection.length === 0) return '';
     const first = projection[0];
     const last = projection[projection.length - 1];
-    if (this.view() === 'value') {
-      const gap = last.marketValue - last.taxableValue;
-      return gap > 0
-        ? `By year ${last.year}, the homestead cap keeps ${currency.format(gap)} of value off the tax roll.`
-        : 'The lines overlap: the home value grows slower than the homestead cap allows, so taxable value equals market value.';
-    }
+    if (this.view() === 'value') return valueNote(projection);
     return `Yearly taxes & costs go from ${currency.format(first.costs.total)} in year 1 to ${currency.format(last.costs.total)} in year ${last.year}.`;
   });
 
@@ -64,11 +61,7 @@ export class CostProjectionComponent {
           return buildLineChart(
             {
               labels,
-              series: [
-                { label: 'Market value', color: '--series-1', data: projection.map((y) => y.marketValue) },
-                // Shading down to market value shows the value the homestead cap keeps off the tax roll.
-                { label: 'Taxable value', color: '--series-2', data: projection.map((y) => y.taxableValue), dashed: true, fillToPrevious: true },
-              ],
+              series: valueLines(projection),
               title: (i, label) => `${label} (from ${startYear(i)})`,
             },
             host,

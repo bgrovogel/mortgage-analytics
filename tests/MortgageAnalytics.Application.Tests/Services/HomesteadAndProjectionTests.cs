@@ -120,7 +120,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
     }
 
     [Test]
-    public void Projection_HomesteadCapHoldsTaxableValueBelowAFastRisingMarket()
+    public void Projection_HomesteadCapHoldsTheAssessedValueBelowAFastRisingMarket()
     {
         var request = A.Request.WithHousingCosts(c => c.WithLocalTax(2m).AsHomestead().WithHomeValueGrowth(15m));
 
@@ -129,17 +129,49 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
         Assert.Multiple(() =>
         {
             Assert.That(year2.MarketValue, Is.EqualTo(287_500m), "$250,000 + 15%");
-            Assert.That(year2.TaxableValue, Is.EqualTo(275_000m), "capped at $250,000 + 10%");
+            Assert.That(year2.AssessedValue, Is.EqualTo(275_000m), "capped at $250,000 + 10%");
             Assert.That(year2.Costs.LocalTax, Is.EqualTo(5_500m), "2% of $275,000; installments add up exactly");
         });
     }
 
     [Test]
-    public void Projection_WithoutHomestead_TaxableValueTracksTheMarket()
+    public void Projection_WithoutHomestead_TheAssessedValueTracksTheMarket()
     {
         var year2 = Service.Analyze(A.Request.WithHousingCosts(c => c.WithLocalTax(2m).WithHomeValueGrowth(15m))).Projection[1];
 
-        Assert.That(year2.TaxableValue, Is.EqualTo(year2.MarketValue), "only a homestead gets the assessment cap");
+        Assert.That(year2.AssessedValue, Is.EqualTo(year2.MarketValue), "only a homestead gets the assessment cap");
+    }
+
+    [Test]
+    public void Projection_ShowsTheValueEachTaxIsChargedOn_AfterItsOwnExemptions()
+    {
+        var request = A.Request.WithHousingCosts(c => c
+            .WithSchoolTax(1m).WithLocalTax(1m).WithMudTax(0.85m)
+            .AsHomestead(schoolExemption: 140_000m, localExemptionPercent: 20m));
+
+        var year1 = Service.Analyze(request).Projection[0];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(year1.AssessedValue, Is.EqualTo(250_000m), "the home's value");
+            Assert.That(year1.SchoolTaxableValue, Is.EqualTo(110_000m), "school tax: $250,000 - $140,000");
+            Assert.That(year1.LocalTaxableValue, Is.EqualTo(200_000m), "county/city tax: $250,000 - 20%");
+            Assert.That(year1.MudTaxableValue, Is.EqualTo(250_000m), "MUD tax: no homestead exemption");
+            Assert.That(year1.Costs.SchoolTax, Is.EqualTo(1_100m), "and the tax follows it: 1% of $110,000");
+        });
+    }
+
+    [Test]
+    public void Projection_HasNoTaxableValue_ForATaxThatIsNotCharged()
+    {
+        var year1 = Service.Analyze(A.Request.WithHousingCosts(c => c.WithLocalTax(2m))).Projection[0];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(year1.SchoolTaxableValue, Is.Null, "no school tax, no school taxable value");
+            Assert.That(year1.MudTaxableValue, Is.Null, "nor MUD");
+            Assert.That(year1.LocalTaxableValue, Is.EqualTo(250_000m), "the tax that is charged has one");
+        });
     }
 
     [TestCase(0, 2_400, 1_200, TestName = "Year 1: starting amounts")]

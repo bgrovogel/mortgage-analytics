@@ -17,13 +17,19 @@ public sealed record AmortizationResponse(
 /// <param name="Year">The 1-based loan year.</param>
 /// <param name="StartDate">Due date of the year's first payment.</param>
 /// <param name="MarketValue">Projected market value of the home.</param>
-/// <param name="TaxableValue">Assessed value after any homestead cap, before exemptions.</param>
+/// <param name="AssessedValue">The value the appraisal district assesses: market value, held down by the homestead cap. Before any exemption.</param>
+/// <param name="SchoolTaxableValue">What school tax is charged on: the assessed value minus the school homestead (and over-65) exemptions. Null when there is no school tax.</param>
+/// <param name="LocalTaxableValue">What county/city tax is charged on, after its own exemptions. Null when there is no county/city tax.</param>
+/// <param name="MudTaxableValue">What MUD tax is charged on (MUDs grant no homestead exemption). Null when there is no MUD tax.</param>
 /// <param name="Costs">Housing costs paid during the year, by category.</param>
 public sealed record YearProjectionResponse(
     int Year,
     DateOnly StartDate,
     decimal MarketValue,
-    decimal TaxableValue,
+    decimal AssessedValue,
+    decimal? SchoolTaxableValue,
+    decimal? LocalTaxableValue,
+    decimal? MudTaxableValue,
     HousingCostsResponse Costs);
 
 /// <summary>The purchase and the loan it produces.</summary>

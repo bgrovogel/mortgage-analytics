@@ -117,8 +117,10 @@ internal static class AmortizationMapper
     /// <summary>Converts the domain comparison into the API response.</summary>
     /// <param name="comparison">The standard and accelerated schedules with their costs.</param>
     /// <param name="purchase">The price and down payment.</param>
-    /// <param name="valuation">The home's projected market and taxable values.</param>
-    public static AmortizationResponse ToResponse(this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation) =>
+    /// <param name="valuation">The home's projected market and assessed values.</param>
+    /// <param name="plan">The housing costs, whose taxes report what each one is charged on.</param>
+    public static AmortizationResponse ToResponse(
+        this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation, HousingCostPlan plan) =>
         new(
             new PurchaseResponse(
                 purchase.HomePrice,
@@ -138,22 +140,31 @@ internal static class AmortizationMapper
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
-            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation));
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan));
 
     /// <summary>
     /// One row per year of the standard schedule. The standard schedule is used because it spans
     /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early.
     /// </summary>
     private static List<YearProjectionResponse> ToProjection(
-        AmortizationSchedule schedule, HousingCostSchedule costs, PropertyValuation valuation) =>
-        costs.ByYear
+        AmortizationSchedule schedule, HousingCostSchedule costs, PropertyValuation valuation, HousingCostPlan plan)
+    {
+        var taxes = plan.Taxes.ToDictionary(t => t.Category);
+        decimal? TaxableValue(HousingCostCategory category, int year) =>
+            taxes.TryGetValue(category, out var tax) ? tax.TaxableValueInYear(year) : null;
+
+        return costs.ByYear
             .Select((year, index) => new YearProjectionResponse(
                 index + 1,
                 schedule.Payments[index * 12].DueDate,
                 valuation.MarketValueInYear(index),
                 valuation.AssessedValueInYear(index),
+                TaxableValue(HousingCostCategory.SchoolTax, index),
+                TaxableValue(HousingCostCategory.LocalTax, index),
+                TaxableValue(HousingCostCategory.MudTax, index),
                 ToResponse(year)))
             .ToList();
+    }
 
     private static ScheduleResponse ToResponse(AmortizationSchedule schedule, HousingCostSchedule costs)
     {

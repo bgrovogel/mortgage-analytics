@@ -13,6 +13,9 @@ public sealed class HousingCostPlan
     /// <summary>Creates a plan from the given costs.</summary>
     public HousingCostPlan(IEnumerable<IHousingCost> costs) => _costs = costs.ToList();
 
+    /// <summary>The value-based taxes in the plan (school, county/city, MUD), each with its own exemptions.</summary>
+    public IEnumerable<ValueBasedTax> Taxes => _costs.OfType<ValueBasedTax>();
+
     /// <summary>A plan with no costs: principal and interest only.</summary>
     public static HousingCostPlan None { get; } = new([]);
 

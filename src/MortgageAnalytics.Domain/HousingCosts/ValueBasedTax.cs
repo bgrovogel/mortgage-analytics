@@ -70,6 +70,19 @@ public sealed class ValueBasedTax : IHousingCost
             : tax;
     }
 
+    /// <summary>
+    /// The value this unit taxes in loan year <paramref name="year"/> (0-based): the assessed value minus this
+    /// unit's exemptions, including the over-65 exemption from the qualifying year. (A ceiling caps the bill,
+    /// not this value.)
+    /// </summary>
+    /// <param name="year">The 0-based loan year.</param>
+    /// <returns>The taxable value, never negative.</returns>
+    public decimal TaxableValueInYear(int year)
+    {
+        var exemption = SeniorRelief is { } relief && relief.AppliesIn(year) ? Exemption.Plus(relief.AdditionalExemption) : Exemption;
+        return exemption.TaxableValue(_valuation.AssessedValueInYear(year));
+    }
+
     /// <summary>The tax for <paramref name="year"/> with the given exemption, ignoring any ceiling.</summary>
     private decimal TaxBeforeCeiling(int year, TaxExemption exemption) =>
         Money.Round(exemption.TaxableValue(_valuation.AssessedValueInYear(year)) * AnnualRatePercent / 100m);

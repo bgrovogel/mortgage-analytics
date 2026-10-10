@@ -105,4 +105,16 @@ public class SeniorTaxReliefTests
     {
         DomainAssert.Rejects(() => new SeniorTaxRelief(0, -1m, true), "additional exemption", "an exemption cannot add value");
     }
+
+    [Test]
+    public void TaxableValue_IsTheAssessedValueMinusThisUnitsExemptions_FromTheQualifyingYear()
+    {
+        var tax = SchoolTax(new SeniorTaxRelief(startsInYear: 2, additionalExemption: 60_000m, hasTaxCeiling: true));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tax.TaxableValueInYear(0), Is.EqualTo(160_000m), "$300,000 - $140,000 homestead");
+            Assert.That(tax.TaxableValueInYear(2), Is.EqualTo(100_000m), "minus another $60,000 once the owner qualifies");
+        });
+    }
 }
