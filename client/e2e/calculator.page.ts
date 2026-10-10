@@ -247,7 +247,10 @@ export class CalculatorPage {
   /** Returns one schedule cell, found by its column header ("Payment", "Extra", ...), not by position. */
   async cell(paymentNumber: number, column: string): Promise<Locator> {
     if (!this.page.url().endsWith('/schedule')) await this.showResults('schedule');
-    const headers = (await this.page.getByTestId('schedule-table').locator('thead th').allTextContents()).map((h) => h.trim());
+    // allTextContents does not wait, so first wait for the column to be rendered (the tab may have just opened).
+    const headerCells = this.page.getByTestId('schedule-table').locator('thead th');
+    await expect(headerCells.filter({ hasText: column }).first(), `the "${column}" column is rendered`).toBeVisible();
+    const headers = (await headerCells.allTextContents()).map((h) => h.trim());
     const index = headers.indexOf(column);
     expect(index, `the schedule table should have a "${column}" column`).toBeGreaterThanOrEqual(0);
     return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(index);
