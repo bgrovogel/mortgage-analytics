@@ -113,6 +113,26 @@ app-root {
 }
 
 // The page links, as pills; the current page is filled with the soft accent.
+// The focused header on account pages: the name (a link home) and a way back.
+.app-header.focused {
+  align-items: center;
+
+  h1 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .back {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 // The page links and the account, kept together on the right; they wrap as a unit on narrow screens.
 .header-actions {
   display: flex;

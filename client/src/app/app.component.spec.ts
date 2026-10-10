@@ -113,4 +113,28 @@ describe('AppComponent', () => {
 
     expect(harness.routeNativeElement?.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
   });
+
+  /** Renders the real app shell at `url`. */
+  const shellAt = async (url: string) => {
+    const fixture = TestBed.createComponent(AppComponent);
+    await TestBed.inject(Router).navigateByUrl(url);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it.each(['/sign-in', '/forgot-password', '/reset-password?email=a%40example.com&code=c', '/confirm-email', '/dev/mailbox'])(
+    'keeps %s focused: no page tabs or account controls, just a way back', async (url) => {
+      const shell = await shellAt(url);
+
+      expect(shell.querySelector('nav[aria-label="Pages"]')).toBeNull();
+      expect(shell.querySelector('[data-testid="sign-in-link"]')).toBeNull();
+      expect(shell.querySelector('[data-testid="back-to-app"]')!.getAttribute('href')).toBe('/calculator');
+    });
+
+  it('shows the page tabs everywhere else', async () => {
+    const shell = await shellAt('/refinance');
+
+    expect(shell.querySelector('nav[aria-label="Pages"]')).not.toBeNull();
+    expect(shell.querySelector('[data-testid="back-to-app"]')).toBeNull();
+  });
 });

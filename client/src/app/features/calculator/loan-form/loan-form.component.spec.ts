@@ -67,7 +67,7 @@ describe('LoanFormComponent', () => {
     it('summarizes each closed section in one line', () => {
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
-      expect(text('growth-summary')).toBe('Home +4% · Insurance +5% · HOA +3%');
+      expect(text('growth-summary')).toBe('Home +4.3% · Insurance +4.8% · HOA +4%');
       expect(component.optionsSummary()).toMatch(/^First payment [A-Z][a-z]{2} \d{4} · Pay off sooner$/);
     });
 
@@ -85,7 +85,7 @@ describe('LoanFormComponent', () => {
 
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo');
-      expect(text('growth-summary')).toBe('Home -2% · Insurance +5% · HOA +3%');
+      expect(text('growth-summary')).toBe('Home -2% · Insurance +4.8% · HOA +4%');
       expect(text('options-summary')).toBe('First payment Mar 2027 · $2,000 yearly · 1 lump sum · Recast (min $10,000)');
     });
 
@@ -416,5 +416,12 @@ describe('LoanFormComponent', () => {
         'Private mortgage insurance',
       ]));
     });
+  });
+
+  it('starts future increases at long-run US averages, and says where each comes from', () => {
+    expect([controls().homeValueGrowthRate.value, controls().insuranceIncreaseRate.value, controls().hoaIncreaseRate.value]).toEqual([4.3, 4.8, 4]);
+    const sources = text('growth-sources');
+    expect(sources).toContain('FHFA');
+    expect(sources).toContain('GAO');
   });
 });

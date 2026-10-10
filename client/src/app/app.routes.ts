@@ -12,6 +12,9 @@ import { SignInPageComponent } from './features/account/sign-in-page.component';
 import { HistoryPageComponent } from './features/history/history-page.component';
 import { RefinancePageComponent } from './features/refinance/refinance-page.component';
 
+/** Route data for pages shown without the page tabs (sign-in and the other account pages). */
+export const FOCUSED = { layout: 'focused' } as const;
+
 /** Every page title ends with the app name. */
 const title = (page: string) => `${page} · Mortgage Analytics`;
 
@@ -29,12 +32,13 @@ export const routes: Routes = [
   },
   { path: 'refinance', component: RefinancePageComponent, title: title('Refinance') },
   { path: 'history', component: HistoryPageComponent, canActivate: [signedInGuard], title: title('History') },
-  { path: 'sign-in', component: SignInPageComponent, title: title('Sign in') },
+  // The account pages use a focused layout: no page tabs or account controls, just a way back.
+  { path: 'sign-in', component: SignInPageComponent, title: title('Sign in'), data: FOCUSED },
   // Where the links in account emails land.
-  { path: 'confirm-email', component: ConfirmEmailPageComponent, title: title('Confirm email') },
-  { path: 'forgot-password', component: ForgotPasswordPageComponent, title: title('Forgot password') },
-  { path: 'reset-password', component: ResetPasswordPageComponent, title: title('Reset password') },
+  { path: 'confirm-email', component: ConfirmEmailPageComponent, title: title('Confirm email'), data: FOCUSED },
+  { path: 'forgot-password', component: ForgotPasswordPageComponent, title: title('Forgot password'), data: FOCUSED },
+  { path: 'reset-password', component: ResetPasswordPageComponent, title: title('Reset password'), data: FOCUSED },
   // Local demos: the emails the app "sent" (the API serves them only in Development).
-  { path: 'dev/mailbox', component: DevMailboxPageComponent, title: title('Dev mailbox') },
+  { path: 'dev/mailbox', component: DevMailboxPageComponent, title: title('Dev mailbox'), data: FOCUSED },
   { path: '**', redirectTo: 'calculator' },
 ];

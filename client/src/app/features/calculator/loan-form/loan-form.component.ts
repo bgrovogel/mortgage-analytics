@@ -103,9 +103,12 @@ export class LoanFormComponent implements OnInit {
     over65SchoolExemption: [60_000, [Validators.min(0)]],
     over65LocalExemption: [0, [Validators.min(0)]],
     over65LocalCeiling: [false],
-    homeValueGrowthRate: [4, [Validators.min(-20), Validators.max(25)]],
-    insuranceIncreaseRate: [5, [Validators.min(-20), Validators.max(50)]],
-    hoaIncreaseRate: [3, [Validators.min(-20), Validators.max(50)]],
+    // Long-run US averages (sources are shown under the fields):
+    // home values +4.3% a year (FHFA House Price Index, 1975-2025); home insurance +4.8% a year
+    // (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024); HOA dues +4% (typically 3-5%).
+    homeValueGrowthRate: [4.3, [Validators.min(-20), Validators.max(25)]],
+    insuranceIncreaseRate: [4.8, [Validators.min(-20), Validators.max(50)]],
+    hoaIncreaseRate: [4, [Validators.min(-20), Validators.max(50)]],
     pidAnnual: [0, [Validators.min(0)]],
     pidYears: [null as number | null, [Validators.min(1), Validators.max(50)]],
     annualInsurance: [2_400, [Validators.min(0)]],

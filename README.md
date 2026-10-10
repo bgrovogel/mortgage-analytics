@@ -21,7 +21,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 492 backend tests · Jest: 311 Angular unit tests · Playwright: 42 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 492 backend tests · Jest: 318 Angular unit tests · Playwright: 42 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -38,7 +38,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas, and never less than $5,000: Tax Code §11.13(n)). The school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. A MUD may offer its own percentage exemption; this app has no MUD exemption input, so MUD tax is charged on the full assessed value. |
 | **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling. |
 | **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
-| **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. |
+| **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. Defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), home insurance +4.8% a year (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024), HOA dues +4% (typically 3–5%). |
 | **Yearly projection** | Market value, the cap-limited assessed value, **what each tax is actually charged on** (school after its homestead exemption, county/city after its own, MUD in full), and every cost category, for each year of the term. Costs are a stacked area (the top edge is the yearly total). |
 | **PID assessment** | A fixed annual amount, optionally ending after the district's remaining years. |
 | **Insurance & HOA** | An annual premium and monthly dues. |
@@ -96,7 +96,7 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 492 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 311 Jest unit tests; fails below 85% coverage
+npm test                          # 318 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 42 Playwright tests; starts the API and Angular for you
 ```
@@ -403,7 +403,7 @@ Accounts follow the same habit of not trusting the client:
 | Infrastructure (12) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (both kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
 | API integration (56) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (311) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| Angular (318) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (42) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening both kinds from History, and the refinance comparison against the reference numbers. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
