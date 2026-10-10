@@ -11,30 +11,56 @@
       : 'Sign in to save calculations and see your history.' }}
   </p>
 
-  <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="account-form">
-    <label class="field">
-      <span>Email</span>
-      <input type="email" formControlName="email" autocomplete="email" data-testid="account-email" [attr.aria-invalid]="showError('email')" />
-      @if (showError('email')) {
-        <small class="error">Enter a valid email address.</small>
+  @if (sentTo(); as email) {
+    <div class="check-email" data-testid="account-check-email">
+      <p class="note" role="status">
+        Almost there: we sent a link to <strong>{{ email }}</strong>. Open it to confirm your email, then sign in.
+      </p>
+      @if (resent()) {
+        <p class="note" role="status" data-testid="account-resent">We sent the link again.</p>
+      } @else {
+        <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">Send the link again</button>
       }
-    </label>
+      <app-dev-mailbox-hint />
+    </div>
+  } @else {
+    <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="account-form">
+      <label class="field">
+        <span>Email</span>
+        <input type="email" formControlName="email" autocomplete="email" data-testid="account-email" [attr.aria-invalid]="showError('email')" />
+        @if (showError('email')) {
+          <small class="error">Enter a valid email address.</small>
+        }
+      </label>
 
-    <label class="field">
-      <span>Password</span>
-      <input type="password" formControlName="password" data-testid="account-password" [attr.aria-invalid]="showError('password')"
-             [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
-      @if (showError('password')) {
-        <small class="error">At least 8 characters, with a number.</small>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" formControlName="password" data-testid="account-password" [attr.aria-invalid]="showError('password')"
+               [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
+        @if (showError('password')) {
+          <small class="error">At least 8 characters, with a number.</small>
+        }
+      </label>
+
+      @if (error(); as message) {
+        <p class="alert" role="alert" data-testid="account-error">{{ message }}</p>
       }
-    </label>
+      @if (needsConfirmation()) {
+        @if (resent()) {
+          <p class="note" role="status" data-testid="account-resent">We sent the link again.</p>
+        } @else {
+          <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">Send the link again</button>
+        }
+        <app-dev-mailbox-hint />
+      }
 
-    @if (error(); as message) {
-      <p class="alert" role="alert" data-testid="account-error">{{ message }}</p>
+      <button type="submit" class="primary" [disabled]="busy()" data-testid="account-submit">
+        {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
+      </button>
+    </form>
+
+    @if (mode() === 'sign-in') {
+      <div class="links"><a routerLink="/forgot-password" data-testid="forgot-password-link">Forgot your password?</a></div>
     }
-
-    <button type="submit" class="primary" [disabled]="busy()" data-testid="account-submit">
-      {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
-    </button>
-  </form>
+  }
 </section>

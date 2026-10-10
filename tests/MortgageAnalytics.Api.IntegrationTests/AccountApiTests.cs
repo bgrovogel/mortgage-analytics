@@ -32,6 +32,7 @@ public class AccountApiTests : ApiTestBase
         var email = UniqueEmail();
         using var client = ApiFixture.Factory.CreateClient();
         await client.PostAsJsonAsync($"{AccountUrl}/register", new { email, password = GoodPassword });
+        await ConfirmEmailAsync(client, email);
 
         var login = await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword });
         var cookie = login.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("mortgage-analytics.session=", StringComparison.Ordinal));

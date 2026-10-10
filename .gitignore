@@ -8,6 +8,8 @@ TestResults/
 *.db
 *.db-shm
 *.db-wal
+# Local outbox emails and data-protection keys
+App_Data/
 coverage/
 
 # Node / Angular

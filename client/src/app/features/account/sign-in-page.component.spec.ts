@@ -4,18 +4,24 @@ import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angul
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { SignInPageComponent } from './sign-in-page.component';
+import { DevMailboxService } from '../../core/dev/dev-mailbox.service';
 
 describe('SignInPageComponent', () => {
   let fixture: ComponentFixture<SignInPageComponent>;
-  let auth: { signIn: jest.Mock; register: jest.Mock };
+  let auth: { signIn: jest.Mock; register: jest.Mock; resendConfirmation: jest.Mock };
   let navigate: jest.SpyInstance;
 
   const create = (returnUrl: string | null = null) => {
-    auth = { signIn: jest.fn().mockReturnValue(of(undefined)), register: jest.fn().mockReturnValue(of(undefined)) };
+    auth = {
+      signIn: jest.fn().mockReturnValue(of(undefined)),
+      register: jest.fn().mockReturnValue(of(undefined)),
+      resendConfirmation: jest.fn().mockReturnValue(of(undefined)),
+    };
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: auth },
+        { provide: DevMailboxService, useValue: { available: () => of(true) } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(returnUrl ? { returnUrl } : {}) } } },
       ],
     });
@@ -69,17 +75,53 @@ describe('SignInPageComponent', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('creates an account instead, when asked', () => {
+  it('creates an account instead, when asked, then asks the user to check their email', () => {
     create();
     (el('account-mode-create') as HTMLButtonElement).click();
     fixture.detectChanges();
+    expect(el('account-submit')!.textContent!.trim()).toBe('Create account');
     fillIn('bob@example.com');
 
     submit();
 
-    expect(el('account-submit')!.textContent!.trim()).toBe('Create account');
     expect(auth.register).toHaveBeenCalledWith('bob@example.com', 'correct-horse-1');
     expect(auth.signIn).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(el('account-check-email')!.textContent).toContain('we sent a link to bob@example.com');
+    expect(el('dev-mailbox-hint')).not.toBeNull();
+  });
+
+  it('can send the confirmation link again', () => {
+    create();
+    (el('account-mode-create') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    fillIn('bob@example.com');
+    submit();
+
+    (el('account-resend') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(auth.resendConfirmation).toHaveBeenCalledWith('bob@example.com');
+    expect(el('account-resent')!.textContent).toContain('We sent the link again.');
+  });
+
+  it('explains an unconfirmed email, and offers to send the link again', () => {
+    create();
+    auth.signIn.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401, error: { detail: 'NotAllowed' } })));
+    fillIn();
+
+    submit();
+    (el('account-resend') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(el('account-error')!.textContent).toContain('Confirm your email first');
+    expect(auth.resendConfirmation).toHaveBeenCalledWith('alice@example.com');
+  });
+
+  it('links to the forgotten-password page', () => {
+    create();
+
+    expect(el('forgot-password-link')!.getAttribute('href')).toBe('/forgot-password');
   });
 
   it('shows the rules a new password breaks, as the server words them', () => {

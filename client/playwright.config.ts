@@ -25,7 +25,13 @@ export default defineConfig({
       command: `dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls ${API_URL}`,
       url: `${API_URL}/health`,
       // Saved calculations go to a scratch database, not the one used for local development.
-      env: { ConnectionStrings__Calculations: `Data Source=${join(tmpdir(), 'mortgage-analytics-e2e.db')}` },
+      env: {
+        // Saved calculations and accounts go to a scratch database, not the one used for local development.
+        ConnectionStrings__Calculations: `Data Source=${join(tmpdir(), 'mortgage-analytics-e2e.db')}`,
+        // Development, as for a local demo: emails land in the outbox, which the tests read through the
+        // dev mailbox endpoint, exactly as a person does in the browser.
+        ASPNETCORE_ENVIRONMENT: 'Development',
+      },
       reuseExistingServer: !process.env['CI'],
       timeout: 180_000,
     },

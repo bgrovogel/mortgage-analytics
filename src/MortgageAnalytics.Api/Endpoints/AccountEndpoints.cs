@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using MortgageAnalytics.Infrastructure;
@@ -6,23 +7,32 @@ using MortgageAnalytics.Infrastructure;
 namespace MortgageAnalytics.Api.Endpoints;
 
 /// <summary>
-/// User accounts, with ASP.NET Core Identity: its built-in endpoints (register, login, account info)
-/// under <c>/api/v1/account</c>, plus sign-out. The browser signs in with <c>login?useCookies=true</c> and
+/// User accounts, with ASP.NET Core Identity: its built-in endpoints (register, confirm email, login,
+/// forgot and reset password, account info) under <c>/api/v1/account</c>, plus sign-out. The browser signs in with <c>login?useCookies=true</c> and
 /// then carries an HttpOnly, SameSite=Strict session cookie, which scripts cannot read and other sites
 /// cannot send.
 /// </summary>
 public static class AccountEndpoints
 {
-    /// <summary>Registers Identity, its password rules and the session cookie.</summary>
+    /// <summary>Registers Identity, its password rules, the session cookie and the keys that sign them.</summary>
     /// <param name="services">The container to add to.</param>
+    /// <param name="configuration">The app's configuration (<c>DataProtection:KeysDirectory</c>).</param>
+    /// <param name="environment">Supplies the content root for a relative keys directory.</param>
     /// <returns>The same container, for chaining.</returns>
-    public static IServiceCollection AddAccounts(this IServiceCollection services)
+    public static IServiceCollection AddAccounts(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
+        // Session cookies and the codes in confirmation and reset emails are signed with these keys. Kept on
+        // disk (a volume in Docker), they survive restarts, so nobody is signed out and no emailed link breaks.
+        var keys = Path.GetFullPath(configuration["DataProtection:KeysDirectory"] ?? "App_Data/keys", environment.ContentRootPath);
+        services.AddDataProtection().SetApplicationName("MortgageAnalytics").PersistKeysToFileSystem(new DirectoryInfo(keys));
+
         services.AddAuthorization();
         services
             .AddIdentityApiEndpoints<IdentityUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
+                // Sign-in waits until the email is confirmed, so an account always belongs to a real inbox.
+                options.SignIn.RequireConfirmedEmail = true;
                 // Length matters more than character classes (NIST SP 800-63B): 8+ characters with a digit.
                 options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;

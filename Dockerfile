@@ -31,6 +31,9 @@ EXPOSE 8080
 # Saved calculations live in a SQLite file under /data; mount a volume there to keep them.
 RUN mkdir -p /data && chown app:app /data
 ENV ConnectionStrings__Calculations="Data Source=/data/calculations.db"
+# Signing keys for sessions and emailed links, and the outbox (when no mail server is set), also live in /data.
+ENV DataProtection__KeysDirectory=/data/keys
+ENV Email__OutboxDirectory=/data/outbox
 VOLUME /data
 # Run as the non-root user that ships with the .NET images.
 USER app

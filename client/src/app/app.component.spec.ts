@@ -7,6 +7,7 @@ import { fakeCharts } from '../testing/fake-charts';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
 import { AuthService, User } from './core/auth/auth.service';
+import { DevMailboxService } from './core/dev/dev-mailbox.service';
 import { AmortizationApiService } from './core/services/amortization-api.service';
 import { RefinanceApiService } from './core/services/refinance-api.service';
 import { SavedCalculationsApiService } from './core/services/saved-calculations-api.service';
@@ -30,7 +31,8 @@ describe('AppComponent', () => {
         { provide: AmortizationApiService, useValue: { calculate: () => NEVER } },
         { provide: SavedCalculationsApiService, useValue: { list: () => NEVER } },
         { provide: RefinanceApiService, useValue: { analyze: () => NEVER } },
-        { provide: AuthService, useValue: { user, signOut } },
+        { provide: AuthService, useValue: { user, signOut, confirmEmail: () => NEVER } },
+        { provide: DevMailboxService, useValue: { list: () => NEVER, available: () => of(false) } },
       ],
     });
   });
@@ -99,5 +101,16 @@ describe('AppComponent', () => {
     const harness = await RouterTestingHarness.create('/history');
 
     expect(harness.routeNativeElement?.querySelector('[data-testid="history-search"]')).not.toBeNull();
+  });
+
+  it.each([
+    ['/confirm-email', 'confirm-email'],
+    ['/forgot-password', 'forgot-form'],
+    ['/reset-password?email=a%40example.com&code=c', 'reset-form'],
+    ['/dev/mailbox', 'mailbox-refresh'],
+  ])('has a page at %s for the account emails', async (url, testId) => {
+    const harness = await RouterTestingHarness.create(url);
+
+    expect(harness.routeNativeElement?.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
   });
 });

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using MortgageAnalytics.Api.Email;
 
 namespace MortgageAnalytics.Api.IntegrationTests.Infrastructure;
 
@@ -35,16 +36,29 @@ public abstract class ApiTestBase
     protected static string UniqueEmail() => $"user-{Guid.NewGuid():N}@example.com";
 
     /// <summary>
-    /// Registers a new user and signs in with a session cookie, the way the browser does. The returned
-    /// client keeps the cookie, so every request it makes is that user's.
+    /// Registers a new user, confirms the email from the message the API sent, and signs in with a session
+    /// cookie, the way a person does in the browser. The returned client keeps the cookie, so every request
+    /// it makes is that user's.
     /// </summary>
     protected static async Task<HttpClient> SignUpAsync(string? email = null)
     {
         email ??= UniqueEmail();
         var client = ApiFixture.Factory.CreateClient(); // handles cookies by default
         await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/register", new { email, password = GoodPassword }), "registering");
+        await EnsureSucceededAsync(await ConfirmEmailAsync(client, email), "confirming the email");
         await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword }), "signing in");
         return client;
+    }
+
+    /// <summary>The most recent email the API sent to <paramref name="address"/>, or null when there is none.</summary>
+    protected static EmailMessage? LastEmailTo(string address) =>
+        ApiFixture.Factory.SentMail.LastOrDefault(m => m.To == address);
+
+    /// <summary>Follows the confirmation link in the last email to <paramref name="address"/>, as the confirm page does.</summary>
+    protected static Task<HttpResponseMessage> ConfirmEmailAsync(HttpClient client, string address)
+    {
+        var link = LastEmailTo(address)?.ActionUrl ?? throw new InvalidOperationException($"No email was sent to {address}.");
+        return client.GetAsync($"{AccountUrl}/confirmEmail{new Uri(link).Query}");
     }
 
     /// <summary>Stops a test whose setup failed, showing the response body. Setup is not what the test asserts.</summary>

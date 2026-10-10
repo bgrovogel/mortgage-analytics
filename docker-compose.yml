@@ -1,13 +1,28 @@
+# A fixed project name, so containers and volumes are "mortgage-analytics-*" whatever the folder is called.
+name: mortgage-analytics
+
 services:
-  mortgage-analytics:
+  app:
     build: .
     image: mortgage-analytics:local
     ports:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      # Account emails (confirmation, password reset) go to Mailpit below: open http://localhost:8025 to read them.
+      Email__Smtp__Host: mailpit
+      Email__Smtp__Port: "1025"
+      Email__PublicUrl: http://localhost:8080
     volumes:
       - calculations:/data
+    depends_on:
+      - mailpit
+
+  # A local mail catcher: it accepts every email and shows it in a web inbox. Nothing leaves the machine.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
 
 volumes:
   calculations:

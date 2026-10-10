@@ -1,5 +1,6 @@
 import { expect, test as base } from '@playwright/test';
 import { CalculatorPage } from './calculator.page';
+import { latestEmailTo } from './mailbox';
 
 /** A password that meets the API's rules (8+ characters with a digit). */
 export const PASSWORD = 'correct-horse-1';
@@ -17,8 +18,8 @@ export const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36)
  * Playwright fixtures: each test receives what it needs, ready, instead of sharing mutable state set up
  * in beforeEach.
  * - `calculator`: the app opened on the calculator, first result rendered (signed out).
- * - `account`: a new user, registered and signed in through the API. `page.request` shares the
- *   browser's cookies, so the browser is signed in too.
+ * - `account`: a new user, registered, confirmed (with the link from the dev mailbox) and signed in through
+ *   the API. `page.request` shares the browser's cookies, so the browser is signed in too.
  * - `signedIn`: the calculator, opened after signing in.
  */
 export const test = base.extend<{ calculator: CalculatorPage; account: Account; signedIn: CalculatorPage }>({
@@ -31,6 +32,9 @@ export const test = base.extend<{ calculator: CalculatorPage; account: Account; 
   account: async ({ page }, use) => {
     const account = { email: uniqueEmail(), password: PASSWORD };
     await expect(await page.request.post('/api/v1/account/register', { data: account }), 'the test account is created').toBeOK();
+    const confirmation = await latestEmailTo(page.request, account.email);
+    const query = new URL(confirmation.actionUrl).search;
+    await expect(await page.request.get(`/api/v1/account/confirmEmail${query}`), 'its email is confirmed').toBeOK();
     await expect(await page.request.post('/api/v1/account/login?useCookies=true', { data: account }), 'and signed in').toBeOK();
     await use(account);
   },

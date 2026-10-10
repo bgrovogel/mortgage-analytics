@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi;
+using MortgageAnalytics.Api.Email;
 using MortgageAnalytics.Api.Endpoints;
 using MortgageAnalytics.Api.Errors;
 using MortgageAnalytics.Application;
@@ -12,7 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Calculations")
     ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string."));
-builder.Services.AddAccounts();
+builder.Services.AddAccounts(builder.Configuration, builder.Environment);
+builder.Services.AddEmail(builder.Configuration);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -67,6 +69,10 @@ app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
 app.MapAccountEndpoints();
+// Development only: lists the emails in the local outbox, so sign-up and password reset can be demoed
+// without a mail server. Never in Production: it would show every user's links.
+if (app.Environment.IsDevelopment())
+    app.MapDevOutbox();
 app.MapSavedCalculationEndpoints();
 app.MapRefinanceEndpoints();
 

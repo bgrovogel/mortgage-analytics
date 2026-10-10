@@ -1,28 +1,49 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using MortgageAnalytics.Api.Email;
 
 namespace MortgageAnalytics.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// Hosts the real API in memory for tests. The environment is pinned to Production so tests see the
-/// same error handling as a deployment, and the clock is frozen so date defaults are deterministic.
+/// Hosts the real API in memory for tests. The environment is pinned (Production by default) so tests see
+/// the same error handling as a deployment, and the clock is frozen so date defaults are deterministic.
 /// Each host gets its own SQLite file, built by the real migrations and deleted when the host is disposed.
+/// Outgoing email goes to an NSubstitute transport that records it in <see cref="SentMail"/>.
 /// </summary>
 /// <param name="configureServices">Optional extra registrations, e.g. a substitute service for error-path tests.</param>
-public sealed class MortgageApiFactory(Action<IServiceCollection>? configureServices = null) : WebApplicationFactory<Program>
+/// <param name="environment">The hosting environment; "Development" turns on development-only endpoints.</param>
+/// <param name="captureMail">True to record email in <see cref="SentMail"/>; false to use the app's own transport.</param>
+public sealed class MortgageApiFactory(
+    Action<IServiceCollection>? configureServices = null, string environment = "Production", bool captureMail = true)
+    : WebApplicationFactory<Program>
 {
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"mortgage-analytics-tests-{Guid.NewGuid():N}.db");
+    private readonly string _appDataPath = Path.Combine(Path.GetTempPath(), $"mortgage-analytics-tests-{Guid.NewGuid():N}");
+
+    /// <summary>Every email the API has sent, in order.</summary>
+    public ConcurrentQueue<EmailMessage> SentMail { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Production");
+        builder.UseEnvironment(environment);
         builder.UseSetting("ConnectionStrings:Calculations", $"Data Source={_databasePath}");
+        builder.UseSetting("DataProtection:KeysDirectory", Path.Combine(_appDataPath, "keys"));
+        builder.UseSetting("Email:OutboxDirectory", Path.Combine(_appDataPath, "outbox"));
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<TimeProvider>(TestClock.Create());
+
+            if (captureMail)
+            {
+                var transport = Substitute.For<IMailTransport>();
+                transport.SendAsync(Arg.Do<EmailMessage>(SentMail.Enqueue), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
+                services.AddSingleton(transport);
+            }
+
             configureServices?.Invoke(services);
         });
     }
@@ -36,5 +57,7 @@ public sealed class MortgageApiFactory(Action<IServiceCollection>? configureServ
         // Pooled connections keep the file open on Windows, so close them before deleting it.
         SqliteConnection.ClearAllPools();
         File.Delete(_databasePath);
+        if (Directory.Exists(_appDataPath))
+            Directory.Delete(_appDataPath, recursive: true);
     }
 }

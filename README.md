@@ -19,9 +19,9 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 
 | | |
 |---|---|
-| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions) · Swagger / OpenAPI · RFC 9457 ProblemDetails |
+| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 469 backend tests · Jest: 265 Angular unit tests · Playwright: 40 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 485 backend tests · Jest: 297 Angular unit tests · Playwright: 42 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -45,7 +45,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
 | **Savings** | **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and dues are deliberately excluded, because they continue after the loan is paid off. |
 | **Refinance** | The rest of the current loan against the new one, with closing costs paid at closing or rolled into the loan. Reports the monthly change, **lifetime savings (closing costs included)**, the months added by restarting the clock, and a **break-even**: the payment by which the interest saved covers the closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings". When the new payment is lower it also shows the new loan **paid at today's payment**, which is how to refinance without restarting the clock. |
-| **Accounts & History** | Sign up with an email and password. Save any calculation or refinance comparison under a name; search and filter by kind, reopen it on its own page (the form is restored exactly), rename or delete it. Each person sees only their own. |
+| **Accounts & History** | Sign up with an email and password, and confirm the email from the link sent to it; a forgotten password is reset by email. Save any calculation or refinance comparison under a name; search and filter by kind, reopen it on its own page (the form is restored exactly), rename or delete it. Each person sees only their own. |
 
 ---
 
@@ -59,7 +59,10 @@ docker compose up --build
 
 - App: http://localhost:8080
 - API docs (Swagger UI): http://localhost:8080/swagger
-- Saved calculations live in a SQLite file on the `calculations` volume, so they survive restarts.
+- **Email inbox (Mailpit): http://localhost:8025**. Confirmation and password-reset emails land here;
+  nothing leaves your machine.
+- Accounts, saved calculations and the keys that sign sessions and emailed links live on the
+  `mortgage-analytics_calculations` volume, so they survive restarts.
 
 ### Option 2: Local development
 
@@ -75,6 +78,14 @@ npm install
 npm start
 ```
 
+**Accounts work locally with no mail server.** Without SMTP settings the API writes emails to a local
+outbox, and in Development the app shows them at **http://localhost:4200/dev/mailbox** (the sign-up and
+forgot-password screens link to it). Open the email, click its link, done. *Clear* empties it before a demo.
+The mailbox exists only in Development, because it shows everyone's links.
+
+To send real email, set `Email:Smtp:Host`, `Port`, `Username` and `Password` (user secrets or environment
+variables, e.g. `Email__Smtp__Host`), and `Email:From`.
+
 **Visual Studio / Rider:** open `MortgageAnalytics.sln`. Every project is in the solution, the
 Angular app included (`client/client.esproj`), and repository files appear under *Solution Items*.
 Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run both with F5.
@@ -82,12 +93,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 469 NUnit tests, including the convention tests
+dotnet test                       # 485 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 265 Jest unit tests; fails below 85% coverage
+npm test                          # 297 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 40 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 42 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -106,7 +117,10 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
 |---|---|
 | `POST /api/v1/amortization/calculate` | The purchase analysis below (`?includePayments=false` for summaries only) |
 | `POST /api/v1/refinance/analyze` | Keep the current loan or refinance it |
-| `POST /api/v1/account/register` · `login?useCookies=true` · `logout` | Create an account, sign in (session cookie), sign out |
+| `POST /api/v1/account/register` · `login?useCookies=true` · `logout` | Create an account (a confirmation email is sent), sign in (session cookie), sign out |
+| `GET /api/v1/account/confirmEmail` · `POST resendConfirmationEmail` | Confirm the email with the code from the link; send the link again |
+| `POST /api/v1/account/forgotPassword` · `resetPassword` | Email a reset link; set a new password with its code |
+| `GET` · `DELETE /api/v1/dev/outbox` | **Development only:** the local outbox, and emptying it |
 | `GET /api/v1/account/manage/info` | Who is signed in (401 when nobody is) |
 | `GET /api/v1/calculations?search=` 🔒 | Your saved calculations, newest first, filtered by name |
 | `GET /api/v1/calculations/{id}` 🔒 | One of them |
@@ -222,7 +236,7 @@ tests/
   MortgageAnalytics.Domain.Tests/   263 tests
   MortgageAnalytics.Application.Tests/  149 tests (unit with NSubstitute, sociable scenarios, architecture)
   MortgageAnalytics.Infrastructure.Tests/  12 tests (real SQLite, built by the real migrations)
-  MortgageAnalytics.Api.IntegrationTests/  39 tests (shared WebApplicationFactory fixture, temp SQLite file)
+  MortgageAnalytics.Api.IntegrationTests/  55 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,history} · e2e/
 ```
 
@@ -310,6 +324,10 @@ Accounts follow the same habit of not trusting the client:
   send it (no token in `localStorage`). Passwords are hashed by Identity; repeated failures lock the account.
 - **Ownership is enforced in the query** (`WHERE OwnerId = @user`) in the repository, not by checking
   afterwards, and a deleted account takes its calculations with it (foreign key, cascade).
+- **An account belongs to a real inbox:** sign-in waits for the emailed confirmation. "Forgot password"
+  and "resend" answer the same whether or not the address has an account, so they cannot be used to find
+  out who is registered. Emailed codes are single-purpose, expire, and are signed with keys that are kept
+  on disk, so links (and sessions) survive a restart.
 - **Sign-in only returns to paths on this site** (`/history`, never `//evil.example`), so it cannot be
   turned into an open redirect.
 
@@ -383,12 +401,12 @@ Accounts follow the same habit of not trusting the client:
 | Domain (263) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. |
 | Application (149) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | Infrastructure (12) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (both kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
-| API integration (39) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
+| API integration (55) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (265) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (40) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up and sign-out, saving while signed out, saving and reopening both kinds from History, and the refinance comparison against the reference numbers. |
+| Angular (297) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (42) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening both kinds from History, and the refinance comparison against the reference numbers. |
 
-**Coverage:** backend 99.6% lines / 98% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
+**Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
 ### Test standards, enforced by the build
 
@@ -414,6 +432,5 @@ And by convention, supported by shared infrastructure:
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
 - **Adjustable-rate (ARM) loans**: a rate-schedule strategy.
-- **Email confirmation and password reset**: Identity's endpoints are in place; they need an email sender.
 - **Rate limiting** on sign-in and registration, on top of Identity's lockout.
 - **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

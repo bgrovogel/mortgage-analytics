@@ -1,23 +1,25 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { safeReturnUrl } from '../../core/auth/signed-in.guard';
 import { toErrorMessages } from '../../core/errors/problem-details';
+import { DevMailboxHintComponent } from './dev-mailbox-hint.component';
 
 type Mode = 'sign-in' | 'create';
 
 /**
- * Sign in, or create an account, on one page. Afterwards it returns to where the user was heading
- * (`?returnUrl=`), but only within this site.
+ * Sign in, or create an account, on one page. A new account must confirm its email before signing in, so
+ * creating one ends on "check your email"; signing in with an unconfirmed email offers to send the link
+ * again. After signing in it returns to where the user was heading (`?returnUrl=`), but only within this site.
  */
 @Component({
   selector: 'app-sign-in-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink, DevMailboxHintComponent],
   templateUrl: './sign-in-page.component.html',
-  styleUrl: './sign-in-page.component.scss',
+  styleUrl: './account-pages.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInPageComponent {
@@ -34,6 +36,15 @@ export class SignInPageComponent {
   /** True while a request is on its way. */
   readonly busy = signal(false);
 
+  /** The address a confirmation email was just sent to (after creating an account). */
+  readonly sentTo = signal<string | null>(null);
+
+  /** True when sign-in failed only because the email is not confirmed yet. */
+  readonly needsConfirmation = signal(false);
+
+  /** True once the confirmation email has been sent again. */
+  readonly resent = signal(false);
+
   readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
     // Mirrors the server's rule: 8+ characters with a digit. The server checks again regardless.
@@ -44,6 +55,7 @@ export class SignInPageComponent {
   setMode(mode: Mode): void {
     this.mode.set(mode);
     this.error.set(null);
+    this.needsConfirmation.set(false);
   }
 
   /** Signs in or creates the account, then returns to where the user was heading. */
@@ -53,24 +65,38 @@ export class SignInPageComponent {
       return;
     }
     const { email, password } = this.form.getRawValue();
-    const attempt: Observable<void> = this.mode() === 'create' ? this.auth.register(email, password) : this.auth.signIn(email, password);
+    const creating = this.mode() === 'create';
+    const attempt: Observable<void> = creating ? this.auth.register(email, password) : this.auth.signIn(email, password);
 
     this.busy.set(true);
     this.error.set(null);
+    this.needsConfirmation.set(false);
     attempt.subscribe({
       next: () => {
         this.busy.set(false);
-        void this.router.navigateByUrl(this.returnUrl);
+        if (creating) this.sentTo.set(email);
+        else void this.router.navigateByUrl(this.returnUrl);
       },
       error: (error: unknown) => {
         this.busy.set(false);
-        this.error.set(
-          error instanceof HttpErrorResponse && error.status === 401
-            ? 'That email and password do not match.'
-            : toErrorMessages(error).join(' '),
-        );
+        this.error.set(this.messageFor(error));
       },
     });
+  }
+
+  /** Sends the confirmation email again, to the address in the form. */
+  resend(): void {
+    this.auth.resendConfirmation(this.sentTo() ?? this.form.controls.email.value).subscribe(() => this.resent.set(true));
+  }
+
+  /** Identity answers a failed sign-in with 401 and "Failed" (wrong password) or "NotAllowed" (unconfirmed email). */
+  private messageFor(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse) || error.status !== 401) return toErrorMessages(error).join(' ');
+    if ((error.error as { detail?: string } | null)?.detail === 'NotAllowed') {
+      this.needsConfirmation.set(true);
+      return 'Confirm your email first, with the link we sent when you created the account.';
+    }
+    return 'That email and password do not match.';
   }
 
   /** True when a field should show its error. */
