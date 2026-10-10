@@ -30,6 +30,8 @@ export interface LineSeries {
   data: number[];
   /** Draws a dashed line, so a series stays visible when it overlaps another. */
   dashed?: boolean;
+  /** Shades the area between this series and the one before it (e.g. the gap two payoffs open up). */
+  fillToPrevious?: boolean;
 }
 
 /** Everything that differs between the app's line charts. */
@@ -40,6 +42,8 @@ export interface LineChartSpec {
   title: (index: number, label: string) => string;
   /** Optional tooltip footer, e.g. a total across all series. */
   footer?: (index: number) => string;
+  /** Stacks the series as filled areas, so the top edge is their total (a part-to-whole over time). */
+  stacked?: boolean;
 }
 
 /**
@@ -50,6 +54,8 @@ export interface LineChartSpec {
 export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartConfiguration<'line'> {
   const css = getComputedStyle(host);
   const token = (name: string) => css.getPropertyValue(name).trim();
+  // Areas are tints of the line colour. Stacked bands never overlap, so they can be stronger.
+  const tint = (name: string) => withAlpha(token(name), spec.stacked ? 0.55 : 0.28);
   const grid = token('--grid');
   const muted = token('--text-muted');
 
@@ -57,11 +63,13 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
     type: 'line',
     data: {
       labels: spec.labels,
-      datasets: spec.series.map((s) => ({
+      datasets: spec.series.map((s, i) => ({
         label: s.label,
         data: s.data,
         borderColor: token(s.color),
-        backgroundColor: token(s.color),
+        backgroundColor: spec.stacked || s.fillToPrevious ? tint(s.color) : token(s.color),
+        // A stacked band fills down to the band below it; the first one down to zero.
+        fill: spec.stacked ? (i === 0 ? 'origin' : '-1') : s.fillToPrevious ? '-1' : false,
         borderWidth: 2,
         borderDash: s.dashed ? [6, 4] : [],
         pointRadius: 0,
@@ -97,6 +105,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           ticks: { color: muted, maxTicksLimit: 8, maxRotation: 0, autoSkipPadding: 24 },
         },
         y: {
+          stacked: spec.stacked ?? false,
           beginAtZero: true,
           grid: { color: grid },
           border: { display: false },
@@ -105,4 +114,15 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
       },
     },
   };
+}
+
+/**
+ * Turns a "#rrggbb" token into rgba() with the given opacity. Canvas colour parsing is older than CSS
+ * colour functions, so plain rgba() is the safe form. Anything else is returned unchanged.
+ */
+export function withAlpha(color: string, alpha: number): string {
+  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  return hex
+    ? `rgba(${parseInt(hex[1], 16)}, ${parseInt(hex[2], 16)}, ${parseInt(hex[3], 16)}, ${alpha})`
+    : color;
 }

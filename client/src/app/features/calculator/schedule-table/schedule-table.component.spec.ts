@@ -57,6 +57,58 @@ describe('ScheduleTableComponent', () => {
     expect(rows()[1].textContent).not.toContain('PMI');
   });
 
+  describe('yearly view', () => {
+    /** Two loan years: 24 payments of $1,000 ($600 principal, $400 interest), $100 extra on payment 13. */
+    const twoYears = () => aResponse({
+      accelerated: aSchedule({
+        payments: Array.from({ length: 24 }, (_, i) =>
+          aPayment(i + 1, { extraPrincipal: i === 12 ? 100 : 0, remainingBalance: 24_000 - (i + 1) * 600, housingCosts: 50, totalOutlay: i === 12 ? 1_150 : 1_050 })),
+        totalHousingCosts: aHousingCosts({ hoaDues: 1_200 }),
+      }),
+    });
+
+    it('shows monthly rows by default', () => {
+      render(twoYears());
+
+      expect(rows()).toHaveLength(24);
+    });
+
+    it('rolls the payments up into one row per loan year', () => {
+      render(twoYears());
+      click('view-yearly');
+
+      expect(rows()).toHaveLength(2);
+      expect(headers()[0]).toBe('Year');
+      const year2 = [...rows()[1].querySelectorAll('td')].map((td) => td.textContent?.trim());
+      expect(year2).toEqual(['2', '2027', '$12,000.00', '$7,200.00', '$4,800.00', '$100.00', '$600.00', '$12,700.00', '$9,600.00']);
+    });
+
+    it('switches back to monthly rows', () => {
+      render(twoYears());
+      click('view-yearly');
+      click('view-monthly');
+
+      expect(rows()).toHaveLength(24);
+    });
+  });
+
+  it('totals every money column, each under its own header', () => {
+    const accelerated = aSchedule({
+      payments: [aPayment(1, { extraPrincipal: 100, housingCosts: 50, totalOutlay: 1_150 }), aPayment(2, { housingCosts: 50, totalOutlay: 1_050 })],
+      totalHousingCosts: aHousingCosts({ hoaDues: 100 }),
+    });
+    render(aResponse({ accelerated }));
+
+    const footer = [...fixture.nativeElement.querySelectorAll('tfoot td')].map((td: Element) => td.textContent?.trim());
+    expect(footer).toEqual(['$2,000.00', '$1,200.00', '$800.00', '$100.00', '$100.00', '$2,200.00', '']);
+  });
+
+  it('pins the first two columns, so they stay put when the table scrolls sideways on a phone', () => {
+    render(response);
+
+    expect(fixture.nativeElement.querySelector('thead th').classList).toContain('pinned');
+  });
+
   it('shows extra principal, a dash when there is none, and tags the payment that triggered a recast', () => {
     const accelerated = aSchedule({
       payments: [aPayment(1), aPayment(2, { extraPrincipal: 25_000 })],

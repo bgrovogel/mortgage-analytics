@@ -1,4 +1,4 @@
-import { buildLineChart, compactCurrency, currency } from './line-chart';
+import { buildLineChart, compactCurrency, currency, withAlpha } from './line-chart';
 
 describe('buildLineChart', () => {
   const host = document.createElement('div');
@@ -45,6 +45,31 @@ describe('buildLineChart', () => {
     expect(footer([{ dataIndex: 0 }])).toBe('Total 0');
   });
 
+  it('draws plain lines by default', () => {
+    const config = buildLineChart(spec, host);
+
+    expect(config.options!.scales!['y']!.stacked).toBeFalsy();
+    expect(config.data.datasets.every((d) => !d.fill)).toBe(true);
+  });
+
+  it('stacks filled areas when asked, so the top edge is the total', () => {
+    const config = buildLineChart({ ...spec, stacked: true }, host);
+
+    expect(config.options!.scales!['y']!.stacked).toBe(true);
+    // Each band fills down to the one below it (not to $0), so bands never overlap and muddy each other.
+    expect(config.data.datasets.map((d) => d.fill)).toEqual(['origin', '-1']);
+  });
+
+  it('can shade the area between a series and the one before it', () => {
+    const config = buildLineChart(
+      { ...spec, series: [spec.series[0], { ...spec.series[1], dashed: false, fillToPrevious: true }] },
+      host,
+    );
+
+    expect(config.data.datasets[1].fill).toBe('-1');
+    expect(config.data.datasets[0].fill).toBeFalsy();
+  });
+
   it('omits the tooltip footer when the spec has none', () => {
     const config = buildLineChart({ ...spec, footer: undefined }, host);
 
@@ -57,5 +82,15 @@ describe('buildLineChart', () => {
 
     expect((y as { beginAtZero?: boolean }).beginAtZero).toBe(true);
     expect(tick(250_000)).toBe(compactCurrency.format(250_000));
+  });
+});
+
+describe('withAlpha', () => {
+  it('turns a hex colour into rgba with the given opacity', () => {
+    expect(withAlpha('#2a78d6', 0.28)).toBe('rgba(42, 120, 214, 0.28)');
+  });
+
+  it('leaves anything that is not #rrggbb unchanged', () => {
+    expect(withAlpha('', 0.5)).toBe('');
   });
 });

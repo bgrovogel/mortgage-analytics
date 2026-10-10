@@ -8,8 +8,8 @@ type View = 'costs' | 'value';
 
 /**
  * The long-term picture, year by year over the full term:
- * - "Yearly costs": one line per tax, insurance, PMI and dues category, showing rises and drop-offs
- *   (PMI ending, a PID paid off).
+ * - "Yearly costs": stacked areas, one per tax, insurance, PMI and dues category; the top edge is the
+ *   total, and rises and drop-offs (PMI ending, a PID paid off) show as bands growing or vanishing.
  * - "Home value": market value against taxable value, which shows the homestead cap at work.
  * The two views are separate charts because their scales differ by two orders of magnitude.
  */
@@ -91,6 +91,8 @@ export class CostProjectionComponent {
             series,
             title: (i, label) => `${label} (from ${startYear(i)})`,
             footer: (i) => `Total: ${currency.format(projection[i].costs.total)}`,
+            // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
+            stacked: true,
           },
           host,
         );

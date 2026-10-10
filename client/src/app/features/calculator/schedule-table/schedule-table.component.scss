@@ -12,6 +12,12 @@ h2 {
   margin: 0;
 }
 
+.toggles {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .toggle {
   display: inline-flex;
   border: 1px solid var(--border);
@@ -22,6 +28,7 @@ h2 {
     font: inherit;
     font-size: 0.85rem;
     padding: 0.4rem 0.8rem;
+    min-height: 36px;
     border: 0;
     background: transparent;
     color: var(--text-secondary);
@@ -115,5 +122,51 @@ tbody td {
     color: var(--text-muted);
     border-color: var(--border);
     font-weight: 500;
+  }
+}
+
+// The first two columns stay in place while the rest scrolls sideways (mainly on phones).
+.pinned {
+  position: sticky;
+  z-index: 1;
+  background: var(--surface-1);
+}
+
+.pinned.first {
+  left: 0;
+  min-width: 3rem;
+}
+
+.pinned.second {
+  left: 3rem;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+thead .pinned,
+tfoot .pinned {
+  z-index: 2;
+  background: var(--surface-2);
+}
+
+tbody tr:nth-child(even) .pinned {
+  background: var(--row-alt);
+}
+
+.table-frame {
+  position: relative;
+}
+
+// On small screens, a fade at the right edge hints that the table scrolls sideways.
+@media (max-width: 860px) {
+  .table-frame::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 2rem;
+    border-radius: 0 10px 10px 0;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--surface-1));
   }
 }

@@ -152,7 +152,7 @@ export class CalculatorPage {
   async addLumpSum(amount: number, paymentNumber: number): Promise<void> {
     await (await this.reveal('add-lump-sum')).click();
     const row = this.page.getByTestId('lump-sum').last();
-    await row.getByLabel('Lump sum ($)').fill(String(amount));
+    await row.getByLabel('Lump sum', { exact: true }).fill(String(amount));
     await row.getByLabel('With payment #').fill(String(paymentNumber));
   }
 
@@ -200,6 +200,11 @@ export class CalculatorPage {
   /** Switches the projection chart to market value against taxable value. */
   showHomeValueProjection(): Promise<void> {
     return this.page.getByTestId('projection-value').click();
+  }
+
+  /** Switches the table to one row per loan year. */
+  showYearlySchedule(): Promise<void> {
+    return this.page.getByTestId('view-yearly').click();
   }
 
   /** Switches the table to the standard (no extra payments) schedule. */

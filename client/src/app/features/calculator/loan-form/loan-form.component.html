@@ -5,21 +5,21 @@
 
     <div class="row">
       <label class="field">
-        <span>Home price ($)</span>
-        <input type="number" formControlName="homePrice" min="1" step="5000" inputmode="decimal"
-               data-testid="home-price" [attr.aria-invalid]="showError(form.controls.homePrice)" />
+        <span>Home price</span>
+        <span class="affix" data-prefix="$"><input appNumber formControlName="homePrice" data-testid="home-price" [attr.aria-invalid]="showError(form.controls.homePrice)" /></span>
       </label>
       <div class="field">
         <div class="label-row">
-          <label for="down-payment">Down payment ({{ form.controls.downPaymentMode.value === 'percent' ? '%' : '$' }})</label>
+          <label for="down-payment">Down payment</label>
           <span class="unit-toggle" role="radiogroup" aria-label="Enter the down payment in">
             <label><input type="radio" formControlName="downPaymentMode" value="amount" data-testid="down-payment-mode-amount" />$</label>
             <label><input type="radio" formControlName="downPaymentMode" value="percent" data-testid="down-payment-mode-percent" />%</label>
           </span>
         </div>
-        <input id="down-payment" type="number" formControlName="downPayment" min="0"
-               [step]="form.controls.downPaymentMode.value === 'percent' ? 0.5 : 1000" inputmode="decimal"
-               data-testid="down-payment" [attr.aria-invalid]="showError(form.controls.downPayment) || loanAmount() <= 0" />
+        <span class="affix" [attr.data-prefix]="downPaymentInPercent() ? null : '$'"
+              [attr.data-suffix]="downPaymentInPercent() ? '%' : null">
+          <input appNumber formControlName="downPayment" id="down-payment" data-testid="down-payment" [attr.aria-invalid]="showError(form.controls.downPayment) || loanAmount() <= 0" />
+        </span>
       </div>
     </div>
     @if (loanAmount() > 0) {
@@ -33,17 +33,15 @@
 
     <div class="row">
       <label class="field">
-        <span>Interest rate (%)</span>
-        <input type="number" formControlName="annualInterestRate" min="0" max="30" step="0.125" inputmode="decimal"
-               data-testid="interest-rate" [attr.aria-invalid]="showError(form.controls.annualInterestRate)" />
+        <span>Interest rate</span>
+        <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="annualInterestRate" data-testid="interest-rate" [attr.aria-invalid]="showError(form.controls.annualInterestRate)" /></span>
         @if (showError(form.controls.annualInterestRate)) {
           <small class="error">Rate must be between 0% and 30%.</small>
         }
       </label>
       <label class="field">
         <span>Term (years)</span>
-        <input type="number" formControlName="termYears" min="1" [max]="maxYears" step="1"
-               data-testid="term-years" [attr.aria-invalid]="showError(form.controls.termYears)" />
+        <input appNumber [decimals]="0" formControlName="termYears" data-testid="term-years" [attr.aria-invalid]="showError(form.controls.termYears)" />
         @if (showError(form.controls.termYears)) {
           <small class="error">Term must be 1 to {{ maxYears }} years.</small>
         }
@@ -51,9 +49,8 @@
     </div>
 
     <label class="field">
-      <span>Extra principal every month ($)</span>
-      <input type="number" formControlName="monthlyExtra" min="0" step="50" inputmode="decimal" data-testid="monthly-extra"
-             [attr.aria-invalid]="showError(form.controls.monthlyExtra)" />
+      <span>Extra principal every month</span>
+      <span class="affix" data-prefix="$"><input appNumber formControlName="monthlyExtra" data-testid="monthly-extra" [attr.aria-invalid]="showError(form.controls.monthlyExtra)" /></span>
       @if (showError(form.controls.monthlyExtra)) {
         <small class="error">Cannot be negative.</small>
       }
@@ -68,32 +65,28 @@
     <div class="section-body">
       <div class="row three">
         <label class="field">
-          <span>School (%)</span>
-          <input type="number" formControlName="schoolTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
-                 data-testid="school-tax-rate" />
+          <span>School</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="schoolTaxRate" data-testid="school-tax-rate" /></span>
         </label>
         <label class="field">
-          <span>County/city (%)</span>
-          <input type="number" formControlName="localTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
-                 data-testid="local-tax-rate" />
+          <span>County/city</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="localTaxRate" data-testid="local-tax-rate" /></span>
         </label>
         <label class="field">
-          <span><abbr title="Municipal Utility District">MUD</abbr> (%)</span>
-          <input type="number" formControlName="mudTaxRate" min="0" max="5" step="0.01" inputmode="decimal"
-                 data-testid="mud-tax-rate" />
+          <span><abbr title="Municipal Utility District">MUD</abbr></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="mudTaxRate" data-testid="mud-tax-rate" /></span>
         </label>
       </div>
       <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
 
       <div class="row">
         <label class="field">
-          <span><abbr title="Public Improvement District">PID</abbr> ($/yr)</span>
-          <input type="number" formControlName="pidAnnual" min="0" step="100" inputmode="decimal" data-testid="pid-annual" />
+          <span><abbr title="Public Improvement District">PID</abbr> per year</span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="pidAnnual" data-testid="pid-annual" /></span>
         </label>
         <label class="field">
           <span>PID years left</span>
-          <input type="number" formControlName="pidYears" min="1" max="50" step="1" placeholder="No end"
-                 data-testid="pid-years" />
+          <input appNumber [decimals]="0" formControlName="pidYears" placeholder="No end" data-testid="pid-years" />
         </label>
       </div>
       <p class="hint">A PID assessment is a fixed yearly charge that ends once the district's bonds are repaid.</p>
@@ -106,19 +99,16 @@
       @if (isHomestead()) {
         <div class="row three">
           <label class="field">
-            <span>School exempt ($)</span>
-            <input type="number" formControlName="schoolHomesteadExemption" min="0" step="5000" inputmode="decimal"
-                   data-testid="school-exemption" />
+            <span>School exempt</span>
+            <span class="affix" data-prefix="$"><input appNumber formControlName="schoolHomesteadExemption" data-testid="school-exemption" /></span>
           </label>
           <label class="field">
-            <span>Local exempt (%)</span>
-            <input type="number" formControlName="localHomesteadExemptionPercent" min="0" max="100" step="1"
-                   data-testid="local-exemption" />
+            <span>Local exempt</span>
+            <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="localHomesteadExemptionPercent" data-testid="local-exemption" /></span>
           </label>
           <label class="field">
-            <span>Cap (%/yr)</span>
-            <input type="number" formControlName="homesteadAssessmentCap" min="0" max="100" step="1"
-                   data-testid="assessment-cap" />
+            <span>Cap per year</span>
+            <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="homesteadAssessmentCap" data-testid="assessment-cap" /></span>
           </label>
         </div>
         <p class="hint">
@@ -135,17 +125,15 @@
           <div class="row three">
             <label class="field">
               <span>Qualifies in year</span>
-              <input type="number" formControlName="over65Year" min="1" [max]="maxYears" step="1" data-testid="over-65-year" />
+              <input appNumber [decimals]="0" formControlName="over65Year" data-testid="over-65-year" />
             </label>
             <label class="field">
-              <span>Extra school ($)</span>
-              <input type="number" formControlName="over65SchoolExemption" min="0" step="5000" inputmode="decimal"
-                     data-testid="over-65-school-exemption" />
+              <span>Extra school</span>
+              <span class="affix" data-prefix="$"><input appNumber formControlName="over65SchoolExemption" data-testid="over-65-school-exemption" /></span>
             </label>
             <label class="field">
-              <span>Extra local ($)</span>
-              <input type="number" formControlName="over65LocalExemption" min="0" step="1000" inputmode="decimal"
-                     data-testid="over-65-local-exemption" />
+              <span>Extra local</span>
+              <span class="affix" data-prefix="$"><input appNumber formControlName="over65LocalExemption" data-testid="over-65-local-exemption" /></span>
             </label>
           </div>
           <label class="checkbox">
@@ -169,21 +157,20 @@
     <div class="section-body">
       <div class="row">
         <label class="field">
-          <span>Home insurance ($/yr)</span>
-          <input type="number" formControlName="annualInsurance" min="0" step="100" inputmode="decimal"
-                 data-testid="annual-insurance" />
+          <span>Home insurance per year</span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="annualInsurance" data-testid="annual-insurance" /></span>
         </label>
         <label class="field">
-          <span>HOA dues ($/mo)</span>
-          <input type="number" formControlName="monthlyHoa" min="0" step="10" inputmode="decimal" data-testid="monthly-hoa" />
+          <span>HOA dues per month</span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="monthlyHoa" data-testid="monthly-hoa" /></span>
         </label>
       </div>
 
 
       <div class="row">
         <label class="field">
-          <span>PMI (%/yr)</span>
-          <input type="number" formControlName="pmiRate" min="0" max="5" step="0.05" inputmode="decimal" data-testid="pmi-rate" />
+          <span>PMI per year</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="pmiRate" data-testid="pmi-rate" /></span>
         </label>
         <label class="field">
           <span>PMI removal</span>
@@ -212,19 +199,16 @@
     <div class="section-body">
       <div class="row three">
         <label class="field">
-          <span>Home value (%/yr)</span>
-          <input type="number" formControlName="homeValueGrowthRate" min="-20" max="25" step="0.5" inputmode="decimal"
-                 data-testid="home-value-growth" />
+          <span>Home value</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="homeValueGrowthRate" data-testid="home-value-growth" /></span>
         </label>
         <label class="field">
-          <span>Insurance (%/yr)</span>
-          <input type="number" formControlName="insuranceIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
-                 data-testid="insurance-increase" />
+          <span>Insurance</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="insuranceIncreaseRate" data-testid="insurance-increase" /></span>
         </label>
         <label class="field">
-          <span>HOA (%/yr)</span>
-          <input type="number" formControlName="hoaIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
-                 data-testid="hoa-increase" />
+          <span>HOA</span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="4" formControlName="hoaIncreaseRate" data-testid="hoa-increase" /></span>
         </label>
       </div>
       <p class="hint">Rising home values raise property taxes each year (limited by the appraisal cap for a homestead).</p>
@@ -244,12 +228,12 @@
 
       <div class="row">
         <label class="field">
-          <span>Extra once a year ($)</span>
-          <input type="number" formControlName="annualExtra" min="0" step="500" inputmode="decimal" data-testid="annual-extra" />
+          <span>Extra once a year</span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="annualExtra" data-testid="annual-extra" /></span>
         </label>
         <label class="field">
           <span>Starting with payment #</span>
-          <input type="number" formControlName="annualFirstPayment" min="1" step="1" data-testid="annual-first-payment" />
+          <input appNumber [decimals]="0" formControlName="annualFirstPayment" data-testid="annual-first-payment" />
         </label>
       </div>
 
@@ -257,12 +241,12 @@
         @for (lumpSum of lumpSums.controls; track lumpSum; let i = $index) {
           <div class="row lump-sum" [formGroupName]="i" data-testid="lump-sum">
             <label class="field">
-              <span>Lump sum ($)</span>
-              <input type="number" formControlName="amount" min="0.01" step="1000" inputmode="decimal" />
+              <span>Lump sum</span>
+              <span class="affix" data-prefix="$"><input appNumber formControlName="amount" /></span>
             </label>
             <label class="field">
               <span>With payment #</span>
-              <input type="number" formControlName="paymentNumber" min="1" step="1" />
+              <input appNumber [decimals]="0" formControlName="paymentNumber" />
             </label>
             <button type="button" class="icon-button" (click)="removeLumpSum(i)" [attr.aria-label]="'Remove lump sum ' + (i + 1)">
               ✕
@@ -286,13 +270,12 @@
         @if (isRecast()) {
           <div class="row recast-terms">
             <label class="field">
-              <span>Lender minimum ($)</span>
-              <input type="number" formControlName="recastMinimum" min="1000" step="1000" inputmode="decimal" data-testid="recast-minimum"
-                     [attr.aria-invalid]="showError(form.controls.recastMinimum)" />
+              <span>Lender minimum</span>
+              <span class="affix" data-prefix="$"><input appNumber formControlName="recastMinimum" data-testid="recast-minimum" [attr.aria-invalid]="showError(form.controls.recastMinimum)" /></span>
             </label>
             <label class="field">
-              <span>Recast fee ($)</span>
-              <input type="number" formControlName="recastFee" min="0" step="25" inputmode="decimal" data-testid="recast-fee" />
+              <span>Recast fee</span>
+              <span class="affix" data-prefix="$"><input appNumber formControlName="recastFee" data-testid="recast-fee" /></span>
             </label>
           </div>
           @if (showError(form.controls.recastMinimum)) {

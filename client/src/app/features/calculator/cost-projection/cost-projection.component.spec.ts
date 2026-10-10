@@ -33,6 +33,12 @@ describe('CostProjectionComponent', () => {
   });
 
   describe('yearly costs view', () => {
+    it('stacks the categories as areas, so the top edge is the total cost', () => {
+      render(rising);
+
+      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBe(true);
+    });
+
     it('draws one line per category that has any cost', () => {
       render(rising);
 
@@ -61,6 +67,7 @@ describe('CostProjectionComponent', () => {
 
       const [market, taxable] = charts.lastConfig().data.datasets;
       expect([market.label, taxable.label]).toEqual(['Market value', 'Taxable value']);
+      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBeFalsy(); // values are compared, not added
       expect(taxable.borderDash).toEqual([6, 4]);
       expect(tooltip()['title']([{ dataIndex: 0, label: 'Year 1' }])).toBe('Year 1 (from 2026)');
     });

@@ -39,7 +39,14 @@ export class BalanceChartComponent {
             labels: baseline.payments.map((p) => monthYear.format(new Date(p.dueDate))),
             series: [
               { label: 'Standard payoff', color: '--series-1', data: baseline.payments.map((p) => p.remainingBalance) },
-              { label: 'With extra payments', color: '--series-2', data: accelerated.payments.map((p) => p.remainingBalance) },
+              // Shading down to the standard payoff makes the time and interest saved visible as an area.
+              // Once paid off the balance stays at $0, so the line and the shading run to the standard payoff.
+              {
+                label: 'With extra payments',
+                color: '--series-2',
+                data: baseline.payments.map((_, i) => accelerated.payments[i]?.remainingBalance ?? 0),
+                fillToPrevious: true,
+              },
             ],
             title: (index, label) => `Payment ${index + 1} · ${label}`,
           },

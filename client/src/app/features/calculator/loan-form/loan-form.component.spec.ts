@@ -332,6 +332,28 @@ describe('LoanFormComponent', () => {
       expect(el('pmi-hint')?.textContent).toContain('No PMI');
     });
 
+    it('formats numbers with thousands separators and shows the unit inside the box', () => {
+      const price = el('home-price') as HTMLInputElement;
+
+      expect(price.type).toBe('text');
+      expect(price.value).toBe('375,000');
+      expect((price.closest('.affix') as HTMLElement).dataset['prefix']).toBe('$');
+      expect((el('interest-rate')!.closest('.affix') as HTMLElement).dataset['suffix']).toBe('%');
+    });
+
+    it('switches the down payment unit marker with the $ | % toggle', () => {
+      controls().downPaymentMode.setValue('percent');
+      fixture.detectChanges();
+
+      const affix = el('down-payment')!.closest('.affix') as HTMLElement;
+      expect(affix.dataset['suffix']).toBe('%');
+      expect(affix.dataset['prefix']).toBeUndefined();
+    });
+
+    it('uses the number box for every numeric field, so none shows spinner arrows', () => {
+      expect(fixture.nativeElement.querySelectorAll('input[type="number"]')).toHaveLength(0);
+    });
+
     it('spells out jargon for screen readers and on hover', () => {
       const titles = [...fixture.nativeElement.querySelectorAll('abbr')].map((a: HTMLElement) => a.title);
 

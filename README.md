@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 104 Angular unit tests · Playwright: 24 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 129 Angular unit tests · Playwright: 26 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -34,7 +34,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling; MUD tax has none. |
 | **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
 | **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. |
-| **Yearly projection** | Market value, taxable value and every cost category for each year of the term, charted as lines. |
+| **Yearly projection** | Market value, taxable value and every cost category for each year of the term. Costs are a stacked area (the top edge is the yearly total); home value is two lines. |
 | **PID assessment** | A fixed annual amount, optionally ending after the district's remaining years. |
 | **Insurance & HOA** | An annual premium and monthly dues. |
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
@@ -77,9 +77,9 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 381 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 104 Jest unit tests; fails below 85% coverage
+npm test                          # 129 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 24 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 26 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -301,6 +301,11 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 - **One headline number.** With extra payments, net savings is the full-width hero tile and a Total
   interest tile shows the new total against the original. Without them, the headline is the total interest
   over the loan, never a $0 saving. On phones a sticky bar keeps the payment and savings in view.
+- **Number boxes that read like money.** A small `appNumber` directive (a `ControlValueAccessor` and
+  validator) shows "375,000" with the $ or % inside the box, switches to the plain number while you
+  edit, selects it on focus so typing replaces it, and marks unreadable text invalid instead of reading it as 0.
+- **A schedule you can scan.** Monthly or yearly rows, totals under each column, and the # and Date
+  columns pinned while the table scrolls sideways on a phone (a fade shows there is more).
 - **Down payment in dollars or percent.** A $ | % switch converts the value; the API always receives dollars.
 - **The form scrolls on its own.** The results column is much longer, so the form panel is capped to the
   window and scrolls independently, keeping every section toggle reachable.
@@ -311,7 +316,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 - **`switchMap` with per-request error handling.** A newer calculation cancels a stale one, and a
   failed request does not break later ones (an E2E test covers this).
 - **Accessible charts.** The payment breakdown is a stacked bar with a labelled table, and the line
-  charts have legends, crosshair tooltips and a one-line written takeaway. The schedule table doubles
+  charts have legends, crosshair tooltips and a one-line written takeaway. On the balance chart the gap
+  between the two payoffs is shaded, so the time and interest saved show up as an area. The schedule table doubles
   as the data view. Taxable value is dashed, so it stays visible when it overlaps market value. Colors come from a colorblind-safe palette validated in both light and dark mode, and are
   fixed per category so they never shift between results.
 
@@ -325,8 +331,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 | Application (107) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | API integration (18) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (104) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (24) | Playwright | Real browser and real API, through a page object. |
+| Angular (129) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (26) | Playwright | Real browser and real API, through a page object. |
 
 **Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

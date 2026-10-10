@@ -2,6 +2,7 @@ import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, output } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import {
   AmortizationRequest,
   ExtraPaymentStrategy,
@@ -59,7 +60,7 @@ function firstOfNextMonth(): string {
  */
 @Component({
   selector: 'app-loan-form',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberInputDirective],
   templateUrl: './loan-form.component.html',
   styleUrl: './loan-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,6 +130,9 @@ export class LoanFormComponent implements OnInit {
     const price = this.values().homePrice ?? 0;
     return price > 0 ? (this.downPaymentAmount() / price) * 100 : 0;
   });
+
+  /** True when the down payment is being entered as a percentage of the price. */
+  readonly downPaymentInPercent = computed(() => this.values().downPaymentMode === 'percent');
 
   /** PMI applies only with less than 20% down. */
   readonly pmiApplies = computed(() => this.downPaymentPercent() < 20);

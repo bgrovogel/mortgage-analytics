@@ -229,6 +229,28 @@ test.describe('Mortgage calculator', () => {
     await expect(await calculator.cell(11, 'Extra'), 'and nowhere else').toHaveText('—');
   });
 
+  test('shows amounts with thousands separators, and the plain number while editing', async ({ calculator }) => {
+    await calculator.set('home-price', 250000);
+    await calculator.field('interest-rate').click(); // move on, as a user would
+
+    await expect(calculator.field('home-price'), 'formatted once editing ends').toHaveValue('250,000');
+
+    await calculator.field('home-price').click();
+    await expect(calculator.field('home-price'), 'plain while editing, so the caret never jumps').toHaveValue('250000');
+  });
+
+  test('can roll the schedule up into one row per year', async ({ calculator }) => {
+    await calculator.fillLoan(TWENTY_PERCENT_DOWN);
+    await calculator.setExtras(0);
+    await calculator.calculate();
+
+    await calculator.showYearlySchedule();
+
+    await expect(calculator.scheduleRows, 'a 30-year loan has 30 yearly rows').toHaveCount(30);
+    await expect(await calculator.cell(1, 'Starts'), 'year 1 starts in 2026').toHaveText('2026');
+    await expect(await calculator.cell(30, 'Balance'), 'the loan ends at zero').toHaveText('$0.00');
+  });
+
   test('can switch the table to the standard schedule', async ({ calculator }) => {
     await calculator.showStandardSchedule();
 
