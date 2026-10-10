@@ -1,0 +1,43 @@
+// A row of equal choices in one bordered control (radio inputs inside labels), e.g. a risk profile or a
+// chart scenario. Usage:   @use 'core/forms/segmented';   .picker { @include segmented.styles(3); }
+@mixin styles($count) {
+  display: grid;
+  grid-template-columns: repeat($count, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+
+  label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    & + label {
+      border-left: 1px solid var(--border);
+    }
+
+    &:has(input:checked) {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+}

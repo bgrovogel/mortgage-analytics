@@ -1,0 +1,8 @@
+@use '../../../core/forms/form-fields' as fields;
+@use '../../../core/forms/segmented';
+
+@include fields.styles;
+
+.segmented {
+  @include segmented.styles(3);
+}

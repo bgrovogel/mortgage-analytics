@@ -48,7 +48,7 @@ describe('AppComponent', () => {
 
     expect(root.querySelector('h1')?.textContent).toBe('Mortgage Analytics');
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
-      .toEqual(['Calculator', 'Refinance', 'History', 'API docs ↗']);
+      .toEqual(['Calculator', 'Refinance', 'Pay off or invest', 'History', 'API docs ↗']);
     expect(root.querySelector('a[href="/swagger"]')).not.toBeNull();
   });
 

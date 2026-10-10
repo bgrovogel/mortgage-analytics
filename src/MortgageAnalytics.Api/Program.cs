@@ -31,7 +31,8 @@ builder.Services.AddSwaggerGen(options =>
         Title = "Mortgage Analytics API",
         Version = "v1",
         Description = "Home-purchase and mortgage analysis: fixed-rate amortization, extra payments and recasting, "
-            + "property taxes with homestead exemptions and the appraisal cap, PMI, insurance and HOA, and a yearly cost projection.",
+            + "property taxes with homestead exemptions and the appraisal cap, PMI, insurance and HOA, a yearly cost projection, "
+            + "refinance comparisons, and paying the mortgage off versus investing.",
     });
 
     // Pull /// comments (summaries and <example> values) from the API and the contracts assembly.
@@ -75,6 +76,7 @@ if (app.Environment.IsDevelopment())
     app.MapDevOutbox();
 app.MapSavedCalculationEndpoints();
 app.MapRefinanceEndpoints();
+app.MapStrategyEndpoints();
 
 // Unknown API routes must 404 as JSON, not fall through to the SPA's index.html.
 app.Map("/api/{**path}", () => TypedResults.Problem(statusCode: StatusCodes.Status404NotFound, title: "API endpoint not found."));

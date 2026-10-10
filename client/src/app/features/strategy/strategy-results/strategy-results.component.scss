@@ -1,0 +1,232 @@
+@use '../../../core/forms/segmented';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+.panel-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+
+  &.spread {
+    justify-content: space-between;
+  }
+}
+
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+// The recommended path: blue when a bad decade would not change it, amber when it would.
+.hero {
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-border);
+
+  &.warning {
+    background: var(--warning-soft);
+    border-color: var(--warning-border);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .headline {
+    margin: 0.2rem 0 0.35rem;
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .detail,
+  .downside {
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .downside {
+    margin-top: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.picker {
+  @include segmented.styles(3);
+
+  &.two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &.small,
+  &.two {
+    min-width: min(100%, 360px);
+
+    label {
+      min-height: 36px;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+// Each card carries its strategy's color as a stripe, matching its line on the charts.
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--strategy-color);
+  border-radius: 12px;
+
+  &.recommended {
+    border-color: var(--accent-soft-border);
+    border-top-color: var(--strategy-color);
+    box-shadow: 0 0 0 1px var(--accent-soft-border);
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 0.98rem;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    white-space: nowrap;
+  }
+
+  .split {
+    margin: 0 0 0.35rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .net-worth {
+    font-size: 1.45rem;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  ul {
+    margin: 0.6rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+  }
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 36px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.55rem 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+td.best {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.facts ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}

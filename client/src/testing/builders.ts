@@ -8,6 +8,7 @@ import {
   YearProjection,
 } from '../app/core/models/amortization.models';
 import { LoanPayment, RefinanceOption, RefinanceResponse } from '../app/core/models/refinance.models';
+import { NetWorthYear, StrategyComparison, StrategyOutcome, StrategyProjection } from '../app/core/models/strategy.models';
 
 /**
  * Test-data builders for the client. Each returns a small, valid object with sensible defaults,
@@ -172,6 +173,60 @@ export function aRefinanceResponse(overrides: Partial<RefinanceResponse> = {}): 
     monthsAdded: 60,
     breakEvenPaymentNumber: 25,
     breakEvenDate: '2028-01-01',
+    ...overrides,
+  };
+}
+
+/** A 30-year projection whose net worth climbs in a straight line to `finalNetWorth`, with a few markers set. */
+export function aStrategyProjection(finalNetWorth: number, overrides: Partial<StrategyProjection> = {}): StrategyProjection {
+  const years: NetWorthYear[] = Array.from({ length: 31 }, (_, year) => {
+    const netWorth = 100_000 + ((finalNetWorth - 100_000) * year) / 30;
+    const mortgageBalance = Math.max(0, 300_000 - year * 20_000);
+    return {
+      year,
+      homeValue: 400_000 + year * 10_000,
+      mortgageBalance,
+      homeEquity: 400_000 + year * 10_000 - mortgageBalance,
+      investments: year * 30_000,
+      netWorth,
+      netWorthInTodaysDollars: netWorth / 2,
+    };
+  });
+  return { totalInterest: 200_000, totalTaxSaved: 0, payoffMonth: 180, payoffDate: '2041-01-01', crossoverMonth: 90, crossoverDate: '2033-06-01', years, ...overrides };
+}
+
+/**
+ * The reference comparison (ReferenceStrategies.Typical on the server): investing wins at a risk-adjusted 8%,
+ * paying off first wins if the next decade is lost. Year-30 net worths are the server's.
+ */
+export function aStrategyComparison(overrides: Partial<StrategyComparison> = {}): StrategyComparison {
+  const outcome = (strategy: StrategyOutcome['strategy'], investPercent: number, expected: number, riskAdjusted: number, badDecade: number,
+    marks: Partial<StrategyProjection>): StrategyOutcome => ({
+    strategy,
+    investPercent,
+    expected: aStrategyProjection(expected, marks),
+    riskAdjusted: aStrategyProjection(riskAdjusted, marks),
+    badDecade: aStrategyProjection(badDecade, marks),
+  });
+  return {
+    recommended: 'InvestTheDifference',
+    runnerUp: 'Hybrid',
+    lead: 59_433.1,
+    leadPercent: 1.6,
+    expectedWinner: 'InvestTheDifference',
+    badDecadeWinner: 'PayOffFirst',
+    plan: { mortgagePayment: 2_025.62, retirementContribution: 600, employerMatch: 300, retirementContributionCost: 456, esppContribution: 0, extraCash: 544 },
+    rates: {
+      mortgageRate: 6.5, firstYearInterest: 19_354.15, firstYearTaxSaved: 0, standardDeduction: 32_200, interestIsDeducted: false,
+      afterTaxMortgageRate: 6.5, expectedReturn: 10, riskMargin: 2, riskAdjustedReturn: 8, afterTaxRiskAdjustedReturn: 6.8, rateEdge: 0.3,
+      badDecadeReturn: -1, employerMatchPercent: 50, esppGainPercent: 0, targetInvestPercent: 58, automaticAnnualStock: 0,
+      discretionaryAnnualCash: 6_528, hybridInvestPercent: 58,
+    },
+    strategies: [
+      outcome('PayOffFirst', 0, 4_700_702.7, 3_719_026.59, 3_187_295.65, { payoffMonth: 186, payoffDate: '2041-06-01', crossoverMonth: 93, crossoverDate: '2033-09-01', totalInterest: 176_023.74 }),
+      outcome('InvestTheDifference', 100, 5_060_856.45, 3_844_781.09, 3_145_932.42, { payoffMonth: 300, payoffDate: '2050-12-01', crossoverMonth: 92, crossoverDate: '2033-08-01', totalInterest: 307_687.31 }),
+      outcome('Hybrid', 58, 4_887_968.18, 3_785_347.99, 3_156_688.92, { payoffMonth: 237, payoffDate: '2045-09-01', crossoverMonth: 92, crossoverDate: '2033-08-01', totalInterest: 232_524.75 }),
+    ],
     ...overrides,
   };
 }

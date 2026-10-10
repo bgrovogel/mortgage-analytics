@@ -1,0 +1,4 @@
+@use '../../core/layout/form-and-results';
+
+// The form is long, so it scrolls with the page rather than sticking.
+@include form-and-results.styles($sticky-form: false);

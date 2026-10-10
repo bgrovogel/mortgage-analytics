@@ -1,0 +1,118 @@
+@let r = result();
+@let rec = recommendation();
+
+<section class="hero" [class.warning]="rec.reversible" data-testid="strategy-verdict">
+  <p class="eyebrow">Recommended path</p>
+  <p class="headline" data-testid="recommended">{{ rec.headline }}</p>
+  <p class="detail" data-testid="recommended-detail">{{ rec.detail }}</p>
+  <p class="downside" data-testid="downside">{{ rec.downside }}</p>
+</section>
+
+<div class="picker" role="radiogroup" aria-label="Market scenario" data-testid="scenario-picker">
+  @for (option of scenarioLabels(); track option.value) {
+    <label>
+      <input type="radio" name="scenario" [value]="option.value" [checked]="scenario() === option.value"
+             (change)="scenario.set(option.value)" [attr.data-testid]="'scenario-' + option.value" />
+      {{ option.label }}
+    </label>
+  }
+</div>
+
+<div class="cards">
+  @for (card of cards(); track card.strategy) {
+    <article class="card" [class.recommended]="card.recommended" [attr.data-testid]="'card-' + card.strategy"
+             [style.--strategy-color]="'var(' + strategies[card.strategy].color + ')'">
+      <header>
+        <h3>{{ strategies[card.strategy].name }}</h3>
+        @if (card.recommended) {
+          <span class="badge">Recommended</span>
+        }
+      </header>
+      <p class="split">{{ card.split }}</p>
+      <strong class="net-worth" data-testid="card-net-worth">{{ usd(card.netWorth) }}</strong>
+      <small>net worth after 30 years</small>
+      <ul>
+        <li>{{ card.payoff }}</li>
+        <li>{{ usd(card.interest) }} of mortgage interest</li>
+      </ul>
+    </article>
+  }
+</div>
+
+<div class="panel">
+  <div class="panel-tools spread">
+    <div class="picker two" role="radiogroup" aria-label="Chart view" data-testid="view-picker">
+      @for (option of views; track option.value) {
+        <label>
+          <input type="radio" name="view" [value]="option.value" [checked]="view() === option.value"
+                 (change)="view.set(option.value)" [attr.data-testid]="'view-' + option.value" />
+          {{ option.label }}
+        </label>
+      }
+    </div>
+    <label class="toggle">
+      <input type="checkbox" [checked]="todaysDollars()" (change)="todaysDollars.set(!todaysDollars())" data-testid="todays-dollars" />
+      In today's dollars
+    </label>
+  </div>
+  <app-net-worth-chart [result]="r" [scenario]="scenario()" [todaysDollars]="todaysDollars()" [view]="view()" />
+</div>
+
+<div class="panel">
+  <h3>Net worth at each milestone</h3>
+  <div class="table-wrap" tabindex="0" aria-label="Net worth at years 5, 10, 15 and 30">
+    <table data-testid="milestones">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          @for (outcome of r.strategies; track outcome.strategy) {
+            <th scope="col">{{ strategies[outcome.strategy].name }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of milestoneRows(); track row.year) {
+          <tr>
+            <th scope="row">Year {{ row.year }}</th>
+            @for (cell of row.cells; track $index) {
+              <td [class.best]="cell.best">{{ usd(cell.value) }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    Home equity plus investments, counting every account after the tax still owed on it.
+    {{ todaysDollars() ? "Shown in today's dollars." : '' }}
+  </p>
+</div>
+
+<div class="panel">
+  <div class="panel-tools">
+    <div class="picker small" role="radiogroup" aria-label="Strategy to show" data-testid="crossover-picker">
+      @for (outcome of r.strategies; track outcome.strategy) {
+        <label>
+          <input type="radio" name="crossover" [value]="outcome.strategy" [checked]="crossoverStrategy() === outcome.strategy"
+                 (change)="crossoverStrategy.set(outcome.strategy)" [attr.data-testid]="'crossover-' + outcome.strategy" />
+          {{ strategies[outcome.strategy].short }}
+        </label>
+      }
+    </div>
+  </div>
+  <app-crossover-chart [strategy]="crossoverStrategy()" [projection]="crossoverProjection()" />
+  <p class="note" data-testid="crossover-note">{{ crossoverNote() }}</p>
+</div>
+
+<section class="panel facts" data-testid="fact-sheet">
+  <h3>Why {{ rec.headline }}</h3>
+  <ul>
+    @for (fact of facts(); track $index) {
+      <li>{{ fact }}</li>
+    }
+  </ul>
+  <p class="note">
+    Every strategy spends exactly the same cash each month; only where the extra goes differs. Projections assume
+    steady returns, which markets never deliver, and leave out selling costs and early-withdrawal penalties.
+  </p>
+</section>

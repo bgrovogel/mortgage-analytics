@@ -10,6 +10,7 @@ import { RefinanceStore } from './features/refinance/refinance.store';
 const PAGES = [
   { path: '/calculator', label: 'Calculator' },
   { path: '/refinance', label: 'Refinance' },
+  { path: '/strategy', label: 'Pay off or invest' },
   { path: '/history', label: 'History' },
 ] as const;
 
