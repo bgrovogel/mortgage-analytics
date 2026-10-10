@@ -213,21 +213,21 @@ export function aStrategyComparison(overrides: Partial<StrategyComparison> = {})
   return {
     recommended: 'InvestTheDifference',
     runnerUp: 'Hybrid',
-    lead: 59_433.1,
-    leadPercent: 1.6,
+    lead: 18_150.18,
+    leadPercent: 0.5,
     expectedWinner: 'InvestTheDifference',
     badDecadeWinner: 'PayOffFirst',
     plan: { mortgagePayment: 2_025.62, retirementContribution: 600, employerMatch: 300, retirementContributionCost: 456, esppContribution: 0, extraCash: 544 },
     rates: {
       mortgageRate: 6.5, firstYearInterest: 19_354.15, firstYearTaxSaved: 0, standardDeduction: 32_200, interestIsDeducted: false,
-      afterTaxMortgageRate: 6.5, expectedReturn: 10, riskMargin: 2, riskAdjustedReturn: 8, afterTaxRiskAdjustedReturn: 6.8, rateEdge: 0.3,
-      badDecadeReturn: -1, employerMatchPercent: 50, esppGainPercent: 0, targetInvestPercent: 58, automaticAnnualStock: 0,
-      discretionaryAnnualCash: 6_528, hybridInvestPercent: 58,
+      afterTaxMortgageRate: 6.5, expectedReturn: 10, riskMargin: 2, riskAdjustedReturn: 8, iraShelteredPercent: 100, taxableAfterTaxReturn: 7.41,
+      afterTaxRiskAdjustedReturn: 8, rateEdge: 1.5, badDecadeReturn: -1, employerMatchPercent: 50, esppGainPercent: 0, targetInvestPercent: 88,
+      automaticAnnualStock: 0, discretionaryAnnualCash: 6_528, hybridInvestPercent: 88,
     },
     strategies: [
       outcome('PayOffFirst', 0, 4_700_702.7, 3_719_026.59, 3_187_295.65, { payoffMonth: 186, payoffDate: '2041-06-01', crossoverMonth: 93, crossoverDate: '2033-09-01', totalInterest: 176_023.74 }),
       outcome('InvestTheDifference', 100, 5_060_856.45, 3_844_781.09, 3_145_932.42, { payoffMonth: 300, payoffDate: '2050-12-01', crossoverMonth: 92, crossoverDate: '2033-08-01', totalInterest: 307_687.31 }),
-      outcome('Hybrid', 58, 4_887_968.18, 3_785_347.99, 3_156_688.92, { payoffMonth: 237, payoffDate: '2045-09-01', crossoverMonth: 92, crossoverDate: '2033-08-01', totalInterest: 232_524.75 }),
+      outcome('Hybrid', 88, 5_007_419.45, 3_826_630.91, 3_147_836.56, { payoffMonth: 278, payoffDate: '2049-02-01', crossoverMonth: 92, crossoverDate: '2033-08-01', totalInterest: 281_119.21 }),
     ],
     ...overrides,
   };

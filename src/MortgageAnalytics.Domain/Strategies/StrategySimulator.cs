@@ -25,7 +25,7 @@ public interface IStrategySimulator
 ///         purchase period, come back with the discount (minus income tax on it).</item>
 ///   <item>At each year end: RSUs vest (kept as shares, or sold for cash), the ESOP contribution goes in, and the
 ///         tax saved by deducting that year's mortgage interest (only the part of itemized deductions above the
-///         standard deduction) comes back as cash.</item>
+///         standard deduction, both rising with inflation) comes back as cash.</item>
 ///   <item>The cash is split: (100 − investPercent)% to extra principal while anything is owed, the rest
 ///         invested: an IRA up to the yearly amount first, then a taxable account.</item>
 /// </list>
@@ -53,7 +53,7 @@ public sealed class StrategySimulator : IStrategySimulator
         decimal totalInterest = 0m, totalTaxSaved = 0m, interestThisYear = 0m, esppSaved = 0m, iraRoom = 0m;
         int? payoffMonth = null;
         int? crossoverMonth = accounts.AfterTaxValue(household) >= balance ? 0 : null;
-        var years = new List<NetWorthYear>(HorizonInMonths / 12 + 1) { YearEnd(inputs, 0, balance, accounts) };
+        var years = new List<NetWorthYear>(HorizonInMonths / 12 + 1) { YearEnd(inputs, 0, balance, accounts, 0m) };
 
         for (var month = 1; month <= HorizonInMonths; month++)
         {
@@ -95,7 +95,8 @@ public sealed class StrategySimulator : IStrategySimulator
 
             if (isYearEnd)
             {
-                var taxSaved = TaxDeductions.TaxSavedByInterest(household, TaxDeductions.DeductibleInterest(interestThisYear, balanceAtYearStart));
+                var priceLevel = DecimalMath.Pow(1 + inputs.Market.InflationRate / 100m, year - 1);
+                var taxSaved = TaxDeductions.TaxSavedByInterest(household, TaxDeductions.DeductibleInterest(interestThisYear, balanceAtYearStart), priceLevel);
                 totalTaxSaved += taxSaved;
                 cash += taxSaved;
                 accounts.AddRetirement(household.AnnualEsopContribution);
@@ -120,11 +121,11 @@ public sealed class StrategySimulator : IStrategySimulator
 
             if (balance == 0 && payoffMonth is null)
                 payoffMonth = month;
-            if (crossoverMonth is null && accounts.AfterTaxValue(household) >= balance)
+            if (crossoverMonth is null && accounts.AfterTaxValue(household) + esppSaved >= balance)
                 crossoverMonth = month;
             if (isYearEnd)
             {
-                years.Add(YearEnd(inputs, year, balance, accounts));
+                years.Add(YearEnd(inputs, year, balance, accounts, esppSaved));
                 balanceAtYearStart = balance;
             }
         }
@@ -140,10 +141,11 @@ public sealed class StrategySimulator : IStrategySimulator
             crossoverMonth is { } crossed and > 0 ? loan.DueDateOf(crossed) : null);
     }
 
-    private static NetWorthYear YearEnd(StrategyInputs inputs, int year, decimal balance, InvestmentAccounts accounts)
+    // esppSaved: payroll savings waiting in the ESPP for the next purchase are still the household's money.
+    private static NetWorthYear YearEnd(StrategyInputs inputs, int year, decimal balance, InvestmentAccounts accounts, decimal esppSaved)
     {
         var homeValue = Growth.Compound(inputs.HomeValue, inputs.HomeGrowthRate, year);
-        var investments = accounts.AfterTaxValue(inputs.Household);
+        var investments = accounts.AfterTaxValue(inputs.Household) + esppSaved;
         var netWorth = homeValue - balance + investments;
         var inflation = DecimalMath.Pow(1 + inputs.Market.InflationRate / 100m, year);
         return new NetWorthYear(year, homeValue, balance, investments, netWorth, Money.Round(netWorth / inflation));

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { formatMonths } from '../../../core/formatting/duration';
 import { MarketScenario, PayoffStrategy, STRATEGIES, StrategyComparison } from '../../../core/models/strategy.models';
 import { CrossoverChartComponent } from '../strategy-charts/crossover-chart.component';
 import { NetWorthChartComponent, NetWorthView } from '../strategy-charts/net-worth-chart.component';
@@ -10,9 +9,20 @@ export const MILESTONES = [5, 10, 15, 30] as const;
 
 const SCENARIOS: readonly MarketScenario[] = ['riskAdjusted', 'expected', 'badDecade'];
 
+/** The detail views, one shown at a time so the page stays readable. */
+export type DetailTab = 'overTime' | 'milestones' | 'crossover' | 'why';
+
+export const DETAIL_TABS: readonly { value: DetailTab; label: string }[] = [
+  { value: 'overTime', label: 'Over time' },
+  { value: 'milestones', label: 'Milestones' },
+  { value: 'crossover', label: 'Debt vs. investments' },
+  { value: 'why', label: 'Why' },
+];
+
 /**
- * Presentational: the recommended path first, in plain words and with what could reverse it; then each
- * strategy, net worth over time, the milestones, debt against wealth, and the reasons behind the answer.
+ * Presentational: the answer first (the recommended path, and what could reverse it), then one card per
+ * strategy, then the details behind tabs: the difference over time, the milestones, debt against
+ * investments, and the reasons.
  */
 @Component({
   selector: 'app-strategy-results',
@@ -25,8 +35,11 @@ export class StrategyResultsComponent {
   /** The comparison to show. */
   readonly result = input.required<StrategyComparison>();
 
-  /** The market path the charts, cards and table show. Strategies are ranked on the risk-adjusted one. */
+  /** The market path the cards, charts and table show. Strategies are ranked on the risk-adjusted one. */
   readonly scenario = signal<MarketScenario>('riskAdjusted');
+
+  /** The detail view shown. */
+  readonly tab = signal<DetailTab>('overTime');
 
   /** True to show net worth in today's dollars. */
   readonly todaysDollars = signal(false);
@@ -37,29 +50,25 @@ export class StrategyResultsComponent {
    */
   readonly view = signal<NetWorthView>('gap');
 
+  /** The strategy the debt-vs-investments chart shows; follows the recommendation until the user picks another. */
+  readonly crossoverStrategy = linkedSignal<PayoffStrategy>(() => this.result().recommended);
+
+  protected readonly tabs = DETAIL_TABS;
   protected readonly views: readonly { value: NetWorthView; label: string }[] = [
     { value: 'gap', label: 'Difference' },
     { value: 'total', label: 'Net worth' },
   ];
-
-  /** The strategy the debt-vs-wealth chart shows; follows the recommendation until the user picks another. */
-  readonly crossoverStrategy = linkedSignal<PayoffStrategy>(() => this.result().recommended);
-
-  protected readonly scenarios = SCENARIOS;
   protected readonly milestones = MILESTONES;
   protected readonly strategies = STRATEGIES;
   protected readonly usd = usd;
   protected readonly signedUsd = signedUsd;
-  protected readonly pct = pct;
-  protected readonly monthOf = monthOf;
-  protected readonly months = formatMonths;
 
   readonly recommendation = computed(() => recommendation(this.result()));
   readonly facts = computed(() => facts(this.result()));
   readonly closeness = computed(() => closeness(this.result()));
   readonly scenarioLabels = computed(() => SCENARIOS.map((s) => ({ value: s, label: scenarioLabel(this.result(), s) })));
 
-  /** One card per strategy, in the chosen scenario, with how far each is behind the leader. */
+  /** One card per strategy, in the chosen scenario, led by how far each ends behind the leader. */
   readonly cards = computed(() => {
     const result = this.result();
     const scenario = this.scenario();
@@ -75,16 +84,15 @@ export class StrategyResultsComponent {
         split: o.investPercent === 0 ? 'All extra cash to the mortgage'
           : o.investPercent === 100 ? 'All extra cash invested'
             : `${pct(o.investPercent)} invested, ${pct(100 - o.investPercent)} to the mortgage`,
-        netWorth: finals[i],
         leads: Math.round(behind) === 0,
         standing: Math.round(behind) === 0 ? 'Highest after 30 years' : `${usd(behind)} behind ${STRATEGIES[leader].short}`,
-        payoff: projection.payoffDate ? `Mortgage-free ${monthOf(projection.payoffDate)}` : 'Mortgage still owed after 30 years',
-        interest: projection.totalInterest,
+        netWorth: finals[i],
+        payoff: projection.payoffDate ? `mortgage-free ${monthOf(projection.payoffDate)}` : 'mortgage still owed at year 30',
       };
     });
   });
 
-  /** Net worth at each milestone year, per strategy: the best of each row marked, and each one's difference from paying off first. */
+  /** Net worth at each milestone year: the best of each row marked, and each value's difference from paying off first. */
   readonly milestoneRows = computed(() => {
     const result = this.result();
     const scenario = this.scenario();
@@ -99,22 +107,10 @@ export class StrategyResultsComponent {
     });
   });
 
-  /** Where each strategy's net worth sits after the last year: the home, what is still owed, and the investments. */
-  readonly breakdown = computed(() => {
-    const scenario = this.scenario();
-    const last = this.result().strategies.map((o) => o[scenario].years[o[scenario].years.length - 1]);
-    return [
-      { label: 'Home value', values: last.map((y) => y.homeValue), total: false },
-      { label: 'Mortgage still owed', values: last.map((y) => y.mortgageBalance), total: false },
-      { label: 'Investments, after tax', values: last.map((y) => y.investments), total: false },
-      { label: 'Net worth', values: last.map((y) => y.netWorth), total: true },
-    ].map((row) => ({ ...row, same: row.values.every((v) => Math.round(v) === Math.round(row.values[0])) }));
-  });
-
-  /** The projection the debt-vs-wealth chart shows. */
+  /** The projection the debt-vs-investments chart shows. */
   readonly crossoverProjection = computed(() =>
     this.result().strategies.find((s) => s.strategy === this.crossoverStrategy())![this.scenario()]);
 
-  /** The sentence under the debt-vs-wealth chart. */
+  /** The sentence under the debt-vs-investments chart. */
   readonly crossoverNote = computed(() => crossover(this.crossoverStrategy(), this.crossoverProjection()));
 }

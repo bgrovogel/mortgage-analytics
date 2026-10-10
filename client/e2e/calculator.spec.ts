@@ -357,6 +357,17 @@ test.describe('On a phone', () => {
     expect(headline!.y, 'the headline sits above the form').toBeLessThan(form!.y);
   });
 
+  test('keeps the header to two short rows, with the page links on one line', async ({ calculator, page }) => {
+    await expect(calculator.headline, 'the page has loaded').toBeVisible();
+    const header = await page.locator('.app-header').boundingBox();
+    const links = page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: /Calculator|Refinance|History/ });
+    const tops = await links.evaluateAll((all) => all.map((a) => Math.round(a.getBoundingClientRect().top)));
+
+    expect(header!.height, 'the name and Sign in, then the page links: not four rows').toBeLessThan(110);
+    expect(new Set(tops).size, 'the page links share one line, which scrolls sideways').toBe(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), 'the page itself never scrolls sideways').toBeLessThanOrEqual(390);
+  });
+
   test('hides the summary bar while the headline numbers are on screen', async ({ calculator }) => {
     await expect(calculator.headline, 'the headline is in view at the top').toBeInViewport();
     await expect(calculator.summaryBar, 'so the bar would only repeat it').toBeHidden();

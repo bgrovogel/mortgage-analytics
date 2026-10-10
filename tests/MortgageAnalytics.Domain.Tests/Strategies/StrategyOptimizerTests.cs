@@ -55,7 +55,7 @@ public class StrategyOptimizerTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(hybrid.InvestPercent, Is.EqualTo(Typical.HybridInvestPercent), "6.8% after tax against a 6.5% mortgage: a little more invested than not");
+            Assert.That(hybrid.InvestPercent, Is.EqualTo(Typical.HybridInvestPercent), "8% tax-free in the IRA against a 6.5% mortgage: mostly invested");
             Assert.That(hybrid.RiskAdjusted.PayoffMonth, Is.EqualTo(Typical.Hybrid.PayoffMonth), "paid off between the other two");
             Assert.That(hybrid.RiskAdjusted.FinalNetWorth, Is.EqualTo(Typical.Hybrid.RiskAdjustedNetWorthAtYear30), "and ends between them too");
         });
@@ -71,7 +71,7 @@ public class StrategyOptimizerTests
             Assert.That(comparison.Recommended.Kind, Is.EqualTo(StrategyKind.InvestTheDifference), "at a risk-adjusted 8%, investing ends highest");
             Assert.That(comparison.RunnerUp.Kind, Is.EqualTo(StrategyKind.Hybrid), "the hybrid is next");
             Assert.That(comparison.Lead, Is.EqualTo(Typical.InvestTheDifference.RiskAdjustedNetWorthAtYear30 - Typical.Hybrid.RiskAdjustedNetWorthAtYear30), "by this much");
-            Assert.That(comparison.LeadPercent, Is.EqualTo(1.6m), "a small edge, as a percentage of the runner-up");
+            Assert.That(comparison.LeadPercent, Is.EqualTo(0.5m), "a small edge, as a percentage of the runner-up");
             Assert.That(comparison.WinnerIn(MarketScenarioKind.BadDecade).Kind, Is.EqualTo(StrategyKind.PayOffFirst),
                 "a lost decade first, and the guaranteed return of paying off wins");
             Assert.That(Outcome(comparison, StrategyKind.PayOffFirst).BadDecade.FinalNetWorth, Is.EqualTo(Typical.PayOffFirst.BadDecadeNetWorthAtYear30), "pay off first, bad decade");
@@ -109,14 +109,14 @@ public class StrategyOptimizerTests
     [Test]
     public void StockThatArrivesAnyway_SendsTheHybridsExtraCashToTheMortgage()
     {
-        var comparison = Optimizer.Compare(TypicalInputs(annualRsuVesting: 30_000m, annualEsopContribution: 5_000m));
+        var comparison = Optimizer.Compare(TypicalInputs(annualRsuVesting: 50_000m, annualEsopContribution: 5_000m));
         var payOff = Outcome(comparison, StrategyKind.PayOffFirst);
         var hybrid = Outcome(comparison, StrategyKind.Hybrid);
 
         Assert.Multiple(() =>
         {
-            Assert.That(comparison.Rates.AutomaticAnnualStock, Is.EqualTo(35_000m), "RSUs kept as shares plus the ESOP");
-            Assert.That(hybrid.InvestPercent, Is.EqualTo(StockHeavy.HybridInvestPercent), "already more in stock than the hybrid's 58% target");
+            Assert.That(comparison.Rates.AutomaticAnnualStock, Is.EqualTo(55_000m), "RSUs kept as shares plus the ESOP");
+            Assert.That(hybrid.InvestPercent, Is.EqualTo(StockHeavy.HybridInvestPercent), "already more in stock than the hybrid's 88% target");
             Assert.That(hybrid.RiskAdjusted.FinalNetWorth, Is.EqualTo(payOff.RiskAdjusted.FinalNetWorth), "so the hybrid becomes paying off first");
             Assert.That(payOff.RiskAdjusted.FinalNetWorth, Is.EqualTo(StockHeavy.PayOffFirstRiskAdjustedNetWorthAtYear30), "the RSUs and ESOP grow in every strategy");
             Assert.That(payOff.RiskAdjusted.Years[30].Investments, Is.EqualTo(StockHeavy.PayOffFirstRiskAdjustedInvestmentsAtYear30), "investments, after tax");
@@ -132,7 +132,8 @@ public class StrategyOptimizerTests
         Assert.Multiple(() =>
         {
             Assert.That(sold.Rates.AutomaticAnnualStock, Is.Zero, "sold RSUs are not stock held");
-            Assert.That(sold.Rates.HybridInvestPercent, Is.EqualTo(Typical.HybridInvestPercent), "so the hybrid keeps its rate-based split");
+            Assert.That(sold.Rates.HybridInvestPercent, Is.EqualTo(sold.Rates.TargetInvestPercent), "so the hybrid keeps its rate-based split");
+            Assert.That(sold.Rates.IraShelteredPercent, Is.EqualTo(21m), "and only $7,500 of the $36,528 a year fits in the IRA");
             Assert.That(Outcome(sold, StrategyKind.PayOffFirst).RiskAdjusted.PayoffMonth, Is.LessThan(Outcome(kept, StrategyKind.PayOffFirst).RiskAdjusted.PayoffMonth!.Value),
                 "paying off first, the proceeds go on the mortgage");
         });

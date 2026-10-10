@@ -46,12 +46,20 @@ public static class TaxDeductions
     /// The tax the mortgage interest saves in a year: the tax on the part of itemized deductions above the
     /// standard deduction, but never more than the tax on the interest itself.
     /// </summary>
-    /// <param name="household">Filing status, tax rate and other itemized deductions.</param>
+    /// <remarks>
+    /// The standard deduction is indexed to inflation by law, and the other deductions (property and state
+    /// taxes, charity) tend to rise with prices too, so both grow by <paramref name="priceLevel"/>. Mortgage
+    /// interest does not: it falls as the balance does. Over the years, then, the interest deduction is worth less.
+    /// </remarks>
+    /// <param name="household">Filing status, tax rate and other itemized deductions (in today's dollars).</param>
     /// <param name="deductibleInterest">Deductible mortgage interest for the year.</param>
+    /// <param name="priceLevel">Prices relative to today: 1 in the first year, (1 + inflation)ⁿ⁻¹ in year n.</param>
     /// <returns>Zero when taking the standard deduction is better.</returns>
-    public static decimal TaxSavedByInterest(Household household, decimal deductibleInterest)
+    public static decimal TaxSavedByInterest(Household household, decimal deductibleInterest, decimal priceLevel = 1m)
     {
-        var aboveStandard = household.OtherItemizedDeductions + deductibleInterest - StandardDeduction(household.FilingStatus);
+        var standard = Money.Round(StandardDeduction(household.FilingStatus) * priceLevel);
+        var other = Money.Round(household.OtherItemizedDeductions * priceLevel);
+        var aboveStandard = other + deductibleInterest - standard;
         var deducted = Math.Clamp(aboveStandard, 0m, deductibleInterest);
         return Money.Round(deducted * household.MarginalTaxRate / 100m);
     }

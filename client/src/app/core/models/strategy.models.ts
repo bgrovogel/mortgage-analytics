@@ -54,6 +54,8 @@ export interface StrategyRates {
   expectedReturn: number;
   riskMargin: number;
   riskAdjustedReturn: number;
+  iraShelteredPercent: number;
+  taxableAfterTaxReturn: number;
   afterTaxRiskAdjustedReturn: number;
   rateEdge: number;
   badDecadeReturn: number;

@@ -58,6 +58,8 @@ public static class StrategyMapper
                 rates.ExpectedReturn,
                 rates.RiskMargin,
                 rates.RiskAdjustedReturn,
+                rates.IraShelteredPercent,
+                rates.TaxableAfterTaxReturn,
                 rates.AfterTaxRiskAdjustedReturn,
                 rates.RateEdge,
                 MarketScenario.BadDecadeAnnualReturn,

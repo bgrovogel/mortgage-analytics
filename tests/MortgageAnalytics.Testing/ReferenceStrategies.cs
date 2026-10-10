@@ -90,11 +90,14 @@ public static class ReferenceStrategies
         /// <summary>Interest in the first year.</summary>
         public const decimal FirstYearInterest = 19_354.15m;
 
-        /// <summary>The risk-adjusted return (10% − 2) after 15% capital gains tax.</summary>
-        public const decimal AfterTaxRiskAdjustedReturn = 6.8m;
+        /// <summary>The risk-adjusted return (10% − 2), untaxed: the $544 a month fits in the $7,500 IRA.</summary>
+        public const decimal AfterTaxRiskAdjustedReturn = 8m;
 
-        /// <summary>50 + 25 × (6.8 − 6.5) = 57.5, rounded.</summary>
-        public const decimal HybridInvestPercent = 58m;
+        /// <summary>8% for 25 years in a taxable account, taxed 15% on selling: about 7.41% a year (not 8 × 0.85 = 6.8).</summary>
+        public const decimal TaxableAfterTaxReturn = 7.41m;
+
+        /// <summary>50 + 25 × (8 − 6.5) = 87.5, rounded.</summary>
+        public const decimal HybridInvestPercent = 88m;
 
         /// <summary>Pay off first: paid off in month 186.</summary>
         public static class PayOffFirst
@@ -152,20 +155,20 @@ public static class ReferenceStrategies
             public const decimal RiskAdjustedInvestmentsAtYear30 = 2_430_325.74m;
         }
 
-        /// <summary>The hybrid: 58% invested, 42% to principal.</summary>
+        /// <summary>The hybrid: 88% invested, 12% to principal.</summary>
         public static class Hybrid
         {
             /// <summary>The month the mortgage is gone.</summary>
-            public const int PayoffMonth = 237;
+            public const int PayoffMonth = 278;
 
             /// <summary>Net worth after 30 years at the risk-adjusted return.</summary>
-            public const decimal RiskAdjustedNetWorthAtYear30 = 3_785_347.99m;
+            public const decimal RiskAdjustedNetWorthAtYear30 = 3_826_630.91m;
         }
     }
 
     /// <summary>
-    /// <see cref="TypicalInputs"/> plus $30,000 of RSUs kept as shares and a $5,000 ESOP contribution each year:
-    /// already plenty in stock, so the hybrid puts all extra cash on the mortgage.
+    /// <see cref="TypicalInputs"/> plus $50,000 of RSUs kept as shares and a $5,000 ESOP contribution each year:
+    /// more stock than the hybrid's 88% target of all new savings, so it puts all extra cash on the mortgage.
     /// </summary>
     public static class StockHeavy
     {
@@ -173,10 +176,10 @@ public static class ReferenceStrategies
         public const decimal HybridInvestPercent = 0m;
 
         /// <summary>Pay off first (and so the hybrid): net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 7_173_225.10m;
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 9_189_039.47m;
 
         /// <summary>Investments after 30 years, after tax, at the risk-adjusted return, paying off first.</summary>
-        public const decimal PayOffFirstRiskAdjustedInvestmentsAtYear30 = 5_758_769.75m;
+        public const decimal PayOffFirstRiskAdjustedInvestmentsAtYear30 = 7_774_584.12m;
     }
 
     /// <summary>
@@ -207,11 +210,11 @@ public static class ReferenceStrategies
         /// <summary>7% × (1 − 35%).</summary>
         public const decimal AfterTaxMortgageRate = 4.55m;
 
-        /// <summary>Tax saved over 30 years, investing the difference.</summary>
-        public const decimal InvestTheDifferenceTotalTaxSaved = 330_246.16m;
+        /// <summary>Tax saved over 30 years, investing the difference (the standard deduction rising 3% a year).</summary>
+        public const decimal InvestTheDifferenceTotalTaxSaved = 323_665.07m;
 
         /// <summary>Tax saved over 30 years, paying off first: less interest, so less to deduct.</summary>
-        public const decimal PayOffFirstTotalTaxSaved = 98_896.78m;
+        public const decimal PayOffFirstTotalTaxSaved = 98_256.31m;
     }
 
     /// <summary><see cref="TypicalInputs"/> with $2,000 a month and 10% of pay in a 15%-discount ESPP that buys every 6 months.</summary>

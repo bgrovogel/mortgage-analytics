@@ -141,9 +141,9 @@ public class StrategyRulesTests
 
     // ---- The hybrid's split ----
 
-    [TestCase(RiskProfile.Aggressive, 100, TestName = "Aggressive: 8.5% after tax beats 6.5% by 2 points, all invested")]
-    [TestCase(RiskProfile.Balanced, 58, TestName = "Balanced: 6.8% against 6.5%, a little more invested")]
-    [TestCase(RiskProfile.Conservative, 15, TestName = "Conservative: 5.1% against 6.5%, mostly to the mortgage")]
+    [TestCase(RiskProfile.Aggressive, 100, TestName = "Aggressive: 10% tax-free in the IRA beats 6.5% by 3.5 points, all invested")]
+    [TestCase(RiskProfile.Balanced, 88, TestName = "Balanced: 8% against 6.5%, mostly invested")]
+    [TestCase(RiskProfile.Conservative, 38, TestName = "Conservative: 6% against 6.5%, mostly to the mortgage")]
     public void TheHybrid_LeansTowardWhicheverEarnsMore(RiskProfile profile, decimal expectedInvestPercent)
     {
         var inputs = TypicalInputs(riskProfile: profile);
@@ -158,8 +158,8 @@ public class StrategyRulesTests
         var inputs = TypicalInputs(annualEsopContribution: 2_000m);
         var rates = StrategyRates.For(inputs, MonthlyCashPlan.For(inputs));
 
-        // Target 58% of $8,528 of new savings is $4,946; the ESOP brings $2,000, so $2,946 of the $6,528 extra.
-        Assert.That(rates.HybridInvestPercent, Is.EqualTo(45m), "the ESOP counts toward the market's share");
+        // Target 88% of $8,528 of new savings is $7,505; the ESOP brings $2,000, so $5,505 of the $6,528 extra.
+        Assert.That(rates.HybridInvestPercent, Is.EqualTo(84m), "the ESOP counts toward the market's share");
     }
 
     [Test]
@@ -172,6 +172,44 @@ public class StrategyRulesTests
         {
             Assert.That(rates.DiscretionaryAnnualCash, Is.Zero, "nothing to split");
             Assert.That(rates.HybridInvestPercent, Is.EqualTo(rates.TargetInvestPercent), "so the split is just the target");
+        });
+    }
+
+    [Test]
+    public void ExtraCashThatFitsInTheIra_EarnsTheFullReturn_AndTheRestIsTaxedOnlyWhenSold()
+    {
+        var fits = StrategyRates.For(TypicalInputs(), MonthlyCashPlan.For(TypicalInputs()));
+        var bigger = TypicalInputs(monthlyCash: 3_000m);
+        var overflows = StrategyRates.For(bigger, MonthlyCashPlan.For(bigger));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(fits.IraShelteredPercent, Is.EqualTo(100m), "$6,528 a year fits in the $7,500 IRA");
+            Assert.That(fits.AfterTaxRiskAdjustedReturn, Is.EqualTo(8m), "so it keeps the whole 8%");
+            Assert.That(fits.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "a taxable account would keep 7.41%: tax is paid once, on selling");
+            Assert.That(overflows.IraShelteredPercent, Is.EqualTo(25m), "$7,500 of $30,528 a year fits in the IRA (24.6%)");
+            // 25% at 8% and 75% at 7.41% = 7.5575, rounded.
+            Assert.That(overflows.AfterTaxRiskAdjustedReturn, Is.EqualTo(7.56m), "a blend of the two");
+        });
+    }
+
+    [TestCase(8, 15, 25, 7.41, TestName = "8% for 25 years, 15% on the gain at the end")]
+    [TestCase(8, 15, 1, 6.8, TestName = "Sold after a year: the full 15% of the year's gain")]
+    [TestCase(8, 0, 25, 8, TestName = "No capital gains tax: the whole return")]
+    [TestCase(-1, 15, 25, -1, TestName = "A loss is not taxed")]
+    public void TaxedOnlyWhenSold_ATaxableAccountKeepsMoreTheLongerItIsHeld(decimal annualReturn, decimal rate, decimal years, decimal expected) =>
+        Assert.That(StrategyRates.ReturnKeptAfterSaleTax(annualReturn, rate, years), Is.EqualTo(expected), "((1 + r)ⁿ less the tax on the gain)^(1/n) − 1");
+
+    [Test]
+    public void TheStandardDeduction_RisesWithPrices_SoTheSameInterestSavesLessLater()
+    {
+        var household = Household(otherDeductions: 10_000m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(TaxDeductions.TaxSavedByInterest(household, 30_000m), Is.EqualTo(1_872m), "today: $7,800 above the $32,200 standard deduction, at 24%");
+            // Ten years of 3%: the standard deduction is $43,274.11 and the other deductions $13,439.16.
+            Assert.That(TaxDeductions.TaxSavedByInterest(household, 30_000m, 1.343916379m), Is.EqualTo(39.61m), "later: only $165.05 above it, at 24%");
         });
     }
 

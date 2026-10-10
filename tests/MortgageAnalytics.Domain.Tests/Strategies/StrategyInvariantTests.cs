@@ -76,6 +76,19 @@ public class StrategyInvariantTests
     }
 
     [Test]
+    public void EsppSavingsWaitingForAPurchase_StillCountAsYours()
+    {
+        // Buying every 5 months, a year end usually falls between purchases.
+        var inputs = TypicalInputs(monthlyCash: 2_000m, stockPurchasePlan: new StockPurchasePlan(10m, 15m, 5));
+        var year1 = Outcome(Optimizer.Compare(inputs), StrategyKind.InvestTheDifference).Expected.Years[1];
+        var withoutEspp = Outcome(Optimizer.Compare(TypicalInputs(monthlyCash: 1_000m)), StrategyKind.InvestTheDifference).Expected.Years[1];
+
+        // Year 1: two purchases (months 5 and 10) and $2,000 of months 11-12 still in the plan, all on top of the $1,000-a-month household.
+        Assert.That(year1.Investments - withoutEspp.Investments, Is.GreaterThan(12_000m),
+            "the $12,000 put in over the year is never missing, whether it has bought shares yet or not");
+    }
+
+    [Test]
     public void TheHomeValue_IsTheSameWhicheverStrategyIsChosen()
     {
         var comparison = Optimizer.Compare(TypicalInputs());

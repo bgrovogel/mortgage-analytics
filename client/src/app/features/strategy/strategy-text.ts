@@ -47,35 +47,30 @@ export function recommendation(result: StrategyComparison): Recommendation {
   const { rates } = result;
   const best = outcomeOf(result, result.recommended);
   const countingOn = rates.riskMargin > 0
-    ? `counting on ${pct(rates.riskAdjustedReturn)} a year: your ${pct(rates.expectedReturn)} expected return minus ${percent.format(rates.riskMargin)} points for risk`
-    : `counting on your full ${pct(rates.expectedReturn)} expected return`;
+    ? `counting on ${pct(rates.riskAdjustedReturn)} a year (your ${pct(rates.expectedReturn)} less ${percent.format(rates.riskMargin)} points for risk)`
+    : `counting on your full ${pct(rates.expectedReturn)} a year`;
   const detail = result.lead > 0
-    ? `${usd(result.lead)} more than ${nameOf(result.runnerUp)} after 30 years${result.leadPercent !== null ? ` (+${percent.format(result.leadPercent)}%)` : ''}, ${countingOn}.`
-    : `It ties with ${nameOf(result.runnerUp)} after 30 years, ${countingOn}; paying down debt carries no market risk, so it takes the tie.`;
+    ? `${usd(result.lead)} ahead of ${nameOf(result.runnerUp)} after 30 years, ${countingOn}.`
+    : `Tied with ${nameOf(result.runnerUp)} after 30 years, ${countingOn}. Paying down debt carries no market risk, so it takes the tie.`;
 
   const badWinner = result.badDecadeWinner;
-  const lostDecade = `a lost decade (${pct(rates.badDecadeReturn)} a year for ten years, like 2000–2009)`;
+  const lostDecade = `a lost decade (${pct(rates.badDecadeReturn)} a year, like 2000–2009)`;
   if (badWinner !== result.recommended) {
     const margin = finalNetWorth(outcomeOf(result, badWinner).badDecade) - finalNetWorth(best.badDecade);
     return {
       headline: nameOf(result.recommended),
       detail,
-      downside: `Not guaranteed: if the next ten years are ${lostDecade}, ${nameOf(badWinner)} comes out ahead by ${usd(margin)}.`,
+      downside: `Not guaranteed: after ${lostDecade}, ${nameOf(badWinner)} would win by ${usd(margin)}.`,
       reversible: true,
     };
   }
-  return {
-    headline: nameOf(result.recommended),
-    detail,
-    downside: `Even if the next ten years are ${lostDecade}, it still comes out ahead.`,
-    reversible: false,
-  };
+  return { headline: nameOf(result.recommended), detail, downside: `It stays ahead even after ${lostDecade}.`, reversible: false };
 }
 
 /**
- * Why the strategies end close together (or far apart). Most of a household's net worth (the home, the 401(k)
- * and match, the savings it already has) is the same whichever strategy it picks; only the extra cash, and the
- * payment once the mortgage is gone, go somewhere different. Without saying so, near-identical totals look wrong.
+ * Why the strategies end close together (or far apart). Most of a household's net worth (the home, the 401(k),
+ * the savings it already has) is the same whichever strategy it picks; only the extra cash, and the payment once
+ * the mortgage is gone, go somewhere different. Without saying so, near-identical totals look wrong.
  */
 export function closeness(result: StrategyComparison): string {
   const finals = result.strategies.map((o) => finalNetWorth(o.riskAdjusted));
@@ -84,12 +79,22 @@ export function closeness(result: StrategyComparison): string {
   const years = result.strategies[0].riskAdjusted.years;
   const { plan } = result;
   const same = `Most of your net worth is the same whichever you choose: the home (${usd(years[years.length - 1].homeValue)} by year 30), `
-    + 'your 401(k) and match, and the savings you already have.';
-  const differs = `Only the ${usd(plan.extraCash + plan.esppContribution)} a month left after the match, and the `
-    + `${usd(plan.mortgagePayment)} payment once the mortgage is gone, go somewhere different.`;
+    + `${plan.employerMatch > 0 ? 'your 401(k) and match' : 'your retirement savings'}, and what you have already saved.`;
+  const differs = `Only the ${usd(plan.extraCash + plan.esppContribution)} a month of extra cash, and the ${usd(plan.mortgagePayment)} `
+    + 'payment once the mortgage is gone, go somewhere different.';
   if (Math.round(spread) === 0) return `All three end the same. ${same} ${differs}`;
   const share = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format((spread / best) * 100);
   return `All three end within ${usd(spread)} (${share}%) of each other. ${same} ${differs}`;
+}
+
+/** What the invested extra cash keeps after tax: the IRA share tax-free, the rest taxed once, on selling. */
+function investingTaxLine(result: StrategyComparison): string {
+  const { rates } = result;
+  if (rates.iraShelteredPercent >= 100) return `Your extra cash fits in your IRA, so it grows tax-free: the full ${pct(rates.riskAdjustedReturn)}.`;
+  const taxed = `taxed only when sold, keeps about ${pct(rates.taxableAfterTaxReturn)} a year`;
+  if (rates.iraShelteredPercent <= 0) return `Invested cash goes to a taxable account: ${taxed}.`;
+  return `${pct(rates.iraShelteredPercent)} of your extra cash fits in your IRA, tax-free; the rest, ${taxed}. `
+    + `Together: ${pct(rates.afterTaxRiskAdjustedReturn)}.`;
 }
 
 /** The fact sheet: why the recommendation came out the way it did, one point per line. */
@@ -97,43 +102,35 @@ export function facts(result: StrategyComparison): string[] {
   const { rates, plan } = result;
   const lines: string[] = [];
 
-  lines.push(
-    `Paying down the mortgage earns ${pct(rates.afterTaxMortgageRate)} for certain${rates.interestIsDeducted ? ' after tax' : ''}. `
-    + `The market's ${pct(rates.expectedReturn)} is a long-run average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}`
-    + (rates.afterTaxRiskAdjustedReturn !== rates.riskAdjustedReturn ? `, about ${pct(rates.afterTaxRiskAdjustedReturn)} after capital gains tax.` : '.'),
-  );
+  lines.push(`Paying down the mortgage earns ${pct(rates.afterTaxMortgageRate)} for certain${rates.interestIsDeducted ? ' after tax' : ''}. `
+    + `The market's ${pct(rates.expectedReturn)} is an average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}.`);
 
-  if (rates.rateEdge > 0) lines.push(`That puts the market ${percent.format(rates.rateEdge)} points ahead after tax and risk, which favors investing.`);
-  else if (rates.rateEdge < 0) lines.push(`That puts the mortgage ${percent.format(-rates.rateEdge)} points ahead after tax and risk, which favors paying it down.`);
-  else lines.push('After tax and risk the two earn the same.');
+  const edge = rates.rateEdge > 0
+    ? `That leaves investing ${percent.format(rates.rateEdge)} points ahead.`
+    : rates.rateEdge < 0 ? `That leaves the mortgage ${percent.format(-rates.rateEdge)} points ahead.` : 'That leaves the two even.';
+  lines.push(`${investingTaxLine(result)} ${edge}`);
 
   lines.push(rates.interestIsDeducted
-    ? `Itemizing beats your ${usd(rates.standardDeduction)} standard deduction, so the ${usd(rates.firstYearInterest)} of interest in year 1 saves `
-      + `${usd(rates.firstYearTaxSaved)} in tax. Only deductions above the standard deduction save anything, and the break shrinks as the balance falls.`
-    : `Your ${usd(rates.firstYearInterest)} of interest in year 1 doesn't lift your deductions above the ${usd(rates.standardDeduction)} standard `
-      + `deduction, so it saves no tax: paying it down earns the full ${pct(rates.mortgageRate)}.`);
+    ? `Itemizing beats your ${usd(rates.standardDeduction)} standard deduction, so year-1 interest of ${usd(rates.firstYearInterest)} saves `
+      + `${usd(rates.firstYearTaxSaved)} in tax. That shrinks as the balance falls and the standard deduction rises with inflation.`
+    : `Your ${usd(rates.firstYearInterest)} of year-1 interest doesn't beat the ${usd(rates.standardDeduction)} standard deduction, `
+      + `so it saves no tax: paying it down earns the full ${pct(rates.mortgageRate)}.`);
 
   if (plan.employerMatch > 0) {
-    lines.push(`Every strategy first puts ${usd(plan.retirementContribution)} a month into your 401(k) to collect the full match: ${usd(plan.employerMatch)} `
-      + `a month free, an instant ${pct(rates.employerMatchPercent)} return no mortgage rate can beat. It costs ${usd(plan.retirementContributionCost)} `
-      + 'of take-home pay, since it goes in before tax.');
+    lines.push(`Every strategy first collects the full 401(k) match: ${usd(plan.employerMatch)} a month free for ${usd(plan.retirementContributionCost)} `
+      + `of take-home pay, an instant ${pct(rates.employerMatchPercent)} return no mortgage can beat.`);
   }
 
   if (plan.esppContribution > 0) {
-    lines.push(`Your ESPP buys stock at a discount and sells it right away: a ${pct(rates.esppGainPercent)} gain on each purchase before tax, `
-      + 'taken in every strategy. The proceeds join your extra cash.');
+    lines.push(`Every strategy takes the ESPP discount too: a ${pct(rates.esppGainPercent)} gain on each purchase, before tax.`);
   }
 
-  if (rates.automaticAnnualStock > 0) {
-    lines.push(`Your RSUs and ESOP already put ${usd(rates.automaticAnnualStock)} a year into stock. The hybrid counts that toward its `
-      + `${pct(rates.targetInvestPercent)} market share, so it invests ${pct(rates.hybridInvestPercent)} of your extra cash`
-      + (rates.hybridInvestPercent === 0 ? ' and puts all of it on the mortgage: the diversified choice.' : '.'));
-  } else {
-    lines.push(`The hybrid invests ${pct(rates.hybridInvestPercent)} of your extra ${usd(plan.extraCash)} a month and puts `
-      + `${pct(100 - rates.hybridInvestPercent)} on the mortgage.`);
-  }
+  lines.push(rates.automaticAnnualStock > 0
+    ? `RSUs and ESOP already put ${usd(rates.automaticAnnualStock)} a year into stock, which counts toward the hybrid's `
+      + `${pct(rates.targetInvestPercent)} market share. So it invests ${pct(rates.hybridInvestPercent)} of your extra cash`
+      + (rates.hybridInvestPercent === 0 ? ' and puts the rest on the mortgage: the diversified choice.' : ', and puts the rest on the mortgage.')
+    : `The hybrid invests ${pct(rates.hybridInvestPercent)} of your extra cash and puts ${pct(100 - rates.hybridInvestPercent)} on the mortgage.`);
 
-  lines.push(crossover(result.recommended, outcomeOf(result, result.recommended).riskAdjusted));
   return lines;
 }
 

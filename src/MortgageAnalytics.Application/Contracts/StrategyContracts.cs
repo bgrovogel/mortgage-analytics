@@ -196,7 +196,9 @@ public sealed record MonthlyCashPlanResponse(
 /// <param name="ExpectedReturn">The expected market return.</param>
 /// <param name="RiskMargin">Points taken off for the risk profile.</param>
 /// <param name="RiskAdjustedReturn">The expected return minus the margin: what strategies are ranked on.</param>
-/// <param name="AfterTaxRiskAdjustedReturn">The risk-adjusted return after capital gains tax.</param>
+/// <param name="IraShelteredPercent">The share of the extra cash that fits in the IRA, where it grows tax-free.</param>
+/// <param name="TaxableAfterTaxReturn">The risk-adjusted return a taxable account keeps a year, with the gains taxed once, on selling.</param>
+/// <param name="AfterTaxRiskAdjustedReturn">What invested extra cash keeps after tax: the IRA share untaxed, the rest taxed on selling.</param>
 /// <param name="RateEdge">The after-tax market return minus the after-tax mortgage rate, in points.</param>
 /// <param name="BadDecadeReturn">The yearly return during the bad decade.</param>
 /// <param name="EmployerMatchPercent">The match: an instant return of this much on every matched dollar.</param>
@@ -215,6 +217,8 @@ public sealed record StrategyRatesResponse(
     decimal ExpectedReturn,
     decimal RiskMargin,
     decimal RiskAdjustedReturn,
+    decimal IraShelteredPercent,
+    decimal TaxableAfterTaxReturn,
     decimal AfterTaxRiskAdjustedReturn,
     decimal RateEdge,
     decimal BadDecadeReturn,

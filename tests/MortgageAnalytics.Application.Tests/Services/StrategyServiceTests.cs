@@ -30,7 +30,7 @@ public class StrategyServiceTests
             Assert.That(response.Recommended, Is.EqualTo(PayoffStrategy.InvestTheDifference), "best at the risk-adjusted return");
             Assert.That(response.RunnerUp, Is.EqualTo(PayoffStrategy.Hybrid), "then the hybrid");
             Assert.That(response.Lead, Is.EqualTo(Typical.InvestTheDifference.RiskAdjustedNetWorthAtYear30 - Typical.Hybrid.RiskAdjustedNetWorthAtYear30), "by this much");
-            Assert.That(response.LeadPercent, Is.EqualTo(1.6m), "in percent");
+            Assert.That(response.LeadPercent, Is.EqualTo(0.5m), "in percent");
             Assert.That(response.ExpectedWinner, Is.EqualTo(PayoffStrategy.InvestTheDifference), "and at the expected return");
             Assert.That(response.BadDecadeWinner, Is.EqualTo(PayoffStrategy.PayOffFirst), "but a lost decade favors the guaranteed return");
             Assert.That(response.Strategies.Select(s => s.Strategy), Is.EqualTo(new[] { PayoffStrategy.PayOffFirst, PayoffStrategy.InvestTheDifference, PayoffStrategy.Hybrid }), "in a fixed order");
@@ -49,8 +49,10 @@ public class StrategyServiceTests
             Assert.That(response.Plan.ExtraCash, Is.EqualTo(Typical.ExtraCash), "the extra cash");
             Assert.That(response.Rates.FirstYearInterest, Is.EqualTo(Typical.FirstYearInterest), "year-1 interest");
             Assert.That(response.Rates.StandardDeduction, Is.EqualTo(32_200m), "the joint standard deduction");
-            Assert.That(response.Rates.AfterTaxRiskAdjustedReturn, Is.EqualTo(Typical.AfterTaxRiskAdjustedReturn), "6.8%");
-            Assert.That(response.Rates.RateEdge, Is.EqualTo(0.3m), "0.3 points over the mortgage");
+            Assert.That(response.Rates.AfterTaxRiskAdjustedReturn, Is.EqualTo(Typical.AfterTaxRiskAdjustedReturn), "8%, in the IRA");
+            Assert.That(response.Rates.IraShelteredPercent, Is.EqualTo(100m), "all of it fits in the IRA");
+            Assert.That(response.Rates.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "what a taxable account would keep");
+            Assert.That(response.Rates.RateEdge, Is.EqualTo(1.5m), "1.5 points over the mortgage");
             Assert.That(response.Rates.BadDecadeReturn, Is.EqualTo(-1m), "the lost decade");
             Assert.That(response.Rates.EmployerMatchPercent, Is.EqualTo(50m), "a 50% instant return");
             Assert.That(response.Rates.EsppGainPercent, Is.Zero, "no ESPP");
@@ -94,7 +96,7 @@ public class StrategyServiceTests
         {
             MonthlyCashToPutToWork = 2_000m,
             EsppContributionPercent = 10m,
-            AnnualRsuVesting = 30_000m,
+            AnnualRsuVesting = 70_000m,
             SellRsusAtVest = false,
             AnnualEsopContribution = 5_000m,
         });
@@ -103,7 +105,7 @@ public class StrategyServiceTests
         {
             Assert.That(response.Plan.EsppContribution, Is.EqualTo(1_000m), "10% of pay into the ESPP");
             Assert.That(response.Rates.EsppGainPercent, Is.EqualTo(17.65m), "a 15% discount");
-            Assert.That(response.Rates.AutomaticAnnualStock, Is.EqualTo(35_000m), "RSUs kept and the ESOP");
+            Assert.That(response.Rates.AutomaticAnnualStock, Is.EqualTo(75_000m), "RSUs kept and the ESOP");
             Assert.That(response.Rates.HybridInvestPercent, Is.Zero, "plenty of stock already, so the hybrid pays down the mortgage");
         });
     }
