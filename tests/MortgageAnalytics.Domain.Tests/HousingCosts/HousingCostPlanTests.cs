@@ -1,88 +1,83 @@
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.HousingCosts;
-using MortgageAnalytics.Domain.Loans;
+using FivePercentDown = MortgageAnalytics.Testing.ReferenceLoans.FivePercentDown;
 
 namespace MortgageAnalytics.Domain.Tests.HousingCosts;
 
-/// <summary>Housing costs applied to real schedules. PMI timing values were cross-checked in Python.</summary>
+/// <summary>Housing costs applied to real schedules. PMI timing values come from <see cref="ReferenceLoans"/>.</summary>
 [TestFixture]
-public class HousingCostPlanTests
+public class HousingCostPlanTests : AmortizationTestBase
 {
-    // $250,000 home, 5% down: a $237,500 loan at 6.5% over 30 years.
-    private static readonly PropertyPurchase Purchase = new(250_000m, 12_500m);
-    private static readonly LoanTerms Loan = new(Purchase.LoanAmount, 6.5m, 360, new DateOnly(2026, 1, 1));
-    private readonly AmortizationCalculator _calculator = new();
-
     private static HousingCostPlan PmiOnly(MortgageInsuranceCancellation cancellation = MortgageInsuranceCancellation.Automatic) =>
-        new([new MortgageInsurance(0.5m, Purchase, cancellation)]);
+        new([new MortgageInsurance(FivePercentDown.PmiRate, A.FivePercentDownPurchase, cancellation)]);
 
-    private AmortizationSchedule Schedule(decimal monthlyExtra = 0m) =>
-        _calculator.Generate(
-            Loan,
+    /// <summary>The <see cref="FivePercentDown"/> loan, optionally with a monthly extra payment.</summary>
+    private AmortizationSchedule FivePercentDownSchedule(decimal monthlyExtra = 0m) =>
+        Calculator.Generate(
+            A.Loan(FivePercentDown.LoanAmount, FivePercentDown.AnnualInterestRate),
             monthlyExtra > 0 ? new ExtraPaymentPlan([new MonthlyExtraPayment(monthlyExtra)]) : ExtraPaymentPlan.None,
             RecastPolicy.Never);
 
     [Test]
     public void ApplyTo_ProducesOneBreakdownPerPayment()
     {
-        var schedule = Schedule();
+        var schedule = FivePercentDownSchedule();
 
         var costs = PmiOnly().ApplyTo(schedule);
 
-        Assert.That(costs.Periods, Has.Count.EqualTo(schedule.NumberOfPayments));
+        Assert.That(costs.Periods, Has.Count.EqualTo(schedule.NumberOfPayments), "every payment gets exactly one cost breakdown");
     }
 
     [Test]
     public void Pmi_StopsWhenTheBalanceReaches78Percent()
     {
-        var costs = PmiOnly().ApplyTo(Schedule());
+        var costs = PmiOnly().ApplyTo(FivePercentDownSchedule());
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(135));
-            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(13_359.60m));
-            Assert.That(costs.Periods[135][HousingCostCategory.MortgageInsurance], Is.Zero);
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.PmiLastPayment), "the last payment that opens above 78% of value");
+            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.PmiTotal), "135 months of $98.96");
+            Assert.That(costs.Periods[FivePercentDown.PmiLastPayment][HousingCostCategory.MortgageInsurance], Is.Zero, "and nothing the month after");
         });
     }
 
     [Test]
     public void Pmi_EndsSoonerWhenTheBorrowerRequestsRemovalAt80Percent()
     {
-        var costs = PmiOnly(MortgageInsuranceCancellation.BorrowerRequested).ApplyTo(Schedule());
+        var costs = PmiOnly(MortgageInsuranceCancellation.BorrowerRequested).ApplyTo(FivePercentDownSchedule());
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(124));
-            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(12_271.04m));
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.BorrowerRequestedPmiLastPayment), "80% is reached before 78%");
+            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.BorrowerRequestedPmiTotal), "fewer months of PMI");
         });
     }
 
     [Test]
     public void Pmi_EndsSoonerWithExtraPayments()
     {
-        var costs = PmiOnly().ApplyTo(Schedule(monthlyExtra: 300m));
+        var costs = PmiOnly().ApplyTo(FivePercentDownSchedule(monthlyExtra: 300m));
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(69));
-            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(6_828.24m));
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.PmiLastPaymentWith300Extra), "extra principal reaches the cancellation point sooner");
+            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.PmiTotalWith300Extra), "fewer months of PMI");
         });
     }
 
     [Test]
     public void Pmi_IsNeverChargedWithTwentyPercentDown()
     {
-        var purchase = new PropertyPurchase(250_000m, 50_000m);
-        var loan = new LoanTerms(purchase.LoanAmount, 6.5m, 360, new DateOnly(2026, 1, 1));
+        var purchase = new MortgageAnalytics.Domain.Loans.PropertyPurchase(250_000m, 50_000m);
         var plan = new HousingCostPlan([new MortgageInsurance(0.5m, purchase)]);
 
-        var costs = plan.ApplyTo(_calculator.Generate(loan, ExtraPaymentPlan.None, RecastPolicy.Never));
+        var costs = plan.ApplyTo(StandardSchedule(A.Loan(purchase.LoanAmount, 6.5m)));
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.MortgageInsuranceLastPayment, Is.Null);
-            Assert.That(costs.Totals.Total, Is.Zero);
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.Null, "there is no last PMI payment when there is no PMI");
+            Assert.That(costs.Totals.Total, Is.Zero, "no PMI is charged at all");
         });
     }
 
@@ -91,13 +86,13 @@ public class HousingCostPlanTests
     {
         var plan = new HousingCostPlan([new AnnualFixedCost(HousingCostCategory.HomeownersInsurance, 2_400m, annualIncreasePercent: 5m)]);
 
-        var costs = plan.ApplyTo(Schedule());
+        var costs = plan.ApplyTo(StandardSchedule(A.Loan()));
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.ByYear, Has.Count.EqualTo(30));
-            Assert.That(costs.ByYear[0][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_400m));
-            Assert.That(costs.ByYear[1][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_520m));
+            Assert.That(costs.ByYear, Has.Count.EqualTo(30), "a 30-year loan has 30 loan years");
+            Assert.That(costs.ByYear[0][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_400m), "year 1 is the starting premium");
+            Assert.That(costs.ByYear[1][HousingCostCategory.HomeownersInsurance], Is.EqualTo(2_520m), "year 2 is 5% higher");
         });
     }
 
@@ -106,24 +101,35 @@ public class HousingCostPlanTests
     {
         var plan = new HousingCostPlan([new MonthlyFixedCost(HousingCostCategory.HoaDues, 100m)]);
 
-        var costs = plan.ApplyTo(Schedule(monthlyExtra: 300m));
+        var costs = plan.ApplyTo(FivePercentDownSchedule(monthlyExtra: 300m));
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.ByYear, Has.Count.EqualTo((int)Math.Ceiling(costs.Periods.Count / 12.0)));
-            Assert.That(costs.ByYear.Sum(y => y.Total), Is.EqualTo(costs.Totals.Total));
+            Assert.That(costs.ByYear, Has.Count.EqualTo((costs.Periods.Count + 11) / 12), "a final partial year still gets a row");
+            Assert.That(costs.ByYear.Sum(y => y.Total), Is.EqualTo(costs.Totals.Total), "the yearly rows add up to the lifetime total");
         });
     }
 
     [Test]
     public void None_ChargesNothing()
     {
-        var costs = HousingCostPlan.None.ApplyTo(Schedule());
+        var costs = HousingCostPlan.None.ApplyTo(StandardSchedule(A.Loan()));
 
         Assert.Multiple(() =>
         {
-            Assert.That(HousingCostPlan.None.IsEmpty, Is.True);
-            Assert.That(costs.Totals.Total, Is.Zero);
+            Assert.That(HousingCostPlan.None.IsEmpty, Is.True, "the None plan holds no costs");
+            Assert.That(costs.Totals.Total, Is.Zero, "and charges nothing");
         });
+    }
+
+    [Test]
+    public void Schedule_RejectsBreakdownsThatDoNotMatchThePayments()
+    {
+        var schedule = StandardSchedule(A.Loan(1_000m, 0m, 2));
+
+        DomainAssert.Rejects(
+            () => new HousingCostSchedule(schedule, [HousingCostBreakdown.Empty]),
+            "exactly one cost breakdown per payment",
+            "costs must line up one-to-one with payments");
     }
 }

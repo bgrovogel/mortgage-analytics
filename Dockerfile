@@ -12,7 +12,7 @@ RUN npx ng build --configuration production
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS api
 WORKDIR /src
 # Restore first, in its own layer, so code edits don't invalidate the package cache.
-COPY Directory.Build.props .editorconfig ./
+COPY Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/MortgageAnalytics.Domain/*.csproj src/MortgageAnalytics.Domain/
 COPY src/MortgageAnalytics.Application/*.csproj src/MortgageAnalytics.Application/
 COPY src/MortgageAnalytics.Api/*.csproj src/MortgageAnalytics.Api/

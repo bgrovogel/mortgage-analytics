@@ -7,16 +7,19 @@ public class LoanTermsTests
 {
     private static readonly DateOnly FirstPayment = new(2026, 1, 1);
 
-    [TestCase(0, 6, 360, TestName = "Zero principal")]
-    [TestCase(-1, 6, 360, TestName = "Negative principal")]
-    [TestCase(100_000_000.01, 6, 360, TestName = "Principal above maximum")]
-    [TestCase(200_000, -0.01, 360, TestName = "Negative rate")]
-    [TestCase(200_000, 30.01, 360, TestName = "Rate above maximum")]
-    [TestCase(200_000, 6, 0, TestName = "Zero term")]
-    [TestCase(200_000, 6, 601, TestName = "Term above maximum")]
-    public void Constructor_InvalidTerms_Throws(decimal principal, decimal rate, int months)
+    [TestCase(0, 6, 360, "Principal", TestName = "Zero principal")]
+    [TestCase(-1, 6, 360, "Principal", TestName = "Negative principal")]
+    [TestCase(100_000_000.01, 6, 360, "Principal", TestName = "Principal above maximum")]
+    [TestCase(200_000, -0.01, 360, "interest rate", TestName = "Negative rate")]
+    [TestCase(200_000, 30.01, 360, "interest rate", TestName = "Rate above maximum")]
+    [TestCase(200_000, 6, 0, "Term", TestName = "Zero term")]
+    [TestCase(200_000, 6, 601, "Term", TestName = "Term above maximum")]
+    public void Constructor_InvalidTerms_AreRejectedByTheMatchingGuard(decimal principal, decimal rate, int months, string guard)
     {
-        Assert.Throws<DomainValidationException>(() => _ = new LoanTerms(principal, rate, months, FirstPayment));
+        DomainAssert.Rejects(
+            () => new LoanTerms(principal, rate, months, FirstPayment),
+            guard,
+            $"the {guard} guard must reject an out-of-range value");
     }
 
     [TestCase(0.01, 6, 360, TestName = "Boundary: one-cent principal is allowed")]
@@ -27,7 +30,7 @@ public class LoanTermsTests
     [TestCase(200_000, 6, 600, TestName = "Boundary: 50-year term is allowed")]
     public void Constructor_BoundaryValues_AreAccepted(decimal principal, decimal rate, int months)
     {
-        Assert.DoesNotThrow(() => _ = new LoanTerms(principal, rate, months, FirstPayment));
+        DomainAssert.Accepts(() => new LoanTerms(principal, rate, months, FirstPayment), "boundary values are inside the supported range");
     }
 
     [Test]
@@ -35,7 +38,7 @@ public class LoanTermsTests
     {
         var loan = new LoanTerms(100_000m, 6m, 360, FirstPayment);
 
-        Assert.That(loan.MonthlyRate, Is.EqualTo(0.005m));
+        Assert.That(loan.MonthlyRate, Is.EqualTo(0.005m), "6% a year is 0.5% a month, as a fraction");
     }
 
     [Test]
@@ -45,9 +48,9 @@ public class LoanTermsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(loan.DueDateOf(1), Is.EqualTo(new DateOnly(2026, 1, 31)));
-            Assert.That(loan.DueDateOf(2), Is.EqualTo(new DateOnly(2026, 2, 28)));
-            Assert.That(loan.DueDateOf(13), Is.EqualTo(new DateOnly(2027, 1, 31)));
+            Assert.That(loan.DueDateOf(1), Is.EqualTo(new DateOnly(2026, 1, 31)), "payment 1 is due on the first payment date");
+            Assert.That(loan.DueDateOf(2), Is.EqualTo(new DateOnly(2026, 2, 28)), "a 31st due date falls on the last day of February");
+            Assert.That(loan.DueDateOf(13), Is.EqualTo(new DateOnly(2027, 1, 31)), "payment 13 is exactly a year after payment 1");
         });
     }
 }

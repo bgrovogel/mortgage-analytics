@@ -1,4 +1,5 @@
 using MortgageAnalytics.Domain.HousingCosts;
+using static MortgageAnalytics.Domain.Tests.HousingCosts.HousingCostTestData;
 
 namespace MortgageAnalytics.Domain.Tests.HousingCosts;
 
@@ -6,8 +7,6 @@ namespace MortgageAnalytics.Domain.Tests.HousingCosts;
 [TestFixture]
 public class SeniorTaxReliefTests
 {
-    private static readonly TaxExemption TexasSchoolHomestead = new(amount: 140_000m);
-
     /// <summary>A $300,000 home at a 1% school rate, with optional growth capped at 10% a year.</summary>
     private static ValueBasedTax SchoolTax(SeniorTaxRelief? relief, decimal growthPercent = 0m) =>
         new(
@@ -20,48 +19,38 @@ public class SeniorTaxReliefTests
     [Test]
     public void ExtraExemption_StacksOnTheRegularHomesteadExemption()
     {
-        // ($300,000 - $140,000 - $60,000) x 1% = $1,000.
         var tax = SchoolTax(new SeniorTaxRelief(startsInYear: 0, additionalExemption: 60_000m, hasTaxCeiling: false));
 
-        Assert.That(tax.AnnualAmountInYear(0), Is.EqualTo(1_000m));
+        Assert.That(tax.AnnualAmountInYear(0), Is.EqualTo(1_000m), "($300,000 - $140,000 - $60,000) x 1%");
     }
 
-    [Test]
-    public void Ceiling_FreezesTheTaxWhileValuesRise()
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(29)]
+    public void Ceiling_FreezesTheTaxWhileValuesRise(int year)
     {
-        // Value +10% a year. Without the ceiling, year 2 would be ($330,000 - $200,000) x 1% = $1,300.
         var tax = SchoolTax(new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true), growthPercent: 10m);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(tax.AnnualAmountInYear(0), Is.EqualTo(1_000m));
-            Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(1_000m));
-            Assert.That(tax.AnnualAmountInYear(29), Is.EqualTo(1_000m));
-        });
+        Assert.That(tax.AnnualAmountInYear(year), Is.EqualTo(1_000m), "values rise 10% a year, but the frozen tax never does");
     }
 
-    [Test]
-    public void Ceiling_IsSetInTheYearTheOwnerQualifies_NotAtPurchase()
+    [TestCase(0, 1_600, TestName = "Year 1, before qualifying: ($300,000 - $140,000) x 1%")]
+    [TestCase(1, 1_900, TestName = "Year 2, before qualifying: ($330,000 - $140,000) x 1%")]
+    [TestCase(2, 1_630, TestName = "Year 3, the ceiling year: ($363,000 - $200,000) x 1%")]
+    [TestCase(3, 1_630, TestName = "Year 4, frozen though the uncapped tax would be $1,993")]
+    public void Ceiling_IsSetInTheYearTheOwnerQualifies_NotAtPurchase(int year, decimal expected)
     {
-        // Values +10% a year; the owner turns 65 in year 3 (index 2).
         var tax = SchoolTax(new SeniorTaxRelief(startsInYear: 2, 60_000m, hasTaxCeiling: true), growthPercent: 10m);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(tax.AnnualAmountInYear(0), Is.EqualTo(1_600m), "($300,000 - $140,000) x 1%, before qualifying");
-            Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(1_900m), "($330,000 - $140,000) x 1%, before qualifying");
-            Assert.That(tax.AnnualAmountInYear(2), Is.EqualTo(1_630m), "($363,000 - $200,000) x 1%: the ceiling year");
-            Assert.That(tax.AnnualAmountInYear(3), Is.EqualTo(1_630m), "frozen, though the uncapped tax would be $1,993");
-        });
+        Assert.That(tax.AnnualAmountInYear(year), Is.EqualTo(expected), "the freeze starts in the qualifying year");
     }
 
     [Test]
     public void Ceiling_LetsTheTaxFallWhenValuesDrop()
     {
-        // Value -5% a year: year 2 is ($285,000 - $200,000) x 1% = $850, below the $1,000 ceiling.
         var tax = SchoolTax(new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true), growthPercent: -5m);
 
-        Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(850m));
+        Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(850m), "($285,000 - $200,000) x 1%, below the $1,000 ceiling");
     }
 
     [Test]
@@ -69,38 +58,51 @@ public class SeniorTaxReliefTests
     {
         var tax = SchoolTax(new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: false), growthPercent: 10m);
 
-        Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(1_300m));
+        Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(1_300m), "($330,000 - $200,000) x 1%: no freeze without a ceiling");
     }
 
     [Test]
     public void ExemptionLargerThanTheValue_MeansNoTax()
     {
         var tax = new ValueBasedTax(
-            HousingCostCategory.SchoolTax, new PropertyValuation(180_000m), 1m, TexasSchoolHomestead,
+            HousingCostCategory.SchoolTax, Flat(180_000m), 1m, TexasSchoolHomestead,
             new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true));
 
-        Assert.That(tax.AnnualAmountInYear(0), Is.Zero);
+        Assert.That(tax.AnnualAmountInYear(0), Is.Zero, "$200,000 of exemptions on a $180,000 home leaves nothing to tax");
+    }
+
+    [TestCase(0, false)]
+    [TestCase(2, false)]
+    [TestCase(3, true)]
+    public void AppliesIn_OnlyFromTheQualifyingYear(int year, bool expected)
+    {
+        var relief = new SeniorTaxRelief(startsInYear: 3, 60_000m, hasTaxCeiling: true);
+
+        Assert.That(relief.AppliesIn(year), Is.EqualTo(expected), "relief starts in loan year 3 (0-based) and continues");
     }
 
     [Test]
-    public void RejectsANegativeStartYearOrExemption()
+    public void ExposesWhatItWasCreatedWith()
     {
+        var relief = new SeniorTaxRelief(2, 60_000m, hasTaxCeiling: true);
+
         Assert.Multiple(() =>
         {
-            Assert.Throws<DomainValidationException>(() => _ = new SeniorTaxRelief(-1, 0m, true));
-            Assert.Throws<DomainValidationException>(() => _ = new SeniorTaxRelief(0, -1m, true));
+            Assert.That(relief.StartsInYear, Is.EqualTo(2), "the qualifying year");
+            Assert.That(relief.AdditionalExemption, Is.EqualTo(60_000m), "the extra exemption");
+            Assert.That(relief.HasTaxCeiling, Is.True, "whether a ceiling applies");
         });
     }
 
     [Test]
-    public void Plus_AddsToTheExemptionAmountAndKeepsThePercentage()
+    public void RejectsANegativeStartYear()
     {
-        var stacked = new TaxExemption(amount: 3_000m, percent: 20m).Plus(10_000m);
+        DomainAssert.Rejects(() => new SeniorTaxRelief(-1, 0m, true), "qualifying year", "relief cannot start before the loan");
+    }
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(stacked.Amount, Is.EqualTo(13_000m));
-            Assert.That(stacked.Percent, Is.EqualTo(20m));
-        });
+    [Test]
+    public void RejectsANegativeExemption()
+    {
+        DomainAssert.Rejects(() => new SeniorTaxRelief(0, -1m, true), "additional exemption", "an exemption cannot add value");
     }
 }

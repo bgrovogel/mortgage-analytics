@@ -1,4 +1,3 @@
-using FluentValidation.TestHelper;
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Validation;
 using MortgageAnalytics.Domain.HousingCosts;
@@ -6,60 +5,42 @@ using MortgageAnalytics.Domain.HousingCosts;
 namespace MortgageAnalytics.Application.Tests.Validation;
 
 [TestFixture]
-public class AmortizationRequestValidatorTests
+public class AmortizationRequestValidatorTests : ValidatorTestBase
 {
-    private readonly AmortizationRequestValidator _validator = new();
-
-    private static readonly AmortizationRequest Valid = new()
-    {
-        HomePrice = 375_000m,
-        DownPayment = 18_750m,
-        AnnualInterestRate = 6.5m,
-        TermInMonths = 360,
-    };
+    // ---------------------------------------------------------------------------------------
+    // Valid requests.
+    // ---------------------------------------------------------------------------------------
 
     [Test]
-    public void ValidRequest_HasNoErrors()
+    public void StandardRequest_IsValid()
     {
-        _validator.TestValidate(Valid).ShouldNotHaveAnyValidationErrors();
+        AssertValid(A.Request, "the reference loan is a normal, valid request");
     }
 
     [Test]
-    public void FullyPopulatedRequest_HasNoErrors()
+    public void FullyPopulatedRequest_IsValid()
     {
-        var request = Valid with
-        {
-            FirstPaymentDate = new DateOnly(2026, 11, 1),
-            Strategy = ExtraPaymentStrategy.Recast,
-            Recast = new RecastTermsRequest { MinimumLumpSum = 10_000m, Fee = 250m },
-            ExtraPayments = new ExtraPaymentsRequest
-            {
-                MonthlyAmount = 250m,
-                MonthlyStartingPaymentNumber = 6,
-                Annual = new AnnualExtraPaymentRequest(2_000m, 12),
-                LumpSums = [new LumpSumPaymentRequest(24, 10_000m)],
-            },
-            HousingCosts = new HousingCostsRequest
-            {
-                SchoolTaxRate = 1.0m,
-                PropertyTaxRate = 1.1m,
-                MudTaxRate = 0.85m,
-                IsHomestead = true,
-                SchoolHomesteadExemption = 140_000m,
-                LocalHomesteadExemptionPercent = 20m,
-                HomesteadAssessmentCap = 10m,
-                HomeValueGrowthRate = 3m,
-                InsuranceIncreaseRate = 5m,
-                HoaIncreaseRate = 3m,
-                Pid = new PidAssessmentRequest(1_200m, 20),
-                AnnualHomeownersInsurance = 2_400m,
-                MonthlyHoaDues = 75m,
-                PmiRate = 0.5m,
-                PmiCancellation = MortgageInsuranceCancellation.BorrowerRequested,
-            },
-        };
+        var request = A.Request
+            .FivePercentDown()
+            .WithRecast(10_000m, 250m)
+            .WithMonthlyExtra(250m, startingPaymentNumber: 6)
+            .WithAnnualExtra(2_000m)
+            .WithLumpSum(24, 10_000m)
+            .WithHousingCosts(c => c
+                .WithSchoolTax(1.0m).WithLocalTax(1.1m).WithMudTax(0.85m)
+                .AsHomestead(localExemptionPercent: 20m)
+                .WithOver65(qualifiesInYear: 5, localExemption: 5_000m, localTaxCeiling: true)
+                .WithHomeValueGrowth(3m).WithInsurance(2_400m, 5m).WithHoa(75m, 3m)
+                .WithPid(1_200m, 20)
+                .WithPmi(0.5m, MortgageInsuranceCancellation.BorrowerRequested));
 
-        _validator.TestValidate(request).ShouldNotHaveAnyValidationErrors();
+        AssertValid(request, "every optional section filled with sensible values must pass");
+    }
+
+    [Test]
+    public void ZeroDownPayment_IsAllowed()
+    {
+        AssertNoErrorFor(A.Request.WithDownPayment(0m), nameof(AmortizationRequest.DownPayment), "100% financing is a real product");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -71,39 +52,30 @@ public class AmortizationRequestValidatorTests
     [TestCase(375_000.001)]
     public void HomePrice_NonPositiveOrSubCent_IsRejected(decimal price)
     {
-        _validator.TestValidate(Valid with { HomePrice = price })
-            .ShouldHaveValidationErrorFor(r => r.HomePrice);
+        AssertInvalid(A.Request.WithHomePrice(price), nameof(AmortizationRequest.HomePrice), "the price must be a positive amount in whole cents");
     }
 
     [TestCase(-1, TestName = "Negative down payment")]
-    [TestCase(375_000, TestName = "Down payment equal to the price")]
-    [TestCase(400_000, TestName = "Down payment above the price")]
+    [TestCase(250_000, TestName = "Down payment equal to the price")]
+    [TestCase(300_000, TestName = "Down payment above the price")]
     public void DownPayment_NegativeOrCoveringThePrice_IsRejected(decimal down)
     {
-        _validator.TestValidate(Valid with { DownPayment = down })
-            .ShouldHaveValidationErrorFor(r => r.DownPayment);
-    }
-
-    [Test]
-    public void ZeroDownPayment_IsAllowed()
-    {
-        _validator.TestValidate(Valid with { DownPayment = 0m })
-            .ShouldNotHaveValidationErrorFor(r => r.DownPayment);
+        AssertInvalid(A.Request.WithDownPayment(down), nameof(AmortizationRequest.DownPayment), "there must be something left to borrow");
     }
 
     [Test]
     public void LoanAmountAboveTheMaximum_IsReportedOnTheDownPayment()
     {
-        _validator.TestValidate(Valid with { HomePrice = 200_000_000m, DownPayment = 0m })
-            .ShouldHaveValidationErrorFor(r => r.DownPayment);
+        var request = A.Request.WithHomePrice(200_000_000m).WithDownPayment(0m);
+
+        AssertInvalid(request, nameof(AmortizationRequest.DownPayment), "the down payment is what brings the loan under the maximum");
     }
 
     [TestCase(-0.1)]
     [TestCase(30.01)]
     public void InterestRate_OutOfRange_IsRejected(decimal rate)
     {
-        _validator.TestValidate(Valid with { AnnualInterestRate = rate })
-            .ShouldHaveValidationErrorFor(r => r.AnnualInterestRate);
+        AssertInvalid(A.Request.WithRate(rate), nameof(AmortizationRequest.AnnualInterestRate), "rates are limited to 0-30%");
     }
 
     [TestCase(0)]
@@ -111,37 +83,30 @@ public class AmortizationRequestValidatorTests
     [TestCase(601)]
     public void Term_OutOfRange_IsRejected(int months)
     {
-        _validator.TestValidate(Valid with { TermInMonths = months })
-            .ShouldHaveValidationErrorFor(r => r.TermInMonths);
+        AssertInvalid(A.Request.WithTermInMonths(months), nameof(AmortizationRequest.TermInMonths), "terms are limited to 1-600 months");
     }
 
     [Test]
     public void Strategy_UndefinedEnumValue_IsRejected()
     {
-        _validator.TestValidate(Valid with { Strategy = (ExtraPaymentStrategy)99 })
-            .ShouldHaveValidationErrorFor(r => r.Strategy);
+        AssertInvalid(A.Request.WithStrategy((ExtraPaymentStrategy)99), nameof(AmortizationRequest.Strategy), "only defined strategies are accepted");
     }
 
     [Test]
     public void FirstPaymentDate_TooFarInTheFuture_IsRejected()
     {
-        _validator.TestValidate(Valid with { FirstPaymentDate = DateOnly.MaxValue })
-            .ShouldHaveValidationErrorFor(r => r.FirstPaymentDate);
+        AssertInvalid(A.Request.WithFirstPaymentDate(DateOnly.MaxValue), nameof(AmortizationRequest.FirstPaymentDate), "600 months past this date would overflow DateOnly");
     }
 
     // ---------------------------------------------------------------------------------------
     // Recast terms.
     // ---------------------------------------------------------------------------------------
 
-    [Test]
-    public void RecastTerms_NegativeValues_AreRejected()
+    [TestCase("Recast.MinimumLumpSum")]
+    [TestCase("Recast.Fee")]
+    public void RecastTerms_NegativeValues_AreRejected(string path)
     {
-        var request = Valid with { Recast = new RecastTermsRequest { MinimumLumpSum = -1m, Fee = -1m } };
-
-        var result = _validator.TestValidate(request);
-
-        result.ShouldHaveValidationErrorFor("Recast.MinimumLumpSum");
-        result.ShouldHaveValidationErrorFor("Recast.Fee");
+        AssertInvalid(A.Request.WithRecast(minimumLumpSum: -1m, fee: -1m), path, "lender terms cannot be negative");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -151,55 +116,39 @@ public class AmortizationRequestValidatorTests
     [Test]
     public void NegativeMonthlyExtra_IsRejected()
     {
-        var request = Valid with { ExtraPayments = new ExtraPaymentsRequest { MonthlyAmount = -1m } };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("ExtraPayments.MonthlyAmount");
+        AssertInvalid(A.Request.WithMonthlyExtra(-1m), "ExtraPayments.MonthlyAmount", "a negative extra would add to the debt");
     }
 
     [Test]
-    public void ExtraPaymentLargerThanTheLoan_IsRejected()
+    public void ExtraPaymentLargerThanTheLoan_IsRejectedWithAClearMessage()
     {
-        // The loan is $375,000 - $18,750 = $356,250.
-        var request = Valid with
-        {
-            ExtraPayments = new ExtraPaymentsRequest { LumpSums = [new LumpSumPaymentRequest(12, 356_250.01m)] },
-        };
-
-        _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor("ExtraPayments.LumpSums[0].Amount")
-            .WithErrorMessage("'Amount' cannot exceed the loan amount.");
+        // The reference loan is $200,000.
+        AssertErrorMessage(
+            A.Request.WithLumpSum(12, 200_000.01m),
+            "ExtraPayments.LumpSums[0].Amount",
+            "'Amount' cannot exceed the loan amount.",
+            "an extra larger than the whole loan is always a mistake");
     }
 
     [Test]
     public void LumpSumOfZero_IsRejected()
     {
-        var request = Valid with { ExtraPayments = new ExtraPaymentsRequest { LumpSums = [new LumpSumPaymentRequest(12, 0m)] } };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("ExtraPayments.LumpSums[0].Amount");
+        AssertInvalid(A.Request.WithLumpSum(12, 0m), "ExtraPayments.LumpSums[0].Amount", "a lump sum must be a real payment");
     }
 
     [TestCase(0)]
     [TestCase(361)]
     public void LumpSumOutsideTheTerm_IsRejected(int paymentNumber)
     {
-        var request = Valid with
-        {
-            ExtraPayments = new ExtraPaymentsRequest { LumpSums = [new LumpSumPaymentRequest(paymentNumber, 1_000m)] },
-        };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("ExtraPayments.LumpSums[0].PaymentNumber");
+        AssertInvalid(A.Request.WithLumpSum(paymentNumber, 1_000m), "ExtraPayments.LumpSums[0].PaymentNumber", "a lump sum must land on a real payment");
     }
 
     [Test]
     public void AnnualExtraStartingAfterTheTerm_IsRejected()
     {
-        var request = Valid with
-        {
-            TermInMonths = 120,
-            ExtraPayments = new ExtraPaymentsRequest { Annual = new AnnualExtraPaymentRequest(1_000m, 121) },
-        };
+        var request = A.Request.WithTermInMonths(120).WithAnnualExtra(1_000m, firstPaymentNumber: 121);
 
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("ExtraPayments.Annual.FirstPaymentNumber");
+        AssertInvalid(request, "ExtraPayments.Annual.FirstPaymentNumber", "the first annual extra must fall within the term");
     }
 
     [Test]
@@ -209,94 +158,41 @@ public class AmortizationRequestValidatorTests
             .Select(n => new LumpSumPaymentRequest(n, 1m))
             .ToList();
 
-        var request = Valid with { ExtraPayments = new ExtraPaymentsRequest { LumpSums = lumpSums } };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("ExtraPayments.LumpSums");
+        AssertInvalid(A.Request.WithLumpSums(lumpSums), "ExtraPayments.LumpSums", "the number of lump sums is capped to bound the work per request");
     }
 
     // ---------------------------------------------------------------------------------------
     // Housing costs.
     // ---------------------------------------------------------------------------------------
 
-    [TestCase(nameof(HousingCostsRequest.PropertyTaxRate), 10.01)]
-    [TestCase(nameof(HousingCostsRequest.PropertyTaxRate), -0.01)]
-    [TestCase(nameof(HousingCostsRequest.MudTaxRate), 5.01)]
-    [TestCase(nameof(HousingCostsRequest.PmiRate), 5.01)]
-    [TestCase(nameof(HousingCostsRequest.AnnualHomeownersInsurance), -1)]
-    [TestCase(nameof(HousingCostsRequest.MonthlyHoaDues), 75.001)]
-    [TestCase(nameof(HousingCostsRequest.SchoolTaxRate), 10.01)]
-    [TestCase(nameof(HousingCostsRequest.LocalHomesteadExemptionPercent), 100.01)]
-    [TestCase(nameof(HousingCostsRequest.HomesteadAssessmentCap), -1)]
-    [TestCase(nameof(HousingCostsRequest.HomeValueGrowthRate), 25.01)]
-    [TestCase(nameof(HousingCostsRequest.HomeValueGrowthRate), -20.01)]
-    [TestCase(nameof(HousingCostsRequest.InsuranceIncreaseRate), 50.01)]
-    [TestCase(nameof(HousingCostsRequest.HoaIncreaseRate), -20.01)]
-    [TestCase(nameof(HousingCostsRequest.SchoolHomesteadExemption), -1)]
-    public void HousingCost_OutOfRangeOrSubCent_IsRejected(string property, decimal value)
+    private static IEnumerable<TestCaseData> InvalidHousingCosts()
     {
-        var costs = property switch
-        {
-            nameof(HousingCostsRequest.PropertyTaxRate) => new HousingCostsRequest { PropertyTaxRate = value },
-            nameof(HousingCostsRequest.MudTaxRate) => new HousingCostsRequest { MudTaxRate = value },
-            nameof(HousingCostsRequest.PmiRate) => new HousingCostsRequest { PmiRate = value },
-            nameof(HousingCostsRequest.AnnualHomeownersInsurance) => new HousingCostsRequest { AnnualHomeownersInsurance = value },
-            nameof(HousingCostsRequest.SchoolTaxRate) => new HousingCostsRequest { SchoolTaxRate = value },
-            nameof(HousingCostsRequest.LocalHomesteadExemptionPercent) => new HousingCostsRequest { LocalHomesteadExemptionPercent = value },
-            nameof(HousingCostsRequest.HomesteadAssessmentCap) => new HousingCostsRequest { HomesteadAssessmentCap = value },
-            nameof(HousingCostsRequest.HomeValueGrowthRate) => new HousingCostsRequest { HomeValueGrowthRate = value },
-            nameof(HousingCostsRequest.InsuranceIncreaseRate) => new HousingCostsRequest { InsuranceIncreaseRate = value },
-            nameof(HousingCostsRequest.HoaIncreaseRate) => new HousingCostsRequest { HoaIncreaseRate = value },
-            nameof(HousingCostsRequest.SchoolHomesteadExemption) => new HousingCostsRequest { SchoolHomesteadExemption = value },
-            _ => new HousingCostsRequest { MonthlyHoaDues = value },
-        };
+        TestCaseData Case(string path, Func<HousingCostsRequest, HousingCostsRequest> change) =>
+            new TestCaseData(change, $"HousingCosts.{path}").SetName($"{path} out of range");
 
-        _validator.TestValidate(Valid with { HousingCosts = costs })
-            .ShouldHaveValidationErrorFor($"HousingCosts.{property}");
+        yield return Case("SchoolTaxRate", c => c with { SchoolTaxRate = 10.01m });
+        yield return Case("PropertyTaxRate", c => c with { PropertyTaxRate = -0.01m });
+        yield return Case("MudTaxRate", c => c with { MudTaxRate = 5.01m });
+        yield return Case("PmiRate", c => c with { PmiRate = 5.01m });
+        yield return Case("AnnualHomeownersInsurance", c => c with { AnnualHomeownersInsurance = -1m });
+        yield return Case("MonthlyHoaDues", c => c with { MonthlyHoaDues = 75.001m });
+        yield return Case("SchoolHomesteadExemption", c => c with { SchoolHomesteadExemption = -1m });
+        yield return Case("LocalHomesteadExemptionPercent", c => c with { LocalHomesteadExemptionPercent = 100.01m });
+        yield return Case("HomesteadAssessmentCap", c => c with { HomesteadAssessmentCap = -1m });
+        yield return Case("HomeValueGrowthRate", c => c with { HomeValueGrowthRate = 25.01m });
+        yield return Case("InsuranceIncreaseRate", c => c with { InsuranceIncreaseRate = 50.01m });
+        yield return Case("HoaIncreaseRate", c => c with { HoaIncreaseRate = -20.01m });
+        yield return Case("PmiCancellation", c => c with { PmiCancellation = (MortgageInsuranceCancellation)7 });
+        yield return Case("Pid.AnnualAssessment", c => c with { Pid = new PidAssessmentRequest(-1m) });
+        yield return Case("Pid.RemainingYears", c => c with { Pid = new PidAssessmentRequest(1_200m, 51) });
+        yield return Case("Over65OrDisabled.QualifiesInYear", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = 0 } });
+        yield return Case("Over65OrDisabled.SchoolExemption", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { SchoolExemption = -1m } });
+        yield return Case("Over65OrDisabled.LocalExemption", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { LocalExemption = -1m } });
     }
 
-    [TestCase(0)]
-    [TestCase(51)]
-    public void PidRemainingYears_OutOfRange_IsRejected(int years)
+    [TestCaseSource(nameof(InvalidHousingCosts))]
+    public void HousingCost_OutOfRange_IsRejected(Func<HousingCostsRequest, HousingCostsRequest> change, string path)
     {
-        var request = Valid with { HousingCosts = new HousingCostsRequest { Pid = new PidAssessmentRequest(1_200m, years) } };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("HousingCosts.Pid.RemainingYears");
-    }
-
-    [TestCase(0)]
-    [TestCase(51)]
-    public void Over65QualifyingYear_OutsideTheTerm_IsRejected(int year)
-    {
-        var request = Valid with
-        {
-            HousingCosts = new HousingCostsRequest { Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = year } },
-        };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.QualifiesInYear");
-    }
-
-    [Test]
-    public void Over65Exemptions_Negative_AreRejected()
-    {
-        var request = Valid with
-        {
-            HousingCosts = new HousingCostsRequest
-            {
-                Over65OrDisabled = new Over65OrDisabledRequest { SchoolExemption = -1m, LocalExemption = -1m },
-            },
-        };
-
-        var result = _validator.TestValidate(request);
-
-        result.ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.SchoolExemption");
-        result.ShouldHaveValidationErrorFor("HousingCosts.Over65OrDisabled.LocalExemption");
-    }
-
-    [Test]
-    public void PmiCancellation_UndefinedEnumValue_IsRejected()
-    {
-        var request = Valid with { HousingCosts = new HousingCostsRequest { PmiCancellation = (MortgageInsuranceCancellation)7 } };
-
-        _validator.TestValidate(request).ShouldHaveValidationErrorFor("HousingCosts.PmiCancellation");
+        AssertInvalid(A.Request.WithHousingCosts(c => c.With(change)), path, "each housing-cost field has a sensible range");
     }
 }

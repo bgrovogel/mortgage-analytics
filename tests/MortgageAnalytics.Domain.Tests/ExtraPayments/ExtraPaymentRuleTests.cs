@@ -13,7 +13,7 @@ public class ExtraPaymentRuleTests
     {
         var rule = new MonthlyExtraPayment(100m, startingPaymentNumber: 3);
 
-        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected));
+        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), $"payment {paymentNumber} with a monthly extra starting at payment 3");
     }
 
     [TestCase(5, 0)]
@@ -26,20 +26,17 @@ public class ExtraPaymentRuleTests
     {
         var rule = new AnnualExtraPayment(1_000m, firstPaymentNumber: 6);
 
-        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected));
+        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), $"payment {paymentNumber} with an annual extra on payments 6, 18, 30, ...");
     }
 
-    [Test]
-    public void Annual_DefaultsToTheTwelfthPayment()
+    [TestCase(11, 0)]
+    [TestCase(12, 1_000)]
+    [TestCase(24, 1_000)]
+    public void Annual_DefaultsToTheTwelfthPayment(int paymentNumber, decimal expected)
     {
         var rule = new AnnualExtraPayment(1_000m);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(rule.AmountFor(11), Is.Zero);
-            Assert.That(rule.AmountFor(12), Is.EqualTo(1_000m));
-            Assert.That(rule.AmountFor(24), Is.EqualTo(1_000m));
-        });
+        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), "by default the annual extra lands on every 12th payment");
     }
 
     [TestCase(23, 0)]
@@ -49,22 +46,29 @@ public class ExtraPaymentRuleTests
     {
         var rule = new LumpSumExtraPayment(5_000m, paymentNumber: 24);
 
-        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected));
+        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), "a lump sum is paid once, with payment 24");
     }
 
-    [Test]
-    public void Rules_RejectNegativeAmountsAndPaymentNumbersBelowOne()
+    private static IEnumerable<TestCaseData> InvalidRules()
     {
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<DomainValidationException>(() => _ = new MonthlyExtraPayment(-1m));
-            Assert.Throws<DomainValidationException>(() => _ = new AnnualExtraPayment(100m, 0));
-            Assert.Throws<DomainValidationException>(() => _ = new LumpSumExtraPayment(100m, 0));
-        });
+        yield return new TestCaseData(new Func<object>(() => new MonthlyExtraPayment(-1m)), "cannot be negative").SetName("Monthly: negative amount");
+        yield return new TestCaseData(new Func<object>(() => new MonthlyExtraPayment(1m, 0)), "payment 1 or later").SetName("Monthly: starts before payment 1");
+        yield return new TestCaseData(new Func<object>(() => new AnnualExtraPayment(-1m)), "cannot be negative").SetName("Annual: negative amount");
+        yield return new TestCaseData(new Func<object>(() => new AnnualExtraPayment(100m, 0)), "payment 1 or later").SetName("Annual: starts before payment 1");
+        yield return new TestCaseData(new Func<object>(() => new LumpSumExtraPayment(-1m, 1)), "cannot be negative").SetName("Lump sum: negative amount");
+        yield return new TestCaseData(new Func<object>(() => new LumpSumExtraPayment(100m, 0)), "payment 1 or later").SetName("Lump sum: before payment 1");
     }
 
-    [Test]
-    public void Plan_SumsEveryRuleForAPayment()
+    [TestCaseSource(nameof(InvalidRules))]
+    public void Rules_RejectNegativeAmountsAndPaymentNumbersBelowOne(Func<object> create, string guard)
+    {
+        DomainAssert.Rejects(create, guard, "extra payments must be non-negative and start on a real payment");
+    }
+
+    [TestCase(1, 100)]
+    [TestCase(12, 6_100)]
+    [TestCase(24, 1_100)]
+    public void Plan_SumsEveryRuleForAPayment(int paymentNumber, decimal expected)
     {
         var plan = new ExtraPaymentPlan(
         [
@@ -73,12 +77,7 @@ public class ExtraPaymentRuleTests
             new LumpSumExtraPayment(5_000m, 12),
         ]);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(plan.AmountFor(1), Is.EqualTo(100m));
-            Assert.That(plan.AmountFor(12), Is.EqualTo(6_100m));
-            Assert.That(plan.AmountFor(24), Is.EqualTo(1_100m));
-        });
+        Assert.That(plan.AmountFor(paymentNumber), Is.EqualTo(expected), $"payment {paymentNumber}: monthly + any annual + any lump sum");
     }
 
     [Test]
@@ -86,7 +85,7 @@ public class ExtraPaymentRuleTests
     {
         var plan = new ExtraPaymentPlan([new MonthlyExtraPayment(10.005m)]);
 
-        Assert.That(plan.AmountFor(1), Is.EqualTo(10.01m));
+        Assert.That(plan.AmountFor(1), Is.EqualTo(10.01m), "extra principal is money, so it is rounded to cents half away from zero");
     }
 
     [Test]
@@ -94,8 +93,8 @@ public class ExtraPaymentRuleTests
     {
         Assert.Multiple(() =>
         {
-            Assert.That(ExtraPaymentPlan.None.IsEmpty, Is.True);
-            Assert.That(ExtraPaymentPlan.None.AmountFor(1), Is.Zero);
+            Assert.That(ExtraPaymentPlan.None.IsEmpty, Is.True, "the None plan holds no rules");
+            Assert.That(ExtraPaymentPlan.None.AmountFor(1), Is.Zero, "the None plan adds no extra principal");
         });
     }
 }

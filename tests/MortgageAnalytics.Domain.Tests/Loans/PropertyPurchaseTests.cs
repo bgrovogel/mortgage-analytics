@@ -16,24 +16,26 @@ public class PropertyPurchaseTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(purchase.LoanAmount, Is.EqualTo(expectedLoan));
-            Assert.That(purchase.DownPaymentPercent, Is.EqualTo(expectedDownPercent));
-            Assert.That(purchase.LoanToValuePercent, Is.EqualTo(expectedLtv));
+            Assert.That(purchase.LoanAmount, Is.EqualTo(expectedLoan), "the loan is the price minus the down payment");
+            Assert.That(purchase.DownPaymentPercent, Is.EqualTo(expectedDownPercent), "down payment as a percentage of the price");
+            Assert.That(purchase.LoanToValuePercent, Is.EqualTo(expectedLtv), "loan-to-value is 100% minus the down-payment percentage");
         });
     }
 
-    [TestCase(250_000, 50_000, false)]
-    [TestCase(250_000, 49_999.99, true)]
-    public void RequiresMortgageInsurance_WithLessThanTwentyPercentDown(decimal price, decimal down, bool expected)
+    [TestCase(250_000, 50_000, false, TestName = "Exactly 20% down: no PMI")]
+    [TestCase(250_000, 49_999.99, true, TestName = "One cent under 20% down: PMI required")]
+    public void RequiresMortgageInsurance_OnlyWithLessThanTwentyPercentDown(decimal price, decimal down, bool expected)
     {
-        Assert.That(new PropertyPurchase(price, down).RequiresMortgageInsurance, Is.EqualTo(expected));
+        var purchase = new PropertyPurchase(price, down);
+
+        Assert.That(purchase.RequiresMortgageInsurance, Is.EqualTo(expected), "conventional loans need PMI only above 80% loan-to-value");
     }
 
-    [TestCase(0, 0, TestName = "Zero price")]
-    [TestCase(300_000, -1, TestName = "Negative down payment")]
-    [TestCase(300_000, 300_000, TestName = "Down payment covers the whole price")]
-    public void RejectsPurchasesThatLeaveNoValidLoan(decimal price, decimal down)
+    [TestCase(0, 0, "Home price", TestName = "Zero price")]
+    [TestCase(300_000, -1, "cannot be negative", TestName = "Negative down payment")]
+    [TestCase(300_000, 300_000, "less than the home price", TestName = "Down payment covers the whole price")]
+    public void RejectsPurchasesThatLeaveNoValidLoan(decimal price, decimal down, string guard)
     {
-        Assert.Throws<DomainValidationException>(() => _ = new PropertyPurchase(price, down));
+        DomainAssert.Rejects(() => new PropertyPurchase(price, down), guard, "a purchase must leave a positive amount to borrow");
     }
 }

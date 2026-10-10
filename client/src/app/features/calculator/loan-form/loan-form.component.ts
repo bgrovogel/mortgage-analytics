@@ -50,7 +50,8 @@ export class LoanFormComponent implements OnInit {
     downPayment: [18_750, [Validators.required, Validators.min(0)]],
     annualInterestRate: [6.5, [Validators.required, Validators.min(0), Validators.max(MAX_RATE)]],
     termYears: [30, [Validators.required, Validators.min(1), Validators.max(MAX_YEARS)]],
-    firstPaymentDate: [firstOfNextMonth(), Validators.required],
+    // Optional: a blank date lets the API default to the first of next month.
+    firstPaymentDate: [firstOfNextMonth()],
 
     schoolTaxRate: [1.0, [Validators.min(0), Validators.max(10)]],
     propertyTaxRate: [1.1, [Validators.min(0), Validators.max(10)]],

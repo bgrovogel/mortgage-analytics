@@ -1,0 +1,28 @@
+<Project>
+  <!-- Inherit the solution-wide settings first. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!--
+    Every *.Tests project gets the same test stack (DRY): NUnit, NSubstitute, their analyzers,
+    coverage, and global usings. Individual test projects only add what is specific to them.
+  -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)coverage.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NUnit.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="NSubstitute.Analyzers.CSharp" PrivateAssets="all" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)MortgageAnalytics.Testing\MortgageAnalytics.Testing.csproj" />
+    <Using Include="NUnit.Framework" />
+    <Using Include="NSubstitute" />
+    <Using Include="MortgageAnalytics.Testing" />
+  </ItemGroup>
+</Project>

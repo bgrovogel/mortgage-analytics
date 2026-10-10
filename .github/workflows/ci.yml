@@ -5,27 +5,70 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  # Minimum line and branch coverage, in percent. Below this the build fails (test-first gate).
+  COVERAGE_THRESHOLD: 85
+
 jobs:
   backend:
-    name: .NET build & tests
+    name: .NET build, tests & coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 9.0.x
+      - run: dotnet tool restore
       - run: dotnet restore MortgageAnalytics.sln
       - run: dotnet build MortgageAnalytics.sln -c Release --no-restore
+      # Includes the convention tests, so a missing assertion message or Assert.Multiple fails the build.
       - run: dotnet test MortgageAnalytics.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+      - name: Coverage report
+        run: >
+          dotnet reportgenerator
+          -reports:"coverage/**/coverage.cobertura.xml"
+          -targetdir:coverage/report
+          "-reporttypes:JsonSummary;MarkdownSummaryGithub;Html"
+      - name: Publish coverage summary
+        run: cat coverage/report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Enforce coverage threshold
+        run: |
+          jq -r '.summary | "Lines \(.linecoverage)%  Branches \(.branchcoverage)%"' coverage/report/Summary.json
+          jq -e --argjson min "$COVERAGE_THRESHOLD" \
+            '.summary.linecoverage >= $min and .summary.branchcoverage >= $min' coverage/report/Summary.json \
+            || { echo "::error::Backend coverage is below ${COVERAGE_THRESHOLD}%"; exit 1; }
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          name: coverage
-          path: coverage
+          name: backend-coverage
+          path: coverage/report
+
+  frontend:
+    name: Angular unit tests & coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      # jest.config.js sets an 85% threshold on statements, branches, functions and lines.
+      - run: npm test -- --ci
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: frontend-coverage
+          path: client/coverage
 
   e2e:
     name: Angular build & Playwright E2E
     runs-on: ubuntu-latest
-    needs: backend
+    needs: [backend, frontend]
     defaults:
       run:
         working-directory: client

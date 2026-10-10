@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit: 263 tests across domain, application and in-memory API integration · Playwright: 16 full-stack E2E tests |
+| **Tests** | NUnit + NSubstitute: 340 backend tests · Jest: 76 Angular unit tests · Playwright: 16 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -74,11 +74,20 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 196 NUnit tests
+dotnet test                       # 340 NUnit tests, including the convention tests
 
 cd client
+npm test                          # 76 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 13 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 16 Playwright tests; starts the API and Angular for you
+```
+
+Backend coverage report (the same gate CI applies):
+
+```bash
+dotnet tool restore
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:coverage/report -reporttypes:Html
 ```
 
 ---
@@ -177,7 +186,12 @@ src/MortgageAnalytics.Domain/
                     HousingCostPlan (composite), HousingCostBreakdown, HousingCostSchedule (monthly + yearly)
 src/MortgageAnalytics.Application/   Contracts, validation, mapping, AmortizationService, DI wiring
 src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handling
-tests/   Domain (181) · Application (73) · Api.IntegrationTests (9)
+tests/
+  MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, TestClock
+  MortgageAnalytics.Conventions.Tests/  Roslyn checks that every test follows the assertion standards
+  MortgageAnalytics.Domain.Tests/   231 tests
+  MortgageAnalytics.Application.Tests/  89 tests (unit with NSubstitute, plus sociable scenarios)
+  MortgageAnalytics.Api.IntegrationTests/  16 tests (shared WebApplicationFactory fixture)
 client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
 ```
 
@@ -282,17 +296,32 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 ## Testing strategy
 
-| Layer | Tool | What it proves |
+| Layer | Tools | What it proves |
 |---|---|---|
-| Domain (181) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Each housing cost on its own. Exemptions (fixed, percentage, both, larger than the value). The appraisal cap in rising, slow and falling markets. Installments summing exactly. Over-65 exemption stacking, the ceiling set in the qualifying year, and taxes falling below the ceiling. PMI at 78% and 80%. Recast boundary, fee and event. Net savings excluding taxes. |
-| Application (73) | NUnit + FluentValidation.TestHelper | Every validation rule and boundary. Homestead on and off, and the school exemption not leaking into county/MUD tax. Over-65 relief, the school freeze versus rising county tax, local ceilings, and relief being ignored for non-homesteads. Yearly projection, the cap, and insurance and HOA increases. PMI end dates and savings. Recast defaults. Injected clock, including the December rollover. |
-| API integration (9) | NUnit + `WebApplicationFactory` | The real middleware pipeline: JSON binding (enums as strings), the validation filter, camelCase error keys, malformed bodies, the unknown-route 404, Swagger and health. |
-| End-to-end (16) | Playwright | Real browser and real API: the homestead toggle changing school tax, the over-65 freeze holding yearly costs flat, the projection charts and the cap, taxes adding to the payment but not to savings, PMI ending sooner, recast versus a lump sum below the minimum, the no-PMI case at 20% down, client-side validation, server errors, and recovery after a network failure. |
+| Domain (231) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
+| Application (89) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| API integration (16) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies. Error handling, with a substitute service that throws (422, 500 without leaking details, 400). Swagger, health, the 404 for unknown API routes. |
+| Conventions (4) | NUnit + Roslyn | The test standards themselves (below). |
+| Angular (76) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (16) | Playwright | Real browser and real API, through a page object. |
 
-The E2E suite uses a **page object** (`e2e/calculator.page.ts`), so selectors live in one place and
-the specs read as behavior.
+**Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
----
+### Test standards, enforced by the build
+
+These are checked by `MortgageAnalytics.Conventions.Tests`, which parses every test file with Roslyn and lists each violation as `file:line`:
+
+1. **Constraint model only:** `Assert.That(...)` and `Assert.Multiple(...)`; no classic asserts.
+2. **Every assertion has a message** explaining what a failure means.
+3. **More than one assertion in a method means `Assert.Multiple`**, so one run reports every failure.
+
+And by convention, supported by shared infrastructure:
+
+- **NSubstitute** for test doubles. There are no hand-rolled fakes, and the clock comes from `FakeTimeProvider`.
+- **Builders, not copy-paste:** `A.Request.FivePercentDown().WithMonthlyExtra(300).WithHousingCosts(c => c.AsHomestead())`.
+- **One source of expected values:** `ReferenceLoans`, independently computed in Python and shared by every layer.
+- **Base classes:** `AmortizationTestBase`, `ValidatorTestBase`, `AmortizationServiceTestBase` (unit), `SociableAnalysisTestBase`, and `ApiTestBase` with a `[SetUpFixture]` that shares one API host.
+- **Central package versions** (`Directory.Packages.props`) and one shared test stack (`tests/Directory.Build.props`).
 
 ## What I'd add next
 
@@ -302,4 +331,4 @@ the specs read as behavior.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
 - **Adjustable-rate (ARM) loans**: a rate-schedule strategy.
 - **Persistence**, to save and share scenarios. This would bring an Infrastructure project (EF Core).
-- **Mutation testing** (Stryker.NET) on the domain, and **Angular component tests** (Jest or Vitest).
+- **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

@@ -16,7 +16,7 @@ public class PaymentFormulaTests
     {
         var payment = PaymentFormula.MonthlyPayment(principal, annualRate / 100m / 12m, months);
 
-        Assert.That(payment, Is.EqualTo(expected));
+        Assert.That(payment, Is.EqualTo(expected), $"{principal:C} at {annualRate}% over {months} months");
     }
 
     [Test]
@@ -24,14 +24,17 @@ public class PaymentFormulaTests
     {
         var payment = PaymentFormula.MonthlyPayment(12_000m, 0.01m, 1);
 
-        Assert.That(payment, Is.EqualTo(12_120m));
+        Assert.That(payment, Is.EqualTo(12_120m), "a one-payment loan repays the principal plus one month of interest");
     }
 
     [TestCase(0)]
     [TestCase(-1)]
-    public void MonthlyPayment_NonPositiveTerm_Throws(int months)
+    public void MonthlyPayment_NonPositiveTerm_IsRejected(int months)
     {
-        Assert.Throws<DomainValidationException>(() => PaymentFormula.MonthlyPayment(1_000m, 0.01m, months));
+        DomainAssert.Rejects(
+            () => PaymentFormula.MonthlyPayment(1_000m, 0.01m, months),
+            "Number of payments",
+            "a loan must have at least one payment, otherwise the formula divides by zero");
     }
 
     [TestCase(2, 0, 1)]
@@ -40,6 +43,6 @@ public class PaymentFormulaTests
     [TestCase(1.5, 3, 3.375)]
     public void Pow_ComputesExactDecimalPowers(decimal value, int exponent, decimal expected)
     {
-        Assert.That(PaymentFormula.Pow(value, exponent), Is.EqualTo(expected));
+        Assert.That(PaymentFormula.Pow(value, exponent), Is.EqualTo(expected), $"{value}^{exponent} must be exact in decimal");
     }
 }

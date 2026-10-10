@@ -1,49 +1,39 @@
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.Loans;
+using Standard = MortgageAnalytics.Testing.ReferenceLoans.Standard;
 
 namespace MortgageAnalytics.Domain.Tests.Amortization;
 
 [TestFixture]
-public class AmortizationCalculatorTests
+public class AmortizationCalculatorTests : AmortizationTestBase
 {
-    private static readonly DateOnly FirstPayment = new(2026, 1, 1);
-    private readonly AmortizationCalculator _calculator = new();
-
-    private static LoanTerms Loan(decimal principal, decimal rate, int months) => new(principal, rate, months, FirstPayment);
-
-    private AmortizationSchedule Standard(LoanTerms loan) =>
-        _calculator.Generate(loan, ExtraPaymentPlan.None, RecastPolicy.Never);
-
-    private AmortizationSchedule WithExtras(LoanTerms loan, RecastPolicy recastPolicy, params IExtraPaymentRule[] rules) =>
-        _calculator.Generate(loan, new ExtraPaymentPlan(rules), recastPolicy);
-
     // ---------------------------------------------------------------------------------------
     // Invariants that must hold for every loan, whatever its shape.
     // ---------------------------------------------------------------------------------------
 
     private static IEnumerable<TestCaseData> LoanShapes()
     {
-        yield return new TestCaseData(Loan(200_000m, 6m, 360)).SetName("30-year at 6%");
-        yield return new TestCaseData(Loan(350_000m, 6.875m, 360)).SetName("30-year at 6.875%");
-        yield return new TestCaseData(Loan(250_000m, 7.5m, 180)).SetName("15-year at 7.5%");
-        yield return new TestCaseData(Loan(100_000m, 0m, 120)).SetName("Zero-interest 10-year");
-        yield return new TestCaseData(Loan(1m, 30m, 600)).SetName("One dollar at maximum rate and term");
-        yield return new TestCaseData(Loan(100_000_000m, 30m, 600)).SetName("Maximum principal, rate and term");
-        yield return new TestCaseData(Loan(999.99m, 3.333m, 7)).SetName("Odd amounts and a short term");
-        yield return new TestCaseData(Loan(5_000m, 4m, 1)).SetName("Single-payment loan");
+        yield return new TestCaseData(A.Loan()).SetName("30-year at 6%");
+        yield return new TestCaseData(A.Loan(350_000m, 6.875m)).SetName("30-year at 6.875%");
+        yield return new TestCaseData(A.Loan(250_000m, 7.5m, 180)).SetName("15-year at 7.5%");
+        yield return new TestCaseData(A.Loan(100_000m, 0m, 120)).SetName("Zero-interest 10-year");
+        yield return new TestCaseData(A.Loan(1m, 30m, 600)).SetName("One dollar at maximum rate and term");
+        yield return new TestCaseData(A.Loan(100_000_000m, 30m, 600)).SetName("Maximum principal, rate and term");
+        yield return new TestCaseData(A.Loan(999.99m, 3.333m, 7)).SetName("Odd amounts and a short term");
+        yield return new TestCaseData(A.Loan(5_000m, 4m, 1)).SetName("Single-payment loan");
     }
 
     [TestCaseSource(nameof(LoanShapes))]
     public void Schedule_FullyRepaysThePrincipal_ToTheCent(LoanTerms loan)
     {
-        var schedule = Standard(loan);
+        var schedule = StandardSchedule(loan);
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero);
-            Assert.That(schedule.TotalPrincipal, Is.EqualTo(loan.Principal));
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(loan.TermInMonths));
+            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero, "the final payment must clear the balance exactly");
+            Assert.That(schedule.TotalPrincipal, Is.EqualTo(loan.Principal), "principal repaid must equal the amount borrowed");
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(loan.TermInMonths), "without extras the loan runs its full term");
         });
     }
 
@@ -52,31 +42,32 @@ public class AmortizationCalculatorTests
     {
         // Not "strictly decreases": on a $1 loan at 30% the 3-cent payment is all interest,
         // so the balance stays flat until the final payment clears it.
-        var balances = Standard(loan).Payments.Select(p => p.RemainingBalance).Prepend(loan.Principal).ToList();
+        var balances = StandardSchedule(loan).Payments.Select(p => p.RemainingBalance).Prepend(loan.Principal).ToList();
 
         Assert.Multiple(() =>
         {
-            Assert.That(balances, Is.Ordered.Descending);
-            Assert.That(balances, Has.All.GreaterThanOrEqualTo(0m));
+            Assert.That(balances, Is.Ordered.Descending, "a fully amortizing loan never grows");
+            Assert.That(balances, Has.All.GreaterThanOrEqualTo(0m), "the loan can never be overpaid");
         });
     }
 
     [TestCaseSource(nameof(LoanShapes))]
     public void Schedule_EveryAmountIsRoundedToCents(LoanTerms loan)
     {
-        var amounts = Standard(loan).Payments.SelectMany(p => new[] { p.Interest, p.Principal, p.RemainingBalance });
+        var amounts = StandardSchedule(loan).Payments.SelectMany(p => new[] { p.Interest, p.Principal, p.RemainingBalance });
 
-        Assert.That(amounts, Has.All.Matches<decimal>(a => a == Money.Round(a)));
+        Assert.That(amounts, Has.All.Matches<decimal>(a => a == Money.Round(a)), "no fractions of a cent may appear in a schedule");
     }
 
     [TestCaseSource(nameof(LoanShapes))]
     public void Schedule_EveryPaymentButTheLast_EqualsTheMonthlyPayment(LoanTerms loan)
     {
-        var schedule = Standard(loan);
+        var schedule = StandardSchedule(loan);
 
         Assert.That(
             schedule.Payments.SkipLast(1).Select(p => p.ScheduledAmount),
-            Has.All.EqualTo(schedule.InitialMonthlyPayment));
+            Has.All.EqualTo(schedule.InitialMonthlyPayment),
+            "only the final payment may differ, because it absorbs rounding drift");
     }
 
     // ---------------------------------------------------------------------------------------
@@ -86,15 +77,15 @@ public class AmortizationCalculatorTests
     [Test]
     public void FirstPayment_SplitsIntoInterestAndPrincipal()
     {
-        var first = Standard(Loan(200_000m, 6m, 360)).Payments[0];
+        var first = StandardSchedule(A.Loan()).Payments[0];
 
         Assert.Multiple(() =>
         {
-            Assert.That(first.PaymentNumber, Is.EqualTo(1));
-            Assert.That(first.DueDate, Is.EqualTo(FirstPayment));
-            Assert.That(first.Interest, Is.EqualTo(1_000.00m));
-            Assert.That(first.Principal, Is.EqualTo(199.10m));
-            Assert.That(first.RemainingBalance, Is.EqualTo(199_800.90m));
+            Assert.That(first.PaymentNumber, Is.EqualTo(1), "payments are numbered from 1");
+            Assert.That(first.DueDate, Is.EqualTo(ReferenceLoans.FirstPaymentDate), "the first payment is due on the first payment date");
+            Assert.That(first.Interest, Is.EqualTo(Standard.FirstInterest), "first month's interest is $200,000 x 0.5%");
+            Assert.That(first.Principal, Is.EqualTo(Standard.FirstPrincipal), "the rest of the payment repays principal");
+            Assert.That(first.RemainingBalance, Is.EqualTo(Standard.LoanAmount - Standard.FirstPrincipal), "the balance falls by the principal repaid");
         });
     }
 
@@ -105,13 +96,13 @@ public class AmortizationCalculatorTests
     public void TotalInterest_AndFinalPayment_MatchReferenceValues(
         decimal principal, decimal rate, int months, decimal expectedInterest, decimal expectedFinalPayment)
     {
-        var schedule = Standard(Loan(principal, rate, months));
+        var schedule = StandardSchedule(A.Loan(principal, rate, months));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.TotalInterest, Is.EqualTo(expectedInterest));
-            Assert.That(schedule.Payments[^1].ScheduledAmount, Is.EqualTo(expectedFinalPayment));
-            Assert.That(schedule.TotalPaid, Is.EqualTo(principal + expectedInterest));
+            Assert.That(schedule.TotalInterest, Is.EqualTo(expectedInterest), "total interest must match the reference implementation");
+            Assert.That(schedule.Payments[^1].ScheduledAmount, Is.EqualTo(expectedFinalPayment), "the final payment absorbs rounding drift");
+            Assert.That(schedule.TotalPaid, Is.EqualTo(principal + expectedInterest), "total paid is principal plus interest");
         });
     }
 
@@ -119,13 +110,13 @@ public class AmortizationCalculatorTests
     public void ZeroInterest_FinalPaymentAbsorbsRoundingDrift()
     {
         // 100,000 / 120 = 833.333... rounds to 833.33, leaving 0.40 for the last payment to pick up.
-        var schedule = Standard(Loan(100_000m, 0m, 120));
+        var schedule = StandardSchedule(A.Loan(100_000m, 0m, 120));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.InitialMonthlyPayment, Is.EqualTo(833.33m));
-            Assert.That(schedule.Payments[^1].ScheduledAmount, Is.EqualTo(833.73m));
-            Assert.That(schedule.TotalInterest, Is.Zero);
+            Assert.That(schedule.InitialMonthlyPayment, Is.EqualTo(833.33m), "at 0% the payment is principal / term, rounded");
+            Assert.That(schedule.Payments[^1].ScheduledAmount, Is.EqualTo(833.73m), "the final payment picks up the 40 cents of drift");
+            Assert.That(schedule.TotalInterest, Is.Zero, "a 0% loan charges no interest");
         });
     }
 
@@ -136,125 +127,110 @@ public class AmortizationCalculatorTests
     [Test]
     public void MonthlyExtra_ShortensTheTermAndReducesInterest()
     {
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.Never, new MonthlyExtraPayment(200m));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.Never, new MonthlyExtraPayment(ReferenceLoans.StandardWithMonthlyExtra200.MonthlyExtra));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(252));
-            Assert.That(schedule.TotalInterest, Is.EqualTo(151_876.18m));
-            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero);
-            Assert.That(schedule.TotalPrincipal, Is.EqualTo(200_000m));
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(ReferenceLoans.StandardWithMonthlyExtra200.NumberOfPayments), "$200 a month pays the loan off in 252 payments");
+            Assert.That(schedule.TotalInterest, Is.EqualTo(ReferenceLoans.StandardWithMonthlyExtra200.TotalInterest), "interest must match the reference implementation");
+            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero, "the loan still ends at exactly zero");
+            Assert.That(schedule.TotalPrincipal, Is.EqualTo(Standard.LoanAmount), "extra principal never makes total principal exceed the loan");
         });
     }
 
     [Test]
     public void LumpSumLargerThanBalance_IsCappedAndPaysTheLoanOff()
     {
-        var loan = Loan(10_000m, 5m, 60);
+        var loan = A.Loan(10_000m, 5m, 60);
 
         var schedule = WithExtras(loan, RecastPolicy.Never, new LumpSumExtraPayment(1_000_000m, 3));
 
         var last = schedule.Payments[^1];
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(3));
-            Assert.That(last.RemainingBalance, Is.Zero);
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(3), "the oversized lump sum pays the loan off with payment 3");
+            Assert.That(last.RemainingBalance, Is.Zero, "the balance ends at exactly zero, never negative");
             Assert.That(last.ExtraPrincipal, Is.LessThan(10_000m), "only the outstanding balance is collected");
-            Assert.That(schedule.TotalPrincipal, Is.EqualTo(loan.Principal));
+            Assert.That(schedule.TotalPrincipal, Is.EqualTo(loan.Principal), "nothing beyond the loan amount is repaid");
         });
     }
 
     [Test]
     public void LumpSumScheduledAfterPayoff_IsIgnored()
     {
-        var schedule = WithExtras(Loan(1_000m, 12m, 12), RecastPolicy.Never, new LumpSumExtraPayment(500m, 100));
+        var schedule = WithExtras(A.Loan(1_000m, 12m, 12), RecastPolicy.Never, new LumpSumExtraPayment(500m, 100));
 
-        Assert.That(schedule.Payments.Sum(p => p.ExtraPrincipal), Is.Zero);
+        Assert.That(schedule.Payments.Sum(p => p.ExtraPrincipal), Is.Zero, "a lump sum after the last payment never happens");
     }
 
     [Test]
     public void AnnualExtra_IsAppliedOncePerYear()
     {
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.Never, new AnnualExtraPayment(2_400m, 12));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.Never, new AnnualExtraPayment(2_400m, 12));
 
         var paymentsWithExtra = schedule.Payments.Where(p => p.ExtraPrincipal > 0).Select(p => p.PaymentNumber).ToList();
         Assert.Multiple(() =>
         {
-            Assert.That(paymentsWithExtra.Take(3), Is.EqualTo(new[] { 12, 24, 36 }));
-            Assert.That(schedule.NumberOfPayments, Is.LessThan(360));
+            Assert.That(paymentsWithExtra.Take(3), Is.EqualTo(new[] { 12, 24, 36 }), "the annual extra lands every 12 payments");
+            Assert.That(schedule.NumberOfPayments, Is.LessThan(Standard.TermInMonths), "annual extras shorten the loan");
         });
     }
+
+    // ---------------------------------------------------------------------------------------
+    // Recasting.
+    // ---------------------------------------------------------------------------------------
 
     [Test]
     public void Recast_KeepsThePayoffDateAndLowersThePayment()
     {
-        var loan = Loan(200_000m, 6m, 360);
-
-        var schedule = WithExtras(loan, RecastPolicy.OnLumpSum(RecastPolicy.TypicalMinimumLumpSum, 0m), new LumpSumExtraPayment(50_000m, 12));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(RecastPolicy.TypicalMinimumLumpSum, 0m), new LumpSumExtraPayment(50_000m, 12));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(360));
-            Assert.That(schedule.Payments[10].ScheduledAmount, Is.EqualTo(1_199.10m), "before the lump sum");
-            Assert.That(schedule.Payments[12].ScheduledAmount, Is.EqualTo(895.60m), "recast after the lump sum");
-            Assert.That(schedule.TotalInterest, Is.EqualTo(176_056.85m));
-            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero);
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(Standard.TermInMonths), "a recast keeps the original payoff date");
+            Assert.That(schedule.Payments[10].ScheduledAmount, Is.EqualTo(Standard.MonthlyPayment), "before the lump sum the payment is unchanged");
+            Assert.That(schedule.Payments[12].ScheduledAmount, Is.EqualTo(ReferenceLoans.StandardRecastAfter50KLumpSum.NewPayment), "after the recast the payment drops");
+            Assert.That(schedule.TotalInterest, Is.EqualTo(ReferenceLoans.StandardRecastAfter50KLumpSum.TotalInterest), "interest must match the reference implementation");
+            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero, "the recast loan still ends at exactly zero");
         });
     }
 
     [Test]
     public void Recast_StillPaysOffEarlyWhenExtrasCoverTheWholeBalance()
     {
-        var schedule = WithExtras(Loan(10_000m, 5m, 60), RecastPolicy.OnLumpSum(RecastPolicy.TypicalMinimumLumpSum, 0m), new LumpSumExtraPayment(20_000m, 1));
+        var schedule = WithExtras(A.Loan(10_000m, 5m, 60), RecastPolicy.OnLumpSum(RecastPolicy.TypicalMinimumLumpSum, 0m), new LumpSumExtraPayment(20_000m, 1));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(1));
-            Assert.That(schedule.Payments[0].RemainingBalance, Is.Zero);
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(1), "a lump sum covering the balance ends the loan at once");
+            Assert.That(schedule.Payments[0].RemainingBalance, Is.Zero, "nothing is left to recast");
+            Assert.That(schedule.Recasts, Is.Empty, "there is no balance left to re-amortize");
         });
     }
 
     [Test]
     public void Recast_RecordsTheEventWithOldAndNewPayment()
     {
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.OnLumpSum(10_000m, 250m), new LumpSumExtraPayment(50_000m, 12));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new LumpSumExtraPayment(50_000m, 12));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.Recasts, Has.Count.EqualTo(1));
-            Assert.That(schedule.Recasts[0], Is.EqualTo(new RecastEvent(12, 1_199.10m, 895.60m, 250m)));
-            Assert.That(schedule.TotalRecastFees, Is.EqualTo(250m));
+            Assert.That(schedule.Recasts, Has.Count.EqualTo(1), "one qualifying lump sum means one recast");
+            Assert.That(schedule.Recasts[0], Is.EqualTo(new RecastEvent(12, Standard.MonthlyPayment, 895.60m, 250m)), "the event records when, from, to and the fee");
+            Assert.That(schedule.TotalRecastFees, Is.EqualTo(250m), "the fee is totalled on the schedule");
         });
     }
 
     [Test]
     public void Recast_IsSkippedWhenThePrepaymentIsBelowTheLendersMinimum()
     {
-        // $200 a month never reaches a $10,000 minimum, so the payment stays level and the term shortens.
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.OnLumpSum(10_000m, 250m), new MonthlyExtraPayment(200m));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new MonthlyExtraPayment(200m));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.Recasts, Is.Empty);
-            Assert.That(schedule.NumberOfPayments, Is.EqualTo(252));
-            Assert.That(schedule.TotalRecastFees, Is.Zero);
-        });
-    }
-
-    [Test]
-    public void Recast_OnlyTheQualifyingLumpSumTriggersIt_WhenMixedWithSmallExtras()
-    {
-        var schedule = WithExtras(
-            Loan(200_000m, 6m, 360),
-            RecastPolicy.OnLumpSum(10_000m, 300m),
-            new MonthlyExtraPayment(100m),
-            new LumpSumExtraPayment(25_000m, 24));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(schedule.Recasts.Select(r => r.AfterPaymentNumber), Is.EqualTo(new[] { 24 }));
-            Assert.That(schedule.Payments[24].ScheduledAmount, Is.LessThan(schedule.Payments[22].ScheduledAmount));
-            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero);
+            Assert.That(schedule.Recasts, Is.Empty, "$200 a month never reaches a $10,000 minimum");
+            Assert.That(schedule.NumberOfPayments, Is.EqualTo(ReferenceLoans.StandardWithMonthlyExtra200.NumberOfPayments), "the extras shorten the term instead");
+            Assert.That(schedule.TotalRecastFees, Is.Zero, "no recast means no fee");
         });
     }
 
@@ -262,34 +238,53 @@ public class AmortizationCalculatorTests
     [TestCase(10_000, 1, TestName = "Lump sum exactly at the minimum: recast")]
     public void Recast_RequiresASingleLumpSumOfAtLeastTheMinimum(decimal lumpSum, int expectedRecasts)
     {
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.OnLumpSum(10_000m, 250m), new LumpSumExtraPayment(lumpSum, 12));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new LumpSumExtraPayment(lumpSum, 12));
 
-        Assert.That(schedule.Recasts, Has.Count.EqualTo(expectedRecasts));
+        Assert.That(schedule.Recasts, Has.Count.EqualTo(expectedRecasts), "the lender's minimum is inclusive");
+    }
+
+    [Test]
+    public void Recast_OnlyTheQualifyingLumpSumTriggersIt_WhenMixedWithSmallExtras()
+    {
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 300m), new MonthlyExtraPayment(100m), new LumpSumExtraPayment(25_000m, 24));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(schedule.Recasts.Select(r => r.AfterPaymentNumber), Is.EqualTo(new[] { 24 }), "only the payment with the lump sum recasts");
+            Assert.That(schedule.Payments[24].ScheduledAmount, Is.LessThan(schedule.Payments[22].ScheduledAmount), "the payment drops after the recast");
+            Assert.That(schedule.Payments[^1].RemainingBalance, Is.Zero, "the loan still ends at exactly zero");
+        });
     }
 
     [Test]
     public void Never_DoesNotRecastEvenForLargeLumpSums()
     {
-        var schedule = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.Never, new LumpSumExtraPayment(50_000m, 12));
+        var schedule = WithExtras(A.Loan(), RecastPolicy.Never, new LumpSumExtraPayment(50_000m, 12));
 
         Assert.Multiple(() =>
         {
-            Assert.That(schedule.Recasts, Is.Empty);
-            Assert.That(schedule.Payments[12].ScheduledAmount, Is.EqualTo(1_199.10m));
-            Assert.That(schedule.NumberOfPayments, Is.LessThan(360));
+            Assert.That(schedule.Recasts, Is.Empty, "the Never policy never recasts");
+            Assert.That(schedule.Payments[12].ScheduledAmount, Is.EqualTo(Standard.MonthlyPayment), "the payment stays the same");
+            Assert.That(schedule.NumberOfPayments, Is.LessThan(Standard.TermInMonths), "the lump sum shortens the term instead");
         });
     }
 
     [Test]
     public void OpeningBalance_IsTheBalanceBeforeThePaymentWasApplied()
     {
-        var payments = WithExtras(Loan(200_000m, 6m, 360), RecastPolicy.Never, new LumpSumExtraPayment(5_000m, 2)).Payments;
+        var payments = WithExtras(A.Loan(), RecastPolicy.Never, new LumpSumExtraPayment(5_000m, 2)).Payments;
 
         Assert.Multiple(() =>
         {
-            Assert.That(payments[0].OpeningBalance, Is.EqualTo(200_000m));
-            Assert.That(payments[1].OpeningBalance, Is.EqualTo(payments[0].RemainingBalance));
-            Assert.That(payments[2].OpeningBalance, Is.EqualTo(payments[1].RemainingBalance));
+            Assert.That(payments[0].OpeningBalance, Is.EqualTo(Standard.LoanAmount), "payment 1 opens at the full loan amount");
+            Assert.That(payments[1].OpeningBalance, Is.EqualTo(payments[0].RemainingBalance), "each payment opens where the last one closed");
+            Assert.That(payments[2].OpeningBalance, Is.EqualTo(payments[1].RemainingBalance), "including after a lump sum");
         });
+    }
+
+    [Test]
+    public void Schedule_WithoutPayments_IsRejected()
+    {
+        DomainAssert.Rejects(() => new AmortizationSchedule(100m, []), "at least one payment", "an empty schedule has no payoff date");
     }
 }

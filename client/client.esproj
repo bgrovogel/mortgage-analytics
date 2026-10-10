@@ -9,8 +9,8 @@
     <BuildCommand>npm run build</BuildCommand>
     <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
     <ShouldRunBuildScript>false</ShouldRunBuildScript>
-    <JavaScriptTestRoot>e2e\</JavaScriptTestRoot>
-    <JavaScriptTestFramework>Playwright</JavaScriptTestFramework>
+    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
+    <JavaScriptTestFramework>Jest</JavaScriptTestFramework>
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\client\browser\</BuildOutputFolder>
   </PropertyGroup>
 </Project>
