@@ -15,6 +15,8 @@ const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'nume
 export const usd = (value: number) => dollars.format(value);
 /** "6.5%". */
 export const pct = (value: number) => `${percent.format(value)}%`;
+/** "+$1,234", "−$1,234" or "$0": a difference. */
+export const signedUsd = (value: number) => (Math.round(value) === 0 ? '$0' : `${value > 0 ? '+' : '−'}${dollars.format(Math.abs(value))}`);
 /** "Sep 2033". */
 export const monthOf = (iso: string) => monthYear.format(new Date(`${iso}T00:00:00Z`));
 /** "Debt free ASAP". */
@@ -68,6 +70,26 @@ export function recommendation(result: StrategyComparison): Recommendation {
     downside: `Even if the next ten years are ${lostDecade}, it still comes out ahead.`,
     reversible: false,
   };
+}
+
+/**
+ * Why the strategies end close together (or far apart). Most of a household's net worth (the home, the 401(k)
+ * and match, the savings it already has) is the same whichever strategy it picks; only the extra cash, and the
+ * payment once the mortgage is gone, go somewhere different. Without saying so, near-identical totals look wrong.
+ */
+export function closeness(result: StrategyComparison): string {
+  const finals = result.strategies.map((o) => finalNetWorth(o.riskAdjusted));
+  const best = Math.max(...finals);
+  const spread = best - Math.min(...finals);
+  const years = result.strategies[0].riskAdjusted.years;
+  const { plan } = result;
+  const same = `Most of your net worth is the same whichever you choose: the home (${usd(years[years.length - 1].homeValue)} by year 30), `
+    + 'your 401(k) and match, and the savings you already have.';
+  const differs = `Only the ${usd(plan.extraCash + plan.esppContribution)} a month left after the match, and the `
+    + `${usd(plan.mortgagePayment)} payment once the mortgage is gone, go somewhere different.`;
+  if (Math.round(spread) === 0) return `All three end the same. ${same} ${differs}`;
+  const share = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format((spread / best) * 100);
+  return `All three end within ${usd(spread)} (${share}%) of each other. ${same} ${differs}`;
 }
 
 /** The fact sheet: why the recommendation came out the way it did, one point per line. */

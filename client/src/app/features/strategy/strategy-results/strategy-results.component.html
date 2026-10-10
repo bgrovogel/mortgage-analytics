@@ -6,6 +6,7 @@
   <p class="headline" data-testid="recommended">{{ rec.headline }}</p>
   <p class="detail" data-testid="recommended-detail">{{ rec.detail }}</p>
   <p class="downside" data-testid="downside">{{ rec.downside }}</p>
+  <p class="context" data-testid="closeness">{{ closeness() }}</p>
 </section>
 
 <div class="picker" role="radiogroup" aria-label="Market scenario" data-testid="scenario-picker">
@@ -29,8 +30,8 @@
         }
       </header>
       <p class="split">{{ card.split }}</p>
-      <strong class="net-worth" data-testid="card-net-worth">{{ usd(card.netWorth) }}</strong>
-      <small>net worth after 30 years</small>
+      <strong class="standing" [class.leads]="card.leads" data-testid="card-standing">{{ card.standing }}</strong>
+      <small data-testid="card-net-worth">{{ usd(card.netWorth) }} net worth after 30 years</small>
       <ul>
         <li>{{ card.payoff }}</li>
         <li>{{ usd(card.interest) }} of mortgage interest</li>
@@ -75,7 +76,12 @@
           <tr>
             <th scope="row">Year {{ row.year }}</th>
             @for (cell of row.cells; track $index) {
-              <td [class.best]="cell.best">{{ usd(cell.value) }}</td>
+              <td [class.best]="cell.best">
+                {{ usd(cell.value) }}
+                @if (cell.gap !== null) {
+                  <span class="gap">{{ signedUsd(cell.gap) }}</span>
+                }
+              </td>
             }
           </tr>
         }
@@ -83,9 +89,42 @@
     </table>
   </div>
   <p class="note">
-    Home equity plus investments, counting every account after the tax still owed on it.
+    Home equity plus investments, counting every account after the tax still owed on it. Under each value: the
+    difference from Debt free ASAP.
     {{ todaysDollars() ? "Shown in today's dollars." : '' }}
   </p>
+</div>
+
+<div class="panel">
+  <h3>Where the money is after 30 years</h3>
+  <div class="table-wrap" tabindex="0" aria-label="Net worth after 30 years, broken down">
+    <table data-testid="breakdown">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          @for (outcome of r.strategies; track outcome.strategy) {
+            <th scope="col">{{ strategies[outcome.strategy].name }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of breakdown(); track row.label) {
+          <tr [class.total]="row.total" [class.same]="row.same && !row.total">
+            <th scope="row">
+              {{ row.label }}
+              @if (row.same && !row.total) {
+                <span class="same-note">same in all three</span>
+              }
+            </th>
+            @for (value of row.values; track $index) {
+              <td>{{ usd(value) }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="note">The home grows the same whichever you choose, so any difference in net worth is in the mortgage and the investments.</p>
 </div>
 
 <div class="panel">

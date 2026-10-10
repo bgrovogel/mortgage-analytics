@@ -63,7 +63,8 @@ describe('strategy charts', () => {
 
       expect(config.data.datasets.map((d) => d.label)).toEqual(['Mortgage owed', 'Investments (after tax)']);
       expect(config.data.datasets[0].data[1]).toBe(280_000);
-      expect(config.data.datasets[1].data[1]).toBe(30_000);
+      // Year 1: net worth 220,634.22 less home equity 130,000.
+      expect(config.data.datasets[1].data[1]).toBeCloseTo(90_634.22, 2);
       expect((fixture.nativeElement as HTMLElement).querySelector('figcaption')!.textContent).toContain('Debt free ASAP');
       expect(config.options!.plugins!.tooltip!.callbacks!.title!.call({} as never, [{ dataIndex: 0 }] as never)).toBe('Today');
     });

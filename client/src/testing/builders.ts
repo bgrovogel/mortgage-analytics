@@ -177,17 +177,19 @@ export function aRefinanceResponse(overrides: Partial<RefinanceResponse> = {}): 
   };
 }
 
-/** A 30-year projection whose net worth climbs in a straight line to `finalNetWorth`, with a few markers set. */
+/** A 30-year projection whose net worth climbs in a straight line to `finalNetWorth`; the home is the same in every one. */
 export function aStrategyProjection(finalNetWorth: number, overrides: Partial<StrategyProjection> = {}): StrategyProjection {
   const years: NetWorthYear[] = Array.from({ length: 31 }, (_, year) => {
     const netWorth = 100_000 + ((finalNetWorth - 100_000) * year) / 30;
     const mortgageBalance = Math.max(0, 300_000 - year * 20_000);
+    const homeEquity = 400_000 + year * 10_000 - mortgageBalance;
     return {
       year,
       homeValue: 400_000 + year * 10_000,
       mortgageBalance,
-      homeEquity: 400_000 + year * 10_000 - mortgageBalance,
-      investments: year * 30_000,
+      homeEquity,
+      // Whatever the home does not account for, as on the server: net worth = home equity + investments.
+      investments: netWorth - homeEquity,
       netWorth,
       netWorthInTodaysDollars: netWorth / 2,
     };

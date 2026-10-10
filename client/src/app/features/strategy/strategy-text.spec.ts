@@ -1,6 +1,6 @@
 import { aStrategyComparison, aStrategyProjection } from '../../../testing/builders';
 import { StrategyComparison } from '../../core/models/strategy.models';
-import { crossover, facts, recommendation, scenarioLabel } from './strategy-text';
+import { closeness, crossover, facts, recommendation, scenarioLabel, signedUsd } from './strategy-text';
 
 describe('strategy text', () => {
   const withRates = (rates: Partial<StrategyComparison['rates']>, rest: Partial<StrategyComparison> = {}) => {
@@ -92,6 +92,27 @@ describe('strategy text', () => {
 
       expect(lines).toContain('Your RSUs and ESOP already put $2,000 a year into stock. The hybrid counts that toward its 58% market share, so it invests 45% of your extra cash.');
     });
+  });
+
+  describe('closeness', () => {
+    it('says how close the strategies end, and why: most of net worth is the same in all three', () => {
+      // 3,844,781.09 − 3,719,026.59 = 125,754.50, which is 3.3% of the best.
+      expect(closeness(aStrategyComparison())).toBe(
+        'All three end within $125,755 (3.3%) of each other. Most of your net worth is the same whichever you choose: '
+        + 'the home ($700,000 by year 30), your 401(k) and match, and the savings you already have. '
+        + 'Only the $544 a month left after the match, and the $2,026 payment once the mortgage is gone, go somewhere different.');
+    });
+
+    it('says when they end exactly the same', () => {
+      const base = aStrategyComparison();
+      const same = aStrategyComparison({ strategies: base.strategies.map((o) => ({ ...o, riskAdjusted: base.strategies[0].riskAdjusted })) });
+
+      expect(closeness(same)).toMatch(/^All three end the same\. /);
+    });
+  });
+
+  it('signs differences, and shows none as $0', () => {
+    expect([signedUsd(1_234.4), signedUsd(-1_234.6), signedUsd(0.2)]).toEqual(['+$1,234', '−$1,235', '$0']);
   });
 
   describe('crossover', () => {

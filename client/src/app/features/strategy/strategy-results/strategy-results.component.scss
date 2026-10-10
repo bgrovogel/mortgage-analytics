@@ -70,9 +70,15 @@
   }
 
   .detail,
-  .downside {
+  .downside,
+  .context {
     color: var(--text-secondary);
     line-height: 1.5;
+  }
+
+  .context {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
   }
 
   .downside {
@@ -151,10 +157,15 @@
     color: var(--text-secondary);
   }
 
-  .net-worth {
-    font-size: 1.45rem;
+  // Each card leads with its standing: how far behind the leader it ends.
+  .standing {
+    font-size: 1.15rem;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
+
+    &.leads {
+      color: var(--accent);
+    }
   }
 
   small {
@@ -219,6 +230,31 @@ tbody th {
 td.best {
   font-weight: 700;
   color: var(--text-primary);
+}
+
+// The difference from Debt free ASAP, under each milestone value.
+td .gap {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+tr.total th,
+tr.total td {
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 0;
+}
+
+tr.same td {
+  color: var(--text-muted);
+}
+
+.same-note {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
 }
 
 .facts ul {

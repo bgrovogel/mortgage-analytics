@@ -21,6 +21,8 @@ test.describe('Pay off or invest', () => {
     await expect(page.getByTestId('downside'), 'but market returns are not guaranteed').toContainText('Debt free ASAP comes out ahead by $41,363');
     await expect(page.getByTestId('card-PayOffFirst'), 'the reference net worth, to the dollar').toContainText('$3,719,027');
     await expect(page.getByTestId('card-InvestTheDifference'), 'and investing').toContainText('$3,844,781');
+    await expect(page.getByTestId('card-PayOffFirst'), 'each card leads with how far it is behind').toContainText('$125,755 behind Invest');
+    await expect(page.getByTestId('closeness'), 'and the page says why the totals are close').toContainText('All three end within $125,755 (3.3%)');
     await expect(page.getByTestId('fact-sheet'), 'the standard deduction beats itemizing here').toContainText('saves no tax');
   });
 
