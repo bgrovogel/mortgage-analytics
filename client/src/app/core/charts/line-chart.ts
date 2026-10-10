@@ -30,6 +30,10 @@ export interface LineSeries {
   data: number[];
   /** Draws a dashed line, so a series stays visible when it overlaps another. */
   dashed?: boolean;
+  /** Draws a dotted line: a third style, for when three series can overlap. */
+  dotted?: boolean;
+  /** A custom dash pattern (dash and gap lengths), for a fourth style. Overrides dashed and dotted. */
+  dash?: number[];
   /** Shades the area between this series and the one before it (e.g. the gap two payoffs open up). */
   fillToPrevious?: boolean;
 }
@@ -77,7 +81,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
         // overlaps an earlier one stays visible. Stacked areas keep the default: order changes stacking.
         order: spec.stacked ? undefined : -i,
         borderWidth: 2,
-        borderDash: s.dashed ? [6, 4] : [],
+        borderDash: s.dash ?? (s.dashed ? [6, 4] : s.dotted ? [2, 4] : []),
         pointRadius: 0,
         pointHoverRadius: 5,
         pointHoverBorderWidth: 2,

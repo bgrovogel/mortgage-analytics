@@ -15,8 +15,9 @@ export async function latestEmailTo(request: APIRequestContext, address: string,
   let found: Email | undefined;
   await expect
     .poll(async () => {
-      const emails = (await (await request.get('/api/v1/dev/outbox')).json()) as Email[];
-      found = emails.find((e) => e.to === address && (!subject || e.subject === subject));
+      const response = await request.get('/api/v1/dev/outbox');
+      const emails: unknown = response.ok() ? await response.json() : [];
+      found = (Array.isArray(emails) ? (emails as Email[]) : []).find((e) => e.to === address && (!subject || e.subject === subject));
       return found !== undefined;
     }, { message: `an email to ${address} arrives in the dev mailbox`, timeout: 10_000 })
     .toBe(true);

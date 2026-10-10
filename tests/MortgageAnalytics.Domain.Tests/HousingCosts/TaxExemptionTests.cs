@@ -9,6 +9,9 @@ public class TaxExemptionTests
     [TestCase(300_000, 0, 20, 240_000, TestName = "Percentage: 20% local option")]
     [TestCase(300_000, 10_000, 20, 230_000, TestName = "Both: percentage first, then the amount")]
     [TestCase(100_000, 140_000, 0, 0, TestName = "Exemption larger than the value: nothing to tax")]
+    [TestCase(375_000, 0, 1, 370_000, TestName = "Percentage below the $5,000 legal minimum: $5,000")]
+    [TestCase(20_000, 0, 20, 15_000, TestName = "The minimum applies to a low value too")]
+    [TestCase(4_000, 0, 20, 0, TestName = "The minimum never makes the taxable value negative")]
     public void TaxableValue_SubtractsTheExemption(decimal assessed, decimal amount, decimal percent, decimal expected)
     {
         var exemption = new TaxExemption(amount, percent);

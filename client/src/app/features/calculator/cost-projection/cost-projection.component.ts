@@ -3,7 +3,7 @@ import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart, currency } from '../../../core/charts/line-chart';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
-import { valueLines, valueNote } from './value-lines';
+import { valueBills, valueLines, valueNote } from './value-lines';
 
 /** The two views of the projection. */
 export type ProjectionView = 'costs' | 'value';
@@ -62,6 +62,8 @@ export class CostProjectionComponent {
             {
               labels,
               series: valueLines(projection),
+              // Each year's bills, so every line can be checked against the tax it produces.
+              footer: (i) => valueBills(projection[i]),
               title: (i, label) => `${label} (from ${startYear(i)})`,
             },
             host,

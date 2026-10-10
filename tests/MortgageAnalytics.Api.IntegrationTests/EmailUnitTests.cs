@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting;
 using MimeKit;
 using MortgageAnalytics.Api.Email;
 
@@ -73,5 +74,32 @@ public class EmailUnitTests
             Assert.That(mime.HtmlBody, Is.EqualTo("<p>Html</p>"), "and an HTML part");
             Assert.That(mime.Body, Is.TypeOf<MultipartAlternative>(), "as alternatives, so mail apps pick the best one");
         });
+    }
+
+    [Test]
+    public async Task TheOutbox_NeverLetsAHalfWrittenOrBrokenFileBreakTheMailbox()
+    {
+        var root = Directory.CreateTempSubdirectory("outbox-test-").FullName;
+        try
+        {
+            var environment = Substitute.For<IHostEnvironment>();
+            environment.ContentRootPath.Returns(root);
+            var outbox = new FileOutbox(Options.Create(new EmailOptions { OutboxDirectory = "mail" }), environment);
+            Directory.CreateDirectory(Path.Combine(root, "mail"));
+            await File.WriteAllTextAsync(Path.Combine(root, "mail", "9999-broken.json"), "{ not json");
+
+            await outbox.SendAsync(new EmailMessage("a@example.com", "S", "T", "H", "https://x.example", TestClock.Now), CancellationToken.None);
+            var emails = await outbox.ReadAllAsync(CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(emails.Select(e => e.To), Is.EqualTo(new[] { "a@example.com" }), "a broken file is skipped, not fatal");
+                Assert.That(Directory.GetFiles(Path.Combine(root, "mail"), "*.tmp"), Is.Empty, "the temporary file was renamed into place");
+            });
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }

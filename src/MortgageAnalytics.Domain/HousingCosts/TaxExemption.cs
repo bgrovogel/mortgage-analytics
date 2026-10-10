@@ -5,8 +5,9 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 /// </summary>
 /// <remarks>
 /// A unit can grant a percentage of the value, a fixed dollar amount, or both. The percentage is
-/// taken first. In Texas, school districts must exempt $140,000 of a homestead's value, and counties
-/// and cities may choose to exempt up to 20%.
+/// taken first. In Texas, school districts must exempt $140,000 of a homestead's value, and any other
+/// unit (county, city, MUD) may choose to exempt up to 20%; a percentage exemption is never less than
+/// $5,000 (Tax Code 11.13(n)).
 /// </remarks>
 public sealed record TaxExemption
 {
@@ -25,6 +26,9 @@ public sealed record TaxExemption
         Percent = percent;
     }
 
+    /// <summary>The smallest a percentage homestead exemption can be, in dollars (Texas Tax Code 11.13(n)).</summary>
+    public const decimal MinimumPercentageExemption = 5_000m;
+
     /// <summary>No exemption: the full assessed value is taxed.</summary>
     public static TaxExemption None { get; } = new();
 
@@ -39,6 +43,9 @@ public sealed record TaxExemption
 
     /// <summary>Returns the value left to tax after the exemption. It is never negative.</summary>
     /// <param name="assessedValue">The home's assessed value for the year.</param>
-    public decimal TaxableValue(decimal assessedValue) =>
-        Math.Max(0m, Money.Round(assessedValue * (1 - Percent / 100m)) - Amount);
+    public decimal TaxableValue(decimal assessedValue)
+    {
+        var percentage = Percent > 0 ? Math.Max(Money.Round(assessedValue * Percent / 100m), MinimumPercentageExemption) : 0m;
+        return Math.Max(0m, assessedValue - percentage - Amount);
+    }
 }

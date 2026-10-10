@@ -70,8 +70,10 @@ describe('CostProjectionComponent', () => {
       showValue();
 
       expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Market value', 'Assessed value (capped)', 'School taxable value']);
+      expect(charts.lastConfig().data.datasets.map((d) => d.borderDash)).toEqual([[], [6, 4], []]);
       expect(charts.lastConfig().options!.scales!['y']!.stacked).toBeFalsy(); // values are compared, not added
       expect(tooltip()['title']([{ dataIndex: 0, label: 'Year 1' }])).toBe('Year 1 (from 2026)');
+      expect(tooltip()['footer']([{ dataIndex: 0 }])).toBe(''); // no taxes in this example
     });
 
     it('explains what each tax is charged on', () => {

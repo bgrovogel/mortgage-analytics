@@ -22,6 +22,18 @@ describe('buildLineChart', () => {
     expect(datasets.every((d) => d.borderWidth === 2 && d.pointRadius === 0)).toBe(true);
   });
 
+  it('takes a custom dash pattern over the named styles', () => {
+    const config = buildLineChart({ ...spec, series: [{ ...spec.series[0], dash: [12, 6] }] }, host);
+
+    expect(config.data.datasets[0].borderDash).toEqual([12, 6]);
+  });
+
+  it('can dot a series too, so three overlapping lines can all be told apart', () => {
+    const config = buildLineChart({ ...spec, series: [spec.series[0], { ...spec.series[1], dashed: false, dotted: true }] }, host);
+
+    expect(config.data.datasets[1].borderDash).toEqual([2, 4]);
+  });
+
   it('dashes only the series marked dashed, so overlapping lines stay visible', () => {
     const [solid, dashed] = buildLineChart(spec, host).data.datasets;
 

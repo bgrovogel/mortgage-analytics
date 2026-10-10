@@ -4,11 +4,16 @@ import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 
 type TaxableKey = 'schoolTaxableValue' | 'localTaxableValue' | 'mudTaxableValue';
 
-/** Each taxing unit: its taxable value in the projection, and its cost category (for the color). */
-const UNITS: readonly { key: TaxableKey; category: 'schoolTax' | 'localTax' | 'mudTax'; name: string }[] = [
-  { key: 'schoolTaxableValue', category: 'schoolTax', name: 'school tax' },
-  { key: 'localTaxableValue', category: 'localTax', name: 'county & city tax' },
-  { key: 'mudTaxableValue', category: 'mudTax', name: 'MUD tax' },
+/**
+ * Each taxing unit: its taxable value in the projection, its cost category (for the color), and a line style
+ * of its own. Taxes are often charged on the same value (county/city and MUD on the full value), so solid,
+ * long-dashed and dotted lines (and the assessed value's short dashes) let each show through where they overlap.
+ */
+const UNITS: readonly { key: TaxableKey; category: 'schoolTax' | 'localTax' | 'mudTax'; name: string; label: string; style: Partial<LineSeries> }[] = [
+  { key: 'schoolTaxableValue', category: 'schoolTax', name: 'school tax', label: 'School taxable value', style: {} },
+  // Long dashes: unlike the assessed value's short ones, which this line can sit on.
+  { key: 'localTaxableValue', category: 'localTax', name: 'county & city tax', label: 'County & city taxable value', style: { dash: [12, 6] } },
+  { key: 'mudTaxableValue', category: 'mudTax', name: 'MUD tax', label: 'MUD taxable value', style: { dotted: true } },
 ];
 
 const sameLine = (a: number[], b: number[]) => a.every((value, i) => value === b[i]);
@@ -25,10 +30,8 @@ function chargedUnits(projection: YearProjection[]) {
 /**
  * The lines of the "home value" chart. In Texas, market value is first held down by the homestead cap
  * (the assessed value); then each taxing unit subtracts its own exemptions. So the chart shows market
- * value, the capped assessed value, and what each tax is actually charged on.
- *
- * A line identical to the one it would overlap is left out (assessed value when the cap never applies,
- * a tax with no exemption), so no line is ever hidden behind another; the note names those instead.
+ * value, the capped assessed value (only once the cap actually holds it below market), and a line for
+ * every tax that is charged: what that tax is charged on.
  */
 export function valueLines(projection: YearProjection[]): LineSeries[] {
   const market = projection.map((y) => y.marketValue);
@@ -41,10 +44,7 @@ export function valueLines(projection: YearProjection[]): LineSeries[] {
   }
 
   for (const unit of chargedUnits(projection)) {
-    if (!sameLine(unit.values, assessed)) {
-      const label = unit.key === 'localTaxableValue' ? 'County & city taxable value' : `${capitalized(unit.name.replace(' tax', ''))} taxable value`;
-      lines.push({ label, color: colorOf(unit.category), data: unit.values });
-    }
+    lines.push({ label: unit.label, color: colorOf(unit.category), data: unit.values, ...unit.style });
   }
   return lines;
 }
@@ -69,11 +69,46 @@ export function valueNote(projection: YearProjection[]): string {
   const full = units.filter((u) => u.values[0] === first.assessedValue);
   if (full.length > 0) {
     const names = capitalized(full.map((u) => u.name).join(' and '));
-    sentences.push(`${names} ${full.length === 1 ? 'is' : 'are'} charged on the full ${currency.format(first.assessedValue)}.`);
+    // Once the cap holds the assessed value below the market, these lines follow it, not the market.
+    const along = projection.every((y) => y.assessedValue === y.marketValue) ? 'the market value' : 'the assessed value';
+    const lineWord = full.length === 1 ? 'its line runs' : 'their lines run';
+    sentences.push(`${names} ${full.length === 1 ? 'is' : 'are'} charged on the full ${currency.format(first.assessedValue)} (no exemption entered), so ${lineWord} along ${along}.`);
+  }
+
+  // An over-65 ceiling freezes a bill: the line keeps rising, the tax does not. Say so, or the chart misleads.
+  for (const unit of units) {
+    const frozenFrom = ceilingYear(projection, unit);
+    if (frozenFrom !== null) {
+      sentences.push(`From year ${frozenFrom}, a tax ceiling holds ${unit.name} at ${currency.format(last.costs[unit.category])} a year, even as its line keeps rising.`);
+    }
   }
 
   const gap = last.marketValue - last.assessedValue;
   if (gap > 0) sentences.push(`By year ${last.year}, the homestead cap keeps ${currency.format(gap)} of value off the tax roll.`);
 
   return sentences.length > 0 ? sentences.join(' ') : 'No property taxes are entered, so only the home value is shown.';
+}
+
+/** The tooltip footer: that year's bill for each tax, e.g. "Tax this year: school $2,350 · county & city $4,125". */
+export function valueBills(year: YearProjection): string {
+  const bills = [
+    ['school', year.costs.schoolTax],
+    ['county & city', year.costs.localTax],
+    ['MUD', year.costs.mudTax],
+  ] as const;
+  const charged = bills.filter(([, amount]) => amount > 0).map(([name, amount]) => `${name} ${currency.format(amount)}`);
+  return charged.length > 0 ? `Tax this year: ${charged.join(' · ')}` : '';
+}
+
+/**
+ * The first year (1-based) from which a unit's bill stays the same to the end of the projection while the
+ * value it is charged on grows: a tax ceiling. Null when there is none.
+ */
+function ceilingYear(projection: YearProjection[], unit: { category: 'schoolTax' | 'localTax' | 'mudTax'; values: number[] }): number | null {
+  const last = projection.length - 1;
+  const bill = projection[last].costs[unit.category];
+  if (bill <= 0) return null;
+  let first = last;
+  while (first > 0 && projection[first - 1].costs[unit.category] === bill) first--;
+  return first < last && unit.values[last] > unit.values[first] ? projection[first].year : null;
 }

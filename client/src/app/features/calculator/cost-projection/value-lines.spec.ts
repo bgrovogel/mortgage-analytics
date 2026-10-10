@@ -1,6 +1,7 @@
 import { aProjectionYear } from '../../../../testing/builders';
 import { YearProjection } from '../../../core/models/amortization.models';
-import { valueLines, valueNote } from './value-lines';
+import { aHousingCosts } from '../../../../testing/builders';
+import { valueBills, valueLines, valueNote } from './value-lines';
 
 describe('home value lines', () => {
   /** The default example: $375,000, growing slower than the cap, a $140,000 school exemption. */
@@ -10,22 +11,33 @@ describe('home value lines', () => {
   ];
 
   describe('valueLines', () => {
-    it('draws the home value and what school tax is charged on, after its exemption', () => {
+    it('draws a line for every tax that is charged, each in its tax color', () => {
       const lines = valueLines(typicalHomestead());
 
-      expect(lines.map((l) => [l.label, l.data])).toEqual([
-        ['Market value', [375_000, 390_000]],
-        ['School taxable value', [235_000, 250_000]],
+      expect(lines.map((l) => [l.label, l.data, l.color])).toEqual([
+        ['Market value', [375_000, 390_000], '--series-1'],
+        ['School taxable value', [235_000, 250_000], '--series-2'],
+        ['County & city taxable value', [375_000, 390_000], '--series-3'],
+        ['MUD taxable value', [375_000, 390_000], '--series-4'],
       ]);
-      expect(lines[1].color).toBe('--series-2'); // the school tax color, as in every other chart
     });
 
-    it('leaves out a line that would sit exactly on another one, so no line is ever hidden', () => {
-      const labels = valueLines(typicalHomestead()).map((l) => l.label);
+    it('gives each tax its own line style, so taxes charged on the same value stay visible on top of each other', () => {
+      const [, school, local, mud] = valueLines(typicalHomestead());
 
-      expect(labels).not.toContain('Assessed value (capped)'); // growth below the cap: assessed = market
-      expect(labels).not.toContain('County & city taxable value'); // no county/city exemption
-      expect(labels).not.toContain('MUD taxable value'); // MUDs grant none
+      expect([school.dashed, school.dotted]).toEqual([undefined, undefined]); // solid
+      expect(local.dash).toEqual([12, 6]); // long dashes, unlike the assessed value's short ones
+      expect(mud.dotted).toBe(true);
+    });
+
+    it('leaves out a tax that is not charged', () => {
+      const labels = valueLines(typicalHomestead({ mudTaxableValue: null })).map((l) => l.label);
+
+      expect(labels).not.toContain('MUD taxable value');
+    });
+
+    it('shows the assessed value only once the cap holds it below the market (it is not a tax)', () => {
+      expect(valueLines(typicalHomestead()).map((l) => l.label)).not.toContain('Assessed value (capped)');
     });
 
     it('adds the capped assessed value, dashed and shaded, once the cap holds it below the market', () => {
@@ -35,15 +47,10 @@ describe('home value lines', () => {
       ]);
 
       const capped = lines.find((l) => l.label === 'Assessed value (capped)')!;
+      expect(capped.color).toBe('--series-7');
       expect(lines.indexOf(capped)).toBe(1); // right after market value, so the shading fills the gap between them
       expect(capped.dashed).toBe(true);
       expect(capped.fillToPrevious).toBe(true);
-    });
-
-    it('draws county/city and MUD lines when their exemptions make them differ', () => {
-      const labels = valueLines(typicalHomestead({ localTaxableValue: 300_000 })).map((l) => l.label);
-
-      expect(labels).toEqual(['Market value', 'School taxable value', 'County & city taxable value']);
     });
   });
 
@@ -51,7 +58,7 @@ describe('home value lines', () => {
     it('says what each tax is charged on in year 1', () => {
       expect(valueNote(typicalHomestead())).toBe(
         'In year 1, after homestead exemptions, school tax is charged on $235,000. '
-        + 'County & city tax and MUD tax are charged on the full $375,000.');
+        + 'County & city tax and MUD tax are charged on the full $375,000 (no exemption entered), so their lines run along the market value.');
     });
 
     it('adds what the homestead cap keeps off the tax roll by the last year', () => {
@@ -64,6 +71,24 @@ describe('home value lines', () => {
         + 'By year 2, the homestead cap keeps $15,000 of value off the tax roll.');
     });
 
+    it('says those lines follow the assessed value once the cap holds it below the market', () => {
+      const note = valueNote([
+        aProjectionYear(1, { marketValue: 300_000, assessedValue: 300_000, localTaxableValue: 300_000 }),
+        aProjectionYear(2, { marketValue: 345_000, assessedValue: 330_000, localTaxableValue: 330_000 }),
+      ]);
+
+      expect(note).toContain('County & city tax is charged on the full $300,000 (no exemption entered), so its line runs along the assessed value.');
+    });
+
+    it('warns when a tax ceiling freezes the bill while the value it is charged on keeps rising', () => {
+      const year = (n: number, taxable: number, bill: number) =>
+        aProjectionYear(n, { marketValue: 400_000 + n, assessedValue: 400_000 + n, schoolTaxableValue: taxable, costs: aHousingCosts({ schoolTax: bill }) });
+
+      const note = valueNote([year(1, 260_000, 2_600), year(2, 200_000, 2_000), year(3, 210_000, 2_000), year(4, 220_000, 2_000)]);
+
+      expect(note).toContain('From year 2, a tax ceiling holds school tax at $2,000 a year, even as its line keeps rising.');
+    });
+
     it('lists several exempted taxes together', () => {
       expect(valueNote(typicalHomestead({ localTaxableValue: 300_000, mudTaxableValue: null })))
         .toBe('In year 1, after homestead exemptions, school tax is charged on $235,000 and county & city tax on $300,000.');
@@ -72,6 +97,18 @@ describe('home value lines', () => {
     it('says when there are no property taxes to show', () => {
       expect(valueNote([aProjectionYear(1)])).toBe('No property taxes are entered, so only the home value is shown.');
       expect(valueNote([])).toBe('');
+    });
+  });
+
+  describe('valueBills', () => {
+    it('lists the year\'s bill for each tax, so every line can be checked against the tax it produces', () => {
+      const year = aProjectionYear(1, { costs: aHousingCosts({ schoolTax: 2_350, localTax: 4_125, mudTax: 3_187.5 }) });
+
+      expect(valueBills(year)).toBe('Tax this year: school $2,350 · county & city $4,125 · MUD $3,188');
+    });
+
+    it('says nothing when there are no taxes', () => {
+      expect(valueBills(aProjectionYear(1))).toBe('');
     });
   });
 });
