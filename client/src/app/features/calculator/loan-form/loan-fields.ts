@@ -3,6 +3,9 @@ import { FieldRules, MAX_AMOUNT } from '../../../core/forms/field-rules';
 /** The longest loan, in years. */
 export const MAX_YEARS = 50;
 
+/** Years left as the calculator's whole-year term: 270 months (22.5 years) becomes 23. */
+export const wholeYearsOf = (months: number) => Math.max(1, Math.round(months / 12));
+
 /**
  * Every number on the calculator form, with the limits the API enforces (AmortizationRequestValidator). Optional
  * fields may be left blank, which counts as nothing (no tax, no extra payment). Limits that depend on other

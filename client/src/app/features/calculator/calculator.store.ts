@@ -4,6 +4,7 @@ import { AmortizationRequest, AmortizationResponse } from '../../core/models/amo
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
+import { wholeYearsOf } from './loan-form/loan-fields';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 
@@ -30,6 +31,14 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
       remainingTermInMonths: request.termInMonths,
       homeValue: request.homePrice,
     };
+  }
+
+  /** The calculator holds the shared loan with a whole-year term (and its own price when the loan has no home value). */
+  protected override matchesShared(loan: SharedLoan, shared: SharedLoan): boolean {
+    return loan.balance === shared.balance
+      && loan.annualInterestRate === shared.annualInterestRate
+      && loan.remainingTermInMonths === wholeYearsOf(shared.remainingTermInMonths) * 12
+      && (shared.homeValue === null || loan.homeValue === shared.homeValue);
   }
 
   protected send$(request: AmortizationRequest) {

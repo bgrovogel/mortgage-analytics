@@ -1,17 +1,20 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
+import { setChanged } from '../../../core/forms/set-changed';
+import { formatMonths } from '../../../core/formatting/duration';
+import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { monthOf, pct, signedPct, usd } from '../../../core/formatting/format';
 import {
   AmortizationRequest,
   ExtraPaymentStrategy,
   MortgageInsuranceCancellation,
 } from '../../../core/models/amortization.models';
-import { LOAN_RULES, LUMP_SUM_RULES } from './loan-fields';
+import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
 
@@ -72,6 +75,12 @@ export class LoanFormComponent implements OnInit {
 
   /** A request to start from (the last calculation, or a saved one) instead of the worked example. */
   readonly initial = input<AmortizationRequest | null>(null);
+
+  /** A loan changed on another page since this one was last open: the form starts from it. */
+  readonly loan = input<SharedLoanChange | null>(null);
+
+  /** Where the loan was filled in from, and the years left before rounding when the term had to be rounded. */
+  readonly sharedFrom = signal<{ from: string; rounded: string | null } | null>(null);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly calculate = output<AmortizationRequest>();
@@ -240,7 +249,31 @@ export class LoanFormComponent implements OnInit {
   ngOnInit(): void {
     const initial = this.initial();
     if (initial) this.restore(initial);
+    this.startFromSharedLoan();
     this.submit();
+  }
+
+  /**
+   * Fills in the loan changed on another page: the price is the home's value (or stays, when that page did not
+   * ask), the down payment is what is not owed, and the term is the years left, to the nearest whole year.
+   */
+  private startFromSharedLoan(): void {
+    const shared = this.loan();
+    if (!shared) return;
+    const { balance, annualInterestRate, remainingTermInMonths, homeValue } = shared.loan;
+    const price = Math.max(homeValue ?? this.form.controls.homePrice.value, balance);
+    const years = wholeYearsOf(remainingTermInMonths);
+    const wasPercent = this.form.controls.downPaymentMode.value !== 'amount';
+    this.form.controls.downPaymentMode.setValue('amount', { emitEvent: false });
+    const changed = setChanged(this.form, {
+      homePrice: price,
+      downPayment: cents(price - balance),
+      annualInterestRate,
+      termYears: years,
+    });
+    if (changed || wasPercent) {
+      this.sharedFrom.set({ from: shared.from, rounded: years * 12 === remainingTermInMonths ? null : formatMonths(remainingTermInMonths) });
+    }
   }
 
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */

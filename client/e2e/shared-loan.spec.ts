@@ -45,6 +45,22 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'years-left'), 'the whole term is left').toHaveValue('30');
   });
 
+  test('the Calculator takes the loan too, rounding part years without changing them elsewhere', async ({ page }) => {
+    await page.goto('/strategy');
+    await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');
+    await box(page, 'balance').fill('280000');
+    await box(page, 'years-left').fill('22.5');
+
+    await go(page, 'Calculator');
+    await expect(box(page, 'home-price'), "the home's value").toHaveValue('400,000');
+    await expect(box(page, 'down-payment'), 'what is not owed').toHaveValue('120,000');
+    await expect(box(page, 'term-years'), 'the years left, to the nearest whole year').toHaveValue('23');
+    await expect(box(page, 'loan-shared'), 'the rounding is explained').toContainText('with 22 yr 6 mo left rounded to 23 years');
+
+    await go(page, 'Pay off or invest');
+    await expect(box(page, 'years-left'), 'the rounding stays on the Calculator').toHaveValue('22.5');
+  });
+
   test('just opening a page does not overwrite a loan typed elsewhere', async ({ page }) => {
     await page.goto('/refinance');
     await box(page, 'current-balance').fill('123000');

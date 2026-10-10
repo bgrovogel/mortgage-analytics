@@ -315,6 +315,40 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('the shared loan', () => {
+    const startFrom = (loan: { balance: number; annualInterestRate: number; remainingTermInMonths: number; homeValue: number | null }) => {
+      fixture = TestBed.createComponent(LoanFormComponent);
+      component = fixture.componentInstance;
+      emitted = [];
+      component.calculate.subscribe((request) => emitted.push(request));
+      fixture.componentRef.setInput('loan', { loan, from: 'Pay off or invest', version: 1 });
+      fixture.detectChanges();
+      return emitted[0];
+    };
+
+    it("starts from the loan: the price is the home's value, the down payment what is not owed, the term the years left", () => {
+      const request = startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: 400_000 });
+
+      expect(request).toEqual(expect.objectContaining({ homePrice: 400_000, downPayment: 100_000, annualInterestRate: 7, termInMonths: 300 }));
+      expect(text('loan-shared')).toContain('Filled in from your loan on the Pay off or invest page.');
+      expect(request.extraPayments?.monthlyAmount).toBe(200); // its own inputs stay
+    });
+
+    it('rounds part years to a whole-year term, and says so', () => {
+      const request = startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 270, homeValue: 400_000 });
+
+      expect(request.termInMonths).toBe(276);
+      expect(text('loan-shared')).toContain('with 22 yr 6 mo left rounded to 23 years');
+    });
+
+    it('keeps its own price when the loan has no home value, and never goes below a $0 down payment', () => {
+      expect(startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: null }))
+        .toEqual(expect.objectContaining({ homePrice: 375_000, downPayment: 75_000 }));
+      expect(startFrom({ balance: 420_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: 400_000 }))
+        .toEqual(expect.objectContaining({ homePrice: 420_000, downPayment: 0 }));
+    });
+  });
+
   describe('validation', () => {
     it('reveals every error when an invalid form is submitted', () => {
       controls().annualInterestRate.setValue(45);

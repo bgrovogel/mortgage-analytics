@@ -31,6 +31,9 @@ export class CalculatorPageComponent {
   /** The calculation to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
 
+  /** The loan, if another page has changed it since this one was last open. */
+  protected readonly loan = this.store.loanToApply();
+
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);
 }

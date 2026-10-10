@@ -137,6 +137,20 @@ describe('CalculationStores', () => {
       expect(strategyPage().loanToApply()!.loan.balance).toBe(123_000);
     });
 
+    it("does not send the calculator's whole-year rounding back, but does share a term the user changes there", () => {
+      refinancePage().send(refinance);
+      refinancePage().send({ ...refinance, remainingTermInMonths: 270 }); // 22.5 years left
+      const rounded = { ...purchase, homePrice: 375_000, downPayment: 75_000, annualInterestRate: 7, termInMonths: 276 };
+      calculator().send(purchase);
+      calculator().send(rounded); // what the calculator holds after taking the loan: 23 years
+
+      expect(refinancePage().loanToApply()).toBeNull();
+
+      calculator().send({ ...rounded, termInMonths: 264 }); // the user picks 22 years
+
+      expect(refinancePage().loanToApply()!.loan.remainingTermInMonths).toBe(264);
+    });
+
     it('treats opening a saved calculation as choosing its loan', () => {
       refinancePage().send(refinance);
       strategyPage().send({ ...strategy, currentBalance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300 });
