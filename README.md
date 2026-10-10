@@ -24,7 +24,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 582 backend tests · Jest: 372 Angular unit tests · Playwright: 54 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 582 backend tests · Jest: 394 Angular unit tests · Playwright: 54 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -100,7 +100,7 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 582 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 372 Jest unit tests; fails below 85% coverage
+npm test                          # 394 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 54 Playwright tests; starts the API and Angular for you
 ```
@@ -363,6 +363,15 @@ Accounts follow the same habit of not trusting the client:
   stores hold each page's state, so moving between pages never loses a calculation.
 - **One debounced-request helper.** `latestRequest` (debounce, `switchMap`, per-request error recovery,
   busy until the latest answer) backs the calculator, the refinance comparison and the strategy comparison.
+- **Each page says only what differs.** One `CalculationStore` base holds a page's request, result, errors,
+  busy flag and saved-item link; each page's store adds how to send, describe and name its inputs. One
+  `app-calculation-page` layout gives every page the same form and results columns, Save, API errors,
+  placeholder, and "these results are for your last valid inputs" notice. History and sign-out go through
+  `CalculationStores`, so a new kind of saved calculation is one store, not edits in three places.
+- **One rules table per form.** Each number's label, unit and limits mirror the API's validator in one table
+  (`loan-fields.ts`, `refinance-fields.ts`, `strategy-fields.ts`); the same table builds the validators, the
+  message under the field ("Tax rate must be between 0% and 60%.") and the list in the stale-results notice.
+  Every number box is one `app-number-field`, and money, rates and dates are formatted in one place (`format.ts`).
 - **A schedule you can make your own.** Lifetime totals for every cost above the table, and a Columns
   picker to show any category (school tax, PMI, HOA...) as its own column with its own total.
 
@@ -373,8 +382,8 @@ Accounts follow the same habit of not trusting the client:
 - **Results update as you type.** Every valid change produces a request. The page waits for a 400 ms
   pause, cancels stale requests with `switchMap`, and stays `aria-busy` until the *latest* change is
   answered (an older response arriving mid-typing does not end the busy state).
-- **One headline number.** With extra payments, net savings is the full-width hero tile and a Total
-  interest tile shows the new total against the original. Without them, the headline is the total interest
+- **One headline number.** With extra payments, net savings is the full-width hero tile, with the new total
+  interest against the original under it; one tile says when the loan is paid off and how much sooner. Without them, the headline is the total interest
   over the loan, never a $0 saving. On phones a sticky bar keeps the payment and savings in view.
 - **Number boxes that read like money.** A small `appNumber` directive (a `ControlValueAccessor` and
   validator) shows "375,000" with the $ or % inside the box, switches to the plain number while you
@@ -412,7 +421,7 @@ Accounts follow the same habit of not trusting the client:
 | Infrastructure (13) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
 | API integration (60) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (372) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| Angular (394) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (54) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).

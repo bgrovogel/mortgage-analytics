@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, sign
 import { MarketScenario, PayoffStrategy, STRATEGIES, StrategyComparison } from '../../../core/models/strategy.models';
 import { CrossoverChartComponent } from '../strategy-charts/crossover-chart.component';
 import { NetWorthChartComponent, NetWorthView } from '../strategy-charts/net-worth-chart.component';
-import { closeness, crossover, facts, monthOf, pct, recommendation, scenarioLabel, signedUsd, usd } from '../strategy-text';
+import { monthOf, pct, signedUsd, usd } from '../../../core/formatting/format';
+import { closeness, crossover, facts, recommendation, scenarioLabel } from '../strategy-text';
 
 /** The years the milestone table shows. */
 export const MILESTONES = [5, 10, 15, 30] as const;
@@ -41,7 +42,7 @@ export class StrategyResultsComponent {
   /** The detail view shown. */
   readonly tab = signal<DetailTab>('overTime');
 
-  /** True to show net worth in today's dollars. */
+  /** True to show net worth in today's dollars, everywhere below the scenario picker. */
   readonly todaysDollars = signal(false);
 
   /**
@@ -68,11 +69,15 @@ export class StrategyResultsComponent {
   readonly closeness = computed(() => closeness(this.result()));
   readonly scenarioLabels = computed(() => SCENARIOS.map((s) => ({ value: s, label: scenarioLabel(this.result(), s) })));
 
-  /** One card per strategy, in the chosen scenario, led by how far each ends behind the leader. */
+  /** One card per strategy, in the chosen scenario and dollars, led by how far each ends behind the leader. */
   readonly cards = computed(() => {
     const result = this.result();
     const scenario = this.scenario();
-    const finals = result.strategies.map((o) => o[scenario].years[o[scenario].years.length - 1].netWorth);
+    const real = this.todaysDollars();
+    const finals = result.strategies.map((o) => {
+      const last = o[scenario].years[o[scenario].years.length - 1];
+      return real ? last.netWorthInTodaysDollars : last.netWorth;
+    });
     const best = Math.max(...finals);
     const leader = result.strategies[finals.indexOf(best)].strategy;
     return result.strategies.map((o, i) => {

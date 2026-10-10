@@ -1,4 +1,5 @@
-import { buildLineChart, compactCurrency, currency, tickIndices, withAlpha } from './line-chart';
+import { compactUsd, usd } from '../formatting/format';
+import { buildLineChart, tickIndices, withAlpha } from './line-chart';
 
 describe('buildLineChart', () => {
   const host = document.createElement('div');
@@ -52,8 +53,8 @@ describe('buildLineChart', () => {
     const { title, label, footer } = callbacks();
 
     expect(title([{ dataIndex: 1, label: 'Year 2' }])).toBe('#1 Year 2');
-    expect(label({ dataset: { label: 'Market value' }, parsed: { y: 1234 } })).toBe(` Market value: ${currency.format(1234)}`);
-    expect(label({ dataset: { label: 'Gap' }, parsed: { y: null } })).toBe(` Gap: ${currency.format(0)}`);
+    expect(label({ dataset: { label: 'Market value' }, parsed: { y: 1234 } })).toBe(` Market value: ${usd(1234)}`);
+    expect(label({ dataset: { label: 'Gap' }, parsed: { y: null } })).toBe(` Gap: ${usd(0)}`);
     expect(footer([{ dataIndex: 0 }])).toBe('Total 0');
   });
 
@@ -115,7 +116,7 @@ describe('buildLineChart', () => {
     const tick = (y.ticks as unknown as { callback: (v: number) => string }).callback;
 
     expect((y as { beginAtZero?: boolean }).beginAtZero).toBe(true);
-    expect(tick(250_000)).toBe(compactCurrency.format(250_000));
+    expect(tick(250_000)).toBe(compactUsd(250_000));
   });
 });
 

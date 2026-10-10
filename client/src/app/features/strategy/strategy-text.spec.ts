@@ -1,6 +1,7 @@
 import { aStrategyComparison, aStrategyProjection } from '../../../testing/builders';
 import { StrategyComparison } from '../../core/models/strategy.models';
-import { closeness, crossover, facts, recommendation, scenarioLabel, signedUsd } from './strategy-text';
+import { signedUsd } from '../../core/formatting/format';
+import { closeness, crossover, facts, recommendation, scenarioLabel } from './strategy-text';
 
 describe('strategy text', () => {
   const withRates = (rates: Partial<StrategyComparison['rates']>, rest: Partial<StrategyComparison> = {}) => {

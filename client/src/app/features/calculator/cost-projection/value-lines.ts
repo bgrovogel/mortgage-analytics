@@ -1,4 +1,5 @@
-import { LineSeries, currency } from '../../../core/charts/line-chart';
+import { LineSeries } from '../../../core/charts/line-chart';
+import { usd } from '../../../core/formatting/format';
 import { YearProjection } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 
@@ -62,7 +63,7 @@ export function valueNote(projection: YearProjection[]): string {
 
   const exempted = units.filter((u) => u.values[0] < first.assessedValue);
   if (exempted.length > 0) {
-    const parts = exempted.map((u, i) => `${u.name}${i === 0 ? ' is charged' : ''} on ${currency.format(u.values[0])}`);
+    const parts = exempted.map((u, i) => `${u.name}${i === 0 ? ' is charged' : ''} on ${usd(u.values[0])}`);
     sentences.push(`In year 1, after homestead exemptions, ${parts.join(' and ')}.`);
   }
 
@@ -72,19 +73,19 @@ export function valueNote(projection: YearProjection[]): string {
     // Once the cap holds the assessed value below the market, these lines follow it, not the market.
     const along = projection.every((y) => y.assessedValue === y.marketValue) ? 'the market value' : 'the assessed value';
     const lineWord = full.length === 1 ? 'its line runs' : 'their lines run';
-    sentences.push(`${names} ${full.length === 1 ? 'is' : 'are'} charged on the full ${currency.format(first.assessedValue)} (no exemption entered), so ${lineWord} along ${along}.`);
+    sentences.push(`${names} ${full.length === 1 ? 'is' : 'are'} charged on the full ${usd(first.assessedValue)} (no exemption entered), so ${lineWord} along ${along}.`);
   }
 
   // An over-65 ceiling freezes a bill: the line keeps rising, the tax does not. Say so, or the chart misleads.
   for (const unit of units) {
     const frozenFrom = ceilingYear(projection, unit);
     if (frozenFrom !== null) {
-      sentences.push(`From year ${frozenFrom}, a tax ceiling holds ${unit.name} at ${currency.format(last.costs[unit.category])} a year, even as its line keeps rising.`);
+      sentences.push(`From year ${frozenFrom}, a tax ceiling holds ${unit.name} at ${usd(last.costs[unit.category])} a year, even as its line keeps rising.`);
     }
   }
 
   const gap = last.marketValue - last.assessedValue;
-  if (gap > 0) sentences.push(`By year ${last.year}, the homestead cap keeps ${currency.format(gap)} of value off the tax roll.`);
+  if (gap > 0) sentences.push(`By year ${last.year}, the homestead cap keeps ${usd(gap)} of value off the tax roll.`);
 
   return sentences.length > 0 ? sentences.join(' ') : 'No property taxes are entered, so only the home value is shown.';
 }
@@ -96,7 +97,7 @@ export function valueBills(year: YearProjection): string {
     ['county & city', year.costs.localTax],
     ['MUD', year.costs.mudTax],
   ] as const;
-  const charged = bills.filter(([, amount]) => amount > 0).map(([name, amount]) => `${name} ${currency.format(amount)}`);
+  const charged = bills.filter(([, amount]) => amount > 0).map(([name, amount]) => `${name} ${usd(amount)}`);
   return charged.length > 0 ? `Tax this year: ${charged.join(' · ')}` : '';
 }
 

@@ -20,8 +20,7 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .WithName("Current balance");
 
         RuleFor(r => r.CurrentAnnualInterestRate)
-            .InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate)
-            .PrecisionScale(6, 4, ignoreTrailingZeros: true)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("Current interest rate");
 
         RuleFor(r => r.RemainingTermInMonths)
@@ -34,8 +33,7 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .When(r => r.NextPaymentDate is not null);
 
         RuleFor(r => r.NewAnnualInterestRate)
-            .InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate)
-            .PrecisionScale(6, 4, ignoreTrailingZeros: true)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("New interest rate");
 
         RuleFor(r => r.NewTermInMonths)

@@ -1,0 +1,102 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-areas: 'form results';
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.form-panel {
+  grid-area: form;
+}
+
+.form-panel.sticky {
+  position: sticky;
+  top: 1rem;
+  // The results column is often much taller than the form. Capping the panel to the window, less the page
+  // header above it (measured, since its links can wrap; see HeaderHeightDirective) and the space around it,
+  // and letting it scroll on its own keeps every section reachable, even before the page has scrolled at all.
+  max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.results {
+  grid-area: results;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+// Fade results slightly while they are being recalculated, so stale numbers are not mistaken for fresh ones.
+.results.updating {
+  opacity: 0.6;
+  transition: opacity 0.2s ease 0.15s;
+}
+
+// The title (or tabs) on the left, Save on the right, over one shared rule.
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+
+  h2 {
+    margin: 0;
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+}
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  min-width: 0;
+}
+
+.placeholder {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.alert {
+  border: 1px solid var(--critical);
+  background: var(--critical-soft);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+
+  ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.2rem;
+  }
+}
+
+// Stale results: amber, not red; nothing failed, the inputs just need fixing first.
+.alert.stale {
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+}
+
+// One column on a phone: the answer first, then the form.
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'results'
+      'form';
+  }
+
+  .form-panel.sticky {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}

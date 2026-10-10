@@ -1,0 +1,10 @@
+import { FieldRules, MAX_AMOUNT } from '../../../core/forms/field-rules';
+
+/** Every number on the refinance form, with the limits the API enforces (RefinanceRequestValidator). */
+export const REFINANCE_RULES = {
+  currentBalance: { label: 'Balance you still owe', unit: '$', min: 0.01, max: MAX_AMOUNT },
+  currentAnnualInterestRate: { label: 'Current rate', unit: '%', min: 0, max: 30, decimals: 4 },
+  yearsLeft: { label: 'Years left', unit: 'years', min: 1 / 12, max: 50 },
+  newAnnualInterestRate: { label: 'New rate', unit: '%', min: 0, max: 30, decimals: 4 },
+  closingCosts: { label: 'Closing costs', unit: '$', min: 0, max: MAX_AMOUNT },
+} as const satisfies FieldRules;

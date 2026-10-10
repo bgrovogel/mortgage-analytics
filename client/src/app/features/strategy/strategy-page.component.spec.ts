@@ -54,7 +54,7 @@ describe('StrategyPageComponent', () => {
     const page = open();
 
     expect(page.textContent).toContain('Playing out 30 years');
-    expect(page.querySelector('[data-testid="strategy-results"]')!.getAttribute('aria-busy')).toBe('true');
+    expect(page.querySelector('[data-testid="results"]')!.getAttribute('aria-busy')).toBe('true');
   });
 
   it('shows what went wrong when the server rejects the request', () => {
@@ -62,7 +62,7 @@ describe('StrategyPageComponent', () => {
 
     const page = open();
 
-    expect(page.querySelector('[data-testid="strategy-errors"]')!.textContent).toContain('Too big.');
+    expect(page.querySelector('[data-testid="calculation-errors"]')!.textContent).toContain('Too big.');
   });
 
   it('says the results are for the last valid inputs while a field is invalid, and which', () => {
@@ -74,14 +74,14 @@ describe('StrategyPageComponent', () => {
     tax.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    expect(page.querySelector('[data-testid="strategy-stale"]')!.textContent).toContain('Tax rate must be between 0% and 60%.');
+    expect(page.querySelector('[data-testid="stale-results"]')!.textContent).toContain('Tax rate must be between 0% and 60%.');
     expect(page.querySelector('[data-testid="recommended"]')).not.toBeNull(); // the last results stay, clearly marked
 
     tax.value = '24';
     tax.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    expect(page.querySelector('[data-testid="strategy-stale"]')).toBeNull();
+    expect(page.querySelector('[data-testid="stale-results"]')).toBeNull();
   });
 
   it('offers to save the comparison, with a suggested name', () => {
@@ -91,8 +91,9 @@ describe('StrategyPageComponent', () => {
 
     // Signed out, Save first asks to sign in; the payload and the name are ready for when they do.
     expect(page.querySelector('[data-testid="save-sign-in"]')).not.toBeNull();
-    expect(fixture.componentInstance['savePayload']()).toEqual({ strategy: compare.mock.calls[0][0] });
-    expect(fixture.componentInstance['suggestedName']()).toBe('Pay off or invest: $1,000/mo, 6.5% mortgage');
+    const store = TestBed.inject(StrategyStore);
+    expect(store.savePayload()).toEqual({ strategy: compare.mock.calls[0][0] });
+    expect(store.suggestedName()).toBe('Pay off or invest: $1,000/mo, 6.5% mortgage');
   });
 
   it('resumes the last comparison after a trip to another page', () => {

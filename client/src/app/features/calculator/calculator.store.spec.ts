@@ -30,7 +30,7 @@ describe('CalculatorStore', () => {
       const response = aResponse({ savings: aSavings({ netSavings: 1_234 }) });
       calculate.mockReturnValue(of(response));
 
-      store.calculate(request(7));
+      store.send(request(7));
       settle();
 
       expect(store.result()).toBe(response);
@@ -40,7 +40,7 @@ describe('CalculatorStore', () => {
     it('remembers the latest request at once, so a page opened mid-typing restores it', () => {
       calculate.mockReturnValue(new Subject());
 
-      store.calculate(request(9));
+      store.send(request(9));
 
       expect(store.request()?.extraPayments?.monthlyAmount).toBe(9);
     });

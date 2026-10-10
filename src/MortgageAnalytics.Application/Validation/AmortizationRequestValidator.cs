@@ -49,8 +49,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .OverridePropertyName(nameof(AmortizationRequest.DownPayment));
 
         RuleFor(r => r.AnnualInterestRate)
-            .InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate)
-            .PrecisionScale(6, 4, ignoreTrailingZeros: true)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("Interest rate");
 
         RuleFor(r => r.TermInMonths)
@@ -138,9 +137,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(h => h.SchoolHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents().WithName("School homestead exemption");
             RuleFor(h => h.LocalHomesteadExemptionPercent).Percentage(max: 100).WithName("County/city exemption");
             RuleFor(h => h.HomesteadAssessmentCap).Percentage(max: 100).WithName("Appraisal cap");
-            RuleFor(h => h.HomeValueGrowthRate).InclusiveBetween(-20, 25).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("Home value growth");
-            RuleFor(h => h.InsuranceIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("Insurance increase");
-            RuleFor(h => h.HoaIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("HOA increase");
+            RuleFor(h => h.HomeValueGrowthRate).Rate(-20, 25).WithName("Home value growth");
+            RuleFor(h => h.InsuranceIncreaseRate).Rate(-20, 50).WithName("Insurance increase");
+            RuleFor(h => h.HoaIncreaseRate).Rate(-20, 50).WithName("HOA increase");
             RuleFor(h => h.PmiRate).Percentage(max: 5).WithName("PMI rate");
             RuleFor(h => h.PmiCancellation).IsInEnum().WithName("PMI removal");
             RuleFor(h => h.AnnualHomeownersInsurance).InclusiveBetween(0, 1_000_000).WholeCents().WithName("Home insurance");
@@ -184,7 +183,14 @@ internal static class SharedRules
 
     /// <summary>Requires a percentage between 0 and <paramref name="max"/>, with up to four decimal places.</summary>
     public static IRuleBuilderOptions<T, decimal> Percentage<T>(this IRuleBuilder<T, decimal> rule, decimal max) =>
-        rule.InclusiveBetween(0, max).PrecisionScale(6, 4, ignoreTrailingZeros: true);
+        rule.Rate(0, max);
+
+    /// <summary>
+    /// Requires a rate between <paramref name="min"/> and <paramref name="max"/>, with up to four decimal places.
+    /// Seven digits in all, so three-digit rates (a 100% or 200% employer match) fit.
+    /// </summary>
+    public static IRuleBuilderOptions<T, decimal> Rate<T>(this IRuleBuilder<T, decimal> rule, decimal min, decimal max) =>
+        rule.InclusiveBetween(min, max).PrecisionScale(7, 4, ignoreTrailingZeros: true);
 
     /// <summary>Requires an extra payment that is not negative (or, unless <paramref name="allowZero"/>, positive), no larger than the loan, and in whole cents.</summary>
     public static IRuleBuilderOptions<T, decimal> ExtraAmount<T>(this IRuleBuilder<T, decimal> rule, decimal loanAmount, bool allowZero)

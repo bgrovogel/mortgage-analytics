@@ -26,9 +26,18 @@ export interface SavedCalculation {
   updatedAt: string; // ISO date-time
 }
 
+/** The field that holds each kind's inputs, in a saved calculation and in what is sent to save one. */
+export const INPUTS_FIELD = { Purchase: 'inputs', Refinance: 'refinance', Strategy: 'strategy' } as const satisfies Record<
+  SavedCalculationKind,
+  keyof SavedCalculation
+>;
+
+/** What to send to save a kind's inputs, e.g. `{ refinance: request }`. The kind decides the field. */
+export function savedInputsFor(kind: SavedCalculationKind, request: unknown): SavedInputs {
+  return { [INPUTS_FIELD[kind]]: request } as unknown as SavedInputs;
+}
+
 /** The saved inputs of a calculation, ready to save again (e.g. under a new name). */
 export function savedInputsOf(calculation: SavedCalculation): SavedInputs {
-  if (calculation.inputs) return { inputs: calculation.inputs };
-  if (calculation.refinance) return { refinance: calculation.refinance };
-  return { strategy: calculation.strategy! };
+  return savedInputsFor(calculation.kind, calculation[INPUTS_FIELD[calculation.kind]]);
 }

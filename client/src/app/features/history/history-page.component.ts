@@ -3,12 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
-import { describeInputs, describeRefinance, describeStrategy } from '../../core/formatting/describe-inputs';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
-import { CalculatorStore } from '../calculator/calculator.store';
-import { RefinanceStore } from '../refinance/refinance.store';
-import { StrategyStore } from '../strategy/strategy.store';
+import { CalculationStores } from '../calculation-stores';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -29,9 +26,7 @@ const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', y
 })
 export class HistoryPageComponent {
   private readonly api = inject(SavedCalculationsApiService);
-  private readonly calculator = inject(CalculatorStore);
-  private readonly refinance = inject(RefinanceStore);
-  private readonly strategy = inject(StrategyStore);
+  private readonly stores = inject(CalculationStores);
   private readonly router = inject(Router);
   private readonly searches = new Subject<string>();
 
@@ -103,8 +98,7 @@ export class HistoryPageComponent {
 
   /** One line that tells saved items apart, in the terms of their kind. */
   describe(calculation: SavedCalculation): string {
-    if (calculation.inputs) return describeInputs(calculation.inputs);
-    return calculation.refinance ? describeRefinance(calculation.refinance) : describeStrategy(calculation.strategy!);
+    return this.stores.describe(calculation);
   }
 
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */
@@ -116,16 +110,9 @@ export class HistoryPageComponent {
 
   /** Loads the calculation on its own page (the calculator, refinance or pay-off-or-invest) and goes there. */
   open(calculation: SavedCalculation): void {
-    if (calculation.kind === 'Refinance') {
-      this.refinance.open(calculation);
-      void this.router.navigate(['/refinance']);
-    } else if (calculation.kind === 'Strategy') {
-      this.strategy.open(calculation);
-      void this.router.navigate(['/strategy']);
-    } else {
-      this.calculator.open(calculation);
-      void this.router.navigate(['/calculator', 'overview']);
-    }
+    const store = this.stores.of(calculation.kind);
+    store.open(calculation);
+    void this.router.navigate([...store.route]);
   }
 
   /** Starts renaming, with the current name to edit. */
@@ -152,9 +139,7 @@ export class HistoryPageComponent {
       next: (updated) => {
         this.calculations.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         // Keep whichever page shows this calculation linked to its new name.
-        if (this.calculator.saved()?.id === updated.id) this.calculator.linkTo(updated);
-        if (this.refinance.saved()?.id === updated.id) this.refinance.linkTo(updated);
-        if (this.strategy.saved()?.id === updated.id) this.strategy.linkTo(updated);
+        this.stores.renamed(updated);
         this.renaming.set(null);
         this.error.set(null);
       },
@@ -167,9 +152,7 @@ export class HistoryPageComponent {
     this.api.delete(calculation.id).subscribe({
       next: () => {
         this.calculations.update((list) => list.filter((c) => c.id !== calculation.id));
-        if (this.calculator.saved()?.id === calculation.id) this.calculator.saved.set(null);
-        if (this.refinance.saved()?.id === calculation.id) this.refinance.saved.set(null);
-        if (this.strategy.saved()?.id === calculation.id) this.strategy.saved.set(null);
+        this.stores.deleted(calculation.id);
         this.confirmingDelete.set(null);
         this.error.set(null);
       },

@@ -1,0 +1,46 @@
+@let state = store();
+
+<div class="layout">
+  <aside class="panel form-panel" [class.sticky]="stickyForm()" data-testid="form-panel">
+    <ng-content select="[form]" />
+  </aside>
+
+  <section class="results" [attr.aria-label]="label()" [attr.aria-live]="announce() ? 'polite' : null"
+           [attr.aria-busy]="state.busy()" [class.updating]="state.busy()" data-testid="results">
+    <div class="results-header">
+      @if (heading()) {
+        <h2>{{ heading() }}</h2>
+      }
+      <ng-content select="[tabs]" />
+      <app-save-calculation [payload]="state.savePayload()" [suggestion]="state.suggestedName()" [linked]="state.saved()"
+                            (saved)="state.linkTo($event)" />
+    </div>
+
+    @if (problems().length > 0 && state.result()) {
+      <div class="alert stale" role="status" data-testid="stale-results">
+        <strong>These results are for your last valid inputs.</strong> Fix {{ problems().length === 1 ? 'this' : 'these' }} to update them:
+        <ul>
+          @for (problem of problems(); track problem) {
+            <li>{{ problem }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (state.errors().length > 0) {
+      <div class="alert" role="alert" data-testid="calculation-errors">
+        <strong>{{ errorTitle() }}</strong>
+        <ul>
+          @for (message of state.errors(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (!state.result() && state.errors().length === 0) {
+      <div class="panel placeholder">{{ placeholder() }}</div>
+    }
+    <ng-content />
+  </section>
+</div>

@@ -14,7 +14,7 @@ describe('RefinanceStore', () => {
     const store = TestBed.inject(RefinanceStore);
     const request = { currentBalance: 300_000 } as RefinanceRequest;
 
-    store.analyze(request);
+    store.send(request);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
     expect(analyze).toHaveBeenCalledWith(request);

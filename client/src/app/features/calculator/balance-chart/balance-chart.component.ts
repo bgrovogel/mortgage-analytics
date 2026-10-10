@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, viewChild } from
 import { hostChart } from '../../../core/charts/chart-host';
 import { buildLineChart } from '../../../core/charts/line-chart';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { monthOf } from '../../../core/formatting/format';
 
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** Remaining loan balance over time: standard payoff against accelerated payoff. */
 @Component({
@@ -36,7 +36,7 @@ export class BalanceChartComponent {
         const { baseline, accelerated } = this.result();
         return buildLineChart(
           {
-            labels: baseline.payments.map((p) => monthYear.format(new Date(p.dueDate))),
+            labels: baseline.payments.map((p) => monthOf(p.dueDate)),
             series: [
               { label: 'Standard payoff', color: '--series-1', data: baseline.payments.map((p) => p.remainingBalance) },
               // Shading down to the standard payoff makes the time and interest saved visible as an area.

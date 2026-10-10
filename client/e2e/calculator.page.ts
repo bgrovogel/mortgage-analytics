@@ -22,6 +22,8 @@ export class CalculatorPage {
   readonly totalInterest: Locator;
   readonly savingsDetail: Locator;
   readonly timeSaved: Locator;
+  readonly samePayoff: Locator;
+  readonly staleResults: Locator;
   readonly payoffDate: Locator;
   readonly pmiEnd: Locator;
   readonly recasts: Locator;
@@ -53,6 +55,8 @@ export class CalculatorPage {
     this.totalInterest = page.getByTestId('total-interest');
     this.savingsDetail = page.getByTestId('savings-detail');
     this.timeSaved = page.getByTestId('time-saved');
+    this.samePayoff = page.getByTestId('same-payoff');
+    this.staleResults = page.getByTestId('stale-results');
     this.payoffDate = page.getByTestId('payoff-date');
     this.pmiEnd = page.getByTestId('pmi-end');
     this.recasts = page.getByTestId('recasts');
@@ -63,7 +67,7 @@ export class CalculatorPage {
     this.projectionNote = page.getByTestId('projection-note-costs');
     this.homeValueNote = page.getByTestId('projection-note-value');
     this.scheduleRows = page.getByTestId('schedule-table').locator('tbody tr');
-    this.errorSummary = page.getByTestId('error-summary');
+    this.errorSummary = page.getByTestId('calculation-errors');
     this.summaryBar = page.getByTestId('summary-bar');
     this.pmiHint = page.getByTestId('pmi-hint');
     this.calculateButton = page.getByTestId('calculate');

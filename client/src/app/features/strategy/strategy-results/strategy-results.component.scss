@@ -1,4 +1,5 @@
 @use '../../../core/forms/segmented';
+@use '../../../core/layout/scroll-hint';
 
 :host {
   display: flex;
@@ -80,6 +81,17 @@
   }
 }
 
+.view-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+
+  .picker {
+    flex: 1 1 360px;
+  }
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -155,6 +167,7 @@
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   overflow-y: hidden;
+  @include scroll-hint.fade-edge;
 
   button {
     flex: none;

@@ -19,26 +19,26 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
     public StrategyRequestValidator()
     {
         RuleFor(r => r.CurrentBalance).GreaterThan(0).LessThanOrEqualTo(LoanTerms.MaxPrincipal).WholeCents().WithName("Mortgage balance");
-        RuleFor(r => r.AnnualInterestRate).InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("Interest rate");
+        RuleFor(r => r.AnnualInterestRate).Percentage(max: LoanTerms.MaxAnnualInterestRate).WithName("Interest rate");
         RuleFor(r => r.RemainingTermInMonths).InclusiveBetween(1, MaxRemainingTermInMonths).WithName("Payments left");
         RuleFor(r => r.NextPaymentDate)
             .InclusiveBetween(AmortizationRequestValidator.EarliestFirstPayment, AmortizationRequestValidator.LatestFirstPayment)
             .WithName("Next payment date")
             .When(r => r.NextPaymentDate is not null);
         RuleFor(r => r.HomeValue).GreaterThanOrEqualTo(0).LessThanOrEqualTo(Household.MaxAmount).WholeCents().WithName("Home value");
-        RuleFor(r => r.HomeGrowthRate).InclusiveBetween(-20, 25).WithName("Home value growth");
+        RuleFor(r => r.HomeGrowthRate).Rate(-20, 25).WithName("Home value growth");
 
         Amount(r => r.GrossAnnualIncome, "Gross income");
-        Rate(r => r.MarginalTaxRate, Household.MaxTaxRate, "Tax rate");
-        Rate(r => r.CapitalGainsTaxRate, Household.MaxTaxRate, "Capital gains tax rate");
+        Percent(r => r.MarginalTaxRate, Household.MaxTaxRate, "Tax rate");
+        Percent(r => r.CapitalGainsTaxRate, Household.MaxTaxRate, "Capital gains tax rate");
         RuleFor(r => r.FilingStatus).IsInEnum().WithName("Filing status");
         Amount(r => r.OtherItemizedDeductions, "Other itemized deductions");
         Amount(r => r.MonthlyCashToPutToWork, "Monthly cash to put to work");
 
-        Rate(r => r.EmployerMatchPercent, 200, "Employer match");
-        Rate(r => r.MatchUpToPercentOfPay, 100, "Matched share of pay");
-        Rate(r => r.EsppContributionPercent, 25, "ESPP contribution");
-        Rate(r => r.EsppDiscountPercent, 15, "ESPP discount");
+        Percent(r => r.EmployerMatchPercent, 200, "Employer match");
+        Percent(r => r.MatchUpToPercentOfPay, 100, "Matched share of pay");
+        Percent(r => r.EsppContributionPercent, 25, "ESPP contribution");
+        Percent(r => r.EsppDiscountPercent, 15, "ESPP discount");
         RuleFor(r => r.EsppPurchasePeriodMonths).InclusiveBetween(1, 27).WithName("ESPP purchase period");
         RuleFor(r => r.AnnualIraContribution).InclusiveBetween(0, TaxLimits.IraContribution).WholeCents().WithName("IRA contribution");
         Amount(r => r.AnnualRsuVesting, "RSUs vesting");
@@ -46,15 +46,14 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
         Amount(r => r.CurrentRetirementSavings, "Retirement savings");
         Amount(r => r.CurrentInvestments, "Current investments");
 
-        RuleFor(r => r.ExpectedAnnualReturn).InclusiveBetween(-10, 30).WithName("Expected return");
-        RuleFor(r => r.InflationRate).InclusiveBetween(-5, 20).WithName("Inflation");
+        RuleFor(r => r.ExpectedAnnualReturn).Rate(-10, 30).WithName("Expected return");
+        RuleFor(r => r.InflationRate).Rate(-5, 20).WithName("Inflation");
         RuleFor(r => r.RiskProfile).IsInEnum().WithName("Risk profile");
     }
 
     private void Amount(Expression<Func<StrategyRequest, decimal>> field, string name) =>
         RuleFor(field).InclusiveBetween(0, Household.MaxAmount).WholeCents().WithName(name);
 
-    // Up to four decimal places. Seven digits in all, so three-digit rates (a 100% or 200% match) fit.
-    private void Rate(Expression<Func<StrategyRequest, decimal>> field, decimal max, string name) =>
-        RuleFor(field).InclusiveBetween(0, max).PrecisionScale(7, 4, ignoreTrailingZeros: true).WithName(name);
+    private void Percent(Expression<Func<StrategyRequest, decimal>> field, decimal max, string name) =>
+        RuleFor(field).Percentage(max).WithName(name);
 }

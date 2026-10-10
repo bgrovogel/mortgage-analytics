@@ -75,7 +75,7 @@ describe('RefinanceFormComponent', () => {
     fixture.detectChanges();
 
     expect(emitted).toHaveLength(before);
-    expect(el('refinance-form')!.textContent).toContain('Enter the balance you still owe.');
+    expect(el('refinance-form')!.textContent).toContain('Balance you still owe must be more than $0.');
   });
 
   it('restores a previous comparison instead of the example', () => {

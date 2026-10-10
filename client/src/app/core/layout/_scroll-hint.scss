@@ -1,0 +1,21 @@
+// A strip that scrolls sideways (tabs, the page links) fades out at the edge that has more to show, so a link
+// cut off on a phone reads as "scroll for more" rather than missing. It uses a scroll-driven animation: the
+// fade follows the scroll position, and a strip that fits (nothing to scroll) shows no fade at all. Browsers
+// without scroll-driven animations simply show the strip as before.
+@mixin fade-edge {
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-hint-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+
+  @keyframes scroll-hint-fade {
+    0%,
+    95% {
+      mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    }
+
+    100% {
+      mask-image: none;
+    }
+  }
+}

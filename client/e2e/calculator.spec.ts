@@ -136,7 +136,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
 
     await expect(calculator.pmiEnd, 'automatic removal stays at payment 135').toHaveText('Mar 2037');
-    await expect(calculator.savingsDetail, 'so no PMI is saved').not.toContainText('PMI');
+    await expect(calculator.savingsDetail, 'so no PMI is saved: the savings are all interest, which the headline already says').toBeHidden();
   });
 
   test('applies the Texas school homestead exemption only to a homestead', async ({ calculator }) => {
@@ -231,7 +231,7 @@ test.describe('Mortgage calculator', () => {
 
     await expect(calculator.recasts, 're-amortized over the remaining 348 months').toContainText('payment drops from $1,199.10 to $895.60');
     await expect(calculator.recasts, 'the lender fee is shown').toContainText('$250 fee');
-    await expect(calculator.timeSaved, 'a recast keeps the payoff date').toHaveText('0 mo');
+    await expect(calculator.samePayoff, 'a recast keeps the payoff date').toHaveText('Same date: a recast lowers the payment instead');
     await calculator.showResults('schedule');
     await expect(calculator.scheduleRows, 'all 360 payments remain').toHaveCount(360);
     await expect(await calculator.cell(12, 'Extra'), 'the triggering payment is tagged').toContainText('recast');
@@ -313,8 +313,10 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('interest-rate', 45);
     await calculator.set('down-payment', 400_000);
 
-    await expect(calculator.message('Rate must be between 0% and 30%.'), 'the rate error is shown').toBeVisible();
-    await expect(calculator.message('The down payment must be less than the home price.'), 'the down payment error is shown').toBeVisible();
+    await expect(calculator.formPanel.getByText('Interest rate must be between 0% and 30%.'), 'the rate error is shown on the field').toBeVisible();
+    await expect(calculator.formPanel.getByText('The down payment must be less than the home price.'), 'the down payment error is shown').toBeVisible();
+    await expect(calculator.staleResults.locator('li'), 'the results say they are for the last valid inputs, and why')
+      .toHaveText(['Interest rate must be between 0% and 30%.', 'The down payment must be less than the home price.']);
     await calculator.waitPastRecalculationPause();
     expect(apiWasCalled(), 'invalid input must not reach the API').toBe(false);
   });

@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, viewChild } from
 import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
 import { LoanPayment, RefinanceResponse } from '../../../core/models/refinance.models';
+import { monthOf } from '../../../core/formatting/format';
 
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** Each option's balance after every payment, padded with $0 once it is paid off. */
 const balances = (payments: LoanPayment[], length: number) =>
@@ -49,7 +49,7 @@ export class RefinanceChartComponent {
         }
         return buildLineChart(
           {
-            labels: longest.payments.map((p) => monthYear.format(new Date(`${p.dueDate}T00:00:00Z`))),
+            labels: longest.payments.map((p) => monthOf(p.dueDate)),
             series,
             title: (index, label) => `Payment ${index + 1} · ${label}`,
             tickEvery: 12,

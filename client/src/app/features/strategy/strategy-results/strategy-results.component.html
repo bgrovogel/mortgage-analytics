@@ -8,14 +8,21 @@
   <p class="downside" data-testid="downside">{{ rec.downside }}</p>
 </section>
 
-<div class="picker" role="radiogroup" aria-label="Market scenario" data-testid="scenario-picker">
-  @for (option of scenarioLabels(); track option.value) {
-    <label>
-      <input type="radio" name="scenario" [value]="option.value" [checked]="scenario() === option.value"
-             (change)="scenario.set(option.value)" [attr.data-testid]="'scenario-' + option.value" />
-      {{ option.label }}
-    </label>
-  }
+<!-- How every number below is shown: in which market, and in today's or future dollars. -->
+<div class="view-options">
+  <div class="picker" role="radiogroup" aria-label="Market scenario" data-testid="scenario-picker">
+    @for (option of scenarioLabels(); track option.value) {
+      <label>
+        <input type="radio" name="scenario" [value]="option.value" [checked]="scenario() === option.value"
+               (change)="scenario.set(option.value)" [attr.data-testid]="'scenario-' + option.value" />
+        {{ option.label }}
+      </label>
+    }
+  </div>
+  <label class="toggle">
+    <input type="checkbox" [checked]="todaysDollars()" (change)="todaysDollars.set(!todaysDollars())" data-testid="todays-dollars" />
+    In today's dollars
+  </label>
 </div>
 
 <div class="cards">
@@ -58,21 +65,11 @@
               </label>
             }
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="todaysDollars()" (change)="todaysDollars.set(!todaysDollars())" data-testid="todays-dollars" />
-            In today's dollars
-          </label>
         </div>
         <app-net-worth-chart [result]="r" [scenario]="scenario()" [todaysDollars]="todaysDollars()" [view]="view()" />
       }
       @case ('milestones') {
         <p class="lead" data-testid="closeness">{{ closeness() }}</p>
-        <div class="tools">
-          <label class="toggle">
-            <input type="checkbox" [checked]="todaysDollars()" (change)="todaysDollars.set(!todaysDollars())" data-testid="todays-dollars" />
-            In today's dollars
-          </label>
-        </div>
         <div class="table-wrap" tabindex="0" aria-label="Net worth at years 5, 10, 15 and 30">
           <table data-testid="milestones">
             <thead>

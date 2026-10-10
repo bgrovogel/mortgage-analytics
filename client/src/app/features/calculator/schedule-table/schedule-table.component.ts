@@ -2,6 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES, CostCategory } from '../../../core/models/cost-categories';
+import { monthOf } from '../../../core/formatting/format';
 
 type View = 'accelerated' | 'baseline';
 type Period = 'monthly' | 'yearly';
@@ -39,7 +40,6 @@ export interface ScheduleColumn {
 /** Where the chosen columns are remembered, per browser. */
 export const COLUMNS_STORAGE_KEY = 'schedule-columns';
 
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 const utcDate = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`);
 const sum = <T>(items: T[], pick: (item: T) => number) => items.reduce((total, item) => total + pick(item), 0);
 
@@ -105,7 +105,7 @@ export class ScheduleTableComponent {
   readonly rows = computed<ScheduleRow[]>(() => {
     const payments = this.schedule().payments;
     return this.period() === 'monthly'
-      ? payments.map((p) => this.toRow(p.paymentNumber, monthYear.format(utcDate(p.dueDate)), [p]))
+      ? payments.map((p) => this.toRow(p.paymentNumber, monthOf(p.dueDate), [p]))
       : this.byYear(payments);
   });
 

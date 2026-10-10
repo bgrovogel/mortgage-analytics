@@ -1,14 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
+import { money, monthOf, usd, usdCents } from '../../../core/formatting/format';
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 
-const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-const cents = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-/** "$1,500" for whole dollars, "$1,798.65" otherwise. */
-const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 });
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-const date = (iso: string) => monthYear.format(new Date(`${iso}T00:00:00Z`));
 
 /** One column of the comparison table. */
 interface TableColumn {
@@ -36,10 +31,10 @@ export class RefinanceResultsComponent {
   /** The comparison to show. */
   readonly result = input.required<RefinanceResponse>();
 
-  protected readonly dollars = (value: number) => dollars.format(value);
-  protected readonly cents = (value: number) => cents.format(value);
-  protected readonly money = (value: number) => money.format(value);
-  protected readonly date = date;
+  protected readonly dollars = usd;
+  protected readonly cents = usdCents;
+  protected readonly money = money;
+  protected readonly date = monthOf;
   protected readonly months = formatMonths;
 
   /** True when refinancing costs more over the life of the loan, closing costs included. */
@@ -49,15 +44,15 @@ export class RefinanceResultsComponent {
   readonly paymentSentence = computed(() => {
     const r = this.result();
     const change = r.monthlySavings >= 0
-      ? `The payment drops ${cents.format(r.monthlySavings)} a month`
-      : `The payment rises ${cents.format(-r.monthlySavings)} a month`;
+      ? `The payment drops ${usdCents(r.monthlySavings)} a month`
+      : `The payment rises ${usdCents(-r.monthlySavings)} a month`;
     return r.monthsAdded > 0 ? `${change}, but the loan runs ${formatMonths(r.monthsAdded)} longer.` : `${change}.`;
   });
 
   /** "5 yr later than now (Dec 2050)", "1 yr 2 mo sooner than now", or "same as now". */
   readonly payoffChange = computed(() => {
     const r = this.result();
-    if (r.monthsAdded > 0) return `${formatMonths(r.monthsAdded)} later than now (${date(r.current.payoffDate)})`;
+    if (r.monthsAdded > 0) return `${formatMonths(r.monthsAdded)} later than now (${monthOf(r.current.payoffDate)})`;
     if (r.monthsAdded < 0) return `${formatMonths(-r.monthsAdded)} sooner than now`;
     return 'same as now';
   });
@@ -75,7 +70,7 @@ export class RefinanceResultsComponent {
   readonly columns = computed<TableColumn[]>(() => {
     const r = this.result();
     const financed = r.refinanced.loanAmount - r.current.loanAmount;
-    const closing = r.upfrontCosts > 0 ? dollars.format(r.upfrontCosts) : financed > 0 ? `${dollars.format(financed)} in the loan` : '$0';
+    const closing = r.upfrontCosts > 0 ? usd(r.upfrontCosts) : financed > 0 ? `${usd(financed)} in the loan` : '$0';
     const columns: TableColumn[] = [
       { label: 'Keep current loan', option: r.current, closing: '—', totalCost: r.current.totalPaid },
       { label: 'Refinance', option: r.refinanced, closing, totalCost: r.refinanced.totalPaid + r.upfrontCosts },

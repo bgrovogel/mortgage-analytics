@@ -1,69 +1,10 @@
 // Form fields shared by every form in the app (loan, refinance, strategy): layout, labels, number
 // boxes with "$" / "%" inside them, checkboxes, hints, errors and collapsible sections. Include with
 //   @use 'core/forms/form-fields' as fields;   @include fields.styles;
-@mixin styles {
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
+// A component that is only one field (NumberFieldComponent) includes just `fields.field`.
 
-  fieldset {
-    border: 0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  legend {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-  }
-
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    // Inputs line up along the bottom even when one label wraps onto two lines.
-    align-items: end;
-  }
-
-  .row.three {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    input {
-      padding-inline: 0.5rem;
-    }
-  }
-
-  .checkbox {
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-start;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-
-    strong {
-      color: var(--text-primary);
-      font-weight: 600;
-    }
-
-    input {
-      width: 18px;
-      height: 18px;
-      flex: none;
-      margin-top: 0.1rem;
-      accent-color: var(--accent);
-    }
-  }
-
+// One labelled box: the label, the input (with "$" before money and "%" after rates), and its error.
+@mixin field {
   .field {
     display: flex;
     flex-direction: column;
@@ -101,12 +42,6 @@
   .error {
     color: var(--critical);
     font-size: 0.8rem;
-  }
-
-  .hint {
-    margin: -0.25rem 0 0;
-    font-size: 0.84rem;
-    color: var(--text-muted);
   }
 
   abbr[title] {
@@ -147,6 +82,91 @@
     &[data-suffix] input {
       padding-right: 1.6rem;
     }
+  }
+}
+
+@mixin styles {
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  legend {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  // Each field in a row spans three shared rows (label, box, error), so the boxes stay level even when one
+  // label wraps onto two lines or one field shows an error. NumberFieldComponent does the same inside itself.
+  .row > .field,
+  .row > app-number-field {
+    grid-row: span 3;
+    display: grid;
+    grid-template-rows: subgrid;
+    row-gap: 0.3rem;
+
+    > :first-child {
+      align-self: end;
+    }
+  }
+
+  .row.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    input {
+      padding-inline: 0.5rem;
+    }
+  }
+
+  .checkbox {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    input {
+      width: 18px;
+      height: 18px;
+      flex: none;
+      margin-top: 0.1rem;
+      accent-color: var(--accent);
+    }
+  }
+
+  @include field;
+
+  .hint {
+    margin: -0.25rem 0 0;
+    font-size: 0.84rem;
+    color: var(--text-muted);
   }
 
   // Collapsible sections: closed by default, summarized in one line.

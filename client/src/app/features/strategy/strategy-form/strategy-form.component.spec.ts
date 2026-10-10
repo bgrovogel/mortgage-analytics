@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StrategyRequest } from '../../../core/models/strategy.models';
-import { NumberField } from './strategy-fields';
+import { StrategyNumberField } from './strategy-fields';
 import { StrategyFormComponent } from './strategy-form.component';
 
 describe('StrategyFormComponent', () => {
@@ -58,29 +58,29 @@ describe('StrategyFormComponent', () => {
 
   it('checks every number against the limits the API enforces, and says why in plain words', () => {
     const root = render();
-    const outOfRange: [NumberField, number, string][] = [
-      ['currentBalance', 0, 'Balance you owe: enter more than $0.'],
-      ['annualInterestRate', 31, 'Interest rate must be between 0% and 30%.'],
-      ['yearsLeft', 31, 'Years left must be between 1 month and 30 years.'],
-      ['homeValue', 100_000_001, 'Home value must be between $0 and $100,000,000.'],
-      ['marginalTaxRate', 61, 'Tax rate must be between 0% and 60%.'],
-      ['employerMatchPercent', 201, 'Employer match must be between 0% and 200%.'],
-      ['annualIraContribution', 8_000, 'IRA contributions must be between $0 and $7,500.'],
-      ['esppDiscountPercent', 16, 'ESPP discount must be between 0% and 15%.'],
-      ['esppPurchasePeriodMonths', 6.5, 'ESPP purchase period: whole months only.'],
-      ['expectedAnnualReturn', -11, 'Stock return must be between -10% and 30%.'],
-      ['inflationRate', 21, 'Inflation must be between -5% and 20%.'],
-      ['homeGrowthRate', 26, 'Home value growth must be between -20% and 25%.'],
+    const outOfRange: [StrategyNumberField, string, number, string][] = [
+      ['currentBalance', 'balance', 0, 'Balance you owe must be more than $0.'],
+      ['annualInterestRate', 'rate', 31, 'Interest rate must be between 0% and 30%.'],
+      ['yearsLeft', 'years-left', 31, 'Years left must be between 1 month and 30 years.'],
+      ['homeValue', 'home-value', 100_000_001, 'Home value must be between $0 and $100,000,000.'],
+      ['marginalTaxRate', 'tax-rate', 61, 'Tax rate must be between 0% and 60%.'],
+      ['employerMatchPercent', 'match-percent', 201, 'Employer match must be between 0% and 200%.'],
+      ['annualIraContribution', 'ira', 8_000, 'IRA contributions must be between $0 and $7,500.'],
+      ['esppDiscountPercent', 'espp-discount', 16, 'ESPP discount must be between 0% and 15%.'],
+      ['esppPurchasePeriodMonths', 'espp-period', 6.5, 'ESPP purchase period: whole numbers only.'],
+      ['expectedAnnualReturn', 'expected-return', -11, 'Stock return must be between -10% and 30%.'],
+      ['inflationRate', 'inflation', 21, 'Inflation must be between -5% and 20%.'],
+      ['homeGrowthRate', 'home-growth', 26, 'Home value growth must be between -20% and 25%.'],
     ];
 
-    for (const [field, value, message] of outOfRange) {
+    for (const [field, testId, value, message] of outOfRange) {
       const control = controls()[field];
       const before = control.value;
       control.setValue(value as never);
       control.markAsDirty();
       fixture.detectChanges();
 
-      expect(text(root, `error-${field}`)).toBe(message);
+      expect(text(root, `error-${testId}`)).toBe(message);
       control.setValue(before as never);
       fixture.detectChanges();
     }
@@ -107,7 +107,7 @@ describe('StrategyFormComponent', () => {
     controls().grossAnnualIncome.markAsDirty();
     fixture.detectChanges();
 
-    expect(text(root, 'error-grossAnnualIncome')).toBe('Gross income: enter a number.');
+    expect(text(root, 'error-income')).toBe('Gross income: enter a number.');
   });
 
   it('reports what is wrong as it changes, so the page can say its results are stale', () => {
@@ -122,6 +122,7 @@ describe('StrategyFormComponent', () => {
     controls().inflationRate.setValue(3);
 
     expect(reports).toEqual([
+      [], // the form starts out valid
       ['Tax rate must be between 0% and 60%.'],
       ['Tax rate must be between 0% and 60%.', 'Inflation must be between -5% and 20%.'],
       ['Inflation must be between -5% and 20%.'],

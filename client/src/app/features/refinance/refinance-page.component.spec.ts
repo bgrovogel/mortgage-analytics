@@ -52,7 +52,7 @@ describe('RefinancePageComponent', () => {
     const page = open();
 
     expect(page.textContent).toContain('Comparing your loans');
-    expect(page.querySelector('[data-testid="refinance-results"]')!.getAttribute('aria-busy')).toBe('true');
+    expect(page.querySelector('[data-testid="results"]')!.getAttribute('aria-busy')).toBe('true');
   });
 
   it('shows what went wrong when the server rejects the request', () => {
@@ -60,7 +60,7 @@ describe('RefinancePageComponent', () => {
 
     const page = open();
 
-    expect(page.querySelector('[data-testid="refinance-errors"]')!.textContent).toContain('Too big.');
+    expect(page.querySelector('[data-testid="calculation-errors"]')!.textContent).toContain('Too big.');
   });
 
   it('starts from the last comparison, so leaving the page and coming back keeps it', () => {
@@ -68,12 +68,25 @@ describe('RefinancePageComponent', () => {
       currentBalance: 123_000, currentAnnualInterestRate: 7, remainingTermInMonths: 120, nextPaymentDate: null,
       newAnnualInterestRate: 6, newTermInMonths: 120, closingCosts: 0, financeClosingCosts: false,
     };
-    TestBed.inject(RefinanceStore).analyze(previous);
+    TestBed.inject(RefinanceStore).send(previous);
 
     open();
 
     expect(analyze).toHaveBeenCalledTimes(1);
     expect(analyze.mock.calls[0][0]).toEqual(previous);
+  });
+
+  it('says the results are for the last valid inputs while a field is invalid, like every page', () => {
+    const page = open();
+    const rate = page.querySelector('[data-testid="new-rate"]') as HTMLInputElement;
+
+    rate.dispatchEvent(new Event('focus'));
+    rate.value = '40';
+    rate.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(page.querySelector('[data-testid="stale-results"]')!.textContent).toContain('New rate must be between 0% and 30%.');
+    expect(page.querySelector('[data-testid="error-new-rate"]')!.textContent).toBe('New rate must be between 0% and 30%.');
   });
 
   it('offers to save the comparison, suggesting a name built from the two rates', () => {

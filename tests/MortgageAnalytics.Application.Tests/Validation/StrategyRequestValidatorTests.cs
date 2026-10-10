@@ -30,8 +30,16 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
         AssertValid(TypicalRequest with { EmployerMatchPercent = match, MatchUpToPercentOfPay = upTo }, "common match formulas must be accepted");
 
     [Test]
-    public void RatesWithMoreThanFourDecimals_AreRejected() =>
-        AssertInvalid(TypicalRequest with { MarginalTaxRate = 24.12345m }, "MarginalTaxRate", "four decimal places at most");
+    public void RatesWithMoreThanFourDecimals_AreRejected()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(TypicalRequest with { MarginalTaxRate = 24.12345m }, "MarginalTaxRate", "four decimal places at most");
+            AssertInvalid(TypicalRequest with { ExpectedAnnualReturn = 7.12345m }, "ExpectedAnnualReturn", "market rates follow the same rule");
+            AssertInvalid(TypicalRequest with { InflationRate = 3.12345m }, "InflationRate", "inflation follows the same rule");
+            AssertInvalid(TypicalRequest with { HomeGrowthRate = 4.12345m }, "HomeGrowthRate", "home growth follows the same rule");
+        });
+    }
 
     [TestCase(0)]
     [TestCase(-1)]

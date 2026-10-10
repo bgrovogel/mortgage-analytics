@@ -1,10 +1,13 @@
-import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { NumberInputDirective } from '../../../core/forms/number-input.directive';
+import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
+import { NumberFieldComponent } from '../../../core/forms/number-field.component';
+import { decimal, usd } from '../../../core/formatting/format';
 import { InvestorRiskProfile, StrategyRequest, TaxFilingStatus } from '../../../core/models/strategy.models';
-import { IRA_LIMIT, NUMBER_FIELDS, NumberField, problemWith, validatorsFor } from './strategy-fields';
+import { IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
+
+const rules = STRATEGY_RULES;
 
 
 export const FILING_STATUSES: readonly { value: TaxFilingStatus; label: string }[] = [
@@ -19,8 +22,6 @@ export const RISK_PROFILES: readonly { value: InvestorRiskProfile; label: string
   { value: 'Aggressive', label: 'Aggressive', margin: 0 },
 ];
 
-const plain = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 /**
  * Presentational: the mortgage, the household, its investment options and the market. Emits a ready-to-send
@@ -29,7 +30,7 @@ const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD',
  */
 @Component({
   selector: 'app-strategy-form',
-  imports: [ReactiveFormsModule, NumberInputDirective, CurrencyPipe],
+  imports: [ReactiveFormsModule, NumberFieldComponent],
   templateUrl: './strategy-form.component.html',
   styleUrl: './strategy-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,104 +44,91 @@ export class StrategyFormComponent implements OnInit {
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly compare = output<StrategyRequest>();
 
-  /**
-   * Emits what is wrong whenever that changes: an empty list once every field is valid again. While a field
-   * is invalid no request is sent, so the page can say its results are for the last valid inputs.
-   */
-  readonly problems = output<string[]>();
-
   protected readonly filingStatuses = FILING_STATUSES;
   protected readonly riskProfiles = RISK_PROFILES;
+  protected readonly rules = rules;
 
   readonly form = this.fb.group({
-    currentBalance: [300_000, validatorsFor('currentBalance')],
-    annualInterestRate: [6.5, validatorsFor('annualInterestRate')],
+    currentBalance: [300_000, validatorsFor(rules.currentBalance)],
+    annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
     // Years, so people can answer from memory; sent as months.
-    yearsLeft: [25, validatorsFor('yearsLeft')],
-    homeValue: [400_000, validatorsFor('homeValue')],
-    monthlyCashToPutToWork: [1_000, validatorsFor('monthlyCashToPutToWork')],
+    yearsLeft: [25, validatorsFor(rules.yearsLeft)],
+    homeValue: [400_000, validatorsFor(rules.homeValue)],
+    monthlyCashToPutToWork: [1_000, validatorsFor(rules.monthlyCashToPutToWork)],
     riskProfile: this.fb.control<InvestorRiskProfile>('Balanced'),
 
-    grossAnnualIncome: [120_000, validatorsFor('grossAnnualIncome')],
-    marginalTaxRate: [24, validatorsFor('marginalTaxRate')],
+    grossAnnualIncome: [120_000, validatorsFor(rules.grossAnnualIncome)],
+    marginalTaxRate: [24, validatorsFor(rules.marginalTaxRate)],
     filingStatus: this.fb.control<TaxFilingStatus>('MarriedFilingJointly'),
-    otherItemizedDeductions: [10_000, validatorsFor('otherItemizedDeductions')],
-    capitalGainsTaxRate: [15, validatorsFor('capitalGainsTaxRate')],
+    otherItemizedDeductions: [10_000, validatorsFor(rules.otherItemizedDeductions)],
+    capitalGainsTaxRate: [15, validatorsFor(rules.capitalGainsTaxRate)],
 
-    employerMatchPercent: [50, validatorsFor('employerMatchPercent')],
-    matchUpToPercentOfPay: [6, validatorsFor('matchUpToPercentOfPay')],
-    annualIraContribution: [IRA_LIMIT, validatorsFor('annualIraContribution')],
-    currentRetirementSavings: [50_000, validatorsFor('currentRetirementSavings')],
-    currentInvestments: [20_000, validatorsFor('currentInvestments')],
+    employerMatchPercent: [50, validatorsFor(rules.employerMatchPercent)],
+    matchUpToPercentOfPay: [6, validatorsFor(rules.matchUpToPercentOfPay)],
+    annualIraContribution: [IRA_LIMIT, validatorsFor(rules.annualIraContribution)],
+    currentRetirementSavings: [50_000, validatorsFor(rules.currentRetirementSavings)],
+    currentInvestments: [20_000, validatorsFor(rules.currentInvestments)],
 
-    annualRsuVesting: [0, validatorsFor('annualRsuVesting')],
+    annualRsuVesting: [0, validatorsFor(rules.annualRsuVesting)],
     sellRsusAtVest: [false],
-    annualEsopContribution: [0, validatorsFor('annualEsopContribution')],
-    esppContributionPercent: [0, validatorsFor('esppContributionPercent')],
-    esppDiscountPercent: [15, validatorsFor('esppDiscountPercent')],
-    esppPurchasePeriodMonths: [6, validatorsFor('esppPurchasePeriodMonths')],
+    annualEsopContribution: [0, validatorsFor(rules.annualEsopContribution)],
+    esppContributionPercent: [0, validatorsFor(rules.esppContributionPercent)],
+    esppDiscountPercent: [15, validatorsFor(rules.esppDiscountPercent)],
+    esppPurchasePeriodMonths: [6, validatorsFor(rules.esppPurchasePeriodMonths)],
 
     // Long-run averages: the S&P 500 has returned about 10% a year with dividends since 1926; inflation about 3%.
-    expectedAnnualReturn: [10, validatorsFor('expectedAnnualReturn')],
-    inflationRate: [3, validatorsFor('inflationRate')],
-    homeGrowthRate: [4.3, validatorsFor('homeGrowthRate')],
+    expectedAnnualReturn: [10, validatorsFor(rules.expectedAnnualReturn)],
+    inflationRate: [3, validatorsFor(rules.inflationRate)],
+    homeGrowthRate: [4.3, validatorsFor(rules.homeGrowthRate)],
   });
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
-  /** Everything wrong with the form right now, one line per field, in the form's order. */
-  readonly allProblems = computed(() => {
-    this.values(); // re-read on every change
-    return (Object.keys(NUMBER_FIELDS) as NumberField[])
-      .map((field) => problemWith(field, this.form.controls[field]))
-      .filter((problem): problem is string => problem !== null);
-  });
+  /**
+   * Emits what is wrong whenever that changes: an empty list once every field is valid again. While a field
+   * is invalid no request is sent, so the page can say its results are for the last valid inputs.
+   */
+  readonly problems = outputFromObservable(problemsOf(this.form, () => problemsIn(rules, this.form.controls)));
 
   /** The risk-adjusted return for the chosen profile, shown beside the picker. */
   readonly countingOn = computed(() => {
     const v = this.values();
     const margin = RISK_PROFILES.find((p) => p.value === v.riskProfile)?.margin ?? 0;
-    return `${plain.format((v.expectedAnnualReturn ?? 0) - margin)}%`;
+    return `${decimal((v.expectedAnnualReturn ?? 0) - margin)}%`;
   });
 
   readonly taxesSummary = computed(() => {
     const v = this.values();
     const status = FILING_STATUSES.find((s) => s.value === v.filingStatus)?.label ?? '';
-    return `${usd.format(v.grossAnnualIncome ?? 0)} · ${plain.format(v.marginalTaxRate ?? 0)}% · ${status}`;
+    return `${usd(v.grossAnnualIncome ?? 0)} · ${decimal(v.marginalTaxRate ?? 0)}% · ${status}`;
   });
 
   readonly savingsSummary = computed(() => {
     const v = this.values();
     const match = (v.employerMatchPercent ?? 0) > 0 && (v.matchUpToPercentOfPay ?? 0) > 0
-      ? `${plain.format(v.employerMatchPercent ?? 0)}% match on ${plain.format(v.matchUpToPercentOfPay ?? 0)}% of pay`
+      ? `${decimal(v.employerMatchPercent ?? 0)}% match on ${decimal(v.matchUpToPercentOfPay ?? 0)}% of pay`
       : 'No match';
-    return `${match} · IRA ${usd.format(v.annualIraContribution ?? 0)}/yr`;
+    return `${match} · IRA ${usd(v.annualIraContribution ?? 0)}/yr`;
   });
 
   readonly stockSummary = computed(() => {
     const v = this.values();
     const parts = [
-      (v.annualRsuVesting ?? 0) > 0 ? `RSUs ${usd.format(v.annualRsuVesting ?? 0)}/yr` : '',
-      (v.annualEsopContribution ?? 0) > 0 ? `ESOP ${usd.format(v.annualEsopContribution ?? 0)}/yr` : '',
-      (v.esppContributionPercent ?? 0) > 0 ? `ESPP ${plain.format(v.esppContributionPercent ?? 0)}% of pay` : '',
+      (v.annualRsuVesting ?? 0) > 0 ? `RSUs ${usd(v.annualRsuVesting ?? 0)}/yr` : '',
+      (v.annualEsopContribution ?? 0) > 0 ? `ESOP ${usd(v.annualEsopContribution ?? 0)}/yr` : '',
+      (v.esppContributionPercent ?? 0) > 0 ? `ESPP ${decimal(v.esppContributionPercent ?? 0)}% of pay` : '',
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(' · ') : 'None';
   });
 
   readonly marketSummary = computed(() => {
     const v = this.values();
-    return `Stocks ${plain.format(v.expectedAnnualReturn ?? 0)}% · Inflation ${plain.format(v.inflationRate ?? 0)}% · Home ${plain.format(v.homeGrowthRate ?? 0)}%`;
+    return `Stocks ${decimal(v.expectedAnnualReturn ?? 0)}% · Inflation ${decimal(v.inflationRate ?? 0)}% · Home ${decimal(v.homeGrowthRate ?? 0)}%`;
   });
 
   constructor() {
-    let reported = '';
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.form.valid) this.compare.emit(this.toRequest());
-      const problems = this.allProblems();
-      if (problems.join('\n') !== reported) {
-        reported = problems.join('\n');
-        this.problems.emit(problems);
-      }
     });
   }
 
@@ -152,17 +140,6 @@ export class StrategyFormComponent implements OnInit {
       this.form.setValue({ ...rest, yearsLeft: remainingTermInMonths / 12 }, { emitEvent: false });
     }
     if (this.form.valid) this.compare.emit(this.toRequest());
-  }
-
-  /** True when a field should show its error: invalid and already interacted with. */
-  showError(field: NumberField): boolean {
-    const control = this.form.controls[field];
-    return control.invalid && (control.touched || control.dirty);
-  }
-
-  /** What is wrong with a field, in plain words. */
-  message(field: NumberField): string {
-    return problemWith(field, this.form.controls[field]) ?? '';
   }
 
   private toRequest(): StrategyRequest {

@@ -6,19 +6,8 @@ import {
   StrategyOutcome,
   StrategyProjection,
 } from '../../core/models/strategy.models';
+import { decimal, monthOf, pct, usd } from '../../core/formatting/format';
 
-const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-const percent = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-
-/** "$1,234". */
-export const usd = (value: number) => dollars.format(value);
-/** "6.5%". */
-export const pct = (value: number) => `${percent.format(value)}%`;
-/** "+$1,234", "−$1,234" or "$0": a difference. */
-export const signedUsd = (value: number) => (Math.round(value) === 0 ? '$0' : `${value > 0 ? '+' : '−'}${dollars.format(Math.abs(value))}`);
-/** "Sep 2033". */
-export const monthOf = (iso: string) => monthYear.format(new Date(`${iso}T00:00:00Z`));
 /** "Debt free ASAP". */
 export const nameOf = (strategy: PayoffStrategy) => STRATEGIES[strategy].name;
 
@@ -47,7 +36,7 @@ export function recommendation(result: StrategyComparison): Recommendation {
   const { rates } = result;
   const best = outcomeOf(result, result.recommended);
   const countingOn = rates.riskMargin > 0
-    ? `counting on ${pct(rates.riskAdjustedReturn)} a year (your ${pct(rates.expectedReturn)} less ${percent.format(rates.riskMargin)} points for risk)`
+    ? `counting on ${pct(rates.riskAdjustedReturn)} a year (your ${pct(rates.expectedReturn)} less ${decimal(rates.riskMargin)} points for risk)`
     : `counting on your full ${pct(rates.expectedReturn)} a year`;
   const detail = result.lead > 0
     ? `${usd(result.lead)} ahead of ${nameOf(result.runnerUp)} after 30 years, ${countingOn}.`
@@ -83,7 +72,7 @@ export function closeness(result: StrategyComparison): string {
   const differs = `Only the ${usd(plan.extraCash + plan.esppContribution)} a month of extra cash, and the ${usd(plan.mortgagePayment)} `
     + 'payment once the mortgage is gone, go somewhere different.';
   if (Math.round(spread) === 0) return `All three end the same. ${same} ${differs}`;
-  const share = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format((spread / best) * 100);
+  const share = decimal((spread / best) * 100, 1);
   return `All three end within ${usd(spread)} (${share}%) of each other. ${same} ${differs}`;
 }
 
@@ -106,8 +95,8 @@ export function facts(result: StrategyComparison): string[] {
     + `The market's ${pct(rates.expectedReturn)} is an average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}.`);
 
   const edge = rates.rateEdge > 0
-    ? `That leaves investing ${percent.format(rates.rateEdge)} points ahead.`
-    : rates.rateEdge < 0 ? `That leaves the mortgage ${percent.format(-rates.rateEdge)} points ahead.` : 'That leaves the two even.';
+    ? `That leaves investing ${decimal(rates.rateEdge)} points ahead.`
+    : rates.rateEdge < 0 ? `That leaves the mortgage ${decimal(-rates.rateEdge)} points ahead.` : 'That leaves the two even.';
   lines.push(`${investingTaxLine(result)} ${edge}`);
 
   lines.push(rates.interestIsDeducted

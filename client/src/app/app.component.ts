@@ -4,9 +4,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkAc
 import { filter, map } from 'rxjs';
 import { HeaderHeightDirective } from './core/layout/header-height.directive';
 import { AuthService } from './core/auth/auth.service';
-import { CalculatorStore } from './features/calculator/calculator.store';
-import { RefinanceStore } from './features/refinance/refinance.store';
-import { StrategyStore } from './features/strategy/strategy.store';
+import { CalculationStores } from './features/calculation-stores';
 
 /** The pages in the top navigation. */
 const PAGES = [
@@ -31,7 +29,7 @@ const PAGES = [
       <header class="app-header" appHeaderHeight>
         <div>
           <h1>Mortgage Analytics</h1>
-          <p>See what a home really costs, and how extra payments or a refinance change it.</p>
+          <p>See what a home really costs, how extra payments or a refinance change it, and whether to pay it off or invest.</p>
         </div>
         <div class="header-actions">
           <nav class="app-nav" aria-label="Pages">
@@ -70,16 +68,12 @@ export class AppComponent {
     ),
     { initialValue: false },
   );
-  private readonly calculator = inject(CalculatorStore);
-  private readonly refinance = inject(RefinanceStore);
-  private readonly strategy = inject(StrategyStore);
+  private readonly stores = inject(CalculationStores);
 
   /** Signs out. The pages stop pointing at saved items, which belonged to the account. */
   signOut(): void {
     this.auth.signOut().subscribe(() => {
-      this.calculator.saved.set(null);
-      this.refinance.saved.set(null);
-      this.strategy.saved.set(null);
+      this.stores.unlinkAll();
       void this.router.navigateByUrl('/calculator');
     });
   }

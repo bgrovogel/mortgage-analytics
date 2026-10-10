@@ -2,33 +2,11 @@
   <fieldset>
     <legend>Your loan today</legend>
 
-    <label class="field">
-      <span>Balance you still owe</span>
-      <span class="affix" data-prefix="$">
-        <input appNumber formControlName="currentBalance" data-testid="current-balance" [attr.aria-invalid]="showError(form.controls.currentBalance)" />
-      </span>
-      @if (showError(form.controls.currentBalance)) {
-        <small class="error">Enter the balance you still owe.</small>
-      }
-    </label>
+    <app-number-field [control]="form.controls.currentBalance" [rule]="rules.currentBalance" testId="current-balance" />
 
     <div class="row">
-      <label class="field">
-        <span>Interest rate</span>
-        <span class="affix" data-suffix="%">
-          <input appNumber [decimals]="4" formControlName="currentAnnualInterestRate" data-testid="current-rate" [attr.aria-invalid]="showError(form.controls.currentAnnualInterestRate)" />
-        </span>
-        @if (showError(form.controls.currentAnnualInterestRate)) {
-          <small class="error">Rate must be between 0% and 30%.</small>
-        }
-      </label>
-      <label class="field">
-        <span>Years left</span>
-        <input appNumber [decimals]="2" formControlName="yearsLeft" data-testid="years-left" [attr.aria-invalid]="showError(form.controls.yearsLeft)" />
-        @if (showError(form.controls.yearsLeft)) {
-          <small class="error">Between 1 month and 50 years.</small>
-        }
-      </label>
+      <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
+      <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
     </div>
   </fieldset>
 
@@ -36,15 +14,7 @@
     <legend>The new loan</legend>
 
     <div class="row">
-      <label class="field">
-        <span>Interest rate</span>
-        <span class="affix" data-suffix="%">
-          <input appNumber [decimals]="4" formControlName="newAnnualInterestRate" data-testid="new-rate" [attr.aria-invalid]="showError(form.controls.newAnnualInterestRate)" />
-        </span>
-        @if (showError(form.controls.newAnnualInterestRate)) {
-          <small class="error">Rate must be between 0% and 30%.</small>
-        }
-      </label>
+      <app-number-field [control]="form.controls.newAnnualInterestRate" [rule]="rules.newAnnualInterestRate" testId="new-rate" label="Interest rate" />
       <label class="field">
         <span>Term</span>
         <select formControlName="newTerm" data-testid="new-term">
@@ -56,15 +26,7 @@
       </label>
     </div>
 
-    <label class="field">
-      <span>Closing costs</span>
-      <span class="affix" data-prefix="$">
-        <input appNumber formControlName="closingCosts" data-testid="closing-costs" [attr.aria-invalid]="showError(form.controls.closingCosts)" />
-      </span>
-      @if (showError(form.controls.closingCosts)) {
-        <small class="error">Closing costs cannot be negative.</small>
-      }
-    </label>
+    <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
     <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>
 
     <label class="checkbox">

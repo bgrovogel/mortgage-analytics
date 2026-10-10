@@ -39,7 +39,7 @@ function watchComparisons(page: Page) {
     }
   });
   return async () => {
-    await expect(page.getByTestId('strategy-results'), 'the latest comparison has arrived').toHaveAttribute('aria-busy', 'false');
+    await expect(page.getByTestId('results'), 'the latest comparison has arrived').toHaveAttribute('aria-busy', 'false');
     // The page shows the newest response only once it is busy no more; wait until every body has been read too.
     await expect.poll(() => (reading === 0 ? latest : null), { message: 'every comparison the page received has been read' }).not.toBeNull();
     return latest!;
@@ -179,8 +179,8 @@ test.describe('Pay off or invest: every number on the page matches the API', () 
     for (const [id, value] of highest) await page.getByTestId(id).fill(value);
 
     await latest();
-    await expect(page.getByTestId('strategy-errors'), 'the API accepted every highest value').toHaveCount(0);
-    await expect(page.getByTestId('strategy-stale'), 'and the form agreed they were valid').toHaveCount(0);
+    await expect(page.getByTestId('calculation-errors'), 'the API accepted every highest value').toHaveCount(0);
+    await expect(page.getByTestId('stale-results'), 'and the form agreed they were valid').toHaveCount(0);
 
     const lowest: [string, string][] = [
       ['rate', '0'], ['years-left', '0.09'], ['monthly-cash', '0'], ['income', '0'], ['tax-rate', '0'], ['capital-gains-rate', '0'],
@@ -189,18 +189,18 @@ test.describe('Pay off or invest: every number on the page matches the API', () 
     for (const [id, value] of lowest) await page.getByTestId(id).fill(value);
 
     await latest();
-    await expect(page.getByTestId('strategy-errors'), 'the API accepted every lowest value').toHaveCount(0);
-    await expect(page.getByTestId('strategy-stale'), 'and the form agreed they were valid').toHaveCount(0);
+    await expect(page.getByTestId('calculation-errors'), 'the API accepted every lowest value').toHaveCount(0);
+    await expect(page.getByTestId('stale-results'), 'and the form agreed they were valid').toHaveCount(0);
   });
 
   test('an out-of-range value is flagged on the field, and the results are marked as the last valid ones', async ({ page }) => {
     await page.getByTestId('section-taxes').locator('summary').click();
     await page.getByTestId('tax-rate').fill('75');
 
-    await expect(page.getByTestId('error-marginalTaxRate'), 'the field says what is wrong').toHaveText('Tax rate must be between 0% and 60%.');
-    await expect(page.getByTestId('strategy-stale'), 'the results say they are out of date, and why').toContainText('Tax rate must be between 0% and 60%.');
+    await expect(page.getByTestId('error-tax-rate'), 'the field says what is wrong').toHaveText('Tax rate must be between 0% and 60%.');
+    await expect(page.getByTestId('stale-results'), 'the results say they are out of date, and why').toContainText('Tax rate must be between 0% and 60%.');
 
     await page.getByTestId('tax-rate').fill('24');
-    await expect(page.getByTestId('strategy-stale'), 'fixing it clears the notice').toHaveCount(0);
+    await expect(page.getByTestId('stale-results'), 'fixing it clears the notice').toHaveCount(0);
   });
 });

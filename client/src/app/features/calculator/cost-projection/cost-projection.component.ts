@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { hostChart } from '../../../core/charts/chart-host';
-import { LineSeries, buildLineChart, currency } from '../../../core/charts/line-chart';
+import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
+import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 import { valueBills, valueLines, valueNote } from './value-lines';
@@ -46,7 +47,7 @@ export class CostProjectionComponent {
     const first = projection[0];
     const last = projection[projection.length - 1];
     if (this.view() === 'value') return valueNote(projection);
-    return `Yearly taxes & costs go from ${currency.format(first.costs.total)} in year 1 to ${currency.format(last.costs.total)} in year ${last.year}.`;
+    return `Yearly taxes & costs go from ${usd(first.costs.total)} in year 1 to ${usd(last.costs.total)} in year ${last.year}.`;
   });
 
   constructor() {
@@ -79,7 +80,7 @@ export class CostProjectionComponent {
             labels,
             series,
             title: (i, label) => `${label} (from ${startYear(i)})`,
-            footer: (i) => `Total: ${currency.format(projection[i].costs.total)}`,
+            footer: (i) => `Total: ${usd(projection[i].costs.total)}`,
             // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
             stacked: true,
           },

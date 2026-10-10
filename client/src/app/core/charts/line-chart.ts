@@ -10,17 +10,11 @@ import {
   Tooltip,
   type ChartConfiguration,
 } from 'chart.js';
+import { compactUsd, usd } from '../formatting/format';
 
 // Register only what the line charts use, so the rest of Chart.js is tree-shaken out.
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler);
 
-export const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-export const compactCurrency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
 
 /** One line on a chart. */
 export interface LineSeries {
@@ -111,7 +105,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           itemSort: (a, b) => a.datasetIndex - b.datasetIndex,
           callbacks: {
             title: (items) => spec.title(items[0].dataIndex, items[0].label),
-            label: (item) => ` ${item.dataset.label}: ${currency.format(item.parsed.y ?? 0)}`,
+            label: (item) => ` ${item.dataset.label}: ${usd(item.parsed.y ?? 0)}`,
             footer: spec.footer ? (items) => spec.footer!(items[0].dataIndex) : undefined,
           },
         },
@@ -133,7 +127,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           beginAtZero: true,
           grid: { color: grid },
           border: { display: false },
-          ticks: { color: muted, callback: (value) => compactCurrency.format(Number(value)) },
+          ticks: { color: muted, callback: (value) => compactUsd(Number(value)) },
         },
       },
     },

@@ -88,7 +88,7 @@ test.describe('History', () => {
     await page.getByTestId('risk-Conservative').check();
     await page.getByTestId('section-stock').locator('summary').click();
     await page.getByTestId('rsu').fill('20000');
-    await expect(page.getByTestId('strategy-results'), 'the comparison has caught up').toHaveAttribute('aria-busy', 'false');
+    await expect(page.getByTestId('results'), 'the comparison has caught up').toHaveAttribute('aria-busy', 'false');
     await page.getByTestId('save-open').click();
     await page.getByTestId('save-name').fill(name);
     await page.getByTestId('save-new').click();

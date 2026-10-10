@@ -1,23 +1,27 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
+import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
+import { monthOf, pct, signedPct, usd } from '../../../core/formatting/format';
 import {
   AmortizationRequest,
   ExtraPaymentStrategy,
   MortgageInsuranceCancellation,
 } from '../../../core/models/amortization.models';
+import { LOAN_RULES, LUMP_SUM_RULES } from './loan-fields';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
 
 /** Whether the down payment field holds dollars or a percentage of the price. */
 export type DownPaymentMode = 'amount' | 'percent';
 
-/** Limits mirror the server's validator. The server re-validates everything regardless. */
-const MAX_YEARS = 50;
-const MAX_RATE = 30;
-const MIN_RECAST_LUMP_SUM = 1_000;
+const rules = LOAN_RULES;
+
+/** Shown while the down payment leaves nothing to borrow. */
+export const NOTHING_TO_BORROW = 'The down payment must be less than the home price.';
 
 /** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
 const CHECK_SECTION = 'Check the values in this section';
@@ -31,17 +35,15 @@ const SECTION_CONTROLS = {
   options: ['firstPaymentDate', 'annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
 } as const;
 
-const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** Rounds to cents, the same way the API does. */
 const cents = (value: number) => Math.round(value * 100) / 100;
 
-/** 1 becomes "1%", 0.85 becomes "0.85%". */
-const percent = (value: number) => `${Number(value.toFixed(4))}%`;
+/** 1 becomes "1%", 0.85 becomes "0.85%": rates here have up to four decimals. */
+const percent = (value: number) => pct(value, 4);
 
 /** 4 becomes "+4%", -2 becomes "-2%", 0 becomes "0%". */
-const signedPercent = (value: number) => `${value > 0 ? '+' : ''}${percent(value)}`;
+const signedPercent = (value: number) => signedPct(value, 4);
 
 /** Returns the first day of next month as yyyy-MM-dd, the API's default first payment date. */
 function firstOfNextMonth(): string {
@@ -60,7 +62,7 @@ function firstOfNextMonth(): string {
  */
 @Component({
   selector: 'app-loan-form',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberInputDirective],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective],
   templateUrl: './loan-form.component.html',
   styleUrl: './loan-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,56 +79,61 @@ export class LoanFormComponent implements OnInit {
   /** True while a request is being loaded into the form, so its many changes do not each emit. */
   private restoring = false;
 
-  readonly maxYears = MAX_YEARS;
+  protected readonly rules = rules;
+  protected readonly lumpSumRules = LUMP_SUM_RULES;
+  protected readonly nothingToBorrow = NOTHING_TO_BORROW;
 
   // Defaults describe a typical Texas homestead purchase with 5% down, so PMI, MUD tax, the $140,000
   // school exemption and yearly increases are all visible on load.
   readonly form = this.fb.group({
-    homePrice: [375_000, [Validators.required, Validators.min(1)]],
+    homePrice: [375_000, validatorsFor(rules.homePrice)],
     downPaymentMode: this.fb.control<DownPaymentMode>('amount'),
     // Dollars or a percentage of the price, depending on downPaymentMode.
-    downPayment: [18_750, [Validators.required, Validators.min(0)]],
-    annualInterestRate: [6.5, [Validators.required, Validators.min(0), Validators.max(MAX_RATE)]],
-    termYears: [30, [Validators.required, Validators.min(1), Validators.max(MAX_YEARS)]],
+    downPayment: [18_750, validatorsFor(rules.downPayment)],
+    annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
+    termYears: [30, validatorsFor(rules.termYears)],
     // Optional: a blank date lets the API default to the first of next month.
     firstPaymentDate: [firstOfNextMonth()],
 
-    schoolTaxRate: [1.0, [Validators.min(0), Validators.max(10)]],
-    localTaxRate: [1.1, [Validators.min(0), Validators.max(10)]],
-    mudTaxRate: [0.85, [Validators.min(0), Validators.max(5)]],
+    schoolTaxRate: [1.0, validatorsFor(rules.schoolTaxRate)],
+    localTaxRate: [1.1, validatorsFor(rules.localTaxRate)],
+    mudTaxRate: [0.85, validatorsFor(rules.mudTaxRate)],
     isHomestead: [true],
-    schoolHomesteadExemption: [140_000, [Validators.min(0)]],
-    localHomesteadExemptionPercent: [0, [Validators.min(0), Validators.max(100)]],
-    homesteadAssessmentCap: [10, [Validators.min(0), Validators.max(100)]],
+    schoolHomesteadExemption: [140_000, validatorsFor(rules.schoolHomesteadExemption)],
+    localHomesteadExemptionPercent: [0, validatorsFor(rules.localHomesteadExemptionPercent)],
+    homesteadAssessmentCap: [10, validatorsFor(rules.homesteadAssessmentCap)],
     isOver65: [false],
-    over65Year: [1, [Validators.min(1), Validators.max(MAX_YEARS)]],
-    over65SchoolExemption: [60_000, [Validators.min(0)]],
-    over65LocalExemption: [0, [Validators.min(0)]],
+    over65Year: [1, validatorsFor(rules.over65Year)],
+    over65SchoolExemption: [60_000, validatorsFor(rules.over65SchoolExemption)],
+    over65LocalExemption: [0, validatorsFor(rules.over65LocalExemption)],
     over65LocalCeiling: [false],
     // Long-run US averages (sources are shown under the fields):
     // home values +4.3% a year (FHFA House Price Index, 1975-2025); home insurance +4.8% a year
     // (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024); HOA dues +4% (typically 3-5%).
-    homeValueGrowthRate: [4.3, [Validators.min(-20), Validators.max(25)]],
-    insuranceIncreaseRate: [4.8, [Validators.min(-20), Validators.max(50)]],
-    hoaIncreaseRate: [4, [Validators.min(-20), Validators.max(50)]],
-    pidAnnual: [0, [Validators.min(0)]],
-    pidYears: [null as number | null, [Validators.min(1), Validators.max(50)]],
-    annualInsurance: [2_400, [Validators.min(0)]],
-    monthlyHoa: [50, [Validators.min(0)]],
-    pmiRate: [0.5, [Validators.min(0), Validators.max(5)]],
+    homeValueGrowthRate: [4.3, validatorsFor(rules.homeValueGrowthRate)],
+    insuranceIncreaseRate: [4.8, validatorsFor(rules.insuranceIncreaseRate)],
+    hoaIncreaseRate: [4, validatorsFor(rules.hoaIncreaseRate)],
+    pidAnnual: [0, validatorsFor(rules.pidAnnual)],
+    pidYears: [null as number | null, validatorsFor(rules.pidYears)],
+    annualInsurance: [2_400, validatorsFor(rules.annualInsurance)],
+    monthlyHoa: [50, validatorsFor(rules.monthlyHoa)],
+    pmiRate: [0.5, validatorsFor(rules.pmiRate)],
     pmiCancellation: this.fb.control<MortgageInsuranceCancellation>('Automatic'),
 
-    monthlyExtra: [200, [Validators.min(0)]],
-    annualExtra: [0, [Validators.min(0)]],
-    annualFirstPayment: [12, [Validators.min(1)]],
+    monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
+    annualExtra: [0, validatorsFor(rules.annualExtra)],
+    annualFirstPayment: [12, validatorsFor(rules.annualFirstPayment)],
     lumpSums: this.fb.array<LumpSumForm>([]),
 
     strategy: this.fb.control<ExtraPaymentStrategy>('ShortenTerm'),
-    recastMinimum: [10_000, [Validators.min(MIN_RECAST_LUMP_SUM)]],
-    recastFee: [250, [Validators.min(0)]],
+    recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
+    recastFee: [250, validatorsFor(rules.recastFee)],
   });
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  /** Emits what is wrong whenever that changes: an empty list once the form can be sent again. */
+  readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
 
   /** The down payment in dollars, whichever unit it was entered in. */
   readonly downPaymentAmount = computed(() => downPaymentAmountOf(this.values()));
@@ -163,7 +170,7 @@ export class LoanFormComponent implements OnInit {
       v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
       v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
       v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
-      v.pidAnnual ? `PID ${dollars.format(v.pidAnnual)}/yr` : '',
+      v.pidAnnual ? `PID ${usd(v.pidAnnual)}/yr` : '',
     ].filter(Boolean);
     if (parts.length === 0) return 'No property taxes';
 
@@ -178,8 +185,8 @@ export class LoanFormComponent implements OnInit {
     if (this.sectionInvalid('costs')) return CHECK_SECTION;
 
     const parts = [
-      v.annualInsurance ? `Insurance ${dollars.format(v.annualInsurance)}/yr` : '',
-      v.monthlyHoa ? `HOA ${dollars.format(v.monthlyHoa)}/mo` : '',
+      v.annualInsurance ? `Insurance ${usd(v.annualInsurance)}/yr` : '',
+      v.monthlyHoa ? `HOA ${usd(v.monthlyHoa)}/mo` : '',
       this.pmiApplies() && v.pmiRate ? `PMI ${percent(v.pmiRate)}` : '',
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(' · ') : 'None';
@@ -201,10 +208,10 @@ export class LoanFormComponent implements OnInit {
 
     const lumpSums = v.lumpSums?.length ?? 0;
     return [
-      `First payment ${v.firstPaymentDate ? monthYear.format(new Date(`${v.firstPaymentDate}T00:00:00Z`)) : 'next month'}`,
-      v.annualExtra ? `${dollars.format(v.annualExtra)} yearly` : '',
+      `First payment ${v.firstPaymentDate ? monthOf(v.firstPaymentDate) : 'next month'}`,
+      v.annualExtra ? `${usd(v.annualExtra)} yearly` : '',
       lumpSums ? `${lumpSums} lump sum${lumpSums === 1 ? '' : 's'}` : '',
-      v.strategy === 'Recast' ? `Recast (min ${dollars.format(v.recastMinimum ?? 0)})` : 'Pay off sooner',
+      v.strategy === 'Recast' ? `Recast (min ${usd(v.recastMinimum ?? 0)})` : 'Pay off sooner',
     ].filter(Boolean).join(' · ');
   });
 
@@ -264,6 +271,17 @@ export class LoanFormComponent implements OnInit {
   private isComplete(): boolean {
     const v = this.form.getRawValue();
     return this.form.valid && v.homePrice - downPaymentAmountOf(v) > 0;
+  }
+
+  /** Everything wrong with the form: each invalid number, each invalid lump sum, and nothing left to borrow. */
+  private currentProblems(): string[] {
+    const v = this.form.getRawValue();
+    return [
+      ...problemsIn(rules, this.form.controls),
+      ...this.lumpSums.controls.flatMap((row) => problemsIn(LUMP_SUM_RULES, row.controls)),
+      ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
+        ? [NOTHING_TO_BORROW] : []),
+    ];
   }
 
   /** True when any control in `section` is invalid. */
@@ -326,8 +344,8 @@ export class LoanFormComponent implements OnInit {
 
   private lumpSumGroup(paymentNumber: number, amount: number): LumpSumForm {
     return this.fb.group({
-      paymentNumber: [paymentNumber, [Validators.required, Validators.min(1)]],
-      amount: [amount, [Validators.required, Validators.min(0.01)]],
+      paymentNumber: [paymentNumber, validatorsFor(LUMP_SUM_RULES.paymentNumber)],
+      amount: [amount, validatorsFor(LUMP_SUM_RULES.amount)],
     });
   }
 

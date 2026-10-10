@@ -6,7 +6,7 @@ import { Page, expect, test } from '@playwright/test';
  */
 test.describe('Pay off or invest', () => {
   const verdict = (page: Page) => page.getByTestId('strategy-verdict');
-  const results = (page: Page) => page.getByTestId('strategy-results');
+  const results = (page: Page) => page.getByTestId('results');
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

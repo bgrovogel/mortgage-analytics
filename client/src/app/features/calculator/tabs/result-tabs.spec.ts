@@ -17,7 +17,7 @@ describe('result tabs', () => {
     jest.useFakeTimers();
     TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: AmortizationApiService, useValue: { calculate: () => of(aResponse()) } }] });
     store = TestBed.inject(CalculatorStore);
-    store.calculate({} as AmortizationRequest);
+    store.send({} as AmortizationRequest);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
   });
   afterEach(() => jest.useRealTimers());

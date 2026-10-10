@@ -9,39 +9,18 @@
   </div>
 }
 
-<div class="layout">
-  <aside class="panel form-panel" data-testid="form-panel">
-    <app-loan-form [initial]="startFrom" (calculate)="store.calculate($event)" />
-  </aside>
+<app-calculation-page [store]="store" [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
+                      errorTitle="We couldn't run that calculation.">
+  <app-loan-form form [initial]="startFrom" (calculate)="store.send($event)" (problems)="problems.set($event)" />
 
-  <section class="results" [attr.aria-busy]="store.busy()" [class.updating]="store.busy()" aria-label="Results"
-           data-testid="results">
-    <div class="results-header">
-      <nav class="result-tabs" aria-label="Results">
-        @for (tab of tabs; track tab.path) {
-          <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
-             [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
-        }
-      </nav>
-      <app-save-calculation [payload]="savePayload()" [suggestion]="suggestedName()" [linked]="store.saved()"
-                            (saved)="store.linkTo($event)" />
-    </div>
-
-    @if (store.errors().length > 0) {
-      <div class="alert" role="alert" data-testid="error-summary">
-        <strong>We couldn't run that calculation.</strong>
-        <ul>
-          @for (message of store.errors(); track message) {
-            <li>{{ message }}</li>
-          }
-        </ul>
-      </div>
+  <nav tabs class="result-tabs" aria-label="Results">
+    @for (tab of tabs; track tab.path) {
+      <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+         [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
     }
+  </nav>
 
-    @if (store.result()) {
-      <router-outlet />
-    } @else if (store.errors().length === 0) {
-      <div class="panel placeholder">Calculating your schedule…</div>
-    }
-  </section>
-</div>
+  @if (store.result()) {
+    <router-outlet />
+  }
+</app-calculation-page>

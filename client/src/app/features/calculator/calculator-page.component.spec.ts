@@ -70,7 +70,7 @@ describe('CalculatorPageComponent', () => {
   });
 
   it('starts the form from the last calculation, so leaving the page and coming back keeps it', async () => {
-    TestBed.inject(CalculatorStore).calculate({
+    TestBed.inject(CalculatorStore).send({
       homePrice: 512_000, downPayment: 102_400, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: null,
       strategy: 'ShortenTerm', recast: null, extraPayments: null, housingCosts: null,
     });
@@ -86,7 +86,7 @@ describe('CalculatorPageComponent', () => {
 
     await open('/calculator');
 
-    expect(el('[data-testid="error-summary"]')!.textContent).toContain('Too big.');
+    expect(el('[data-testid="calculation-errors"]')!.textContent).toContain('Too big.');
   });
 
   it('marks the results busy for assistive technology while updating', async () => {

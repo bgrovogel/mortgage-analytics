@@ -324,7 +324,28 @@ describe('LoanFormComponent', () => {
 
       expect(emitted).toHaveLength(1);
       expect(component.showError(controls().annualInterestRate)).toBe(true);
-      expect(fixture.nativeElement.textContent).toContain('Rate must be between 0% and 30%.');
+      expect(fixture.nativeElement.textContent).toContain('Interest rate must be between 0% and 30%.');
+    });
+
+    it('reports everything wrong as it changes: bad numbers, bad lump sums, and nothing to borrow', () => {
+      const reports: string[][] = [];
+      component.problems.subscribe((p) => reports.push(p));
+
+      controls().schoolTaxRate.setValue(12);
+      component.addLumpSum();
+      component.lumpSums.at(0).controls.amount.setValue(0);
+      controls().schoolTaxRate.setValue(1);
+      component.lumpSums.at(0).controls.amount.setValue(5_000);
+      controls().downPayment.setValue(375_000);
+
+      expect(reports).toEqual([
+        [],
+        ['School tax rate must be between 0% and 10%.'],
+        ['School tax rate must be between 0% and 10%.', 'Lump sum must be more than $0.'],
+        ['Lump sum must be more than $0.'],
+        [],
+        ['The down payment must be less than the home price.'],
+      ]);
     });
 
     it('explains when the down payment leaves nothing to borrow', () => {
@@ -335,7 +356,7 @@ describe('LoanFormComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('The down payment must be less than the home price.');
     });
 
-    it('rejects a recast minimum under $1,000, and explains why', () => {
+    it('rejects a recast minimum under $1,000, the least the API accepts', () => {
       controls().strategy.setValue('Recast');
       const before = emitted.length;
 
@@ -344,7 +365,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(before);
-      expect(fixture.nativeElement.textContent).toContain('Lenders require a lump sum of at least $1,000 to recast.');
+      expect(fixture.nativeElement.textContent).toContain('Recast minimum must be between $1,000 and $100,000,000.');
     });
 
     it('does not flag an untouched valid field', () => {

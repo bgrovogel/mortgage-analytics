@@ -1,3 +1,5 @@
+@use 'app/core/layout/scroll-hint';
+
 /*
  * Design tokens. Components reference roles (--text-secondary, --series-1, ...), never raw hex,
  * so light and dark mode are each defined exactly once, here.
@@ -263,6 +265,7 @@ app-root {
     // Bleed to the screen edges, so links scroll out of view rather than being clipped mid-gutter.
     margin-inline: -1rem;
     padding-inline: 1rem;
+    @include scroll-hint.fade-edge;
 
     a {
       padding: 0 0.7rem;

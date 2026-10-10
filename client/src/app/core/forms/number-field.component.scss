@@ -1,0 +1,36 @@
+@use 'form-fields' as fields;
+
+@include fields.field;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+// In a row, the label, the box and the error each take one of the row's three shared rows (see form-fields).
+:host-context(.row) .field {
+  grid-row: span 3;
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: 0.3rem;
+
+  > :first-child {
+    align-self: end;
+  }
+}
+
+// Three to a row leaves narrow boxes: trim their padding (the form's own `.row.three input` cannot reach in
+// here), but keep room for a "$" or "%".
+:host-context(.row.three) {
+  input {
+    padding-inline: 0.5rem;
+  }
+
+  .affix[data-prefix] input {
+    padding-left: 1.4rem;
+  }
+
+  .affix[data-suffix] input {
+    padding-right: 1.6rem;
+  }
+}

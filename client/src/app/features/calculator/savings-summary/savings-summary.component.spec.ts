@@ -82,11 +82,21 @@ describe('SavingsSummaryComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('taxes & fees');
   });
 
-  it('explains net savings as interest only when that is all there is', () => {
+  it('does not repeat the headline when the savings are all interest', () => {
     const component = render(withExtras());
 
-    expect(component.savingsDetail()).toBe('$79,801 interest');
+    expect(component.savingsDetail()).toBeNull();
+    expect(text('savings-detail')).toBeUndefined();
     expect(text('net-savings')).toBe('$79,801');
+    expect(fixture.nativeElement.querySelector('.tile.hero').textContent.replace(/\s+/g, ' ')).toContain('Total interest $151,876 instead of $231,677');
+  });
+
+  it('says when it is paid off and how much sooner in one tile, not two', () => {
+    render(aResponse({ savings: aSavings({ paymentsSaved: 73, netSavings: 1, originalPayoffDate: '2056-10-01', acceleratedPayoffDate: '2050-09-01' }) }));
+
+    expect(text('payoff-date')).toBe('Sep 2050');
+    expect(fixture.nativeElement.querySelector('[data-testid="payoff-date"]').closest('.tile').textContent).toContain('6 yr 1 mo sooner, instead of Oct 2056');
+    expect(fixture.nativeElement.querySelectorAll('.tile')).toHaveLength(3); // the headline, the payment, and when it is paid off
   });
 
   it('itemizes PMI saved and recast fees', () => {

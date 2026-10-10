@@ -1,11 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
-import { suggestName } from '../../core/formatting/describe-inputs';
-import { SavedInputs } from '../../core/models/saved-calculation.models';
-import { SaveCalculationComponent } from '../../shared/save-calculation/save-calculation.component';
+import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 
 /** The result tabs, each its own URL so it can be bookmarked, shared and reached with the back button. */
 const RESULT_TABS = [
@@ -21,7 +19,7 @@ const RESULT_TABS = [
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [CurrencyPipe, LoanFormComponent, RouterLink, RouterLinkActive, RouterOutlet, SaveCalculationComponent],
+  imports: [CalculationPageComponent, CurrencyPipe, LoanFormComponent, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,15 +31,6 @@ export class CalculatorPageComponent {
   /** The calculation to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
 
-  /** What Save stores: the calculator inputs, once there are any. */
-  protected readonly savePayload = computed<SavedInputs | null>(() => {
-    const inputs = this.store.request();
-    return inputs ? { inputs } : null;
-  });
-
-  /** The name Save suggests for a new calculation. */
-  protected readonly suggestedName = computed(() => {
-    const inputs = this.store.request();
-    return inputs ? suggestName(inputs) : '';
-  });
+  /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
+  protected readonly problems = signal<string[]>([]);
 }
