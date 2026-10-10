@@ -89,6 +89,24 @@ public class SavedCalculationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task AStrategyComparison_IsSavedAndComesBackReadyToCompare()
+    {
+        var saved = await ReadJsonAsync(await Me.PostAsJsonAsync(CalculationsUrl,
+            new { name = UniqueName("Pay off"), strategy = MortgageAnalytics.Testing.ReferenceStrategies.TypicalRequest }));
+
+        var fetched = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
+        var comparison = await Me.PostAsync("/api/v1/strategies/compare",
+            new StringContent(fetched.GetProperty("strategy").GetRawText(), System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(fetched.GetProperty("kind").GetString(), Is.EqualTo("Strategy"), "the kind is a readable string");
+            Assert.That(fetched.GetProperty("strategy").GetProperty("filingStatus").GetString(), Is.EqualTo("MarriedFilingJointly"), "enums are stored as names");
+            Assert.That(comparison.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the saved comparison can be posted straight back");
+        });
+    }
+
+    [Test]
     public async Task List_FindsCalculationsByName_IgnoringCase()
     {
         var tag = Guid.NewGuid().ToString("N");

@@ -7,11 +7,14 @@ public sealed record SaveCalculationRequest
     /// <example>Oak St, 20% down</example>
     public string Name { get; init; } = "";
 
-    /// <summary>The calculator inputs, exactly as sent to the calculate endpoint. Give this or <see cref="Refinance"/>.</summary>
+    /// <summary>The calculator inputs, exactly as sent to the calculate endpoint. Give exactly one of the three kinds.</summary>
     public AmortizationRequest? Inputs { get; init; }
 
-    /// <summary>A refinance comparison, exactly as sent to the refinance endpoint. Give this or <see cref="Inputs"/>.</summary>
+    /// <summary>A refinance comparison, exactly as sent to the refinance endpoint.</summary>
     public RefinanceRequest? Refinance { get; init; }
+
+    /// <summary>A pay-off-or-invest comparison, exactly as sent to the strategies endpoint.</summary>
+    public StrategyRequest? Strategy { get; init; }
 }
 
 /// <summary>What a saved calculation is.</summary>
@@ -22,6 +25,9 @@ public enum SavedCalculationKind
 
     /// <summary>A refinance comparison; its <c>refinance</c> inputs go to the refinance endpoint.</summary>
     Refinance = 1,
+
+    /// <summary>A pay-off-or-invest comparison; its <c>strategy</c> inputs go to the strategies endpoint.</summary>
+    Strategy = 2,
 }
 
 /// <summary>A saved calculation: its name, its inputs, and when it was saved and last changed.</summary>
@@ -34,7 +40,7 @@ public sealed record SavedCalculationResponse
     /// <example>Oak St, 20% down</example>
     public required string Name { get; init; }
 
-    /// <summary>Whether this is a purchase calculation or a refinance comparison.</summary>
+    /// <summary>Whether this is a purchase calculation, a refinance comparison or a pay-off-or-invest comparison.</summary>
     public required SavedCalculationKind Kind { get; init; }
 
     /// <summary>For a purchase: the calculator inputs. Post them to the calculate endpoint to see the results again.</summary>
@@ -42,6 +48,9 @@ public sealed record SavedCalculationResponse
 
     /// <summary>For a refinance comparison: its inputs. Post them to the refinance endpoint to see the results again.</summary>
     public required RefinanceRequest? Refinance { get; init; }
+
+    /// <summary>For a pay-off-or-invest comparison: its inputs. Post them to the strategies endpoint to see the results again.</summary>
+    public required StrategyRequest? Strategy { get; init; }
 
     /// <summary>When it was first saved.</summary>
     public required DateTimeOffset CreatedAt { get; init; }

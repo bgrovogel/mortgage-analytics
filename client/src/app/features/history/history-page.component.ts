@@ -3,11 +3,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
-import { describeInputs, describeRefinance } from '../../core/formatting/describe-inputs';
+import { describeInputs, describeRefinance, describeStrategy } from '../../core/formatting/describe-inputs';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore } from '../calculator/calculator.store';
 import { RefinanceStore } from '../refinance/refinance.store';
+import { StrategyStore } from '../strategy/strategy.store';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -15,7 +16,7 @@ export const SEARCH_DELAY_MS = 300;
 const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 /**
- * Every saved calculation (purchase calculations and refinance comparisons), newest first, searchable by
+ * Every saved calculation (purchases, refinance and pay-off-or-invest comparisons), newest first, searchable by
  * name and filterable by kind. Each opens on its own page, can be renamed in place, or deleted after a
  * confirmation.
  */
@@ -30,6 +31,7 @@ export class HistoryPageComponent {
   private readonly api = inject(SavedCalculationsApiService);
   private readonly calculator = inject(CalculatorStore);
   private readonly refinance = inject(RefinanceStore);
+  private readonly strategy = inject(StrategyStore);
   private readonly router = inject(Router);
   private readonly searches = new Subject<string>();
 
@@ -64,6 +66,7 @@ export class HistoryPageComponent {
     { value: 'all', label: 'All' },
     { value: 'Purchase', label: 'Calculator' },
     { value: 'Refinance', label: 'Refinance' },
+    { value: 'Strategy', label: 'Pay off or invest' },
   ];
 
   constructor() {
@@ -100,7 +103,8 @@ export class HistoryPageComponent {
 
   /** One line that tells saved items apart, in the terms of their kind. */
   describe(calculation: SavedCalculation): string {
-    return calculation.inputs ? describeInputs(calculation.inputs) : describeRefinance(calculation.refinance!);
+    if (calculation.inputs) return describeInputs(calculation.inputs);
+    return calculation.refinance ? describeRefinance(calculation.refinance) : describeStrategy(calculation.strategy!);
   }
 
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */
@@ -110,11 +114,14 @@ export class HistoryPageComponent {
       : `Updated ${day.format(new Date(calculation.updatedAt))}`;
   }
 
-  /** Loads the calculation on its own page (the calculator, or the refinance comparison) and goes there. */
+  /** Loads the calculation on its own page (the calculator, refinance or pay-off-or-invest) and goes there. */
   open(calculation: SavedCalculation): void {
     if (calculation.kind === 'Refinance') {
       this.refinance.open(calculation);
       void this.router.navigate(['/refinance']);
+    } else if (calculation.kind === 'Strategy') {
+      this.strategy.open(calculation);
+      void this.router.navigate(['/strategy']);
     } else {
       this.calculator.open(calculation);
       void this.router.navigate(['/calculator', 'overview']);
@@ -147,6 +154,7 @@ export class HistoryPageComponent {
         // Keep whichever page shows this calculation linked to its new name.
         if (this.calculator.saved()?.id === updated.id) this.calculator.linkTo(updated);
         if (this.refinance.saved()?.id === updated.id) this.refinance.linkTo(updated);
+        if (this.strategy.saved()?.id === updated.id) this.strategy.linkTo(updated);
         this.renaming.set(null);
         this.error.set(null);
       },
@@ -161,6 +169,7 @@ export class HistoryPageComponent {
         this.calculations.update((list) => list.filter((c) => c.id !== calculation.id));
         if (this.calculator.saved()?.id === calculation.id) this.calculator.saved.set(null);
         if (this.refinance.saved()?.id === calculation.id) this.refinance.saved.set(null);
+        if (this.strategy.saved()?.id === calculation.id) this.strategy.saved.set(null);
         this.confirmingDelete.set(null);
         this.error.set(null);
       },

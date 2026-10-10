@@ -6,6 +6,7 @@ import { HeaderHeightDirective } from './core/layout/header-height.directive';
 import { AuthService } from './core/auth/auth.service';
 import { CalculatorStore } from './features/calculator/calculator.store';
 import { RefinanceStore } from './features/refinance/refinance.store';
+import { StrategyStore } from './features/strategy/strategy.store';
 
 /** The pages in the top navigation. */
 const PAGES = [
@@ -71,12 +72,14 @@ export class AppComponent {
   );
   private readonly calculator = inject(CalculatorStore);
   private readonly refinance = inject(RefinanceStore);
+  private readonly strategy = inject(StrategyStore);
 
   /** Signs out. The pages stop pointing at saved items, which belonged to the account. */
   signOut(): void {
     this.auth.signOut().subscribe(() => {
       this.calculator.saved.set(null);
       this.refinance.saved.set(null);
+      this.strategy.saved.set(null);
       void this.router.navigateByUrl('/calculator');
     });
   }

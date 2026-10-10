@@ -3,7 +3,8 @@ using MortgageAnalytics.Application.Contracts;
 namespace MortgageAnalytics.Application.SavedCalculations;
 
 /// <summary>
-/// A calculation the user saved under a name: either calculator inputs or a refinance comparison. The
+/// A calculation the user saved under a name: calculator inputs, a refinance comparison, or a pay-off-or-invest
+/// comparison. Exactly one of the three is set. The
 /// inputs are kept in their API contract shape, so they can always be sent back to their endpoint unchanged.
 /// </summary>
 public sealed class SavedCalculation
@@ -23,8 +24,14 @@ public sealed class SavedCalculation
     /// <summary>The comparison inputs, for a refinance comparison; otherwise null.</summary>
     public RefinanceRequest? Refinance { get; set; }
 
+    /// <summary>The comparison inputs, for a pay-off-or-invest comparison; otherwise null.</summary>
+    public StrategyRequest? Strategy { get; set; }
+
     /// <summary>What this is, read from which inputs it holds.</summary>
-    public SavedCalculationKind Kind => Inputs is null ? SavedCalculationKind.Refinance : SavedCalculationKind.Purchase;
+    public SavedCalculationKind Kind =>
+        Inputs is not null ? SavedCalculationKind.Purchase
+        : Refinance is not null ? SavedCalculationKind.Refinance
+        : SavedCalculationKind.Strategy;
 
     /// <summary>When it was first saved.</summary>
     public required DateTimeOffset CreatedAt { get; init; }

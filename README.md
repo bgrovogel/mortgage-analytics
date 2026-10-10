@@ -12,7 +12,7 @@ hide: a lower payment can cost more overall, because a new 30-year loan restarts
 clock. And it answers the question every owner with spare cash asks: **pay the mortgage off, or invest
 the difference?** It plays three strategies out month by month for 30 years, with the 401(k) match, IRA,
 RSUs, ESOP, ESPP, taxes and the standard deduction, and ranks them on a risk-adjusted return, because
-paying down a mortgage earns its rate for certain and the market does not. With a free **account**, every calculation and refinance comparison can be saved under a name
+paying down a mortgage earns its rate for certain and the market does not. With a free **account**, every calculation, refinance comparison and pay-off-or-invest comparison can be saved under a name
 in a private **History** (SQLite), and found and reopened later. The calculators themselves need no account.
 
 It is a .NET 9 API with an Angular 19 dashboard, tested from pure unit tests up to browser E2E.
@@ -24,7 +24,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 572 backend tests · Jest: 360 Angular unit tests · Playwright: 48 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 582 backend tests · Jest: 372 Angular unit tests · Playwright: 54 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -49,7 +49,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Savings** | **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and dues are deliberately excluded, because they continue after the loan is paid off. |
 | **Refinance** | The rest of the current loan against the new one, with closing costs paid at closing or rolled into the loan. Reports the monthly change, **lifetime savings (closing costs included)**, the months added by restarting the clock, and a **break-even**: the payment by which the interest saved covers the closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings". When the new payment is lower it also shows the new loan **paid at today's payment**, which is how to refinance without restarting the clock. |
 | **Pay off or invest** | Three strategies: **Debt free ASAP** (every extra dollar to principal, then everything invested), **Invest the difference**, and a **Hybrid**. Every strategy first captures free money (the full 401(k) match, at its after-tax cost, and any ESPP discount), so only the cash left over is directed differently, and all three spend exactly the same each month. Each runs at the expected return, at a **risk-adjusted** return (expected minus 4, 2 or 0 points for a Conservative, Balanced or Aggressive profile), and with a **lost decade first** (−1% a year, like 2000–2009). The recommendation rests on the risk-adjusted return and always says whether a bad decade would reverse it. Mortgage interest saves tax only on itemized deductions **above the standard deduction** (2026 amounts, rising with inflation; $750k debt limit), year by year, so paying down early also shrinks the deduction. Net worth counts every account **after the tax still owed** (401(k) at the income tax rate, capital gains on taxable growth, Roth free). The hybrid splits extra cash by the after-tax rate difference (invested cash earns the full return inside the IRA, and in a taxable account keeps what is left after tax paid once, on selling), counting **stock that arrives anyway** (RSUs kept, ESOP) toward its market share, so someone already heavy in company stock leans to the mortgage. Results: the recommendation and three cards (each led by how far it ends behind the leader), then tabs for the difference over time, net worth at years 5, 10, 15 and 30 (also in today's dollars), debt vs. investments, and why. |
-| **Accounts & History** | Sign up with an email and password, and confirm the email from the link sent to it; a forgotten password is reset by email. Save any calculation or refinance comparison under a name; search and filter by kind, reopen it on its own page (the form is restored exactly), rename or delete it. Each person sees only their own. |
+| **Accounts & History** | Sign up with an email and password, and confirm the email from the link sent to it; a forgotten password is reset by email. Save any calculation, refinance comparison or pay-off-or-invest comparison under a name; search and filter by kind, reopen it on its own page (the form is restored exactly), rename or delete it. Each person sees only their own. |
 
 ---
 
@@ -97,12 +97,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 572 NUnit tests, including the convention tests
+dotnet test                       # 582 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 360 Jest unit tests; fails below 85% coverage
+npm test                          # 372 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 48 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 54 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -129,7 +129,7 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
 | `GET /api/v1/account/manage/info` | Who is signed in (401 when nobody is) |
 | `GET /api/v1/calculations?search=` 🔒 | Your saved calculations, newest first, filtered by name |
 | `GET /api/v1/calculations/{id}` 🔒 | One of them |
-| `POST /api/v1/calculations` 🔒 | Save calculator `inputs` or a `refinance` comparison under a name (201 with `Location`) |
+| `POST /api/v1/calculations` 🔒 | Save calculator `inputs`, a `refinance` comparison or a `strategy` comparison under a name (201 with `Location`) |
 | `PUT /api/v1/calculations/{id}` 🔒 | Rename it or replace its inputs |
 | `DELETE /api/v1/calculations/{id}` 🔒 | Delete it (204) |
 
@@ -243,9 +243,9 @@ tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, ReferenceRefinances, ReferenceStrategies, TestClock
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
   MortgageAnalytics.Domain.Tests/   321 tests
-  MortgageAnalytics.Application.Tests/  174 tests (unit with NSubstitute, sociable scenarios, architecture)
-  MortgageAnalytics.Infrastructure.Tests/  12 tests (real SQLite, built by the real migrations)
-  MortgageAnalytics.Api.IntegrationTests/  59 tests (shared WebApplicationFactory fixture, temp SQLite file)
+  MortgageAnalytics.Application.Tests/  182 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Infrastructure.Tests/  13 tests (real SQLite, built by the real migrations)
+  MortgageAnalytics.Api.IntegrationTests/  60 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,strategy,history} · e2e/
 ```
 
@@ -408,12 +408,12 @@ Accounts follow the same habit of not trusting the client:
 | Layer | Tools | What it proves |
 |---|---|---|
 | Domain (321) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. Every strategy, scenario, payoff, crossover and 30-year net worth against an independent Python model, to the cent, and against textbook formulas and identities (payoff month = NPER; at a 0% return, paying off first wins by exactly the interest it avoids; net worth = home − mortgage + investments every year); the standard deduction, the $750k limit, free money capped by the cash available, the ESPP limit, the hybrid split, after-tax account values. |
-| Application (174) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
-| Infrastructure (12) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (both kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
-| API integration (59) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
+| Application (182) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Infrastructure (13) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
+| API integration (60) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (360) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (48) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening both kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. |
+| Angular (372) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (54) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
@@ -430,7 +430,7 @@ And by convention, supported by shared infrastructure:
 
 - **NSubstitute** for test doubles. There are no hand-rolled fakes, and the clock comes from `FakeTimeProvider`.
 - **Builders, not copy-paste:** `A.Request.FivePercentDown().WithMonthlyExtra(300).WithHousingCosts(c => c.AsHomestead())`.
-- **One source of expected values:** `ReferenceLoans`, `ReferenceRefinances` and `ReferenceStrategies`, independently computed in Python (the refinance values with exact fractions) and shared by every layer. That independence paid off: the refinance reference exposed a half-cent rounding bug in the engine (7% ÷ 12 repeats forever, so interest is now balance × annual rate ÷ 1,200).
+- **One source of expected values:** `ReferenceLoans`, `ReferenceRefinances` and `ReferenceStrategies`, independently computed in Python (the refinance values with exact fractions) and shared by every layer. The strategy model is committed in `tools/strategy-check/` with a script that compares 300 random households against the live API, field by field (it found a real bug: a 100% employer match was rejected). That independence paid off: the refinance reference exposed a half-cent rounding bug in the engine (7% ÷ 12 repeats forever, so interest is now balance × annual rate ÷ 1,200).
 - **Base classes:** `AmortizationTestBase`, `ValidatorTestBase`, `AmortizationServiceTestBase` (unit), `SociableAnalysisTestBase`, and `ApiTestBase` with a `[SetUpFixture]` that shares one API host.
 - **Central package versions** (`Directory.Packages.props`) and one shared test stack (`tests/Directory.Build.props`).
 

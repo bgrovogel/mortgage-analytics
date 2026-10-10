@@ -2,3 +2,9 @@
 
 // The form is long, so it scrolls with the page rather than sticking.
 @include form-and-results.styles($sticky-form: false);
+
+// Stale results: amber, not red; nothing failed, the inputs just need fixing first.
+.alert.stale {
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+}

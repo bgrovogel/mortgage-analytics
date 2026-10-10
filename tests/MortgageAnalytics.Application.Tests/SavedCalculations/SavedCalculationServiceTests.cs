@@ -66,6 +66,7 @@ public class SavedCalculationServiceTests
 
         var purchase = await _service.SaveAsync(Owner, Request(), CancellationToken.None);
         var comparison = await _service.SaveAsync(Owner, new SaveCalculationRequest { Name = "Refi", Refinance = refinance }, CancellationToken.None);
+        var strategy = await _service.SaveAsync(Owner, new SaveCalculationRequest { Name = "Pay off?", Strategy = ReferenceStrategies.TypicalRequest }, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -73,6 +74,9 @@ public class SavedCalculationServiceTests
             Assert.That(comparison.Kind, Is.EqualTo(SavedCalculationKind.Refinance), "refinance inputs make a refinance comparison");
             Assert.That(comparison.Refinance, Is.SameAs(refinance), "with its inputs");
             Assert.That(comparison.Inputs, Is.Null, "and no calculator inputs");
+            Assert.That(strategy.Kind, Is.EqualTo(SavedCalculationKind.Strategy), "strategy inputs make a pay-off-or-invest comparison");
+            Assert.That(strategy.Strategy, Is.EqualTo(ReferenceStrategies.TypicalRequest), "with its inputs");
+            Assert.That(strategy.Refinance, Is.Null, "and no other kind");
         });
     }
 

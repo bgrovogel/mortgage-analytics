@@ -1,5 +1,6 @@
 import { AmortizationRequest } from '../models/amortization.models';
 import { RefinanceRequest } from '../models/refinance.models';
+import { StrategyRequest } from '../models/strategy.models';
 
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
@@ -38,6 +39,20 @@ export function describeRefinance(r: RefinanceRequest): string {
 /** A starting name for a saved refinance comparison, e.g. "Refinance 7% → 6%, 30 yr". */
 export function suggestRefinanceName(r: RefinanceRequest): string {
   return `Refinance ${number.format(r.currentAnnualInterestRate)}% → ${number.format(r.newAnnualInterestRate)}%, ${termOf(r.newTermInMonths)}`;
+}
+
+/** "$300,000 left at 6.5% · $1,000/mo to put to work · Balanced": enough to tell saved strategy comparisons apart. */
+export function describeStrategy(r: StrategyRequest): string {
+  return [
+    `${dollars.format(r.currentBalance)} left at ${number.format(r.annualInterestRate)}%`,
+    `${dollars.format(r.monthlyCashToPutToWork)}/mo to put to work`,
+    r.riskProfile,
+  ].join(' · ');
+}
+
+/** A starting name for a saved strategy comparison, e.g. "Pay off or invest: $1,000/mo, 6.5% mortgage". */
+export function suggestStrategyName(r: StrategyRequest): string {
+  return `Pay off or invest: ${dollars.format(r.monthlyCashToPutToWork)}/mo, ${number.format(r.annualInterestRate)}% mortgage`;
 }
 
 /** 360 becomes "30 yr"; 100 becomes "100 mo". */

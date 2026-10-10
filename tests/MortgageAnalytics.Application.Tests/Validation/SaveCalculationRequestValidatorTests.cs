@@ -61,8 +61,34 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
         AssertErrorMessage(
             new SaveCalculationRequest { Name = "Both", Inputs = A.Request.Build(), Refinance = ARefinance() },
             "Inputs",
-            "Include either calculator inputs or refinance inputs, not both.",
+            "Include only one kind of inputs: calculator, refinance or pay-off-or-invest.",
             "a saved item is one kind of calculation");
+
+    [Test]
+    public void NoInputsAtAll_AreRejected() =>
+        AssertErrorMessage(
+            new SaveCalculationRequest { Name = "Empty" },
+            "Inputs",
+            "Include the calculator inputs, a refinance comparison or a pay-off-or-invest comparison to save.",
+            "there must be something to save");
+
+    [Test]
+    public void APayOffOrInvestComparison_CanBeSavedToo() =>
+        AssertValid(new SaveCalculationRequest { Name = "Pay off or invest", Strategy = ReferenceStrategies.TypicalRequest },
+            "History holds strategy comparisons too");
+
+    [Test]
+    public void AStrategyWithAnotherKind_IsRejected() =>
+        AssertErrorMessage(
+            new SaveCalculationRequest { Name = "Two", Refinance = ARefinance(), Strategy = ReferenceStrategies.TypicalRequest },
+            "Inputs",
+            "Include only one kind of inputs: calculator, refinance or pay-off-or-invest.",
+            "a saved item is one kind of calculation");
+
+    [Test]
+    public void InvalidStrategyInputs_AreRejectedWithTheStrategyRules() =>
+        AssertInvalid(new SaveCalculationRequest { Name = "Bad", Strategy = ReferenceStrategies.TypicalRequest with { RemainingTermInMonths = 400 } },
+            "Strategy.RemainingTermInMonths", "the comparison must be one the strategies endpoint would accept");
 
     [Test]
     public void InvalidRefinanceInputs_AreRejectedWithTheRefinanceRules() =>

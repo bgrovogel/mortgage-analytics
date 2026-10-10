@@ -32,9 +32,10 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
         calculation.Property(c => c.Name).HasMaxLength(SaveCalculationRequestValidator.MaxNameLength).IsRequired();
 
         // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
-        // field, and the contracts can grow without a schema change. A row holds one kind; the other is null.
+        // field, and the contracts can grow without a schema change. A row holds one kind; the others are null.
         calculation.Property(c => c.Inputs).HasConversion(JsonConverter<AmortizationRequest>(), JsonComparer<AmortizationRequest>());
         calculation.Property(c => c.Refinance).HasConversion(JsonConverter<RefinanceRequest>(), JsonComparer<RefinanceRequest>());
+        calculation.Property(c => c.Strategy).HasConversion(JsonConverter<StrategyRequest>(), JsonComparer<StrategyRequest>());
         calculation.Ignore(c => c.Kind);
 
         // SQLite cannot sort DateTimeOffset values, so they are stored as sortable 64-bit numbers.

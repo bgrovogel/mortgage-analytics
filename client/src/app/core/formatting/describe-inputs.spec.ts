@@ -1,6 +1,7 @@
 import { AmortizationRequest } from '../models/amortization.models';
 import { RefinanceRequest } from '../models/refinance.models';
-import { describeInputs, describeRefinance, suggestName, suggestRefinanceName } from './describe-inputs';
+import { StrategyRequest } from '../models/strategy.models';
+import { describeInputs, describeRefinance, describeStrategy, suggestName, suggestRefinanceName, suggestStrategyName } from './describe-inputs';
 
 describe('describeInputs', () => {
   const request = {
@@ -49,5 +50,12 @@ describe('describeRefinance', () => {
 
   it('suggests a name from the two rates', () => {
     expect(suggestRefinanceName(refinance)).toBe('Refinance 7% → 6%, 30 yr');
+  });
+
+  it('describes and names a pay-off-or-invest comparison', () => {
+    const r = { currentBalance: 300_000, annualInterestRate: 6.5, monthlyCashToPutToWork: 1_000, riskProfile: 'Conservative' } as StrategyRequest;
+
+    expect(describeStrategy(r)).toBe('$300,000 left at 6.5% · $1,000/mo to put to work · Conservative');
+    expect(suggestStrategyName(r)).toBe('Pay off or invest: $1,000/mo, 6.5% mortgage');
   });
 });

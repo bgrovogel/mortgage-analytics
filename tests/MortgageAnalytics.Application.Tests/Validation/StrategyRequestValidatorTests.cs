@@ -23,6 +23,16 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
             HomeValue = 0,
         }, "a household starting from nothing is an edge case, not an error");
 
+    [TestCase(100, 4, TestName = "A 100% match on 4% of pay")]
+    [TestCase(200, 100, TestName = "The largest match on all of pay")]
+    [TestCase(62.5, 5.5, TestName = "Fractional percentages")]
+    public void ThreeDigitAndFractionalMatchRates_AreValid(decimal match, decimal upTo) =>
+        AssertValid(TypicalRequest with { EmployerMatchPercent = match, MatchUpToPercentOfPay = upTo }, "common match formulas must be accepted");
+
+    [Test]
+    public void RatesWithMoreThanFourDecimals_AreRejected() =>
+        AssertInvalid(TypicalRequest with { MarginalTaxRate = 24.12345m }, "MarginalTaxRate", "four decimal places at most");
+
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(100_000_000.01)]

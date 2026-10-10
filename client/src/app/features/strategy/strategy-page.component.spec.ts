@@ -7,6 +7,10 @@ import { fakeCharts } from '../../../testing/fake-charts';
 import { StrategyComparison, StrategyRequest } from '../../core/models/strategy.models';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
+import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
+import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { StrategyPageComponent } from './strategy-page.component';
 import { StrategyStore } from './strategy.store';
 
@@ -17,7 +21,15 @@ describe('StrategyPageComponent', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     compare = jest.fn().mockReturnValue(of(aStrategyComparison()));
-    TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: StrategyApiService, useValue: { compare } }] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        fakeCharts().provider,
+        { provide: StrategyApiService, useValue: { compare } },
+        { provide: SavedCalculationsApiService, useValue: {} },
+        { provide: AuthService, useValue: { user: signal(null) } },
+      ],
+    });
   });
   afterEach(() => jest.useRealTimers());
 
@@ -51,6 +63,36 @@ describe('StrategyPageComponent', () => {
     const page = open();
 
     expect(page.querySelector('[data-testid="strategy-errors"]')!.textContent).toContain('Too big.');
+  });
+
+  it('says the results are for the last valid inputs while a field is invalid, and which', () => {
+    const page = open();
+    const tax = page.querySelector('[data-testid="tax-rate"]') as HTMLInputElement;
+
+    tax.dispatchEvent(new Event('focus'));
+    tax.value = '75';
+    tax.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(page.querySelector('[data-testid="strategy-stale"]')!.textContent).toContain('Tax rate must be between 0% and 60%.');
+    expect(page.querySelector('[data-testid="recommended"]')).not.toBeNull(); // the last results stay, clearly marked
+
+    tax.value = '24';
+    tax.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(page.querySelector('[data-testid="strategy-stale"]')).toBeNull();
+  });
+
+  it('offers to save the comparison, with a suggested name', () => {
+    const page = open();
+    (page.querySelector('[data-testid="save-open"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // Signed out, Save first asks to sign in; the payload and the name are ready for when they do.
+    expect(page.querySelector('[data-testid="save-sign-in"]')).not.toBeNull();
+    expect(fixture.componentInstance['savePayload']()).toEqual({ strategy: compare.mock.calls[0][0] });
+    expect(fixture.componentInstance['suggestedName']()).toBe('Pay off or invest: $1,000/mo, 6.5% mortgage');
   });
 
   it('resumes the last comparison after a trip to another page', () => {

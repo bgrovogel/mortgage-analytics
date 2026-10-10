@@ -6,35 +6,38 @@
       <label class="field">
         <span>Balance you owe</span>
         <span class="affix" data-prefix="$">
-          <input appNumber formControlName="currentBalance" data-testid="balance" [attr.aria-invalid]="showError(form.controls.currentBalance)" />
+          <input appNumber formControlName="currentBalance" [attr.aria-invalid]="showError('currentBalance')" data-testid="balance" />
         </span>
+        @if (showError('currentBalance')) {
+          <small class="error" data-testid="error-currentBalance">{{ message('currentBalance') }}</small>
+        }
       </label>
       <label class="field">
         <span>Home value</span>
         <span class="affix" data-prefix="$">
-          <input appNumber formControlName="homeValue" data-testid="home-value" [attr.aria-invalid]="showError(form.controls.homeValue)" />
+          <input appNumber formControlName="homeValue" [attr.aria-invalid]="showError('homeValue')" data-testid="home-value" />
         </span>
+        @if (showError('homeValue')) {
+          <small class="error" data-testid="error-homeValue">{{ message('homeValue') }}</small>
+        }
       </label>
     </div>
-    @if (showError(form.controls.currentBalance)) {
-      <small class="error">Enter the balance you still owe.</small>
-    }
 
     <div class="row">
       <label class="field">
         <span>Interest rate</span>
         <span class="affix" data-suffix="%">
-          <input appNumber [decimals]="4" formControlName="annualInterestRate" data-testid="rate" [attr.aria-invalid]="showError(form.controls.annualInterestRate)" />
+          <input appNumber [decimals]="4" formControlName="annualInterestRate" [attr.aria-invalid]="showError('annualInterestRate')" data-testid="rate" />
         </span>
-        @if (showError(form.controls.annualInterestRate)) {
-          <small class="error">Between 0% and 30%.</small>
+        @if (showError('annualInterestRate')) {
+          <small class="error" data-testid="error-annualInterestRate">{{ message('annualInterestRate') }}</small>
         }
       </label>
       <label class="field">
         <span>Years left</span>
-        <input appNumber [decimals]="2" formControlName="yearsLeft" data-testid="years-left" [attr.aria-invalid]="showError(form.controls.yearsLeft)" />
-        @if (showError(form.controls.yearsLeft)) {
-          <small class="error">Up to 30 years.</small>
+        <input appNumber [decimals]="2" formControlName="yearsLeft" [attr.aria-invalid]="showError('yearsLeft')" data-testid="years-left" />
+        @if (showError('yearsLeft')) {
+          <small class="error" data-testid="error-yearsLeft">{{ message('yearsLeft') }}</small>
         }
       </label>
     </div>
@@ -45,8 +48,11 @@
     <label class="field">
       <span>Each month</span>
       <span class="affix" data-prefix="$">
-        <input appNumber formControlName="monthlyCashToPutToWork" data-testid="monthly-cash" [attr.aria-invalid]="showError(form.controls.monthlyCashToPutToWork)" />
+        <input appNumber formControlName="monthlyCashToPutToWork" [attr.aria-invalid]="showError('monthlyCashToPutToWork')" data-testid="monthly-cash" />
       </span>
+      @if (showError('monthlyCashToPutToWork')) {
+        <small class="error" data-testid="error-monthlyCashToPutToWork">{{ message('monthlyCashToPutToWork') }}</small>
+      }
     </label>
     <p class="hint">Take-home pay left after the mortgage payment and living costs. Your 401(k) match comes out of it first.</p>
   </fieldset>
@@ -75,11 +81,17 @@
       <div class="row">
         <label class="field">
           <span>Gross income / year</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="grossAnnualIncome" data-testid="income" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="grossAnnualIncome" [attr.aria-invalid]="showError('grossAnnualIncome')" data-testid="income" /></span>
+          @if (showError('grossAnnualIncome')) {
+            <small class="error" data-testid="error-grossAnnualIncome">{{ message('grossAnnualIncome') }}</small>
+          }
         </label>
         <label class="field">
           <span>Tax rate (federal + state)</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="marginalTaxRate" data-testid="tax-rate" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="marginalTaxRate" [attr.aria-invalid]="showError('marginalTaxRate')" data-testid="tax-rate" /></span>
+          @if (showError('marginalTaxRate')) {
+            <small class="error" data-testid="error-marginalTaxRate">{{ message('marginalTaxRate') }}</small>
+          }
         </label>
       </div>
       <div class="row">
@@ -93,7 +105,10 @@
         </label>
         <label class="field">
           <span>Other deductions / year</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="otherItemizedDeductions" data-testid="other-deductions" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="otherItemizedDeductions" [attr.aria-invalid]="showError('otherItemizedDeductions')" data-testid="other-deductions" /></span>
+          @if (showError('otherItemizedDeductions')) {
+            <small class="error" data-testid="error-otherItemizedDeductions">{{ message('otherItemizedDeductions') }}</small>
+          }
         </label>
       </div>
       <p class="hint">
@@ -102,7 +117,10 @@
       </p>
       <label class="field">
         <span>Capital gains tax rate</span>
-        <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="capitalGainsTaxRate" data-testid="capital-gains-rate" /></span>
+        <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="capitalGainsTaxRate" [attr.aria-invalid]="showError('capitalGainsTaxRate')" data-testid="capital-gains-rate" /></span>
+        @if (showError('capitalGainsTaxRate')) {
+          <small class="error" data-testid="error-capitalGainsTaxRate">{{ message('capitalGainsTaxRate') }}</small>
+        }
       </label>
     </div>
   </details>
@@ -116,30 +134,42 @@
       <div class="row">
         <label class="field">
           <span>Employer match</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="employerMatchPercent" data-testid="match-percent" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="employerMatchPercent" [attr.aria-invalid]="showError('employerMatchPercent')" data-testid="match-percent" /></span>
+          @if (showError('employerMatchPercent')) {
+            <small class="error" data-testid="error-employerMatchPercent">{{ message('employerMatchPercent') }}</small>
+          }
         </label>
         <label class="field">
           <span>On up to (% of pay)</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="matchUpToPercentOfPay" data-testid="match-up-to" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="matchUpToPercentOfPay" [attr.aria-invalid]="showError('matchUpToPercentOfPay')" data-testid="match-up-to" /></span>
+          @if (showError('matchUpToPercentOfPay')) {
+            <small class="error" data-testid="error-matchUpToPercentOfPay">{{ message('matchUpToPercentOfPay') }}</small>
+          }
         </label>
       </div>
       <p class="hint">E.g. 50% on up to 6%: put in 6% of pay, the employer adds 3%. Every strategy captures it first.</p>
       <label class="field">
         <span>IRA contributions / year</span>
-        <span class="affix" data-prefix="$"><input appNumber formControlName="annualIraContribution" data-testid="ira" [attr.aria-invalid]="showError(form.controls.annualIraContribution)" /></span>
-        @if (showError(form.controls.annualIraContribution)) {
-          <small class="error">At most {{ iraLimit | currency: 'USD' : 'symbol' : '1.0-0' }} (the 2026 limit).</small>
+        <span class="affix" data-prefix="$"><input appNumber formControlName="annualIraContribution" [attr.aria-invalid]="showError('annualIraContribution')" data-testid="ira" /></span>
+        @if (showError('annualIraContribution')) {
+          <small class="error" data-testid="error-annualIraContribution">{{ message('annualIraContribution') }}</small>
         }
       </label>
       <p class="hint">Invested cash fills the IRA first. Roth and traditional come out the same when your tax rate in retirement matches today's.</p>
       <div class="row">
         <label class="field">
           <span>In 401(k)s today</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="currentRetirementSavings" data-testid="retirement-savings" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="currentRetirementSavings" [attr.aria-invalid]="showError('currentRetirementSavings')" data-testid="retirement-savings" /></span>
+          @if (showError('currentRetirementSavings')) {
+            <small class="error" data-testid="error-currentRetirementSavings">{{ message('currentRetirementSavings') }}</small>
+          }
         </label>
         <label class="field">
           <span>Other investments today</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="currentInvestments" data-testid="current-investments" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="currentInvestments" [attr.aria-invalid]="showError('currentInvestments')" data-testid="current-investments" /></span>
+          @if (showError('currentInvestments')) {
+            <small class="error" data-testid="error-currentInvestments">{{ message('currentInvestments') }}</small>
+          }
         </label>
       </div>
     </div>
@@ -154,11 +184,17 @@
       <div class="row">
         <label class="field">
           <span>RSUs vesting / year</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="annualRsuVesting" data-testid="rsu" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="annualRsuVesting" [attr.aria-invalid]="showError('annualRsuVesting')" data-testid="rsu" /></span>
+          @if (showError('annualRsuVesting')) {
+            <small class="error" data-testid="error-annualRsuVesting">{{ message('annualRsuVesting') }}</small>
+          }
         </label>
         <label class="field">
           <span>ESOP / year</span>
-          <span class="affix" data-prefix="$"><input appNumber formControlName="annualEsopContribution" data-testid="esop" /></span>
+          <span class="affix" data-prefix="$"><input appNumber formControlName="annualEsopContribution" [attr.aria-invalid]="showError('annualEsopContribution')" data-testid="esop" /></span>
+          @if (showError('annualEsopContribution')) {
+            <small class="error" data-testid="error-annualEsopContribution">{{ message('annualEsopContribution') }}</small>
+          }
         </label>
       </div>
       <p class="hint">RSUs after the tax withheld at vest. Stock you already get counts toward the hybrid's market share, so it leans toward the mortgage.</p>
@@ -169,15 +205,24 @@
       <div class="row three">
         <label class="field">
           <span>ESPP (% of pay)</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="esppContributionPercent" data-testid="espp-percent" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="esppContributionPercent" [attr.aria-invalid]="showError('esppContributionPercent')" data-testid="espp-percent" /></span>
+          @if (showError('esppContributionPercent')) {
+            <small class="error" data-testid="error-esppContributionPercent">{{ message('esppContributionPercent') }}</small>
+          }
         </label>
         <label class="field">
           <span>Discount</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="esppDiscountPercent" data-testid="espp-discount" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="esppDiscountPercent" [attr.aria-invalid]="showError('esppDiscountPercent')" data-testid="espp-discount" /></span>
+          @if (showError('esppDiscountPercent')) {
+            <small class="error" data-testid="error-esppDiscountPercent">{{ message('esppDiscountPercent') }}</small>
+          }
         </label>
         <label class="field">
           <span>Every (months)</span>
-          <input appNumber [decimals]="0" formControlName="esppPurchasePeriodMonths" data-testid="espp-period" />
+          <input appNumber [decimals]="0" formControlName="esppPurchasePeriodMonths" [attr.aria-invalid]="showError('esppPurchasePeriodMonths')" data-testid="espp-period" />
+          @if (showError('esppPurchasePeriodMonths')) {
+            <small class="error" data-testid="error-esppPurchasePeriodMonths">{{ message('esppPurchasePeriodMonths') }}</small>
+          }
         </label>
       </div>
       <p class="hint">Shares are sold as soon as they are bought, so the discount is a near-certain gain (taxed as income).</p>
@@ -193,15 +238,24 @@
       <div class="row three">
         <label class="field">
           <span>Stocks / year</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="expectedAnnualReturn" data-testid="expected-return" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="expectedAnnualReturn" [attr.aria-invalid]="showError('expectedAnnualReturn')" data-testid="expected-return" /></span>
+          @if (showError('expectedAnnualReturn')) {
+            <small class="error" data-testid="error-expectedAnnualReturn">{{ message('expectedAnnualReturn') }}</small>
+          }
         </label>
         <label class="field">
           <span>Inflation</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="inflationRate" data-testid="inflation" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="inflationRate" [attr.aria-invalid]="showError('inflationRate')" data-testid="inflation" /></span>
+          @if (showError('inflationRate')) {
+            <small class="error" data-testid="error-inflationRate">{{ message('inflationRate') }}</small>
+          }
         </label>
         <label class="field">
           <span>Home value</span>
-          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="homeGrowthRate" data-testid="home-growth" /></span>
+          <span class="affix" data-suffix="%"><input appNumber [decimals]="2" formControlName="homeGrowthRate" [attr.aria-invalid]="showError('homeGrowthRate')" data-testid="home-growth" /></span>
+          @if (showError('homeGrowthRate')) {
+            <small class="error" data-testid="error-homeGrowthRate">{{ message('homeGrowthRate') }}</small>
+          }
         </label>
       </div>
       <p class="hint">

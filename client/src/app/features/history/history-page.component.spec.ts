@@ -10,6 +10,9 @@ import { CalculatorStore } from '../calculator/calculator.store';
 import { RefinanceStore } from '../refinance/refinance.store';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
 import { RefinanceRequest } from '../../core/models/refinance.models';
+import { StrategyApiService } from '../../core/services/strategy-api.service';
+import { StrategyRequest } from '../../core/models/strategy.models';
+import { StrategyStore } from '../strategy/strategy.store';
 import { HistoryPageComponent, SEARCH_DELAY_MS } from './history-page.component';
 
 describe('HistoryPageComponent', () => {
@@ -19,7 +22,7 @@ describe('HistoryPageComponent', () => {
 
   const inputs = { homePrice: 375_000, downPayment: 18_750, annualInterestRate: 6.5, termInMonths: 360, extraPayments: null } as AmortizationRequest;
   const aSaved = (id: string, name: string, overrides: Partial<SavedCalculation> = {}): SavedCalculation => ({
-    id, name, kind: 'Purchase', inputs, refinance: null, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
+    id, name, kind: 'Purchase', inputs, refinance: null, strategy: null, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
   });
   const oak = aSaved('1', 'Oak St, 20% down');
   const maple = aSaved('2', 'Maple Ave', { updatedAt: '2026-10-12T09:00:00Z' });
@@ -28,6 +31,8 @@ describe('HistoryPageComponent', () => {
     newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false,
   };
   const refi = aSaved('3', 'Refi at 6%', { kind: 'Refinance', inputs: null, refinance });
+  const strategy = { currentBalance: 300_000, annualInterestRate: 6.5, monthlyCashToPutToWork: 1_000, riskProfile: 'Balanced' } as StrategyRequest;
+  const payOff = aSaved('4', 'Pay off or invest?', { kind: 'Strategy', inputs: null, strategy });
 
   const create = () => {
     fixture = TestBed.createComponent(HistoryPageComponent);
@@ -43,6 +48,7 @@ describe('HistoryPageComponent', () => {
         { provide: SavedCalculationsApiService, useValue: api },
         { provide: AmortizationApiService, useValue: { calculate: () => new Subject() } },
         { provide: RefinanceApiService, useValue: { analyze: () => new Subject() } },
+        { provide: StrategyApiService, useValue: { compare: () => new Subject() } },
       ],
     });
     store = TestBed.inject(CalculatorStore);
@@ -259,6 +265,59 @@ describe('HistoryPageComponent', () => {
 
       show('all');
       expect(names()).toEqual(['Oak St, 20% down', 'Refi at 6%']);
+    });
+  });
+
+  describe('pay-off-or-invest comparisons', () => {
+    beforeEach(() => api.list.mockReturnValue(of([oak, payOff])));
+
+    it('are marked as such, with a summary of the comparison', () => {
+      create();
+
+      expect(items()[1].querySelector('[data-testid="kind-badge"]')!.textContent!.trim()).toBe('Pay off or invest');
+      expect(items()[1].textContent).toContain('$300,000 left at 6.5% · $1,000/mo to put to work · Balanced');
+    });
+
+    it('open on the Pay off or invest page', () => {
+      const navigate = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      create();
+
+      click(button(items()[1], 'Open'));
+
+      expect(TestBed.inject(StrategyStore).saved()).toEqual({ id: '4', name: 'Pay off or invest?' });
+      expect(TestBed.inject(StrategyStore).request()).toBe(strategy);
+      expect(navigate).toHaveBeenCalledWith(['/strategy']);
+    });
+
+    it('keep their inputs when renamed, and the open comparison follows the new name', () => {
+      create();
+      TestBed.inject(StrategyStore).linkTo(payOff);
+      api.update.mockReturnValue(of({ ...payOff, name: 'Pay off, final' }));
+
+      click(button(items()[1], 'Rename'));
+      click(button(items()[1], 'Save'));
+
+      expect(api.update).toHaveBeenCalledWith('4', 'Pay off or invest?', { strategy });
+      expect(TestBed.inject(StrategyStore).saved()).toEqual({ id: '4', name: 'Pay off, final' });
+    });
+
+    it('unlink the open comparison when deleted', () => {
+      create();
+      TestBed.inject(StrategyStore).linkTo(payOff);
+      api.delete.mockReturnValue(of(undefined));
+
+      click(button(items()[1], 'Delete'));
+      click(button(items()[1], 'Yes, delete'));
+
+      expect(TestBed.inject(StrategyStore).saved()).toBeNull();
+    });
+
+    it('can be shown on their own', () => {
+      create();
+
+      click(root().querySelector('[data-testid="kind-filter-Strategy"]') as HTMLElement);
+
+      expect(names()).toEqual(['Pay off or invest?']);
     });
   });
 });

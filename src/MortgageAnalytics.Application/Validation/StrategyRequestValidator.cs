@@ -54,6 +54,7 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
     private void Amount(Expression<Func<StrategyRequest, decimal>> field, string name) =>
         RuleFor(field).InclusiveBetween(0, Household.MaxAmount).WholeCents().WithName(name);
 
+    // Up to four decimal places. Seven digits in all, so three-digit rates (a 100% or 200% match) fit.
     private void Rate(Expression<Func<StrategyRequest, decimal>> field, decimal max, string name) =>
-        RuleFor(field).InclusiveBetween(0, max).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName(name);
+        RuleFor(field).InclusiveBetween(0, max).PrecisionScale(7, 4, ignoreTrailingZeros: true).WithName(name);
 }

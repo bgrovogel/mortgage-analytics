@@ -32,7 +32,7 @@ describe('RefinanceStore', () => {
     const refinance = { currentBalance: 1 } as RefinanceRequest;
     const base = { id: 'r1', name: 'Refi', createdAt: '', updatedAt: '' };
 
-    store.open({ ...base, kind: 'Purchase', inputs: {} as never, refinance: null });
+    store.open({ ...base, kind: 'Purchase', inputs: {} as never, refinance: null, strategy: null });
     expect(store.saved()).toBeNull();
 
     store.open({ ...base, kind: 'Refinance', inputs: null, refinance });

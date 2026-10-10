@@ -75,6 +75,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
             Name = request.Name.Trim(),
             Inputs = request.Inputs,
             Refinance = request.Refinance,
+            Strategy = request.Strategy,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -93,6 +94,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
         calculation.Name = request.Name.Trim();
         calculation.Inputs = request.Inputs;
         calculation.Refinance = request.Refinance;
+        calculation.Strategy = request.Strategy;
         calculation.UpdatedAt = clock.GetUtcNow();
 
         await repository.UpdateAsync(calculation, cancellationToken);
@@ -110,6 +112,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
         Kind = calculation.Kind,
         Inputs = calculation.Inputs,
         Refinance = calculation.Refinance,
+        Strategy = calculation.Strategy,
         CreatedAt = calculation.CreatedAt,
         UpdatedAt = calculation.UpdatedAt,
     };

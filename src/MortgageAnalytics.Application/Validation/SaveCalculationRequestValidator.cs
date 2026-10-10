@@ -9,7 +9,7 @@ public sealed class SaveCalculationRequestValidator : AbstractValidator<SaveCalc
     /// <summary>The longest name accepted, after trimming.</summary>
     public const int MaxNameLength = 100;
 
-    /// <summary>Defines the rules; the inputs reuse the calculator's and the refinance validators (DRY).</summary>
+    /// <summary>Defines the rules; the inputs reuse each endpoint's own validator (DRY).</summary>
     public SaveCalculationRequestValidator()
     {
         RuleFor(r => r.Name)
@@ -18,12 +18,16 @@ public sealed class SaveCalculationRequestValidator : AbstractValidator<SaveCalc
             .Must(name => name.Trim().Length <= MaxNameLength).WithMessage($"Keep the name to {MaxNameLength} characters or fewer.");
 
         RuleFor(r => r.Inputs)
-            .Must((request, inputs) => (inputs is null) != (request.Refinance is null))
-            .WithMessage(r => r.Inputs is null
-                ? "Include the calculator inputs or the refinance comparison to save."
-                : "Include either calculator inputs or refinance inputs, not both.");
+            .Must((request, _) => KindsGiven(request) == 1)
+            .WithMessage(r => KindsGiven(r) == 0
+                ? "Include the calculator inputs, a refinance comparison or a pay-off-or-invest comparison to save."
+                : "Include only one kind of inputs: calculator, refinance or pay-off-or-invest.");
 
         RuleFor(r => r.Inputs!).SetValidator(new AmortizationRequestValidator()).When(r => r.Inputs is not null);
         RuleFor(r => r.Refinance!).SetValidator(new RefinanceRequestValidator()).When(r => r.Refinance is not null);
+        RuleFor(r => r.Strategy!).SetValidator(new StrategyRequestValidator()).When(r => r.Strategy is not null);
     }
+
+    private static int KindsGiven(SaveCalculationRequest request) =>
+        (request.Inputs is null ? 0 : 1) + (request.Refinance is null ? 0 : 1) + (request.Strategy is null ? 0 : 1);
 }

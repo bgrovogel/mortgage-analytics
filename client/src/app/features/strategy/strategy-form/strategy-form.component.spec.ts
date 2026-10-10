@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StrategyRequest } from '../../../core/models/strategy.models';
+import { NumberField } from './strategy-fields';
 import { StrategyFormComponent } from './strategy-form.component';
 
 describe('StrategyFormComponent', () => {
@@ -55,14 +56,78 @@ describe('StrategyFormComponent', () => {
     expect(emitted[1].monthlyCashToPutToWork).toBe(2_000);
   });
 
-  it('flags the IRA limit once touched', () => {
+  it('checks every number against the limits the API enforces, and says why in plain words', () => {
+    const root = render();
+    const outOfRange: [NumberField, number, string][] = [
+      ['currentBalance', 0, 'Balance you owe: enter more than $0.'],
+      ['annualInterestRate', 31, 'Interest rate must be between 0% and 30%.'],
+      ['yearsLeft', 31, 'Years left must be between 1 month and 30 years.'],
+      ['homeValue', 100_000_001, 'Home value must be between $0 and $100,000,000.'],
+      ['marginalTaxRate', 61, 'Tax rate must be between 0% and 60%.'],
+      ['employerMatchPercent', 201, 'Employer match must be between 0% and 200%.'],
+      ['annualIraContribution', 8_000, 'IRA contributions must be between $0 and $7,500.'],
+      ['esppDiscountPercent', 16, 'ESPP discount must be between 0% and 15%.'],
+      ['esppPurchasePeriodMonths', 6.5, 'ESPP purchase period: whole months only.'],
+      ['expectedAnnualReturn', -11, 'Stock return must be between -10% and 30%.'],
+      ['inflationRate', 21, 'Inflation must be between -5% and 20%.'],
+      ['homeGrowthRate', 26, 'Home value growth must be between -20% and 25%.'],
+    ];
+
+    for (const [field, value, message] of outOfRange) {
+      const control = controls()[field];
+      const before = control.value;
+      control.setValue(value as never);
+      control.markAsDirty();
+      fixture.detectChanges();
+
+      expect(text(root, `error-${field}`)).toBe(message);
+      control.setValue(before as never);
+      fixture.detectChanges();
+    }
+    expect(emitted.every((r) => r.annualInterestRate <= 30 && r.annualIraContribution <= 7_500)).toBe(true); // nothing invalid was sent
+  });
+
+  it('accepts the edges of every range', () => {
+    render();
+
+    controls().employerMatchPercent.setValue(200);
+    controls().matchUpToPercentOfPay.setValue(100);
+    controls().yearsLeft.setValue(30);
+    controls().annualIraContribution.setValue(7_500);
+    controls().expectedAnnualReturn.setValue(-10);
+
+    expect(fixture.componentInstance.form.valid).toBe(true);
+    expect(emitted[emitted.length - 1]).toEqual(expect.objectContaining({ employerMatchPercent: 200, remainingTermInMonths: 360, expectedAnnualReturn: -10 }));
+  });
+
+  it('asks for a number when a box is emptied', () => {
     const root = render();
 
-    controls().annualIraContribution.setValue(8_000);
-    controls().annualIraContribution.markAsTouched();
+    controls().grossAnnualIncome.setValue(null as never);
+    controls().grossAnnualIncome.markAsDirty();
     fixture.detectChanges();
 
-    expect(root.textContent).toContain('At most $7,500 (the 2026 limit).');
+    expect(text(root, 'error-grossAnnualIncome')).toBe('Gross income: enter a number.');
+  });
+
+  it('reports what is wrong as it changes, so the page can say its results are stale', () => {
+    render();
+    const reports: string[][] = [];
+    fixture.componentInstance.problems.subscribe((p) => reports.push(p));
+    const sent = emitted.length;
+
+    controls().marginalTaxRate.setValue(70);
+    controls().inflationRate.setValue(25);
+    controls().marginalTaxRate.setValue(24);
+    controls().inflationRate.setValue(3);
+
+    expect(reports).toEqual([
+      ['Tax rate must be between 0% and 60%.'],
+      ['Tax rate must be between 0% and 60%.', 'Inflation must be between -5% and 20%.'],
+      ['Inflation must be between -5% and 20%.'],
+      [],
+    ]);
+    expect(emitted.length - sent).toBe(1); // only once everything was valid again
   });
 
   it('says what the risk profile counts on, and that market returns are not guaranteed', () => {

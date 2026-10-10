@@ -13,6 +13,8 @@ import { RefinanceApiService } from './core/services/refinance-api.service';
 import { SavedCalculationsApiService } from './core/services/saved-calculations-api.service';
 import { CalculatorStore } from './features/calculator/calculator.store';
 import { RefinanceStore } from './features/refinance/refinance.store';
+import { StrategyApiService } from './core/services/strategy-api.service';
+import { StrategyStore } from './features/strategy/strategy.store';
 
 describe('AppComponent', () => {
   let user: ReturnType<typeof signal<User | null>>;
@@ -31,6 +33,7 @@ describe('AppComponent', () => {
         { provide: AmortizationApiService, useValue: { calculate: () => NEVER } },
         { provide: SavedCalculationsApiService, useValue: { list: () => NEVER } },
         { provide: RefinanceApiService, useValue: { analyze: () => NEVER } },
+        { provide: StrategyApiService, useValue: { compare: () => NEVER } },
         { provide: AuthService, useValue: { user, signOut, confirmEmail: () => NEVER } },
         { provide: DevMailboxService, useValue: { list: () => NEVER, available: () => of(false) } },
       ],
@@ -63,6 +66,7 @@ describe('AppComponent', () => {
     user.set({ email: 'alice@example.com' });
     TestBed.inject(CalculatorStore).linkTo({ id: 'c1', name: 'Oak St' });
     TestBed.inject(RefinanceStore).linkTo({ id: 'r1', name: 'Refi' });
+    TestBed.inject(StrategyStore).linkTo({ id: 's1', name: 'Pay off?' });
     const navigate = jest.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const { fixture, root } = render();
     expect(root.querySelector('[data-testid="signed-in-as"]')?.textContent).toContain('alice@example.com');
@@ -73,6 +77,7 @@ describe('AppComponent', () => {
     expect(signOut).toHaveBeenCalled();
     expect(TestBed.inject(CalculatorStore).saved()).toBeNull();
     expect(TestBed.inject(RefinanceStore).saved()).toBeNull();
+    expect(TestBed.inject(StrategyStore).saved()).toBeNull();
     expect(navigate).toHaveBeenCalledWith('/calculator');
     expect(root.querySelector('[data-testid="sign-in-link"]')).not.toBeNull();
   });

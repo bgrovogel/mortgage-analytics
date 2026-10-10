@@ -234,6 +234,9 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                     b.Property<string>("Refinance")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Strategy")
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
 

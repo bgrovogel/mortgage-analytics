@@ -79,4 +79,35 @@ test.describe('History', () => {
     await expect(page, 'it opens on the Refinance page').toHaveURL(/\/refinance$/);
     await expect(page.getByTestId('new-rate'), 'with the saved rate').toHaveValue('5.5');
   });
+
+  test('saves a pay-off-or-invest comparison and reopens it with every setting', async ({ account, page }) => {
+    expect(account.email, 'signed in').toBeTruthy();
+    const name = `Pay off ${tag}`;
+    await page.goto('/strategy');
+    await page.getByTestId('monthly-cash').fill('2500');
+    await page.getByTestId('risk-Conservative').check();
+    await page.getByTestId('section-stock').locator('summary').click();
+    await page.getByTestId('rsu').fill('20000');
+    await expect(page.getByTestId('strategy-results'), 'the comparison has caught up').toHaveAttribute('aria-busy', 'false');
+    await page.getByTestId('save-open').click();
+    await page.getByTestId('save-name').fill(name);
+    await page.getByTestId('save-new').click();
+    await expect(page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
+
+    await page.goto('/strategy'); // a reload starts over from the defaults
+    await expect(page.getByTestId('monthly-cash'), 'the reload really did start over').toHaveValue('1,000');
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await expect(history.item(name), 'it is listed as a pay-off-or-invest comparison').toContainText('Pay off or invest');
+    await expect(history.item(name), 'with a summary of the comparison').toContainText('$2,500/mo to put to work · Conservative');
+
+    await history.act(name, 'Open');
+
+    await expect(page, 'it opens on the Pay off or invest page').toHaveURL(/\/strategy$/);
+    await expect(page.getByTestId('monthly-cash'), 'with the saved cash').toHaveValue('2,500');
+    await expect(page.getByTestId('risk-Conservative'), 'the saved risk profile').toBeChecked();
+    await expect(page.getByTestId('rsu'), 'and the saved RSUs').toHaveValue('20,000');
+    await expect(page.getByTestId('save-open'), 'Save can now update it in place').toBeEnabled();
+  });
 });

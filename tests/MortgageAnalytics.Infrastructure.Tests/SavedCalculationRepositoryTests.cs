@@ -51,6 +51,30 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
     }
 
     [Test]
+    public async Task AStrategyComparison_RoundTrips()
+    {
+        var strategy = ReferenceStrategies.TypicalRequest with
+        {
+            FilingStatus = TaxFilingStatus.HeadOfHousehold,
+            RiskProfile = InvestorRiskProfile.Conservative,
+            SellRsusAtVest = true,
+            AnnualRsuVesting = 12_000m,
+        };
+        var saved = ACalculation("Pay off or invest");
+        saved.Inputs = null;
+        saved.Strategy = strategy;
+        await SeedAsync(saved);
+
+        var found = await NewRepository().FindAsync(Alice, saved.Id, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found?.Strategy, Is.EqualTo(strategy), "every input, enums included, is stored whole");
+            Assert.That(found?.Kind, Is.EqualTo(SavedCalculationKind.Strategy), "and it reads back as a strategy comparison");
+        });
+    }
+
+    [Test]
     public async Task Find_ReturnsNull_ForAnUnknownId()
     {
         var found = await NewRepository().FindAsync(Alice, Guid.NewGuid(), CancellationToken.None);
