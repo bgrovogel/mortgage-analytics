@@ -173,7 +173,8 @@
     </div>
     <p class="hint" data-testid="pmi-hint">
       @if (pmiApplies()) {
-        PMI applies because less than 20% is down. It ends when the balance reaches 78% (or 80%) of the price.
+        PMI applies because less than 20% is down. It is removed automatically when the original schedule
+        reaches 78% of the price; extra payments only count if you ask at 80%.
       } @else {
         No PMI: at least 20% is down.
       }
@@ -259,13 +260,17 @@
       <div class="row recast-terms">
         <label class="field">
           <span>Lender minimum ($)</span>
-          <input type="number" formControlName="recastMinimum" min="0" step="1000" inputmode="decimal" data-testid="recast-minimum" />
+          <input type="number" formControlName="recastMinimum" min="1000" step="1000" inputmode="decimal" data-testid="recast-minimum"
+                 [attr.aria-invalid]="showError(form.controls.recastMinimum)" />
         </label>
         <label class="field">
           <span>Recast fee ($)</span>
           <input type="number" formControlName="recastFee" min="0" step="25" inputmode="decimal" data-testid="recast-fee" />
         </label>
       </div>
+      @if (showError(form.controls.recastMinimum)) {
+        <small class="error">Lenders require a lump sum of at least $1,000 to recast.</small>
+      }
       <p class="hint">
         The lender recasts only after a single lump sum of at least the minimum (most banks require $10,000).
         Smaller extra payments still shorten the term.

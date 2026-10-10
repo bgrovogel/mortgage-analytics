@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 340 backend tests · Jest: 76 Angular unit tests · Playwright: 16 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 357 backend tests · Jest: 77 Angular unit tests · Playwright: 17 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -28,7 +28,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Purchase** | Home price + down payment → loan amount, down-payment %, loan-to-value. |
 | **Principal & interest** | Standard annuity formula in `decimal`, with interest rounded to cents each month. The final payment absorbs rounding drift, so every schedule ends at exactly $0.00. |
 | **Extra payments** | Monthly, annual and one-time lump sums, in any combination. An extra payment that exceeds the remaining balance is capped. |
-| **Recasting** | A lender recasts only after a **single lump sum of at least its minimum** (default $10,000) and charges a fee (default $250). A recast keeps the payoff date and re-amortizes to a lower payment. Smaller extra payments still shorten the term. Each recast is recorded with the old payment, new payment and fee. |
+| **Recasting** | A lender recasts only after a **single payment of at least its minimum** (default $10,000, never below $1,000) and charges a fee (default $250). Several smaller payments in one month do not add up to a qualifying one. A recast keeps the payoff date and re-amortizes to a lower payment; smaller extra payments still shorten the term. Each recast is recorded with the old payment, new payment and fee. |
 | **Property taxes** | Three taxing units, each an annual rate on the home's taxable value: **school**, **county/city/other** and **MUD**. Texas "per $100 of valuation" rates are entered as-is ($0.85 per $100 = 0.85%). Each year's bill is split into twelve installments that add up to the bill exactly. |
 | **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas). The school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. |
 | **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling; MUD tax has none. |
@@ -37,7 +37,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Yearly projection** | Market value, taxable value and every cost category for each year of the term, charted as lines. |
 | **PID assessment** | A fixed annual amount, optionally ending after the district's remaining years. |
 | **Insurance & HOA** | An annual premium and monthly dues. |
-| **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. It stops when the *actual* balance reaches **78%** of the home's value (automatic removal under the Homeowners Protection Act) or **80%** (when the borrower requests removal). Extra payments end PMI sooner. |
+| **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
 | **Savings** | **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and dues are deliberately excluded, because they continue after the loan is paid off. |
 
 ---
@@ -74,12 +74,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 340 NUnit tests, including the convention tests
+dotnet test                       # 357 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 76 Jest unit tests; fails below 85% coverage
+npm test                          # 77 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 16 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 17 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -189,8 +189,8 @@ src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handl
 tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, TestClock
   MortgageAnalytics.Conventions.Tests/  Roslyn checks that every test follows the assertion standards
-  MortgageAnalytics.Domain.Tests/   231 tests
-  MortgageAnalytics.Application.Tests/  89 tests (unit with NSubstitute, plus sociable scenarios)
+  MortgageAnalytics.Domain.Tests/   244 tests
+  MortgageAnalytics.Application.Tests/  93 tests (unit with NSubstitute, plus sociable scenarios)
   MortgageAnalytics.Api.IntegrationTests/  16 tests (shared WebApplicationFactory fixture)
 client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
 ```
@@ -216,10 +216,14 @@ client/  src/app/core (models, API service, errors) · src/app/features/calculat
   separately invites them to disagree. `PropertyPurchase` derives the loan, the LTV and whether PMI is
   required, so the 20% rule is written exactly once.
 - **Recasts follow lender rules.** A lower payment with the same payoff date only happens through a
-  recast, and lenders recast only after a qualifying lump sum. `RecastPolicy.OnLumpSum(minimum, fee)`
-  encodes that, and the tests pin the boundary: a $9,999.99 lump sum does not recast; $10,000 does.
-- **PMI uses the actual balance.** That is what lets extra payments end PMI early, which is a real and
-  often-overlooked saving. 78% (automatic) and 80% (borrower-requested) are both supported.
+  recast, and lenders recast only after one qualifying payment. The calculator compares the period's
+  *largest single* prepayment with `RecastPolicy`'s minimum, not the month's total, so $200 a month plus a
+  $9,900 lump sum does not recast. The tests pin the boundary: $9,999.99 does not recast; $10,000 does.
+  A zero minimum is rejected, because every routine extra payment would trigger a recast and its fee.
+- **PMI removal follows the law.** Automatic removal at 78% is measured on the original schedule, so
+  extra payments do not change it. A borrower's request at 80% may use the actual balance, so extra
+  payments bring it forward, and only that PMI saving counts toward net savings. Each cost period
+  therefore carries both balances: the actual one and the original schedule's.
 - **Homestead rules are per taxing unit.** The Texas $140,000 exemption applies only to school
   district tax, so school tax is a separate unit with its own `TaxExemption`. Applying it to the whole
   tax bill would understate taxes by thousands of dollars a year.
@@ -298,12 +302,12 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 | Layer | Tools | What it proves |
 |---|---|---|
-| Domain (231) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
-| Application (89) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Domain (244) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
+| Application (93) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | API integration (16) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies. Error handling, with a substitute service that throws (422, 500 without leaking details, 400). Swagger, health, the 404 for unknown API routes. |
 | Conventions (4) | NUnit + Roslyn | The test standards themselves (below). |
-| Angular (76) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (16) | Playwright | Real browser and real API, through a page object. |
+| Angular (77) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (17) | Playwright | Real browser and real API, through a page object. |
 
 **Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

@@ -17,8 +17,9 @@ public sealed record RecastPolicy
 
     private RecastPolicy(bool isEnabled, decimal minimumExtraPrincipal, decimal fee)
     {
-        if (minimumExtraPrincipal < 0)
-            throw new DomainValidationException("The minimum extra principal for a recast cannot be negative.");
+        // With no minimum, every routine extra payment would trigger a recast and its fee.
+        if (isEnabled && minimumExtraPrincipal <= 0)
+            throw new DomainValidationException("The minimum lump sum for a recast must be greater than zero.");
         if (fee < 0)
             throw new DomainValidationException("A recast fee cannot be negative.");
 
@@ -33,7 +34,7 @@ public sealed record RecastPolicy
     /// <summary>Recast whenever a single period's extra principal is at least <paramref name="minimumExtraPrincipal"/>.</summary>
     /// <param name="minimumExtraPrincipal">The smallest single prepayment the lender will recast for (commonly <see cref="TypicalMinimumLumpSum"/>).</param>
     /// <param name="fee">The lender's charge for each recast (often $150 to $500).</param>
-    /// <exception cref="DomainValidationException">Either value is negative.</exception>
+    /// <exception cref="DomainValidationException">The minimum is not positive, or the fee is negative.</exception>
     public static RecastPolicy OnLumpSum(decimal minimumExtraPrincipal, decimal fee) => new(true, minimumExtraPrincipal, fee);
 
     /// <summary>True when this policy recasts at all.</summary>
@@ -45,7 +46,8 @@ public sealed record RecastPolicy
     /// <summary>The fee charged for each recast.</summary>
     public decimal Fee { get; }
 
-    /// <summary>Returns true when a period with <paramref name="extraPrincipal"/> prepaid should be followed by a recast.</summary>
-    public bool ShouldRecastAfter(decimal extraPrincipal) =>
-        IsEnabled && extraPrincipal > 0 && extraPrincipal >= MinimumExtraPrincipal;
+    /// <summary>Returns true when a single prepayment of <paramref name="singlePayment"/> should be followed by a recast.</summary>
+    /// <param name="singlePayment">The largest single prepayment in the period. Pass one payment, never a month's total.</param>
+    public bool ShouldRecastAfter(decimal singlePayment) =>
+        IsEnabled && singlePayment > 0 && singlePayment >= MinimumExtraPrincipal;
 }

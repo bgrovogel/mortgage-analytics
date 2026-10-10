@@ -19,4 +19,12 @@ public sealed class ExtraPaymentPlan
 
     /// <summary>Returns the total extra principal for payment <paramref name="paymentNumber"/> across all rules, rounded to cents.</summary>
     public decimal AmountFor(int paymentNumber) => Money.Round(_rules.Sum(rule => rule.AmountFor(paymentNumber)));
+
+    /// <summary>
+    /// Returns the largest single prepayment made with payment <paramref name="paymentNumber"/>, rounded to cents.
+    /// Each rule is a separate payment, so this is what a lender compares against its recast minimum,
+    /// not the month's total.
+    /// </summary>
+    public decimal LargestSinglePaymentFor(int paymentNumber) =>
+        _rules.Count == 0 ? 0m : Money.Round(_rules.Max(rule => rule.AmountFor(paymentNumber)));
 }

@@ -104,7 +104,27 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
-    public void Pmi_ReportsBothEndDatesAndTheSaving()
+    public void RequestedPmiRemoval_ExtraPaymentsBringItForward_AndCountAsSavings()
+    {
+        var request = A.Request.FivePercentDown().WithMonthlyExtra(300m)
+            .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, MortgageAnalytics.Domain.HousingCosts.MortgageInsuranceCancellation.BorrowerRequested));
+
+        var response = Service.Analyze(request);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Baseline.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2036, 4, 1)), "payment 124 on the original schedule");
+            Assert.That(response.Accelerated.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2031, 2, 1)), "payment 62 with $300 extra a month");
+            Assert.That(
+                response.Savings.MortgageInsuranceSaved,
+                Is.EqualTo(FivePercentDown.BorrowerRequestedPmiTotal - FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
+                "PMI avoided");
+            Assert.That(response.Savings.NetSavings, Is.EqualTo(response.Savings.InterestSaved + response.Savings.MortgageInsuranceSaved), "PMI saved counts toward net savings");
+        });
+    }
+
+    [Test]
+    public void AutomaticPmiRemoval_IsNotMovedByExtraPayments()
     {
         var request = A.Request.FivePercentDown().WithMonthlyExtra(300m).WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
 
@@ -112,10 +132,9 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
 
         Assert.Multiple(() =>
         {
-            Assert.That(response.Baseline.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2037, 3, 1)), "payment 135");
-            Assert.That(response.Accelerated.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2031, 9, 1)), "payment 69");
-            Assert.That(response.Savings.MortgageInsuranceSaved, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.PmiTotalWith300Extra), "PMI avoided");
-            Assert.That(response.Savings.NetSavings, Is.EqualTo(response.Savings.InterestSaved + response.Savings.MortgageInsuranceSaved), "PMI saved counts toward net savings");
+            Assert.That(response.Baseline.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2037, 3, 1)), "payment 135 on the original schedule");
+            Assert.That(response.Accelerated.MortgageInsuranceEndDate, Is.EqualTo(response.Baseline.MortgageInsuranceEndDate), "automatic removal ignores extra payments");
+            Assert.That(response.Savings.MortgageInsuranceSaved, Is.Zero, "so no PMI is saved");
         });
     }
 

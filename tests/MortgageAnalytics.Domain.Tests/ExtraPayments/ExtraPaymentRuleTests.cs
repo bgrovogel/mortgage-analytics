@@ -95,6 +95,22 @@ public class ExtraPaymentRuleTests
         {
             Assert.That(ExtraPaymentPlan.None.IsEmpty, Is.True, "the None plan holds no rules");
             Assert.That(ExtraPaymentPlan.None.AmountFor(1), Is.Zero, "the None plan adds no extra principal");
+            Assert.That(ExtraPaymentPlan.None.LargestSinglePaymentFor(1), Is.Zero, "and no single payment");
         });
+    }
+
+    [TestCase(1, 100, TestName = "Only the monthly extra")]
+    [TestCase(12, 5_000, TestName = "The lump sum is the largest of three payments")]
+    [TestCase(24, 1_000, TestName = "The annual extra beats the monthly")]
+    public void Plan_LargestSinglePayment_IsTheBiggestRuleNotTheTotal(int paymentNumber, decimal expected)
+    {
+        var plan = new ExtraPaymentPlan(
+        [
+            new MonthlyExtraPayment(100m),
+            new AnnualExtraPayment(1_000m, 12),
+            new LumpSumExtraPayment(5_000m, 12),
+        ]);
+
+        Assert.That(plan.LargestSinglePaymentFor(paymentNumber), Is.EqualTo(expected), "recasting depends on one payment, so the plan must report the largest, not the sum");
     }
 }

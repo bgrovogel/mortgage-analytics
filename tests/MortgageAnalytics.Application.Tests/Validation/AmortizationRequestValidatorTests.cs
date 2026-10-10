@@ -102,11 +102,24 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase
     // Recast terms.
     // ---------------------------------------------------------------------------------------
 
-    [TestCase("Recast.MinimumLumpSum")]
-    [TestCase("Recast.Fee")]
-    public void RecastTerms_NegativeValues_AreRejected(string path)
+    [Test]
+    public void RecastFee_Negative_IsRejected()
     {
-        AssertInvalid(A.Request.WithRecast(minimumLumpSum: -1m, fee: -1m), path, "lender terms cannot be negative");
+        AssertInvalid(A.Request.WithRecast(fee: -1m), "Recast.Fee", "a lender never pays the borrower to recast");
+    }
+
+    [TestCase(-1, TestName = "Negative minimum")]
+    [TestCase(0, TestName = "Zero minimum: would recast after every monthly extra")]
+    [TestCase(999.99, TestName = "Just under the $1,000 floor")]
+    public void RecastMinimum_BelowOneThousand_IsRejected(decimal minimum)
+    {
+        AssertInvalid(A.Request.WithRecast(minimumLumpSum: minimum), "Recast.MinimumLumpSum", "a recast minimum this low would trigger on routine payments");
+    }
+
+    [Test]
+    public void RecastMinimum_OfOneThousand_IsAccepted()
+    {
+        AssertNoErrorFor(A.Request.WithRecast(minimumLumpSum: 1_000m), "Recast.MinimumLumpSum", "$1,000 is the lowest minimum accepted");
     }
 
     // ---------------------------------------------------------------------------------------

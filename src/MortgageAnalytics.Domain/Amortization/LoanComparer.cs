@@ -15,7 +15,8 @@ public sealed class LoanComparer(IAmortizationCalculator calculator) : ILoanComp
         var accelerated = extraPayments.IsEmpty ? baseline : calculator.Generate(loan, extraPayments, recastPolicy);
 
         var baselineCosts = housingCosts.ApplyTo(baseline);
-        var acceleratedCosts = ReferenceEquals(accelerated, baseline) ? baselineCosts : housingCosts.ApplyTo(accelerated);
+        // The baseline is the original schedule: rules such as automatic PMI removal are measured against it.
+        var acceleratedCosts = ReferenceEquals(accelerated, baseline) ? baselineCosts : housingCosts.ApplyTo(accelerated, baseline);
 
         return new LoanComparison(baseline, accelerated, baselineCosts, acceleratedCosts);
     }

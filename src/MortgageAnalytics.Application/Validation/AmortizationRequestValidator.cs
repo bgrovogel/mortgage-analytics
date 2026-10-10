@@ -18,6 +18,12 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// <summary>The most lump sums one request may contain.</summary>
     public const int MaxLumpSums = 120;
 
+    /// <summary>
+    /// The lowest recast minimum accepted. Lenders typically require $5,000 to $10,000; anything near zero
+    /// would recast (and charge a fee) after routine monthly extras.
+    /// </summary>
+    public const decimal MinimumRecastLumpSum = 1_000m;
+
     // Keeps the last due date (up to 600 months out) well inside DateOnly's range.
     private static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
     private static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
@@ -69,7 +75,10 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     {
         public RecastTermsValidator()
         {
-            RuleFor(r => r.MinimumLumpSum).GreaterThanOrEqualTo(0).WholeCents();
+            RuleFor(r => r.MinimumLumpSum)
+                .GreaterThanOrEqualTo(MinimumRecastLumpSum)
+                .WithMessage($"The recast minimum must be at least {MinimumRecastLumpSum:C0}; lenders recast only after a large lump sum.")
+                .WholeCents();
             RuleFor(r => r.Fee).InclusiveBetween(0, 10_000).WholeCents();
         }
     }

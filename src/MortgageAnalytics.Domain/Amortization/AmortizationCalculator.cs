@@ -11,8 +11,8 @@ namespace MortgageAnalytics.Domain.Amortization;
 ///   <item>Scheduled principal = payment − interest, capped at the balance. In the final scheduled
 ///         period the whole balance is due, which absorbs any rounding drift of a few cents.</item>
 ///   <item>Extra principal is capped at the balance that remains, so a prepayment can never overpay the loan.</item>
-///   <item>If the <see cref="RecastPolicy"/> calls for it, the payment is re-amortized over the
-///         remaining term and a <see cref="RecastEvent"/> is recorded.</item>
+///   <item>If the period's largest single prepayment qualifies under the <see cref="RecastPolicy"/>,
+///         the payment is re-amortized over the remaining term and a <see cref="RecastEvent"/> is recorded.</item>
 /// </list>
 /// The class holds no state, so one instance can safely be shared across requests.
 /// </remarks>
@@ -40,7 +40,8 @@ public sealed class AmortizationCalculator : IAmortizationCalculator
 
             rows.Add(new ScheduledPayment(period, loan.DueDateOf(period), interest, principal, extra, balance));
 
-            if (balance > 0 && recastPolicy.ShouldRecastAfter(extra))
+            // A recast follows one qualifying payment, so compare the largest single prepayment, not the total.
+            if (balance > 0 && recastPolicy.ShouldRecastAfter(extraPayments.LargestSinglePaymentFor(period)))
             {
                 var recastPayment = PaymentFormula.MonthlyPayment(balance, monthlyRate, loan.TermInMonths - period);
                 recasts.Add(new RecastEvent(period, payment, recastPayment, recastPolicy.Fee));

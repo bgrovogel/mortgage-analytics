@@ -156,6 +156,17 @@ describe('LoanFormComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('The down payment must be less than the home price.');
     });
 
+    it('does not submit a recast minimum under $1,000, and explains why', () => {
+      controls().strategy.setValue('Recast');
+      controls().recastMinimum.setValue(500);
+
+      component.submit();
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(1);
+      expect(fixture.nativeElement.textContent).toContain('Lenders require a lump sum of at least $1,000 to recast.');
+    });
+
     it('does not flag an untouched valid field', () => {
       expect(component.showError(controls().homePrice)).toBe(false);
     });
@@ -186,6 +197,7 @@ describe('LoanFormComponent', () => {
 
     it('explains why PMI does or does not apply', () => {
       expect(el('pmi-hint')?.textContent).toContain('PMI applies');
+      expect(el('pmi-hint')?.textContent).toContain('extra payments only count if you ask at 80%');
 
       controls().downPayment.setValue(75_000);
       fixture.detectChanges();

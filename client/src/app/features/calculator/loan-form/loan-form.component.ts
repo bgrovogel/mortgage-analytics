@@ -13,6 +13,7 @@ type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormC
 /** Limits mirror the server's validator. The server re-validates everything regardless. */
 const MAX_YEARS = 50;
 const MAX_RATE = 30;
+const MIN_RECAST_LUMP_SUM = 1_000;
 
 /** Returns the first day of next month as yyyy-MM-dd, the API's default first payment date. */
 function firstOfNextMonth(): string {
@@ -81,7 +82,7 @@ export class LoanFormComponent implements OnInit {
     lumpSums: this.fb.array<LumpSumForm>([]),
 
     strategy: this.fb.control<ExtraPaymentStrategy>('ShortenTerm'),
-    recastMinimum: [10_000, [Validators.min(0)]],
+    recastMinimum: [10_000, [Validators.min(MIN_RECAST_LUMP_SUM)]],
     recastFee: [250, [Validators.min(0)]],
   });
 

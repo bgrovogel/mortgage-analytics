@@ -257,6 +257,31 @@ public class AmortizationCalculatorTests : AmortizationTestBase
     }
 
     [Test]
+    public void Recast_IsNotTriggeredBySmallerPaymentsThatOnlyAddUpToTheMinimum()
+    {
+        // $200 monthly + $9,900 lump sum = $10,100 in one month, but no single payment reaches $10,000.
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new MonthlyExtraPayment(200m), new LumpSumExtraPayment(9_900m, 12));
+
+        Assert.That(schedule.Recasts, Is.Empty, "lenders recast after one qualifying payment, not a month's total");
+    }
+
+    [Test]
+    public void Recast_TwoLumpSumsInOneMonth_EachBelowTheMinimum_DoNotQualify()
+    {
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new LumpSumExtraPayment(6_000m, 12), new LumpSumExtraPayment(6_000m, 12));
+
+        Assert.That(schedule.Recasts, Is.Empty, "two $6,000 payments are not one $10,000 payment");
+    }
+
+    [Test]
+    public void Recast_AnAnnualExtraOfAtLeastTheMinimum_Qualifies()
+    {
+        var schedule = WithExtras(A.Loan(), RecastPolicy.OnLumpSum(10_000m, 250m), new AnnualExtraPayment(10_000m, 12));
+
+        Assert.That(schedule.Recasts.Select(r => r.AfterPaymentNumber).Take(2), Is.EqualTo(new[] { 12, 24 }), "a $10,000 yearly payment is a single qualifying payment each year");
+    }
+
+    [Test]
     public void Never_DoesNotRecastEvenForLargeLumpSums()
     {
         var schedule = WithExtras(A.Loan(), RecastPolicy.Never, new LumpSumExtraPayment(50_000m, 12));

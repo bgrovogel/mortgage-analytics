@@ -36,15 +36,16 @@ public class RecastPolicyTests
         });
     }
 
-    [Test]
-    public void RejectsANegativeMinimum()
+    [TestCase(-1, TestName = "Negative minimum")]
+    [TestCase(0, TestName = "Zero minimum: every routine extra payment would trigger a recast and a fee")]
+    public void RejectsAMinimumThatIsNotPositive(decimal minimum)
     {
-        DomainAssert.Rejects(() => RecastPolicy.OnLumpSum(-1m, 0m), "minimum extra principal", "a negative minimum is meaningless");
+        DomainAssert.Rejects(() => RecastPolicy.OnLumpSum(minimum, 0m), "greater than zero", "a recast needs a real lump sum to trigger it");
     }
 
     [Test]
     public void RejectsANegativeFee()
     {
-        DomainAssert.Rejects(() => RecastPolicy.OnLumpSum(0m, -1m), "fee cannot be negative", "a lender never pays the borrower to recast");
+        DomainAssert.Rejects(() => RecastPolicy.OnLumpSum(10_000m, -1m), "fee cannot be negative", "a lender never pays the borrower to recast");
     }
 }

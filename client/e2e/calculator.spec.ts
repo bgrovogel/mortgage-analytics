@@ -53,7 +53,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.netSavings).toHaveText('$79,801');
   });
 
-  test('ends PMI sooner with extra payments and counts it as savings', async ({ page }) => {
+  test('requested PMI removal: extra payments end PMI sooner and count as savings', async ({ page }) => {
+    await calculator.fillLoan(FIVE_PERCENT_DOWN);
+    await calculator.clearHousingCosts();
+    await page.getByTestId('pmi-rate').fill('0.5');
+    await page.getByTestId('pmi-cancellation').selectOption('BorrowerRequested');
+    await calculator.setExtras(300);
+
+    await calculator.calculate();
+
+    // Requested removal at 80% may use the actual balance: payment 62 instead of 124.
+    await expect(calculator.pmiEnd).toHaveText('Feb 2031');
+    await expect(page.getByText('instead of Apr 2036')).toBeVisible();
+    await expect(page.getByTestId('savings-detail')).toContainText('+ $6,136 PMI');
+  });
+
+  test('automatic PMI removal follows the original schedule, so extra payments do not move it', async ({ page }) => {
     await calculator.fillLoan(FIVE_PERCENT_DOWN);
     await calculator.clearHousingCosts();
     await page.getByTestId('pmi-rate').fill('0.5');
@@ -61,9 +76,8 @@ test.describe('Mortgage calculator', () => {
 
     await calculator.calculate();
 
-    await expect(calculator.pmiEnd).toHaveText('Sep 2031');
-    await expect(page.getByText('instead of Mar 2037')).toBeVisible();
-    await expect(page.getByTestId('savings-detail')).toContainText('+ $6,531 PMI');
+    await expect(calculator.pmiEnd).toHaveText('Mar 2037');
+    await expect(page.getByTestId('savings-detail')).not.toContainText('PMI');
   });
 
   test('applies the Texas school homestead exemption only to a homestead', async ({ page }) => {

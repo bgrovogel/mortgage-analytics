@@ -121,10 +121,14 @@ public static class ReferenceLoans
         /// <summary>All PMI paid when the borrower requests removal at 80%.</summary>
         public const decimal BorrowerRequestedPmiTotal = 12_271.04m;
 
-        /// <summary>Last payment with PMI when $300 extra is paid every month (78%, actual balance).</summary>
-        public const int PmiLastPaymentWith300Extra = 69;
+        /// <summary>
+        /// Last payment with PMI when $300 extra is paid every month and the borrower requests removal at 80%.
+        /// Requested removal may use the actual balance, so the extra payments bring it forward from 124.
+        /// (Automatic removal follows the original schedule, so extra payments do not change it.)
+        /// </summary>
+        public const int BorrowerRequestedPmiLastPaymentWith300Extra = 62;
 
-        /// <summary>All PMI paid when $300 extra is paid every month (78%, actual balance).</summary>
-        public const decimal PmiTotalWith300Extra = 6_828.24m;
+        /// <summary>All PMI paid when $300 extra is paid every month and removal is requested at 80%.</summary>
+        public const decimal BorrowerRequestedPmiTotalWith300Extra = 6_135.52m;
     }
 }

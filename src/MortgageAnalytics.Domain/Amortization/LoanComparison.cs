@@ -19,7 +19,7 @@ public sealed record LoanComparison(
     /// <summary>Interest avoided by paying extra.</summary>
     public decimal InterestSaved => Baseline.TotalInterest - Accelerated.TotalInterest;
 
-    /// <summary>PMI avoided because the balance reached the cancellation point sooner.</summary>
+    /// <summary>PMI avoided because extra payments reached a borrower-requested cancellation sooner. Zero for automatic removal.</summary>
     public decimal MortgageInsuranceSaved =>
         BaselineCosts.Totals[HousingCostCategory.MortgageInsurance] - AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance];
 

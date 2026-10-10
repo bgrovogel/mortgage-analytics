@@ -52,7 +52,7 @@ public class AmortizationServiceTests : AmortizationServiceTestBase
     [Test]
     public void Analyze_ShortenTerm_NeverRecasts_EvenWhenRecastTermsAreSent()
     {
-        Service.Analyze(A.Request.WithStrategy(ExtraPaymentStrategy.ShortenTerm).WithRecastTerms(0m, 0m));
+        Service.Analyze(A.Request.WithStrategy(ExtraPaymentStrategy.ShortenTerm).WithRecastTerms(1_000m, 0m));
 
         Assert.That(CompareArguments().Recast, Is.EqualTo(RecastPolicy.Never), "recast terms only matter when the Recast strategy is chosen");
     }

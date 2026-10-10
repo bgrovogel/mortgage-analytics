@@ -16,5 +16,9 @@ public interface IHousingCost
 
 /// <summary>What a housing cost may need to know about the month it is being charged for.</summary>
 /// <param name="PaymentNumber">The 1-based payment number.</param>
-/// <param name="OpeningBalance">The loan balance before this period's payment is applied.</param>
-public readonly record struct CostPeriod(int PaymentNumber, decimal OpeningBalance);
+/// <param name="OpeningBalance">The actual loan balance before this period's payment, after any extra payments so far.</param>
+/// <param name="ScheduledOpeningBalance">
+/// The balance the <i>original</i> amortization schedule (no extra payments) shows for this payment.
+/// Automatic PMI termination is based on this figure, not on the actual balance.
+/// </param>
+public readonly record struct CostPeriod(int PaymentNumber, decimal OpeningBalance, decimal ScheduledOpeningBalance);

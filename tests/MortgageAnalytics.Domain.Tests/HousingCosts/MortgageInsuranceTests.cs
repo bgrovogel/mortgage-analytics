@@ -50,6 +50,30 @@ public class MortgageInsuranceTests
         Assert.That(pmi.AmountFor(Period(100, openingBalance)), Is.EqualTo(expected), "PMI ends exactly at the cancellation balance");
     }
 
+    [TestCase(150_000, TestName = "Actual balance far below 78%")]
+    [TestCase(195_000.01, TestName = "Actual balance just above 78%")]
+    public void Automatic_FollowsTheOriginalSchedule_NotTheActualBalance(decimal actualBalance)
+    {
+        // The original schedule is still a cent above 78% of value, so PMI is still due,
+        // however far extra payments have brought the actual balance down.
+        var pmi = new MortgageInsurance(0.5m, A.FivePercentDownPurchase, MortgageInsuranceCancellation.Automatic);
+
+        var charge = pmi.AmountFor(Period(100, openingBalance: actualBalance, scheduledOpeningBalance: 195_000.01m));
+
+        Assert.That(charge, Is.EqualTo(98.96m), "the Homeowners Protection Act bases automatic termination on the initial amortization schedule");
+    }
+
+    [Test]
+    public void BorrowerRequested_FollowsTheActualBalance()
+    {
+        // The actual balance is below 80% of value; the original schedule is not yet.
+        var pmi = new MortgageInsurance(0.5m, A.FivePercentDownPurchase, MortgageInsuranceCancellation.BorrowerRequested);
+
+        var charge = pmi.AmountFor(Period(100, openingBalance: 199_000m, scheduledOpeningBalance: 230_000m));
+
+        Assert.That(charge, Is.Zero, "a borrower may request removal once actual payments bring the balance to 80%");
+    }
+
     [TestCase(MortgageInsuranceCancellation.Automatic, 78)]
     [TestCase(MortgageInsuranceCancellation.BorrowerRequested, 80)]
     public void ReportsItsCancellationPoint(MortgageInsuranceCancellation cancellation, decimal expected)

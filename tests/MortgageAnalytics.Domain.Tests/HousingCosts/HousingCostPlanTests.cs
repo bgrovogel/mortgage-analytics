@@ -55,15 +55,42 @@ public class HousingCostPlanTests : AmortizationTestBase
     }
 
     [Test]
-    public void Pmi_EndsSoonerWithExtraPayments()
+    public void AutomaticPmi_IsNotShortenedByExtraPayments()
     {
-        var costs = PmiOnly().ApplyTo(FivePercentDownSchedule(monthlyExtra: 300m));
+        var original = FivePercentDownSchedule();
+
+        var costs = PmiOnly().ApplyTo(FivePercentDownSchedule(monthlyExtra: 300m), original);
 
         Assert.Multiple(() =>
         {
-            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.PmiLastPaymentWith300Extra), "extra principal reaches the cancellation point sooner");
-            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.PmiTotalWith300Extra), "fewer months of PMI");
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.PmiLastPayment), "automatic removal follows the original schedule");
+            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.PmiTotal), "so the same PMI is paid");
         });
+    }
+
+    [Test]
+    public void RequestedPmi_EndsSoonerWithExtraPayments()
+    {
+        var original = FivePercentDownSchedule();
+
+        var costs = PmiOnly(MortgageInsuranceCancellation.BorrowerRequested).ApplyTo(FivePercentDownSchedule(monthlyExtra: 300m), original);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(costs.MortgageInsuranceLastPayment, Is.EqualTo(FivePercentDown.BorrowerRequestedPmiLastPaymentWith300Extra), "extra principal reaches 80% sooner");
+            Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.EqualTo(FivePercentDown.BorrowerRequestedPmiTotalWith300Extra), "fewer months of PMI");
+        });
+    }
+
+    [Test]
+    public void ApplyTo_PaymentsBeyondTheOriginalSchedule_HaveNoScheduledBalance()
+    {
+        // A recast can never extend a loan, but the lookup must still be safe past the original term.
+        var shortOriginal = StandardSchedule(A.Loan(FivePercentDown.LoanAmount, FivePercentDown.AnnualInterestRate, 12));
+
+        var costs = PmiOnly().ApplyTo(FivePercentDownSchedule(), shortOriginal);
+
+        Assert.That(costs.Periods[12][HousingCostCategory.MortgageInsurance], Is.Zero, "past the original schedule, its balance is zero, so automatic PMI has ended");
     }
 
     [Test]

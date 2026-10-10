@@ -100,26 +100,38 @@ public class LoanComparerTests : AmortizationTestBase
         });
     }
 
-    [Test]
-    public void Compare_CountsPmiEndingSoonerAsSavings()
+    private LoanComparison CompareFivePercentDownWith300Extra(MortgageInsuranceCancellation cancellation)
     {
         var purchase = A.FivePercentDownPurchase;
         var loan = A.Loan(purchase.LoanAmount, ReferenceLoans.FivePercentDown.AnnualInterestRate);
-        var costs = new HousingCostPlan([new MortgageInsurance(ReferenceLoans.FivePercentDown.PmiRate, purchase)]);
+        var costs = new HousingCostPlan([new MortgageInsurance(ReferenceLoans.FivePercentDown.PmiRate, purchase, cancellation)]);
+        return new LoanComparer(Calculator).Compare(loan, Monthly(300m), RecastPolicy.Never, costs);
+    }
 
-        var comparison = new LoanComparer(Calculator).Compare(loan, Monthly(300m), RecastPolicy.Never, costs);
+    [Test]
+    public void Compare_RequestedPmiRemoval_CountsPmiEndingSoonerAsSavings()
+    {
+        var comparison = CompareFivePercentDownWith300Extra(MortgageInsuranceCancellation.BorrowerRequested);
 
         Assert.Multiple(() =>
         {
             Assert.That(
                 comparison.MortgageInsuranceSaved,
-                Is.EqualTo(ReferenceLoans.FivePercentDown.PmiTotal - ReferenceLoans.FivePercentDown.PmiTotalWith300Extra),
+                Is.EqualTo(ReferenceLoans.FivePercentDown.BorrowerRequestedPmiTotal - ReferenceLoans.FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
                 "PMI saved is baseline PMI minus accelerated PMI");
             Assert.That(
                 comparison.NetSavings,
                 Is.EqualTo(comparison.InterestSaved + comparison.MortgageInsuranceSaved),
                 "PMI saved counts toward net savings");
         });
+    }
+
+    [Test]
+    public void Compare_AutomaticPmiRemoval_SavesNoPmi()
+    {
+        var comparison = CompareFivePercentDownWith300Extra(MortgageInsuranceCancellation.Automatic);
+
+        Assert.That(comparison.MortgageInsuranceSaved, Is.Zero, "automatic removal follows the original schedule, which extra payments do not change");
     }
 
     [Test]
