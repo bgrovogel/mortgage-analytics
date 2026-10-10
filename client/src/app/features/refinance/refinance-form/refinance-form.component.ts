@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
+import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
+import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
 
 /** The usual new terms, in years. "keep" means the new loan ends when the current one would. */
@@ -30,6 +32,12 @@ export class RefinanceFormComponent implements OnInit {
 
   /** A comparison to start from (the last one) instead of the worked example. */
   readonly initial = input<RefinanceRequest | null>(null);
+
+  /** A loan changed on another page since this one was last open: the form starts from it. */
+  readonly loan = input<SharedLoanChange | null>(null);
+
+  /** The page the loan was filled in from, when starting from the shared loan changed anything. */
+  readonly sharedFrom = signal<string | null>(null);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly analyze = output<RefinanceRequest>();
@@ -84,6 +92,16 @@ export class RefinanceFormComponent implements OnInit {
         },
         { emitEvent: false },
       );
+    }
+    const shared = this.loan();
+    if (shared) {
+      const { balance, annualInterestRate, remainingTermInMonths } = shared.loan;
+      const changed = setChanged(this.form, {
+        currentBalance: balance,
+        currentAnnualInterestRate: annualInterestRate,
+        yearsLeft: remainingTermInMonths / 12,
+      });
+      if (changed) this.sharedFrom.set(shared.from);
     }
     if (this.form.valid) this.analyze.emit(this.toRequest());
   }

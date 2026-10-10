@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
+import { setChanged } from '../../../core/forms/set-changed';
 import { decimal, usd } from '../../../core/formatting/format';
 import { InvestorRiskProfile, StrategyRequest, TaxFilingStatus } from '../../../core/models/strategy.models';
+import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
 
 const rules = STRATEGY_RULES;
@@ -40,6 +42,12 @@ export class StrategyFormComponent implements OnInit {
 
   /** A comparison to start from (the last one) instead of the defaults. */
   readonly initial = input<StrategyRequest | null>(null);
+
+  /** A loan changed on another page since this one was last open: the form starts from it. */
+  readonly loan = input<SharedLoanChange | null>(null);
+
+  /** The page the loan was filled in from, when starting from the shared loan changed anything. */
+  readonly sharedFrom = signal<string | null>(null);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly compare = output<StrategyRequest>();
@@ -138,6 +146,17 @@ export class StrategyFormComponent implements OnInit {
     if (initial) {
       const { remainingTermInMonths, nextPaymentDate: _date, ...rest } = initial;
       this.form.setValue({ ...rest, yearsLeft: remainingTermInMonths / 12 }, { emitEvent: false });
+    }
+    const shared = this.loan();
+    if (shared) {
+      const { balance, annualInterestRate, remainingTermInMonths, homeValue } = shared.loan;
+      const changed = setChanged(this.form, {
+        currentBalance: balance,
+        annualInterestRate,
+        yearsLeft: remainingTermInMonths / 12,
+        ...(homeValue === null ? {} : { homeValue }),
+      });
+      if (changed) this.sharedFrom.set(shared.from);
     }
     if (this.form.valid) this.compare.emit(this.toRequest());
   }

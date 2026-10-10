@@ -12,7 +12,7 @@ import { StrategyStore } from './strategy.store';
     <app-calculation-page [store]="store" heading="Pay off the mortgage, or invest?" label="Strategy comparison"
                           [problems]="problems()" [stickyForm]="false" placeholder="Playing out 30 years…"
                           errorTitle="We could not compare those strategies.">
-      <app-strategy-form form [initial]="startFrom" (compare)="store.send($event)" (problems)="problems.set($event)" />
+      <app-strategy-form form [initial]="startFrom" [loan]="loan" (compare)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
         <app-strategy-results [result]="result" />
       }
@@ -25,6 +25,9 @@ export class StrategyPageComponent {
 
   /** The comparison to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
+
+  /** The loan, if another page has changed it since this one was last open. */
+  protected readonly loan = this.store.loanToApply();
 
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);

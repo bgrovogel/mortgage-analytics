@@ -11,7 +11,7 @@ import { RefinanceStore } from './refinance.store';
   template: `
     <app-calculation-page [store]="store" heading="Should you refinance?" label="Refinance comparison" [problems]="problems()"
                           placeholder="Comparing your loans…" errorTitle="We could not compare those loans.">
-      <app-refinance-form form [initial]="startFrom" (analyze)="store.send($event)" (problems)="problems.set($event)" />
+      <app-refinance-form form [initial]="startFrom" [loan]="loan" (analyze)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
         <app-refinance-results [result]="result" />
       }
@@ -24,6 +24,9 @@ export class RefinancePageComponent {
 
   /** The comparison to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
+
+  /** The loan, if another page has changed it since this one was last open. */
+  protected readonly loan = this.store.loanToApply();
 
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);

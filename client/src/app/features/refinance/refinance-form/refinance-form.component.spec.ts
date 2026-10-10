@@ -78,6 +78,22 @@ describe('RefinanceFormComponent', () => {
     expect(el('refinance-form')!.textContent).toContain('Balance you still owe must be more than $0.');
   });
 
+  it('starts from a loan changed on another page, keeping its own offer, and says so', () => {
+    fixture = TestBed.createComponent(RefinanceFormComponent);
+    component = fixture.componentInstance;
+    emitted = [];
+    component.analyze.subscribe((r) => emitted.push(r));
+    fixture.componentRef.setInput('loan', {
+      loan: { balance: 250_000, annualInterestRate: 7.25, remainingTermInMonths: 270, homeValue: 400_000 }, from: 'Pay off or invest', version: 3,
+    });
+    fixture.detectChanges();
+
+    expect(emitted[0]).toEqual(expect.objectContaining({
+      currentBalance: 250_000, currentAnnualInterestRate: 7.25, remainingTermInMonths: 270, newAnnualInterestRate: 6, closingCosts: 6_000,
+    }));
+    expect(el('loan-shared')!.textContent).toContain('Filled in from your loan on the Pay off or invest page.');
+  });
+
   it('restores a previous comparison instead of the example', () => {
     const previous: RefinanceRequest = {
       currentBalance: 250_000, currentAnnualInterestRate: 7.5, remainingTermInMonths: 240, nextPaymentDate: null,

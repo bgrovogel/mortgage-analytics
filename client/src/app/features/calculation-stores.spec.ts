@@ -95,6 +95,59 @@ describe('CalculationStores', () => {
     expect(TestBed.inject(CalculatorStore).saved()).toBeNull();
   });
 
+  describe('the shared loan', () => {
+    const calculator = () => TestBed.inject(CalculatorStore);
+    const refinancePage = () => TestBed.inject(RefinanceStore);
+    const strategyPage = () => TestBed.inject(StrategyStore);
+
+    it("shares no page's example, only a loan the user changes, and offers it to the pages that have not seen it", () => {
+      calculator().send(purchase); // the calculator opens with its example
+      expect(refinancePage().loanToApply()).toBeNull();
+
+      calculator().send({ ...purchase, annualInterestRate: 6 });
+
+      expect(refinancePage().loanToApply()).toEqual({
+        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000 },
+        from: 'Calculator',
+        version: 1,
+      });
+      expect(calculator().loanToApply()).toBeNull(); // the page it came from is up to date
+    });
+
+    it('carries a loan changed on one page to the others, once each', () => {
+      refinancePage().send({ ...refinance, currentBalance: 1 });
+      refinancePage().send(refinance);
+      strategyPage().send({ ...strategy, currentBalance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300 });
+      expect(refinancePage().loanToApply()).toBeNull(); // same balance, rate and years: nothing new
+
+      strategyPage().send({ ...strategy, currentBalance: 250_000, annualInterestRate: 7, remainingTermInMonths: 300 });
+
+      expect(refinancePage().loanToApply()!.loan.balance).toBe(250_000);
+      expect(refinancePage().loanToApply()!.from).toBe('Pay off or invest');
+      refinancePage().send({ ...refinance, currentBalance: 250_000 });
+      expect(refinancePage().loanToApply()).toBeNull();
+    });
+
+    it("does not let a page's example overwrite a loan typed elsewhere", () => {
+      refinancePage().send(refinance);
+      refinancePage().send({ ...refinance, currentBalance: 123_000 });
+
+      calculator().send(purchase); // the calculator opens with its own example
+
+      expect(strategyPage().loanToApply()!.loan.balance).toBe(123_000);
+    });
+
+    it('treats opening a saved calculation as choosing its loan', () => {
+      refinancePage().send(refinance);
+      strategyPage().send({ ...strategy, currentBalance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300 });
+
+      stores.of('Purchase').open(saved('Purchase', 'p'));
+
+      expect(strategyPage().loanToApply()!.loan).toEqual(
+        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000 });
+    });
+  });
+
   it("offers each page's inputs to Save under the field its kind uses, with a suggested name", () => {
     TestBed.inject(RefinanceStore).send(refinance);
     TestBed.inject(StrategyStore).send(strategy);

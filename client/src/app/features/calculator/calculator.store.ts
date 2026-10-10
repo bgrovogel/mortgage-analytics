@@ -3,6 +3,7 @@ import { describeInputs, suggestName } from '../../core/formatting/describe-inpu
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
+import { SharedLoan } from '../../core/state/shared-loan.store';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 
@@ -13,12 +14,23 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
 
   readonly kind = 'Purchase';
   readonly route = ['/calculator', 'overview'];
+  readonly pageName = 'Calculator';
 
   /** Whether the headline numbers are on screen; when they are not, phones show a compact summary bar. */
   readonly headlineVisible = signal(false);
 
   describe = describeInputs;
   suggestName = suggestName;
+
+  /** The loan being bought: the price less the down payment, over the whole term, on a home worth its price. */
+  protected loanOf(request: AmortizationRequest): SharedLoan {
+    return {
+      balance: Math.round((request.homePrice - request.downPayment) * 100) / 100,
+      annualInterestRate: request.annualInterestRate,
+      remainingTermInMonths: request.termInMonths,
+      homeValue: request.homePrice,
+    };
+  }
 
   protected send$(request: AmortizationRequest) {
     return this.api.calculate(request);

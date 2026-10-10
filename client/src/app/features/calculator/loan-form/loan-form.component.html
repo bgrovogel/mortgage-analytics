@@ -2,6 +2,7 @@
   <!-- The five main inputs are always visible; everything else is in a collapsible section below. -->
   <fieldset class="primary-fields">
     <legend>Your loan</legend>
+    <p class="hint" data-testid="loan-shared">Refinance and Pay off or invest start from this loan when it changes.</p>
 
     <div class="row">
       <app-number-field [control]="form.controls.homePrice" [rule]="rules.homePrice" testId="home-price" />

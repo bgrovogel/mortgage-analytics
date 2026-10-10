@@ -36,6 +36,36 @@ describe('StrategyFormComponent', () => {
     }));
   });
 
+  it('starts from a loan changed on another page, and says so', () => {
+    fixture = TestBed.createComponent(StrategyFormComponent);
+    emitted = [];
+    fixture.componentInstance.compare.subscribe((r) => emitted.push(r));
+    fixture.componentRef.setInput('loan', {
+      loan: { balance: 356_250, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000 }, from: 'Calculator', version: 1,
+    });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(emitted[0]).toEqual(expect.objectContaining({
+      currentBalance: 356_250, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, monthlyCashToPutToWork: 1_000,
+    }));
+    expect(text(root, 'loan-shared')).toContain('Filled in from your loan on the Calculator page.');
+  });
+
+  it('keeps its home value when the shared loan has none, and says nothing when the loan is already the same', () => {
+    fixture = TestBed.createComponent(StrategyFormComponent);
+    emitted = [];
+    fixture.componentInstance.compare.subscribe((r) => emitted.push(r));
+    fixture.componentRef.setInput('loan', {
+      loan: { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 300, homeValue: null }, from: 'Refinance', version: 1,
+    });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(emitted[0].homeValue).toBe(400_000);
+    expect(text(root, 'loan-shared')).not.toContain('Filled in');
+  });
+
   it('starts from an earlier comparison', () => {
     render();
     const earlier = { ...emitted[0], currentBalance: 250_000, remainingTermInMonths: 240, riskProfile: 'Conservative' as const };

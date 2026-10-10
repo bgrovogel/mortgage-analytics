@@ -2,6 +2,7 @@ import { DestroyRef, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { INPUTS_FIELD, SavedCalculation, SavedCalculationKind, SavedInputs, savedInputsFor } from '../models/saved-calculation.models';
 import { latestRequest } from './latest-request';
+import { SharedLoan, SharedLoanChange, SharedLoanStore, sameLoan } from './shared-loan.store';
 
 /** The saved calculation a page is showing: enough to update it in place, and to name it. */
 export type SavedLink = Pick<SavedCalculation, 'id' | 'name'>;
@@ -11,8 +12,13 @@ export type SavedLink = Pick<SavedCalculation, 'id' | 'name'>;
  * errors, whether a result is pending, and the saved calculation it is linked to. A page's store lives for the
  * whole app, so leaving the page and coming back keeps its numbers.
  *
- * Each page says only what differs: how to send a request, which kind of saved calculation it opens, and how
- * to describe and name its inputs. Everything else is written once here (DRY).
+ * Each page says only what differs: how to send a request, which kind of saved calculation it opens, how to
+ * describe and name its inputs, and where its loan is. Everything else is written once here (DRY).
+ *
+ * A request that changes the loan also updates the shared loan (SharedLoanStore), so a loan typed on one page is
+ * where the next page starts: `loanToApply` is the loan another page changed since this page last sent one.
+ * Only a loan the user typed, or a saved one they opened, is shared: merely opening a page (which sends its
+ * example, or what it showed last) changes nothing for the others.
  */
 export abstract class CalculationStore<TRequest, TResponse> {
   /** The kind of saved calculation this page shows. */
@@ -20,6 +26,14 @@ export abstract class CalculationStore<TRequest, TResponse> {
 
   /** Where a saved calculation of this kind opens. */
   abstract readonly route: readonly string[];
+
+  /** The page's name, as the navigation shows it, e.g. "Calculator". */
+  abstract readonly pageName: string;
+
+  private readonly sharedLoan = inject(SharedLoanStore);
+
+  /** The shared loan's version when this page last sent a request. */
+  private seenLoanVersion = 0;
 
   private readonly latest = latestRequest<TRequest, TResponse>((request) => this.send$(request), inject(DestroyRef));
 
@@ -52,19 +66,40 @@ export abstract class CalculationStore<TRequest, TResponse> {
 
   /** Queues a request; it is sent after a short pause, and any request still in flight is cancelled. */
   send(request: TRequest): void {
+    const before = this.request();
     this.latest.send(request);
+    // The first request is the page's example (or the shared loan already); only a change after it is the user's.
+    if (before && !sameLoan(this.loanOf(before), this.loanOf(request))) this.share(request);
+    this.seenLoanVersion = this.sharedLoan.version();
   }
 
-  /** Loads a saved calculation of this page's kind (others are ignored); later saves can update it in place. */
+  /** The loan another page has changed since this page last sent a request, or null when this page is up to date. */
+  loanToApply(): SharedLoanChange | null {
+    const change = this.sharedLoan.change();
+    return change && change.version > this.seenLoanVersion ? change : null;
+  }
+
+  /**
+   * Loads a saved calculation of this page's kind (others are ignored); later saves can update it in place.
+   * Opening one chooses its loan, so the other pages follow it too.
+   */
   open(calculation: SavedCalculation): void {
     if (calculation.kind !== this.kind) return;
+    const request = this.inputsOf(calculation);
     this.linkTo(calculation);
-    this.send(this.inputsOf(calculation));
+    this.send(request);
+    this.share(request);
   }
 
   /** Records that the current calculation is this saved one (after saving or renaming it). */
   linkTo({ id, name }: SavedLink): void {
     this.saved.set({ id, name });
+  }
+
+  /** Makes this request's loan the one every page starts from. */
+  private share(request: TRequest): void {
+    this.sharedLoan.update(this.loanOf(request), this.pageName);
+    this.seenLoanVersion = this.sharedLoan.version();
   }
 
   /** The inputs a saved calculation of this page's kind holds. */
@@ -77,6 +112,9 @@ export abstract class CalculationStore<TRequest, TResponse> {
 
   /** A starting name for saving these inputs. */
   abstract suggestName(request: TRequest): string;
+
+  /** The loan a request is about. */
+  protected abstract loanOf(request: TRequest): SharedLoan;
 
   /** Sends one request to the API. */
   protected abstract send$(request: TRequest): Observable<TResponse>;
