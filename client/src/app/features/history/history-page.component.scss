@@ -32,8 +32,48 @@ input {
   color: var(--text-primary);
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .search {
-  width: min(320px, 100%);
+  width: min(280px, 100%);
+}
+
+.toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+
+  button {
+    border: 0;
+    border-radius: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+
+    &[aria-pressed='true'] {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  margin-right: 0.35rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.6;
+  vertical-align: middle;
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
+  color: var(--text-primary);
 }
 
 .list {

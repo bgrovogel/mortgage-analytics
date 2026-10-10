@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Validation;
+using static MortgageAnalytics.Testing.ReferenceRefinances;
 
 namespace MortgageAnalytics.Application.Tests.Validation;
 
@@ -40,4 +41,31 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
 
         AssertInvalid(request, "Inputs.HomePrice", "inputs the calculator would reject cannot be saved; the error names the nested field");
     }
+
+    private static RefinanceRequest ARefinance() => new()
+    {
+        CurrentBalance = Current.Balance,
+        CurrentAnnualInterestRate = Current.AnnualInterestRate,
+        RemainingTermInMonths = Current.RemainingTermInMonths,
+        NewAnnualInterestRate = ToSixPercentFor30Years.AnnualInterestRate,
+        NewTermInMonths = ToSixPercentFor30Years.TermInMonths,
+        ClosingCosts = ToSixPercentFor30Years.ClosingCosts,
+    };
+
+    [Test]
+    public void ARefinanceComparison_CanBeSavedInsteadOfCalculatorInputs() =>
+        AssertValid(new SaveCalculationRequest { Name = "Refi at 6%", Refinance = ARefinance() }, "History holds refinance comparisons too");
+
+    [Test]
+    public void BothKindsOfInputsAtOnce_AreRejected() =>
+        AssertErrorMessage(
+            new SaveCalculationRequest { Name = "Both", Inputs = A.Request.Build(), Refinance = ARefinance() },
+            "Inputs",
+            "Include either calculator inputs or refinance inputs, not both.",
+            "a saved item is one kind of calculation");
+
+    [Test]
+    public void InvalidRefinanceInputs_AreRejectedWithTheRefinanceRules() =>
+        AssertInvalid(new SaveCalculationRequest { Name = "Bad", Refinance = ARefinance() with { CurrentBalance = 0 } },
+            "Refinance.CurrentBalance", "the comparison must be one the refinance endpoint would accept");
 }

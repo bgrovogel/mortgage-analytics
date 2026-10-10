@@ -1,5 +1,6 @@
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { RefinanceRequest, RefinanceResponse } from '../../core/models/refinance.models';
+import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
 import { latestRequest } from '../../core/state/latest-request';
 
@@ -24,8 +25,23 @@ export class RefinanceStore {
   /** True from the first change until its result arrives. */
   readonly busy = this.latest.busy;
 
+  /** The saved comparison this one came from or was saved as, so it can be updated in place. */
+  readonly saved = signal<Pick<SavedCalculation, 'id' | 'name'> | null>(null);
+
   /** Queues a comparison; it runs after a short pause, cancelling any still in flight. */
   analyze(request: RefinanceRequest): void {
     this.latest.send(request);
+  }
+
+  /** Loads a saved refinance comparison; later saves can update it in place. */
+  open(calculation: SavedCalculation): void {
+    if (!calculation.refinance) return; // a purchase calculation opens in the CalculatorStore
+    this.linkTo(calculation);
+    this.analyze(calculation.refinance);
+  }
+
+  /** Records that the current comparison is this saved one. */
+  linkTo({ id, name }: Pick<SavedCalculation, 'id' | 'name'>): void {
+    this.saved.set({ id, name });
   }
 }

@@ -22,9 +22,31 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
         Assert.Multiple(() =>
         {
             Assert.That(found?.Name, Is.EqualTo("Every option"), "the name is stored");
-            Assert.That(found is null ? null : JsonOf(found.Inputs), Is.EqualTo(JsonOf(inputs)), "every input survives the round trip");
+            Assert.That(found is null ? null : JsonOf(found.Inputs!), Is.EqualTo(JsonOf(inputs)), "every input survives the round trip");
             Assert.That(found?.CreatedAt, Is.EqualTo(saved.CreatedAt), "the creation time is stored exactly");
             Assert.That(found?.UpdatedAt, Is.EqualTo(saved.UpdatedAt), "and the update time");
+        });
+    }
+
+    [Test]
+    public async Task ARefinanceComparison_RoundTrips()
+    {
+        var refinance = new RefinanceRequest
+        {
+            CurrentBalance = 300_000m, CurrentAnnualInterestRate = 7m, RemainingTermInMonths = 300,
+            NewAnnualInterestRate = 6m, NewTermInMonths = 360, ClosingCosts = 6_000m, FinanceClosingCosts = true,
+        };
+        var saved = ACalculation("Refi");
+        saved.Inputs = null;
+        saved.Refinance = refinance;
+        await SeedAsync(saved);
+
+        var found = await NewRepository().FindAsync(saved.Id, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found?.Refinance, Is.EqualTo(refinance), "the comparison is stored whole");
+            Assert.That(found?.Inputs, Is.Null, "with no calculator inputs");
         });
     }
 
@@ -76,7 +98,7 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
         Assert.Multiple(() =>
         {
             Assert.That(reread?.Name, Is.EqualTo("After"), "the new name is stored");
-            Assert.That(reread?.Inputs.HomePrice, Is.EqualTo(500_000m), "replacing the inputs is detected and stored");
+            Assert.That(reread?.Inputs?.HomePrice, Is.EqualTo(500_000m), "replacing the inputs is detected and stored");
             Assert.That(reread?.UpdatedAt, Is.EqualTo(TestClock.Now.AddDays(1)), "and the update time");
         });
     }

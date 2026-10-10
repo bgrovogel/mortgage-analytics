@@ -58,6 +58,28 @@ public class SavedCalculationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task ARefinanceComparison_IsSavedAndComesBackReadyToAnalyze()
+    {
+        var refinance = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300,
+            newAnnualInterestRate = 6, newTermInMonths = 360, closingCosts = 6_000, financeClosingCosts = false,
+        };
+        var saved = await ReadJsonAsync(await Client.PostAsJsonAsync(CalculationsUrl, new { name = UniqueName("Refi"), refinance }));
+
+        var fetched = await ReadJsonAsync(await Client.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
+        var analysis = await Client.PostAsync("/api/v1/refinance/analyze",
+            new StringContent(fetched.GetProperty("refinance").GetRawText(), System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(fetched.GetProperty("kind").GetString(), Is.EqualTo("Refinance"), "the kind is a readable string");
+            Assert.That(fetched.GetProperty("inputs").ValueKind, Is.EqualTo(JsonValueKind.Null), "there are no calculator inputs");
+            Assert.That(analysis.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the saved comparison can be posted straight back");
+        });
+    }
+
+    [Test]
     public async Task List_FindsCalculationsByName_IgnoringCase()
     {
         var tag = Guid.NewGuid().ToString("N");

@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { aRefinanceResponse } from '../../../testing/builders';
 import { fakeCharts } from '../../../testing/fake-charts';
 import { RefinanceRequest, RefinanceResponse } from '../../core/models/refinance.models';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
+import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
+import { provideRouter } from '@angular/router';
 import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 import { RefinancePageComponent } from './refinance-page.component';
 import { RefinanceStore } from './refinance.store';
@@ -15,12 +17,20 @@ describe('RefinancePageComponent', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     analyze = jest.fn().mockReturnValue(of(aRefinanceResponse()));
-    TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: RefinanceApiService, useValue: { analyze } }] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        fakeCharts().provider,
+        { provide: RefinanceApiService, useValue: { analyze } },
+        { provide: SavedCalculationsApiService, useValue: {} },
+      ],
+    });
   });
   afterEach(() => jest.useRealTimers());
 
+  let fixture: ComponentFixture<RefinancePageComponent>;
   const open = () => {
-    const fixture = TestBed.createComponent(RefinancePageComponent);
+    fixture = TestBed.createComponent(RefinancePageComponent);
     fixture.detectChanges();
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
     fixture.detectChanges();
@@ -62,5 +72,14 @@ describe('RefinancePageComponent', () => {
 
     expect(analyze).toHaveBeenCalledTimes(1);
     expect(analyze.mock.calls[0][0]).toEqual(previous);
+  });
+
+  it('offers to save the comparison, suggesting a name built from the two rates', () => {
+    const page = open();
+
+    (page.querySelector('[data-testid="save-open"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect((page.querySelector('[data-testid="save-name"]') as HTMLInputElement).value).toBe('Refinance 7% → 6%, 30 yr');
   });
 });

@@ -23,4 +23,23 @@ describe('RefinanceStore', () => {
     expect(store.busy()).toBe(false);
     jest.useRealTimers();
   });
+
+  it('opens a saved comparison and links to it, but leaves a purchase calculation alone', () => {
+    jest.useFakeTimers();
+    const analyze = jest.fn().mockReturnValue(of({} as RefinanceResponse));
+    TestBed.configureTestingModule({ providers: [{ provide: RefinanceApiService, useValue: { analyze } }] });
+    const store = TestBed.inject(RefinanceStore);
+    const refinance = { currentBalance: 1 } as RefinanceRequest;
+    const base = { id: 'r1', name: 'Refi', createdAt: '', updatedAt: '' };
+
+    store.open({ ...base, kind: 'Purchase', inputs: {} as never, refinance: null });
+    expect(store.saved()).toBeNull();
+
+    store.open({ ...base, kind: 'Refinance', inputs: null, refinance });
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+    expect(store.saved()).toEqual({ id: 'r1', name: 'Refi' });
+    expect(analyze).toHaveBeenCalledWith(refinance);
+    jest.useRealTimers();
+  });
 });

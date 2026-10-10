@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
-import { describeInputs } from '../../core/formatting/describe-inputs';
-import { SavedCalculation } from '../../core/models/saved-calculation.models';
+import { describeInputs, describeRefinance } from '../../core/formatting/describe-inputs';
+import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore } from '../calculator/calculator.store';
+import { RefinanceStore } from '../refinance/refinance.store';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -14,8 +15,9 @@ export const SEARCH_DELAY_MS = 300;
 const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 /**
- * Every saved calculation, newest first, searchable by name. Each can be opened in the calculator,
- * renamed in place, or deleted after a confirmation.
+ * Every saved calculation (purchase calculations and refinance comparisons), newest first, searchable by
+ * name and filterable by kind. Each opens on its own page, can be renamed in place, or deleted after a
+ * confirmation.
  */
 @Component({
   selector: 'app-history-page',
@@ -26,7 +28,8 @@ const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', y
 })
 export class HistoryPageComponent {
   private readonly api = inject(SavedCalculationsApiService);
-  private readonly store = inject(CalculatorStore);
+  private readonly calculator = inject(CalculatorStore);
+  private readonly refinance = inject(RefinanceStore);
   private readonly router = inject(Router);
   private readonly searches = new Subject<string>();
 
@@ -48,7 +51,20 @@ export class HistoryPageComponent {
   /** The calculation waiting for a delete confirmation. */
   readonly confirmingDelete = signal<string | null>(null);
 
-  protected readonly describe = describeInputs;
+  /** Which kinds are shown. */
+  readonly kindFilter = signal<SavedCalculationKind | 'all'>('all');
+
+  /** The calculations shown: the search results, filtered by kind. */
+  readonly shown = computed(() => {
+    const kind = this.kindFilter();
+    return kind === 'all' ? this.calculations() : this.calculations().filter((c) => c.kind === kind);
+  });
+
+  protected readonly kinds: { value: SavedCalculationKind | 'all'; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'Purchase', label: 'Calculator' },
+    { value: 'Refinance', label: 'Refinance' },
+  ];
 
   constructor() {
     // The first list loads at once; later searches wait for a pause in typing. switchMap drops the
@@ -82,6 +98,11 @@ export class HistoryPageComponent {
     this.searches.next(text);
   }
 
+  /** One line that tells saved items apart, in the terms of their kind. */
+  describe(calculation: SavedCalculation): string {
+    return calculation.inputs ? describeInputs(calculation.inputs) : describeRefinance(calculation.refinance!);
+  }
+
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */
   when(calculation: SavedCalculation): string {
     return calculation.updatedAt === calculation.createdAt
@@ -89,10 +110,15 @@ export class HistoryPageComponent {
       : `Updated ${day.format(new Date(calculation.updatedAt))}`;
   }
 
-  /** Loads the calculation into the calculator and goes there. */
+  /** Loads the calculation on its own page (the calculator, or the refinance comparison) and goes there. */
   open(calculation: SavedCalculation): void {
-    this.store.open(calculation);
-    void this.router.navigate(['/calculator', 'overview']);
+    if (calculation.kind === 'Refinance') {
+      this.refinance.open(calculation);
+      void this.router.navigate(['/refinance']);
+    } else {
+      this.calculator.open(calculation);
+      void this.router.navigate(['/calculator', 'overview']);
+    }
   }
 
   /** Starts renaming, with the current name to edit. */
@@ -115,10 +141,12 @@ export class HistoryPageComponent {
       return;
     }
 
-    this.api.update(calculation.id, name, calculation.inputs).subscribe({
+    this.api.update(calculation.id, name, savedInputsOf(calculation)).subscribe({
       next: (updated) => {
         this.calculations.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
-        if (this.store.saved()?.id === updated.id) this.store.linkTo(updated);
+        // Keep whichever page shows this calculation linked to its new name.
+        if (this.calculator.saved()?.id === updated.id) this.calculator.linkTo(updated);
+        if (this.refinance.saved()?.id === updated.id) this.refinance.linkTo(updated);
         this.renaming.set(null);
         this.error.set(null);
       },
@@ -131,7 +159,8 @@ export class HistoryPageComponent {
     this.api.delete(calculation.id).subscribe({
       next: () => {
         this.calculations.update((list) => list.filter((c) => c.id !== calculation.id));
-        if (this.store.saved()?.id === calculation.id) this.store.saved.set(null);
+        if (this.calculator.saved()?.id === calculation.id) this.calculator.saved.set(null);
+        if (this.refinance.saved()?.id === calculation.id) this.refinance.saved.set(null);
         this.confirmingDelete.set(null);
         this.error.set(null);
       },

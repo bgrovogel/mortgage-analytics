@@ -4,6 +4,8 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { aResponse, aSavings } from '../../../testing/builders';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
+import { SavedCalculation } from '../../core/models/saved-calculation.models';
+import { RefinanceRequest } from '../../core/models/refinance.models';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
 
 describe('CalculatorStore', () => {
@@ -45,7 +47,7 @@ describe('CalculatorStore', () => {
   });
 
   describe('saved calculations', () => {
-    const saved = { id: 'abc', name: 'Oak St', inputs: request(42), createdAt: '', updatedAt: '' };
+    const saved: SavedCalculation = { id: 'abc', name: 'Oak St', kind: 'Purchase', inputs: request(42), refinance: null, createdAt: '', updatedAt: '' };
 
     it('is not linked to a saved calculation at first', () => {
       expect(store.saved()).toBeNull();
@@ -60,6 +62,13 @@ describe('CalculatorStore', () => {
       expect(store.request()).toBe(saved.inputs);
       expect(calculate).toHaveBeenCalledWith(saved.inputs);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
+    });
+
+    it('leaves a refinance comparison to the Refinance page', () => {
+      store.open({ ...saved, kind: 'Refinance', inputs: null, refinance: {} as RefinanceRequest });
+
+      expect(store.saved()).toBeNull();
+      expect(store.request()).toBeNull();
     });
 
     it('remembers which saved calculation the current one is, after saving or renaming it', () => {

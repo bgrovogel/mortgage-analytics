@@ -1,9 +1,11 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
-import { SaveCalculationComponent } from './save-calculation/save-calculation.component';
+import { suggestName } from '../../core/formatting/describe-inputs';
+import { SavedInputs } from '../../core/models/saved-calculation.models';
+import { SaveCalculationComponent } from '../../shared/save-calculation/save-calculation.component';
 
 /** The result tabs, each its own URL so it can be bookmarked, shared and reached with the back button. */
 const RESULT_TABS = [
@@ -30,4 +32,16 @@ export class CalculatorPageComponent {
 
   /** The calculation to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
+
+  /** What Save stores: the calculator inputs, once there are any. */
+  protected readonly savePayload = computed<SavedInputs | null>(() => {
+    const inputs = this.store.request();
+    return inputs ? { inputs } : null;
+  });
+
+  /** The name Save suggests for a new calculation. */
+  protected readonly suggestedName = computed(() => {
+    const inputs = this.store.request();
+    return inputs ? suggestName(inputs) : '';
+  });
 }

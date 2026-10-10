@@ -1,5 +1,6 @@
 import { AmortizationRequest } from '../models/amortization.models';
-import { describeInputs, suggestName } from './describe-inputs';
+import { RefinanceRequest } from '../models/refinance.models';
+import { describeInputs, describeRefinance, suggestName, suggestRefinanceName } from './describe-inputs';
 
 describe('describeInputs', () => {
   const request = {
@@ -29,5 +30,24 @@ describe('suggestName', () => {
   it('suggests a short name from the price, down payment and rate', () => {
     expect(suggestName({ homePrice: 375_000, downPayment: 75_000, annualInterestRate: 6.25 } as AmortizationRequest))
       .toBe('$375,000 home, 20% down at 6.25%');
+  });
+});
+
+describe('describeRefinance', () => {
+  const refinance: RefinanceRequest = {
+    currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+    newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false,
+  };
+
+  it('sums up the refinance in one line', () => {
+    expect(describeRefinance(refinance)).toBe('$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs');
+  });
+
+  it('says when the closing costs are rolled into the loan', () => {
+    expect(describeRefinance({ ...refinance, financeClosingCosts: true })).toContain('$6,000 closing costs in the loan');
+  });
+
+  it('suggests a name from the two rates', () => {
+    expect(suggestRefinanceName(refinance)).toBe('Refinance 7% → 6%, 30 yr');
   });
 });

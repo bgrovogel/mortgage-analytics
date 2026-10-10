@@ -7,6 +7,9 @@ import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore } from '../calculator/calculator.store';
+import { RefinanceStore } from '../refinance/refinance.store';
+import { RefinanceApiService } from '../../core/services/refinance-api.service';
+import { RefinanceRequest } from '../../core/models/refinance.models';
 import { HistoryPageComponent, SEARCH_DELAY_MS } from './history-page.component';
 
 describe('HistoryPageComponent', () => {
@@ -16,10 +19,15 @@ describe('HistoryPageComponent', () => {
 
   const inputs = { homePrice: 375_000, downPayment: 18_750, annualInterestRate: 6.5, termInMonths: 360, extraPayments: null } as AmortizationRequest;
   const aSaved = (id: string, name: string, overrides: Partial<SavedCalculation> = {}): SavedCalculation => ({
-    id, name, inputs, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
+    id, name, kind: 'Purchase', inputs, refinance: null, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
   });
   const oak = aSaved('1', 'Oak St, 20% down');
   const maple = aSaved('2', 'Maple Ave', { updatedAt: '2026-10-12T09:00:00Z' });
+  const refinance: RefinanceRequest = {
+    currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+    newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false,
+  };
+  const refi = aSaved('3', 'Refi at 6%', { kind: 'Refinance', inputs: null, refinance });
 
   const create = () => {
     fixture = TestBed.createComponent(HistoryPageComponent);
@@ -34,6 +42,7 @@ describe('HistoryPageComponent', () => {
         provideRouter([]),
         { provide: SavedCalculationsApiService, useValue: api },
         { provide: AmortizationApiService, useValue: { calculate: () => new Subject() } },
+        { provide: RefinanceApiService, useValue: { analyze: () => new Subject() } },
       ],
     });
     store = TestBed.inject(CalculatorStore);
@@ -132,7 +141,7 @@ describe('HistoryPageComponent', () => {
       box.dispatchEvent(new Event('input'));
       click(button(items()[0], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', oak.inputs);
+      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', { inputs: oak.inputs });
       expect(names()).toEqual(['Oak St, final', 'Maple Ave']);
     });
 
@@ -203,6 +212,53 @@ describe('HistoryPageComponent', () => {
 
       expect(root().querySelector('[role="alert"]')!.textContent).toContain('There is no saved calculation with that id.');
       expect(names()).toEqual(['Oak St, 20% down', 'Maple Ave']);
+    });
+  });
+
+  describe('refinance comparisons', () => {
+    beforeEach(() => api.list.mockReturnValue(of([oak, refi])));
+
+    it('are marked as such, with a summary of the refinance', () => {
+      create();
+
+      expect(items()[1].querySelector('[data-testid="kind-badge"]')!.textContent!.trim()).toBe('Refinance');
+      expect(items()[1].textContent).toContain('$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs');
+      expect(items()[0].querySelector('[data-testid="kind-badge"]')).toBeNull();
+    });
+
+    it('open on the Refinance page', () => {
+      const navigate = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      create();
+
+      click(button(items()[1], 'Open'));
+
+      expect(TestBed.inject(RefinanceStore).saved()).toEqual({ id: '3', name: 'Refi at 6%' });
+      expect(TestBed.inject(RefinanceStore).request()).toBe(refinance);
+      expect(navigate).toHaveBeenCalledWith(['/refinance']);
+    });
+
+    it('keep their inputs when renamed', () => {
+      create();
+      api.update.mockReturnValue(of({ ...refi, name: 'Refi, final' }));
+
+      click(button(items()[1], 'Rename'));
+      click(button(items()[1], 'Save'));
+
+      expect(api.update).toHaveBeenCalledWith('3', 'Refi at 6%', { refinance });
+    });
+
+    it('can be shown on their own, or hidden', () => {
+      create();
+      const show = (kind: string) => click(root().querySelector(`[data-testid="kind-filter-${kind}"]`) as HTMLElement);
+
+      show('Refinance');
+      expect(names()).toEqual(['Refi at 6%']);
+
+      show('Purchase');
+      expect(names()).toEqual(['Oak St, 20% down']);
+
+      show('all');
+      expect(names()).toEqual(['Oak St, 20% down', 'Refi at 6%']);
     });
   });
 });

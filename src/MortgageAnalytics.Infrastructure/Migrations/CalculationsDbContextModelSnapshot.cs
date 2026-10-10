@@ -27,12 +27,14 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Inputs")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Refinance")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("UpdatedAt")

@@ -42,8 +42,9 @@ export class CalculatorStore {
     this.latest.send(request);
   }
 
-  /** Loads a saved calculation: its inputs are calculated, and later saves can update it in place. */
+  /** Loads a saved purchase calculation: its inputs are calculated, and later saves can update it in place. */
   open(calculation: SavedCalculation): void {
+    if (!calculation.inputs) return; // a refinance comparison opens in the RefinanceStore
     this.linkTo(calculation);
     this.calculate(calculation.inputs);
   }

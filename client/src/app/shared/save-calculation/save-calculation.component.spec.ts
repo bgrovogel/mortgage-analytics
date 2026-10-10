@@ -1,35 +1,36 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { NEVER, of, throwError } from 'rxjs';
-import { AmortizationRequest } from '../../../core/models/amortization.models';
-import { SavedCalculation } from '../../../core/models/saved-calculation.models';
-import { AmortizationApiService } from '../../../core/services/amortization-api.service';
-import { SavedCalculationsApiService } from '../../../core/services/saved-calculations-api.service';
-import { CalculatorStore } from '../calculator.store';
+import { of, throwError } from 'rxjs';
+import { AmortizationRequest } from '../../core/models/amortization.models';
+import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculation.models';
+import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { SaveCalculationComponent } from './save-calculation.component';
 
 describe('SaveCalculationComponent', () => {
   let fixture: ComponentFixture<SaveCalculationComponent>;
-  let store: CalculatorStore;
   let api: { save: jest.Mock; update: jest.Mock };
+  let saved: SavedCalculation[];
 
-  const inputs = { homePrice: 375_000, downPayment: 75_000, annualInterestRate: 6.5 } as AmortizationRequest;
-  const savedAs = (name: string, id = 'new-id'): SavedCalculation => ({ id, name, inputs, createdAt: '', updatedAt: '' });
+  const inputs = { homePrice: 375_000 } as AmortizationRequest;
+  const payload: SavedInputs = { inputs };
+  const savedAs = (name: string, id = 'new-id'): SavedCalculation =>
+    ({ id, name, kind: 'Purchase', inputs, refinance: null, createdAt: '', updatedAt: '' });
+
+  /** Creates the control the way a page uses it: what to save, a suggested name, and what it is linked to. */
+  const create = (options: { payload?: SavedInputs | null; linked?: { id: string; name: string } | null } = {}) => {
+    fixture = TestBed.createComponent(SaveCalculationComponent);
+    fixture.componentRef.setInput('payload', options.payload === undefined ? payload : options.payload);
+    fixture.componentRef.setInput('suggestion', '$375,000 home, 20% down at 6.5%');
+    fixture.componentRef.setInput('linked', options.linked ?? null);
+    saved = [];
+    fixture.componentInstance.saved.subscribe((s) => saved.push(s));
+    fixture.detectChanges();
+  };
 
   beforeEach(() => {
     api = { save: jest.fn(), update: jest.fn() };
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: SavedCalculationsApiService, useValue: api },
-        { provide: AmortizationApiService, useValue: { calculate: () => NEVER } },
-      ],
-    });
-    store = TestBed.inject(CalculatorStore);
-    fixture = TestBed.createComponent(SaveCalculationComponent);
-    store.calculate(inputs); // the request is remembered at once; the (never-answered) call does not matter
-    fixture.detectChanges();
+    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: api }] });
   });
 
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
@@ -45,32 +46,38 @@ describe('SaveCalculationComponent', () => {
   };
 
   it('starts closed, as a single Save button', () => {
+    create();
+
     expect(el('save-open')!.textContent!.trim()).toBe('Save');
     expect(el('save-name')).toBeNull();
   });
 
-  it('suggests a name built from the loan', () => {
+  it('starts from the suggested name, ready to type over', () => {
+    create();
+
     click('save-open');
 
     expect(nameBox().value).toBe('$375,000 home, 20% down at 6.5%');
     expect(document.activeElement).toBe(nameBox());
   });
 
-  it('saves under the chosen name, links the calculator to it, and says so', () => {
+  it('saves the inputs under the chosen name, reports it, and says so', () => {
+    create();
     api.save.mockReturnValue(of(savedAs('Oak St')));
     click('save-open');
     typeName('  Oak St ');
 
     click('save-new');
 
-    expect(api.save).toHaveBeenCalledWith('Oak St', inputs);
-    expect(store.saved()).toEqual({ id: 'new-id', name: 'Oak St' });
+    expect(api.save).toHaveBeenCalledWith('Oak St', payload);
+    expect(saved.map((s) => s.name)).toEqual(['Oak St']);
     expect(el('save-name')).toBeNull();
     expect(el('save-status')!.textContent).toContain('Saved as “Oak St”');
     expect(el('save-status')!.querySelector('a')!.getAttribute('href')).toBe('/history');
   });
 
   it('asks for a name instead of saving a blank one', () => {
+    create();
     click('save-open');
     typeName('   ');
 
@@ -80,10 +87,9 @@ describe('SaveCalculationComponent', () => {
     expect(el('save-error')!.textContent).toContain('Give the calculation a name.');
   });
 
-  it('offers to update the saved calculation it came from, as well as saving a new one', () => {
-    store.linkTo({ id: 'abc', name: 'Oak St' });
+  it('offers to update the saved calculation it is linked to, as well as saving a new one', () => {
+    create({ linked: { id: 'abc', name: 'Oak St' } });
     api.update.mockReturnValue(of(savedAs('Oak St, refined', 'abc')));
-    fixture.detectChanges();
     click('save-open');
     expect(nameBox().value).toBe('Oak St');
     expect(el('save-new')!.textContent!.trim()).toBe('Save as new');
@@ -91,12 +97,13 @@ describe('SaveCalculationComponent', () => {
     typeName('Oak St, refined');
     click('save-update');
 
-    expect(api.update).toHaveBeenCalledWith('abc', 'Oak St, refined', inputs);
-    expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St, refined' });
+    expect(api.update).toHaveBeenCalledWith('abc', 'Oak St, refined', payload);
+    expect(saved.map((s) => s.id)).toEqual(['abc']);
     expect(el('save-status')!.textContent).toContain('Updated “Oak St, refined”');
   });
 
   it('shows what went wrong when the server rejects the save, and keeps the form open', () => {
+    create();
     api.save.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { errors: { name: ['Too long.'] } } })));
     click('save-open');
 
@@ -107,6 +114,7 @@ describe('SaveCalculationComponent', () => {
   });
 
   it('can be cancelled', () => {
+    create();
     click('save-open');
 
     click('save-cancel');
@@ -116,13 +124,8 @@ describe('SaveCalculationComponent', () => {
   });
 
   it('cannot save before there is anything to save', () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: api }, { provide: AmortizationApiService, useValue: {} }],
-    });
-    const fresh = TestBed.createComponent(SaveCalculationComponent);
-    fresh.detectChanges();
+    create({ payload: null });
 
-    expect((fresh.nativeElement.querySelector('[data-testid="save-open"]') as HTMLButtonElement).disabled).toBe(true);
+    expect((el('save-open') as HTMLButtonElement).disabled).toBe(true);
   });
 });

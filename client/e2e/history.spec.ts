@@ -62,4 +62,27 @@ test.describe('History', () => {
     await expect(history.item(renamed), 'it is gone from the list').toHaveCount(0);
     await expect(history.empty, 'and nothing else matches the search').toContainText('Nothing matches');
   });
+
+  test('saves a refinance comparison and reopens it on the Refinance page', async ({ page }) => {
+    const name = `Refi ${tag}`;
+    await page.goto('/refinance');
+    await page.getByTestId('new-rate').fill('5.5');
+    await expect(page.getByTestId('refi-verdict'), 'the comparison updates').toContainText('Refinancing');
+    await page.getByTestId('save-open').click();
+    await page.getByTestId('save-name').fill(name);
+    await page.getByTestId('save-new').click();
+    await expect(page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
+
+    await page.goto('/refinance'); // a reload starts over from the worked example
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await expect(history.item(name), 'it is listed as a refinance comparison').toContainText('Refinance');
+    await expect(history.item(name), 'with a summary of the refinance').toContainText('→ 5.5%');
+
+    await history.act(name, 'Open');
+
+    await expect(page, 'it opens on the Refinance page').toHaveURL(/\/refinance$/);
+    await expect(page.getByTestId('new-rate'), 'with the saved rate').toHaveValue('5.5');
+  });
 });

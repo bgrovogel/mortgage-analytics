@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { suggestRefinanceName } from '../../core/formatting/describe-inputs';
+import { SavedInputs } from '../../core/models/saved-calculation.models';
+import { SaveCalculationComponent } from '../../shared/save-calculation/save-calculation.component';
 import { RefinanceFormComponent } from './refinance-form/refinance-form.component';
 import { RefinanceResultsComponent } from './refinance-results/refinance-results.component';
 import { RefinanceStore } from './refinance.store';
@@ -9,7 +12,7 @@ import { RefinanceStore } from './refinance.store';
  */
 @Component({
   selector: 'app-refinance-page',
-  imports: [RefinanceFormComponent, RefinanceResultsComponent],
+  imports: [RefinanceFormComponent, RefinanceResultsComponent, SaveCalculationComponent],
   template: `
     <div class="layout">
       <aside class="panel form-panel" data-testid="refinance-form-panel">
@@ -18,6 +21,11 @@ import { RefinanceStore } from './refinance.store';
 
       <section class="results" aria-label="Refinance comparison" aria-live="polite" [attr.aria-busy]="store.busy()"
                [class.updating]="store.busy()" data-testid="refinance-results">
+        <div class="results-header">
+          <h2>Should you refinance?</h2>
+          <app-save-calculation [payload]="savePayload()" [suggestion]="suggestedName()" [linked]="store.saved()"
+                                (saved)="store.linkTo($event)" />
+        </div>
         @if (store.errors().length > 0) {
           <div class="alert" role="alert" data-testid="refinance-errors">
             <strong>We could not compare those loans.</strong>
@@ -44,4 +52,16 @@ export class RefinancePageComponent {
 
   /** The comparison to resume, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();
+
+  /** What Save stores: the comparison inputs, once there are any. */
+  protected readonly savePayload = computed<SavedInputs | null>(() => {
+    const refinance = this.store.request();
+    return refinance ? { refinance } : null;
+  });
+
+  /** The name Save suggests, e.g. "Refinance 7% → 6%, 30 yr". */
+  protected readonly suggestedName = computed(() => {
+    const refinance = this.store.request();
+    return refinance ? suggestRefinanceName(refinance) : '';
+  });
 }

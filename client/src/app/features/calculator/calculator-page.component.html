@@ -23,7 +23,8 @@
              [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
         }
       </nav>
-      <app-save-calculation />
+      <app-save-calculation [payload]="savePayload()" [suggestion]="suggestedName()" [linked]="store.saved()"
+                            (saved)="store.linkTo($event)" />
     </div>
 
     @if (store.errors().length > 0) {

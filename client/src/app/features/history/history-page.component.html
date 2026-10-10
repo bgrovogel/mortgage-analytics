@@ -4,8 +4,16 @@
       <h2 class="title" id="history-title">Saved calculations</h2>
       <p class="intro">Open one to pick up where you left off.</p>
     </div>
-    <input class="search" type="search" placeholder="Search by name" aria-label="Search saved calculations by name"
-           data-testid="history-search" (input)="onSearch($any($event.target).value)" />
+    <div class="filters">
+      <div class="toggle" role="group" aria-label="Show">
+        @for (kind of kinds; track kind.value) {
+          <button type="button" [attr.aria-pressed]="kindFilter() === kind.value" (click)="kindFilter.set(kind.value)"
+                  [attr.data-testid]="'kind-filter-' + kind.value">{{ kind.label }}</button>
+        }
+      </div>
+      <input class="search" type="search" placeholder="Search by name" aria-label="Search saved calculations by name"
+             data-testid="history-search" (input)="onSearch($any($event.target).value)" />
+    </div>
   </header>
 
   @if (error(); as message) {
@@ -23,9 +31,11 @@
           }
         </div>
       }
+    } @else if (shown().length === 0) {
+      <div class="empty" data-testid="history-empty">Nothing of that kind{{ searched() ? ' matches “' + searched() + '”' : ' saved yet' }}.</div>
     } @else {
       <ul class="list">
-        @for (c of calculations(); track c.id) {
+        @for (c of shown(); track c.id) {
           <li class="item" data-testid="history-item">
             @if (renaming()?.id === c.id) {
               <form class="rename" (submit)="$event.preventDefault(); saveRename(c)">
@@ -37,7 +47,12 @@
             } @else {
               <div class="info">
                 <h3>{{ c.name }}</h3>
-                <p class="summary">{{ describe(c.inputs) }}</p>
+                <p class="summary">
+                  @if (c.kind === 'Refinance') {
+                    <span class="badge" data-testid="kind-badge">Refinance</span>
+                  }
+                  {{ describe(c) }}
+                </p>
                 <p class="when">{{ when(c) }}</p>
               </div>
               @if (confirmingDelete() === c.id) {

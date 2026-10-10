@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { AmortizationRequest } from '../models/amortization.models';
+import { RefinanceRequest } from '../models/refinance.models';
 import { SavedCalculationsApiService } from './saved-calculations-api.service';
 
 describe('SavedCalculationsApiService', () => {
@@ -34,8 +35,8 @@ describe('SavedCalculationsApiService', () => {
     call.flush([]);
   });
 
-  it('saves a name and inputs', () => {
-    service.save('Oak St', inputs).subscribe();
+  it('saves a name and calculator inputs', () => {
+    service.save('Oak St', { inputs }).subscribe();
 
     const call = http.expectOne('/api/v1/calculations');
     expect(call.request.method).toBe('POST');
@@ -43,8 +44,17 @@ describe('SavedCalculationsApiService', () => {
     call.flush({});
   });
 
+  it('saves a refinance comparison the same way', () => {
+    const refinance = { currentBalance: 300_000 } as RefinanceRequest;
+    service.save('Refi', { refinance }).subscribe();
+
+    const call = http.expectOne('/api/v1/calculations');
+    expect(call.request.body).toEqual({ name: 'Refi', refinance });
+    call.flush({});
+  });
+
   it('replaces a saved calculation by id', () => {
-    service.update('abc', 'New name', inputs).subscribe();
+    service.update('abc', 'New name', { inputs }).subscribe();
 
     const call = http.expectOne('/api/v1/calculations/abc');
     expect(call.request.method).toBe('PUT');

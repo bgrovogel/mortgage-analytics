@@ -47,11 +47,28 @@ public class SavedCalculationServiceTests
         {
             Assert.That(added, Is.Not.Null, "the calculation is stored");
             Assert.That(added!.Name, Is.EqualTo("Oak St"), "surrounding spaces are trimmed");
-            Assert.That(added.Inputs.HomePrice, Is.EqualTo(400_000m), "the inputs are stored as given");
+            Assert.That(added.Inputs?.HomePrice, Is.EqualTo(400_000m), "the inputs are stored as given");
             Assert.That(added.CreatedAt, Is.EqualTo(TestClock.Now), "created now");
             Assert.That(added.UpdatedAt, Is.EqualTo(TestClock.Now), "and not yet updated");
             Assert.That(response.Id, Is.EqualTo(added.Id).And.Not.EqualTo(Guid.Empty), "the response carries the new id");
             Assert.That(response.Name, Is.EqualTo("Oak St"), "and the stored name");
+        });
+    }
+
+    [Test]
+    public async Task Save_TellsTheKindsApart_ByTheInputsGiven()
+    {
+        var refinance = new RefinanceRequest { CurrentBalance = 300_000m, RemainingTermInMonths = 300, NewTermInMonths = 360 };
+
+        var purchase = await _service.SaveAsync(Request(), CancellationToken.None);
+        var comparison = await _service.SaveAsync(new SaveCalculationRequest { Name = "Refi", Refinance = refinance }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(purchase.Kind, Is.EqualTo(SavedCalculationKind.Purchase), "calculator inputs make a purchase calculation");
+            Assert.That(comparison.Kind, Is.EqualTo(SavedCalculationKind.Refinance), "refinance inputs make a refinance comparison");
+            Assert.That(comparison.Refinance, Is.SameAs(refinance), "with its inputs");
+            Assert.That(comparison.Inputs, Is.Null, "and no calculator inputs");
         });
     }
 
@@ -113,7 +130,7 @@ public class SavedCalculationServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(response?.Name, Is.EqualTo("New name"), "renamed, trimmed");
-            Assert.That(response?.Inputs.HomePrice, Is.EqualTo(500_000m), "inputs replaced");
+            Assert.That(response?.Inputs?.HomePrice, Is.EqualTo(500_000m), "inputs replaced");
             Assert.That(response?.CreatedAt, Is.EqualTo(TestClock.Now), "the creation time never changes");
             Assert.That(response?.UpdatedAt, Is.EqualTo(TestClock.Now.AddDays(1)), "the update time is now");
         });

@@ -27,22 +27,25 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
         calculation.HasKey(c => c.Id);
         calculation.Property(c => c.Name).HasMaxLength(SaveCalculationRequestValidator.MaxNameLength).IsRequired();
 
-        // The inputs are one JSON column: they are always read and written whole, never queried by field,
-        // and the request contract can grow without a schema change. The comparer compares the JSON, so
-        // replacing the inputs with an equal copy is not seen as a change.
-        calculation.Property(c => c.Inputs)
-            .HasConversion(
-                inputs => JsonSerializer.Serialize(inputs, Json),
-                json => JsonSerializer.Deserialize<AmortizationRequest>(json, Json)!,
-                new ValueComparer<AmortizationRequest>(
-                    (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
-                    inputs => JsonSerializer.Serialize(inputs, Json).GetHashCode(StringComparison.Ordinal),
-                    inputs => JsonSerializer.Deserialize<AmortizationRequest>(JsonSerializer.Serialize(inputs, Json), Json)!))
-            .IsRequired();
+        // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
+        // field, and the contracts can grow without a schema change. A row holds one kind; the other is null.
+        calculation.Property(c => c.Inputs).HasConversion(JsonConverter<AmortizationRequest>(), JsonComparer<AmortizationRequest>());
+        calculation.Property(c => c.Refinance).HasConversion(JsonConverter<RefinanceRequest>(), JsonComparer<RefinanceRequest>());
+        calculation.Ignore(c => c.Kind);
 
         // SQLite cannot sort DateTimeOffset values, so they are stored as sortable 64-bit numbers.
         calculation.Property(c => c.CreatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
         calculation.Property(c => c.UpdatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
         calculation.HasIndex(c => c.UpdatedAt);
     }
+
+    private static ValueConverter<T?, string?> JsonConverter<T>() where T : class =>
+        new(value => value == null ? null : JsonSerializer.Serialize(value, Json),
+            json => json == null ? null : JsonSerializer.Deserialize<T>(json, Json));
+
+    // Compares the JSON, so replacing the inputs with an equal copy is not seen as a change.
+    private static ValueComparer<T?> JsonComparer<T>() where T : class =>
+        new((a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
+            value => JsonSerializer.Serialize(value, Json).GetHashCode(StringComparison.Ordinal),
+            value => value == null ? null : JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, Json), Json));
 }
