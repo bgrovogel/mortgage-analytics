@@ -1,6 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="loan-form">
-  <fieldset>
-    <legend>Purchase</legend>
+  <!-- The five main inputs are always visible; everything else is in a collapsible section below. -->
+  <fieldset class="primary-fields">
+    <legend>Your loan</legend>
 
     <div class="row">
       <label class="field">
@@ -42,243 +43,259 @@
     </div>
 
     <label class="field">
-      <span>First payment date</span>
-      <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
-    </label>
-  </fieldset>
-
-  <fieldset>
-    <legend>Property taxes</legend>
-
-    <div class="row three">
-      <label class="field">
-        <span>School (%)</span>
-        <input type="number" formControlName="schoolTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
-               data-testid="school-tax-rate" />
-      </label>
-      <label class="field">
-        <span>County/city (%)</span>
-        <input type="number" formControlName="propertyTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
-               data-testid="property-tax-rate" />
-      </label>
-      <label class="field">
-        <span>MUD (%)</span>
-        <input type="number" formControlName="mudTaxRate" min="0" max="5" step="0.01" inputmode="decimal"
-               data-testid="mud-tax-rate" />
-      </label>
-    </div>
-    <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
-
-    <label class="checkbox">
-      <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
-      <span><strong>Homestead</strong> (primary residence): apply exemptions and the appraisal cap</span>
-    </label>
-
-    @if (isHomestead()) {
-      <div class="row three">
-        <label class="field">
-          <span>School exemption ($)</span>
-          <input type="number" formControlName="schoolHomesteadExemption" min="0" step="5000" inputmode="decimal"
-                 data-testid="school-exemption" />
-        </label>
-        <label class="field">
-          <span>County/city exempt (%)</span>
-          <input type="number" formControlName="localHomesteadExemptionPercent" min="0" max="100" step="1"
-                 data-testid="local-exemption" />
-        </label>
-        <label class="field">
-          <span>Appraisal cap (% / yr)</span>
-          <input type="number" formControlName="homesteadAssessmentCap" min="0" max="100" step="1"
-                 data-testid="assessment-cap" />
-        </label>
-      </div>
-      <p class="hint">
-        Texas: school districts exempt $140,000 of a homestead's value; counties and cities may exempt up to 20%.
-        Taxable value can rise at most 10% a year.
-      </p>
-
-      <label class="checkbox">
-        <input type="checkbox" formControlName="isOver65" data-testid="is-over-65" />
-        <span><strong>Over 65 or disabled</strong>: extra exemption and a school tax ceiling</span>
-      </label>
-
-      @if (isOver65()) {
-        <div class="row three">
-          <label class="field">
-            <span>Qualifies in year</span>
-            <input type="number" formControlName="over65Year" min="1" [max]="maxYears" step="1" data-testid="over-65-year" />
-          </label>
-          <label class="field">
-            <span>Extra school ($)</span>
-            <input type="number" formControlName="over65SchoolExemption" min="0" step="5000" inputmode="decimal"
-                   data-testid="over-65-school-exemption" />
-          </label>
-          <label class="field">
-            <span>Extra local ($)</span>
-            <input type="number" formControlName="over65LocalExemption" min="0" step="1000" inputmode="decimal"
-                   data-testid="over-65-local-exemption" />
-          </label>
-        </div>
-        <label class="checkbox">
-          <input type="checkbox" formControlName="over65LocalCeiling" data-testid="over-65-local-ceiling" />
-          <span>County/city has also adopted a tax ceiling</span>
-        </label>
-        <p class="hint">
-          From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise.
-          Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies.
-        </p>
-      }
-    }
-  </fieldset>
-
-  <fieldset>
-    <legend>Insurance &amp; fees</legend>
-
-    <div class="row">
-      <label class="field">
-        <span>PID assessment ($ / yr)</span>
-        <input type="number" formControlName="pidAnnual" min="0" step="100" inputmode="decimal" data-testid="pid-annual" />
-      </label>
-      <label class="field">
-        <span>PID years remaining</span>
-        <input type="number" formControlName="pidYears" min="1" max="50" step="1" placeholder="No end"
-               data-testid="pid-years" />
-      </label>
-    </div>
-
-    <div class="row">
-      <label class="field">
-        <span>Home insurance ($ / yr)</span>
-        <input type="number" formControlName="annualInsurance" min="0" step="100" inputmode="decimal"
-               data-testid="annual-insurance" />
-      </label>
-      <label class="field">
-        <span>HOA dues ($ / mo)</span>
-        <input type="number" formControlName="monthlyHoa" min="0" step="10" inputmode="decimal" data-testid="monthly-hoa" />
-      </label>
-    </div>
-
-    <div class="row">
-      <label class="field">
-        <span>PMI (% / yr)</span>
-        <input type="number" formControlName="pmiRate" min="0" max="5" step="0.05" inputmode="decimal" data-testid="pmi-rate" />
-      </label>
-      <label class="field">
-        <span>PMI removal</span>
-        <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
-          <option value="Automatic">Auto at 78%</option>
-          <option value="BorrowerRequested">Ask at 80%</option>
-        </select>
-      </label>
-    </div>
-    <p class="hint" data-testid="pmi-hint">
-      @if (pmiApplies()) {
-        PMI applies because less than 20% is down. It is removed automatically when the original schedule
-        reaches 78% of the price; extra payments only count if you ask at 80%.
-      } @else {
-        No PMI: at least 20% is down.
-      }
-    </p>
-  </fieldset>
-
-  <fieldset>
-    <legend>Future increases (per year)</legend>
-    <div class="row three">
-      <label class="field">
-        <span>Home value (%)</span>
-        <input type="number" formControlName="homeValueGrowthRate" min="-20" max="25" step="0.5" inputmode="decimal"
-               data-testid="home-value-growth" />
-      </label>
-      <label class="field">
-        <span>Insurance (%)</span>
-        <input type="number" formControlName="insuranceIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
-               data-testid="insurance-increase" />
-      </label>
-      <label class="field">
-        <span>HOA (%)</span>
-        <input type="number" formControlName="hoaIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
-               data-testid="hoa-increase" />
-      </label>
-    </div>
-    <p class="hint">Rising home values raise property taxes each year (limited by the appraisal cap for a homestead).</p>
-  </fieldset>
-
-  <fieldset>
-    <legend>Extra payments</legend>
-
-    <label class="field">
-      <span>Every month ($)</span>
-      <input type="number" formControlName="monthlyExtra" min="0" step="50" inputmode="decimal" data-testid="monthly-extra" />
+      <span>Extra principal every month ($)</span>
+      <input type="number" formControlName="monthlyExtra" min="0" step="50" inputmode="decimal" data-testid="monthly-extra"
+             [attr.aria-invalid]="showError(form.controls.monthlyExtra)" />
       @if (showError(form.controls.monthlyExtra)) {
         <small class="error">Cannot be negative.</small>
       }
     </label>
-
-    <div class="row">
-      <label class="field">
-        <span>Once a year ($)</span>
-        <input type="number" formControlName="annualExtra" min="0" step="500" inputmode="decimal" data-testid="annual-extra" />
-      </label>
-      <label class="field">
-        <span>Starting with payment #</span>
-        <input type="number" formControlName="annualFirstPayment" min="1" step="1" data-testid="annual-first-payment" />
-      </label>
-    </div>
-
-    <div formArrayName="lumpSums" class="lump-sums">
-      @for (lumpSum of lumpSums.controls; track lumpSum; let i = $index) {
-        <div class="row lump-sum" [formGroupName]="i" data-testid="lump-sum">
-          <label class="field">
-            <span>Lump sum ($)</span>
-            <input type="number" formControlName="amount" min="0.01" step="1000" inputmode="decimal" />
-          </label>
-          <label class="field">
-            <span>With payment #</span>
-            <input type="number" formControlName="paymentNumber" min="1" step="1" />
-          </label>
-          <button type="button" class="icon-button" (click)="removeLumpSum(i)" [attr.aria-label]="'Remove lump sum ' + (i + 1)">
-            ✕
-          </button>
-        </div>
-      }
-      <button type="button" class="link-button" (click)="addLumpSum()" data-testid="add-lump-sum">+ Add a lump sum</button>
-    </div>
   </fieldset>
 
-  <fieldset class="strategy">
-    <legend>Apply extra payments to</legend>
-    <label class="choice">
-      <input type="radio" formControlName="strategy" value="ShortenTerm" data-testid="strategy-shorten" />
-      <span><strong>Pay off sooner</strong> and keep the same monthly payment</span>
-    </label>
-    <label class="choice">
-      <input type="radio" formControlName="strategy" value="Recast" data-testid="strategy-recast" />
-      <span><strong>Recast after a lump sum</strong>: keep the payoff date and lower the payment</span>
-    </label>
-
-    @if (isRecast()) {
-      <div class="row recast-terms">
+  <details class="section" data-testid="section-taxes">
+    <summary>
+      <span class="section-title">Property taxes</span>
+      <span class="section-summary" data-testid="taxes-summary">{{ taxesSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="row three">
         <label class="field">
-          <span>Lender minimum ($)</span>
-          <input type="number" formControlName="recastMinimum" min="1000" step="1000" inputmode="decimal" data-testid="recast-minimum"
-                 [attr.aria-invalid]="showError(form.controls.recastMinimum)" />
+          <span>School (%)</span>
+          <input type="number" formControlName="schoolTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
+                 data-testid="school-tax-rate" />
         </label>
         <label class="field">
-          <span>Recast fee ($)</span>
-          <input type="number" formControlName="recastFee" min="0" step="25" inputmode="decimal" data-testid="recast-fee" />
+          <span>County/city (%)</span>
+          <input type="number" formControlName="propertyTaxRate" min="0" max="10" step="0.01" inputmode="decimal"
+                 data-testid="property-tax-rate" />
+        </label>
+        <label class="field">
+          <span><abbr title="Municipal Utility District">MUD</abbr> (%)</span>
+          <input type="number" formControlName="mudTaxRate" min="0" max="5" step="0.01" inputmode="decimal"
+                 data-testid="mud-tax-rate" />
         </label>
       </div>
-      @if (showError(form.controls.recastMinimum)) {
-        <small class="error">Lenders require a lump sum of at least $1,000 to recast.</small>
-      }
-      <p class="hint">
-        The lender recasts only after a single lump sum of at least the minimum (most banks require $10,000).
-        Smaller extra payments still shorten the term.
-      </p>
-    }
-  </fieldset>
+      <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
 
-  <button type="submit" class="primary" [disabled]="busy()" data-testid="calculate">
-    {{ busy() ? 'Calculating…' : 'Calculate' }}
-  </button>
+      <label class="checkbox">
+        <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
+        <span><strong>Homestead</strong> (primary residence): exemptions and the appraisal cap</span>
+      </label>
+
+      @if (isHomestead()) {
+        <div class="row three">
+          <label class="field">
+            <span>School exempt ($)</span>
+            <input type="number" formControlName="schoolHomesteadExemption" min="0" step="5000" inputmode="decimal"
+                   data-testid="school-exemption" />
+          </label>
+          <label class="field">
+            <span>Local exempt (%)</span>
+            <input type="number" formControlName="localHomesteadExemptionPercent" min="0" max="100" step="1"
+                   data-testid="local-exemption" />
+          </label>
+          <label class="field">
+            <span>Cap (%/yr)</span>
+            <input type="number" formControlName="homesteadAssessmentCap" min="0" max="100" step="1"
+                   data-testid="assessment-cap" />
+          </label>
+        </div>
+        <p class="hint">
+          Texas: school districts exempt $140,000 of a homestead's value; counties and cities may exempt up to 20%.
+          Taxable value can rise at most 10% a year.
+        </p>
+
+        <label class="checkbox">
+          <input type="checkbox" formControlName="isOver65" data-testid="is-over-65" />
+          <span><strong>Over 65 or disabled</strong>: extra exemption and a school tax ceiling</span>
+        </label>
+
+        @if (isOver65()) {
+          <div class="row three">
+            <label class="field">
+              <span>Qualifies in year</span>
+              <input type="number" formControlName="over65Year" min="1" [max]="maxYears" step="1" data-testid="over-65-year" />
+            </label>
+            <label class="field">
+              <span>Extra school ($)</span>
+              <input type="number" formControlName="over65SchoolExemption" min="0" step="5000" inputmode="decimal"
+                     data-testid="over-65-school-exemption" />
+            </label>
+            <label class="field">
+              <span>Extra local ($)</span>
+              <input type="number" formControlName="over65LocalExemption" min="0" step="1000" inputmode="decimal"
+                     data-testid="over-65-local-exemption" />
+            </label>
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" formControlName="over65LocalCeiling" data-testid="over-65-local-ceiling" />
+            <span>County/city has also adopted a tax ceiling</span>
+          </label>
+          <p class="hint">
+            From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise.
+            Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies.
+          </p>
+        }
+      }
+    </div>
+  </details>
+
+  <details class="section" data-testid="section-costs">
+    <summary>
+      <span class="section-title">Insurance, HOA &amp; <abbr title="Private mortgage insurance">PMI</abbr></span>
+      <span class="section-summary" data-testid="costs-summary">{{ costsSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="row">
+        <label class="field">
+          <span>Home insurance ($/yr)</span>
+          <input type="number" formControlName="annualInsurance" min="0" step="100" inputmode="decimal"
+                 data-testid="annual-insurance" />
+        </label>
+        <label class="field">
+          <span>HOA dues ($/mo)</span>
+          <input type="number" formControlName="monthlyHoa" min="0" step="10" inputmode="decimal" data-testid="monthly-hoa" />
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="field">
+          <span><abbr title="Public Improvement District">PID</abbr> ($/yr)</span>
+          <input type="number" formControlName="pidAnnual" min="0" step="100" inputmode="decimal" data-testid="pid-annual" />
+        </label>
+        <label class="field">
+          <span>PID years left</span>
+          <input type="number" formControlName="pidYears" min="1" max="50" step="1" placeholder="No end"
+                 data-testid="pid-years" />
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="field">
+          <span>PMI (%/yr)</span>
+          <input type="number" formControlName="pmiRate" min="0" max="5" step="0.05" inputmode="decimal" data-testid="pmi-rate" />
+        </label>
+        <label class="field">
+          <span>PMI removal</span>
+          <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
+            <option value="Automatic">Auto at 78%</option>
+            <option value="BorrowerRequested">Ask at 80%</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint" data-testid="pmi-hint">
+        @if (pmiApplies()) {
+          PMI applies because less than 20% is down. It is removed automatically when the original schedule
+          reaches 78% of the price; extra payments only count if you ask at 80%.
+        } @else {
+          No PMI: at least 20% is down.
+        }
+      </p>
+    </div>
+  </details>
+
+  <details class="section" data-testid="section-growth">
+    <summary>
+      <span class="section-title">Future increases</span>
+      <span class="section-summary" data-testid="growth-summary">{{ growthSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="row three">
+        <label class="field">
+          <span>Home value (%/yr)</span>
+          <input type="number" formControlName="homeValueGrowthRate" min="-20" max="25" step="0.5" inputmode="decimal"
+                 data-testid="home-value-growth" />
+        </label>
+        <label class="field">
+          <span>Insurance (%/yr)</span>
+          <input type="number" formControlName="insuranceIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
+                 data-testid="insurance-increase" />
+        </label>
+        <label class="field">
+          <span>HOA (%/yr)</span>
+          <input type="number" formControlName="hoaIncreaseRate" min="-20" max="50" step="0.5" inputmode="decimal"
+                 data-testid="hoa-increase" />
+        </label>
+      </div>
+      <p class="hint">Rising home values raise property taxes each year (limited by the appraisal cap for a homestead).</p>
+    </div>
+  </details>
+
+  <details class="section" data-testid="section-options">
+    <summary>
+      <span class="section-title">More payment options</span>
+      <span class="section-summary" data-testid="options-summary">{{ optionsSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <label class="field">
+        <span>First payment date</span>
+        <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span>Extra once a year ($)</span>
+          <input type="number" formControlName="annualExtra" min="0" step="500" inputmode="decimal" data-testid="annual-extra" />
+        </label>
+        <label class="field">
+          <span>Starting with payment #</span>
+          <input type="number" formControlName="annualFirstPayment" min="1" step="1" data-testid="annual-first-payment" />
+        </label>
+      </div>
+
+      <div formArrayName="lumpSums" class="lump-sums">
+        @for (lumpSum of lumpSums.controls; track lumpSum; let i = $index) {
+          <div class="row lump-sum" [formGroupName]="i" data-testid="lump-sum">
+            <label class="field">
+              <span>Lump sum ($)</span>
+              <input type="number" formControlName="amount" min="0.01" step="1000" inputmode="decimal" />
+            </label>
+            <label class="field">
+              <span>With payment #</span>
+              <input type="number" formControlName="paymentNumber" min="1" step="1" />
+            </label>
+            <button type="button" class="icon-button" (click)="removeLumpSum(i)" [attr.aria-label]="'Remove lump sum ' + (i + 1)">
+              ✕
+            </button>
+          </div>
+        }
+        <button type="button" class="link-button" (click)="addLumpSum()" data-testid="add-lump-sum">+ Add a lump sum</button>
+      </div>
+
+      <fieldset class="strategy">
+        <legend>Apply extra payments to</legend>
+        <label class="choice">
+          <input type="radio" formControlName="strategy" value="ShortenTerm" data-testid="strategy-shorten" />
+          <span><strong>Pay off sooner</strong> and keep the same monthly payment</span>
+        </label>
+        <label class="choice">
+          <input type="radio" formControlName="strategy" value="Recast" data-testid="strategy-recast" />
+          <span><strong>Recast after a lump sum</strong>: keep the payoff date and lower the payment</span>
+        </label>
+
+        @if (isRecast()) {
+          <div class="row recast-terms">
+            <label class="field">
+              <span>Lender minimum ($)</span>
+              <input type="number" formControlName="recastMinimum" min="1000" step="1000" inputmode="decimal" data-testid="recast-minimum"
+                     [attr.aria-invalid]="showError(form.controls.recastMinimum)" />
+            </label>
+            <label class="field">
+              <span>Recast fee ($)</span>
+              <input type="number" formControlName="recastFee" min="0" step="25" inputmode="decimal" data-testid="recast-fee" />
+            </label>
+          </div>
+          @if (showError(form.controls.recastMinimum)) {
+            <small class="error">Lenders require a lump sum of at least $1,000 to recast.</small>
+          }
+          <p class="hint">
+            The lender recasts only after a single lump sum of at least the minimum (most banks require $10,000).
+            Smaller extra payments still shorten the term.
+          </p>
+        }
+      </fieldset>
+    </div>
+  </details>
+
+  <p class="auto-note">Results update as you type.</p>
 </form>

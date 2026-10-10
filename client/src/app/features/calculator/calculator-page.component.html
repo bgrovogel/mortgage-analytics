@@ -1,9 +1,20 @@
+@if (result(); as r) {
+  <!-- Small screens only: keeps the answer in view while the form is being edited. -->
+  <div class="summary-bar" data-testid="summary-bar" aria-hidden="true">
+    <span><strong>{{ r.baseline.totalMonthlyPayment | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong></span>
+    <span>Save <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+    @if (busy()) {
+      <span class="updating">Updating…</span>
+    }
+  </div>
+}
+
 <div class="layout">
   <aside class="panel form-panel">
-    <app-loan-form [busy]="busy()" (calculate)="calculate($event)" />
+    <app-loan-form (calculate)="calculate($event)" />
   </aside>
 
-  <section class="results" aria-live="polite" [attr.aria-busy]="busy()">
+  <section class="results" aria-live="polite" [attr.aria-busy]="busy()" [class.updating]="busy()" data-testid="results">
     @if (errors().length > 0) {
       <div class="alert" role="alert" data-testid="error-summary">
         <strong>We couldn't run that calculation.</strong>

@@ -10,8 +10,13 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
   template: `
     @let r = result();
     <dl class="tiles">
+      <div class="tile hero">
+        <dt>Net savings from paying extra</dt>
+        <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+        <small data-testid="savings-detail">{{ savingsDetail() }}</small>
+      </div>
       <div class="tile">
-        <dt>Monthly payment</dt>
+        <dt>Required monthly payment</dt>
         <dd data-testid="total-monthly-payment">{{ r.baseline.totalMonthlyPayment | currency }}</dd>
         <small>
           <span data-testid="monthly-payment">{{ r.baseline.monthlyPayment | currency }}</span> principal &amp; interest
@@ -19,11 +24,9 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
             + {{ r.baseline.monthlyHousingCosts.total | currency }} taxes &amp; fees
           }
         </small>
-      </div>
-      <div class="tile highlight">
-        <dt>Net savings</dt>
-        <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-        <small data-testid="savings-detail">{{ savingsDetail() }}</small>
+        @if (withExtra(); as extra) {
+          <small class="with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</small>
+        }
       </div>
       <div class="tile highlight">
         <dt>Time saved</dt>
@@ -71,6 +74,12 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
 export class SavingsSummaryComponent {
   /** The analysis to summarize. */
   readonly result = input.required<AmortizationResponse>();
+
+  /** The extra principal in the first payment and what that payment comes to, or null when nothing extra is paid. */
+  readonly withExtra = computed(() => {
+    const first = this.result().accelerated.payments[0];
+    return first && first.extraPrincipal > 0 ? { amount: first.extraPrincipal, total: first.totalOutlay } : null;
+  });
 
   /** Payments saved, formatted as years and months. */
   readonly timeSaved = computed(() => formatMonths(this.result().savings.paymentsSaved));

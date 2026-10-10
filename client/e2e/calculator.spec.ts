@@ -24,6 +24,27 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.scheduleRows.first()).toBeVisible();
   });
 
+  test('keeps advanced options collapsed, each summarized in one line', async ({ page }) => {
+    for (const id of ['section-taxes', 'section-costs', 'section-growth', 'section-options']) {
+      await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
+    }
+    await expect(page.getByTestId('taxes-summary')).toHaveText('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
+    await expect(page.getByTestId('school-tax-rate')).toBeHidden();
+
+    await page.getByTestId('section-taxes').locator('summary').click();
+
+    await expect(page.getByTestId('school-tax-rate')).toBeVisible();
+  });
+
+  test('recalculates as you type, without a Calculate button', async ({ page }) => {
+    await expect(page.getByTestId('calculate')).toHaveCount(0);
+
+    await calculator.set('monthly-extra', 1_000);
+    await calculator.calculate();
+
+    await expect(calculator.timeSaved).not.toHaveText('6 yr 1 mo');
+  });
+
   test('calculates interest savings for a recurring monthly extra payment', async () => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.clearHousingCosts();
@@ -41,8 +62,8 @@ test.describe('Mortgage calculator', () => {
   test('adds taxes and fees to the monthly payment but never counts them as savings', async ({ page }) => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.clearHousingCosts();
-    await page.getByTestId('property-tax-rate').fill('2.1');
-    await page.getByTestId('monthly-hoa').fill('75');
+    await calculator.set('property-tax-rate', 2.1);
+    await calculator.set('monthly-hoa', 75);
     await calculator.setExtras(200);
 
     await calculator.calculate();
@@ -56,8 +77,8 @@ test.describe('Mortgage calculator', () => {
   test('requested PMI removal: extra payments end PMI sooner and count as savings', async ({ page }) => {
     await calculator.fillLoan(FIVE_PERCENT_DOWN);
     await calculator.clearHousingCosts();
-    await page.getByTestId('pmi-rate').fill('0.5');
-    await page.getByTestId('pmi-cancellation').selectOption('BorrowerRequested');
+    await calculator.set('pmi-rate', 0.5);
+    await calculator.choose('pmi-cancellation', 'BorrowerRequested');
     await calculator.setExtras(300);
 
     await calculator.calculate();
@@ -71,7 +92,7 @@ test.describe('Mortgage calculator', () => {
   test('automatic PMI removal follows the original schedule, so extra payments do not move it', async ({ page }) => {
     await calculator.fillLoan(FIVE_PERCENT_DOWN);
     await calculator.clearHousingCosts();
-    await page.getByTestId('pmi-rate').fill('0.5');
+    await calculator.set('pmi-rate', 0.5);
     await calculator.setExtras(300);
 
     await calculator.calculate();
@@ -80,7 +101,7 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('savings-detail')).not.toContainText('PMI');
   });
 
-  test('applies the Texas school homestead exemption only to a homestead', async ({ page }) => {
+  test('applies the Texas school homestead exemption only to a homestead', async () => {
     // $300,000 home, 1% school rate: homestead taxes $160,000 ($133.33/mo); otherwise $300,000 ($250.00/mo).
     await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
     await calculator.clearHousingCosts();
@@ -90,7 +111,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
     await expect(calculator.breakdownAmount('School tax')).toHaveText('$133.33');
 
-    await page.getByTestId('is-homestead').uncheck();
+    await calculator.setChecked('is-homestead', false);
     await calculator.calculate();
     await expect(calculator.breakdownAmount('School tax')).toHaveText('$250.00');
   });
@@ -102,7 +123,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('school-tax-rate', 1);
     await calculator.set('school-exemption', 140_000);
     await calculator.set('home-value-growth', 10);
-    await page.getByTestId('is-over-65').check();
+    await calculator.setChecked('is-over-65', true);
     await calculator.set('over-65-year', 1);
     await calculator.set('over-65-school-exemption', 60_000);
 
@@ -181,19 +202,19 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.scheduleRows).toHaveCount(360);
   });
 
-  test('blocks invalid input in the browser before calling the API', async ({ page }) => {
+  test('never sends invalid input to the API, and explains the problem', async ({ page }) => {
     let apiCalled = false;
     page.on('request', (r) => {
       if (r.url().includes('/api/')) apiCalled = true;
     });
 
-    await calculator.interestRate.fill('45');
-    await calculator.downPayment.fill('400000');
-    await calculator.calculateButton.click();
+    await calculator.set('interest-rate', 45);
+    await calculator.set('down-payment', 400_000);
 
     await expect(page.getByText('Rate must be between 0% and 30%.')).toBeVisible();
     await expect(page.getByText('The down payment must be less than the home price.')).toBeVisible();
-    expect(apiCalled).toBe(false);
+    await page.waitForTimeout(1_000); // longer than the recalculation pause
+    expect(apiCalled, 'invalid input must not reach the API').toBe(false);
   });
 
   test('shows server validation messages', async ({ page }) => {
@@ -211,21 +232,46 @@ test.describe('Mortgage calculator', () => {
       }),
     );
 
-    await calculator.calculateButton.click();
+    await calculator.set('monthly-extra', 250);
 
     await expect(calculator.errorSummary).toContainText("'Amount' cannot exceed the loan amount.");
   });
 
-  test('recovers after a failed request', async ({ page }) => {
-    await page.route('**/api/v1/amortization/calculate', (route) => route.abort(), { times: 1 });
-    await calculator.calculateButton.click();
+  test('recovers after a failed request', async () => {
+    await calculator.failNextCalculation();
+    await calculator.set('monthly-extra', 250);
     await expect(calculator.errorSummary).toContainText('could not be reached');
 
+    await calculator.set('monthly-extra', 300);
     await calculator.calculate();
 
     await expect(calculator.errorSummary).toBeHidden();
     await expect(calculator.monthlyPayment).toBeVisible();
   });
+});
+
+test.describe('On a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('keeps the payment and savings in view while editing', async ({ page }) => {
+    const calculator = new CalculatorPage(page);
+    await calculator.open();
+
+    await calculator.set('monthly-extra', 500);
+    await calculator.calculate();
+
+    await expect(calculator.summaryBar).toBeVisible();
+    await expect(calculator.summaryBar).toContainText('/mo');
+    await expect(calculator.summaryBar).toContainText('Save $');
+    await expect(calculator.summaryBar).toBeInViewport();
+  });
+});
+
+test('hides the phone summary bar on a desktop, where the tiles are in view', async ({ page }) => {
+  const calculator = new CalculatorPage(page);
+  await calculator.open();
+
+  await expect(calculator.summaryBar).toBeHidden();
 });
 
 test('serves interactive API documentation', async ({ page }) => {

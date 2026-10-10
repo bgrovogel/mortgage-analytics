@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 357 backend tests · Jest: 77 Angular unit tests · Playwright: 17 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 357 backend tests · Jest: 95 Angular unit tests · Playwright: 21 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -77,9 +77,9 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 357 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 77 Jest unit tests; fails below 85% coverage
+npm test                          # 95 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 17 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 21 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -285,6 +285,15 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 ### Frontend
 
+- **Five fields up front, the rest one click away.** Price, down payment, rate, term and the monthly
+  extra are always visible. Taxes, insurance/HOA/PMI, future increases and other payment options sit in
+  collapsible sections, each summarized in one line ("School 1% · County/city 1.1% · MUD 0.85% ·
+  Homestead"). A closed section that holds an invalid value says so, so a problem is never hidden.
+- **Results update as you type.** Every valid change produces a request. The page waits for a 400 ms
+  pause, cancels stale requests with `switchMap`, and stays `aria-busy` until the *latest* change is
+  answered (an older response arriving mid-typing does not end the busy state).
+- **One headline number.** Net savings is the full-width hero tile, and the required payment shows what
+  it comes to with the extra. On phones a sticky bar keeps the payment and savings in view while editing.
 - **Container / presentational split.** `CalculatorPageComponent` owns state and HTTP, and five
   presentational children take inputs and emit outputs.
 - **Signals + OnPush** throughout, with a typed form. Loan amount, down-payment % and whether PMI
@@ -306,8 +315,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 | Application (93) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | API integration (16) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies. Error handling, with a substitute service that throws (422, 500 without leaking details, 400). Swagger, health, the 404 for unknown API routes. |
 | Conventions (4) | NUnit + Roslyn | The test standards themselves (below). |
-| Angular (77) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (17) | Playwright | Real browser and real API, through a page object. |
+| Angular (95) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (21) | Playwright | Real browser and real API, through a page object. |
 
 **Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

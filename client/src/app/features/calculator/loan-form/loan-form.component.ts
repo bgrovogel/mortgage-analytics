@@ -1,6 +1,6 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, output } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   AmortizationRequest,
@@ -15,6 +15,27 @@ const MAX_YEARS = 50;
 const MAX_RATE = 30;
 const MIN_RECAST_LUMP_SUM = 1_000;
 
+/** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
+const CHECK_SECTION = 'Check the values in this section';
+
+/** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
+const SECTION_CONTROLS = {
+  taxes: ['schoolTaxRate', 'propertyTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
+    'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
+  costs: ['pidAnnual', 'pidYears', 'annualInsurance', 'monthlyHoa', 'pmiRate'],
+  growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
+  options: ['firstPaymentDate', 'annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
+} as const;
+
+const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** 1 becomes "1%", 0.85 becomes "0.85%". */
+const percent = (value: number) => `${Number(value.toFixed(4))}%`;
+
+/** 4 becomes "+4%", -2 becomes "-2%", 0 becomes "0%". */
+const signedPercent = (value: number) => `${value > 0 ? '+' : ''}${percent(value)}`;
+
 /** Returns the first day of next month as yyyy-MM-dd, the API's default first payment date. */
 function firstOfNextMonth(): string {
   const now = new Date();
@@ -23,8 +44,12 @@ function firstOfNextMonth(): string {
 }
 
 /**
- * Presentational component: owns the form and emits a ready-to-send request.
- * It knows nothing about HTTP; the page decides what to do with the request.
+ * Presentational component: owns the form and emits a ready-to-send request whenever a change
+ * leaves it valid, so results update as the user types. It knows nothing about HTTP or timing;
+ * the page debounces and sends the requests.
+ *
+ * Only the five main fields are always visible. Everything else lives in collapsible sections,
+ * each summarized in one line while closed.
  */
 @Component({
   selector: 'app-loan-form',
@@ -36,10 +61,7 @@ function firstOfNextMonth(): string {
 export class LoanFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
 
-  /** True while a calculation is in flight; disables the submit button. */
-  readonly busy = input(false);
-
-  /** Emits a complete request each time the form is submitted while valid. */
+  /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly calculate = output<AmortizationRequest>();
 
   readonly maxYears = MAX_YEARS;
@@ -108,6 +130,67 @@ export class LoanFormComponent implements OnInit {
   /** Over-65 / disability relief applies only to a homestead. */
   readonly isOver65 = computed(() => this.isHomestead() && this.values().isOver65 === true);
 
+  /** One-line summary of the property-tax section. */
+  readonly taxesSummary = computed(() => {
+    const v = this.values();
+    if (this.sectionInvalid('taxes')) return CHECK_SECTION;
+
+    const parts = [
+      v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
+      v.propertyTaxRate ? `County/city ${percent(v.propertyTaxRate)}` : '',
+      v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
+    ].filter(Boolean);
+    if (parts.length === 0) return 'No property taxes';
+
+    if (this.isHomestead()) parts.push('Homestead');
+    if (this.isOver65()) parts.push('Over 65');
+    return parts.join(' · ');
+  });
+
+  /** One-line summary of the insurance, HOA, PID and PMI section. */
+  readonly costsSummary = computed(() => {
+    const v = this.values();
+    if (this.sectionInvalid('costs')) return CHECK_SECTION;
+
+    const parts = [
+      v.annualInsurance ? `Insurance ${dollars.format(v.annualInsurance)}/yr` : '',
+      v.monthlyHoa ? `HOA ${dollars.format(v.monthlyHoa)}/mo` : '',
+      v.pidAnnual ? `PID ${dollars.format(v.pidAnnual)}/yr` : '',
+      this.pmiApplies() && v.pmiRate ? `PMI ${percent(v.pmiRate)}` : '',
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(' · ') : 'None';
+  });
+
+  /** One-line summary of the yearly-increase assumptions. */
+  readonly growthSummary = computed(() => {
+    const v = this.values();
+    if (this.sectionInvalid('growth')) return CHECK_SECTION;
+
+    return `Home ${signedPercent(v.homeValueGrowthRate ?? 0)} · Insurance ${signedPercent(v.insuranceIncreaseRate ?? 0)}`
+      + ` · HOA ${signedPercent(v.hoaIncreaseRate ?? 0)}`;
+  });
+
+  /** One-line summary of the first payment date, extra payments beyond monthly, and the strategy. */
+  readonly optionsSummary = computed(() => {
+    const v = this.values();
+    if (this.sectionInvalid('options')) return CHECK_SECTION;
+
+    const lumpSums = v.lumpSums?.length ?? 0;
+    return [
+      `First payment ${v.firstPaymentDate ? monthYear.format(new Date(`${v.firstPaymentDate}T00:00:00Z`)) : 'next month'}`,
+      v.annualExtra ? `${dollars.format(v.annualExtra)} yearly` : '',
+      lumpSums ? `${lumpSums} lump sum${lumpSums === 1 ? '' : 's'}` : '',
+      v.strategy === 'Recast' ? `Recast (min ${dollars.format(v.recastMinimum ?? 0)})` : 'Pay off sooner',
+    ].filter(Boolean).join(' · ');
+  });
+
+  constructor() {
+    // Recalculate as the user types: every change that leaves the form valid produces a request.
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.isComplete()) this.calculate.emit(this.toRequest());
+    });
+  }
+
   /** The lump-sum rows, typed for the template. */
   get lumpSums(): FormArray<LumpSumForm> {
     return this.form.controls.lumpSums;
@@ -140,11 +223,22 @@ export class LoanFormComponent implements OnInit {
 
   /** Emits the request if the form is valid; otherwise reveals every error. */
   submit(): void {
-    if (this.form.invalid || this.loanAmount() <= 0) {
+    if (!this.isComplete()) {
       this.form.markAllAsTouched();
       return;
     }
     this.calculate.emit(this.toRequest());
+  }
+
+  /** True when the form can be sent: every field valid and something left to borrow. */
+  private isComplete(): boolean {
+    const v = this.form.getRawValue();
+    return this.form.valid && v.homePrice - v.downPayment > 0;
+  }
+
+  /** True when any control in `section` is invalid. */
+  private sectionInvalid(section: keyof typeof SECTION_CONTROLS): boolean {
+    return SECTION_CONTROLS[section].some((name) => this.form.controls[name].invalid);
   }
 
   /** Converts form values (years, flat fields) into the API's request shape. */

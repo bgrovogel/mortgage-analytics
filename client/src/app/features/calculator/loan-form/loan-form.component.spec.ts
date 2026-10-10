@@ -16,21 +16,21 @@ describe('LoanFormComponent', () => {
   });
 
   const controls = () => component.form.controls;
+  const last = () => emitted[emitted.length - 1];
   const submit = () => {
     component.submit();
-    return emitted[emitted.length - 1];
+    return last();
   };
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
+  const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
 
   describe('on load', () => {
-    it('submits the default example once, so results appear without a click', () => {
+    it('submits the default example once, so results appear without any input', () => {
       expect(emitted).toHaveLength(1);
     });
 
     it('maps years to months and sends a complete Texas homestead example', () => {
-      const request = emitted[0];
-
-      expect(request).toMatchObject({
+      expect(emitted[0]).toMatchObject({
         homePrice: 375_000,
         downPayment: 18_750,
         termInMonths: 360,
@@ -45,6 +45,91 @@ describe('LoanFormComponent', () => {
       expect(component.loanAmount()).toBe(356_250);
       expect(component.downPaymentPercent()).toBeCloseTo(5);
       expect(component.pmiApplies()).toBe(true);
+    });
+  });
+
+  describe('layout', () => {
+    it('shows only the five main fields; everything else is in sections that start closed', () => {
+      const sections = [...fixture.nativeElement.querySelectorAll('details')] as HTMLDetailsElement[];
+
+      for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
+        expect(el(id)?.closest('details')).toBeNull();
+      }
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-taxes', 'section-costs', 'section-growth', 'section-options']);
+      expect(sections.every((s) => !s.open)).toBe(true);
+    });
+
+    it('has no Calculate button: results update as you type', () => {
+      expect(el('calculate')).toBeNull();
+    });
+
+    it('summarizes each closed section in one line', () => {
+      expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
+      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
+      expect(text('growth-summary')).toBe('Home +4% · Insurance +5% · HOA +3%');
+      expect(component.optionsSummary()).toMatch(/^First payment [A-Z][a-z]{2} \d{4} · Pay off sooner$/);
+    });
+
+    it('updates the summaries as values change', () => {
+      controls().isOver65.setValue(true);
+      controls().mudTaxRate.setValue(0);
+      controls().pidAnnual.setValue(1_200);
+      controls().downPayment.setValue(75_000);
+      controls().homeValueGrowthRate.setValue(-2);
+      controls().annualExtra.setValue(2_000);
+      controls().strategy.setValue('Recast');
+      component.addLumpSum();
+      controls().firstPaymentDate.setValue('2027-03-01');
+      fixture.detectChanges();
+
+      expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · Homestead · Over 65');
+      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PID $1,200/yr');
+      expect(text('growth-summary')).toBe('Home -2% · Insurance +5% · HOA +3%');
+      expect(text('options-summary')).toBe('First payment Mar 2027 · $2,000 yearly · 1 lump sum · Recast (min $10,000)');
+    });
+
+    it('says when a section has nothing in it', () => {
+      for (const name of ['schoolTaxRate', 'propertyTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate'] as const) {
+        controls()[name].setValue(0);
+      }
+      controls().isHomestead.setValue(false);
+      controls().firstPaymentDate.setValue('');
+      component.addLumpSum();
+      component.addLumpSum();
+      fixture.detectChanges();
+
+      expect(text('taxes-summary')).toBe('No property taxes');
+      expect(text('costs-summary')).toBe('None');
+      expect(component.optionsSummary()).toBe('First payment next month · 2 lump sums · Pay off sooner');
+    });
+
+    it('flags a closed section that contains an invalid value, so the problem is not hidden', () => {
+      controls().mudTaxRate.setValue(9);
+      controls().pmiRate.setValue(-1);
+      controls().hoaIncreaseRate.setValue(99);
+      controls().strategy.setValue('Recast');
+      controls().recastMinimum.setValue(10);
+      fixture.detectChanges();
+
+      for (const id of ['taxes-summary', 'costs-summary', 'growth-summary', 'options-summary']) {
+        expect(text(id)).toBe('Check the values in this section');
+      }
+    });
+  });
+
+  describe('recalculating as you type', () => {
+    it('emits a new request whenever a change leaves the form valid', () => {
+      controls().monthlyExtra.setValue(300);
+
+      expect(emitted).toHaveLength(2);
+      expect(last().extraPayments?.monthlyAmount).toBe(300);
+    });
+
+    it('emits nothing while the form is invalid', () => {
+      controls().annualInterestRate.setValue(45);
+      controls().downPayment.setValue(400_000);
+
+      expect(emitted).toHaveLength(1);
     });
   });
 
@@ -68,14 +153,14 @@ describe('LoanFormComponent', () => {
       controls().strategy.setValue('Recast');
 
       expect(component.isRecast()).toBe(true);
-      expect(submit().recast).toEqual({ minimumLumpSum: 10_000, fee: 250 });
+      expect(last().recast).toEqual({ minimumLumpSum: 10_000, fee: 250 });
     });
 
     it('sends an annual extra only when its amount is positive', () => {
       controls().annualExtra.setValue(2_000);
       controls().annualFirstPayment.setValue(6);
 
-      expect(submit().extraPayments?.annual).toEqual({ amount: 2_000, firstPaymentNumber: 6 });
+      expect(last().extraPayments?.annual).toEqual({ amount: 2_000, firstPaymentNumber: 6 });
     });
 
     it('adds and removes lump sums', () => {
@@ -83,16 +168,15 @@ describe('LoanFormComponent', () => {
       component.addLumpSum();
       component.removeLumpSum(0);
 
-      expect(submit().extraPayments?.lumpSums).toEqual([{ paymentNumber: 12, amount: 10_000 }]);
+      expect(last().extraPayments?.lumpSums).toEqual([{ paymentNumber: 12, amount: 10_000 }]);
     });
 
     it('sends a PID only when its assessment is positive, with no end year when blank', () => {
       controls().pidAnnual.setValue(1_200);
-
-      expect(submit().housingCosts?.pid).toEqual({ annualAssessment: 1_200, remainingYears: null });
+      expect(last().housingCosts?.pid).toEqual({ annualAssessment: 1_200, remainingYears: null });
 
       controls().pidYears.setValue(20);
-      expect(submit().housingCosts?.pid).toEqual({ annualAssessment: 1_200, remainingYears: 20 });
+      expect(last().housingCosts?.pid).toEqual({ annualAssessment: 1_200, remainingYears: 20 });
     });
 
     it('sends over-65 relief only for a homestead', () => {
@@ -100,7 +184,7 @@ describe('LoanFormComponent', () => {
       controls().over65Year.setValue(6);
 
       expect(component.isOver65()).toBe(true);
-      expect(submit().housingCosts?.over65OrDisabled).toEqual({
+      expect(last().housingCosts?.over65OrDisabled).toEqual({
         qualifiesInYear: 6,
         schoolExemption: 60_000,
         localExemption: 0,
@@ -109,7 +193,7 @@ describe('LoanFormComponent', () => {
 
       controls().isHomestead.setValue(false);
       expect(component.isOver65()).toBe(false);
-      expect(submit().housingCosts?.over65OrDisabled).toBeNull();
+      expect(last().housingCosts?.over65OrDisabled).toBeNull();
     });
 
     it('sends zeros for blank optional amounts and null for a blank first payment date', () => {
@@ -135,7 +219,7 @@ describe('LoanFormComponent', () => {
   });
 
   describe('validation', () => {
-    it('does not submit an out-of-range rate, and reveals the error', () => {
+    it('reveals every error when an invalid form is submitted', () => {
       controls().annualInterestRate.setValue(45);
 
       component.submit();
@@ -146,24 +230,23 @@ describe('LoanFormComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('Rate must be between 0% and 30%.');
     });
 
-    it('does not submit when the down payment leaves nothing to borrow', () => {
+    it('explains when the down payment leaves nothing to borrow', () => {
       controls().downPayment.setValue(375_000);
-
-      component.submit();
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(1);
       expect(fixture.nativeElement.textContent).toContain('The down payment must be less than the home price.');
     });
 
-    it('does not submit a recast minimum under $1,000, and explains why', () => {
+    it('rejects a recast minimum under $1,000, and explains why', () => {
       controls().strategy.setValue('Recast');
-      controls().recastMinimum.setValue(500);
+      const before = emitted.length;
 
-      component.submit();
+      controls().recastMinimum.setValue(500);
+      controls().recastMinimum.markAsDirty(); // as typing would
       fixture.detectChanges();
 
-      expect(emitted).toHaveLength(1);
+      expect(emitted).toHaveLength(before);
       expect(fixture.nativeElement.textContent).toContain('Lenders require a lump sum of at least $1,000 to recast.');
     });
 
@@ -205,13 +288,14 @@ describe('LoanFormComponent', () => {
       expect(el('pmi-hint')?.textContent).toContain('No PMI');
     });
 
-    it('disables the button and says so while busy', () => {
-      fixture.componentRef.setInput('busy', true);
-      fixture.detectChanges();
+    it('spells out jargon for screen readers and on hover', () => {
+      const titles = [...fixture.nativeElement.querySelectorAll('abbr')].map((a: HTMLElement) => a.title);
 
-      const button = el('calculate') as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
-      expect(button.textContent).toContain('Calculating');
+      expect(titles).toEqual(expect.arrayContaining([
+        'Municipal Utility District',
+        'Public Improvement District',
+        'Private mortgage insurance',
+      ]));
     });
   });
 });

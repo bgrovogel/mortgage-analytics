@@ -1,6 +1,6 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -19,7 +19,7 @@
 
 .charts {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);
   gap: 1.25rem;
 }
 
@@ -63,5 +63,43 @@
 
   .form-panel {
     position: static;
+  }
+}
+
+// Fade results slightly while they are being recalculated, so stale numbers are not mistaken for fresh ones.
+.results.updating {
+  opacity: 0.6;
+  transition: opacity 0.2s ease 0.15s;
+}
+
+.summary-bar {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .summary-bar {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 0 -1rem 1rem;
+    padding: 0.7rem 1rem;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+
+    strong {
+      color: var(--text-primary);
+      font-size: 1.05rem;
+    }
+
+    .updating {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
   }
 }

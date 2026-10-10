@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { aHousingCosts, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
+import { aHousingCosts, aPayment, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { SavingsSummaryComponent } from './savings-summary.component';
 
@@ -21,6 +21,30 @@ describe('SavingsSummaryComponent', () => {
     expect(text('total-monthly-payment')).toBe('$1,711.60');
     expect(text('monthly-payment')).toBe('$1,199.10');
     expect(fixture.nativeElement.textContent).toContain('taxes & fees');
+  });
+
+  it('labels the payment as the required payment', () => {
+    render(aResponse());
+
+    expect(fixture.nativeElement.textContent).toContain('Required monthly payment');
+  });
+
+  it('shows what the first payment comes to with the extra principal', () => {
+    render(aResponse({ accelerated: aSchedule({ payments: [aPayment(1, { extraPrincipal: 200, totalOutlay: 3_655.39 })] }) }));
+
+    expect(text('with-extra')).toBe('+ $200 extra = $3,655.39');
+  });
+
+  it('omits the extra line when nothing extra is paid', () => {
+    render(aResponse());
+
+    expect(text('with-extra')).toBeUndefined();
+  });
+
+  it('makes net savings the headline figure', () => {
+    render(aResponse());
+
+    expect(fixture.nativeElement.querySelector('[data-testid="net-savings"]').closest('.tile').classList).toContain('hero');
   });
 
   it('omits the taxes line when there are no housing costs', () => {
