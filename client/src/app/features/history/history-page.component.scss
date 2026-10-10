@@ -35,12 +35,16 @@ input {
 .filters {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
   align-items: center;
+  // Keep the filter and the search side by side; the title gives way first.
+  flex: 0 1 auto;
 }
 
 .search {
-  width: min(280px, 100%);
+  width: 15rem;
+  max-width: 100%;
 }
 
 .toggle {
@@ -186,4 +190,11 @@ button {
   color: var(--text-primary);
   border-radius: 12px;
   padding: 0.9rem 1.1rem;
+}
+
+// One column on a phone: filters and search start at the left, under the title.
+@media (max-width: 640px) {
+  .filters {
+    justify-content: flex-start;
+  }
 }

@@ -1,0 +1,40 @@
+<section class="card" aria-labelledby="account-title">
+  <div class="toggle" role="group" aria-label="Account">
+    <button type="button" [attr.aria-pressed]="mode() === 'sign-in'" (click)="setMode('sign-in')" data-testid="account-mode-sign-in">Sign in</button>
+    <button type="button" [attr.aria-pressed]="mode() === 'create'" (click)="setMode('create')" data-testid="account-mode-create">Create account</button>
+  </div>
+
+  <h2 id="account-title">{{ mode() === 'create' ? 'Create your account' : 'Welcome back' }}</h2>
+  <p class="intro">
+    {{ mode() === 'create'
+      ? 'An account keeps your saved calculations and refinance comparisons private, and lets you find them again.'
+      : 'Sign in to save calculations and see your history.' }}
+  </p>
+
+  <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="account-form">
+    <label class="field">
+      <span>Email</span>
+      <input type="email" formControlName="email" autocomplete="email" data-testid="account-email" [attr.aria-invalid]="showError('email')" />
+      @if (showError('email')) {
+        <small class="error">Enter a valid email address.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Password</span>
+      <input type="password" formControlName="password" data-testid="account-password" [attr.aria-invalid]="showError('password')"
+             [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
+      @if (showError('password')) {
+        <small class="error">At least 8 characters, with a number.</small>
+      }
+    </label>
+
+    @if (error(); as message) {
+      <p class="alert" role="alert" data-testid="account-error">{{ message }}</p>
+    }
+
+    <button type="submit" class="primary" [disabled]="busy()" data-testid="account-submit">
+      {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
+    </button>
+  </form>
+</section>

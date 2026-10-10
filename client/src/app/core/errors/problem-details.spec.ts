@@ -34,4 +34,8 @@ describe('toErrorMessages', () => {
   it('handles errors that are not HTTP errors', () => {
     expect(toErrorMessages(new Error('boom'))).toEqual(['Something went wrong. Please try again.']);
   });
+
+  it('asks the user to sign in when the session has ended', () => {
+    expect(toErrorMessages(new HttpErrorResponse({ status: 401 }))).toEqual(['Please sign in to continue.']);
+  });
 });

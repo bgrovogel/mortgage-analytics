@@ -1,10 +1,10 @@
-import { API_URL } from './env';
 import { expect, test } from './fixtures';
 import { HistoryPage } from './history.page';
 
 /**
  * Saving, finding, reopening, renaming and deleting calculations, against the real API and database.
- * Each test saves under names carrying its own tag, and deletes whatever it saved afterwards.
+ * Each test runs as a brand-new user (the `signedIn` / `account` fixtures), so its History holds only
+ * what it saved; names still carry a tag, so searches are unambiguous.
  */
 test.describe('History', () => {
   let tag: string;
@@ -13,14 +13,7 @@ test.describe('History', () => {
     tag = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   });
 
-  test.afterEach(async ({ request }) => {
-    const leftovers = await (await request.get(`${API_URL}/api/v1/calculations`, { params: { search: tag } })).json();
-    for (const calculation of leftovers as { id: string }[]) {
-      await request.delete(`${API_URL}/api/v1/calculations/${calculation.id}`);
-    }
-  });
-
-  test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ calculator, page }) => {
+  test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ signedIn: calculator, page }) => {
     const name = `Oak St ${tag}`;
     await calculator.set('home-price', 432_100);
     await calculator.set('monthly-extra', 350);
@@ -46,7 +39,7 @@ test.describe('History', () => {
     await expect(page.getByTestId('save-update'), 'saving again offers to update the one it came from').toContainText(name);
   });
 
-  test('renames and deletes a saved calculation', async ({ calculator, page }) => {
+  test('renames and deletes a saved calculation', async ({ signedIn: calculator, page }) => {
     const name = `Maple ${tag}`;
     const renamed = `Maple final ${tag}`;
     await calculator.saveAs(name);
@@ -63,7 +56,8 @@ test.describe('History', () => {
     await expect(history.empty, 'and nothing else matches the search').toContainText('Nothing matches');
   });
 
-  test('saves a refinance comparison and reopens it on the Refinance page', async ({ page }) => {
+  test('saves a refinance comparison and reopens it on the Refinance page', async ({ account, page }) => {
+    expect(account.email, 'signed in').toBeTruthy();
     const name = `Refi ${tag}`;
     await page.goto('/refinance');
     await page.getByTestId('new-rate').fill('5.5');

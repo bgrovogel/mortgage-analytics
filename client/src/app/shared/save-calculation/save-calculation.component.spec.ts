@@ -1,4 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
+import { AuthService, User } from '../../core/auth/auth.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -11,6 +13,7 @@ describe('SaveCalculationComponent', () => {
   let fixture: ComponentFixture<SaveCalculationComponent>;
   let api: { save: jest.Mock; update: jest.Mock };
   let saved: SavedCalculation[];
+  let user: ReturnType<typeof signal<User | null>>;
 
   const inputs = { homePrice: 375_000 } as AmortizationRequest;
   const payload: SavedInputs = { inputs };
@@ -30,7 +33,10 @@ describe('SaveCalculationComponent', () => {
 
   beforeEach(() => {
     api = { save: jest.fn(), update: jest.fn() };
-    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: api }] });
+    user = signal<User | null>({ email: 'alice@example.com' });
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: api }, { provide: AuthService, useValue: { user } }],
+    });
   });
 
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
@@ -127,5 +133,17 @@ describe('SaveCalculationComponent', () => {
     create({ payload: null });
 
     expect((el('save-open') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('asks a signed-out visitor to sign in first, and to come back here afterwards', () => {
+    user.set(null);
+    create();
+
+    click('save-open');
+
+    const prompt = el('save-sign-in')!;
+    expect(prompt.textContent).toContain('Sign in to save');
+    expect(prompt.querySelector('a')!.getAttribute('href')).toBe('/sign-in?returnUrl=%2F');
+    expect(el('save-name')).toBeNull();
   });
 });

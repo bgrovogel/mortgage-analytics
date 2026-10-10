@@ -113,6 +113,60 @@ app-root {
 }
 
 // The page links, as pills; the current page is filled with the soft accent.
+// The page links and the account, kept together on the right; they wrap as a unit on narrow screens.
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+}
+
+// Who is signed in, beside the page links.
+.account {
+  padding-left: 1rem;
+  border-left: 1px solid var(--border);
+
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+
+  .who {
+    color: var(--text-secondary);
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  a,
+  .link {
+    font: inherit;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.6rem;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// On a phone the account wraps onto its own line, where a divider would only look stray.
+@media (max-width: 640px) {
+  .account {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
 .app-nav {
   display: flex;
   flex-wrap: wrap;

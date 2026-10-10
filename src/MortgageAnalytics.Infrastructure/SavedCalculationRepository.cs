@@ -10,9 +10,9 @@ public sealed class SavedCalculationRepository(CalculationsDbContext db) : ISave
     private const string LikeEscape = "\\";
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SavedCalculation>> ListAsync(string? search, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<SavedCalculation>> ListAsync(string ownerId, string? search, CancellationToken cancellationToken)
     {
-        var query = db.SavedCalculations.AsNoTracking();
+        var query = db.SavedCalculations.AsNoTracking().Where(c => c.OwnerId == ownerId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -37,8 +37,8 @@ public sealed class SavedCalculationRepository(CalculationsDbContext db) : ISave
     }
 
     /// <inheritdoc />
-    public async Task<SavedCalculation?> FindAsync(Guid id, CancellationToken cancellationToken) =>
-        await db.SavedCalculations.FindAsync([id], cancellationToken);
+    public Task<SavedCalculation?> FindAsync(string ownerId, Guid id, CancellationToken cancellationToken) =>
+        db.SavedCalculations.SingleOrDefaultAsync(c => c.Id == id && c.OwnerId == ownerId, cancellationToken);
 
     /// <inheritdoc />
     public async Task AddAsync(SavedCalculation calculation, CancellationToken cancellationToken)
@@ -55,6 +55,6 @@ public sealed class SavedCalculationRepository(CalculationsDbContext db) : ISave
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken) =>
-        await db.SavedCalculations.Where(c => c.Id == id).ExecuteDeleteAsync(cancellationToken) > 0;
+    public async Task<bool> DeleteAsync(string ownerId, Guid id, CancellationToken cancellationToken) =>
+        await db.SavedCalculations.Where(c => c.Id == id && c.OwnerId == ownerId).ExecuteDeleteAsync(cancellationToken) > 0;
 }

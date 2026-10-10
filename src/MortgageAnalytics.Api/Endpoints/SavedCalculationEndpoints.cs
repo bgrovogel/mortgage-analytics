@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using MortgageAnalytics.Api.Filters;
 using MortgageAnalytics.Application.Contracts;
@@ -6,8 +7,10 @@ using MortgageAnalytics.Application.SavedCalculations;
 namespace MortgageAnalytics.Api.Endpoints;
 
 /// <summary>
-/// The HTTP surface for saved calculations: list (with search), get, save, replace and delete.
-/// Like the amortization endpoints, these only translate between HTTP and the application service.
+/// The HTTP surface for saved calculations: list (with search), get, save, replace and delete. Every
+/// endpoint requires a signed-in user and works only on that user's calculations; another user's
+/// calculation is a 404, so its existence is never revealed. Like the other endpoints, these only
+/// translate between HTTP and the application service.
 /// </summary>
 public static class SavedCalculationEndpoints
 {
@@ -20,6 +23,8 @@ public static class SavedCalculationEndpoints
     {
         var group = routes.MapGroup("/api/v1/calculations")
             .WithTags("Saved calculations")
+            .RequireAuthorization()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         group.MapGet("/", List)
@@ -52,27 +57,27 @@ public static class SavedCalculationEndpoints
     }
 
     private static async Task<Ok<IReadOnlyList<SavedCalculationResponse>>> List(
-        ISavedCalculationService service, CancellationToken cancellationToken, string? search = null) =>
-        TypedResults.Ok(await service.ListAsync(search, cancellationToken));
+        ClaimsPrincipal user, ISavedCalculationService service, CancellationToken cancellationToken, string? search = null) =>
+        TypedResults.Ok(await service.ListAsync(user.OwnerId(), search, cancellationToken));
 
     private static async Task<Results<Ok<SavedCalculationResponse>, ProblemHttpResult>> Get(
-        Guid id, ISavedCalculationService service, CancellationToken cancellationToken) =>
-        await service.GetAsync(id, cancellationToken) is { } found ? TypedResults.Ok(found) : NotFound();
+        Guid id, ClaimsPrincipal user, ISavedCalculationService service, CancellationToken cancellationToken) =>
+        await service.GetAsync(user.OwnerId(), id, cancellationToken) is { } found ? TypedResults.Ok(found) : NotFound();
 
     private static async Task<Created<SavedCalculationResponse>> Save(
-        SaveCalculationRequest request, ISavedCalculationService service, CancellationToken cancellationToken)
+        SaveCalculationRequest request, ClaimsPrincipal user, ISavedCalculationService service, CancellationToken cancellationToken)
     {
-        var saved = await service.SaveAsync(request, cancellationToken);
+        var saved = await service.SaveAsync(user.OwnerId(), request, cancellationToken);
         return TypedResults.Created($"/api/v1/calculations/{saved.Id}", saved);
     }
 
     private static async Task<Results<Ok<SavedCalculationResponse>, ProblemHttpResult>> Update(
-        Guid id, SaveCalculationRequest request, ISavedCalculationService service, CancellationToken cancellationToken) =>
-        await service.UpdateAsync(id, request, cancellationToken) is { } updated ? TypedResults.Ok(updated) : NotFound();
+        Guid id, SaveCalculationRequest request, ClaimsPrincipal user, ISavedCalculationService service, CancellationToken cancellationToken) =>
+        await service.UpdateAsync(user.OwnerId(), id, request, cancellationToken) is { } updated ? TypedResults.Ok(updated) : NotFound();
 
     private static async Task<Results<NoContent, ProblemHttpResult>> Delete(
-        Guid id, ISavedCalculationService service, CancellationToken cancellationToken) =>
-        await service.DeleteAsync(id, cancellationToken) ? TypedResults.NoContent() : NotFound();
+        Guid id, ClaimsPrincipal user, ISavedCalculationService service, CancellationToken cancellationToken) =>
+        await service.DeleteAsync(user.OwnerId(), id, cancellationToken) ? TypedResults.NoContent() : NotFound();
 
     private static ProblemHttpResult NotFound() =>
         TypedResults.Problem(statusCode: StatusCodes.Status404NotFound, title: NotFoundTitle);

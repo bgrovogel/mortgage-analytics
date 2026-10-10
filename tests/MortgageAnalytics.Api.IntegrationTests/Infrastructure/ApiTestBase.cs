@@ -14,6 +14,12 @@ public abstract class ApiTestBase
     /// <summary>The saved-calculations collection.</summary>
     protected const string CalculationsUrl = "/api/v1/calculations";
 
+    /// <summary>The account endpoints.</summary>
+    protected const string AccountUrl = "/api/v1/account";
+
+    /// <summary>A password that meets the rules (8+ characters with a digit).</summary>
+    protected const string GoodPassword = "correct-horse-1";
+
     /// <summary>A client for the shared in-memory API.</summary>
     protected static HttpClient Client => ApiFixture.Client;
 
@@ -24,6 +30,29 @@ public abstract class ApiTestBase
     /// <summary>Posts raw text as JSON, for malformed-body tests.</summary>
     protected static Task<HttpResponseMessage> PostRawAsync(string json) =>
         Client.PostAsync(CalculateUrl, new StringContent(json, Encoding.UTF8, "application/json"));
+
+    /// <summary>A unique email, so tests on the shared host never collide.</summary>
+    protected static string UniqueEmail() => $"user-{Guid.NewGuid():N}@example.com";
+
+    /// <summary>
+    /// Registers a new user and signs in with a session cookie, the way the browser does. The returned
+    /// client keeps the cookie, so every request it makes is that user's.
+    /// </summary>
+    protected static async Task<HttpClient> SignUpAsync(string? email = null)
+    {
+        email ??= UniqueEmail();
+        var client = ApiFixture.Factory.CreateClient(); // handles cookies by default
+        await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/register", new { email, password = GoodPassword }), "registering");
+        await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword }), "signing in");
+        return client;
+    }
+
+    /// <summary>Stops a test whose setup failed, showing the response body. Setup is not what the test asserts.</summary>
+    private static async Task EnsureSucceededAsync(HttpResponseMessage response, string step)
+    {
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Test setup failed while {step}: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+    }
 
     /// <summary>Reads the response body as a JSON document root.</summary>
     protected static async Task<JsonElement> ReadJsonAsync(HttpResponseMessage response)

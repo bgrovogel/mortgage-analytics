@@ -1,0 +1,3 @@
+# EF Core writes these files; they are generated code, so style analyzers do not apply to them.
+[*.cs]
+generated_code = true

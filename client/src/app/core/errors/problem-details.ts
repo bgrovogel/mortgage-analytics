@@ -17,6 +17,10 @@ export function toErrorMessages(error: unknown): string[] {
     return ['The server could not be reached. Is the API running?'];
   }
 
+  if (error.status === 401) {
+    return ['Please sign in to continue.'];
+  }
+
   const problem = (error.error ?? {}) as ProblemDetails;
   const fieldErrors = Object.values(problem.errors ?? {}).flat();
   if (fieldErrors.length > 0) {

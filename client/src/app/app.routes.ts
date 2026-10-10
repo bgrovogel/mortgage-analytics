@@ -3,6 +3,8 @@ import { CalculatorPageComponent } from './features/calculator/calculator-page.c
 import { OverviewTabComponent } from './features/calculator/tabs/overview-tab.component';
 import { ProjectionTabComponent } from './features/calculator/tabs/projection-tab.component';
 import { ScheduleTabComponent } from './features/calculator/tabs/schedule-tab.component';
+import { signedInGuard } from './core/auth/signed-in.guard';
+import { SignInPageComponent } from './features/account/sign-in-page.component';
 import { HistoryPageComponent } from './features/history/history-page.component';
 import { RefinancePageComponent } from './features/refinance/refinance-page.component';
 
@@ -22,6 +24,7 @@ export const routes: Routes = [
     ],
   },
   { path: 'refinance', component: RefinancePageComponent, title: title('Refinance') },
-  { path: 'history', component: HistoryPageComponent, title: title('History') },
+  { path: 'history', component: HistoryPageComponent, canActivate: [signedInGuard], title: title('History') },
+  { path: 'sign-in', component: SignInPageComponent, title: title('Sign in') },
   { path: '**', redirectTo: 'calculator' },
 ];

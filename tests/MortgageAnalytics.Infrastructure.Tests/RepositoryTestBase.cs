@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using MortgageAnalytics.Application.Contracts;
@@ -26,6 +27,9 @@ public abstract class RepositoryTestBase
         _connection.Open();
         using var context = NewContext();
         context.Database.Migrate();
+        // Saved calculations belong to real users (a foreign key), so the test owners exist.
+        context.Users.AddRange(new IdentityUser { Id = Alice, UserName = "alice" }, new IdentityUser { Id = Bob, UserName = "bob" });
+        context.SaveChanges();
     }
 
     [TearDown]
@@ -38,11 +42,20 @@ public abstract class RepositoryTestBase
     /// <summary>A repository on a new context, the way each HTTP request gets one.</summary>
     protected SavedCalculationRepository NewRepository() => new(NewContext());
 
+    /// <summary>The owner most tests save as.</summary>
+    protected const string Alice = "alice-id";
+
+    /// <summary>Another owner, for tests that keep owners apart.</summary>
+    protected const string Bob = "bob-id";
+
     /// <summary>A saved calculation with the given name, saved at <see cref="TestClock.Now"/> plus <paramref name="minutesLater"/>.</summary>
-    protected static SavedCalculation ACalculation(string name = "Oak St", int minutesLater = 0, AmortizationRequest? inputs = null)
+    protected static SavedCalculation ACalculation(string name = "Oak St", int minutesLater = 0, AmortizationRequest? inputs = null, string owner = Alice)
     {
         var at = TestClock.Now.AddMinutes(minutesLater);
-        return new SavedCalculation { Id = Guid.CreateVersion7(at), Name = name, Inputs = inputs ?? A.Request.Build(), CreatedAt = at, UpdatedAt = at };
+        return new SavedCalculation
+        {
+            Id = Guid.CreateVersion7(at), OwnerId = owner, Name = name, Inputs = inputs ?? A.Request.Build(), CreatedAt = at, UpdatedAt = at,
+        };
     }
 
     /// <summary>Saves calculations through a repository of their own.</summary>

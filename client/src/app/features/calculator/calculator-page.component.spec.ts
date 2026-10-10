@@ -8,6 +8,8 @@ import { fakeCharts } from '../../../testing/fake-charts';
 import { routes } from '../../app.routes';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { signal } from '@angular/core';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
 
@@ -19,7 +21,7 @@ describe('CalculatorPageComponent', () => {
     jest.useFakeTimers();
     calculate = jest.fn().mockReturnValue(of(aResponse()));
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: {} }, { provide: AmortizationApiService, useValue: { calculate } }],
+      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }, { provide: AmortizationApiService, useValue: { calculate } }],
     });
   });
   afterEach(() => jest.useRealTimers());

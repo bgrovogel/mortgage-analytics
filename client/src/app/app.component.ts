@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth/auth.service';
+import { CalculatorStore } from './features/calculator/calculator.store';
+import { RefinanceStore } from './features/refinance/refinance.store';
 
 /** The pages in the top navigation. */
 const PAGES = [
@@ -8,7 +11,7 @@ const PAGES = [
   { path: '/history', label: 'History' },
 ] as const;
 
-/** The app shell: title, page navigation and a link to the API docs. Pages render in the outlet. */
+/** The app shell: title, page navigation, the API docs, and who is signed in. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
@@ -18,12 +21,22 @@ const PAGES = [
         <h1>Mortgage Analytics</h1>
         <p>See what a home really costs, and how extra payments or a refinance change it.</p>
       </div>
-      <nav class="app-nav" aria-label="Pages">
-        @for (page of pages; track page.path) {
-          <a [routerLink]="page.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ page.label }}</a>
-        }
-        <a class="external" href="/swagger" target="_blank" rel="noopener">API docs ↗</a>
-      </nav>
+      <div class="header-actions">
+        <nav class="app-nav" aria-label="Pages">
+          @for (page of pages; track page.path) {
+            <a [routerLink]="page.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ page.label }}</a>
+          }
+          <a class="external" href="/swagger" target="_blank" rel="noopener">API docs ↗</a>
+        </nav>
+        <div class="account">
+          @if (auth.user(); as user) {
+            <span class="who" data-testid="signed-in-as">{{ user.email }}</span>
+            <button type="button" class="link" (click)="signOut()" data-testid="sign-out">Sign out</button>
+          } @else {
+            <a routerLink="/sign-in" data-testid="sign-in-link">Sign in</a>
+          }
+        </div>
+      </div>
     </header>
     <main>
       <router-outlet />
@@ -33,4 +46,17 @@ const PAGES = [
 })
 export class AppComponent {
   protected readonly pages = PAGES;
+  protected readonly auth = inject(AuthService);
+  private readonly calculator = inject(CalculatorStore);
+  private readonly refinance = inject(RefinanceStore);
+  private readonly router = inject(Router);
+
+  /** Signs out. The pages stop pointing at saved items, which belonged to the account. */
+  signOut(): void {
+    this.auth.signOut().subscribe(() => {
+      this.calculator.saved.set(null);
+      this.refinance.saved.set(null);
+      void this.router.navigateByUrl('/calculator');
+    });
+  }
 }

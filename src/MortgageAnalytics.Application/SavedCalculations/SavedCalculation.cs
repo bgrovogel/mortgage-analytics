@@ -11,6 +11,9 @@ public sealed class SavedCalculation
     /// <summary>The id. Version 7 GUIDs are time-ordered, which keeps database inserts sequential.</summary>
     public required Guid Id { get; init; }
 
+    /// <summary>The id of the user it belongs to. Only that user can list, read, change or delete it.</summary>
+    public required string OwnerId { get; init; }
+
     /// <summary>The name to find it by.</summary>
     public required string Name { get; set; }
 

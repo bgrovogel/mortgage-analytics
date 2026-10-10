@@ -5,6 +5,8 @@ import { aRefinanceResponse } from '../../../testing/builders';
 import { fakeCharts } from '../../../testing/fake-charts';
 import { RefinanceRequest, RefinanceResponse } from '../../core/models/refinance.models';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { signal } from '@angular/core';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { provideRouter } from '@angular/router';
 import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
@@ -22,7 +24,7 @@ describe('RefinancePageComponent', () => {
         provideRouter([]),
         fakeCharts().provider,
         { provide: RefinanceApiService, useValue: { analyze } },
-        { provide: SavedCalculationsApiService, useValue: {} },
+        { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } },
       ],
     });
   });
@@ -75,6 +77,7 @@ describe('RefinancePageComponent', () => {
   });
 
   it('offers to save the comparison, suggesting a name built from the two rates', () => {
+    TestBed.overrideProvider(AuthService, { useValue: { user: signal({ email: 'alice@example.com' }) } });
     const page = open();
 
     (page.querySelector('[data-testid="save-open"]') as HTMLButtonElement).click();

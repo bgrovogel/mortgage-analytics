@@ -48,6 +48,23 @@ button {
 }
 
 // A small panel under the Save button, over the results.
+a.primary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.prompt {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .save-form {
   position: absolute;
   right: 0;

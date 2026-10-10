@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 import { Observable } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculation.models';
@@ -20,6 +21,10 @@ import { SavedCalculationsApiService } from '../../core/services/saved-calculati
 })
 export class SaveCalculationComponent {
   private readonly api = inject(SavedCalculationsApiService);
+  protected readonly auth = inject(AuthService);
+
+  /** Where signing in should bring the user back to: this page. */
+  protected readonly returnUrl = inject(Router).url;
 
   /** What to save, or null while there is nothing to save yet. */
   readonly payload = input<SavedInputs | null>(null);

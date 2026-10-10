@@ -9,8 +9,8 @@ where it starts.
 
 It also compares **refinancing** with keeping the current loan, including the trap most calculators
 hide: a lower payment can cost more overall, because a new 30-year loan restarts the amortization
-clock. And it keeps a **named history** of calculations in a SQLite database, so any scenario can be
-found and reopened later.
+clock. With a free **account**, every calculation and refinance comparison can be saved under a name
+in a private **History** (SQLite), and found and reopened later. The calculators themselves need no account.
 
 It is a .NET 9 API with an Angular 19 dashboard, tested from pure unit tests up to browser E2E.
 
@@ -19,9 +19,9 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 
 | | |
 |---|---|
-| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · Swagger / OpenAPI · RFC 9457 ProblemDetails |
+| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions) · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 454 backend tests · Jest: 230 Angular unit tests · Playwright: 36 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 469 backend tests · Jest: 265 Angular unit tests · Playwright: 40 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -45,7 +45,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
 | **Savings** | **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and dues are deliberately excluded, because they continue after the loan is paid off. |
 | **Refinance** | The rest of the current loan against the new one, with closing costs paid at closing or rolled into the loan. Reports the monthly change, **lifetime savings (closing costs included)**, the months added by restarting the clock, and a **break-even**: the payment by which the interest saved covers the closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings". When the new payment is lower it also shows the new loan **paid at today's payment**, which is how to refinance without restarting the clock. |
-| **History** | Save any calculation under a name; search, reopen (the form is restored exactly), rename or delete it. |
+| **Accounts & History** | Sign up with an email and password. Save any calculation or refinance comparison under a name; search and filter by kind, reopen it on its own page (the form is restored exactly), rename or delete it. Each person sees only their own. |
 
 ---
 
@@ -82,12 +82,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 454 NUnit tests, including the convention tests
+dotnet test                       # 469 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 230 Jest unit tests; fails below 85% coverage
+npm test                          # 265 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 36 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 40 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -106,11 +106,16 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
 |---|---|
 | `POST /api/v1/amortization/calculate` | The purchase analysis below (`?includePayments=false` for summaries only) |
 | `POST /api/v1/refinance/analyze` | Keep the current loan or refinance it |
-| `GET /api/v1/calculations?search=` | Saved calculations, newest first, filtered by name |
-| `GET /api/v1/calculations/{id}` | One saved calculation |
-| `POST /api/v1/calculations` | Save a calculation under a name (201 with `Location`) |
-| `PUT /api/v1/calculations/{id}` | Rename it or replace its inputs |
-| `DELETE /api/v1/calculations/{id}` | Delete it (204) |
+| `POST /api/v1/account/register` · `login?useCookies=true` · `logout` | Create an account, sign in (session cookie), sign out |
+| `GET /api/v1/account/manage/info` | Who is signed in (401 when nobody is) |
+| `GET /api/v1/calculations?search=` 🔒 | Your saved calculations, newest first, filtered by name |
+| `GET /api/v1/calculations/{id}` 🔒 | One of them |
+| `POST /api/v1/calculations` 🔒 | Save calculator `inputs` or a `refinance` comparison under a name (201 with `Location`) |
+| `PUT /api/v1/calculations/{id}` 🔒 | Rename it or replace its inputs |
+| `DELETE /api/v1/calculations/{id}` 🔒 | Delete it (204) |
+
+🔒 needs a signed-in user (401 otherwise). Another user's calculation is a **404**, not a 403, so the
+API never confirms that it exists.
 
 `POST /api/v1/amortization/calculate`
 
@@ -215,9 +220,9 @@ tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, ReferenceRefinances, TestClock
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
   MortgageAnalytics.Domain.Tests/   263 tests
-  MortgageAnalytics.Application.Tests/  145 tests (unit with NSubstitute, sociable scenarios, architecture)
-  MortgageAnalytics.Infrastructure.Tests/  10 tests (real SQLite, built by the real migrations)
-  MortgageAnalytics.Api.IntegrationTests/  30 tests (shared WebApplicationFactory fixture, temp SQLite file)
+  MortgageAnalytics.Application.Tests/  149 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Infrastructure.Tests/  12 tests (real SQLite, built by the real migrations)
+  MortgageAnalytics.Api.IntegrationTests/  39 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,history} · e2e/
 ```
 
@@ -299,6 +304,15 @@ Input is validated **twice, for different reasons**:
 
 The Angular form mirrors the main limits too, which saves a round trip. The server never trusts it.
 
+Accounts follow the same habit of not trusting the client:
+
+- **Session in an HttpOnly, SameSite=Strict cookie**, so scripts cannot read it and other sites cannot
+  send it (no token in `localStorage`). Passwords are hashed by Identity; repeated failures lock the account.
+- **Ownership is enforced in the query** (`WHERE OwnerId = @user`) in the repository, not by checking
+  afterwards, and a deleted account takes its calculations with it (foreign key, cascade).
+- **Sign-in only returns to paths on this site** (`/history`, never `//evil.example`), so it cannot be
+  turned into an open redirect.
+
 ### API
 
 - **Minimal APIs** with `TypedResults`, so OpenAPI response types are inferred from the code.
@@ -367,12 +381,12 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 | Layer | Tools | What it proves |
 |---|---|---|
 | Domain (263) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. |
-| Application (145) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
-| Infrastructure (10) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: every input survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
-| API integration (30) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: saved-calculation CRUD (201 + Location, 404 problems), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
+| Application (149) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Infrastructure (12) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (both kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
+| API integration (39) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (230) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (36) | Playwright | Real browser and real API (on a scratch database), through page objects: the calculator, saving and reopening from History, and the refinance comparison against the reference numbers. |
+| Angular (265) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (40) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, sign-up and sign-out, saving while signed out, saving and reopening both kinds from History, and the refinance comparison against the reference numbers. |
 
 **Coverage:** backend 99.6% lines / 98% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
@@ -400,6 +414,6 @@ And by convention, supported by shared infrastructure:
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
 - **Adjustable-rate (ARM) loans**: a rate-schedule strategy.
-- **User accounts**, so saved calculations are private to each person (today one server shares one list).
-- **Saving refinance comparisons** to History, alongside calculator scenarios.
+- **Email confirmation and password reset**: Identity's endpoints are in place; they need an email sender.
+- **Rate limiting** on sign-in and registration, on top of Identity's lockout.
 - **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

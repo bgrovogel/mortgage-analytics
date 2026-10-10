@@ -8,7 +8,15 @@
           aria-controls="save-form" (click)="editing() ? close() : openForm()">Save</button>
 </div>
 
-@if (editing()) {
+@if (editing() && !auth.user()) {
+  <div class="save-form" id="save-form" data-testid="save-sign-in">
+    <p class="prompt">Sign in to save calculations and find them again in History.</p>
+    <div class="actions">
+      <a class="primary" routerLink="/sign-in" [queryParams]="{ returnUrl }">Sign in</a>
+      <button type="button" class="link" (click)="close()">Not now</button>
+    </div>
+  </div>
+} @else if (editing()) {
   <form class="save-form" id="save-form" aria-label="Save this calculation" (submit)="$event.preventDefault()">
     <label for="save-name">Name</label>
     <input #nameInput id="save-name" type="text" maxlength="100" autocomplete="off" data-testid="save-name"

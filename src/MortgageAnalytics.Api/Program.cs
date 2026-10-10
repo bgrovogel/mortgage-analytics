@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Calculations")
     ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string."));
+builder.Services.AddAccounts();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -60,8 +61,12 @@ app.UseSwaggerUI(options =>
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
+app.MapAccountEndpoints();
 app.MapSavedCalculationEndpoints();
 app.MapRefinanceEndpoints();
 

@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -9,9 +11,9 @@ using MortgageAnalytics.Application.Validation;
 
 namespace MortgageAnalytics.Infrastructure;
 
-/// <summary>The database of saved calculations.</summary>
+/// <summary>The app's database: user accounts (ASP.NET Core Identity's tables) and their saved calculations.</summary>
 /// <param name="options">Provider and connection, set by <see cref="DependencyInjection.AddInfrastructure"/> or a test.</param>
-public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext> options) : DbContext(options)
+public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext> options) : IdentityDbContext<IdentityUser>(options)
 {
     // The same JSON shape the API uses, so a stored row reads like the request that created it.
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
@@ -20,9 +22,11 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
     public DbSet<SavedCalculation> SavedCalculations => Set<SavedCalculation>();
 
     /// <inheritdoc />
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        var calculation = modelBuilder.Entity<SavedCalculation>();
+        base.OnModelCreating(builder); // Identity's users, roles and claims
+
+        var calculation = builder.Entity<SavedCalculation>();
 
         calculation.HasKey(c => c.Id);
         calculation.Property(c => c.Name).HasMaxLength(SaveCalculationRequestValidator.MaxNameLength).IsRequired();
@@ -36,7 +40,10 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
         // SQLite cannot sort DateTimeOffset values, so they are stored as sortable 64-bit numbers.
         calculation.Property(c => c.CreatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
         calculation.Property(c => c.UpdatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
-        calculation.HasIndex(c => c.UpdatedAt);
+        // Every query filters by owner and sorts by update time.
+        calculation.Property(c => c.OwnerId).HasMaxLength(450).IsRequired();
+        calculation.HasIndex(c => new { c.OwnerId, c.UpdatedAt });
+        calculation.HasOne<IdentityUser>().WithMany().HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static ValueConverter<T?, string?> JsonConverter<T>() where T : class =>

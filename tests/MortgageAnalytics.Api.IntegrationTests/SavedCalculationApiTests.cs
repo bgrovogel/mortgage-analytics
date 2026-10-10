@@ -6,12 +6,21 @@ using MortgageAnalytics.Api.IntegrationTests.Infrastructure;
 namespace MortgageAnalytics.Api.IntegrationTests;
 
 /// <summary>
-/// The saved-calculations endpoints, end to end through HTTP, EF Core and a real SQLite database.
-/// The host is shared, so every test saves under a name of its own and searches for exactly that.
+/// The saved-calculations endpoints, end to end through HTTP, EF Core and a real SQLite database, as a
+/// signed-in user. The host is shared, so every test saves under a name of its own and searches for exactly that.
 /// </summary>
 [TestFixture]
 public class SavedCalculationApiTests : ApiTestBase
 {
+    /// <summary>The signed-in user every test in this fixture acts as.</summary>
+    private static HttpClient Me = null!;
+
+    [OneTimeSetUp]
+    public async Task SignIn() => Me = await SignUpAsync();
+
+    [OneTimeTearDown]
+    public void SignOut() => Me.Dispose();
+
     private static string UniqueName(string label) => $"{label} {Guid.NewGuid():N}";
 
     private static object SaveBody(string name, decimal homePrice = 400_000m) =>
@@ -19,7 +28,7 @@ public class SavedCalculationApiTests : ApiTestBase
 
     private static async Task<JsonElement> SaveAsync(string name, decimal homePrice = 400_000m)
     {
-        var response = await Client.PostAsJsonAsync(CalculationsUrl, SaveBody(name, homePrice));
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, SaveBody(name, homePrice));
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"setup: saving \"{name}\" should succeed; body: {await response.Content.ReadAsStringAsync()}");
         return await ReadJsonAsync(response);
     }
@@ -29,7 +38,7 @@ public class SavedCalculationApiTests : ApiTestBase
     {
         var name = UniqueName("Oak St");
 
-        var response = await Client.PostAsJsonAsync(CalculationsUrl, SaveBody($"  {name}  "));
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, SaveBody($"  {name}  "));
         var body = await ReadJsonAsync(response);
 
         Assert.Multiple(() =>
@@ -46,7 +55,7 @@ public class SavedCalculationApiTests : ApiTestBase
     {
         var saved = await SaveAsync(UniqueName("Round trip"), homePrice: 512_000m);
 
-        var fetched = await ReadJsonAsync(await Client.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
+        var fetched = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
         var calculation = await PostCalculateAsync(fetched.GetProperty("inputs"));
 
         Assert.Multiple(() =>
@@ -65,10 +74,10 @@ public class SavedCalculationApiTests : ApiTestBase
             currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300,
             newAnnualInterestRate = 6, newTermInMonths = 360, closingCosts = 6_000, financeClosingCosts = false,
         };
-        var saved = await ReadJsonAsync(await Client.PostAsJsonAsync(CalculationsUrl, new { name = UniqueName("Refi"), refinance }));
+        var saved = await ReadJsonAsync(await Me.PostAsJsonAsync(CalculationsUrl, new { name = UniqueName("Refi"), refinance }));
 
-        var fetched = await ReadJsonAsync(await Client.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
-        var analysis = await Client.PostAsync("/api/v1/refinance/analyze",
+        var fetched = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
+        var analysis = await Me.PostAsync("/api/v1/refinance/analyze",
             new StringContent(fetched.GetProperty("refinance").GetRawText(), System.Text.Encoding.UTF8, "application/json"));
 
         Assert.Multiple(() =>
@@ -87,7 +96,7 @@ public class SavedCalculationApiTests : ApiTestBase
         await SaveAsync($"MAPLE {tag} second");
         await SaveAsync(UniqueName("Unrelated"));
 
-        var list = await ReadJsonAsync(await Client.GetAsync($"{CalculationsUrl}?search=maple%20{tag}"));
+        var list = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}?search=maple%20{tag}"));
 
         Assert.That(
             list.EnumerateArray().Select(c => c.GetProperty("name").GetString()),
@@ -102,7 +111,7 @@ public class SavedCalculationApiTests : ApiTestBase
         var id = saved.GetProperty("id").GetGuid();
         var newName = UniqueName("After");
 
-        var response = await Client.PutAsJsonAsync($"{CalculationsUrl}/{id}", SaveBody(newName));
+        var response = await Me.PutAsJsonAsync($"{CalculationsUrl}/{id}", SaveBody(newName));
         var body = await ReadJsonAsync(response);
 
         Assert.Multiple(() =>
@@ -118,10 +127,10 @@ public class SavedCalculationApiTests : ApiTestBase
     {
         var url = $"{CalculationsUrl}/{(await SaveAsync(UniqueName("Doomed"))).GetProperty("id").GetGuid()}";
 
-        var deleted = await Client.DeleteAsync(url);
+        var deleted = await Me.DeleteAsync(url);
 
         Assert.That(deleted.StatusCode, Is.EqualTo(HttpStatusCode.NoContent), "deleted");
-        await AssertProblemAsync(await Client.GetAsync(url), HttpStatusCode.NotFound, "it cannot be read after deletion");
+        await AssertProblemAsync(await Me.GetAsync(url), HttpStatusCode.NotFound, "it cannot be read after deletion");
     }
 
     [TestCase("GET")]
@@ -133,7 +142,7 @@ public class SavedCalculationApiTests : ApiTestBase
         if (method == "PUT")
             request.Content = JsonContent.Create(SaveBody("Nobody"));
 
-        await AssertProblemAsync(await Client.SendAsync(request), HttpStatusCode.NotFound, $"{method} of a missing calculation");
+        await AssertProblemAsync(await Me.SendAsync(request), HttpStatusCode.NotFound, $"{method} of a missing calculation");
     }
 
     [Test]
@@ -141,7 +150,7 @@ public class SavedCalculationApiTests : ApiTestBase
     {
         var body = new { name = " ", inputs = A.Request.WithHomePrice(0).Build() };
 
-        var response = await Client.PostAsJsonAsync(CalculationsUrl, body);
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, body);
         await AssertProblemAsync(response, HttpStatusCode.BadRequest, "invalid input is a validation problem");
         var errors = (await ReadJsonAsync(response)).GetProperty("errors");
 
@@ -149,6 +158,42 @@ public class SavedCalculationApiTests : ApiTestBase
         {
             Assert.That(errors.TryGetProperty("name", out _), Is.True, $"the blank name is reported; errors: {errors}");
             Assert.That(errors.TryGetProperty("inputs.homePrice", out _), Is.True, $"the inputs are checked like the calculator's, keyed by JSON path; errors: {errors}");
+        });
+    }
+
+    [Test]
+    public async Task WithoutSigningIn_SavedCalculationsAreOffLimits()
+    {
+        var list = await Client.GetAsync(CalculationsUrl);
+        var save = await Client.PostAsJsonAsync(CalculationsUrl, SaveBody("Anonymous"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(list.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), "listing needs an account");
+            Assert.That(save.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), "and so does saving");
+        });
+    }
+
+    [Test]
+    public async Task AnotherUser_CannotSeeOrChangeMyCalculations()
+    {
+        var name = UniqueName("Private");
+        var url = $"{CalculationsUrl}/{(await SaveAsync(name)).GetProperty("id").GetGuid()}";
+        using var someoneElse = await SignUpAsync();
+
+        var theirList = await ReadJsonAsync(await someoneElse.GetAsync($"{CalculationsUrl}?search={name}"));
+        var get = await someoneElse.GetAsync(url);
+        var put = await someoneElse.PutAsJsonAsync(url, SaveBody("Hijacked"));
+        var delete = await someoneElse.DeleteAsync(url);
+        var mine = await Me.GetAsync(url);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(theirList.GetArrayLength(), Is.Zero, "it is not in their list");
+            Assert.That(get.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "reading it is a 404, so its existence is not revealed");
+            Assert.That(put.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "it cannot be changed");
+            Assert.That(delete.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "or deleted");
+            Assert.That(mine.StatusCode, Is.EqualTo(HttpStatusCode.OK), "and it is still mine");
         });
     }
 }
