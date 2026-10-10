@@ -25,9 +25,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// </summary>
     public const decimal MinimumRecastLumpSum = 1_000m;
 
-    // Keeps the last due date (up to 600 months out) well inside DateOnly's range.
-    private static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
-    private static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
+    // Keeps the last due date (up to 600 months out) well inside DateOnly's range. Shared with the refinance validator.
+    internal static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
+    internal static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
 
     /// <summary>Defines every rule for an <see cref="AmortizationRequest"/>.</summary>
     public AmortizationRequestValidator()

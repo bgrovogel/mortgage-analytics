@@ -23,7 +23,11 @@ public class DependencyInjectionTests
     {
         using var provider = new ServiceCollection().AddApplication().BuildServiceProvider();
 
-        Assert.That(() => provider.GetRequiredService<IAmortizationService>(), Throws.Nothing, "the use case resolves with its dependencies");
+        Assert.Multiple(() =>
+        {
+            Assert.That(() => provider.GetRequiredService<IAmortizationService>(), Throws.Nothing, "the purchase analysis resolves with its dependencies");
+            Assert.That(() => provider.GetRequiredService<IRefinanceService>(), Throws.Nothing, "and so does the refinance comparison");
+        });
     }
 
     [Test]

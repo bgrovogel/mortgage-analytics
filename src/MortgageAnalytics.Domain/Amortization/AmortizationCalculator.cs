@@ -7,7 +7,7 @@ namespace MortgageAnalytics.Domain.Amortization;
 /// <remarks>
 /// Each period, in order:
 /// <list type="number">
-///   <item>Interest = opening balance × monthly rate, rounded to cents.</item>
+///   <item>Interest = opening balance × annual rate ÷ 1,200, rounded to cents (see <see cref="LoanTerms.MonthlyInterestOn"/>).</item>
 ///   <item>Scheduled principal = payment − interest, capped at the balance. In the final scheduled
 ///         period the whole balance is due, which absorbs any rounding drift of a few cents.</item>
 ///   <item>Extra principal is capped at the balance that remains, so a prepayment can never overpay the loan.</item>
@@ -30,7 +30,7 @@ public sealed class AmortizationCalculator : IAmortizationCalculator
 
         for (var period = 1; period <= loan.TermInMonths && balance > 0; period++)
         {
-            var interest = Money.Round(balance * monthlyRate);
+            var interest = loan.MonthlyInterestOn(balance);
             var isFinalPeriod = period == loan.TermInMonths;
             var principal = isFinalPeriod ? balance : Math.Min(payment - interest, balance);
             balance -= principal;

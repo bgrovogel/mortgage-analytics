@@ -51,6 +51,14 @@ public sealed record LoanTerms
     /// <summary>The periodic (monthly) rate as a fraction. 6.5% becomes 0.065 ÷ 12.</summary>
     public decimal MonthlyRate => AnnualInterestRate / 100m / 12m;
 
+    /// <summary>One month's interest on <paramref name="balance"/>, rounded to cents.</summary>
+    /// <remarks>
+    /// Multiplies before dividing. A monthly rate like 7% ÷ 12 repeats forever, so multiplying by a
+    /// pre-divided <see cref="MonthlyRate"/> can land a hair under an exact half cent and round the wrong way.
+    /// </remarks>
+    /// <param name="balance">The balance the interest accrues on.</param>
+    public decimal MonthlyInterestOn(decimal balance) => Money.Round(balance * AnnualInterestRate / 1_200m);
+
     /// <summary>Returns the due date of payment <paramref name="paymentNumber"/>, one month apart from the first.</summary>
     /// <remarks>A first payment on the 31st falls on the last day of shorter months.</remarks>
     public DateOnly DueDateOf(int paymentNumber) => FirstPaymentDate.AddMonths(paymentNumber - 1);

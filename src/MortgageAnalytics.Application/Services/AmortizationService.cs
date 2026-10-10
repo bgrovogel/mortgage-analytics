@@ -25,7 +25,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     public AmortizationResponse Analyze(AmortizationRequest request)
     {
         var purchase = request.ToPurchase();
-        var loan = request.ToLoanTerms(purchase, FirstOfNextMonth());
+        var loan = request.ToLoanTerms(purchase, clock.FirstOfNextMonth());
         var valuation = request.HousingCosts.ToValuation(purchase);
 
         var comparison = comparer.Compare(
@@ -35,15 +35,5 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
             request.HousingCosts.ToHousingCostPlan(purchase, valuation));
 
         return comparison.ToResponse(purchase, valuation);
-    }
-
-    /// <summary>
-    /// Returns the first day of the month after today, in the server's local time zone. Using UTC
-    /// would jump a month early on the last evening of a month for US users.
-    /// </summary>
-    private DateOnly FirstOfNextMonth()
-    {
-        var today = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
-        return new DateOnly(today.Year, today.Month, 1).AddMonths(1);
     }
 }

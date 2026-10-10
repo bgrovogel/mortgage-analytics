@@ -63,6 +63,7 @@ app.UseStaticFiles();
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
 app.MapSavedCalculationEndpoints();
+app.MapRefinanceEndpoints();
 
 // Unknown API routes must 404 as JSON, not fall through to the SPA's index.html.
 app.Map("/api/{**path}", () => TypedResults.Problem(statusCode: StatusCodes.Status404NotFound, title: "API endpoint not found."));

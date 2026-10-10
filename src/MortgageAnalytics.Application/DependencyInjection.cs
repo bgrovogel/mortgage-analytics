@@ -5,6 +5,7 @@ using MortgageAnalytics.Application.SavedCalculations;
 using MortgageAnalytics.Application.Services;
 using MortgageAnalytics.Application.Validation;
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.Refinancing;
 
 namespace MortgageAnalytics.Application;
 
@@ -23,6 +24,8 @@ public static class DependencyInjection
         services.AddSingleton<IAmortizationCalculator, AmortizationCalculator>();
         services.AddSingleton<ILoanComparer, LoanComparer>();
         services.AddSingleton<IAmortizationService, AmortizationService>();
+        services.AddSingleton<IRefinanceAnalyzer, RefinanceAnalyzer>();
+        services.AddSingleton<IRefinanceService, RefinanceService>();
         // Scoped, like the database storage behind ISavedCalculationRepository (registered by the host).
         services.AddScoped<ISavedCalculationService, SavedCalculationService>();
         // TryAdd: a clock the host (or a test) registered first must win.

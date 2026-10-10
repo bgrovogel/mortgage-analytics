@@ -75,6 +75,16 @@ public class AmortizationCalculatorTests : AmortizationTestBase
     // ---------------------------------------------------------------------------------------
 
     [Test]
+    public void InterestExactlyOnAHalfCent_RoundsUp_EvenWhenTheMonthlyRateRepeats()
+    {
+        // $6.00 at 7% accrues exactly 3.5 cents. 7% ÷ 12 is a repeating decimal, so multiplying by a
+        // pre-divided monthly rate lands a hair under the half cent and wrongly rounds down.
+        var schedule = StandardSchedule(A.Loan(6m, 7m, 1));
+
+        Assert.That(schedule.Payments[0].Interest, Is.EqualTo(0.04m), "an exact half cent rounds up, away from zero");
+    }
+
+    [Test]
     public void FirstPayment_SplitsIntoInterestAndPrincipal()
     {
         var first = StandardSchedule(A.Loan()).Payments[0];
