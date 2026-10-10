@@ -8,12 +8,13 @@ import { NumberInputDirective } from '../../../core/forms/number-input.directive
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { monthOf, pct, signedPct, usd } from '../../../core/formatting/format';
+import { pct, signedPct, usd } from '../../../core/formatting/format';
 import {
   AmortizationRequest,
   ExtraPaymentStrategy,
   MortgageInsuranceCancellation,
 } from '../../../core/models/amortization.models';
+import { balanceAfter, originalAmount, paymentsMade, toCents } from './existing-loan';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
@@ -26,6 +27,13 @@ const rules = LOAN_RULES;
 /** Shown while the down payment leaves nothing to borrow. */
 export const NOTHING_TO_BORROW = 'The down payment must be less than the home price.';
 
+/** Shown when the first payment is so long ago that the whole term is behind it. */
+export const PAID_OFF_ALREADY = 'With that first payment, the whole term is already behind you: pick a later date or a longer term.';
+
+/** Shown for a lump sum on a payment already made. */
+const lumpSumInThePast = (paymentNumber: number, next: number) =>
+  `A lump sum with payment #${paymentNumber} is in the past: payment #${next} is next.`;
+
 /** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
 const CHECK_SECTION = 'Check the values in this section';
 
@@ -35,12 +43,10 @@ const SECTION_CONTROLS = {
     'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
-  options: ['firstPaymentDate', 'annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
+  options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
 } as const;
 
 
-/** Rounds to cents, the same way the API does. */
-const cents = (value: number) => Math.round(value * 100) / 100;
 
 /** 1 becomes "1%", 0.85 becomes "0.85%": rates here have up to four decimals. */
 const percent = (value: number) => pct(value, 4);
@@ -79,8 +85,8 @@ export class LoanFormComponent implements OnInit {
   /** A loan changed on another page since this one was last open: the form starts from it. */
   readonly loan = input<SharedLoanChange | null>(null);
 
-  /** Where the loan was filled in from, and the years left before rounding when the term had to be rounded. */
-  readonly sharedFrom = signal<{ from: string; rounded: string | null } | null>(null);
+  /** Where the loan was filled in from, and, when the term had to be rounded to whole years, from what to what. */
+  readonly sharedFrom = signal<{ from: string; rounded: { from: string; to: string } | null } | null>(null);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly calculate = output<AmortizationRequest>();
@@ -91,6 +97,7 @@ export class LoanFormComponent implements OnInit {
   protected readonly rules = rules;
   protected readonly lumpSumRules = LUMP_SUM_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
+  protected readonly paidOffAlready = PAID_OFF_ALREADY;
 
   // Defaults describe a typical Texas homestead purchase with 5% down, so PMI, MUD tax, the $140,000
   // school exemption and yearly increases are all visible on load.
@@ -210,6 +217,26 @@ export class LoanFormComponent implements OnInit {
       + ` · HOA ${signedPercent(v.hoaIncreaseRate ?? 0)}`;
   });
 
+  /**
+   * A loan already being paid (its first payment is in the past): the payments behind it, the next one, and about
+   * what is owed now. Null for a new loan. Its schedule starts at the real first payment, so PMI follows the
+   * original loan and its original schedule; extra payments start with the next payment.
+   */
+  readonly existingLoan = computed(() => {
+    const v = this.values();
+    const termInMonths = (v.termYears ?? 0) * 12;
+    const made = paymentsMade(v.firstPaymentDate, new Date());
+    if (made === 0 || termInMonths <= 0) return null;
+    const borrowed = (v.homePrice ?? 0) - this.downPaymentAmount();
+    return {
+      made,
+      next: made + 1,
+      termInMonths,
+      paidOff: made >= termInMonths,
+      balance: balanceAfter(borrowed, v.annualInterestRate ?? 0, termInMonths, made),
+    };
+  });
+
   /** One-line summary of the first payment date, extra payments beyond monthly, and the strategy. */
   readonly optionsSummary = computed(() => {
     const v = this.values();
@@ -217,7 +244,6 @@ export class LoanFormComponent implements OnInit {
 
     const lumpSums = v.lumpSums?.length ?? 0;
     return [
-      `First payment ${v.firstPaymentDate ? monthOf(v.firstPaymentDate) : 'next month'}`,
       v.annualExtra ? `${usd(v.annualExtra)} yearly` : '',
       lumpSums ? `${lumpSums} lump sum${lumpSums === 1 ? '' : 's'}` : '',
       v.strategy === 'Recast' ? `Recast (min ${usd(v.recastMinimum ?? 0)})` : 'Pay off sooner',
@@ -229,8 +255,8 @@ export class LoanFormComponent implements OnInit {
     this.form.controls.downPaymentMode.valueChanges.pipe(takeUntilDestroyed()).subscribe((mode) => {
       const { homePrice, downPayment } = this.form.getRawValue();
       const converted = mode === 'percent'
-        ? (homePrice > 0 ? cents((downPayment / homePrice) * 100) : 0)
-        : cents((homePrice * downPayment) / 100);
+        ? (homePrice > 0 ? toCents((downPayment / homePrice) * 100) : 0)
+        : toCents((homePrice * downPayment) / 100);
       this.form.controls.downPayment.setValue(converted);
     });
 
@@ -261,18 +287,30 @@ export class LoanFormComponent implements OnInit {
     const shared = this.loan();
     if (!shared) return;
     const { balance, annualInterestRate, remainingTermInMonths, homeValue } = shared.loan;
-    const price = Math.max(homeValue ?? this.form.controls.homePrice.value, balance);
-    const years = wholeYearsOf(remainingTermInMonths);
+    // A loan already being paid keeps its start and purchase price; what was first borrowed is worked out from what
+    // is owed now. A new loan is bought today, at the home's value.
+    const made = paymentsMade(this.form.controls.firstPaymentDate.value, new Date());
+    const years = wholeYearsOf(made + remainingTermInMonths);
+    const borrowed = toCents(originalAmount(balance, annualInterestRate, years * 12, made));
+    const price = Math.max(made > 0 ? this.form.controls.homePrice.value : (homeValue ?? this.form.controls.homePrice.value), borrowed);
     const wasPercent = this.form.controls.downPaymentMode.value !== 'amount';
     this.form.controls.downPaymentMode.setValue('amount', { emitEvent: false });
     const changed = setChanged(this.form, {
       homePrice: price,
-      downPayment: cents(price - balance),
+      downPayment: toCents(price - borrowed),
       annualInterestRate,
       termYears: years,
     });
+    // Let the form's derived values (the loan summary, the existing-loan note) see the new numbers, without sending.
+    this.restoring = true;
+    this.form.updateValueAndValidity();
+    this.restoring = false;
     if (changed || wasPercent) {
-      this.sharedFrom.set({ from: shared.from, rounded: years * 12 === remainingTermInMonths ? null : formatMonths(remainingTermInMonths) });
+      const left = years * 12 - made;
+      this.sharedFrom.set({
+        from: shared.from,
+        rounded: left === remainingTermInMonths ? null : { from: formatMonths(remainingTermInMonths), to: formatMonths(left) },
+      });
     }
   }
 
@@ -300,20 +338,27 @@ export class LoanFormComponent implements OnInit {
     this.calculate.emit(this.toRequest());
   }
 
-  /** True when the form can be sent: every field valid and something left to borrow. */
+  /** True when the form can be sent: nothing wrong with it. */
   private isComplete(): boolean {
-    const v = this.form.getRawValue();
-    return this.form.valid && v.homePrice - downPaymentAmountOf(v) > 0;
+    return this.currentProblems().length === 0;
   }
 
-  /** Everything wrong with the form: each invalid number, each invalid lump sum, and nothing left to borrow. */
+  /**
+   * Everything wrong with the form: each invalid number, each invalid lump sum, nothing left to borrow, and, for a
+   * loan already being paid, a loan that would be paid off already or a lump sum dated before the next payment.
+   */
   private currentProblems(): string[] {
     const v = this.form.getRawValue();
+    const existing = this.form.controls.termYears.valid ? this.existingLoan() : null;
     return [
       ...problemsIn(rules, this.form.controls),
       ...this.lumpSums.controls.flatMap((row) => problemsIn(LUMP_SUM_RULES, row.controls)),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
+      ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
+      ...(existing && !existing.paidOff
+        ? v.lumpSums.filter((l) => l.paymentNumber < existing.next).map((l) => lumpSumInThePast(l.paymentNumber, existing.next))
+        : []),
     ];
   }
 
@@ -385,6 +430,9 @@ export class LoanFormComponent implements OnInit {
   /** Converts form values (years, flat fields) into the API's request shape. */
   private toRequest(): AmortizationRequest {
     const v = this.form.getRawValue();
+    // On a loan already being paid, extra payments can only start with the next payment.
+    const next = (this.existingLoan()?.made ?? 0) + 1;
+    const annualFirst = v.annualFirstPayment < next ? v.annualFirstPayment + Math.ceil((next - v.annualFirstPayment) / 12) * 12 : v.annualFirstPayment;
     return {
       homePrice: v.homePrice,
       downPayment: downPaymentAmountOf(v),
@@ -395,8 +443,8 @@ export class LoanFormComponent implements OnInit {
       recast: v.strategy === 'Recast' ? { minimumLumpSum: v.recastMinimum, fee: v.recastFee } : null,
       extraPayments: {
         monthlyAmount: v.monthlyExtra || 0,
-        monthlyStartingPaymentNumber: 1,
-        annual: v.annualExtra > 0 ? { amount: v.annualExtra, firstPaymentNumber: v.annualFirstPayment } : null,
+        monthlyStartingPaymentNumber: next,
+        annual: v.annualExtra > 0 ? { amount: v.annualExtra, firstPaymentNumber: annualFirst } : null,
         lumpSums: v.lumpSums,
       },
       housingCosts: {
@@ -431,5 +479,5 @@ export class LoanFormComponent implements OnInit {
 /** The down payment in dollars: as entered, or the entered percentage of the price, rounded to cents. */
 function downPaymentAmountOf(v: { homePrice?: number; downPayment?: number; downPaymentMode?: DownPaymentMode }): number {
   const entered = v.downPayment ?? 0;
-  return v.downPaymentMode === 'percent' ? cents(((v.homePrice ?? 0) * entered) / 100) : entered;
+  return v.downPaymentMode === 'percent' ? toCents(((v.homePrice ?? 0) * entered) / 100) : entered;
 }

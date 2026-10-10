@@ -4,7 +4,7 @@
     <legend>Your loan</legend>
     <p class="hint" data-testid="loan-shared">
       @if (sharedFrom(); as shared) {
-        Filled in from your loan on the {{ shared.from }} page@if (shared.rounded) {, with {{ shared.rounded }} left rounded to {{ form.controls.termYears.value }} years}.
+        Filled in from your loan on the {{ shared.from }} page@if (shared.rounded; as rounded) {, with {{ rounded.from }} left rounded to {{ rounded.to }}}.
       }
       Shared with the other pages: change it here and they follow.
     </p>
@@ -40,6 +40,23 @@
     </div>
 
     <app-number-field [control]="form.controls.monthlyExtra" [rule]="rules.monthlyExtra" testId="monthly-extra" />
+
+    <label class="field">
+      <span>First payment</span>
+      <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
+    </label>
+    @if (existingLoan(); as existing) {
+      @if (!existing.paidOff) {
+        <p class="hint" data-testid="existing-loan">
+          A loan you already have: payment {{ existing.next }} of {{ existing.termInMonths }} is next, with about
+          {{ existing.balance | currency: 'USD' : 'symbol' : '1.0-0' }} owed. Extra payments start there; PMI follows the original loan.
+        </p>
+      } @else {
+        <small class="error" data-testid="existing-loan">{{ paidOffAlready }}</small>
+      }
+    } @else {
+      <p class="hint">For a loan you already have, enter its real first payment: the schedule, PMI and dates follow it.</p>
+    }
   </fieldset>
 
   <details class="section" data-testid="section-taxes">
@@ -160,11 +177,6 @@
       <span class="section-summary" data-testid="options-summary">{{ optionsSummary() }}</span>
     </summary>
     <div class="section-body">
-      <label class="field">
-        <span>First payment date</span>
-        <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
-      </label>
-
       <div class="row">
         <app-number-field [control]="form.controls.annualExtra" [rule]="rules.annualExtra" testId="annual-extra" />
         <app-number-field [control]="form.controls.annualFirstPayment" [rule]="rules.annualFirstPayment" testId="annual-first-payment" label="Starting with payment #" />

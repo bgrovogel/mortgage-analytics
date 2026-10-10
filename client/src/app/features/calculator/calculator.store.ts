@@ -4,6 +4,7 @@ import { AmortizationRequest, AmortizationResponse } from '../../core/models/amo
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
+import { loanToday } from './loan-form/existing-loan';
 import { wholeYearsOf } from './loan-form/loan-fields';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
@@ -23,22 +24,36 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   describe = describeInputs;
   suggestName = suggestName;
 
-  /** The loan being bought: the price less the down payment, over the whole term, on a home worth its price. */
+  /**
+   * The loan as it stands today. A new loan (first payment still ahead) is the price less the down payment, over
+   * the whole term. A loan already being paid shares what is owed now, the payments left, and the home's value now.
+   */
   protected loanOf(request: AmortizationRequest): SharedLoan {
+    const today = this.today(request);
     return {
-      balance: Math.round((request.homePrice - request.downPayment) * 100) / 100,
+      balance: today.balance,
       annualInterestRate: request.annualInterestRate,
-      remainingTermInMonths: request.termInMonths,
-      homeValue: request.homePrice,
+      remainingTermInMonths: today.monthsLeft,
+      homeValue: today.homeValue,
     };
   }
 
-  /** The calculator holds the shared loan with a whole-year term (and its own price when the loan has no home value). */
-  protected override matchesShared(loan: SharedLoan, shared: SharedLoan): boolean {
-    return loan.balance === shared.balance
-      && loan.annualInterestRate === shared.annualInterestRate
-      && loan.remainingTermInMonths === wholeYearsOf(shared.remainingTermInMonths) * 12
-      && (shared.homeValue === null || loan.homeValue === shared.homeValue);
+  /**
+   * True when the calculator holds the shared loan as closely as it can: the same balance (to the dollar, since a
+   * loan already being paid is worked out backwards), the same rate, and the term the loan form gave it, in whole
+   * years. The home's value only counts for a new loan, whose price it is; a loan already being paid keeps its
+   * own purchase price.
+   */
+  protected override matchesShared(request: AmortizationRequest, shared: SharedLoan): boolean {
+    const today = this.today(request);
+    return Math.abs(today.balance - shared.balance) < 1
+      && request.annualInterestRate === shared.annualInterestRate
+      && request.termInMonths === wholeYearsOf(today.made + shared.remainingTermInMonths) * 12
+      && (today.made > 0 || shared.homeValue === null || request.homePrice === Math.max(shared.homeValue, shared.balance));
+  }
+
+  private today(request: AmortizationRequest) {
+    return loanToday({ ...request, homeValueGrowthRate: request.housingCosts?.homeValueGrowthRate }, new Date());
   }
 
   protected send$(request: AmortizationRequest) {

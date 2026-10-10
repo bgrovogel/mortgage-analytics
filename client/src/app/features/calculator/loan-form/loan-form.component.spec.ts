@@ -68,7 +68,7 @@ describe('LoanFormComponent', () => {
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
       expect(text('growth-summary')).toBe('Home +4.3% · Insurance +4.8% · HOA +4%');
-      expect(component.optionsSummary()).toMatch(/^First payment [A-Z][a-z]{2} \d{4} · Pay off sooner$/);
+      expect(component.optionsSummary()).toBe('Pay off sooner');
     });
 
     it('updates the summaries as values change', () => {
@@ -86,7 +86,7 @@ describe('LoanFormComponent', () => {
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo');
       expect(text('growth-summary')).toBe('Home -2% · Insurance +4.8% · HOA +4%');
-      expect(text('options-summary')).toBe('First payment Mar 2027 · $2,000 yearly · 1 lump sum · Recast (min $10,000)');
+      expect(text('options-summary')).toBe('$2,000 yearly · 1 lump sum · Recast (min $10,000)');
     });
 
     it('says when a section has nothing in it', () => {
@@ -101,7 +101,7 @@ describe('LoanFormComponent', () => {
 
       expect(text('taxes-summary')).toBe('No property taxes');
       expect(text('costs-summary')).toBe('None');
-      expect(component.optionsSummary()).toBe('First payment next month · 2 lump sums · Pay off sooner');
+      expect(component.optionsSummary()).toBe('2 lump sums · Pay off sooner');
     });
 
     it('flags a closed section that contains an invalid value, so the problem is not hidden', () => {
@@ -315,6 +315,77 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('a loan already being paid (a first payment in the past)', () => {
+    beforeEach(() => jest.useFakeTimers({ now: new Date(2026, 9, 10), doNotFake: ['nextTick', 'setImmediate'] }));
+    afterEach(() => jest.useRealTimers());
+
+    /** The form opened on a $200,000 loan at 6% over 30 years, bought for $250,000, first paid on `firstPayment`. */
+    const openOn = (firstPayment: string, loan: { balance: number; annualInterestRate: number; remainingTermInMonths: number; homeValue: number | null } | null = null) => {
+      fixture = TestBed.createComponent(LoanFormComponent);
+      component = fixture.componentInstance;
+      emitted = [];
+      component.calculate.subscribe((request) => emitted.push(request));
+      fixture.componentRef.setInput('initial', {
+        homePrice: 250_000, downPayment: 50_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: firstPayment,
+        strategy: 'ShortenTerm', recast: null, housingCosts: null,
+        extraPayments: { monthlyAmount: 200, monthlyStartingPaymentNumber: 1, annual: { amount: 2_000, firstPaymentNumber: 12 }, lumpSums: [] },
+      } satisfies AmortizationRequest);
+      if (loan) fixture.componentRef.setInput('loan', { loan, from: 'Refinance', version: 1 });
+      fixture.detectChanges();
+      return emitted[emitted.length - 1];
+    };
+
+    it('starts at the real first payment, and starts extra payments with the next one', () => {
+      const request = openOn('2021-11-01');
+
+      expect(request.firstPaymentDate).toBe('2021-11-01'); // so PMI follows the original loan and its original schedule
+      expect(request.extraPayments?.monthlyStartingPaymentNumber).toBe(61);
+      expect(request.extraPayments?.annual?.firstPaymentNumber).toBe(72); // its next yearly date still ahead
+      expect(text('existing-loan')).toBe(
+        'A loan you already have: payment 61 of 360 is next, with about $186,109 owed. Extra payments start there; PMI follows the original loan.');
+    });
+
+    it('starts extra payments with the first payment for a new loan', () => {
+      const request = openOn('2026-11-01');
+
+      expect(request.extraPayments?.monthlyStartingPaymentNumber).toBe(1);
+      expect(request.extraPayments?.annual?.firstPaymentNumber).toBe(12);
+      expect(text('existing-loan')).toBeUndefined();
+    });
+
+    it('will not send a lump sum on a payment already made, or a loan whose whole term is behind it', () => {
+      openOn('2021-11-01');
+      const reports: string[][] = [];
+      component.problems.subscribe((p) => reports.push(p));
+      const sent = emitted.length;
+
+      component.addLumpSum(); // payment 12, years ago
+      controls().firstPaymentDate.setValue('1990-01-01');
+
+      expect(reports).toEqual([
+        [],
+        ['A lump sum with payment #12 is in the past: payment #61 is next.'],
+        ['With that first payment, the whole term is already behind you: pick a later date or a longer term.'],
+      ]);
+      expect(emitted).toHaveLength(sent);
+    });
+
+    it('takes a loan from another page by working out what was first borrowed, keeping its start and purchase price', () => {
+      const request = openOn('2021-11-01', { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: 400_000 });
+
+      expect(request).toEqual(expect.objectContaining({ homePrice: 250_000, downPayment: 50_000, termInMonths: 360, firstPaymentDate: '2021-11-01' }));
+      expect(text('existing-loan')).toContain('with about $186,109 owed');
+    });
+
+    it('rounds a part-year term, saying how many payments that leaves', () => {
+      const request = openOn('2021-11-01', { balance: 180_000, annualInterestRate: 6, remainingTermInMonths: 295, homeValue: null });
+
+      expect(request.termInMonths).toBe(360); // 60 made + 295 left, to the nearest whole year
+      expect(text('loan-shared')).toContain('with 24 yr 7 mo left rounded to 25 yr');
+      expect(text('existing-loan')).toContain('with about $180,000 owed'); // the balance itself is kept
+    });
+  });
+
   describe('the shared loan', () => {
     const startFrom = (loan: { balance: number; annualInterestRate: number; remainingTermInMonths: number; homeValue: number | null }) => {
       fixture = TestBed.createComponent(LoanFormComponent);
@@ -338,7 +409,7 @@ describe('LoanFormComponent', () => {
       const request = startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 270, homeValue: 400_000 });
 
       expect(request.termInMonths).toBe(276);
-      expect(text('loan-shared')).toContain('with 22 yr 6 mo left rounded to 23 years');
+      expect(text('loan-shared')).toContain('with 22 yr 6 mo left rounded to 23 yr');
     });
 
     it('keeps its own price when the loan has no home value, and never goes below a $0 down payment', () => {

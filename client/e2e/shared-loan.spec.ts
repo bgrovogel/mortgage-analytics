@@ -55,10 +55,36 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'home-price'), "the home's value").toHaveValue('400,000');
     await expect(box(page, 'down-payment'), 'what is not owed').toHaveValue('120,000');
     await expect(box(page, 'term-years'), 'the years left, to the nearest whole year').toHaveValue('23');
-    await expect(box(page, 'loan-shared'), 'the rounding is explained').toContainText('with 22 yr 6 mo left rounded to 23 years');
+    await expect(box(page, 'loan-shared'), 'the rounding is explained').toContainText('with 22 yr 6 mo left rounded to 23 yr');
 
     await go(page, 'Pay off or invest');
     await expect(box(page, 'years-left'), 'the rounding stays on the Calculator').toHaveValue('22.5');
+  });
+
+  test('a loan already being paid shares what is owed today, and the payments left', async ({ page }) => {
+    // Five years ago, on the first of the month: 60 or 61 payments made, depending on whether today is the 1st.
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 60, 1);
+    const firstPayment = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`;
+    const made = now.getDate() > 1 ? 61 : 60;
+    // $200,000 at 6% over 30 years, by the textbook formula.
+    const r = 0.005;
+    const owed = Math.round(200_000 * ((1 + r) ** 360 - (1 + r) ** made) / ((1 + r) ** 360 - 1) * 100) / 100;
+
+    await page.goto('/calculator/overview');
+    await expect(page.getByTestId('results'), 'the first calculation has arrived').toHaveAttribute('aria-busy', 'false');
+    await box(page, 'home-price').fill('250000');
+    await box(page, 'down-payment').fill('50000');
+    await box(page, 'interest-rate').fill('6');
+    await box(page, 'first-payment-date').fill(firstPayment);
+    await expect(box(page, 'existing-loan'), 'the form says which payment is next')
+      .toContainText(`payment ${made + 1} of 360 is next`);
+
+    await go(page, 'Refinance');
+    await expect(box(page, 'current-balance'), 'what is owed today')
+      .toHaveValue(owed.toLocaleString('en-US', { maximumFractionDigits: 2 }));
+    await expect(box(page, 'years-left'), 'the payments left, in years')
+      .toHaveValue(((360 - made) / 12).toLocaleString('en-US', { maximumFractionDigits: 2 }));
   });
 
   test('just opening a page does not overwrite a loan typed elsewhere', async ({ page }) => {

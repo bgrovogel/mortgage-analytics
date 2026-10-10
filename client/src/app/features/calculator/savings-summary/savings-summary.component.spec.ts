@@ -76,6 +76,13 @@ describe('SavingsSummaryComponent', () => {
     expect(text('time-saved')).toBeUndefined();
   });
 
+  it('shows the extra from the first payment that has one, e.g. the next payment on a loan already being paid', () => {
+    const accelerated = aSchedule({ payments: [aPayment(1), aPayment(2, { extraPrincipal: 200, totalOutlay: 1_399.1 })] });
+    const component = render(aResponse({ accelerated, savings: aSavings({ netSavings: 1 }) }));
+
+    expect(component.withExtra()).toEqual({ amount: 200, total: 1_399.1 });
+  });
+
   it('omits the taxes line when there are no housing costs', () => {
     render(aResponse());
 

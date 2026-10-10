@@ -69,9 +69,10 @@ export abstract class CalculationStore<TRequest, TResponse> {
     const before = this.request();
     this.latest.send(request);
     // The first request is the page's example (or the shared loan already); only a change after it is the user's.
-    const loan = this.loanOf(request);
     const shared = this.sharedLoan.change()?.loan;
-    if (before && !sameLoan(this.loanOf(before), loan) && !(shared && this.matchesShared(loan, shared))) this.share(request);
+    if (before && !sameLoan(this.loanOf(before), this.loanOf(request)) && !(shared && this.matchesShared(request, shared))) {
+      this.share(request);
+    }
     this.seenLoanVersion = this.sharedLoan.version();
   }
 
@@ -99,11 +100,11 @@ export abstract class CalculationStore<TRequest, TResponse> {
   }
 
   /**
-   * True when this page's loan is the shared one, as closely as the page can hold it. Then it is not shared again:
+   * True when this page's request holds the shared loan, as closely as the page can. Then it is not shared again:
    * a page that rounds the loan (the calculator's whole-year term) must not send the rounding back to the others.
    */
-  protected matchesShared(loan: SharedLoan, shared: SharedLoan): boolean {
-    return sameLoan(loan, shared);
+  protected matchesShared(request: TRequest, shared: SharedLoan): boolean {
+    return sameLoan(this.loanOf(request), shared);
   }
 
   /** Makes this request's loan the one every page starts from. */

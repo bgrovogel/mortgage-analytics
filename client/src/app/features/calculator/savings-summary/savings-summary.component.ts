@@ -87,10 +87,13 @@ export class SavingsSummaryComponent {
   /** The analysis to summarize. */
   readonly result = input.required<AmortizationResponse>();
 
-  /** The extra principal in the first payment and what that payment comes to, or null when nothing extra is paid. */
+  /**
+   * The extra principal in the first payment that has any (the next one, on a loan already being paid) and what that
+   * payment comes to, or null when nothing extra is paid.
+   */
   readonly withExtra = computed(() => {
-    const first = this.result().accelerated.payments[0];
-    return first && first.extraPrincipal > 0 ? { amount: first.extraPrincipal, total: first.totalOutlay } : null;
+    const first = this.result().accelerated.payments.find((p) => p.extraPrincipal > 0);
+    return first ? { amount: first.extraPrincipal, total: first.totalOutlay } : null;
   });
 
   /** True when extra payments change anything; otherwise savings tiles would only show zeros. */

@@ -1,11 +1,14 @@
 import { API_URL } from './env';
 import { expect, test } from './fixtures';
 
+// The reference loans start in the future: a first payment in the past would make them loans already being paid,
+// whose extra payments start with the next payment instead of the first.
+
 /** $250,000 home with 20% down: a $200,000 loan at 6%, whose reference values the unit tests verify. */
-const TWENTY_PERCENT_DOWN = { homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2026-01-01' };
+const TWENTY_PERCENT_DOWN = { homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' };
 
 /** The same home with 5% down at 6.5%, which needs PMI. */
-const FIVE_PERCENT_DOWN = { homePrice: 250_000, downPayment: 12_500, rate: 6.5, years: 30, firstPayment: '2026-01-01' };
+const FIVE_PERCENT_DOWN = { homePrice: 250_000, downPayment: 12_500, rate: 6.5, years: 30, firstPayment: '2036-01-01' };
 
 test.describe('Mortgage calculator', () => {
   test('shows a worked example with taxes, insurance and PMI on first load', async ({ calculator }) => {
@@ -93,7 +96,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.monthlyPayment, '$200,000 at 6% over 30 years').toHaveText('$1,199.10');
     await expect(calculator.netSavings, 'interest saved by $200 a month').toHaveText('$79,801');
     await expect(calculator.timeSaved, '108 payments sooner').toHaveText('9 yr');
-    await expect(calculator.payoffDate, 'payment 252').toHaveText('Dec 2046');
+    await expect(calculator.payoffDate, 'payment 252').toHaveText('Dec 2056');
     await expect(calculator.totalInterest, 'the new total interest').toHaveText('$151,876');
     await calculator.showResults('schedule');
     await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
@@ -122,8 +125,8 @@ test.describe('Mortgage calculator', () => {
 
     await calculator.calculate();
 
-    await expect(calculator.pmiEnd, 'requested removal uses the actual balance: payment 62').toHaveText('Feb 2031');
-    await expect(calculator.message('instead of Apr 2036'), 'instead of payment 124').toBeVisible();
+    await expect(calculator.pmiEnd, 'requested removal uses the actual balance: payment 62').toHaveText('Feb 2041');
+    await expect(calculator.message('instead of Apr 2046'), 'instead of payment 124').toBeVisible();
     await expect(calculator.savingsDetail, 'the PMI saved is part of net savings').toContainText('+ $6,136 PMI');
   });
 
@@ -135,7 +138,7 @@ test.describe('Mortgage calculator', () => {
 
     await calculator.calculate();
 
-    await expect(calculator.pmiEnd, 'automatic removal stays at payment 135').toHaveText('Mar 2037');
+    await expect(calculator.pmiEnd, 'automatic removal stays at payment 135').toHaveText('Mar 2047');
     await expect(calculator.savingsDetail, 'so no PMI is saved: the savings are all interest, which the headline already says').toBeHidden();
   });
 
@@ -281,7 +284,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.showYearlySchedule();
 
     await expect(calculator.scheduleRows, 'a 30-year loan has 30 yearly rows').toHaveCount(30);
-    await expect(await calculator.cell(1, 'Starts'), 'year 1 starts in 2026').toHaveText('2026');
+    await expect(await calculator.cell(1, 'Starts'), 'year 1 starts in 2036').toHaveText('2036');
     await expect(await calculator.cell(30, 'Balance'), 'the loan ends at zero').toHaveText('$0.00');
   });
 
