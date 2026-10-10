@@ -1,107 +1,10 @@
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
+@use '../../../core/forms/form-fields' as fields;
 
-fieldset {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-legend {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  // Inputs line up along the bottom even when one label wraps onto two lines.
-  align-items: end;
-}
-
-.row.three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-
-  input {
-    padding-inline: 0.5rem;
-  }
-}
-
-.checkbox {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-
-  strong {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
-  input {
-    width: 18px;
-    height: 18px;
-    flex: none;
-    margin-top: 0.1rem;
-    accent-color: var(--accent);
-  }
-}
+@include fields.styles;
 
 .lump-sum {
   grid-template-columns: 1fr 1fr auto;
   align-items: end;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 0;
-
-  span {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-}
-
-input[appNumber],
-input[type='date'],
-select {
-  font: inherit;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-primary);
-  width: 100%;
-  box-sizing: border-box;
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-
-  &[aria-invalid='true'] {
-    border-color: var(--critical);
-  }
-}
-
-.error {
-  color: var(--critical);
-  font-size: 0.8rem;
 }
 
 .choice {
@@ -163,12 +66,6 @@ select {
 }
 
 
-.hint {
-  margin: -0.25rem 0 0;
-  font-size: 0.84rem;
-  color: var(--text-muted);
-}
-
 .recast-terms {
   margin-top: 0.25rem;
   padding-left: 1.6rem;
@@ -177,12 +74,6 @@ select {
 .strategy .hint {
   padding-left: 1.6rem;
   margin-top: 0;
-}
-
-abbr[title] {
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
-  cursor: help;
 }
 
 // Collapsible sections: closed by default, summarized in one line.
@@ -325,40 +216,6 @@ abbr[title] {
     inset: 0;
     margin: 0;
     cursor: pointer;
-  }
-}
-
-// "$" before money and "%" after rates, inside the box, so labels need no units.
-.affix {
-  position: relative;
-  display: block;
-
-  &[data-prefix]::before,
-  &[data-suffix]::after {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    pointer-events: none;
-  }
-
-  &[data-prefix]::before {
-    content: attr(data-prefix);
-    left: 0.65rem;
-  }
-
-  &[data-suffix]::after {
-    content: attr(data-suffix);
-    right: 0.65rem;
-  }
-
-  &[data-prefix] input {
-    padding-left: 1.4rem;
-  }
-
-  &[data-suffix] input {
-    padding-right: 1.6rem;
   }
 }
 

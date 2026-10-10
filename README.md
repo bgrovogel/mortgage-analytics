@@ -7,6 +7,11 @@ assessments, homeowners insurance, PMI and HOA dues**. It then projects all of t
 by year over the life of the loan, so an owner can see where their payment is heading, not just
 where it starts.
 
+It also compares **refinancing** with keeping the current loan, including the trap most calculators
+hide: a lower payment can cost more overall, because a new 30-year loan restarts the amortization
+clock. And it keeps a **named history** of calculations in a SQLite database, so any scenario can be
+found and reopened later.
+
 It is a .NET 9 API with an Angular 19 dashboard, tested from pure unit tests up to browser E2E.
 
 It is small on purpose. The domain (exact money math, prepayment rules, lender recast rules, PMI
@@ -14,9 +19,9 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 
 | | |
 |---|---|
-| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
-| **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 144 Angular unit tests · Playwright: 28 E2E tests · coverage gated at 85% |
+| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · Swagger / OpenAPI · RFC 9457 ProblemDetails |
+| **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
+| **Tests** | NUnit + NSubstitute: 454 backend tests · Jest: 230 Angular unit tests · Playwright: 36 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -39,6 +44,8 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Insurance & HOA** | An annual premium and monthly dues. |
 | **PMI** | Required only with **less than 20% down**. The premium is a percentage of the *original* loan. Two removal paths, as the Homeowners Protection Act defines them: **automatic at 78%**, measured on the *original* amortization schedule (extra payments do not move it), or **on request at 80%**, which may use the *actual* balance (extra payments bring it forward, and that PMI saving counts toward net savings). |
 | **Savings** | **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and dues are deliberately excluded, because they continue after the loan is paid off. |
+| **Refinance** | The rest of the current loan against the new one, with closing costs paid at closing or rolled into the loan. Reports the monthly change, **lifetime savings (closing costs included)**, the months added by restarting the clock, and a **break-even**: the payment by which the interest saved covers the closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings". When the new payment is lower it also shows the new loan **paid at today's payment**, which is how to refinance without restarting the clock. |
+| **History** | Save any calculation under a name; search, reopen (the form is restored exactly), rename or delete it. |
 
 ---
 
@@ -52,6 +59,7 @@ docker compose up --build
 
 - App: http://localhost:8080
 - API docs (Swagger UI): http://localhost:8080/swagger
+- Saved calculations live in a SQLite file on the `calculations` volume, so they survive restarts.
 
 ### Option 2: Local development
 
@@ -74,12 +82,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 381 NUnit tests, including the convention tests
+dotnet test                       # 454 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 144 Jest unit tests; fails below 85% coverage
+npm test                          # 230 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 28 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 36 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -93,6 +101,16 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
 ---
 
 ## Using the API
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v1/amortization/calculate` | The purchase analysis below (`?includePayments=false` for summaries only) |
+| `POST /api/v1/refinance/analyze` | Keep the current loan or refinance it |
+| `GET /api/v1/calculations?search=` | Saved calculations, newest first, filtered by name |
+| `GET /api/v1/calculations/{id}` | One saved calculation |
+| `POST /api/v1/calculations` | Save a calculation under a name (201 with `Location`) |
+| `PUT /api/v1/calculations/{id}` | Rename it or replace its inputs |
+| `DELETE /api/v1/calculations/{id}` | Delete it (204) |
 
 `POST /api/v1/amortization/calculate`
 
@@ -160,20 +178,25 @@ The full contract, with descriptions and example values, is in Swagger UI at `/s
 ## Architecture
 
 ```
-┌───────────────────────────┐      ┌──────────────────────────────────────────────────────────┐
-│  Angular client           │      │  MortgageAnalytics.Api   (HTTP only)                     │
-│  calculator-page (state)  │ HTTP │   endpoints · ValidationFilter<T> · exception handler    │
-│   ├ loan-form             ├─────►│   Swagger · health check · serves the SPA in production  │
-│   ├ savings-summary       │      ├──────────────────────────────────────────────────────────┤
-│   ├ payment-breakdown     │      │  MortgageAnalytics.Application   (use case)              │
-│   ├ trends (tabs)         │      │   contracts · validators · mapping · AmortizationService │
-│   └ schedule-table        │      ├──────────────────────────────────────────────────────────┤
-└───────────────────────────┘      │  MortgageAnalytics.Domain   (no dependencies at all)     │
-                                   │   Loans · ExtraPayments · Amortization · HousingCosts    │
-                                   └──────────────────────────────────────────────────────────┘
+┌──────────────────────────────┐      ┌──────────────────────────────────────────────────────────┐
+│  Angular client (router)     │      │  MortgageAnalytics.Api   (HTTP only)                     │
+│  /calculator                 │ HTTP │   endpoints · ValidationFilter<T> · exception handler    │
+│    overview · projection ·   ├─────►│   Swagger · health check · serves the SPA in production  │
+│    schedule (routed tabs)    │      ├──────────────────────────────────────────────────────────┤
+│  /refinance                  │      │  MortgageAnalytics.Application   (use cases)             │
+│  /history                    │      │   contracts · validators · mapping · services · ports    │
+│  stores: CalculatorStore,    │      ├────────────────────────────┬─────────────────────────────┤
+│  RefinanceStore (signals)    │      │  MortgageAnalytics.Domain  │  MortgageAnalytics.         │
+└──────────────────────────────┘      │  (no dependencies at all)  │  Infrastructure             │
+                                      │  Loans · ExtraPayments ·   │  EF Core + SQLite: the      │
+                                      │  Amortization · Housing-   │  saved-calculations         │
+                                      │  Costs · Refinancing       │  repository, migrations     │
+                                      └────────────────────────────┴─────────────────────────────┘
 ```
 
-Dependencies point inward only: **Api → Application → Domain**. The domain references no NuGet
+Dependencies point inward only: **Api → Application → Domain**, and **Infrastructure → Application**.
+The Application layer owns the `ISavedCalculationRepository` port; Infrastructure implements it with
+EF Core, so neither the domain nor the use cases know a database exists. The domain references no NuGet
 packages and no ASP.NET types, so the financial logic can be tested, and reused, in isolation.
 
 ```
@@ -184,15 +207,18 @@ src/MortgageAnalytics.Domain/
   HousingCosts/     IHousingCost → ValueBasedTax / AnnualFixedCost / MonthlyFixedCost / MortgageInsurance;
                     PropertyValuation (growth + appraisal cap), TaxExemption, SeniorTaxRelief, Installments;
                     HousingCostPlan (composite), HousingCostBreakdown, HousingCostSchedule (monthly + yearly)
-src/MortgageAnalytics.Application/   Contracts, validation, mapping, AmortizationService, DI wiring
+  Refinancing/      RefinanceOffer, RefinanceAnalyzer, RefinanceAnalysis (savings, months added, break-even)
+src/MortgageAnalytics.Application/   Contracts, validation, mapping, services, the repository port, DI wiring
+src/MortgageAnalytics.Infrastructure/ CalculationsDbContext, SavedCalculationRepository, Migrations/
 src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handling
 tests/
-  MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, TestClock
+  MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, ReferenceRefinances, TestClock
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
-  MortgageAnalytics.Domain.Tests/   250 tests
-  MortgageAnalytics.Application.Tests/  107 tests (unit with NSubstitute, sociable scenarios, architecture)
-  MortgageAnalytics.Api.IntegrationTests/  18 tests (shared WebApplicationFactory fixture)
-client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
+  MortgageAnalytics.Domain.Tests/   263 tests
+  MortgageAnalytics.Application.Tests/  145 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Infrastructure.Tests/  10 tests (real SQLite, built by the real migrations)
+  MortgageAnalytics.Api.IntegrationTests/  30 tests (shared WebApplicationFactory fixture, temp SQLite file)
+client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,history} · e2e/
 ```
 
 ---
@@ -254,7 +280,7 @@ client/  src/app/core (models, API service, errors) · src/app/features/calculat
 | **Interface Segregation** | Small interfaces with one or two members each: `IExtraPaymentRule`, `IHousingCost`, `IAmortizationCalculator`, `ILoanComparer`, `IAmortizationService`. |
 | **Dependency Inversion** | The service depends on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. |
 | **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are each written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and color everywhere. |
-| **KISS / YAGNI** | No MediatR, AutoMapper, repository layer or database: nothing here needs them. There is no *Infrastructure* project because there is no infrastructure yet. |
+| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project and the repository arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole. |
 
 ### Documentation is enforced, not hoped for
 
@@ -290,6 +316,14 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
   one deployment, and no CORS.
 
 ### Frontend
+
+- **Pages and routed tabs.** Calculator, Refinance and History are pages; the calculator's results are
+  Overview, Projection and Schedule tabs with their own URLs (bookmarkable, back button works). Root
+  stores hold each page's state, so moving between pages never loses a calculation.
+- **One debounced-request helper.** `latestRequest` (debounce, `switchMap`, per-request error recovery,
+  busy until the latest answer) backs both the calculator and the refinance comparison.
+- **A schedule you can make your own.** Lifetime totals for every cost above the table, and a Columns
+  picker to show any category (school tax, PMI, HOA...) as its own column with its own total.
 
 - **Five fields up front, the rest one click away.** Price, down payment, rate, term and the monthly
   extra are always visible. Taxes, insurance/HOA/PMI, future increases and other payment options sit in
@@ -332,14 +366,15 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 | Layer | Tools | What it proves |
 |---|---|---|
-| Domain (250) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
-| Application (107) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
-| API integration (18) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
+| Domain (263) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values. |
+| Application (145) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Infrastructure (10) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: every input survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
+| API integration (30) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: saved-calculation CRUD (201 + Location, 404 problems), refinance, JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (144) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (28) | Playwright | Real browser and real API, through a page object. |
+| Angular (230) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (36) | Playwright | Real browser and real API (on a scratch database), through page objects: the calculator, saving and reopening from History, and the refinance comparison against the reference numbers. |
 
-**Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
+**Coverage:** backend 99.6% lines / 98% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
 ### Test standards, enforced by the build
 
@@ -354,7 +389,7 @@ And by convention, supported by shared infrastructure:
 
 - **NSubstitute** for test doubles. There are no hand-rolled fakes, and the clock comes from `FakeTimeProvider`.
 - **Builders, not copy-paste:** `A.Request.FivePercentDown().WithMonthlyExtra(300).WithHousingCosts(c => c.AsHomestead())`.
-- **One source of expected values:** `ReferenceLoans`, independently computed in Python and shared by every layer.
+- **One source of expected values:** `ReferenceLoans` and `ReferenceRefinances`, independently computed in Python (the refinance values with exact fractions) and shared by every layer. That independence paid off: the refinance reference exposed a half-cent rounding bug in the engine (7% ÷ 12 repeats forever, so interest is now balance × annual rate ÷ 1,200).
 - **Base classes:** `AmortizationTestBase`, `ValidatorTestBase`, `AmortizationServiceTestBase` (unit), `SociableAnalysisTestBase`, and `ApiTestBase` with a `[SetUpFixture]` that shares one API host.
 - **Central package versions** (`Directory.Packages.props`) and one shared test stack (`tests/Directory.Build.props`).
 
@@ -365,5 +400,6 @@ And by convention, supported by shared infrastructure:
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
 - **Adjustable-rate (ARM) loans**: a rate-schedule strategy.
-- **Persistence**, to save and share scenarios. This would bring an Infrastructure project (EF Core).
+- **User accounts**, so saved calculations are private to each person (today one server shares one list).
+- **Saving refinance comparisons** to History, alongside calculator scenarios.
 - **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

@@ -1,0 +1,137 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+}
+
+// The verdict: green-blue when refinancing saves, amber when it costs more.
+.hero {
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-border);
+
+  &.warning {
+    background: var(--warning-soft);
+    border-color: var(--warning-border);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .headline {
+    margin: 0.2rem 0 0.35rem;
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .detail {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  &.warning {
+    border-color: var(--warning-border);
+  }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  strong {
+    font-size: 1.45rem;
+    color: var(--text-primary);
+  }
+
+  small {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+}
+
+.restart {
+  border-left: 4px solid var(--warning-border);
+}
+
+.keep {
+  border-left: 4px solid var(--accent);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.55rem 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+tr.total th,
+tr.total td {
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 0;
+}

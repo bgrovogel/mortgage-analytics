@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { AmortizationRequest } from '../../../core/models/amortization.models';
 import { SavedCalculation } from '../../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
@@ -23,12 +23,12 @@ describe('SaveCalculationComponent', () => {
       providers: [
         provideRouter([]),
         { provide: SavedCalculationsApiService, useValue: api },
-        { provide: AmortizationApiService, useValue: { calculate: () => of() } },
+        { provide: AmortizationApiService, useValue: { calculate: () => NEVER } },
       ],
     });
     store = TestBed.inject(CalculatorStore);
-    store.request.set(inputs);
     fixture = TestBed.createComponent(SaveCalculationComponent);
+    store.calculate(inputs); // the request is remembered at once; the (never-answered) call does not matter
     fixture.detectChanges();
   });
 
@@ -116,9 +116,13 @@ describe('SaveCalculationComponent', () => {
   });
 
   it('cannot save before there is anything to save', () => {
-    store.request.set(null);
-    fixture.detectChanges();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: api }, { provide: AmortizationApiService, useValue: {} }],
+    });
+    const fresh = TestBed.createComponent(SaveCalculationComponent);
+    fresh.detectChanges();
 
-    expect((el('save-open') as HTMLButtonElement).disabled).toBe(true);
+    expect((fresh.nativeElement.querySelector('[data-testid="save-open"]') as HTMLButtonElement).disabled).toBe(true);
   });
 });

@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { aResponse } from '../../../../testing/builders';
 import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
-import { CalculatorStore } from '../calculator.store';
+import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
+import { AmortizationRequest } from '../../../core/models/amortization.models';
+import { of } from 'rxjs';
 import { OverviewTabComponent } from './overview-tab.component';
 import { ProjectionTabComponent } from './projection-tab.component';
 import { ScheduleTabComponent } from './schedule-tab.component';
@@ -12,10 +14,13 @@ describe('result tabs', () => {
   let store: CalculatorStore;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: AmortizationApiService, useValue: {} }] });
+    jest.useFakeTimers();
+    TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: AmortizationApiService, useValue: { calculate: () => of(aResponse()) } }] });
     store = TestBed.inject(CalculatorStore);
-    store.result.set(aResponse());
+    store.calculate({} as AmortizationRequest);
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
   });
+  afterEach(() => jest.useRealTimers());
 
   const render = <T>(component: new (...args: never[]) => T) => {
     const fixture = TestBed.createComponent(component);

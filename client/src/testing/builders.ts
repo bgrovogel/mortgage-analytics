@@ -7,6 +7,7 @@ import {
   Schedule,
   YearProjection,
 } from '../app/core/models/amortization.models';
+import { LoanPayment, RefinanceOption, RefinanceResponse } from '../app/core/models/refinance.models';
 
 /**
  * Test-data builders for the client. Each returns a small, valid object with sensible defaults,
@@ -118,6 +119,56 @@ export function aResponse(overrides: Partial<AmortizationResponse> = {}): Amorti
     accelerated: aSchedule(),
     savings: aSavings(),
     projection: [1, 2, 3].map((y) => aProjectionYear(y)),
+    ...overrides,
+  };
+}
+
+/** A repayment option with a few payment rows (balance falling to zero). */
+export function aRefinanceOption(overrides: Partial<RefinanceOption> = {}, paymentCount = 3): RefinanceOption {
+  const payments: LoanPayment[] = Array.from({ length: paymentCount }, (_, i) => ({
+    paymentNumber: i + 1,
+    dueDate: new Date(Date.UTC(2026, i, 1)).toISOString().slice(0, 10),
+    principal: 100,
+    interest: 50,
+    extraPrincipal: 0,
+    remainingBalance: (paymentCount - i - 1) * 100,
+  }));
+  return {
+    loanAmount: paymentCount * 100,
+    monthlyPayment: 150,
+    extraMonthlyPrincipal: 0,
+    numberOfPayments: paymentCount,
+    totalInterest: paymentCount * 50,
+    totalPaid: paymentCount * 150,
+    payoffDate: payments[paymentCount - 1].dueDate,
+    payments,
+    ...overrides,
+  };
+}
+
+/**
+ * The reference refinance (7% with 25 years left, to 6% over a new 30 years, $6,000 at closing): the
+ * payment drops $321.69 but the total cost rises $17,415.28, because the clock restarts.
+ */
+export function aRefinanceResponse(overrides: Partial<RefinanceResponse> = {}): RefinanceResponse {
+  return {
+    current: aRefinanceOption({ loanAmount: 300_000, monthlyPayment: 2_120.34, numberOfPayments: 300, totalInterest: 336_100.16, totalPaid: 636_100.16, payoffDate: '2050-12-01' }),
+    refinanced: aRefinanceOption({
+      loanAmount: 300_000, monthlyPayment: 1_798.65, numberOfPayments: 360, totalInterest: 347_515.44, totalPaid: 647_515.44, payoffDate: '2055-12-01',
+      payments: [{ paymentNumber: 1, dueDate: '2026-01-01', principal: 298.65, interest: 1_500, extraPrincipal: 0, remainingBalance: 299_701.35 }],
+    }),
+    keepingCurrentPayment: aRefinanceOption({
+      loanAmount: 300_000, monthlyPayment: 1_798.65, extraMonthlyPrincipal: 321.69, numberOfPayments: 247, totalInterest: 222_510.04,
+      totalPaid: 522_510.04, payoffDate: '2046-07-01',
+    }),
+    upfrontCosts: 6_000,
+    monthlySavings: 321.69,
+    interestSaved: -11_415.28,
+    lifetimeSavings: -17_415.28,
+    keepingCurrentPaymentLifetimeSavings: 107_590.12,
+    monthsAdded: 60,
+    breakEvenPaymentNumber: 25,
+    breakEvenDate: '2028-01-01',
     ...overrides,
   };
 }

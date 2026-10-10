@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 /** The pages in the top navigation. */
 const PAGES = [
   { path: '/calculator', label: 'Calculator' },
+  { path: '/refinance', label: 'Refinance' },
   { path: '/history', label: 'History' },
 ] as const;
 
@@ -15,7 +16,7 @@ const PAGES = [
     <header class="app-header">
       <div>
         <h1>Mortgage Analytics</h1>
-        <p>See how extra payments change your payoff date and total interest.</p>
+        <p>See what a home really costs, and how extra payments or a refinance change it.</p>
       </div>
       <nav class="app-nav" aria-label="Pages">
         @for (page of pages; track page.path) {

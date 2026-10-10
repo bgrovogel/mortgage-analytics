@@ -1,0 +1,125 @@
+@let r = result();
+
+<section class="hero" [class.warning]="costsMore()" data-testid="refi-verdict">
+  @if (costsMore()) {
+    <p class="eyebrow">Over the life of the loan</p>
+    <p class="headline">Refinancing costs {{ dollars(-r.lifetimeSavings) }} more</p>
+  } @else {
+    <p class="eyebrow">Over the life of the loan</p>
+    <p class="headline">Refinancing saves {{ dollars(r.lifetimeSavings) }}</p>
+  }
+  <p class="detail">{{ paymentSentence() }} Closing costs are included.</p>
+</section>
+
+<div class="tiles">
+  <div class="tile" data-testid="refi-payment">
+    <span class="label">New monthly payment</span>
+    <strong>{{ cents(r.refinanced.monthlyPayment) }}</strong>
+    <small>
+      {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
+    </small>
+  </div>
+  <div class="tile" data-testid="refi-break-even">
+    <span class="label">Break-even</span>
+    @if (r.breakEvenDate) {
+      <strong>{{ date(r.breakEvenDate) }}</strong>
+      <small>after {{ r.breakEvenPaymentNumber }} payments, the interest saved covers the closing costs</small>
+    } @else {
+      <strong>Never</strong>
+      <small>the interest saved never covers the closing costs</small>
+    }
+  </div>
+  <div class="tile" [class.warning]="r.monthsAdded > 0" data-testid="refi-payoff">
+    <span class="label">Paid off</span>
+    <strong>{{ date(r.refinanced.payoffDate) }}</strong>
+    <small>{{ payoffChange() }}</small>
+  </div>
+  <div class="tile" data-testid="refi-interest">
+    <span class="label">Total interest</span>
+    <strong>{{ dollars(r.refinanced.totalInterest) }}</strong>
+    <small>vs {{ dollars(r.current.totalInterest) }} left on your loan</small>
+  </div>
+</div>
+
+@if (r.monthsAdded > 0) {
+  <section class="panel restart" data-testid="refi-restart">
+    <h3>The clock restarts</h3>
+    <p>
+      Your loan has {{ months(r.current.numberOfPayments) }} left; the new one starts a fresh {{ months(r.refinanced.numberOfPayments) }}.
+      Early payments go mostly to interest again: {{ money(firstInterest()) }} of the first {{ money(r.refinanced.monthlyPayment) }} payment is interest.
+      That is how a lower rate and a lower payment can still cost more in the end.
+    </p>
+  </section>
+}
+
+@if (r.keepingCurrentPayment; as keep) {
+  <section class="panel keep" data-testid="refi-keep-payment">
+    <h3>Keep paying {{ cents(r.current.monthlyPayment) }} a month instead</h3>
+    <p>
+      Take the new rate but keep today's payment. The extra {{ cents(keep.extraMonthlyPrincipal) }} goes to principal:
+      paid off {{ date(keep.payoffDate) }}, {{ months(keepingMonthsSooner()) }} sooner than your current loan,
+      @if ((r.keepingCurrentPaymentLifetimeSavings ?? 0) >= 0) {
+        saving {{ dollars(r.keepingCurrentPaymentLifetimeSavings ?? 0) }} overall.
+      } @else {
+        though it still costs {{ dollars(-(r.keepingCurrentPaymentLifetimeSavings ?? 0)) }} more overall.
+      }
+    </p>
+  </section>
+}
+
+<div class="panel">
+  <app-refinance-chart [result]="r" />
+</div>
+
+<div class="panel">
+  <div class="table-wrap" tabindex="0" aria-label="The options side by side">
+    <table data-testid="refi-table">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          @for (column of columns(); track column.label) {
+            <th scope="col">{{ column.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Monthly payment</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal) }}</td>
+          }
+        </tr>
+        <tr>
+          <th scope="row">Payments</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ column.option.numberOfPayments }}</td>
+          }
+        </tr>
+        <tr>
+          <th scope="row">Paid off</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ date(column.option.payoffDate) }}</td>
+          }
+        </tr>
+        <tr>
+          <th scope="row">Total interest</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ dollars(column.option.totalInterest) }}</td>
+          }
+        </tr>
+        <tr>
+          <th scope="row">Closing costs</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ column.closing }}</td>
+          }
+        </tr>
+        <tr class="total" data-testid="refi-total-cost">
+          <th scope="row">Total cost</th>
+          @for (column of columns(); track column.label) {
+            <td>{{ dollars(column.totalCost) }}</td>
+          }
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

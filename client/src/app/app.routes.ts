@@ -4,6 +4,7 @@ import { OverviewTabComponent } from './features/calculator/tabs/overview-tab.co
 import { ProjectionTabComponent } from './features/calculator/tabs/projection-tab.component';
 import { ScheduleTabComponent } from './features/calculator/tabs/schedule-tab.component';
 import { HistoryPageComponent } from './features/history/history-page.component';
+import { RefinancePageComponent } from './features/refinance/refinance-page.component';
 
 /** Every page title ends with the app name. */
 const title = (page: string) => `${page} · Mortgage Analytics`;
@@ -20,6 +21,7 @@ export const routes: Routes = [
       { path: 'schedule', component: ScheduleTabComponent, title: title('Schedule') },
     ],
   },
+  { path: 'refinance', component: RefinancePageComponent, title: title('Refinance') },
   { path: 'history', component: HistoryPageComponent, title: title('History') },
   { path: '**', redirectTo: 'calculator' },
 ];

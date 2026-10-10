@@ -1,0 +1,77 @@
+<form [formGroup]="form" novalidate data-testid="refinance-form">
+  <fieldset>
+    <legend>Your loan today</legend>
+
+    <label class="field">
+      <span>Balance you still owe</span>
+      <span class="affix" data-prefix="$">
+        <input appNumber formControlName="currentBalance" data-testid="current-balance" [attr.aria-invalid]="showError(form.controls.currentBalance)" />
+      </span>
+      @if (showError(form.controls.currentBalance)) {
+        <small class="error">Enter the balance you still owe.</small>
+      }
+    </label>
+
+    <div class="row">
+      <label class="field">
+        <span>Interest rate</span>
+        <span class="affix" data-suffix="%">
+          <input appNumber [decimals]="4" formControlName="currentAnnualInterestRate" data-testid="current-rate" [attr.aria-invalid]="showError(form.controls.currentAnnualInterestRate)" />
+        </span>
+        @if (showError(form.controls.currentAnnualInterestRate)) {
+          <small class="error">Rate must be between 0% and 30%.</small>
+        }
+      </label>
+      <label class="field">
+        <span>Years left</span>
+        <input appNumber [decimals]="2" formControlName="yearsLeft" data-testid="years-left" [attr.aria-invalid]="showError(form.controls.yearsLeft)" />
+        @if (showError(form.controls.yearsLeft)) {
+          <small class="error">Between 1 month and 50 years.</small>
+        }
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>The new loan</legend>
+
+    <div class="row">
+      <label class="field">
+        <span>Interest rate</span>
+        <span class="affix" data-suffix="%">
+          <input appNumber [decimals]="4" formControlName="newAnnualInterestRate" data-testid="new-rate" [attr.aria-invalid]="showError(form.controls.newAnnualInterestRate)" />
+        </span>
+        @if (showError(form.controls.newAnnualInterestRate)) {
+          <small class="error">Rate must be between 0% and 30%.</small>
+        }
+      </label>
+      <label class="field">
+        <span>Term</span>
+        <select formControlName="newTerm" data-testid="new-term">
+          @for (years of terms; track years) {
+            <option [value]="'' + years">{{ years }} years</option>
+          }
+          <option value="keep">Keep my payoff date ({{ remainingLabel() }})</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Closing costs</span>
+      <span class="affix" data-prefix="$">
+        <input appNumber formControlName="closingCosts" data-testid="closing-costs" [attr.aria-invalid]="showError(form.controls.closingCosts)" />
+      </span>
+      @if (showError(form.controls.closingCosts)) {
+        <small class="error">Closing costs cannot be negative.</small>
+      }
+    </label>
+    <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="financeClosingCosts" data-testid="finance-closing-costs" />
+      <span><strong>Add them to the loan</strong> instead of paying at closing</span>
+    </label>
+  </fieldset>
+
+  <p class="auto-note">Results update as you type.</p>
+</form>
