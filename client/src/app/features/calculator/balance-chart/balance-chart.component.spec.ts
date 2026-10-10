@@ -27,4 +27,18 @@ describe('BalanceChartComponent', () => {
     // The gap between the curves is shaded: that area is the time saved.
     expect(config.data.datasets[1].fill).toBe('-1');
   });
+
+  it('labels the axis on whole years, ending with the last payment', () => {
+    const charts = fakeCharts();
+    TestBed.configureTestingModule({ providers: [charts.provider] });
+    const fixture = TestBed.createComponent(BalanceChartComponent);
+    const payments = Array.from({ length: 360 }, (_, i) => aPayment(i + 1));
+    fixture.componentRef.setInput('result', aResponse({ baseline: aSchedule({ payments }), accelerated: aSchedule({ payments }) }));
+
+    fixture.detectChanges();
+
+    const ticks = charts.lastConfig().options!.scales!['x']!.ticks as unknown as { callback: (v: unknown, i: number) => string | null };
+    const shown = payments.map((_, i) => i).filter((i) => ticks.callback(i, i) !== null);
+    expect(shown).toEqual([0, 60, 120, 180, 240, 300, 359]);
+  });
 });

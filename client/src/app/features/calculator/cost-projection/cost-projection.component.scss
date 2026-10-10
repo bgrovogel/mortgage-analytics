@@ -2,40 +2,10 @@ figure {
   margin: 0;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
 figcaption {
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.toggle {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-
-  button {
-    font: inherit;
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
-    border: 0;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-
-    &[aria-pressed='true'] {
-      background: var(--accent);
-      color: var(--on-accent);
-    }
-  }
+  margin-bottom: 0.75rem;
 }
 
 .canvas-wrap {

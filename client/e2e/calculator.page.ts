@@ -40,6 +40,8 @@ export class CalculatorPage {
   readonly calculateButton: Locator;
   /** The panel holding the form, which scrolls on its own when it is taller than the window. */
   readonly formPanel: Locator;
+  /** The headline numbers: the savings (or total interest) and the summary tiles. */
+  readonly headline: Locator;
 
   constructor(private readonly page: Page) {
     this.results = page.getByTestId('results');
@@ -63,6 +65,7 @@ export class CalculatorPage {
     this.pmiHint = page.getByTestId('pmi-hint');
     this.calculateButton = page.getByTestId('calculate');
     this.formPanel = page.getByTestId('form-panel');
+    this.headline = page.getByTestId('headline');
   }
 
   /** Opens the app and waits for the first (automatic) calculation to render. */
@@ -197,9 +200,19 @@ export class CalculatorPage {
     return this.page.waitForTimeout(1_000);
   }
 
-  /** Switches the projection chart to market value against taxable value. */
+  /** A tab of the charts-over-time card: 'balance', 'costs' or 'value'. */
+  chartTab(name: 'balance' | 'costs' | 'value'): Locator {
+    return this.page.getByTestId(`tab-${name}`);
+  }
+
+  /** Shows the yearly taxes & costs chart. */
+  showYearlyCosts(): Promise<void> {
+    return this.chartTab('costs').click();
+  }
+
+  /** Shows market value against taxable value. */
   showHomeValueProjection(): Promise<void> {
-    return this.page.getByTestId('projection-value').click();
+    return this.chartTab('value').click();
   }
 
   /** Switches the table to one row per loan year. */

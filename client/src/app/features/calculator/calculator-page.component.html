@@ -9,12 +9,13 @@
   </div>
 }
 
+<!--
+  Reading order is headline numbers, then the form, then the detail, so a phone shows the answer
+  first. On wider screens the grid puts the form in its own column on the left.
+-->
 <div class="layout">
-  <aside class="panel form-panel" data-testid="form-panel">
-    <app-loan-form (calculate)="calculate($event)" />
-  </aside>
-
-  <section class="results" aria-live="polite" [attr.aria-busy]="busy()" [class.updating]="busy()" data-testid="results">
+  <section class="headline" aria-live="polite" [attr.aria-busy]="busy()" [class.updating]="busy()" aria-label="Results"
+           data-testid="headline">
     @if (errors().length > 0) {
       <div class="alert" role="alert" data-testid="error-summary">
         <strong>We couldn't run that calculation.</strong>
@@ -28,22 +29,29 @@
 
     @if (result(); as r) {
       <app-savings-summary [result]="r" />
+    } @else if (errors().length === 0) {
+      <div class="panel placeholder">Calculating your schedule…</div>
+    }
+  </section>
+
+  <aside class="panel form-panel" data-testid="form-panel">
+    <app-loan-form (calculate)="calculate($event)" />
+  </aside>
+
+  <section class="results" [attr.aria-busy]="busy()" [class.updating]="busy()" aria-label="Charts and schedule"
+           data-testid="results">
+    @if (result(); as r) {
       <div class="charts">
         <div class="panel">
           <app-payment-breakdown [schedule]="r.accelerated" />
         </div>
         <div class="panel">
-          <app-balance-chart [result]="r" />
+          <app-trends [result]="r" />
         </div>
-      </div>
-      <div class="panel">
-        <app-cost-projection [result]="r" />
       </div>
       <div class="panel">
         <app-schedule-table [result]="r" />
       </div>
-    } @else if (errors().length === 0) {
-      <div class="panel placeholder">Calculating your schedule…</div>
     }
   </section>
 </div>

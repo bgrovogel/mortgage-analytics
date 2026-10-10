@@ -44,6 +44,8 @@ export interface LineChartSpec {
   footer?: (index: number) => string;
   /** Stacks the series as filled areas, so the top edge is their total (a part-to-whole over time). */
   stacked?: boolean;
+  /** Label the x-axis in steps of this many points, e.g. 12 for whole years of monthly data. Defaults to 1. */
+  tickEvery?: number;
 }
 
 /**
@@ -58,6 +60,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
   const tint = (name: string) => withAlpha(token(name), spec.stacked ? 0.55 : 0.28);
   const grid = token('--grid');
   const muted = token('--text-muted');
+  const shownTicks = new Set(tickIndices(spec.labels.length, MAX_X_TICKS, spec.tickEvery));
 
   return {
     type: 'line',
@@ -102,7 +105,13 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
         x: {
           grid: { display: false },
           border: { color: grid },
-          ticks: { color: muted, maxTicksLimit: 8, maxRotation: 0, autoSkipPadding: 24 },
+          // Ticks are chosen here rather than by Chart.js's auto-skip, which can drop the last label.
+          ticks: {
+            color: muted,
+            maxRotation: 0,
+            autoSkip: false,
+            callback: (_value, index) => (shownTicks.has(index) ? spec.labels[index] : null),
+          },
         },
         y: {
           stacked: spec.stacked ?? false,
@@ -114,6 +123,23 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
       },
     },
   };
+}
+
+const MAX_X_TICKS = 8;
+
+/**
+ * Which points get an x-axis label: at most `max`, evenly spaced in whole multiples of `every`,
+ * always including the first and the last. A regular label that would crowd the last one is dropped.
+ */
+export function tickIndices(count: number, max: number, every = 1): number[] {
+  if (count === 0) return [];
+  const last = count - 1;
+  const step = Math.max(every, Math.ceil(last / (max - 1) / every) * every);
+  const ticks: number[] = [];
+  for (let i = 0; i < last; i += step) ticks.push(i);
+  if (ticks.length > 1 && last - ticks[ticks.length - 1] < step / 2) ticks.pop();
+  ticks.push(last);
+  return ticks;
 }
 
 /**

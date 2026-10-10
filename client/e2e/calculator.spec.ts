@@ -163,6 +163,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
 
     await expect(calculator.breakdownAmount('School tax'), '$140,000 + $60,000 exempt').toHaveText('$83.33');
+    await calculator.showYearlyCosts();
     await expect(calculator.projectionNote, 'values rise 10% a year, but the ceiling holds the tax flat')
       .toContainText('go from $1,000 in year 1 to $1,000 in year 30');
   });
@@ -171,12 +172,26 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('home-value-growth', 15);
     await calculator.set('assessment-cap', 10);
     await calculator.calculate();
+    await calculator.showYearlyCosts();
 
     await expect(calculator.projectionChart, 'the projection chart renders').toBeVisible();
     await expect(calculator.projectionNote, 'the costs view summarizes the change').toContainText('Yearly taxes & costs go from');
 
     await calculator.showHomeValueProjection();
     await expect(calculator.projectionNote, 'a 15% market against a 10% cap opens a gap').toContainText('the homestead cap keeps');
+  });
+
+  test('shows one chart over time at a time, in tabs you can also use from the keyboard', async ({ calculator }) => {
+    await expect(calculator.chart, 'the balance chart is the first tab').toBeVisible();
+    await expect(calculator.projectionChart, 'the other charts wait behind their tabs').toHaveCount(0);
+
+    await calculator.chartTab('balance').focus();
+    await calculator.chartTab('balance').press('ArrowRight');
+
+    await expect(calculator.chartTab('costs'), 'the arrow key selects the next tab').toHaveAttribute('aria-selected', 'true');
+    await expect(calculator.chartTab('costs'), 'and moves focus to it').toBeFocused();
+    await expect(calculator.projectionChart, 'the yearly costs chart replaces the balance chart').toBeVisible();
+    await expect(calculator.chart, 'only one chart shows').toHaveCount(0);
   });
 
   test('shows no PMI with 20% down', async ({ calculator }) => {
@@ -298,6 +313,14 @@ test.describe('Mortgage calculator', () => {
 
 test.describe('On a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
+
+  test('shows the answer first, above the form', async ({ calculator }) => {
+    await expect(calculator.headline, 'the headline numbers are on screen without scrolling').toBeInViewport();
+
+    const headline = await calculator.headline.boundingBox();
+    const form = await calculator.formPanel.boundingBox();
+    expect(headline!.y, 'the headline sits above the form').toBeLessThan(form!.y);
+  });
 
   test('keeps the payment and savings in view while editing', async ({ calculator }) => {
     await calculator.set('monthly-extra', 500);

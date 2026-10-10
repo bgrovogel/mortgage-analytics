@@ -108,6 +108,25 @@ describe('CalculatorPageComponent', () => {
       expect(bar).toContain('Save $114,699');
     });
 
+    it('puts the headline numbers before the form in reading order, so a phone shows the answer first', () => {
+      create(of(aResponse()));
+      settle();
+
+      const headline = fixture.nativeElement.querySelector('app-savings-summary') as HTMLElement;
+      const form = fixture.nativeElement.querySelector('[data-testid="form-panel"]') as HTMLElement;
+      expect(headline.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows the charts over time in one tabbed card, beside the payment breakdown', () => {
+      create(of(aResponse()));
+      settle();
+
+      const charts = fixture.nativeElement.querySelector('.charts') as HTMLElement;
+      expect(charts.querySelector('app-payment-breakdown')).not.toBeNull();
+      expect(charts.querySelector('app-trends [role="tablist"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelectorAll('canvas').length).toBe(1); // one chart at a time
+    });
+
     it('marks the results region busy for assistive technology while updating', () => {
       create(new Subject<AmortizationResponse>());
       settle();

@@ -5,12 +5,11 @@ import { EMPTY, Subject, catchError, debounceTime, map, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
-import { BalanceChartComponent } from './balance-chart/balance-chart.component';
-import { CostProjectionComponent } from './cost-projection/cost-projection.component';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { PaymentBreakdownComponent } from './payment-breakdown/payment-breakdown.component';
 import { SavingsSummaryComponent } from './savings-summary/savings-summary.component';
 import { ScheduleTableComponent } from './schedule-table/schedule-table.component';
+import { TrendsComponent } from './trends/trends.component';
 
 /** How long to wait after the last change before calculating, so typing "375000" sends one request, not six. */
 export const RECALCULATE_DELAY_MS = 400;
@@ -26,8 +25,7 @@ export const RECALCULATE_DELAY_MS = 400;
     LoanFormComponent,
     SavingsSummaryComponent,
     PaymentBreakdownComponent,
-    BalanceChartComponent,
-    CostProjectionComponent,
+    TrendsComponent,
     ScheduleTableComponent,
   ],
   templateUrl: './calculator-page.component.html',

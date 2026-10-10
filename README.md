@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 129 Angular unit tests · Playwright: 26 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 144 Angular unit tests · Playwright: 28 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -77,9 +77,9 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 381 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 129 Jest unit tests; fails below 85% coverage
+npm test                          # 144 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 26 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 28 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -166,7 +166,7 @@ The full contract, with descriptions and example values, is in Swagger UI at `/s
 │   ├ loan-form             ├─────►│   Swagger · health check · serves the SPA in production  │
 │   ├ savings-summary       │      ├──────────────────────────────────────────────────────────┤
 │   ├ payment-breakdown     │      │  MortgageAnalytics.Application   (use case)              │
-│   ├ balance-chart         │      │   contracts · validators · mapping · AmortizationService │
+│   ├ trends (tabs)         │      │   contracts · validators · mapping · AmortizationService │
 │   └ schedule-table        │      ├──────────────────────────────────────────────────────────┤
 └───────────────────────────┘      │  MortgageAnalytics.Domain   (no dependencies at all)     │
                                    │   Loans · ExtraPayments · Amortization · HousingCosts    │
@@ -304,12 +304,17 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 - **Number boxes that read like money.** A small `appNumber` directive (a `ControlValueAccessor` and
   validator) shows "375,000" with the $ or % inside the box, switches to the plain number while you
   edit, selects it on focus so typing replaces it, and marks unreadable text invalid instead of reading it as 0.
+- **Answer first on a phone.** The reading order is headline numbers, then the form, then the
+  detail; on wider screens a CSS grid moves the form into its own column on the left.
+- **One chart card, three tabs.** Balance, yearly costs and home value share a card that follows the
+  WAI-ARIA tabs pattern (arrow keys, Home/End, one tab in the tab order). X-axis labels are chosen in
+  code (`tickIndices`) so the last point is always labelled, on whole years for monthly data.
 - **A schedule you can scan.** Monthly or yearly rows, totals under each column, and the # and Date
   columns pinned while the table scrolls sideways on a phone (a fade shows there is more).
 - **Down payment in dollars or percent.** A $ | % switch converts the value; the API always receives dollars.
 - **The form scrolls on its own.** The results column is much longer, so the form panel is capped to the
   window and scrolls independently, keeping every section toggle reachable.
-- **Container / presentational split.** `CalculatorPageComponent` owns state and HTTP, and five
+- **Container / presentational split.** `CalculatorPageComponent` owns state and HTTP, and its
   presentational children take inputs and emit outputs.
 - **Signals + OnPush** throughout, with a typed form. Loan amount, down-payment % and whether PMI
   applies are computed live from the form.
@@ -331,8 +336,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 | Application (107) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | API integration (18) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (129) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (26) | Playwright | Real browser and real API, through a page object. |
+| Angular (144) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (28) | Playwright | Real browser and real API, through a page object. |
 
 **Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

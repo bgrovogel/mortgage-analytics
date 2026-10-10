@@ -1,4 +1,4 @@
-import { buildLineChart, compactCurrency, currency, withAlpha } from './line-chart';
+import { buildLineChart, compactCurrency, currency, tickIndices, withAlpha } from './line-chart';
 
 describe('buildLineChart', () => {
   const host = document.createElement('div');
@@ -82,6 +82,46 @@ describe('buildLineChart', () => {
 
     expect((y as { beginAtZero?: boolean }).beginAtZero).toBe(true);
     expect(tick(250_000)).toBe(compactCurrency.format(250_000));
+  });
+});
+
+describe('x-axis labels', () => {
+  const months = Array.from({ length: 360 }, (_, i) => `M${i + 1}`);
+  const xTick = (config: ReturnType<typeof buildLineChart>) =>
+    (index: number) => (config.options!.scales!['x']!.ticks as unknown as { callback: (v: unknown, i: number) => string | null }).callback(index, index);
+
+  it('always labels the last point, so the axis shows where the line ends', () => {
+    const label = xTick(buildLineChart({ labels: months, series: [], title: () => '' }, document.createElement('div')));
+
+    expect(label(0)).toBe('M1');
+    expect(label(359)).toBe('M360');
+    expect(label(1)).toBeNull();
+  });
+
+  it('can step in whole units, such as every 12 months for a monthly series', () => {
+    const label = xTick(buildLineChart({ labels: months, series: [], title: () => '', tickEvery: 12 }, document.createElement('div')));
+
+    expect(label(60)).toBe('M61');
+    expect(label(50)).toBeNull();
+  });
+});
+
+describe('tickIndices', () => {
+  it('spreads at most the given number of ticks evenly, ending on the last point', () => {
+    expect(tickIndices(30, 8)).toEqual([0, 5, 10, 15, 20, 25, 29]);
+  });
+
+  it('steps in whole units when asked', () => {
+    expect(tickIndices(360, 8, 12)).toEqual([0, 60, 120, 180, 240, 300, 359]);
+  });
+
+  it('drops a regular tick that would crowd the last one', () => {
+    expect(tickIndices(8, 4)).toEqual([0, 3, 7]);
+  });
+
+  it('handles a single point and no points', () => {
+    expect(tickIndices(1, 8)).toEqual([0]);
+    expect(tickIndices(0, 8)).toEqual([]);
   });
 });
 

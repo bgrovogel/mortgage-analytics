@@ -19,8 +19,9 @@ describe('CostProjectionComponent', () => {
     fixture.detectChanges();
     return fixture.componentInstance;
   };
+  // The view is chosen by the tabs around the chart.
   const showValue = () => {
-    fixture.nativeElement.querySelector('[data-testid="projection-value"]').click();
+    fixture.componentRef.setInput('view', 'value');
     fixture.detectChanges();
   };
   const tooltip = () => charts.lastConfig().options!.plugins!.tooltip!.callbacks! as unknown as Record<string, (items: unknown) => string>;
@@ -85,6 +86,17 @@ describe('CostProjectionComponent', () => {
 
       expect(component.note()).toContain('Taxable value tracks market value');
     });
+  });
+
+  it('names the chart for the view shown, and draws a new chart when the view changes', () => {
+    render(rising);
+    const caption = () => fixture.nativeElement.querySelector('figcaption').textContent.trim();
+    expect(caption()).toBe('Projected yearly taxes & costs');
+
+    showValue();
+
+    expect(caption()).toBe('Home value vs. taxable value');
+    expect(charts.count()).toBe(2);
   });
 
   it('shows no note when there is no projection', () => {

@@ -1,11 +1,21 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'form headline'
+    'form results';
   gap: 1.25rem;
   align-items: start;
 }
 
+.headline {
+  grid-area: headline;
+  min-width: 0;
+}
+
 .form-panel {
+  grid-area: form;
   position: sticky;
   top: 1rem;
   // The results column is much taller than the form. Capping the panel to the window (less the page
@@ -18,6 +28,7 @@
 }
 
 .results {
+  grid-area: results;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -64,8 +75,14 @@
 }
 
 @media (max-width: 860px) {
+  // One column: the answer first, then the form, then the detail.
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas:
+      'headline'
+      'form'
+      'results';
   }
 
   .form-panel {
@@ -76,6 +93,7 @@
 }
 
 // Fade results slightly while they are being recalculated, so stale numbers are not mistaken for fresh ones.
+.headline.updating,
 .results.updating {
   opacity: 0.6;
   transition: opacity 0.2s ease 0.15s;

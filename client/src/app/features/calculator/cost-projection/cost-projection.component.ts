@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart, currency } from '../../../core/charts/line-chart';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 
-type View = 'costs' | 'value';
+/** The two views of the projection. */
+export type ProjectionView = 'costs' | 'value';
 
 /**
  * The long-term picture, year by year over the full term:
@@ -17,15 +18,7 @@ type View = 'costs' | 'value';
   selector: 'app-cost-projection',
   template: `
     <figure>
-      <div class="header">
-        <figcaption id="projection-title">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value vs. taxable value' }}</figcaption>
-        <div class="toggle" role="group" aria-label="Projection to show">
-          <button type="button" [attr.aria-pressed]="view() === 'costs'" (click)="view.set('costs')"
-                  data-testid="projection-costs">Yearly costs</button>
-          <button type="button" [attr.aria-pressed]="view() === 'value'" (click)="view.set('value')"
-                  data-testid="projection-value">Home value</button>
-        </div>
-      </div>
+      <figcaption id="projection-title">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value vs. taxable value' }}</figcaption>
       <div class="canvas-wrap">
         <canvas #canvas role="img" aria-labelledby="projection-title" data-testid="projection-chart"></canvas>
       </div>
@@ -39,8 +32,8 @@ export class CostProjectionComponent {
   /** The analysis whose projection is plotted. */
   readonly result = input.required<AmortizationResponse>();
 
-  /** Which view is shown. */
-  readonly view = signal<View>('costs');
+  /** Which view is shown; the tabs around the chart choose it. */
+  readonly view = input<ProjectionView>('costs');
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 

@@ -49,6 +49,7 @@ export class BalanceChartComponent {
               },
             ],
             title: (index, label) => `Payment ${index + 1} · ${label}`,
+            tickEvery: 12, // label whole years
           },
           host,
         );
