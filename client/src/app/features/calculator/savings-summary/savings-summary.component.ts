@@ -10,11 +10,20 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
   template: `
     @let r = result();
     <dl class="tiles">
-      <div class="tile hero">
-        <dt>Net savings from paying extra</dt>
-        <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-        <small data-testid="savings-detail">{{ savingsDetail() }}</small>
-      </div>
+      @if (hasSavings()) {
+        <div class="tile hero">
+          <dt>Net savings from paying extra</dt>
+          <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <small data-testid="savings-detail">{{ savingsDetail() }}</small>
+        </div>
+      } @else {
+        <!-- Nothing extra is paid, so a $0 saving would say nothing: lead with what the loan costs instead. -->
+        <div class="tile hero">
+          <dt>Total interest over the loan</dt>
+          <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <small data-testid="total-interest-detail">Add an extra payment to see how much you could save.</small>
+        </div>
+      }
       <div class="tile">
         <dt>Required monthly payment</dt>
         <dd data-testid="total-monthly-payment">{{ r.baseline.totalMonthlyPayment | currency }}</dd>
@@ -28,11 +37,18 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
           <small class="with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</small>
         }
       </div>
-      <div class="tile highlight">
-        <dt>Time saved</dt>
-        <dd data-testid="time-saved">{{ timeSaved() }}</dd>
-        <small>{{ r.accelerated.numberOfPayments }} of {{ r.baseline.numberOfPayments }} payments</small>
-      </div>
+      @if (hasSavings()) {
+        <div class="tile">
+          <dt>Total interest</dt>
+          <dd data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <small data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</small>
+        </div>
+        <div class="tile highlight">
+          <dt>Time saved</dt>
+          <dd data-testid="time-saved">{{ timeSaved() }}</dd>
+          <small>{{ r.accelerated.numberOfPayments }} of {{ r.baseline.numberOfPayments }} payments</small>
+        </div>
+      }
       <div class="tile">
         <dt>Payoff date</dt>
         <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
@@ -79,6 +95,12 @@ export class SavingsSummaryComponent {
   readonly withExtra = computed(() => {
     const first = this.result().accelerated.payments[0];
     return first && first.extraPrincipal > 0 ? { amount: first.extraPrincipal, total: first.totalOutlay } : null;
+  });
+
+  /** True when extra payments change anything; otherwise savings tiles would only show zeros. */
+  readonly hasSavings = computed(() => {
+    const s = this.result().savings;
+    return s.netSavings !== 0 || s.paymentsSaved > 0 || s.totalExtraPrincipal > 0;
   });
 
   /** Payments saved, formatted as years and months. */

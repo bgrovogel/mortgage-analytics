@@ -19,6 +19,7 @@ export class CalculatorPage {
   readonly totalMonthlyPayment: Locator;
   readonly monthlyPayment: Locator;
   readonly netSavings: Locator;
+  readonly totalInterest: Locator;
   readonly savingsDetail: Locator;
   readonly timeSaved: Locator;
   readonly payoffDate: Locator;
@@ -37,12 +38,15 @@ export class CalculatorPage {
   readonly pmiHint: Locator;
   /** The Calculate button the form used to have; results now update as you type. */
   readonly calculateButton: Locator;
+  /** The panel holding the form, which scrolls on its own when it is taller than the window. */
+  readonly formPanel: Locator;
 
   constructor(private readonly page: Page) {
     this.results = page.getByTestId('results');
     this.totalMonthlyPayment = page.getByTestId('total-monthly-payment');
     this.monthlyPayment = page.getByTestId('monthly-payment');
     this.netSavings = page.getByTestId('net-savings');
+    this.totalInterest = page.getByTestId('total-interest');
     this.savingsDetail = page.getByTestId('savings-detail');
     this.timeSaved = page.getByTestId('time-saved');
     this.payoffDate = page.getByTestId('payoff-date');
@@ -58,6 +62,7 @@ export class CalculatorPage {
     this.summaryBar = page.getByTestId('summary-bar');
     this.pmiHint = page.getByTestId('pmi-hint');
     this.calculateButton = page.getByTestId('calculate');
+    this.formPanel = page.getByTestId('form-panel');
   }
 
   /** Opens the app and waits for the first (automatic) calculation to render. */
@@ -80,6 +85,18 @@ export class CalculatorPage {
   /** The one-line summary shown on a section, e.g. "taxes-summary". */
   sectionSummary(testId: string): Locator {
     return this.page.getByTestId(testId);
+  }
+
+  /** Opens every collapsed section, making the form as tall as it gets. */
+  async openAllSections(): Promise<void> {
+    for (const id of ['section-taxes', 'section-costs', 'section-growth', 'section-options']) {
+      await this.openSection(id);
+    }
+  }
+
+  /** How far the window itself has scrolled, in pixels. */
+  windowScrollY(): Promise<number> {
+    return this.page.evaluate(() => window.scrollY);
   }
 
   /** Opens a collapsed section by clicking its header, as a user would. */

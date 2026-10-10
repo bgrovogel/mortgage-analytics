@@ -57,7 +57,7 @@
         <th scope="row" colspan="2">Totals</th>
         <td>{{ schedule().totalPaid | currency }}</td>
         <td></td>
-        <td data-testid="total-interest">{{ schedule().totalInterest | currency }}</td>
+        <td data-testid="table-total-interest">{{ schedule().totalInterest | currency }}</td>
         <td></td>
         @if (hasHousingCosts()) {
           <td>{{ schedule().totalHousingCosts.total | currency }}</td>

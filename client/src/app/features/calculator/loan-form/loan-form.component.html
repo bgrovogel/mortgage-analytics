@@ -9,15 +9,23 @@
         <input type="number" formControlName="homePrice" min="1" step="5000" inputmode="decimal"
                data-testid="home-price" [attr.aria-invalid]="showError(form.controls.homePrice)" />
       </label>
-      <label class="field">
-        <span>Down payment ($)</span>
-        <input type="number" formControlName="downPayment" min="0" step="1000" inputmode="decimal"
+      <div class="field">
+        <div class="label-row">
+          <label for="down-payment">Down payment ({{ form.controls.downPaymentMode.value === 'percent' ? '%' : '$' }})</label>
+          <span class="unit-toggle" role="radiogroup" aria-label="Enter the down payment in">
+            <label><input type="radio" formControlName="downPaymentMode" value="amount" data-testid="down-payment-mode-amount" />$</label>
+            <label><input type="radio" formControlName="downPaymentMode" value="percent" data-testid="down-payment-mode-percent" />%</label>
+          </span>
+        </div>
+        <input id="down-payment" type="number" formControlName="downPayment" min="0"
+               [step]="form.controls.downPaymentMode.value === 'percent' ? 0.5 : 1000" inputmode="decimal"
                data-testid="down-payment" [attr.aria-invalid]="showError(form.controls.downPayment) || loanAmount() <= 0" />
-      </label>
+      </div>
     </div>
     @if (loanAmount() > 0) {
       <p class="hint" data-testid="loan-summary">
-        {{ downPaymentPercent() | number: '1.0-2' }}% down · Loan {{ loanAmount() | currency: 'USD' : 'symbol' : '1.0-0' }}
+        {{ downPaymentAmount() | currency: 'USD' : 'symbol' : '1.0-0' }} down ({{ downPaymentPercent() | number: '1.0-2' }}%)
+        · Loan {{ loanAmount() | currency: 'USD' : 'symbol' : '1.0-0' }}
       </p>
     } @else {
       <small class="error">The down payment must be less than the home price.</small>
@@ -54,7 +62,7 @@
 
   <details class="section" data-testid="section-taxes">
     <summary>
-      <span class="section-title">Property taxes</span>
+      <span class="section-title">Property taxes &amp; <abbr title="Public Improvement District">PID</abbr></span>
       <span class="section-summary" data-testid="taxes-summary">{{ taxesSummary() }}</span>
     </summary>
     <div class="section-body">
@@ -76,6 +84,19 @@
         </label>
       </div>
       <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
+
+      <div class="row">
+        <label class="field">
+          <span><abbr title="Public Improvement District">PID</abbr> ($/yr)</span>
+          <input type="number" formControlName="pidAnnual" min="0" step="100" inputmode="decimal" data-testid="pid-annual" />
+        </label>
+        <label class="field">
+          <span>PID years left</span>
+          <input type="number" formControlName="pidYears" min="1" max="50" step="1" placeholder="No end"
+                 data-testid="pid-years" />
+        </label>
+      </div>
+      <p class="hint">A PID assessment is a fixed yearly charge that ends once the district's bonds are repaid.</p>
 
       <label class="checkbox">
         <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
@@ -158,17 +179,6 @@
         </label>
       </div>
 
-      <div class="row">
-        <label class="field">
-          <span><abbr title="Public Improvement District">PID</abbr> ($/yr)</span>
-          <input type="number" formControlName="pidAnnual" min="0" step="100" inputmode="decimal" data-testid="pid-annual" />
-        </label>
-        <label class="field">
-          <span>PID years left</span>
-          <input type="number" formControlName="pidYears" min="1" max="50" step="1" placeholder="No end"
-                 data-testid="pid-years" />
-        </label>
-      </div>
 
       <div class="row">
         <label class="field">

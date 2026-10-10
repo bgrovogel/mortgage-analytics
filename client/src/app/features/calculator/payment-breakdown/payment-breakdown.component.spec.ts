@@ -38,6 +38,17 @@ describe('PaymentBreakdownComponent', () => {
     expect(component.slices().find((s) => s.label === 'HOA dues')?.color).toBe('--series-8');
   });
 
+  it('shows every tax that is present, including county and city tax', () => {
+    const component = withCosts(aSchedule({
+      monthlyPayment: 1_000,
+      monthlyHousingCosts: aHousingCosts({ schoolTax: 195.83, localTax: 343.75, mudTax: 265.63 }),
+      totalMonthlyPayment: 1_805.21,
+    }));
+
+    expect(component.slices().map((s) => s.label)).toEqual(['Principal & interest', 'School tax', 'County & city tax', 'MUD tax']);
+    expect(fixture.nativeElement.textContent).toContain('$343.75');
+  });
+
   it('describes the bar in text for screen readers', () => {
     const component = withCosts(schedule);
 

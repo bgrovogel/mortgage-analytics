@@ -202,7 +202,7 @@ abbr[title] {
     gap: 0.15rem;
     min-height: 44px;
     justify-content: center;
-    padding: 0.6rem 2.25rem 0.6rem 0.9rem;
+    padding: 0.6rem 2.75rem 0.6rem 0.9rem;
     position: relative;
     cursor: pointer;
     border-radius: 10px;
@@ -211,15 +211,34 @@ abbr[title] {
       display: none;
     }
 
+    // A round 28px target behind the chevron, so the toggle is easy to see and hit.
+    &::before {
+      content: '';
+      position: absolute;
+      right: 0.55rem;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      margin-top: -14px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    &:hover::before {
+      border-color: var(--accent-soft-border);
+      background: var(--accent-soft);
+    }
+
     &::after {
       content: '';
       position: absolute;
-      right: 0.95rem;
+      right: 1.12rem;
       top: 50%;
       width: 7px;
       height: 7px;
-      border-right: 2px solid var(--text-muted);
-      border-bottom: 2px solid var(--text-muted);
+      border-right: 2px solid var(--text-secondary);
+      border-bottom: 2px solid var(--text-secondary);
       transform: translateY(-70%) rotate(45deg);
       transition: transform 0.15s ease;
     }
@@ -258,4 +277,53 @@ abbr[title] {
   font-size: 0.8rem;
   color: var(--text-muted);
   text-align: center;
+}
+
+// "Down payment ($)" with a compact $ | % switch on the same line.
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+
+  > label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+}
+
+.unit-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+
+  label {
+    position: relative;
+    min-width: 2rem;
+    padding: 0.1rem 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    &:has(input:checked) {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
 }

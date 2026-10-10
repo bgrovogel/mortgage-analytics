@@ -41,10 +41,39 @@ describe('SavingsSummaryComponent', () => {
     expect(text('with-extra')).toBeUndefined();
   });
 
-  it('makes net savings the headline figure', () => {
-    render(aResponse());
+  /** A response where extra payments saved something: $79,801 of interest and 108 payments. */
+  const withExtras = () => aResponse({
+    baseline: aSchedule({ totalInterest: 231_677.04 }),
+    accelerated: aSchedule({ totalInterest: 151_876.18 }),
+    savings: aSavings({ interestSaved: 79_800.86, netSavings: 79_800.86, paymentsSaved: 108, totalExtraPrincipal: 50_400 }),
+  });
+
+  it('makes net savings the headline figure when extra payments save something', () => {
+    render(withExtras());
 
     expect(fixture.nativeElement.querySelector('[data-testid="net-savings"]').closest('.tile').classList).toContain('hero');
+  });
+
+  it('shows the total interest with extra payments, and what it would have been', () => {
+    render(withExtras());
+
+    expect(text('total-interest')).toBe('$151,876');
+    expect(text('total-interest-detail')).toBe('instead of $231,677');
+  });
+
+  it('without extra payments, makes total interest the headline instead of a $0 saving', () => {
+    render(aResponse({ baseline: aSchedule({ totalInterest: 231_677.04, numberOfPayments: 360 }) }));
+
+    expect(text('net-savings')).toBeUndefined();
+    expect(text('total-interest')).toBe('$231,677');
+    expect(fixture.nativeElement.querySelector('[data-testid="total-interest"]').closest('.tile').classList).toContain('hero');
+    expect(text('total-interest-detail')).toBe('Add an extra payment to see how much you could save.');
+  });
+
+  it('without extra payments, hides the time-saved tile rather than showing 0 months', () => {
+    render(aResponse());
+
+    expect(text('time-saved')).toBeUndefined();
   });
 
   it('omits the taxes line when there are no housing costs', () => {
@@ -54,7 +83,7 @@ describe('SavingsSummaryComponent', () => {
   });
 
   it('explains net savings as interest only when that is all there is', () => {
-    const component = render(aResponse({ savings: aSavings({ interestSaved: 79_800.86, netSavings: 79_800.86 }) }));
+    const component = render(withExtras());
 
     expect(component.savingsDetail()).toBe('$79,801 interest');
     expect(text('net-savings')).toBe('$79,801');
@@ -67,9 +96,10 @@ describe('SavingsSummaryComponent', () => {
   });
 
   it('formats payments saved as years and months', () => {
-    const component = render(aResponse({ savings: aSavings({ paymentsSaved: 73 }) }));
+    const component = render(aResponse({ savings: aSavings({ paymentsSaved: 73, netSavings: 1 }) }));
 
     expect(component.timeSaved()).toBe('6 yr 1 mo');
+    expect(text('time-saved')).toBe('6 yr 1 mo');
   });
 
   it('shows the original payoff date only when it moved', () => {

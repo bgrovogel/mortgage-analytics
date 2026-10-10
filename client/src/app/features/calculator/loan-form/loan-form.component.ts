@@ -10,6 +10,9 @@ import {
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
 
+/** Whether the down payment field holds dollars or a percentage of the price. */
+export type DownPaymentMode = 'amount' | 'percent';
+
 /** Limits mirror the server's validator. The server re-validates everything regardless. */
 const MAX_YEARS = 50;
 const MAX_RATE = 30;
@@ -20,15 +23,18 @@ const CHECK_SECTION = 'Check the values in this section';
 
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
-  taxes: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
-    'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
-  costs: ['pidAnnual', 'pidYears', 'annualInsurance', 'monthlyHoa', 'pmiRate'],
+  taxes: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
+    'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
+  costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['firstPaymentDate', 'annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
 } as const;
 
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const monthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** Rounds to cents, the same way the API does. */
+const cents = (value: number) => Math.round(value * 100) / 100;
 
 /** 1 becomes "1%", 0.85 becomes "0.85%". */
 const percent = (value: number) => `${Number(value.toFixed(4))}%`;
@@ -70,6 +76,8 @@ export class LoanFormComponent implements OnInit {
   // school exemption and yearly increases are all visible on load.
   readonly form = this.fb.group({
     homePrice: [375_000, [Validators.required, Validators.min(1)]],
+    downPaymentMode: this.fb.control<DownPaymentMode>('amount'),
+    // Dollars or a percentage of the price, depending on downPaymentMode.
     downPayment: [18_750, [Validators.required, Validators.min(0)]],
     annualInterestRate: [6.5, [Validators.required, Validators.min(0), Validators.max(MAX_RATE)]],
     termYears: [30, [Validators.required, Validators.min(1), Validators.max(MAX_YEARS)]],
@@ -110,13 +118,16 @@ export class LoanFormComponent implements OnInit {
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
+  /** The down payment in dollars, whichever unit it was entered in. */
+  readonly downPaymentAmount = computed(() => downPaymentAmountOf(this.values()));
+
   /** Loan amount derived live from price and down payment, shown under the down payment field. */
-  readonly loanAmount = computed(() => Math.max(0, (this.values().homePrice ?? 0) - (this.values().downPayment ?? 0)));
+  readonly loanAmount = computed(() => Math.max(0, (this.values().homePrice ?? 0) - this.downPaymentAmount()));
 
   /** Down payment as a percentage of the price. */
   readonly downPaymentPercent = computed(() => {
     const price = this.values().homePrice ?? 0;
-    return price > 0 ? ((this.values().downPayment ?? 0) / price) * 100 : 0;
+    return price > 0 ? (this.downPaymentAmount() / price) * 100 : 0;
   });
 
   /** PMI applies only with less than 20% down. */
@@ -139,6 +150,7 @@ export class LoanFormComponent implements OnInit {
       v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
       v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
       v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
+      v.pidAnnual ? `PID ${dollars.format(v.pidAnnual)}/yr` : '',
     ].filter(Boolean);
     if (parts.length === 0) return 'No property taxes';
 
@@ -155,7 +167,6 @@ export class LoanFormComponent implements OnInit {
     const parts = [
       v.annualInsurance ? `Insurance ${dollars.format(v.annualInsurance)}/yr` : '',
       v.monthlyHoa ? `HOA ${dollars.format(v.monthlyHoa)}/mo` : '',
-      v.pidAnnual ? `PID ${dollars.format(v.pidAnnual)}/yr` : '',
       this.pmiApplies() && v.pmiRate ? `PMI ${percent(v.pmiRate)}` : '',
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(' · ') : 'None';
@@ -185,6 +196,15 @@ export class LoanFormComponent implements OnInit {
   });
 
   constructor() {
+    // Switching between $ and % converts the value, so the down payment itself stays the same.
+    this.form.controls.downPaymentMode.valueChanges.pipe(takeUntilDestroyed()).subscribe((mode) => {
+      const { homePrice, downPayment } = this.form.getRawValue();
+      const converted = mode === 'percent'
+        ? (homePrice > 0 ? cents((downPayment / homePrice) * 100) : 0)
+        : cents((homePrice * downPayment) / 100);
+      this.form.controls.downPayment.setValue(converted);
+    });
+
     // Recalculate as the user types: every change that leaves the form valid produces a request.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.isComplete()) this.calculate.emit(this.toRequest());
@@ -233,7 +253,7 @@ export class LoanFormComponent implements OnInit {
   /** True when the form can be sent: every field valid and something left to borrow. */
   private isComplete(): boolean {
     const v = this.form.getRawValue();
-    return this.form.valid && v.homePrice - v.downPayment > 0;
+    return this.form.valid && v.homePrice - downPaymentAmountOf(v) > 0;
   }
 
   /** True when any control in `section` is invalid. */
@@ -246,7 +266,7 @@ export class LoanFormComponent implements OnInit {
     const v = this.form.getRawValue();
     return {
       homePrice: v.homePrice,
-      downPayment: v.downPayment,
+      downPayment: downPaymentAmountOf(v),
       annualInterestRate: v.annualInterestRate,
       termInMonths: v.termYears * 12,
       firstPaymentDate: v.firstPaymentDate || null,
@@ -285,4 +305,10 @@ export class LoanFormComponent implements OnInit {
       },
     };
   }
+}
+
+/** The down payment in dollars: as entered, or the entered percentage of the price, rounded to cents. */
+function downPaymentAmountOf(v: { homePrice?: number; downPayment?: number; downPaymentMode?: DownPaymentMode }): number {
+  const entered = v.downPayment ?? 0;
+  return v.downPaymentMode === 'percent' ? cents(((v.homePrice ?? 0) * entered) / 100) : entered;
 }

@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 95 Angular unit tests · Playwright: 21 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 104 Angular unit tests · Playwright: 24 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -77,9 +77,9 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 dotnet test                       # 381 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 95 Jest unit tests; fails below 85% coverage
+npm test                          # 104 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 21 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 24 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -298,8 +298,12 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 - **Results update as you type.** Every valid change produces a request. The page waits for a 400 ms
   pause, cancels stale requests with `switchMap`, and stays `aria-busy` until the *latest* change is
   answered (an older response arriving mid-typing does not end the busy state).
-- **One headline number.** Net savings is the full-width hero tile, and the required payment shows what
-  it comes to with the extra. On phones a sticky bar keeps the payment and savings in view while editing.
+- **One headline number.** With extra payments, net savings is the full-width hero tile and a Total
+  interest tile shows the new total against the original. Without them, the headline is the total interest
+  over the loan, never a $0 saving. On phones a sticky bar keeps the payment and savings in view.
+- **Down payment in dollars or percent.** A $ | % switch converts the value; the API always receives dollars.
+- **The form scrolls on its own.** The results column is much longer, so the form panel is capped to the
+  window and scrolls independently, keeping every section toggle reachable.
 - **Container / presentational split.** `CalculatorPageComponent` owns state and HTTP, and five
   presentational children take inputs and emit outputs.
 - **Signals + OnPush** throughout, with a typed form. Loan amount, down-payment % and whether PMI
@@ -321,8 +325,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 | Application (107) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | API integration (18) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (95) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (21) | Playwright | Real browser and real API, through a page object. |
+| Angular (104) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (24) | Playwright | Real browser and real API, through a page object. |
 
 **Coverage:** backend 99.5% lines / 99.4% branches (compiler-generated code excluded); Angular 100% lines / 94.7% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

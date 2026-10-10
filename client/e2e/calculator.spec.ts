@@ -30,6 +30,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.field('school-tax-rate'), 'opening the section reveals its fields').toBeVisible();
   });
 
+  test('the form scrolls on its own, so every section stays reachable beside long results', async ({ calculator, page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await calculator.openAllSections();
+
+    const panel = await calculator.formPanel.boundingBox();
+    expect(panel!.height, 'the open form must fit in the window instead of running off the bottom').toBeLessThanOrEqual(800);
+
+    await calculator.section('section-options').locator('summary').click();
+    await expect(calculator.section('section-options'), 'the last section can be reached and toggled').not.toHaveAttribute('open');
+
+    const after = await calculator.formPanel.boundingBox();
+    expect(after!.y + after!.height, 'the bottom of the form is inside the window').toBeLessThanOrEqual(800);
+    // At most the page header scrolls away (the panel then sticks); the long results are never scrolled through.
+    expect(await calculator.windowScrollY(), 'reaching it scrolls the form, not the results').toBeLessThan(150);
+  });
+
   test('recalculates as you type, without a Calculate button', async ({ calculator }) => {
     await expect(calculator.calculateButton, 'there is no Calculate button any more').toHaveCount(0);
 
@@ -37,6 +53,30 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
 
     await expect(calculator.timeSaved, 'a bigger extra payment saves more time').not.toHaveText('6 yr 1 mo');
+  });
+
+  test('takes the down payment as a percentage too', async ({ calculator }) => {
+    await calculator.fillLoan(TWENTY_PERCENT_DOWN);
+    await calculator.clearHousingCosts();
+    await calculator.setExtras(0);
+    await calculator.field('down-payment-mode-percent').check();
+
+    await expect(calculator.field('down-payment'), '$50,000 of $250,000 converts to 20%').toHaveValue('20');
+    await calculator.set('down-payment', 10);
+    await calculator.calculate();
+
+    await expect(calculator.field('loan-summary'), '10% of $250,000').toContainText('$25,000 down (10%)');
+    await expect(calculator.monthlyPayment, '$225,000 at 6% over 30 years').toHaveText('$1,348.99');
+  });
+
+  test('without extra payments, leads with the total interest instead of a $0 saving', async ({ calculator }) => {
+    await calculator.fillLoan(TWENTY_PERCENT_DOWN);
+    await calculator.clearHousingCosts();
+    await calculator.setExtras(0);
+    await calculator.calculate();
+
+    await expect(calculator.totalInterest, 'total interest on $200,000 at 6% over 30 years').toHaveText('$231,677');
+    await expect(calculator.netSavings, 'no $0 savings headline').toBeHidden();
   });
 
   test('calculates interest savings for a recurring monthly extra payment', async ({ calculator }) => {
@@ -51,6 +91,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.timeSaved, '108 payments sooner').toHaveText('9 yr');
     await expect(calculator.payoffDate, 'payment 252').toHaveText('Dec 2046');
     await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
+    await expect(calculator.totalInterest, 'the new total interest').toHaveText('$151,876');
   });
 
   test('adds taxes and fees to the monthly payment but never counts them as savings', async ({ calculator }) => {

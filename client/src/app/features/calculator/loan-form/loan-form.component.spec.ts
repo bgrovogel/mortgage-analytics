@@ -56,6 +56,7 @@ describe('LoanFormComponent', () => {
         expect(el(id)?.closest('details')).toBeNull();
       }
       expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-taxes', 'section-costs', 'section-growth', 'section-options']);
+      expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
       expect(sections.every((s) => !s.open)).toBe(true);
     });
 
@@ -82,8 +83,8 @@ describe('LoanFormComponent', () => {
       controls().firstPaymentDate.setValue('2027-03-01');
       fixture.detectChanges();
 
-      expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · Homestead · Over 65');
-      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PID $1,200/yr');
+      expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
+      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo');
       expect(text('growth-summary')).toBe('Home -2% · Insurance +5% · HOA +3%');
       expect(text('options-summary')).toBe('First payment Mar 2027 · $2,000 yearly · 1 lump sum · Recast (min $10,000)');
     });
@@ -114,6 +115,49 @@ describe('LoanFormComponent', () => {
       for (const id of ['taxes-summary', 'costs-summary', 'growth-summary', 'options-summary']) {
         expect(text(id)).toBe('Check the values in this section');
       }
+    });
+  });
+
+  describe('down payment in dollars or percent', () => {
+    it('starts in dollars', () => {
+      expect(controls().downPaymentMode.value).toBe('amount');
+      expect(last().downPayment).toBe(18_750);
+    });
+
+    it('converts the value when switching to percent, and back', () => {
+      controls().downPaymentMode.setValue('percent');
+      expect(controls().downPayment.value).toBe(5);
+      expect(last().downPayment).toBe(18_750);
+
+      controls().downPaymentMode.setValue('amount');
+      expect(controls().downPayment.value).toBe(18_750);
+    });
+
+    it('sends the dollar amount for a percentage, rounded to cents', () => {
+      controls().downPaymentMode.setValue('percent');
+      controls().downPayment.setValue(12.5);
+
+      expect(last().downPayment).toBe(46_875);
+      expect(component.loanAmount()).toBe(328_125);
+      expect(component.downPaymentPercent()).toBeCloseTo(12.5);
+    });
+
+    it('shows the other unit under the field, so both are always visible', () => {
+      controls().downPaymentMode.setValue('percent');
+      fixture.detectChanges();
+
+      expect(text('loan-summary')).toBe('$18,750 down (5%) · Loan $356,250');
+    });
+
+    it('rejects 100% or more, which leaves nothing to borrow', () => {
+      controls().downPaymentMode.setValue('percent');
+      const before = emitted.length;
+
+      controls().downPayment.setValue(100);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(before);
+      expect(fixture.nativeElement.textContent).toContain('The down payment must be less than the home price.');
     });
   });
 
