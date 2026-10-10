@@ -32,10 +32,19 @@ router-outlet {
   display: none;
 }
 
+// The result tabs on the left, the Save control on the right, over one shared rule.
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
 .result-tabs {
   display: flex;
   gap: 0.25rem;
-  border-bottom: 1px solid var(--border);
   overflow-x: auto;
 
   a {

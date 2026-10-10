@@ -8,6 +8,7 @@ import { fakeCharts } from '../../../testing/fake-charts';
 import { routes } from '../../app.routes';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
+import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
 
 describe('CalculatorPageComponent', () => {
@@ -18,7 +19,7 @@ describe('CalculatorPageComponent', () => {
     jest.useFakeTimers();
     calculate = jest.fn().mockReturnValue(of(aResponse()));
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), fakeCharts().provider, { provide: AmortizationApiService, useValue: { calculate } }],
+      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: {} }, { provide: AmortizationApiService, useValue: { calculate } }],
     });
   });
   afterEach(() => jest.useRealTimers());
@@ -49,6 +50,12 @@ describe('CalculatorPageComponent', () => {
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();
     expect(el('app-overview-tab')).toBeNull();
+  });
+
+  it('offers to save the calculation, beside the result tabs', async () => {
+    await open('/calculator');
+
+    expect(el('.results-header app-save-calculation')).not.toBeNull();
   });
 
   it('shows a placeholder until the first result arrives', async () => {

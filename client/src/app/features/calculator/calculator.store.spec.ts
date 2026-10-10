@@ -129,4 +129,29 @@ describe('CalculatorStore', () => {
       expect(store.result()).not.toBeNull();
     });
   });
+
+  describe('saved calculations', () => {
+    const saved = { id: 'abc', name: 'Oak St', inputs: request(42), createdAt: '', updatedAt: '' };
+
+    it('is not linked to a saved calculation at first', () => {
+      expect(store.saved()).toBeNull();
+    });
+
+    it('opens a saved calculation: its inputs become the request, and it is calculated', () => {
+      calculate.mockReturnValue(of(aResponse()));
+
+      store.open(saved);
+      settle();
+
+      expect(store.request()).toBe(saved.inputs);
+      expect(calculate).toHaveBeenCalledWith(saved.inputs);
+      expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
+    });
+
+    it('remembers which saved calculation the current one is, after saving or renaming it', () => {
+      store.linkTo({ ...saved, name: 'Renamed' });
+
+      expect(store.saved()).toEqual({ id: 'abc', name: 'Renamed' });
+    });
+  });
 });

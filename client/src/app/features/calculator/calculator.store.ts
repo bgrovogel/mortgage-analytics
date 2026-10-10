@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, debounceTime, map, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
+import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 
 /** How long to wait after the last change before calculating, so typing "375000" sends one request, not six. */
@@ -32,6 +33,9 @@ export class CalculatorStore {
 
   /** True from the first change until its result arrives, including the debounce wait. */
   readonly busy = signal(false);
+
+  /** The saved calculation the current one came from or was saved as, so it can be updated in place. */
+  readonly saved = signal<Pick<SavedCalculation, 'id' | 'name'> | null>(null);
 
   /** Whether the headline numbers are on screen; when they are not, phones show a compact summary bar. */
   readonly headlineVisible = signal(false);
@@ -66,6 +70,17 @@ export class CalculatorStore {
     this.request.set(request);
     this.busy.set(true);
     this.requests.next({ request, id: ++this.latestId });
+  }
+
+  /** Loads a saved calculation: its inputs are calculated, and later saves can update it in place. */
+  open(calculation: SavedCalculation): void {
+    this.linkTo(calculation);
+    this.calculate(calculation.inputs);
+  }
+
+  /** Records that the current calculation is this saved one (after saving or renaming it). */
+  linkTo({ id, name }: Pick<SavedCalculation, 'id' | 'name'>): void {
+    this.saved.set({ id, name });
   }
 
   /** Shows the error messages and, if this was the latest change, clears the busy state. */

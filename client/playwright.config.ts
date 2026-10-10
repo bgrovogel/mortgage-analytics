@@ -1,4 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { API_URL, APP_URL } from './e2e/env';
 
 /**
@@ -22,6 +24,8 @@ export default defineConfig({
     {
       command: `dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls ${API_URL}`,
       url: `${API_URL}/health`,
+      // Saved calculations go to a scratch database, not the one used for local development.
+      env: { ConnectionStrings__Calculations: `Data Source=${join(tmpdir(), 'mortgage-analytics-e2e.db')}` },
       reuseExistingServer: !process.env['CI'],
       timeout: 180_000,
     },

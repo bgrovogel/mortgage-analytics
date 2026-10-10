@@ -1,6 +1,5 @@
+using FluentValidation;
 using FluentValidation.Results;
-using MortgageAnalytics.Application.Contracts;
-using MortgageAnalytics.Application.Validation;
 
 namespace MortgageAnalytics.Application.Tests.Validation;
 
@@ -8,16 +7,19 @@ namespace MortgageAnalytics.Application.Tests.Validation;
 /// Base class for validator tests. Every check goes through <c>Assert.That</c> with a message,
 /// and a failure lists the errors that were actually produced.
 /// </summary>
-public abstract class ValidatorTestBase
+/// <typeparam name="TRequest">The request type being validated.</typeparam>
+/// <typeparam name="TValidator">The validator under test.</typeparam>
+public abstract class ValidatorTestBase<TRequest, TValidator>
+    where TValidator : IValidator<TRequest>, new()
 {
     /// <summary>The validator under test; a fresh instance per test.</summary>
-    protected AmortizationRequestValidator Validator { get; private set; } = null!;
+    protected TValidator Validator { get; private set; } = default!;
 
     [SetUp]
-    public void CreateValidator() => Validator = new AmortizationRequestValidator();
+    public void CreateValidator() => Validator = new TValidator();
 
     /// <summary>Asserts that <paramref name="request"/> passes every rule.</summary>
-    protected void AssertValid(AmortizationRequest request, string because)
+    protected void AssertValid(TRequest request, string because)
     {
         var result = Validator.Validate(request);
 
@@ -25,7 +27,7 @@ public abstract class ValidatorTestBase
     }
 
     /// <summary>Asserts that <paramref name="request"/> fails with an error on <paramref name="propertyPath"/>.</summary>
-    protected void AssertInvalid(AmortizationRequest request, string propertyPath, string because)
+    protected void AssertInvalid(TRequest request, string propertyPath, string because)
     {
         var result = Validator.Validate(request);
 
@@ -33,7 +35,7 @@ public abstract class ValidatorTestBase
     }
 
     /// <summary>Asserts that <paramref name="request"/> passes the rules for <paramref name="propertyPath"/>.</summary>
-    protected void AssertNoErrorFor(AmortizationRequest request, string propertyPath, string because)
+    protected void AssertNoErrorFor(TRequest request, string propertyPath, string because)
     {
         var result = Validator.Validate(request);
 
@@ -41,7 +43,7 @@ public abstract class ValidatorTestBase
     }
 
     /// <summary>Asserts that the error on <paramref name="propertyPath"/> reads exactly <paramref name="message"/>.</summary>
-    protected void AssertErrorMessage(AmortizationRequest request, string propertyPath, string message, string because)
+    protected void AssertErrorMessage(TRequest request, string propertyPath, string message, string because)
     {
         var result = Validator.Validate(request);
 

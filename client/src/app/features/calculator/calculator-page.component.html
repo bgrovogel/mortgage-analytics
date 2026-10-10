@@ -16,12 +16,15 @@
 
   <section class="results" [attr.aria-busy]="store.busy()" [class.updating]="store.busy()" aria-label="Results"
            data-testid="results">
-    <nav class="result-tabs" aria-label="Results">
-      @for (tab of tabs; track tab.path) {
-        <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
-           [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
-      }
-    </nav>
+    <div class="results-header">
+      <nav class="result-tabs" aria-label="Results">
+        @for (tab of tabs; track tab.path) {
+          <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+             [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
+        }
+      </nav>
+      <app-save-calculation />
+    </div>
 
     @if (store.errors().length > 0) {
       <div class="alert" role="alert" data-testid="error-summary">

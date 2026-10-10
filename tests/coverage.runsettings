@@ -6,9 +6,9 @@
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Include>[MortgageAnalytics.Domain]*,[MortgageAnalytics.Application]*,[MortgageAnalytics.Api]*</Include>
+          <Include>[MortgageAnalytics.Domain]*,[MortgageAnalytics.Application]*,[MortgageAnalytics.Api]*,[MortgageAnalytics.Infrastructure]*</Include>
           <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
-          <ExcludeByFile>**/*.g.cs</ExcludeByFile>
+          <ExcludeByFile>**/*.g.cs,**/Migrations/*.cs</ExcludeByFile>
           <SkipAutoProps>true</SkipAutoProps>
         </Configuration>
       </DataCollector>

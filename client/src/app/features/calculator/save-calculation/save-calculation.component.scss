@@ -1,0 +1,92 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  a {
+    color: var(--accent);
+  }
+}
+
+button {
+  font: inherit;
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  &.link {
+    border-color: transparent;
+    background: transparent;
+    color: var(--accent);
+  }
+}
+
+// A small panel under the Save button, over the results.
+.save-form {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 20;
+  width: min(380px, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-1);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+
+  label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  input {
+    font: inherit;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-primary);
+  }
+
+  .error {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--critical);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+}

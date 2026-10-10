@@ -6,11 +6,12 @@ import { fakeCharts } from '../testing/fake-charts';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
 import { AmortizationApiService } from './core/services/amortization-api.service';
+import { SavedCalculationsApiService } from './core/services/saved-calculations-api.service';
 
 describe('AppComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), fakeCharts().provider, { provide: AmortizationApiService, useValue: { calculate: () => NEVER } }],
+      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: { list: () => NEVER } }, { provide: AmortizationApiService, useValue: { calculate: () => NEVER } }],
     });
   });
 
@@ -21,7 +22,7 @@ describe('AppComponent', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('h1')?.textContent).toBe('Mortgage Analytics');
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
-      .toEqual(['Calculator', 'API docs ↗']);
+      .toEqual(['Calculator', 'History', 'API docs ↗']);
     expect(root.querySelector('a[href="/swagger"]')).not.toBeNull();
   });
 
@@ -29,5 +30,11 @@ describe('AppComponent', () => {
     await RouterTestingHarness.create(url);
 
     expect(TestBed.inject(Router).url).toBe('/calculator/overview');
+  });
+
+  it('has a History page', async () => {
+    const harness = await RouterTestingHarness.create('/history');
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="history-search"]')).not.toBeNull();
   });
 });

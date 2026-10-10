@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 /** The pages in the top navigation. */
-const PAGES = [{ path: '/calculator', label: 'Calculator' }] as const;
+const PAGES = [
+  { path: '/calculator', label: 'Calculator' },
+  { path: '/history', label: 'History' },
+] as const;
 
 /** The app shell: title, page navigation and a link to the API docs. Pages render in the outlet. */
 @Component({

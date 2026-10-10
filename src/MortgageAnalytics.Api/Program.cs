@@ -5,10 +5,13 @@ using MortgageAnalytics.Api.Endpoints;
 using MortgageAnalytics.Api.Errors;
 using MortgageAnalytics.Application;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Calculations")
+    ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string."));
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -39,6 +42,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Create the saved-calculations database, or apply new migrations, before taking requests.
+await app.Services.MigrateDatabaseAsync();
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -56,12 +62,13 @@ app.UseStaticFiles();
 
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
+app.MapSavedCalculationEndpoints();
 
 // Unknown API routes must 404 as JSON, not fall through to the SPA's index.html.
 app.Map("/api/{**path}", () => TypedResults.Problem(statusCode: StatusCodes.Status404NotFound, title: "API endpoint not found."));
 app.MapFallbackToFile("index.html");
 
-app.Run();
+await app.RunAsync();
 
 /// <summary>Exposed so integration tests can host the app with <c>WebApplicationFactory</c>.</summary>
 public partial class Program;

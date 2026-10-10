@@ -1,0 +1,62 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { AmortizationRequest } from '../models/amortization.models';
+import { SavedCalculationsApiService } from './saved-calculations-api.service';
+
+describe('SavedCalculationsApiService', () => {
+  let service: SavedCalculationsApiService;
+  let http: HttpTestingController;
+  const inputs = { homePrice: 250_000 } as AmortizationRequest;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    service = TestBed.inject(SavedCalculationsApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('lists every saved calculation when there is no search', () => {
+    service.list('  ').subscribe();
+
+    const call = http.expectOne((r) => r.url === '/api/v1/calculations');
+    expect(call.request.method).toBe('GET');
+    expect(call.request.params.has('search')).toBe(false);
+    call.flush([]);
+  });
+
+  it('passes a search to the server, trimmed', () => {
+    service.list(' oak ').subscribe();
+
+    const call = http.expectOne((r) => r.url === '/api/v1/calculations');
+    expect(call.request.params.get('search')).toBe('oak');
+    call.flush([]);
+  });
+
+  it('saves a name and inputs', () => {
+    service.save('Oak St', inputs).subscribe();
+
+    const call = http.expectOne('/api/v1/calculations');
+    expect(call.request.method).toBe('POST');
+    expect(call.request.body).toEqual({ name: 'Oak St', inputs });
+    call.flush({});
+  });
+
+  it('replaces a saved calculation by id', () => {
+    service.update('abc', 'New name', inputs).subscribe();
+
+    const call = http.expectOne('/api/v1/calculations/abc');
+    expect(call.request.method).toBe('PUT');
+    expect(call.request.body).toEqual({ name: 'New name', inputs });
+    call.flush({});
+  });
+
+  it('deletes a saved calculation by id', () => {
+    service.delete('abc').subscribe();
+
+    const call = http.expectOne('/api/v1/calculations/abc');
+    expect(call.request.method).toBe('DELETE');
+    call.flush(null, { status: 204, statusText: 'No Content' });
+  });
+});

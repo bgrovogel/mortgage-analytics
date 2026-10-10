@@ -4,7 +4,7 @@ using MortgageAnalytics.Application.Validation;
 namespace MortgageAnalytics.Application.Tests.Validation;
 
 [TestFixture]
-public class AmortizationRequestValidatorTests : ValidatorTestBase
+public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationRequest, AmortizationRequestValidator>
 {
     // ---------------------------------------------------------------------------------------
     // Valid requests.

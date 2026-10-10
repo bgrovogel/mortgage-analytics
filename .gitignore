@@ -4,6 +4,10 @@ obj/
 *.user
 .vs/
 TestResults/
+# Local SQLite databases (saved calculations)
+*.db
+*.db-shm
+*.db-wal
 coverage/
 
 # Node / Angular

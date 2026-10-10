@@ -15,6 +15,7 @@ WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/MortgageAnalytics.Domain/*.csproj src/MortgageAnalytics.Domain/
 COPY src/MortgageAnalytics.Application/*.csproj src/MortgageAnalytics.Application/
+COPY src/MortgageAnalytics.Infrastructure/*.csproj src/MortgageAnalytics.Infrastructure/
 COPY src/MortgageAnalytics.Api/*.csproj src/MortgageAnalytics.Api/
 RUN dotnet restore src/MortgageAnalytics.Api/MortgageAnalytics.Api.csproj
 COPY src/ src/
@@ -27,6 +28,10 @@ COPY --from=api /app ./
 COPY --from=client /client/dist/client/browser ./wwwroot
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
+# Saved calculations live in a SQLite file under /data; mount a volume there to keep them.
+RUN mkdir -p /data && chown app:app /data
+ENV ConnectionStrings__Calculations="Data Source=/data/calculations.db"
+VOLUME /data
 # Run as the non-root user that ships with the .NET images.
 USER app
 ENTRYPOINT ["dotnet", "MortgageAnalytics.Api.dll"]

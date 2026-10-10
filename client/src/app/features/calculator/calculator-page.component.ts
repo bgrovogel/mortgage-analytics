@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
+import { SaveCalculationComponent } from './save-calculation/save-calculation.component';
 
 /** The result tabs, each its own URL so it can be bookmarked, shared and reached with the back button. */
 const RESULT_TABS = [
@@ -18,7 +19,7 @@ const RESULT_TABS = [
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [CurrencyPipe, LoanFormComponent, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CurrencyPipe, LoanFormComponent, RouterLink, RouterLinkActive, RouterOutlet, SaveCalculationComponent],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

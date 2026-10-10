@@ -203,6 +203,14 @@ export class CalculatorPage {
     return this.page.waitForTimeout(1_000);
   }
 
+  /** Saves the current calculation under `name`, as a new saved calculation. */
+  async saveAs(name: string): Promise<void> {
+    await this.page.getByTestId('save-open').click();
+    await this.page.getByTestId('save-name').fill(name);
+    await this.page.getByTestId('save-new').click();
+    await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
+  }
+
   /** Opens a result tab: Overview, Projection or Schedule. Each has its own URL. */
   async showResults(tab: 'overview' | 'projection' | 'schedule'): Promise<void> {
     await this.page.getByTestId(`result-tab-${tab}`).click();

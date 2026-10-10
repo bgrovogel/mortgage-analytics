@@ -1,0 +1,33 @@
+<div class="bar">
+  @if (status(); as s) {
+    <p class="status" role="status" data-testid="save-status">
+      {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">View history</a>
+    </p>
+  }
+  <button type="button" class="open" data-testid="save-open" [disabled]="!store.request()" [attr.aria-expanded]="editing()"
+          aria-controls="save-form" (click)="editing() ? close() : openForm()">Save</button>
+</div>
+
+@if (editing()) {
+  <form class="save-form" id="save-form" aria-label="Save this calculation" (submit)="$event.preventDefault()">
+    <label for="save-name">Name</label>
+    <input #nameInput id="save-name" type="text" maxlength="100" autocomplete="off" data-testid="save-name"
+           [value]="name()" (input)="name.set($any($event.target).value)" (keydown.enter)="store.saved() ? update(store.saved()!.id) : saveNew()" />
+
+    @if (error(); as message) {
+      <p class="error" role="alert" data-testid="save-error">{{ message }}</p>
+    }
+
+    <div class="actions">
+      @if (store.saved(); as linked) {
+        <button type="button" class="primary" data-testid="save-update" [disabled]="saving()" (click)="update(linked.id)">
+          Update “{{ linked.name }}”
+        </button>
+      }
+      <button type="button" [class.primary]="!store.saved()" data-testid="save-new" [disabled]="saving()" (click)="saveNew()">
+        {{ store.saved() ? 'Save as new' : 'Save' }}
+      </button>
+      <button type="button" class="link" data-testid="save-cancel" (click)="close()">Cancel</button>
+    </div>
+  </form>
+}

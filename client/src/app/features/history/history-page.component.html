@@ -1,0 +1,62 @@
+<section class="history" aria-labelledby="history-title">
+  <header class="head">
+    <div>
+      <h2 class="title" id="history-title">Saved calculations</h2>
+      <p class="intro">Open one to pick up where you left off.</p>
+    </div>
+    <input class="search" type="search" placeholder="Search by name" aria-label="Search saved calculations by name"
+           data-testid="history-search" (input)="onSearch($any($event.target).value)" />
+  </header>
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">{{ message }}</div>
+  }
+
+  @if (loaded()) {
+    @if (calculations().length === 0) {
+      @if (!error()) {
+        <div class="empty" data-testid="history-empty">
+          @if (searched()) {
+            Nothing matches “{{ searched() }}”.
+          } @else {
+            No saved calculations yet. <a routerLink="/calculator">Open the calculator</a> and use Save to keep one here.
+          }
+        </div>
+      }
+    } @else {
+      <ul class="list">
+        @for (c of calculations(); track c.id) {
+          <li class="item" data-testid="history-item">
+            @if (renaming()?.id === c.id) {
+              <form class="rename" (submit)="$event.preventDefault(); saveRename(c)">
+                <input type="text" maxlength="100" autocomplete="off" [attr.aria-label]="'New name for ' + c.name"
+                       [value]="renaming()!.name" (input)="renaming.set({ id: c.id, name: $any($event.target).value })" />
+                <button type="submit" class="primary">Save</button>
+                <button type="button" (click)="renaming.set(null)">Cancel</button>
+              </form>
+            } @else {
+              <div class="info">
+                <h3>{{ c.name }}</h3>
+                <p class="summary">{{ describe(c.inputs) }}</p>
+                <p class="when">{{ when(c) }}</p>
+              </div>
+              @if (confirmingDelete() === c.id) {
+                <div class="confirm" role="group" [attr.aria-label]="'Confirm deleting ' + c.name">
+                  <span>Delete “{{ c.name }}”? This cannot be undone.</span>
+                  <button type="button" class="danger" (click)="remove(c)">Yes, delete</button>
+                  <button type="button" (click)="confirmingDelete.set(null)">Keep</button>
+                </div>
+              } @else {
+                <div class="actions">
+                  <button type="button" class="primary" [attr.aria-label]="'Open ' + c.name" (click)="open(c)">Open</button>
+                  <button type="button" [attr.aria-label]="'Rename ' + c.name" (click)="startRename(c)">Rename</button>
+                  <button type="button" [attr.aria-label]="'Delete ' + c.name" (click)="askToDelete(c)">Delete</button>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

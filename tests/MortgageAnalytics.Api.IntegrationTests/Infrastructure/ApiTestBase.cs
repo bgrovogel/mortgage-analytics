@@ -11,6 +11,9 @@ public abstract class ApiTestBase
     /// <summary>The calculate endpoint.</summary>
     protected const string CalculateUrl = "/api/v1/amortization/calculate";
 
+    /// <summary>The saved-calculations collection.</summary>
+    protected const string CalculationsUrl = "/api/v1/calculations";
+
     /// <summary>A client for the shared in-memory API.</summary>
     protected static HttpClient Client => ApiFixture.Client;
 
