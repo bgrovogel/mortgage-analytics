@@ -31,21 +31,24 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.field('school-tax-rate'), 'opening the section reveals its fields').toBeVisible();
   });
 
-  test('the form scrolls on its own, so every section stays reachable beside long results', async ({ calculator, page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await calculator.openAllSections();
+  // At 1100px the page links wrap onto a second line, making the header taller: the form must still fit.
+  for (const width of [1280, 1100]) {
+    test(`the form scrolls on its own, so every section stays reachable beside long results (${width}px)`, async ({ calculator, page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await calculator.openAllSections();
 
-    const panel = await calculator.formPanel.boundingBox();
-    expect(panel!.height, 'the open form must fit in the window instead of running off the bottom').toBeLessThanOrEqual(800);
+      const panel = await calculator.formPanel.boundingBox();
+      expect(panel!.height, 'the open form must fit in the window instead of running off the bottom').toBeLessThanOrEqual(800);
 
-    await calculator.section('section-options').locator('summary').click();
-    await expect(calculator.section('section-options'), 'the last section can be reached and toggled').not.toHaveAttribute('open');
+      await calculator.section('section-options').locator('summary').click();
+      await expect(calculator.section('section-options'), 'the last section can be reached and toggled').not.toHaveAttribute('open');
 
-    const after = await calculator.formPanel.boundingBox();
-    expect(after!.y + after!.height, 'the bottom of the form is inside the window').toBeLessThanOrEqual(800);
-    // At most the page header scrolls away (the panel then sticks); the long results are never scrolled through.
-    expect(await calculator.windowScrollY(), 'reaching it scrolls the form, not the results').toBeLessThan(150);
-  });
+      const after = await calculator.formPanel.boundingBox();
+      expect(after!.y + after!.height, 'the bottom of the form is inside the window').toBeLessThanOrEqual(800);
+      // At most the page header scrolls away (the panel then sticks); the long results are never scrolled through.
+      expect(await calculator.windowScrollY(), 'reaching it scrolls the form, not the results').toBeLessThan(150);
+    });
+  }
 
   test('recalculates as you type, without a Calculate button', async ({ calculator }) => {
     await expect(calculator.calculateButton, 'there is no Calculate button any more').toHaveCount(0);

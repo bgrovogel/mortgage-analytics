@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { HeaderHeightDirective } from './core/layout/header-height.directive';
 import { AuthService } from './core/auth/auth.service';
 import { CalculatorStore } from './features/calculator/calculator.store';
 import { RefinanceStore } from './features/refinance/refinance.store';
@@ -17,7 +18,7 @@ const PAGES = [
 /** The app shell: title, page navigation, the API docs, and who is signed in. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderHeightDirective],
   template: `
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
@@ -26,7 +27,7 @@ const PAGES = [
         <a class="back" routerLink="/calculator" data-testid="back-to-app">← Back to the calculator</a>
       </header>
     } @else {
-      <header class="app-header">
+      <header class="app-header" appHeaderHeight>
         <div>
           <h1>Mortgage Analytics</h1>
           <p>See what a home really costs, and how extra payments or a refinance change it.</p>

@@ -10,10 +10,10 @@
   grid-area: form;
   position: sticky;
   top: 1rem;
-  // The results column is much taller than the form. Capping the panel to the window (less the page
-  // header above it, ~8rem) and letting it scroll on its own keeps every section reachable, even before
-  // the page has scrolled at all.
-  max-height: calc(100vh - 8rem);
+  // The results column is much taller than the form. Capping the panel to the window, less the page
+  // header above it (measured, since its links can wrap; see HeaderHeightDirective) and the space around it,
+  // and letting it scroll on its own keeps every section reachable, even before the page has scrolled at all.
+  max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
