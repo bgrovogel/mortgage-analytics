@@ -47,6 +47,6 @@ public sealed class AnnualFixedCost : IHousingCost
     /// <inheritdoc />
     public decimal AmountFor(CostPeriod period) =>
         _lastPaymentNumber is null || period.PaymentNumber <= _lastPaymentNumber
-            ? Installments.MonthlyShare(AnnualAmountInYear(PropertyValuation.YearOf(period.PaymentNumber)), period.PaymentNumber)
+            ? Installments.MonthlyShare(AnnualAmountInYear(LoanCalendar.YearOf(period.PaymentNumber)), period.PaymentNumber)
             : 0m;
 }

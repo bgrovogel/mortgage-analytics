@@ -16,7 +16,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 357 backend tests · Jest: 95 Angular unit tests · Playwright: 21 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 381 backend tests · Jest: 95 Angular unit tests · Playwright: 21 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -74,7 +74,7 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 357 NUnit tests, including the convention tests
+dotnet test                       # 381 NUnit tests, including the convention tests
 
 cd client
 npm test                          # 95 Jest unit tests; fails below 85% coverage
@@ -112,7 +112,7 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
   },
   "housingCosts": {
     "schoolTaxRate": 1.0,
-    "propertyTaxRate": 1.1,
+    "localTaxRate": 1.1,
     "mudTaxRate": 0.85,
     "isHomestead": true,
     "schoolHomesteadExemption": 140000,
@@ -188,10 +188,10 @@ src/MortgageAnalytics.Application/   Contracts, validation, mapping, Amortizatio
 src/MortgageAnalytics.Api/           Program.cs, endpoints, filters, error handling
 tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, TestClock
-  MortgageAnalytics.Conventions.Tests/  Roslyn checks that every test follows the assertion standards
-  MortgageAnalytics.Domain.Tests/   244 tests
-  MortgageAnalytics.Application.Tests/  93 tests (unit with NSubstitute, plus sociable scenarios)
-  MortgageAnalytics.Api.IntegrationTests/  16 tests (shared WebApplicationFactory fixture)
+  MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
+  MortgageAnalytics.Domain.Tests/   250 tests
+  MortgageAnalytics.Application.Tests/  107 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Api.IntegrationTests/  18 tests (shared WebApplicationFactory fixture)
 client/  src/app/core (models, API service, errors) · src/app/features/calculator · e2e/
 ```
 
@@ -277,8 +277,14 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 - **Minimal APIs** with `TypedResults`, so OpenAPI response types are inferred from the code.
 - **Versioned route** (`/api/v1/...`).
-- **ProblemDetails for every error**: validation (400), malformed JSON (400), unknown API route (404),
-  and unexpected failures (500, with no stack trace leaked).
+- **ProblemDetails for every error**: validation (400, with readable field names keyed by JSON path),
+  unreadable bodies (their own status: 400, 413, ...), unknown API route (404), and server-side failures
+  (500 with a generic title, logged). A broken domain rule is a 500 too: input is validated first, so it
+  means a bug, and its internal message is never shown.
+- **Contracts own their types.** Request and response types never expose Domain types (an architecture
+  test enforces it), so renaming something in the domain cannot silently change the public API.
+- **Response size is the client's choice.** `?includePayments=false` drops the up-to-1,200 monthly rows
+  and keeps every summary and the yearly projection.
 - **Source-generated logging** (`[LoggerMessage]`), and the code builds with the recommended .NET analyzers.
 - **One container**: the API serves the compiled Angular app from `wwwroot`. That means one port,
   one deployment, and no CORS.
@@ -311,10 +317,10 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 
 | Layer | Tools | What it proves |
 |---|---|---|
-| Domain (244) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
-| Application (93) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
-| API integration (16) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies. Error handling, with a substitute service that throws (422, 500 without leaking details, 400). Swagger, health, the 404 for unknown API routes. |
-| Conventions (4) | NUnit + Roslyn | The test standards themselves (below). |
+| Domain (250) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. |
+| Application (107) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| API integration (18) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode: JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
+| Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
 | Angular (95) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (21) | Playwright | Real browser and real API, through a page object. |
 
@@ -325,7 +331,8 @@ The Angular form mirrors the main limits too, which saves a round trip. The serv
 These are checked by `MortgageAnalytics.Conventions.Tests`, which parses every test file with Roslyn and lists each violation as `file:line`:
 
 1. **Constraint model only:** `Assert.That(...)` and `Assert.Multiple(...)`; no classic asserts.
-2. **Every assertion has a message** explaining what a failure means.
+2. **Every assertion has a message** explaining what a failure means, in C# and in the Playwright
+   specs (`expect(actual, 'message')`).
 3. **More than one assertion in a method means `Assert.Multiple`**, so one run reports every failure.
 
 And by convention, supported by shared infrastructure:

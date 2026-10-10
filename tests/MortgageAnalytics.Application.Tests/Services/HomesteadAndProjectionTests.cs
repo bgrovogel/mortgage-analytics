@@ -33,7 +33,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
         Assert.Multiple(() =>
         {
             Assert.That(month.SchoolTax, Is.EqualTo(91.67m), "the school exemption applies to school tax");
-            Assert.That(month.PropertyTax, Is.EqualTo(229.17m), "county/city tax is on the full $250,000");
+            Assert.That(month.LocalTax, Is.EqualTo(229.17m), "county/city tax is on the full $250,000");
             Assert.That(month.MudTax, Is.EqualTo(177.08m), "MUD tax is on the full $250,000");
         });
     }
@@ -45,7 +45,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
 
         var month = Service.Analyze(request).Baseline.MonthlyHousingCosts;
 
-        Assert.That(month.PropertyTax, Is.EqualTo(183.33m), "1.1% of ($250,000 less 20%) = $2,200 a year");
+        Assert.That(month.LocalTax, Is.EqualTo(183.33m), "1.1% of ($250,000 less 20%) = $2,200 a year");
     }
 
     [Test]
@@ -55,7 +55,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
 
         var month = Service.Analyze(request).Baseline.MonthlyHousingCosts;
 
-        Assert.That(month.PropertyTax, Is.EqualTo(229.17m), "homestead exemptions need a homestead");
+        Assert.That(month.LocalTax, Is.EqualTo(229.17m), "homestead exemptions need a homestead");
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
         {
             Assert.That(projection[2].Costs.SchoolTax, Is.EqualTo(1_025m), "($302,500 - $200,000) x 1% sets the ceiling");
             Assert.That(projection[10].Costs.SchoolTax, Is.EqualTo(1_025m), "school tax stays frozen");
-            Assert.That(projection[10].Costs.PropertyTax, Is.GreaterThan(projection[2].Costs.PropertyTax), "county tax has no ceiling here");
+            Assert.That(projection[10].Costs.LocalTax, Is.GreaterThan(projection[2].Costs.LocalTax), "county tax has no ceiling here");
         });
     }
 
@@ -93,7 +93,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
 
         var projection = Service.Analyze(request).Projection;
 
-        Assert.That(projection[year].Costs.PropertyTax, Is.EqualTo(2_000m), "($250,000 - $50,000) x 1%, frozen by the local ceiling");
+        Assert.That(projection[year].Costs.LocalTax, Is.EqualTo(2_000m), "($250,000 - $50,000) x 1%, frozen by the local ceiling");
     }
 
     [Test]
@@ -115,7 +115,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
             Assert.That(projection[0].Year, Is.EqualTo(1), "years are numbered from 1");
             Assert.That(projection[0].StartDate, Is.EqualTo(ReferenceLoans.FirstPaymentDate), "year 1 starts with the first payment");
             Assert.That(projection[1].StartDate, Is.EqualTo(new DateOnly(2027, 1, 1)), "year 2 starts 12 payments later");
-            Assert.That(projection[0].Costs.PropertyTax, Is.EqualTo(5_000m), "a full year's tax, to the cent");
+            Assert.That(projection[0].Costs.LocalTax, Is.EqualTo(5_000m), "a full year's tax, to the cent");
         });
     }
 
@@ -130,7 +130,7 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
         {
             Assert.That(year2.MarketValue, Is.EqualTo(287_500m), "$250,000 + 15%");
             Assert.That(year2.TaxableValue, Is.EqualTo(275_000m), "capped at $250,000 + 10%");
-            Assert.That(year2.Costs.PropertyTax, Is.EqualTo(5_500m), "2% of $275,000; installments add up exactly");
+            Assert.That(year2.Costs.LocalTax, Is.EqualTo(5_500m), "2% of $275,000; installments add up exactly");
         });
     }
 

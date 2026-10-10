@@ -4,7 +4,7 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 public enum HousingCostCategory
 {
     /// <summary>County, city and other local ad valorem taxes (everything except school and MUD).</summary>
-    PropertyTax = 0,
+    LocalTax = 0,
 
     /// <summary>Municipal Utility District tax, which funds water, sewer and drainage infrastructure.</summary>
     MudTax = 1,

@@ -40,6 +40,17 @@ public class AmortizationServiceTests : AmortizationServiceTestBase
     }
 
     [Test]
+    public void Analyze_DefaultFirstPayment_UsesTheLocalDate_NotUtc()
+    {
+        // 9 pm on 30 September in Chicago is already 1 October in UTC.
+        UseClock(new DateTimeOffset(2026, 10, 1, 2, 0, 0, TimeSpan.Zero), TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"));
+
+        Service.Analyze(A.Request.WithFirstPaymentDate(null));
+
+        Assert.That(CompareArguments().Loan.FirstPaymentDate, Is.EqualTo(new DateOnly(2026, 10, 1)), "for a Chicago user it is still September, so next month is October");
+    }
+
+    [Test]
     public void Analyze_InDecember_DefaultFirstPaymentRollsIntoNextYear()
     {
         Clock.SetUtcNow(new DateTimeOffset(2026, 12, 15, 0, 0, 0, TimeSpan.Zero));
@@ -121,7 +132,8 @@ public class AmortizationServiceTests : AmortizationServiceTestBase
     {
         Service.Analyze(A.Request.WithHousingCosts(c => c.WithPmi(0.5m)));
 
-        Assert.That(CompareArguments().Costs.IsEmpty, Is.True, "PMI is not added when the purchase does not require it");
+        var costs = CompareArguments().Costs.ApplyTo(CannedComparison.Baseline);
+        Assert.That(costs.Totals[HousingCostCategory.MortgageInsurance], Is.Zero, "PMI is never charged when the purchase does not require it");
     }
 
     [Test]

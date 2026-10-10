@@ -24,7 +24,8 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Mortgage Analytics API",
         Version = "v1",
-        Description = "Fixed-rate amortization schedules with extra-payment (accelerated payoff) analysis.",
+        Description = "Home-purchase and mortgage analysis: fixed-rate amortization, extra payments and recasting, "
+            + "property taxes with homestead exemptions and the appraisal cap, PMI, insurance and HOA, and a yearly cost projection.",
     });
 
     // Pull /// comments (summaries and <example> values) from the API and the contracts assembly.

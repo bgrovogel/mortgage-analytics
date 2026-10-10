@@ -10,46 +10,54 @@ export interface LoanInput {
 }
 
 /**
- * Page object: tests describe intent ("fill the loan"); selectors and the mechanics of the page
- * (collapsed sections, recalculating as you type) live here, in one place.
+ * Page object: tests describe intent ("fill the loan"); every selector, and the mechanics of the page
+ * (collapsed sections, recalculating as you type), live here in one place.
  */
 export class CalculatorPage {
-  readonly homePrice: Locator;
-  readonly downPayment: Locator;
-  readonly interestRate: Locator;
-  readonly monthlyExtra: Locator;
+  // Results
   readonly results: Locator;
   readonly totalMonthlyPayment: Locator;
   readonly monthlyPayment: Locator;
   readonly netSavings: Locator;
+  readonly savingsDetail: Locator;
   readonly timeSaved: Locator;
   readonly payoffDate: Locator;
   readonly pmiEnd: Locator;
   readonly recasts: Locator;
   readonly breakdown: Locator;
+  readonly breakdownTotal: Locator;
   readonly chart: Locator;
+  readonly projectionChart: Locator;
+  readonly projectionNote: Locator;
   readonly scheduleRows: Locator;
   readonly errorSummary: Locator;
   readonly summaryBar: Locator;
 
+  // Form
+  readonly pmiHint: Locator;
+  /** The Calculate button the form used to have; results now update as you type. */
+  readonly calculateButton: Locator;
+
   constructor(private readonly page: Page) {
-    this.homePrice = page.getByTestId('home-price');
-    this.downPayment = page.getByTestId('down-payment');
-    this.interestRate = page.getByTestId('interest-rate');
-    this.monthlyExtra = page.getByTestId('monthly-extra');
     this.results = page.getByTestId('results');
     this.totalMonthlyPayment = page.getByTestId('total-monthly-payment');
     this.monthlyPayment = page.getByTestId('monthly-payment');
     this.netSavings = page.getByTestId('net-savings');
+    this.savingsDetail = page.getByTestId('savings-detail');
     this.timeSaved = page.getByTestId('time-saved');
     this.payoffDate = page.getByTestId('payoff-date');
     this.pmiEnd = page.getByTestId('pmi-end');
     this.recasts = page.getByTestId('recasts');
     this.breakdown = page.getByTestId('payment-breakdown');
+    this.breakdownTotal = page.getByTestId('breakdown-total');
     this.chart = page.getByTestId('balance-chart');
+    this.projectionChart = page.getByTestId('projection-chart');
+    this.projectionNote = page.getByTestId('projection-note');
     this.scheduleRows = page.getByTestId('schedule-table').locator('tbody tr');
     this.errorSummary = page.getByTestId('error-summary');
     this.summaryBar = page.getByTestId('summary-bar');
+    this.pmiHint = page.getByTestId('pmi-hint');
+    this.calculateButton = page.getByTestId('calculate');
   }
 
   /** Opens the app and waits for the first (automatic) calculation to render. */
@@ -59,27 +67,44 @@ export class CalculatorPage {
     await this.calculate();
   }
 
+  /** Any form field, by its test id. */
+  field(testId: string): Locator {
+    return this.page.getByTestId(testId);
+  }
+
   /** A collapsible form section, e.g. "section-taxes". */
   section(testId: string): Locator {
     return this.page.getByTestId(testId);
   }
 
+  /** The one-line summary shown on a section, e.g. "taxes-summary". */
+  sectionSummary(testId: string): Locator {
+    return this.page.getByTestId(testId);
+  }
+
+  /** Opens a collapsed section by clicking its header, as a user would. */
+  openSection(testId: string): Promise<void> {
+    return this.section(testId).locator('summary').click();
+  }
+
+  /** Text anywhere on the page, such as a validation message. */
+  message(text: string): Locator {
+    return this.page.getByText(text);
+  }
+
   /** Types a value into a field, opening its collapsed section first if it is inside one. */
   async set(testId: string, value: number | string): Promise<void> {
-    const field = await this.reveal(testId);
-    await field.fill(String(value));
+    await (await this.reveal(testId)).fill(String(value));
   }
 
   /** Ticks or unticks a checkbox, opening its section first. */
   async setChecked(testId: string, checked: boolean): Promise<void> {
-    const box = await this.reveal(testId);
-    await box.setChecked(checked);
+    await (await this.reveal(testId)).setChecked(checked);
   }
 
   /** Chooses an option in a select, opening its section first. */
   async choose(testId: string, value: string): Promise<void> {
-    const select = await this.reveal(testId);
-    await select.selectOption(value);
+    await (await this.reveal(testId)).selectOption(value);
   }
 
   /** Fills the purchase and loan fields. */
@@ -95,7 +120,7 @@ export class CalculatorPage {
 
   /** Zeroes every tax, insurance and fee field, leaving principal and interest only. */
   async clearHousingCosts(): Promise<void> {
-    for (const id of ['school-tax-rate', 'property-tax-rate', 'mud-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
+    for (const id of ['school-tax-rate', 'local-tax-rate', 'mud-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
       await this.set(id, 0);
     }
   }
@@ -134,6 +159,32 @@ export class CalculatorPage {
     return this.page.route('**/api/v1/amortization/calculate', (route) => route.abort(), { times: 1 });
   }
 
+  /** Makes every calculation return `problem` as a 400 response. */
+  rejectCalculationsWith(problem: object): Promise<void> {
+    return this.page.route('**/api/v1/amortization/calculate', (route) =>
+      route.fulfill({ status: 400, contentType: 'application/problem+json', body: JSON.stringify(problem) }),
+    );
+  }
+
+  /** Records whether the page calls the API at all; read the result with the returned function. */
+  watchApiCalls(): () => boolean {
+    let called = false;
+    this.page.on('request', (request) => {
+      if (request.url().includes('/api/')) called = true;
+    });
+    return () => called;
+  }
+
+  /** Waits longer than the recalculation pause, so a request that was going to be sent has been. */
+  waitPastRecalculationPause(): Promise<void> {
+    return this.page.waitForTimeout(1_000);
+  }
+
+  /** Switches the projection chart to market value against taxable value. */
+  showHomeValueProjection(): Promise<void> {
+    return this.page.getByTestId('projection-value').click();
+  }
+
   /** Switches the table to the standard (no extra payments) schedule. */
   showStandardSchedule(): Promise<void> {
     return this.page.getByTestId('view-baseline').click();
@@ -144,9 +195,12 @@ export class CalculatorPage {
     return this.breakdown.locator('tr', { hasText: label }).locator('td').first();
   }
 
-  /** Returns one cell in the schedule table. */
-  cell(paymentNumber: number, column: number): Locator {
-    return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(column);
+  /** Returns one schedule cell, found by its column header ("Payment", "Extra", ...), not by position. */
+  async cell(paymentNumber: number, column: string): Promise<Locator> {
+    const headers = (await this.page.getByTestId('schedule-table').locator('thead th').allTextContents()).map((h) => h.trim());
+    const index = headers.indexOf(column);
+    expect(index, `the schedule table should have a "${column}" column`).toBeGreaterThanOrEqual(0);
+    return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(index);
   }
 
   /** Returns the element, first opening the collapsed section that contains it (if any). */

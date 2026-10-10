@@ -89,7 +89,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('says when a section has nothing in it', () => {
-      for (const name of ['schoolTaxRate', 'propertyTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate'] as const) {
+      for (const name of ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate'] as const) {
         controls()[name].setValue(0);
       }
       controls().isHomestead.setValue(false);
@@ -198,7 +198,7 @@ describe('LoanFormComponent', () => {
 
     it('sends zeros for blank optional amounts and null for a blank first payment date', () => {
       const optional = [
-        'monthlyExtra', 'schoolTaxRate', 'propertyTaxRate', 'mudTaxRate', 'schoolHomesteadExemption',
+        'monthlyExtra', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption',
         'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'homeValueGrowthRate', 'insuranceIncreaseRate',
         'hoaIncreaseRate', 'annualInsurance', 'monthlyHoa', 'pmiRate',
       ] as const;
@@ -213,7 +213,7 @@ describe('LoanFormComponent', () => {
 
       expect(request.firstPaymentDate).toBeNull();
       expect(request.extraPayments?.monthlyAmount).toBe(0);
-      expect(request.housingCosts).toMatchObject({ schoolTaxRate: 0, propertyTaxRate: 0, pmiRate: 0, monthlyHoaDues: 0 });
+      expect(request.housingCosts).toMatchObject({ schoolTaxRate: 0, localTaxRate: 0, pmiRate: 0, monthlyHoaDues: 0 });
       expect(request.housingCosts?.over65OrDisabled).toEqual({ qualifiesInYear: 1, schoolExemption: 0, localExemption: 0, localTaxCeiling: false });
     });
   });

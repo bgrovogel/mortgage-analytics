@@ -35,8 +35,11 @@ public sealed record PropertyPurchase
     /// <summary>The amount borrowed: price minus down payment.</summary>
     public decimal LoanAmount => HomePrice - DownPayment;
 
-    /// <summary>The down payment as a percentage of the price, to two decimal places.</summary>
-    public decimal DownPaymentPercent => Math.Round(DownPayment / HomePrice * 100m, 2, MidpointRounding.AwayFromZero);
+    /// <summary>
+    /// The down payment as a percentage of the price, truncated (not rounded) to two decimal places,
+    /// so 19.996% shows as 19.99% and never contradicts <see cref="RequiresMortgageInsurance"/>.
+    /// </summary>
+    public decimal DownPaymentPercent => decimal.Truncate(DownPayment / HomePrice * 10_000m) / 100m;
 
     /// <summary>The loan as a percentage of the price (loan-to-value), to two decimal places.</summary>
     public decimal LoanToValuePercent => 100m - DownPaymentPercent;

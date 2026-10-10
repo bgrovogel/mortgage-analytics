@@ -32,6 +32,18 @@ public abstract class AmortizationServiceTestBase
         Service = new AmortizationService(Comparer, Clock);
     }
 
+    /// <summary>
+    /// Restarts the service on a clock fixed at <paramref name="now"/>, optionally in another local time zone.
+    /// (A fake clock can only move forward, so tests that need an earlier moment start a new one.)
+    /// </summary>
+    protected void UseClock(DateTimeOffset now, TimeZoneInfo? localTimeZone = null)
+    {
+        Clock = TestClock.Create(now);
+        if (localTimeZone is not null)
+            Clock.SetLocalTimeZone(localTimeZone);
+        Service = new AmortizationService(Comparer, Clock);
+    }
+
     /// <summary>A real comparison for the reference loan, returned by the substitute for any input.</summary>
     protected static LoanComparison CannedComparison { get; } =
         new LoanComparer(new AmortizationCalculator()).Compare(A.Loan(), ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None);

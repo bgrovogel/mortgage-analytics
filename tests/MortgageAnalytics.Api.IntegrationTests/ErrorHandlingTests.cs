@@ -38,30 +38,40 @@ public class ErrorHandlingTests : ApiTestBase
     private void ServiceThrows(Exception exception) =>
         _service.Analyze(Arg.Any<AmortizationRequest>()).Throws(exception);
 
-    [Test]
-    public async Task DomainRuleViolation_Returns422Problem()
+    private static IEnumerable<TestCaseData> ServerSideFailures()
     {
-        ServiceThrows(new DomainValidationException("Principal must be greater than 0."));
-
-        var response = await PostCalculateAsync(A.Request.Build(), _client);
-
-        await AssertProblemAsync(response, HttpStatusCode.UnprocessableEntity, "a broken domain rule is reported as unprocessable");
+        // Validation runs before the domain, so a broken domain rule means a bug, not bad input:
+        // it is a server error like any other, and its internal message must not leak.
+        yield return new TestCaseData(new DomainValidationException("Principal must be greater than 0."), "Principal must")
+            .SetName("A broken domain rule is a bug: 500, message hidden");
+        yield return new TestCaseData(new InvalidOperationException("secret connection string"), "secret connection string")
+            .SetName("An unexpected exception: 500, details hidden");
     }
 
-    [Test]
-    public async Task UnexpectedFailure_Returns500_WithoutLeakingDetails()
+    [TestCaseSource(nameof(ServerSideFailures))]
+    public async Task ServerSideFailure_Returns500_WithoutLeakingDetails(Exception exception, string secret)
     {
-        ServiceThrows(new InvalidOperationException("secret connection string"));
+        ServiceThrows(exception);
 
         var response = await PostCalculateAsync(A.Request.Build(), _client);
 
         var body = await response.Content.ReadAsStringAsync();
         Assert.Multiple(() =>
         {
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError), $"an unexpected exception is a server error; body: {body}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError), $"this is the server's fault, not the client's; body: {body}");
             Assert.That(body, Does.Contain("An unexpected error occurred."), "the client gets a generic title");
-            Assert.That(body, Does.Not.Contain("secret connection string"), "exception details must never reach the client");
+            Assert.That(body, Does.Not.Contain(secret), "exception details must never reach the client");
         });
+    }
+
+    [Test]
+    public async Task BadRequestThrownWithASpecificStatus_KeepsThatStatus()
+    {
+        ServiceThrows(new BadHttpRequestException("Request body too large.", StatusCodes.Status413PayloadTooLarge));
+
+        var response = await PostCalculateAsync(A.Request.Build(), _client);
+
+        await AssertProblemAsync(response, HttpStatusCode.RequestEntityTooLarge, "a 413 must not be reported as a generic 400");
     }
 
     [Test]

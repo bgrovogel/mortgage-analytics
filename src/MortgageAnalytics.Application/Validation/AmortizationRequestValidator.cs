@@ -11,7 +11,8 @@ namespace MortgageAnalytics.Application.Validation;
 /// <remarks>
 /// An extra payment larger than the whole loan is always a mistake, so it is rejected here.
 /// Whether an extra payment exceeds the balance <i>at that point</i> depends on the schedule,
-/// so the engine caps it instead.
+/// so the engine caps it instead. Every rule names its field the way the form does
+/// (<c>WithName</c>), because these messages are shown to people.
 /// </remarks>
 public sealed class AmortizationRequestValidator : AbstractValidator<AmortizationRequest>
 {
@@ -33,12 +34,14 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     {
         RuleFor(r => r.HomePrice)
             .GreaterThan(0)
-            .WholeCents();
+            .WholeCents()
+            .WithName("Home price");
 
         RuleFor(r => r.DownPayment)
             .GreaterThanOrEqualTo(0)
             .LessThan(r => r.HomePrice).WithMessage("Down payment must be less than the home price.")
-            .WholeCents();
+            .WholeCents()
+            .WithName("Down payment");
 
         RuleFor(r => r.HomePrice - r.DownPayment)
             .LessThanOrEqualTo(LoanTerms.MaxPrincipal)
@@ -47,16 +50,24 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
 
         RuleFor(r => r.AnnualInterestRate)
             .InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate)
-            .PrecisionScale(6, 4, ignoreTrailingZeros: true);
+            .PrecisionScale(6, 4, ignoreTrailingZeros: true)
+            .WithName("Interest rate");
 
         RuleFor(r => r.TermInMonths)
-            .InclusiveBetween(1, LoanTerms.MaxTermInMonths);
+            .InclusiveBetween(1, LoanTerms.MaxTermInMonths)
+            .WithName("Term in months");
 
         RuleFor(r => r.FirstPaymentDate)
             .InclusiveBetween(EarliestFirstPayment, LatestFirstPayment)
+            .WithName("First payment date")
             .When(r => r.FirstPaymentDate is not null);
 
         RuleFor(r => r.Strategy).IsInEnum();
+
+        // Terms that would be silently ignored are a client mistake, so they are rejected rather than dropped.
+        RuleFor(r => r.Recast)
+            .Null().WithMessage("Recast terms are only used with the Recast strategy.")
+            .When(r => r.Strategy == ExtraPaymentStrategy.ShortenTerm);
 
         RuleFor(r => r.Recast!)
             .SetValidator(new RecastTermsValidator())
@@ -67,7 +78,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .When(r => r.ExtraPayments is not null);
 
         RuleFor(r => r.HousingCosts!)
-            .SetValidator(new HousingCostsValidator())
+            .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
             .When(r => r.HousingCosts is not null);
     }
 
@@ -78,8 +89,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(r => r.MinimumLumpSum)
                 .GreaterThanOrEqualTo(MinimumRecastLumpSum)
                 .WithMessage($"The recast minimum must be at least {MinimumRecastLumpSum:C0}; lenders recast only after a large lump sum.")
-                .WholeCents();
-            RuleFor(r => r.Fee).InclusiveBetween(0, 10_000).WholeCents();
+                .WholeCents()
+                .WithName("Recast minimum");
+            RuleFor(r => r.Fee).InclusiveBetween(0, 10_000).WholeCents().WithName("Recast fee");
         }
     }
 
@@ -87,8 +99,8 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     {
         public ExtraPaymentsValidator(decimal loanAmount, int termInMonths)
         {
-            RuleFor(e => e.MonthlyAmount).ExtraAmount(loanAmount, allowZero: true);
-            RuleFor(e => e.MonthlyStartingPaymentNumber).PaymentNumberWithin(termInMonths);
+            RuleFor(e => e.MonthlyAmount).ExtraAmount(loanAmount, allowZero: true).WithName("Monthly extra payment");
+            RuleFor(e => e.MonthlyStartingPaymentNumber).PaymentNumberWithin(termInMonths).WithName("Monthly extra start");
 
             RuleFor(e => e.Annual!.Amount)
                 .ExtraAmount(loanAmount, allowZero: true)
@@ -102,36 +114,41 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
 
             RuleFor(e => e.LumpSums)
                 .NotNull()
-                .Must(l => l.Count <= MaxLumpSums).WithMessage($"No more than {MaxLumpSums} lump sums are allowed.");
+                .Must(l => l.Count <= MaxLumpSums).WithMessage($"No more than {MaxLumpSums} lump sums are allowed.")
+                .WithName("Lump sums");
 
             RuleForEach(e => e.LumpSums).ChildRules(lumpSum =>
             {
-                lumpSum.RuleFor(l => l.Amount).ExtraAmount(loanAmount, allowZero: false);
-                lumpSum.RuleFor(l => l.PaymentNumber).PaymentNumberWithin(termInMonths);
+                lumpSum.RuleFor(l => l.Amount).ExtraAmount(loanAmount, allowZero: false).WithName("Lump sum");
+                lumpSum.RuleFor(l => l.PaymentNumber).PaymentNumberWithin(termInMonths).WithName("Lump sum payment number");
             });
         }
     }
 
     private sealed class HousingCostsValidator : AbstractValidator<HousingCostsRequest>
     {
-        public HousingCostsValidator()
+        public HousingCostsValidator(int termInMonths)
         {
-            RuleFor(h => h.SchoolTaxRate).Percentage(max: 10);
-            RuleFor(h => h.PropertyTaxRate).Percentage(max: 10);
-            RuleFor(h => h.MudTaxRate).Percentage(max: 5);
-            RuleFor(h => h.SchoolHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents();
-            RuleFor(h => h.LocalHomesteadExemptionPercent).Percentage(max: 100);
-            RuleFor(h => h.HomesteadAssessmentCap).Percentage(max: 100);
-            RuleFor(h => h.HomeValueGrowthRate).InclusiveBetween(-20, 25).PrecisionScale(6, 4, ignoreTrailingZeros: true);
-            RuleFor(h => h.InsuranceIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true);
-            RuleFor(h => h.HoaIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true);
-            RuleFor(h => h.PmiRate).Percentage(max: 5);
-            RuleFor(h => h.PmiCancellation).IsInEnum();
-            RuleFor(h => h.AnnualHomeownersInsurance).InclusiveBetween(0, 1_000_000).WholeCents();
-            RuleFor(h => h.MonthlyHoaDues).InclusiveBetween(0, 100_000).WholeCents();
+            // Relief that starts after the last payment would silently do nothing.
+            var loanYears = Math.Max(1, (termInMonths + 11) / 12);
+
+            RuleFor(h => h.SchoolTaxRate).Percentage(max: 10).WithName("School tax rate");
+            RuleFor(h => h.LocalTaxRate).Percentage(max: 10).WithName("County/city tax rate");
+            RuleFor(h => h.MudTaxRate).Percentage(max: 5).WithName("MUD tax rate");
+            RuleFor(h => h.SchoolHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents().WithName("School homestead exemption");
+            RuleFor(h => h.LocalHomesteadExemptionPercent).Percentage(max: 100).WithName("County/city exemption");
+            RuleFor(h => h.HomesteadAssessmentCap).Percentage(max: 100).WithName("Appraisal cap");
+            RuleFor(h => h.HomeValueGrowthRate).InclusiveBetween(-20, 25).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("Home value growth");
+            RuleFor(h => h.InsuranceIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("Insurance increase");
+            RuleFor(h => h.HoaIncreaseRate).InclusiveBetween(-20, 50).PrecisionScale(6, 4, ignoreTrailingZeros: true).WithName("HOA increase");
+            RuleFor(h => h.PmiRate).Percentage(max: 5).WithName("PMI rate");
+            RuleFor(h => h.PmiCancellation).IsInEnum().WithName("PMI removal");
+            RuleFor(h => h.AnnualHomeownersInsurance).InclusiveBetween(0, 1_000_000).WholeCents().WithName("Home insurance");
+            RuleFor(h => h.MonthlyHoaDues).InclusiveBetween(0, 100_000).WholeCents().WithName("HOA dues");
 
             RuleFor(h => h.Over65OrDisabled!.QualifiesInYear)
-                .InclusiveBetween(1, LoanTerms.MaxTermInMonths / 12)
+                .InclusiveBetween(1, loanYears)
+                .WithMessage($"'Qualifying year' must fall within the loan: between 1 and {loanYears}.")
                 .OverridePropertyName("Over65OrDisabled.QualifiesInYear").WithName("Qualifying year")
                 .When(h => h.Over65OrDisabled is not null);
 
@@ -174,8 +191,11 @@ internal static class SharedRules
     {
         var floor = allowZero ? rule.GreaterThanOrEqualTo(0) : rule.GreaterThan(0);
 
+        // Without a valid loan amount there is nothing to compare against; the down payment
+        // error explains the real problem, so this check stays quiet instead of piling on.
         return floor
             .LessThanOrEqualTo(loanAmount).WithMessage("'{PropertyName}' cannot exceed the loan amount.")
+            .When(_ => loanAmount > 0, ApplyConditionTo.CurrentValidator)
             .WholeCents();
     }
 

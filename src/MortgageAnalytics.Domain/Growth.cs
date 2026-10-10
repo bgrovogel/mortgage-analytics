@@ -1,5 +1,3 @@
-using MortgageAnalytics.Domain.Loans;
-
 namespace MortgageAnalytics.Domain;
 
 /// <summary>Compound annual growth, used for home values, insurance premiums and dues.</summary>
@@ -13,5 +11,5 @@ public static class Growth
     public static decimal Compound(decimal amount, decimal annualPercent, int years) =>
         annualPercent == 0 || years == 0
             ? amount
-            : Money.Round(amount * PaymentFormula.Pow(1 + annualPercent / 100m, years));
+            : Money.Round(amount * DecimalMath.Pow(1 + annualPercent / 100m, years));
 }

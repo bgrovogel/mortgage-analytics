@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { API_URL, APP_URL } from './e2e/env';
 
 /**
  * End-to-end tests run against the real stack: the .NET API plus the Angular dev server,
@@ -8,24 +9,25 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
-  retries: process.env['CI'] ? 2 : 0,
+  // No retries: a flaky test should fail loudly and be fixed, not be hidden by a second attempt.
+  retries: 0,
   reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: APP_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls http://localhost:5080',
-      url: 'http://localhost:5080/health',
+      command: `dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls ${API_URL}`,
+      url: `${API_URL}/health`,
       reuseExistingServer: !process.env['CI'],
       timeout: 180_000,
     },
     {
-      command: 'npm start -- --port 4200',
-      url: 'http://localhost:4200',
+      command: `npm start -- --port ${new URL(APP_URL).port}`,
+      url: APP_URL,
       reuseExistingServer: !process.env['CI'],
       timeout: 180_000,
     },

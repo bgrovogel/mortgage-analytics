@@ -16,7 +16,7 @@ describe('SavingsSummaryComponent', () => {
     (fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null)?.textContent?.trim();
 
   it('shows the all-in monthly payment with principal and interest broken out', () => {
-    render(aResponse({ baseline: aSchedule({ monthlyPayment: 1_199.1, totalMonthlyPayment: 1_711.6, monthlyHousingCosts: aHousingCosts({ propertyTax: 512.5 }) }) }));
+    render(aResponse({ baseline: aSchedule({ monthlyPayment: 1_199.1, totalMonthlyPayment: 1_711.6, monthlyHousingCosts: aHousingCosts({ localTax: 512.5 }) }) }));
 
     expect(text('total-monthly-payment')).toBe('$1,711.60');
     expect(text('monthly-payment')).toBe('$1,199.10');

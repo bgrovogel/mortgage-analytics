@@ -1,5 +1,4 @@
 using MortgageAnalytics.Application.Contracts;
-using MortgageAnalytics.Domain.HousingCosts;
 
 namespace MortgageAnalytics.Testing.Builders;
 
@@ -15,7 +14,7 @@ public sealed class HousingCostsRequestBuilder
     public HousingCostsRequestBuilder WithSchoolTax(decimal rate) => With(c => c with { SchoolTaxRate = rate });
 
     /// <summary>Sets the county, city and other local tax rate.</summary>
-    public HousingCostsRequestBuilder WithLocalTax(decimal rate) => With(c => c with { PropertyTaxRate = rate });
+    public HousingCostsRequestBuilder WithLocalTax(decimal rate) => With(c => c with { LocalTaxRate = rate });
 
     /// <summary>Sets the MUD tax rate.</summary>
     public HousingCostsRequestBuilder WithMudTax(decimal rate) => With(c => c with { MudTaxRate = rate });
@@ -60,7 +59,7 @@ public sealed class HousingCostsRequestBuilder
         With(c => c with { MonthlyHoaDues = monthlyDues, HoaIncreaseRate = annualIncreasePercent });
 
     /// <summary>Adds PMI at <paramref name="rate"/>, removed automatically at 78% unless told otherwise.</summary>
-    public HousingCostsRequestBuilder WithPmi(decimal rate, MortgageInsuranceCancellation cancellation = MortgageInsuranceCancellation.Automatic) =>
+    public HousingCostsRequestBuilder WithPmi(decimal rate, PmiCancellation cancellation = PmiCancellation.Automatic) =>
         With(c => c with { PmiRate = rate, PmiCancellation = cancellation });
 
     /// <summary>Applies any other change, for fields with no dedicated method.</summary>

@@ -10,7 +10,7 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 /// assessment cap limits how much the <i>taxable</i> value may rise in one year. Texas caps a
 /// homestead at +10% a year, so in a fast-rising market the taxable value lags behind the market
 /// value, and the owner pays tax on the lower figure.
-/// <para>Years are loan years (payments 1 to 12 are year 0), not county appraisal years.</para>
+/// <para>Years are loan years (see <see cref="LoanCalendar"/>), not county appraisal years.</para>
 /// </remarks>
 public sealed class PropertyValuation
 {
@@ -52,14 +52,18 @@ public sealed class PropertyValuation
     /// <summary>The most the taxable value may rise in a year, as a percentage, or null when uncapped.</summary>
     public decimal? AssessmentCapPercent { get; }
 
-    /// <summary>Returns the loan year (0-based) that payment <paramref name="paymentNumber"/> falls in.</summary>
-    public static int YearOf(int paymentNumber) => (paymentNumber - 1) / 12;
-
     /// <summary>Returns the projected market value in loan year <paramref name="year"/> (0-based).</summary>
-    public decimal MarketValueInYear(int year) => _marketValues[Clamp(year)];
+    /// <exception cref="ArgumentOutOfRangeException">The year is outside the projection; that is a bug, not something to clamp.</exception>
+    public decimal MarketValueInYear(int year) => _marketValues[Checked(year)];
 
     /// <summary>Returns the taxable (assessed) value in loan year <paramref name="year"/> (0-based), after any cap.</summary>
-    public decimal AssessedValueInYear(int year) => _assessedValues[Clamp(year)];
+    /// <exception cref="ArgumentOutOfRangeException">The year is outside the projection.</exception>
+    public decimal AssessedValueInYear(int year) => _assessedValues[Checked(year)];
 
-    private static int Clamp(int year) => Math.Clamp(year, 0, ProjectedYears - 1);
+    private static int Checked(int year)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(year);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(year, ProjectedYears);
+        return year;
+    }
 }

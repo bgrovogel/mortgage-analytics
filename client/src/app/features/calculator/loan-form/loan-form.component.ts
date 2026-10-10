@@ -20,7 +20,7 @@ const CHECK_SECTION = 'Check the values in this section';
 
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
-  taxes: ['schoolTaxRate', 'propertyTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
+  taxes: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
     'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['pidAnnual', 'pidYears', 'annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
@@ -77,7 +77,7 @@ export class LoanFormComponent implements OnInit {
     firstPaymentDate: [firstOfNextMonth()],
 
     schoolTaxRate: [1.0, [Validators.min(0), Validators.max(10)]],
-    propertyTaxRate: [1.1, [Validators.min(0), Validators.max(10)]],
+    localTaxRate: [1.1, [Validators.min(0), Validators.max(10)]],
     mudTaxRate: [0.85, [Validators.min(0), Validators.max(5)]],
     isHomestead: [true],
     schoolHomesteadExemption: [140_000, [Validators.min(0)]],
@@ -137,7 +137,7 @@ export class LoanFormComponent implements OnInit {
 
     const parts = [
       v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
-      v.propertyTaxRate ? `County/city ${percent(v.propertyTaxRate)}` : '',
+      v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
       v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
     ].filter(Boolean);
     if (parts.length === 0) return 'No property taxes';
@@ -260,7 +260,7 @@ export class LoanFormComponent implements OnInit {
       },
       housingCosts: {
         schoolTaxRate: v.schoolTaxRate || 0,
-        propertyTaxRate: v.propertyTaxRate || 0,
+        localTaxRate: v.localTaxRate || 0,
         mudTaxRate: v.mudTaxRate || 0,
         isHomestead: v.isHomestead,
         schoolHomesteadExemption: v.schoolHomesteadExemption || 0,

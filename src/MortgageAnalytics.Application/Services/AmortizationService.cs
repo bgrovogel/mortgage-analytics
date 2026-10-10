@@ -37,10 +37,13 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         return comparison.ToResponse(purchase, valuation);
     }
 
-    /// <summary>Returns the first day of the month after today (UTC).</summary>
+    /// <summary>
+    /// Returns the first day of the month after today, in the server's local time zone. Using UTC
+    /// would jump a month early on the last evening of a month for US users.
+    /// </summary>
     private DateOnly FirstOfNextMonth()
     {
-        var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+        var today = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
         return new DateOnly(today.Year, today.Month, 1).AddMonths(1);
     }
 }

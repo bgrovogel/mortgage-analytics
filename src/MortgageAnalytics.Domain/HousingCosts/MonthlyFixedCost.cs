@@ -29,5 +29,5 @@ public sealed class MonthlyFixedCost : IHousingCost
 
     /// <inheritdoc />
     public decimal AmountFor(CostPeriod period) =>
-        Growth.Compound(MonthlyAmount, AnnualIncreasePercent, PropertyValuation.YearOf(period.PaymentNumber));
+        Growth.Compound(MonthlyAmount, AnnualIncreasePercent, LoanCalendar.YearOf(period.PaymentNumber));
 }

@@ -68,7 +68,7 @@ public sealed record ScheduleResponse(
 
 /// <summary>Housing costs by category, for one month, one year, or summed over the loan.</summary>
 /// <param name="SchoolTax">School district tax, after its homestead exemption.</param>
-/// <param name="PropertyTax">County, city and other local taxes.</param>
+/// <param name="LocalTax">County, city and other local taxes.</param>
 /// <param name="MudTax">Municipal Utility District tax.</param>
 /// <param name="PidAssessment">Public Improvement District assessment.</param>
 /// <param name="HomeownersInsurance">Homeowners insurance.</param>
@@ -77,7 +77,7 @@ public sealed record ScheduleResponse(
 /// <param name="Total">The sum of every category.</param>
 public sealed record HousingCostsResponse(
     decimal SchoolTax,
-    decimal PropertyTax,
+    decimal LocalTax,
     decimal MudTax,
     decimal PidAssessment,
     decimal HomeownersInsurance,

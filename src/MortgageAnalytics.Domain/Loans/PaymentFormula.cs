@@ -3,10 +3,7 @@ namespace MortgageAnalytics.Domain.Loans;
 /// <summary>
 /// The standard annuity formula: M = P × r × (1 + r)ⁿ ÷ ((1 + r)ⁿ − 1).
 /// </summary>
-/// <remarks>
-/// Implemented entirely in <see cref="decimal"/>. <see cref="Math.Pow"/> is avoided because it
-/// works in <see cref="double"/> and would introduce binary floating-point error.
-/// </remarks>
+/// <remarks>Implemented entirely in <see cref="decimal"/>, using <see cref="DecimalMath.Pow"/>.</remarks>
 public static class PaymentFormula
 {
     /// <summary>Calculates the level monthly payment that repays a loan exactly over its term.</summary>
@@ -23,21 +20,7 @@ public static class PaymentFormula
         if (monthlyRate == 0)
             return Money.Round(principal / numberOfPayments);
 
-        var growth = Pow(1 + monthlyRate, numberOfPayments);
+        var growth = DecimalMath.Pow(1 + monthlyRate, numberOfPayments);
         return Money.Round(principal * monthlyRate * growth / (growth - 1));
-    }
-
-    /// <summary>Raises <paramref name="value"/> to a whole-number power by repeated squaring, in O(log n) multiplications.</summary>
-    internal static decimal Pow(decimal value, int exponent)
-    {
-        var result = 1m;
-        while (exponent > 0)
-        {
-            if ((exponent & 1) == 1)
-                result *= value;
-            value *= value;
-            exponent >>= 1;
-        }
-        return result;
     }
 }

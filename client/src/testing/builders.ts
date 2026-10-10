@@ -17,7 +17,7 @@ import {
 export function aHousingCosts(overrides: Partial<HousingCosts> = {}): HousingCosts {
   const costs: HousingCosts = {
     schoolTax: 0,
-    propertyTax: 0,
+    localTax: 0,
     mudTax: 0,
     pidAssessment: 0,
     homeownersInsurance: 0,
@@ -27,7 +27,7 @@ export function aHousingCosts(overrides: Partial<HousingCosts> = {}): HousingCos
     ...overrides,
   };
   if (overrides.total === undefined) {
-    costs.total = costs.schoolTax + costs.propertyTax + costs.mudTax + costs.pidAssessment
+    costs.total = costs.schoolTax + costs.localTax + costs.mudTax + costs.pidAssessment
       + costs.homeownersInsurance + costs.mortgageInsurance + costs.hoaDues;
   }
   return costs;

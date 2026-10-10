@@ -46,7 +46,7 @@ export interface Over65OrDisabled {
 
 export interface HousingCostsInput {
   schoolTaxRate: number;
-  propertyTaxRate: number;
+  localTaxRate: number;
   mudTaxRate: number;
   isHomestead: boolean;
   schoolHomesteadExemption: number;
@@ -86,7 +86,7 @@ export interface Purchase {
 
 export interface HousingCosts {
   schoolTax: number;
-  propertyTax: number;
+  localTax: number;
   mudTax: number;
   pidAssessment: number;
   homeownersInsurance: number;

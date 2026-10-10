@@ -33,6 +33,23 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_WithoutPayments_LeavesOutTheMonthlyRowsButKeepsEverythingElse()
+    {
+        var response = await PostCalculateAsync(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra).Build(), query: "?includePayments=false");
+
+        var json = await ReadJsonAsync(response);
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the option is valid");
+            Assert.That(json.GetProperty("baseline").GetProperty("payments").GetArrayLength(), Is.Zero, "no baseline rows");
+            Assert.That(json.GetProperty("accelerated").GetProperty("payments").GetArrayLength(), Is.Zero, "no accelerated rows");
+            Assert.That(json.GetProperty("accelerated").GetProperty("numberOfPayments").GetInt32(), Is.EqualTo(Extra200.NumberOfPayments), "summaries are unaffected");
+            Assert.That(json.GetProperty("savings").GetProperty("interestSaved").GetDecimal(), Is.EqualTo(Extra200.InterestSaved), "savings are unaffected");
+            Assert.That(json.GetProperty("projection").GetArrayLength(), Is.EqualTo(30), "the yearly projection is kept");
+        });
+    }
+
+    [Test]
     public async Task Calculate_EnumsAreAcceptedAsStrings()
     {
         var response = await PostCalculateAsync(new

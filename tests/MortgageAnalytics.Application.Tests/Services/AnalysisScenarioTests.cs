@@ -82,7 +82,7 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
         var costs = baseline.MonthlyHousingCosts;
         Assert.Multiple(() =>
         {
-            Assert.That(costs.PropertyTax, Is.EqualTo(437.50m), "2.1% of $250,000 / 12");
+            Assert.That(costs.LocalTax, Is.EqualTo(437.50m), "2.1% of $250,000 / 12");
             Assert.That(costs.MudTax, Is.EqualTo(177.08m), "0.85% of $250,000 / 12");
             Assert.That(costs.PidAssessment, Is.EqualTo(100m), "$1,200 / 12");
             Assert.That(costs.HomeownersInsurance, Is.EqualTo(200m), "$2,400 / 12");
@@ -107,7 +107,7 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     public void RequestedPmiRemoval_ExtraPaymentsBringItForward_AndCountAsSavings()
     {
         var request = A.Request.FivePercentDown().WithMonthlyExtra(300m)
-            .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, MortgageAnalytics.Domain.HousingCosts.MortgageInsuranceCancellation.BorrowerRequested));
+            .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, PmiCancellation.BorrowerRequested));
 
         var response = Service.Analyze(request);
 
@@ -141,13 +141,13 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     [Test]
     public void Pmi_RequestedRemovalEndsSoonerThanAutomatic()
     {
-        DateOnly? EndDate(MortgageAnalytics.Domain.HousingCosts.MortgageInsuranceCancellation cancellation) =>
+        DateOnly? EndDate(PmiCancellation cancellation) =>
             Service.Analyze(A.Request.FivePercentDown().WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, cancellation)))
                 .Baseline.MortgageInsuranceEndDate;
 
         Assert.That(
-            EndDate(MortgageAnalytics.Domain.HousingCosts.MortgageInsuranceCancellation.BorrowerRequested),
-            Is.LessThan(EndDate(MortgageAnalytics.Domain.HousingCosts.MortgageInsuranceCancellation.Automatic)!.Value),
+            EndDate(PmiCancellation.BorrowerRequested),
+            Is.LessThan(EndDate(PmiCancellation.Automatic)!.Value),
             "80% loan-to-value is reached before 78%");
     }
 }

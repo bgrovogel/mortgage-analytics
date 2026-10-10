@@ -3,8 +3,6 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 /// <summary>Splits a yearly bill into twelve monthly installments that add up to the bill exactly.</summary>
 internal static class Installments
 {
-    private const int PerYear = 12;
-
     /// <summary>
     /// Returns the installment of <paramref name="annualAmount"/> due with payment <paramref name="paymentNumber"/>.
     /// The first eleven installments are the rounded twelfth; the twelfth takes whatever is left,
@@ -12,8 +10,9 @@ internal static class Installments
     /// </summary>
     public static decimal MonthlyShare(decimal annualAmount, int paymentNumber)
     {
-        var installment = Money.Round(annualAmount / PerYear);
-        var isLastOfYear = (paymentNumber - 1) % PerYear == PerYear - 1;
-        return isLastOfYear ? annualAmount - installment * (PerYear - 1) : installment;
+        var installment = Money.Round(annualAmount / LoanCalendar.PaymentsPerYear);
+        return LoanCalendar.IsLastPaymentOfYear(paymentNumber)
+            ? annualAmount - installment * (LoanCalendar.PaymentsPerYear - 1)
+            : installment;
     }
 }

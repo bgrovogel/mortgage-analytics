@@ -22,6 +22,20 @@ public class PropertyPurchaseTests
         });
     }
 
+    [Test]
+    public void DownPaymentPercent_IsTruncated_SoItNeverContradictsThePmiRule()
+    {
+        // $49,990 of $250,000 is 19.996%: rounding would show 20.00% down while PMI is required.
+        var purchase = new PropertyPurchase(250_000m, 49_990m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(purchase.RequiresMortgageInsurance, Is.True, "19.996% is under 20%");
+            Assert.That(purchase.DownPaymentPercent, Is.EqualTo(19.99m), "displayed as 19.99%, consistent with the PMI rule");
+            Assert.That(purchase.LoanToValuePercent, Is.EqualTo(80.01m), "and loan-to-value as 80.01%");
+        });
+    }
+
     [TestCase(250_000, 50_000, false, TestName = "Exactly 20% down: no PMI")]
     [TestCase(250_000, 49_999.99, true, TestName = "One cent under 20% down: PMI required")]
     public void RequiresMortgageInsurance_OnlyWithLessThanTwentyPercentDown(decimal price, decimal down, bool expected)

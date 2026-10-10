@@ -16,7 +16,7 @@ public sealed class ValueBasedTax : IHousingCost
     private readonly PropertyValuation _valuation;
 
     /// <summary>Creates a taxing unit.</summary>
-    /// <param name="category"><see cref="HousingCostCategory.SchoolTax"/>, <see cref="HousingCostCategory.PropertyTax"/> or <see cref="HousingCostCategory.MudTax"/>.</param>
+    /// <param name="category"><see cref="HousingCostCategory.SchoolTax"/>, <see cref="HousingCostCategory.LocalTax"/> or <see cref="HousingCostCategory.MudTax"/>.</param>
     /// <param name="valuation">The home's assessed value, year by year.</param>
     /// <param name="annualRatePercent">The annual rate as a percentage (1.05 means 1.05%).</param>
     /// <param name="exemption">This unit's homestead exemption, or null for none.</param>
@@ -29,7 +29,7 @@ public sealed class ValueBasedTax : IHousingCost
         TaxExemption? exemption = null,
         SeniorTaxRelief? seniorRelief = null)
     {
-        if (category is not (HousingCostCategory.SchoolTax or HousingCostCategory.PropertyTax or HousingCostCategory.MudTax))
+        if (category is not (HousingCostCategory.SchoolTax or HousingCostCategory.LocalTax or HousingCostCategory.MudTax))
             throw new DomainValidationException("A value-based tax must be a school, property or MUD tax.");
         HousingCostGuard.AgainstNegative(annualRatePercent, nameof(annualRatePercent));
 
@@ -76,5 +76,5 @@ public sealed class ValueBasedTax : IHousingCost
 
     /// <inheritdoc />
     public decimal AmountFor(CostPeriod period) =>
-        Installments.MonthlyShare(AnnualAmountInYear(PropertyValuation.YearOf(period.PaymentNumber)), period.PaymentNumber);
+        Installments.MonthlyShare(AnnualAmountInYear(LoanCalendar.YearOf(period.PaymentNumber)), period.PaymentNumber);
 }

@@ -14,9 +14,9 @@ public abstract class ApiTestBase
     /// <summary>A client for the shared in-memory API.</summary>
     protected static HttpClient Client => ApiFixture.Client;
 
-    /// <summary>Posts <paramref name="body"/> as JSON to the calculate endpoint.</summary>
-    protected static Task<HttpResponseMessage> PostCalculateAsync(object body, HttpClient? client = null) =>
-        (client ?? Client).PostAsJsonAsync(CalculateUrl, body);
+    /// <summary>Posts <paramref name="body"/> as JSON to the calculate endpoint, with an optional query string.</summary>
+    protected static Task<HttpResponseMessage> PostCalculateAsync(object body, HttpClient? client = null, string query = "") =>
+        (client ?? Client).PostAsJsonAsync(CalculateUrl + query, body);
 
     /// <summary>Posts raw text as JSON, for malformed-body tests.</summary>
     protected static Task<HttpResponseMessage> PostRawAsync(string json) =>

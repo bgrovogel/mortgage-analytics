@@ -6,7 +6,7 @@ namespace MortgageAnalytics.Domain.Tests.HousingCosts;
 [TestFixture]
 public class ValueBasedTaxTests
 {
-    [TestCase(HousingCostCategory.PropertyTax, 250_000, 2.1, 5_250.00, 437.50)]
+    [TestCase(HousingCostCategory.LocalTax, 250_000, 2.1, 5_250.00, 437.50)]
     [TestCase(HousingCostCategory.MudTax, 250_000, 0.85, 2_125.00, 177.08)]
     [TestCase(HousingCostCategory.SchoolTax, 250_000, 0, 0, 0)]
     public void ChargesTheAnnualRateOnValue_InTwelveInstallments(
@@ -26,7 +26,7 @@ public class ValueBasedTaxTests
     public void TwelveInstallmentsAddUpToTheAnnualBillExactly()
     {
         // $5,000 / 12 = $416.666...: eleven installments of $416.67 and a twelfth of $416.63.
-        var tax = new ValueBasedTax(HousingCostCategory.PropertyTax, Flat(250_000m), 2m);
+        var tax = new ValueBasedTax(HousingCostCategory.LocalTax, Flat(250_000m), 2m);
 
         var installments = Enumerable.Range(1, 12).Select(n => tax.AmountFor(Period(n))).ToList();
 

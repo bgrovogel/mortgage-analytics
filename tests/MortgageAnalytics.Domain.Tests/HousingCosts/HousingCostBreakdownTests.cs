@@ -11,7 +11,7 @@ public class HousingCostBreakdownTests
     {
         IHousingCost[] costs =
         [
-            new ValueBasedTax(HousingCostCategory.PropertyTax, Flat(250_000m), 2.1m),
+            new ValueBasedTax(HousingCostCategory.LocalTax, Flat(250_000m), 2.1m),
             new ValueBasedTax(HousingCostCategory.MudTax, Flat(250_000m), 0.85m),
             new MonthlyFixedCost(HousingCostCategory.HoaDues, 75m),
         ];
@@ -20,7 +20,7 @@ public class HousingCostBreakdownTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(breakdown[HousingCostCategory.PropertyTax], Is.EqualTo(437.50m), "2.1% of $250,000 / 12");
+            Assert.That(breakdown[HousingCostCategory.LocalTax], Is.EqualTo(437.50m), "2.1% of $250,000 / 12");
             Assert.That(breakdown[HousingCostCategory.MudTax], Is.EqualTo(177.08m), "0.85% of $250,000 / 12");
             Assert.That(breakdown[HousingCostCategory.HoaDues], Is.EqualTo(75m), "flat dues");
             Assert.That(breakdown[HousingCostCategory.MortgageInsurance], Is.Zero, "absent categories read as zero");

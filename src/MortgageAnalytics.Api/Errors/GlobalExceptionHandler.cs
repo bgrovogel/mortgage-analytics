@@ -1,14 +1,18 @@
 using Microsoft.AspNetCore.Diagnostics;
-using MortgageAnalytics.Domain;
 
 namespace MortgageAnalytics.Api.Errors;
 
 /// <summary>
 /// The last line of defense: turns unhandled exceptions into ProblemDetails responses that never
-/// leak stack traces. Malformed JSON gets a 400; a broken domain invariant is logged as a bug.
+/// leak internal details.
 /// </summary>
+/// <remarks>
+/// A request the server could not read keeps its own status (400, 413, ...). Anything else is the
+/// server's fault and becomes a generic 500. That includes a broken domain rule: input is validated
+/// before it reaches the domain, so a domain guard firing means a bug, and its message is internal.
+/// </remarks>
 /// <param name="problemDetails">Writes RFC 9457 problem responses.</param>
-/// <param name="logger">Records unexpected failures.</param>
+/// <param name="logger">Records server-side failures.</param>
 public sealed partial class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger)
     : IExceptionHandler
 {
@@ -16,14 +20,11 @@ public sealed partial class GlobalExceptionHandler(IProblemDetailsService proble
     /// <returns>True when a response was written, so the exception is considered handled.</returns>
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (status, title) = exception switch
-        {
-            BadHttpRequestException => (StatusCodes.Status400BadRequest, "The request body could not be read."),
-            DomainValidationException => (StatusCodes.Status422UnprocessableEntity, exception.Message),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred."),
-        };
+        var (status, title) = exception is BadHttpRequestException badRequest
+            ? (badRequest.StatusCode, "The request could not be read.")
+            : (StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
 
-        if (status >= StatusCodes.Status500InternalServerError || exception is DomainValidationException)
+        if (status >= StatusCodes.Status500InternalServerError)
             LogUnhandled(logger, exception, httpContext.Request.Method, httpContext.Request.Path);
 
         httpContext.Response.StatusCode = status;
@@ -35,7 +36,7 @@ public sealed partial class GlobalExceptionHandler(IProblemDetailsService proble
         });
     }
 
-    /// <summary>Logs an unhandled exception. Source-generated, so there is no boxing or template parsing at runtime.</summary>
+    /// <summary>Logs a server-side failure. Source-generated, so there is no boxing or template parsing at runtime.</summary>
     [LoggerMessage(Level = LogLevel.Error, Message = "Unhandled exception for {Method} {Path}")]
     private static partial void LogUnhandled(ILogger logger, Exception exception, string method, string path);
 }

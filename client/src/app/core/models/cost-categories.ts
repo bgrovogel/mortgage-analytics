@@ -16,7 +16,7 @@ export interface CostCategory {
  */
 export const COST_CATEGORIES: readonly CostCategory[] = [
   { key: 'schoolTax', label: 'School tax', color: '--series-2' },
-  { key: 'propertyTax', label: 'County & city tax', color: '--series-3' },
+  { key: 'localTax', label: 'County & city tax', color: '--series-3' },
   { key: 'mudTax', label: 'MUD tax', color: '--series-4' },
   { key: 'pidAssessment', label: 'PID assessment', color: '--series-5' },
   { key: 'homeownersInsurance', label: 'Home insurance', color: '--series-6' },

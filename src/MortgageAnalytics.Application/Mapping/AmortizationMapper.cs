@@ -83,8 +83,8 @@ internal static class AmortizationMapper
         if (costs.SchoolTaxRate > 0)
             items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption, schoolRelief));
 
-        if (costs.PropertyTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, localExemption, localRelief));
+        if (costs.LocalTaxRate > 0)
+            items.Add(new ValueBasedTax(HousingCostCategory.LocalTax, valuation, costs.LocalTaxRate, localExemption, localRelief));
 
         if (costs.MudTaxRate > 0)
             items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate));
@@ -99,11 +99,20 @@ internal static class AmortizationMapper
         if (costs.MonthlyHoaDues > 0)
             items.Add(new MonthlyFixedCost(HousingCostCategory.HoaDues, costs.MonthlyHoaDues, costs.HoaIncreaseRate));
 
-        if (costs.PmiRate > 0 && purchase.RequiresMortgageInsurance)
-            items.Add(new MortgageInsurance(costs.PmiRate, purchase, costs.PmiCancellation));
+        // MortgageInsurance itself charges nothing when the purchase does not require PMI.
+        if (costs.PmiRate > 0)
+            items.Add(new MortgageInsurance(costs.PmiRate, purchase, costs.PmiCancellation.ToDomain()));
 
         return items.Count == 0 ? HousingCostPlan.None : new HousingCostPlan(items);
     }
+
+    /// <summary>Maps the contract's PMI option to the domain's.</summary>
+    private static MortgageInsuranceCancellation ToDomain(this PmiCancellation cancellation) => cancellation switch
+    {
+        PmiCancellation.Automatic => MortgageInsuranceCancellation.Automatic,
+        PmiCancellation.BorrowerRequested => MortgageInsuranceCancellation.BorrowerRequested,
+        _ => throw new ArgumentOutOfRangeException(nameof(cancellation), cancellation, "Validated before mapping."),
+    };
 
     /// <summary>Converts the domain comparison into the API response.</summary>
     /// <param name="comparison">The standard and accelerated schedules with their costs.</param>
@@ -149,7 +158,6 @@ internal static class AmortizationMapper
     private static ScheduleResponse ToResponse(AmortizationSchedule schedule, HousingCostSchedule costs)
     {
         var firstMonth = costs.Periods[0];
-        var dueDates = schedule.Payments.ToDictionary(p => p.PaymentNumber, p => p.DueDate);
 
         return new ScheduleResponse(
             schedule.InitialMonthlyPayment,
@@ -159,11 +167,11 @@ internal static class AmortizationMapper
             schedule.TotalInterest,
             schedule.TotalPaid,
             ToResponse(costs.Totals),
-            costs.MortgageInsuranceLastPayment is { } last ? dueDates[last] : null,
+            costs.MortgageInsuranceLastPayment is { } last ? DueDateOf(schedule, last) : null,
             schedule.PayoffDate,
             schedule.Recasts.Select(r => new RecastResponse(
                 r.AfterPaymentNumber,
-                dueDates[r.AfterPaymentNumber + 1],
+                DueDateOf(schedule, r.AfterPaymentNumber + 1),
                 r.PreviousPayment,
                 r.NewPayment,
                 r.Fee)).ToList(),
@@ -180,10 +188,14 @@ internal static class AmortizationMapper
                 p.RemainingBalance)).ToList());
     }
 
+    /// <summary>The due date of payment <paramref name="paymentNumber"/>; payments are numbered from 1 in order.</summary>
+    private static DateOnly DueDateOf(AmortizationSchedule schedule, int paymentNumber) =>
+        schedule.Payments[paymentNumber - 1].DueDate;
+
     private static HousingCostsResponse ToResponse(HousingCostBreakdown breakdown) =>
         new(
             breakdown[HousingCostCategory.SchoolTax],
-            breakdown[HousingCostCategory.PropertyTax],
+            breakdown[HousingCostCategory.LocalTax],
             breakdown[HousingCostCategory.MudTax],
             breakdown[HousingCostCategory.PidAssessment],
             breakdown[HousingCostCategory.HomeownersInsurance],

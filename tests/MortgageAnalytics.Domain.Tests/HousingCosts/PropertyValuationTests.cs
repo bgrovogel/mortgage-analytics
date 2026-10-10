@@ -60,15 +60,17 @@ public class PropertyValuationTests
         Assert.That(valuation.AssessedValueInYear(1), Is.EqualTo(345_000m), "a non-homestead is taxed on the full market value");
     }
 
-    [Test]
-    public void YearsBeyondTheProjection_UseTheLastProjectedYear()
+    [TestCase(-1)]
+    [TestCase(PropertyValuation.ProjectedYears)]
+    public void YearsOutsideTheProjection_AreRejected_NotSilentlyClamped(int year)
     {
         var valuation = new PropertyValuation(300_000m, annualGrowthPercent: 1m);
 
-        Assert.That(
-            valuation.MarketValueInYear(PropertyValuation.ProjectedYears + 5),
-            Is.EqualTo(valuation.MarketValueInYear(PropertyValuation.ProjectedYears - 1)),
-            "years past the longest supported loan are clamped to the last projected year");
+        Assert.Multiple(() =>
+        {
+            Assert.That(() => valuation.MarketValueInYear(year), Throws.TypeOf<ArgumentOutOfRangeException>(), "a wrong year is a bug and must surface");
+            Assert.That(() => valuation.AssessedValueInYear(year), Throws.TypeOf<ArgumentOutOfRangeException>(), "for taxable value too");
+        });
     }
 
     [Test]
@@ -81,15 +83,6 @@ public class PropertyValuationTests
             Assert.That(valuation.AnnualGrowthPercent, Is.EqualTo(4m), "the market growth assumption");
             Assert.That(valuation.AssessmentCapPercent, Is.EqualTo(10m), "the assessment cap");
         });
-    }
-
-    [TestCase(1, 0)]
-    [TestCase(12, 0)]
-    [TestCase(13, 1)]
-    [TestCase(360, 29)]
-    public void YearOf_GroupsPaymentsIntoLoanYears(int paymentNumber, int expectedYear)
-    {
-        Assert.That(PropertyValuation.YearOf(paymentNumber), Is.EqualTo(expectedYear), "payments 1-12 are year 0, 13-24 year 1, and so on");
     }
 
     [TestCase(0, 0, null, "greater than zero", TestName = "Zero value")]

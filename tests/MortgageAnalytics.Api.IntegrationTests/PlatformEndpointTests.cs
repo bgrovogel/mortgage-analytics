@@ -17,6 +17,9 @@ public class PlatformEndpointTests : ApiTestBase
             Assert.That(swagger, Does.Contain(CalculateUrl), "the endpoint is documented");
             Assert.That(swagger, Does.Contain("AmortizationRequest"), "the request schema is documented");
             Assert.That(swagger, Does.Contain("Nominal annual interest rate"), "XML comments flow into the schema");
+            Assert.That(swagger, Does.Contain("homestead"), "the API description covers taxes and exemptions, not only amortization");
+            Assert.That(swagger, Does.Contain("includePayments"), "the option to leave out monthly rows is documented");
+            Assert.That(swagger, Does.Contain("\"500\""), "the server-error response is documented");
         });
     }
 

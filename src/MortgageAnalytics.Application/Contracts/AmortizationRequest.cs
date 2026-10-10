@@ -1,5 +1,3 @@
-using MortgageAnalytics.Domain.HousingCosts;
-
 namespace MortgageAnalytics.Application.Contracts;
 
 /// <summary>Everything needed to analyze a home purchase and its mortgage.</summary>
@@ -105,7 +103,7 @@ public sealed record HousingCostsRequest
 
     /// <summary>Combined county, city and other local tax rate (everything except school and MUD).</summary>
     /// <example>1.1</example>
-    public decimal PropertyTaxRate { get; init; }
+    public decimal LocalTaxRate { get; init; }
 
     /// <summary>Municipal Utility District tax rate.</summary>
     /// <example>0.85</example>
@@ -159,7 +157,7 @@ public sealed record HousingCostsRequest
 
     /// <summary>Whether PMI comes off automatically at 78% loan-to-value or on request at 80%.</summary>
     /// <example>Automatic</example>
-    public MortgageInsuranceCancellation PmiCancellation { get; init; } = MortgageInsuranceCancellation.Automatic;
+    public PmiCancellation PmiCancellation { get; init; } = PmiCancellation.Automatic;
 }
 
 /// <summary>Homestead relief for an owner who is 65 or older, or disabled.</summary>
@@ -185,6 +183,16 @@ public sealed record Over65OrDisabledRequest
     /// <summary>True if the county/city has adopted a tax ceiling for these owners. The school ceiling always applies.</summary>
     /// <example>false</example>
     public bool LocalTaxCeiling { get; init; }
+}
+
+/// <summary>How PMI comes off the loan, under the Homeowners Protection Act.</summary>
+public enum PmiCancellation
+{
+    /// <summary>Removed automatically when the original schedule reaches 78% loan-to-value. Extra payments do not move it.</summary>
+    Automatic = 0,
+
+    /// <summary>Removed on the borrower's request at 80% loan-to-value, measured on the actual balance.</summary>
+    BorrowerRequested = 1,
 }
 
 /// <summary>A Public Improvement District assessment.</summary>

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using MortgageAnalytics.Application.Services;
 using MortgageAnalytics.Application.Validation;
 using MortgageAnalytics.Domain.Amortization;
@@ -18,7 +19,8 @@ public static class DependencyInjection
         services.AddSingleton<IAmortizationCalculator, AmortizationCalculator>();
         services.AddSingleton<ILoanComparer, LoanComparer>();
         services.AddSingleton<IAmortizationService, AmortizationService>();
-        services.AddSingleton(TimeProvider.System);
+        // TryAdd: a clock the host (or a test) registered first must win.
+        services.TryAddSingleton(TimeProvider.System);
 
         services.AddValidatorsFromAssemblyContaining<AmortizationRequestValidator>(ServiceLifetime.Singleton);
 
