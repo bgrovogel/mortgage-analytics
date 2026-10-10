@@ -18,11 +18,11 @@ export type ProjectionView = 'costs' | 'value';
   selector: 'app-cost-projection',
   template: `
     <figure>
-      <figcaption id="projection-title">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value vs. taxable value' }}</figcaption>
+      <figcaption [id]="'projection-title-' + view()">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value vs. taxable value' }}</figcaption>
       <div class="canvas-wrap">
-        <canvas #canvas role="img" aria-labelledby="projection-title" data-testid="projection-chart"></canvas>
+        <canvas #canvas role="img" [attr.aria-labelledby]="'projection-title-' + view()" [attr.data-testid]="'projection-chart-' + view()"></canvas>
       </div>
-      <p class="note" data-testid="projection-note">{{ note() }}</p>
+      <p class="note" [attr.data-testid]="'projection-note-' + view()">{{ note() }}</p>
     </figure>
   `,
   styleUrl: './cost-projection.component.scss',

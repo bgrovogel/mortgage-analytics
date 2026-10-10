@@ -40,6 +40,8 @@ export class CalculatorPage {
   readonly calculateButton: Locator;
   /** The panel holding the form, which scrolls on its own when it is taller than the window. */
   readonly formPanel: Locator;
+  /** The takeaway under the home value chart. */
+  readonly homeValueNote: Locator;
   /** The headline numbers: the savings (or total interest) and the summary tiles. */
   readonly headline: Locator;
 
@@ -57,8 +59,9 @@ export class CalculatorPage {
     this.breakdown = page.getByTestId('payment-breakdown');
     this.breakdownTotal = page.getByTestId('breakdown-total');
     this.chart = page.getByTestId('balance-chart');
-    this.projectionChart = page.getByTestId('projection-chart');
-    this.projectionNote = page.getByTestId('projection-note');
+    this.projectionChart = page.getByTestId('projection-chart-costs');
+    this.projectionNote = page.getByTestId('projection-note-costs');
+    this.homeValueNote = page.getByTestId('projection-note-value');
     this.scheduleRows = page.getByTestId('schedule-table').locator('tbody tr');
     this.errorSummary = page.getByTestId('error-summary');
     this.summaryBar = page.getByTestId('summary-bar');
@@ -200,29 +203,32 @@ export class CalculatorPage {
     return this.page.waitForTimeout(1_000);
   }
 
-  /** A tab of the charts-over-time card: 'balance', 'costs' or 'value'. */
-  chartTab(name: 'balance' | 'costs' | 'value'): Locator {
-    return this.page.getByTestId(`tab-${name}`);
+  /** Opens a result tab: Overview, Projection or Schedule. Each has its own URL. */
+  async showResults(tab: 'overview' | 'projection' | 'schedule'): Promise<void> {
+    await this.page.getByTestId(`result-tab-${tab}`).click();
+    await expect(this.page, `the URL names the ${tab} tab`).toHaveURL(new RegExp(`/calculator/${tab}$`));
   }
 
-  /** Shows the yearly taxes & costs chart. */
+  /** Shows the yearly taxes & costs chart (on the Projection tab). */
   showYearlyCosts(): Promise<void> {
-    return this.chartTab('costs').click();
+    return this.showResults('projection');
   }
 
-  /** Shows market value against taxable value. */
+  /** Shows market value against taxable value (on the Projection tab). */
   showHomeValueProjection(): Promise<void> {
-    return this.chartTab('value').click();
+    return this.showResults('projection');
   }
 
   /** Switches the table to one row per loan year. */
-  showYearlySchedule(): Promise<void> {
-    return this.page.getByTestId('view-yearly').click();
+  async showYearlySchedule(): Promise<void> {
+    await this.showResults('schedule');
+    await this.page.getByTestId('view-yearly').click();
   }
 
   /** Switches the table to the standard (no extra payments) schedule. */
-  showStandardSchedule(): Promise<void> {
-    return this.page.getByTestId('view-baseline').click();
+  async showStandardSchedule(): Promise<void> {
+    await this.showResults('schedule');
+    await this.page.getByTestId('view-baseline').click();
   }
 
   /** Returns the monthly amount shown for a category in the payment breakdown, e.g. "School tax". */
@@ -232,6 +238,7 @@ export class CalculatorPage {
 
   /** Returns one schedule cell, found by its column header ("Payment", "Extra", ...), not by position. */
   async cell(paymentNumber: number, column: string): Promise<Locator> {
+    if (!this.page.url().endsWith('/schedule')) await this.showResults('schedule');
     const headers = (await this.page.getByTestId('schedule-table').locator('thead th').allTextContents()).map((h) => h.trim());
     const index = headers.indexOf(column);
     expect(index, `the schedule table should have a "${column}" column`).toBeGreaterThanOrEqual(0);

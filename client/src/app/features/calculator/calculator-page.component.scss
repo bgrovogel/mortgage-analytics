@@ -1,17 +1,9 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    'form headline'
-    'form results';
+  grid-template-areas: 'form results';
   gap: 1.25rem;
   align-items: start;
-}
-
-.headline {
-  grid-area: headline;
-  min-width: 0;
 }
 
 .form-panel {
@@ -35,10 +27,44 @@
   min-width: 0;
 }
 
-.charts {
-  display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);
-  gap: 1.25rem;
+// The outlet element itself is empty; without this it would take a flex gap of its own.
+router-outlet {
+  display: none;
+}
+
+.result-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0.5rem 0.9rem;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      border-radius: 6px 6px 0 0;
+    }
+  }
 }
 
 .panel {
@@ -68,21 +94,13 @@
   }
 }
 
-@media (max-width: 1100px) {
-  .charts {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 860px) {
-  // One column: the answer first, then the form, then the detail.
+  // One column: the results first (on a phone that is the answer), then the form.
   .layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
     grid-template-areas:
-      'headline'
-      'form'
-      'results';
+      'results'
+      'form';
   }
 
   .form-panel {
@@ -93,7 +111,6 @@
 }
 
 // Fade results slightly while they are being recalculated, so stale numbers are not mistaken for fresh ones.
-.headline.updating,
 .results.updating {
   opacity: 0.6;
   transition: opacity 0.2s ease 0.15s;
@@ -117,6 +134,10 @@
     border-bottom: 1px solid var(--border);
     font-size: 0.95rem;
     color: var(--text-secondary);
+
+    &.hidden {
+      display: none;
+    }
 
     strong {
       color: var(--text-primary);

@@ -262,6 +262,59 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('restoring a request (returning to the page, or opening a saved calculation)', () => {
+    const restore = (request: AmortizationRequest) => {
+      const restored = TestBed.createComponent(LoanFormComponent);
+      const sent: AmortizationRequest[] = [];
+      restored.componentInstance.calculate.subscribe((r) => sent.push(r));
+      restored.componentRef.setInput('initial', request);
+      restored.detectChanges();
+      return { form: restored.componentInstance, sent };
+    };
+
+    it('fills every field from the request, so it sends the very same request back', () => {
+      controls().homePrice.setValue(420_000);
+      controls().downPayment.setValue(84_000);
+      controls().termYears.setValue(15);
+      controls().firstPaymentDate.setValue('2027-03-01');
+      controls().pidAnnual.setValue(1_200);
+      controls().pidYears.setValue(12);
+      controls().isOver65.setValue(true);
+      controls().over65Year.setValue(4);
+      controls().over65LocalCeiling.setValue(true);
+      controls().pmiCancellation.setValue('BorrowerRequested');
+      controls().annualExtra.setValue(2_000);
+      controls().annualFirstPayment.setValue(6);
+      component.addLumpSum();
+      controls().strategy.setValue('Recast');
+      controls().recastFee.setValue(300);
+      const original = last();
+
+      const { sent } = restore(original);
+
+      expect(sent).toEqual([original]);
+    });
+
+    it('restores the down payment in dollars, whichever unit it was entered in', () => {
+      controls().downPaymentMode.setValue('percent');
+      controls().downPayment.setValue(10);
+
+      const { form } = restore(last());
+
+      expect(form.form.controls.downPaymentMode.value).toBe('amount');
+      expect(form.form.controls.downPayment.value).toBe(37_500);
+    });
+
+    it('treats missing extras and costs as zero', () => {
+      const { form, sent } = restore({ ...last(), extraPayments: null, housingCosts: null, firstPaymentDate: null });
+
+      expect(form.form.controls.monthlyExtra.value).toBe(0);
+      expect(form.form.controls.schoolTaxRate.value).toBe(0);
+      expect(form.form.controls.firstPaymentDate.value).toBe('');
+      expect(sent[0].housingCosts!.pmiRate).toBe(0);
+    });
+  });
+
   describe('validation', () => {
     it('reveals every error when an invalid form is submitted', () => {
       controls().annualInterestRate.setValue(45);

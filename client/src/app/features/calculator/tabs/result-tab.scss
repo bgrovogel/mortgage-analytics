@@ -1,0 +1,26 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  min-width: 0;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 1100px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,5 +1,5 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
@@ -53,7 +53,7 @@ function firstOfNextMonth(): string {
 /**
  * Presentational component: owns the form and emits a ready-to-send request whenever a change
  * leaves it valid, so results update as the user types. It knows nothing about HTTP or timing;
- * the page debounces and sends the requests.
+ * the store debounces and sends the requests.
  *
  * Only the five main fields are always visible. Everything else lives in collapsible sections,
  * each summarized in one line while closed.
@@ -68,8 +68,14 @@ function firstOfNextMonth(): string {
 export class LoanFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
 
+  /** A request to start from (the last calculation, or a saved one) instead of the worked example. */
+  readonly initial = input<AmortizationRequest | null>(null);
+
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly calculate = output<AmortizationRequest>();
+
+  /** True while a request is being loaded into the form, so its many changes do not each emit. */
+  private restoring = false;
 
   readonly maxYears = MAX_YEARS;
 
@@ -211,7 +217,7 @@ export class LoanFormComponent implements OnInit {
 
     // Recalculate as the user types: every change that leaves the form valid produces a request.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      if (this.isComplete()) this.calculate.emit(this.toRequest());
+      if (!this.restoring && this.isComplete()) this.calculate.emit(this.toRequest());
     });
   }
 
@@ -220,19 +226,16 @@ export class LoanFormComponent implements OnInit {
     return this.form.controls.lumpSums;
   }
 
-  /** Calculates a worked example as soon as the page loads. */
+  /** Loads the starting request, if any, then calculates at once so results appear without any input. */
   ngOnInit(): void {
+    const initial = this.initial();
+    if (initial) this.restore(initial);
     this.submit();
   }
 
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
   addLumpSum(): void {
-    this.lumpSums.push(
-      this.fb.group({
-        paymentNumber: [12, [Validators.required, Validators.min(1)]],
-        amount: [10_000, [Validators.required, Validators.min(0.01)]],
-      }),
-    );
+    this.lumpSums.push(this.lumpSumGroup(12, 10_000));
   }
 
   /** Removes the lump-sum row at `index`. */
@@ -263,6 +266,66 @@ export class LoanFormComponent implements OnInit {
   /** True when any control in `section` is invalid. */
   private sectionInvalid(section: keyof typeof SECTION_CONTROLS): boolean {
     return SECTION_CONTROLS[section].some((name) => this.form.controls[name].invalid);
+  }
+
+  /**
+   * Fills the form from a request: the reverse of toRequest. The down payment comes back in dollars.
+   * Parts the request leaves out (no extras, no housing costs) become zero; fields that only matter
+   * when an option is on (recast terms, over-65 details) keep their defaults when it is off.
+   */
+  private restore(r: AmortizationRequest): void {
+    const extras = r.extraPayments;
+    const costs = r.housingCosts;
+    const senior = costs?.over65OrDisabled;
+    this.restoring = true;
+    this.form.controls.downPaymentMode.setValue('amount', { emitEvent: false });
+    this.lumpSums.clear({ emitEvent: false });
+    for (const lump of extras?.lumpSums ?? []) {
+      this.lumpSums.push(this.lumpSumGroup(lump.paymentNumber, lump.amount), { emitEvent: false });
+    }
+    this.form.patchValue({
+      homePrice: r.homePrice,
+      downPayment: r.downPayment,
+      annualInterestRate: r.annualInterestRate,
+      termYears: Math.round(r.termInMonths / 12),
+      firstPaymentDate: r.firstPaymentDate ?? '',
+      strategy: r.strategy,
+      ...(r.recast && { recastMinimum: r.recast.minimumLumpSum, recastFee: r.recast.fee }),
+      monthlyExtra: extras?.monthlyAmount ?? 0,
+      annualExtra: extras?.annual?.amount ?? 0,
+      ...(extras?.annual && { annualFirstPayment: extras.annual.firstPaymentNumber }),
+      schoolTaxRate: costs?.schoolTaxRate ?? 0,
+      localTaxRate: costs?.localTaxRate ?? 0,
+      mudTaxRate: costs?.mudTaxRate ?? 0,
+      isHomestead: costs?.isHomestead ?? false,
+      schoolHomesteadExemption: costs?.schoolHomesteadExemption ?? 0,
+      localHomesteadExemptionPercent: costs?.localHomesteadExemptionPercent ?? 0,
+      homesteadAssessmentCap: costs?.homesteadAssessmentCap ?? 0,
+      isOver65: !!senior,
+      ...(senior && {
+        over65Year: senior.qualifiesInYear,
+        over65SchoolExemption: senior.schoolExemption,
+        over65LocalExemption: senior.localExemption,
+        over65LocalCeiling: senior.localTaxCeiling,
+      }),
+      homeValueGrowthRate: costs?.homeValueGrowthRate ?? 0,
+      insuranceIncreaseRate: costs?.insuranceIncreaseRate ?? 0,
+      hoaIncreaseRate: costs?.hoaIncreaseRate ?? 0,
+      pidAnnual: costs?.pid?.annualAssessment ?? 0,
+      pidYears: costs?.pid?.remainingYears ?? null,
+      annualInsurance: costs?.annualHomeownersInsurance ?? 0,
+      monthlyHoa: costs?.monthlyHoaDues ?? 0,
+      pmiRate: costs?.pmiRate ?? 0,
+      ...(costs && { pmiCancellation: costs.pmiCancellation }),
+    });
+    this.restoring = false;
+  }
+
+  private lumpSumGroup(paymentNumber: number, amount: number): LumpSumForm {
+    return this.fb.group({
+      paymentNumber: [paymentNumber, [Validators.required, Validators.min(1)]],
+      amount: [amount, [Validators.required, Validators.min(0.01)]],
+    });
   }
 
   /** Converts form values (years, flat fields) into the API's request shape. */

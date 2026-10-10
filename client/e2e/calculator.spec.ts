@@ -14,6 +14,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdown, 'the default example has 5% down, so PMI').toContainText('PMI');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
     await expect(calculator.chart, 'the balance chart renders').toBeVisible();
+    await calculator.showResults('schedule');
     await expect(calculator.scheduleRows.first(), 'the schedule table has rows').toBeVisible();
   });
 
@@ -90,8 +91,9 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.netSavings, 'interest saved by $200 a month').toHaveText('$79,801');
     await expect(calculator.timeSaved, '108 payments sooner').toHaveText('9 yr');
     await expect(calculator.payoffDate, 'payment 252').toHaveText('Dec 2046');
-    await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
     await expect(calculator.totalInterest, 'the new total interest').toHaveText('$151,876');
+    await calculator.showResults('schedule');
+    await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
   });
 
   test('adds taxes and fees to the monthly payment but never counts them as savings', async ({ calculator }) => {
@@ -178,20 +180,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.projectionNote, 'the costs view summarizes the change').toContainText('Yearly taxes & costs go from');
 
     await calculator.showHomeValueProjection();
-    await expect(calculator.projectionNote, 'a 15% market against a 10% cap opens a gap').toContainText('the homestead cap keeps');
+    await expect(calculator.homeValueNote, 'a 15% market against a 10% cap opens a gap').toContainText('the homestead cap keeps');
   });
 
-  test('shows one chart over time at a time, in tabs you can also use from the keyboard', async ({ calculator }) => {
-    await expect(calculator.chart, 'the balance chart is the first tab').toBeVisible();
-    await expect(calculator.projectionChart, 'the other charts wait behind their tabs').toHaveCount(0);
+  test('splits the results into tabs with their own URLs, and keeps the form as it was', async ({ calculator, page }) => {
+    await calculator.set('home-price', 300_000);
+    await calculator.calculate();
+    await expect(page, 'the calculator opens on the overview').toHaveURL(/\/calculator\/overview$/);
 
-    await calculator.chartTab('balance').focus();
-    await calculator.chartTab('balance').press('ArrowRight');
+    await calculator.showResults('projection');
+    await expect(calculator.projectionChart, 'the projection tab shows the yearly costs').toBeVisible();
+    await expect(calculator.chart, 'and not the overview charts').toHaveCount(0);
+    await expect(calculator.field('home-price'), 'the form is unchanged').toHaveValue('300,000');
 
-    await expect(calculator.chartTab('costs'), 'the arrow key selects the next tab').toHaveAttribute('aria-selected', 'true');
-    await expect(calculator.chartTab('costs'), 'and moves focus to it').toBeFocused();
-    await expect(calculator.projectionChart, 'the yearly costs chart replaces the balance chart').toBeVisible();
-    await expect(calculator.chart, 'only one chart shows').toHaveCount(0);
+    await page.goBack();
+    await expect(page, 'the back button returns to the overview').toHaveURL(/\/calculator\/overview$/);
+    await expect(calculator.chart, 'with its balance chart').toBeVisible();
   });
 
   test('shows no PMI with 20% down', async ({ calculator }) => {
@@ -214,6 +218,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.recasts, 're-amortized over the remaining 348 months').toContainText('payment drops from $1,199.10 to $895.60');
     await expect(calculator.recasts, 'the lender fee is shown').toContainText('$250 fee');
     await expect(calculator.timeSaved, 'a recast keeps the payoff date').toHaveText('0 mo');
+    await calculator.showResults('schedule');
     await expect(calculator.scheduleRows, 'all 360 payments remain').toHaveCount(360);
     await expect(await calculator.cell(12, 'Extra'), 'the triggering payment is tagged').toContainText('recast');
     await expect(await calculator.cell(13, 'Payment'), 'the next payment is the new amount').toHaveText('$895.60');
@@ -320,6 +325,11 @@ test.describe('On a phone', () => {
     const headline = await calculator.headline.boundingBox();
     const form = await calculator.formPanel.boundingBox();
     expect(headline!.y, 'the headline sits above the form').toBeLessThan(form!.y);
+  });
+
+  test('hides the summary bar while the headline numbers are on screen', async ({ calculator }) => {
+    await expect(calculator.headline, 'the headline is in view at the top').toBeInViewport();
+    await expect(calculator.summaryBar, 'so the bar would only repeat it').toBeHidden();
   });
 
   test('keeps the payment and savings in view while editing', async ({ calculator }) => {

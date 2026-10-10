@@ -1,57 +1,43 @@
-@if (result(); as r) {
-  <!-- Small screens only: keeps the answer in view while the form is being edited. -->
-  <div class="summary-bar" data-testid="summary-bar" aria-hidden="true">
+@if (store.result(); as r) {
+  <!-- Phones only, and only while the headline numbers are off screen. -->
+  <div class="summary-bar" [class.hidden]="store.headlineVisible()" data-testid="summary-bar" aria-hidden="true">
     <span><strong>{{ r.baseline.totalMonthlyPayment | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong></span>
     <span>Save <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
-    @if (busy()) {
+    @if (store.busy()) {
       <span class="updating">Updating…</span>
     }
   </div>
 }
 
-<!--
-  Reading order is headline numbers, then the form, then the detail, so a phone shows the answer
-  first. On wider screens the grid puts the form in its own column on the left.
--->
 <div class="layout">
-  <section class="headline" aria-live="polite" [attr.aria-busy]="busy()" [class.updating]="busy()" aria-label="Results"
-           data-testid="headline">
-    @if (errors().length > 0) {
+  <aside class="panel form-panel" data-testid="form-panel">
+    <app-loan-form [initial]="startFrom" (calculate)="store.calculate($event)" />
+  </aside>
+
+  <section class="results" [attr.aria-busy]="store.busy()" [class.updating]="store.busy()" aria-label="Results"
+           data-testid="results">
+    <nav class="result-tabs" aria-label="Results">
+      @for (tab of tabs; track tab.path) {
+        <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+           [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
+      }
+    </nav>
+
+    @if (store.errors().length > 0) {
       <div class="alert" role="alert" data-testid="error-summary">
         <strong>We couldn't run that calculation.</strong>
         <ul>
-          @for (message of errors(); track message) {
+          @for (message of store.errors(); track message) {
             <li>{{ message }}</li>
           }
         </ul>
       </div>
     }
 
-    @if (result(); as r) {
-      <app-savings-summary [result]="r" />
-    } @else if (errors().length === 0) {
+    @if (store.result()) {
+      <router-outlet />
+    } @else if (store.errors().length === 0) {
       <div class="panel placeholder">Calculating your schedule…</div>
-    }
-  </section>
-
-  <aside class="panel form-panel" data-testid="form-panel">
-    <app-loan-form (calculate)="calculate($event)" />
-  </aside>
-
-  <section class="results" [attr.aria-busy]="busy()" [class.updating]="busy()" aria-label="Charts and schedule"
-           data-testid="results">
-    @if (result(); as r) {
-      <div class="charts">
-        <div class="panel">
-          <app-payment-breakdown [schedule]="r.accelerated" />
-        </div>
-        <div class="panel">
-          <app-trends [result]="r" />
-        </div>
-      </div>
-      <div class="panel">
-        <app-schedule-table [result]="r" />
-      </div>
     }
   </section>
 </div>
