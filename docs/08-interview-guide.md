@@ -150,6 +150,9 @@ ASP.NET Core Identity (`MapIdentityApi`) handles it:
 - **Sign-in** waits for a confirmed email.
 - **The session** is an **HttpOnly, SameSite=Strict cookie**, so scripts can't read it (unlike a token in
   `localStorage`), and other sites can't make the browser send it, which blocks CSRF.
+- **Cookies only.** Identity's built-in endpoints would also issue bearer tokens (sign-in without `useCookies=true`,
+  then `/refresh`). A convention on those endpoints refuses the first with a 400 and turns `/refresh` and the unused
+  `/manage/2fa` into 404s, gone from Swagger. The contract snapshot test found them; integration tests pin it.
 - **The keys** that sign cookies and emailed links are persisted, so restarts don't sign people out.
 
 **Other measures?**
@@ -317,5 +320,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 737 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 740 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

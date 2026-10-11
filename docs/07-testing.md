@@ -7,7 +7,7 @@ About 1,300 automated tests in seven suites, written test-first, with the standa
 | Domain | 436 | NUnit | < 1 s |
 | Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
-| API integration | 70 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 73 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 474 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 84 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -111,6 +111,19 @@ inside `Assert.Multiple`.
 - **NSubstitute for every double**, `FakeTimeProvider` for the clock: no hand-written fakes.
 - **No retries in Playwright:** a flaky test should fail loudly and be fixed, not be hidden by a second attempt.
 
+## Dependency audit
+
+CI fails on any known vulnerability in what ships: `dotnet list package --vulnerable --include-transitive` for
+every NuGet package, and `npm audit --omit=dev` for the browser's dependencies. Both are clean.
+
+The full `npm audit` reports one moderate advisory, 21 times over: `sprintf-js` (GHSA-hp3w-g68c-fv3c, a denial of
+service through huge precision specifiers), reached through Jest's coverage instrumentation (`babel-plugin-istanbul`
+→ `js-yaml` 3 → `argparse` 1). It is accepted, for three reasons: no fixed `sprintf-js` exists (1.1.3 is the latest,
+and affected); `js-yaml` 3 loads `argparse` only in its command-line tool, never in the library Istanbul calls, so
+the code never runs here; and it is a test tool that never ships. Forcing `argparse` 2 in with an `overrides` entry
+would silence the report by breaking `js-yaml`'s command-line tool, which is a worse trade. Look again when Istanbul
+moves to `js-yaml` 4.
+
 ## Independent models
 
 | Model | Checks | Run |
@@ -161,9 +174,9 @@ The first run scored 87%, with 118 survivors. They sorted into:
 On every push to `main` and every pull request:
 
 ```
-backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → test with coverage → report → 85% gate
+backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → no vulnerable packages → test with coverage → report → 85% gate
            ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
-frontend  ─┘           npm ci → lint → Jest with coverage; e2e runs only if backend and frontend pass
+frontend  ─┘           npm ci → npm audit (shipped deps) → lint → Jest with coverage; e2e runs only if backend and frontend pass
            └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
                        and the calculator answers (runs if backend passes)
 

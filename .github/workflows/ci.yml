@@ -25,6 +25,11 @@ jobs:
       # Locked mode: fails if a project's packages no longer match its packages.lock.json.
       - run: dotnet restore MortgageAnalytics.sln --locked-mode
       - run: dotnet build MortgageAnalytics.sln -c Release --no-restore
+      # No NuGet package with a known vulnerability, direct or transitive.
+      - name: Vulnerable packages
+        run: |
+          dotnet list MortgageAnalytics.sln package --vulnerable --include-transitive | tee vulnerable.txt
+          ! grep -q "has the following vulnerable packages" vulnerable.txt
       # Includes the convention tests, so a missing assertion message or Assert.Multiple fails the build.
       - run: dotnet test MortgageAnalytics.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
       - name: Coverage report
@@ -61,6 +66,8 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
+      # No known vulnerability in what ships to the browser. Development tools are reviewed instead (docs/07-testing.md).
+      - run: npm audit --omit=dev
       # angular-eslint: TypeScript and template rules, including the template accessibility checks.
       - run: npm run lint
       # jest.config.js sets an 85% threshold on statements, branches, functions and lines.

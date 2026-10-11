@@ -172,7 +172,9 @@ validator). "Today" comes from the injected `TimeProvider`.
 
 ## Signing in
 
-ASP.NET Core Identity provides the account endpoints (`MapIdentityApi`) under `/api/v1/account`:
+ASP.NET Core Identity provides the account endpoints (`MapIdentityApi`) under `/api/v1/account`, narrowed to the
+ones the app uses (`ServeOnlyWhatTheAppUses`): sign-in is with a session cookie only, so the bearer-token paths
+(sign-in without `useCookies=true`, `/refresh`) and two-factor setup are refused or not served.
 
 1. **Register**: the password is hashed by Identity, and a confirmation email is sent (`AccountEmailSender`
    writes the link; SMTP or the file outbox delivers it).

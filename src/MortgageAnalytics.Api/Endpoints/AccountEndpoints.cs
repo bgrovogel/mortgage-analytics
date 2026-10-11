@@ -102,13 +102,44 @@ public static class AccountEndpoints
     {
         var group = routes.MapGroup("/api/v1/account").WithTags("Account").RequireRateLimiting(AttemptsPolicy);
 
-        group.MapIdentityApi<IdentityUser>();
+        group.MapIdentityApi<IdentityUser>().Add(ServeOnlyWhatTheAppUses);
 
         group.MapPost("/logout", SignOut)
             .WithName("SignOut")
             .WithSummary("Sign out, ending the session cookie.");
 
         return routes;
+    }
+
+    /// <summary>
+    /// Narrows Identity's built-in endpoints to the ones this app uses. Bearer-token refresh and two-factor setup answer
+    /// 404 and leave the API document; signing in is with a session cookie only, so the login endpoint refuses to hand
+    /// out a bearer token, which a script could read and keep.
+    /// </summary>
+    private static void ServeOnlyWhatTheAppUses(EndpointBuilder endpoint)
+    {
+        if (endpoint is not RouteEndpointBuilder route) return;
+        var path = route.RoutePattern.RawText ?? "";
+
+        if (path.EndsWith("/refresh", StringComparison.Ordinal) || path.EndsWith("/manage/2fa", StringComparison.Ordinal))
+        {
+            // Replacing the handler before the endpoint is built keeps Identity's own from ever running.
+            route.RequestDelegate = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            };
+            route.Metadata.Add(new ExcludeFromDescriptionAttribute());
+        }
+        else if (path.EndsWith("/login", StringComparison.Ordinal))
+        {
+            route.FilterFactories.Add((_, next) => invocation =>
+                invocation.HttpContext.Request.Query["useCookies"] == "true"
+                    ? next(invocation)
+                    : ValueTask.FromResult<object?>(TypedResults.Problem(
+                        statusCode: StatusCodes.Status400BadRequest,
+                        title: "Sign in with useCookies=true: this API keeps sessions in a cookie and issues no bearer tokens.")));
+        }
     }
 
     /// <summary>The signed-in user's id, as the owner of what they save.</summary>

@@ -76,4 +76,31 @@ public class AccountApiTests : ApiTestBase
 
         await AssertProblemAsync(again, HttpStatusCode.BadRequest, "one account per email");
     }
+
+    [Test]
+    public async Task SigningInWithoutACookie_IsRefused_SoNoBearerTokenIsEverIssued()
+    {
+        var email = UniqueEmail();
+        using var _ = await SignUpAsync(email);
+
+        var login = await Client.PostAsJsonAsync($"{AccountUrl}/login", new { email, password = GoodPassword });
+        var body = await login.Content.ReadAsStringAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"sessions are cookies only; body: {body}");
+            Assert.That(body, Does.Not.Contain("accessToken"), "a token a script could read and keep is never handed out");
+        });
+    }
+
+    [TestCase("refresh", TestName = "Refreshing a bearer token")]
+    [TestCase("manage/2fa", TestName = "Setting up two-factor sign-in")]
+    public async Task IdentityEndpointsTheAppDoesNotUse_AreNotServed(string path)
+    {
+        using var signedIn = await SignUpAsync();
+
+        var response = await signedIn.PostAsJsonAsync($"{AccountUrl}/{path}", new { refreshToken = "anything" });
+
+        await AssertProblemAsync(response, HttpStatusCode.NotFound, $"{path} has no use in this app, so it is not there to attack");
+    }
 }
