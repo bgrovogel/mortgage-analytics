@@ -201,6 +201,20 @@ where the loan came from. Only a loan the user changes is shared, never a page's
 can only approximate the loan (the calculator rounds to whole years) recognises it as the same loan, so it doesn't
 send the rounding back.
 
+**How did you approach the UI and UX?**
+I reviewed every page as the person using it, on a desktop and a phone, in light and dark mode, and sorted what I
+found into usability problems and polish.
+- **Usability first:** on a phone the form came after about 1,200px of results, so "Edit your numbers" takes you
+  (and keyboard focus) straight to it. Nothing told a newcomer the numbers were an example, so each form now says so
+  until the first edit. A long form looked cut off, so its edge fades while there is more below.
+- **Then one visual language:** role-based tokens (light and dark defined once), shared card, tile and verdict
+  styles, one control style for every input, self-hosted Inter with tabular figures, a brand mark.
+- **Colour means one thing everywhere:** green only for a good outcome, amber only for "look again", blue for plain
+  facts. A refinance that saves is green; one that costs more is amber.
+- **Kept honest by tests:** the axe scans check contrast in both modes on every page, and a browser test pins even
+  spacing after an empty element had doubled a gap. I also left something out on purpose: counting-up numbers, which
+  would make people wait to read the very thing they came for.
+
 ### Testing
 
 **How do you do TDD here?**
