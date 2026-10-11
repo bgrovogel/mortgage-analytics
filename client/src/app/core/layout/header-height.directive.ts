@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { DestroyRef, Directive, ElementRef, afterNextRender, inject } from '@angular/core';
+import { DOCUMENT, DestroyRef, Directive, ElementRef, afterNextRender, inject } from '@angular/core';
 
 /** The CSS custom property, set on the root element, that holds the page header's height in pixels. */
 export const HEADER_HEIGHT_PROPERTY = '--app-header-height';

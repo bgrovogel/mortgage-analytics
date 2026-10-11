@@ -1,6 +1,6 @@
 # 5. Frontend
 
-An Angular 19 single-page app in `client/`. Standalone components, signals for state, RxJS for timing, typed
+An Angular 21 single-page app in `client/`. Standalone components, signals for state, RxJS for timing, typed
 reactive forms, and `OnPush` everywhere.
 
 ## Folder map

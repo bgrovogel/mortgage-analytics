@@ -15,15 +15,15 @@ RSUs, ESOP, ESPP, taxes and the standard deduction, and ranks them on a risk-adj
 paying down a mortgage earns its rate for certain and the market does not. With a free **account**, every calculation, refinance comparison and pay-off-or-invest comparison can be saved under a name
 in a private **History** (SQLite), and found and reopened later. The calculators themselves need no account.
 
-It is a .NET 9 API with an Angular 19 dashboard, tested from pure unit tests up to browser E2E.
+It is a .NET 10 API with an Angular 21 dashboard, tested from pure unit tests up to browser E2E.
 
 It is small on purpose. The domain (exact money math, prepayment rules, lender recast rules, PMI
 cancellation) is rich enough to show real engineering judgment, while the codebase stays small enough to read in one sitting.
 
 | | |
 |---|---|
-| **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
-| **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
+| **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
+| **Frontend** | Angular 21 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
 | **Tests** | NUnit + NSubstitute: 644 backend tests · Jest: 472 Angular unit tests · Playwright: 83 E2E tests, including axe accessibility scans · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
@@ -78,7 +78,7 @@ docker compose up --build
 
 ### Option 2: Local development
 
-Prerequisites: .NET 9 SDK and Node 22.
+Prerequisites: .NET 10 SDK and Node 22.
 
 ```bash
 # Terminal 1: API on http://localhost:5080 (Swagger at /swagger)
