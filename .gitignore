@@ -26,3 +26,6 @@ blob-report/
 .DS_Store
 Thumbs.db
 .idea/
+
+# Python bytecode from the tools/ models
+__pycache__/

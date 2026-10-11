@@ -144,6 +144,14 @@ python tools/strategy-check/compare_with_api.py    # 300 random households, ever
 python tools/calculator-check/compare_with_api.py  # 300 purchases + 300 refinances, every field: expect all identical
 ```
 
+## Check the docs' test counts
+
+```bash
+python tools/doc-check/doc_counts.py               # counts the tests, names every count in the docs that is out of date
+```
+
+Run it after adding or removing tests (CI does too). Stop the dev API first: it builds the test projects.
+
 ## Ship it
 
 ```bash

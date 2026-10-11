@@ -101,6 +101,28 @@ jobs:
           name: playwright-report
           path: client/playwright-report
 
+  docs:
+    name: Docs match the test counts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+        working-directory: client
+      - run: python3 -m unittest discover tools/doc-check
+      # Counts the tests with the test tools themselves (listing, not running, where they can) and fails when a
+      # number in the README or docs/ is out of date, naming the file and line.
+      - run: python3 tools/doc-check/doc_counts.py
+
   docker:
     name: Docker image builds & runs
     runs-on: ubuntu-latest

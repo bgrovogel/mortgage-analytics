@@ -255,6 +255,7 @@ Compose adds Mailpit to catch emails locally.
 - **End-to-end:** once both pass, runs Playwright against the production build of the app, served by the real API
   as in the container, so the tests run under the real security headers.
 - **Docker:** builds the image, starts it, and checks it is healthy and serves the app with its CSP.
+- **Docs:** counts the tests and fails if any count in the README or docs is out of date, naming the file and line.
 
 Coverage and failure reports are uploaded as artifacts.
 

@@ -139,7 +139,13 @@ backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors
 frontend  ─┘           npm ci → lint → Jest with coverage; e2e runs only if backend and frontend pass
            └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
                        and the calculator answers (runs if backend passes)
+
+docs      counts the tests (dotnet --list-tests, playwright --list, Jest) → every count in README and docs/ matches
 ```
+
+The test counts in these pages are checked, not trusted: `tools/doc-check/doc_counts.py` holds one rule for each
+place a count appears and fails CI naming the file and line of any that is stale. A "N ... tests" phrase that no rule
+covers fails too, so a new count cannot slip past it.
 
 NuGet packages are cached on the `packages.lock.json` files, and npm packages on `package-lock.json`.
 Coverage reports and, on failure, the Playwright report (with traces and screenshots) are uploaded as artifacts.
