@@ -123,4 +123,37 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
         Assert.That(() => new RefinanceOffer(rate, term, closingCosts, financeClosingCosts: false), Throws.TypeOf<DomainValidationException>(),
             "an offer the engine cannot model must not be constructed");
     }
+
+    [Test]
+    public void InterestSaved_IsTheCurrentLoansInterestLessTheNewOnes_NegativeWhenTheNewLoanChargesMore() =>
+        Assert.That(Analyze(SixPercentUpfront).InterestSaved, Is.EqualTo(Current.TotalInterest - ToSixPercentFor30Years.TotalInterest),
+            "a lower rate over a new 30 years still charges $11,415.28 more interest");
+
+    [Test]
+    public void ABuydownBoughtAtClosing_IsPaidWithTheClosingCosts()
+    {
+        // The 2-1 buydown on $356,250 at 5.99% costs $7,898.76 (TemporaryBuydownTests); paid up front with $3,000 of costs.
+        var offer = new RefinanceOffer(5.99m, 360, 3_000m, financeClosingCosts: false) { Buydown = new TemporaryBuydown([2m, 1m]) };
+
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(new LoanTerms(356_250m, 7m, 360, ReferenceLoans.FirstPaymentDate), offer);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.BuydownCost, Is.EqualTo(7_898.76m), "every bought-down payment's subsidy, added up");
+            Assert.That(analysis.CashAtClosing, Is.EqualTo(10_898.76m), "the closing costs and the buydown, both due at closing");
+        });
+    }
+
+    [Test]
+    public void ANewPaymentNoLowerThanTodays_OffersNoWayToKeepPayingTodaysPayment() =>
+        // The same rate over the same payments left: the payment does not change, so there is no difference to prepay.
+        Assert.That(Analyze(new RefinanceOffer(Current.AnnualInterestRate, Current.RemainingTermInMonths, 0m, financeClosingCosts: false)).KeepingCurrentPayment,
+            Is.Null, "paying today's payment on the new loan only makes sense when the new payment is lower");
+
+    [Test]
+    public void ACurrentLoanThatEndsFirst_IsCountedAsChargingNothing_SoTheRefinanceNeverBreaksEven() =>
+        // A year left on the current loan: after it ends, every new payment only adds interest, so the $5,000 never comes back.
+        Assert.That(new RefinanceAnalyzer(Calculator).Analyze(new LoanTerms(10_000m, 7m, 12, ReferenceLoans.FirstPaymentDate),
+                new RefinanceOffer(6m, 360, 5_000m, financeClosingCosts: false)).BreakEvenPaymentNumber,
+            Is.Null, "the break-even search walks past the end of the shorter, current loan");
 }

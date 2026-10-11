@@ -42,7 +42,7 @@ Then trace one request: [Architecture → One request, end to end](03-architectu
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 353 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 436 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -219,7 +219,9 @@ classic assert is used. Code review standards become automatic.
 **Is 85% coverage enough? Why not 100%?**
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
 code from arriving; correctness comes from the independent reference values. The actual figures are ~98% backend
-and ~99% Angular lines. Mutation testing (Stryker) would be the next step to measure assertion strength.
+and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
+domain code about 890 ways and checks a test fails each time. It scores 97.4%, and CI fails below 95%. Its first run
+(87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
 **Unit vs. integration?**
 - The pyramid: hundreds of fast domain tests at the base.
@@ -256,6 +258,7 @@ Compose adds Mailpit to catch emails locally.
   as in the container, so the tests run under the real security headers.
 - **Docker:** builds the image, starts it, and checks it is healthy and serves the app with its CSP.
 - **Docs:** counts the tests and fails if any count in the README or docs is out of date, naming the file and line.
+- **Mutation:** runs Stryker.NET on the domain and fails below a 95% mutation score.
 
 Coverage and failure reports are uploaded as artifacts.
 
@@ -269,7 +272,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Security | Identity, lockout, SameSite cookies, attempt limits, CSP | Forwarded headers behind a proxy, so the limit sees each client |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
-| Test strength | Coverage gate + independent models | Mutation testing (Stryker.NET) on the domain |
+| Test strength | Coverage gate, independent models, 97% mutation score on the domain | Mutation testing on the Application layer's mapping and validators |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
 | Saved JSON | No version; a test guards the format | `schemaVersion` + upgrade on load, at the first breaking change |
@@ -314,5 +317,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 654 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 737 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

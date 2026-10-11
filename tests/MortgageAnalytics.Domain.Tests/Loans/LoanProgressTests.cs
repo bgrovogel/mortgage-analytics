@@ -24,6 +24,23 @@ public class LoanProgressTests
             "a payment counts as made once its due date has passed");
 
     [Test]
+    public void RemainingAsOf_AnAdjustableRate_CarriesTodaysRateAndTheResetsStillAhead()
+    {
+        // Resets on payments 85 (to 7%) and 97 (to 8%). With 84 made, payment 85 is next: it is paid at 7%, and the
+        // reset on 97 is the 13th payment of what is left.
+        var arm = Original.WithRateChanges([new RateChange(85, 7m), new RateChange(97, 8m)]);
+
+        var remaining = _calculator.RemainingAsOf(arm, new DateOnly(2032, 12, 2));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(remaining.AnnualInterestRate, Is.EqualTo(7m), "the rate for the next payment, after the reset it falls on");
+            Assert.That(remaining.RateChanges, Is.EqualTo(new[] { new RateChange(13, 8m) }),
+                "only the reset still ahead, renumbered from the next payment");
+        });
+    }
+
+    [Test]
     public void RemainingAsOf_IsWhatIsOwedOverThePaymentsLeft_FromTheNextDueDate()
     {
         var remaining = _calculator.RemainingAsOf(Original, new DateOnly(2026, 10, 9));

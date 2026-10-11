@@ -6,22 +6,22 @@ public sealed class AmortizationSchedule
     /// <summary>Creates a schedule from its rows.</summary>
     /// <param name="initialMonthlyPayment">The principal-and-interest payment at origination.</param>
     /// <param name="payments">Every payment in order, ending with the one that clears the balance.</param>
-    /// <param name="recasts">Recasts that happened along the way. Pass none when the loan was never recast.</param>
-    /// <param name="rateChanges">Rate changes that happened along the way. Pass none for a fixed rate.</param>
+    /// <param name="recasts">Recasts that happened along the way; empty when the loan was never recast.</param>
+    /// <param name="rateChanges">Rate changes that happened along the way; empty for a fixed rate.</param>
     /// <exception cref="DomainValidationException">There are no payments.</exception>
     public AmortizationSchedule(
         decimal initialMonthlyPayment,
         IReadOnlyList<ScheduledPayment> payments,
-        IReadOnlyList<RecastEvent>? recasts = null,
-        IReadOnlyList<RateChangeEvent>? rateChanges = null)
+        IReadOnlyList<RecastEvent> recasts,
+        IReadOnlyList<RateChangeEvent> rateChanges)
     {
         if (payments.Count == 0)
             throw new DomainValidationException("A schedule must contain at least one payment.");
 
         InitialMonthlyPayment = initialMonthlyPayment;
         Payments = payments;
-        Recasts = recasts ?? [];
-        RateChanges = rateChanges ?? [];
+        Recasts = recasts;
+        RateChanges = rateChanges;
         TotalInterest = payments.Sum(p => p.Interest);
         TotalPrincipal = payments.Sum(p => p.Principal + p.ExtraPrincipal);
         TotalRecastFees = Recasts.Sum(r => r.Fee);

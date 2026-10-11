@@ -101,6 +101,27 @@ jobs:
           name: playwright-report
           path: client/playwright-report
 
+  mutation:
+    name: Mutation testing (domain)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - run: dotnet tool restore
+      # Stryker.NET changes the domain code in small ways (< to <=, + to -, a deleted line) and checks a test fails
+      # each time. stryker-config.json fails the job below a 95% mutation score.
+      - run: dotnet stryker
+        working-directory: tests/MortgageAnalytics.Domain.Tests
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-report
+          path: tests/MortgageAnalytics.Domain.Tests/StrykerOutput/*/reports/
+
   docs:
     name: Docs match the test counts
     runs-on: ubuntu-latest

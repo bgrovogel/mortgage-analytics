@@ -122,7 +122,8 @@ public sealed record StrategyRates(
         var mortgage = new MortgagePayments(loan, buydown: null);
         var balance = loan.Principal;
         var interest = 0m;
-        for (var month = 1; month <= Math.Min(12, loan.TermInMonths) && balance > 0; month++)
+        // Paid as scheduled, the balance reaches zero only on the last payment, so the term is the only limit.
+        for (var month = 1; month <= Math.Min(12, loan.TermInMonths); month++)
         {
             var (thisMonth, principal, _) = mortgage.Pay(month, balance);
             interest += thisMonth;

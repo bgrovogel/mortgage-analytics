@@ -319,4 +319,51 @@ public class StrategyRulesTests
             DomainAssert.Rejects(() => ProjectionIn((MarketScenarioKind)9), "market scenario", "only the three scenarios exist");
         });
     }
+
+    // ---- What exists, and the edge between the rates ----
+
+    [Test]
+    public void RateEdge_IsHowFarTheAfterTaxMarketBeatsTheAfterTaxMortgage() =>
+        Assert.That(StrategyRates.For(TypicalInputs(), MonthlyCashPlan.For(TypicalInputs())).RateEdge, Is.EqualTo(1.5m),
+            "8% risk-adjusted (untaxed in the IRA) against 6.5% (undeducted: the standard deduction is larger)");
+
+    [Test]
+    public void EsppMoney_CountsAsCashToInvest_WhenSizingTheIrasShare()
+    {
+        // A 10% ESPP takes the $544 left after the 401(k), leaving no other extra cash: its shares, sold, are the
+        // $6,528 a year to invest, and that fits in the $7,500 IRA.
+        var inputs = TypicalInputs(stockPurchasePlan: new StockPurchasePlan(10m, 15m, 6));
+
+        Assert.That(StrategyRates.For(inputs, MonthlyCashPlan.For(inputs)).IraShelteredPercent, Is.EqualTo(100m),
+            "ESPP money is invested like any other extra cash");
+    }
+
+    [TestCase(50, 6, true, TestName = "A 50% match on 6% of pay exists")]
+    [TestCase(0, 6, false, TestName = "No match percent: no match")]
+    [TestCase(50, 0, false, TestName = "No share of pay matched: no match")]
+    public void AnEmployerMatch_ExistsOnlyWithBothAPercentAndAShareOfPay(decimal matchPercent, decimal upToPercentOfPay, bool exists) =>
+        Assert.That(new EmployerMatch(matchPercent, upToPercentOfPay).Exists, Is.EqualTo(exists),
+            "a match needs something to match and some pay to match it on");
+
+    [Test]
+    public void NoStockPurchasePlan_DoesNotExist() =>
+        Assert.That(StockPurchasePlan.None.Exists, Is.False, "a plan nobody contributes to buys nothing");
+
+    [Test]
+    public void LeadPercent_IsLeftOut_WhenTheRunnerUpEndsWithNothing()
+    {
+        // No cash to put to work, no savings, no home value, and a 50-year loan still owed at year 30: every strategy
+        // ends below zero, where a percentage lead means nothing.
+        var household = new Household(120_000m, 24m, 15m, FilingStatus.SingleFiler, otherItemizedDeductions: 0m, monthlyCashToPutToWork: 0m);
+        var inputs = new StrategyInputs(new LoanTerms(300_000m, 6.5m, 600, NextPaymentDate), homeValue: 0m, homeGrowthRate: 0m, household,
+            EmployerMatch.None, StockPurchasePlan.None, annualIraContribution: 0m, new MarketAssumptions(10m, 3m, RiskProfile.Balanced));
+
+        var comparison = new StrategyOptimizer(new StrategySimulator()).Compare(inputs);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(comparison.RunnerUp.RiskAdjusted.FinalNetWorth, Is.Negative, "the runner-up still owes more than it has");
+            Assert.That(comparison.LeadPercent, Is.Null, "so the lead is not given as a percentage of it");
+        });
+    }
 }

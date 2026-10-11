@@ -49,5 +49,5 @@ public sealed record RecastPolicy
     /// <summary>Returns true when a single prepayment of <paramref name="singlePayment"/> should be followed by a recast.</summary>
     /// <param name="singlePayment">The largest single prepayment in the period. Pass one payment, never a month's total.</param>
     public bool ShouldRecastAfter(decimal singlePayment) =>
-        IsEnabled && singlePayment > 0 && singlePayment >= MinimumExtraPrincipal;
+        IsEnabled && singlePayment >= MinimumExtraPrincipal;
 }

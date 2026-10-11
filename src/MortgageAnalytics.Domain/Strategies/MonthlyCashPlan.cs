@@ -30,9 +30,10 @@ public sealed record MonthlyCashPlan(
         var household = inputs.Household;
         var available = household.MonthlyCashToPutToWork;
 
-        // 401(k): enough to earn the whole match, within the legal limit and what take-home pay can cover.
+        // 401(k): enough to earn the whole match, within the legal limit and what take-home pay can cover. AfterTaxShare
+        // is at least 0.4 (Household caps the marginal rate at 60%), so dividing by it is safe.
         var contribution = 0m;
-        if (inputs.Match.Exists && household.AfterTaxShare > 0)
+        if (inputs.Match.Exists)
         {
             var forFullMatch = Math.Min(household.GrossAnnualIncome * inputs.Match.UpToPercentOfPay / 100m, TaxLimits.EmployeeDeferral) / 12m;
             contribution = Money.Round(Math.Min(forFullMatch, available / household.AfterTaxShare));

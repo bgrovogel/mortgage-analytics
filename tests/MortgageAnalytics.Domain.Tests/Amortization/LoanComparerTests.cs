@@ -83,7 +83,8 @@ public class LoanComparerTests : AmortizationTestBase
             Assert.That(comparison.PaymentsSaved, Is.EqualTo(Extra200.PaymentsSaved), "360 - 252 payments");
             Assert.That(comparison.InterestSaved, Is.EqualTo(Extra200.InterestSaved), "baseline interest minus accelerated interest");
             Assert.That(comparison.NetSavings, Is.EqualTo(Extra200.InterestSaved), "with no PMI or fees, net savings is the interest saved");
-            Assert.That(comparison.TotalExtraPrincipal, Is.GreaterThan(0m), "the extra principal paid is reported");
+            Assert.That(comparison.TotalExtraPrincipal, Is.EqualTo(Loan.Principal - comparison.Accelerated.Payments.Sum(p => p.Principal)),
+                "every dollar of the loan is paid as scheduled principal or as extra, so the extra is all the rest");
         });
     }
 

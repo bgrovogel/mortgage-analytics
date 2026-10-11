@@ -29,6 +29,16 @@ public class ExtraPaymentRuleTests
         Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), $"payment {paymentNumber} with an annual extra on payments 6, 18, 30, ...");
     }
 
+    // Counted from the first payment, not from payment 0: from payment 3, payment 9 is half a year in, not a year.
+    [TestCase(9, 0)]
+    [TestCase(15, 1_000)]
+    public void Annual_CountsItsYearsFromItsOwnFirstPayment(int paymentNumber, decimal expected)
+    {
+        var rule = new AnnualExtraPayment(1_000m, firstPaymentNumber: 3);
+
+        Assert.That(rule.AmountFor(paymentNumber), Is.EqualTo(expected), $"payment {paymentNumber} with an annual extra on payments 3, 15, 27, ...");
+    }
+
     [TestCase(11, 0)]
     [TestCase(12, 1_000)]
     [TestCase(24, 1_000)]

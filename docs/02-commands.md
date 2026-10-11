@@ -109,6 +109,19 @@ dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:
 # Frontend: npm test writes client/coverage/lcov-report/index.html
 ```
 
+### Mutation testing
+
+```bash
+dotnet tool restore
+cd tests/MortgageAnalytics.Domain.Tests
+dotnet stryker                           # about 2 minutes; fails below 95%
+# open StrykerOutput/<date>/reports/mutation-report.html: each surviving mutant, in its source line
+```
+
+A survivor is either a missing assertion (write the test) or code that can never change a result (remove it). On
+Windows, the `target-framework` in `stryker-config.json` matters: without it, Stryker's project analysis falls back to
+Visual Studio's MSBuild, which is too old for the .NET 10 SDK.
+
 ### Type-check and build without running
 
 ```bash

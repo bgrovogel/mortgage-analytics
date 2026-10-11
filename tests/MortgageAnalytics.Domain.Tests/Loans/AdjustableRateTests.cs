@@ -111,6 +111,23 @@ public class AdjustableRateTests
     }
 
     [Test]
+    public void WithoutAMargin_TheLifetimeCapIsTheFloor_SoAFallingRateStopsThere() =>
+        // 6% falling toward 0% within 2/2/5 caps: 4%, 2%, then the lifetime floor of 1% (6 - 5), never 0%.
+        Assert.That(SevenOne(0m, 2m, 2m, 5m).RatePath(6m, 360).Select(c => (c.FromPaymentNumber, c.AnnualInterestRate)),
+            Is.EqualTo(new[] { (85, 4m), (97, 2m), (109, 1m) }), "the lifetime cap limits the fall as well as the rise");
+
+    [Test]
+    public void AfterTheFirstReset_ThePeriodicCapLimitsEachMove() =>
+        // 6% rising toward 12% within 2/1/5 caps: +2 at the first reset, then +1 a year, up to the lifetime 11%.
+        Assert.That(SevenOne(12m, 2m, 1m, 5m).RatePath(6m, 360).Select(c => (c.FromPaymentNumber, c.AnnualInterestRate)),
+            Is.EqualTo(new[] { (85, 8m), (97, 9m), (109, 10m), (121, 11m) }), "the first-reset cap applies once, the periodic cap after");
+
+    [Test]
+    public void AResetOnTheLastPayment_StillHappens() =>
+        Assert.That(SevenOne(9m, 2m, 1m, 5m).RatePath(6m, 85), Is.EqualTo(new[] { new RateChange(85, 8m) }),
+            "a 7-year fixed period on an 85-payment loan resets for the final payment");
+
+    [Test]
     public void AMarginAboveTheStartingRate_FloorsAtTheStartingRate() =>
         Assert.That((SevenOne(3m, 2m, 2m, 5m) with { Margin = 7m }).RatePath(6m, 360), Is.Empty, "the rate can fall no lower than where it started");
 

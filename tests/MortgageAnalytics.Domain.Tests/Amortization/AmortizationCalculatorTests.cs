@@ -149,6 +149,11 @@ public class AmortizationCalculatorTests : AmortizationTestBase
     }
 
     [Test]
+    public void APaymentsTotal_IsTheScheduledPaymentPlusItsExtraPrincipal() =>
+        Assert.That(WithExtras(A.Loan(200_000m, 6m, 360), RecastPolicy.Never, new MonthlyExtraPayment(200m)).Payments[0].TotalPaid,
+            Is.EqualTo(1_399.10m), "$1,199.10 as scheduled and $200 extra leave the account together");
+
+    [Test]
     public void LumpSumLargerThanBalance_IsCappedAndPaysTheLoanOff()
     {
         var loan = A.Loan(10_000m, 5m, 60);
@@ -320,6 +325,6 @@ public class AmortizationCalculatorTests : AmortizationTestBase
     [Test]
     public void Schedule_WithoutPayments_IsRejected()
     {
-        DomainAssert.Rejects(() => new AmortizationSchedule(100m, []), "at least one payment", "an empty schedule has no payoff date");
+        DomainAssert.Rejects(() => new AmortizationSchedule(100m, [], [], []), "at least one payment", "an empty schedule has no payoff date");
     }
 }

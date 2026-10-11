@@ -69,6 +69,7 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **`WebApplicationFactory`** | API integration tests | Hosts the real app in memory, with a temporary SQLite file. |
 | **Roslyn** (`Microsoft.CodeAnalysis.CSharp`) | Conventions tests | Parses every C# test file to enforce the test standards. |
 | **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
+| **Stryker.NET 5.0** | CI, `tests/MortgageAnalytics.Domain.Tests` | Mutation testing of the domain: are the assertions strong enough to notice a wrong `<`? Gated at 95%. |
 | **Jest 30 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
 | **Playwright 1.64** | End-to-end | A real Chromium against the production build, served by the real API as in the container, through page objects. |
 | **axe-core** (`@axe-core/playwright`) | End-to-end | Scans every page for WCAG 2.2 A/AA problems (contrast, names, roles, structure) in light and dark mode and on a phone. |
@@ -81,7 +82,7 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **Docker (multi-stage)** | `Dockerfile` | Stage 1 builds Angular (Node 22 Alpine), stage 2 publishes the API (.NET SDK), stage 3 is the small ASP.NET runtime image holding both. Runs as the non-root `app` user; data on a `/data` volume. |
 | **docker compose** | `docker-compose.yml` | The app on :8080 plus **Mailpit** (a local mail catcher, :8025) so sign-up emails can be read. |
 | **GitHub Actions** | `.github/workflows/ci.yml` | Four jobs on every push and pull request: .NET build + tests + coverage, Angular tests + coverage, Angular build + Playwright, Docker image build. |
-| **dotnet local tools** | `.config/dotnet-tools.json` | `dotnet-ef` 10.0 (migrations) and ReportGenerator 5.5 (coverage reports), restored with `dotnet tool restore`. |
+| **dotnet local tools** | `.config/dotnet-tools.json` | `dotnet-ef` 10.0 (migrations), ReportGenerator 5.5 (coverage reports) and Stryker.NET 5.0 (mutation testing), restored with `dotnet tool restore`. |
 
 ## Deliberately not used
 

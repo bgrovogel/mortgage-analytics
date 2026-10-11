@@ -57,7 +57,7 @@ public sealed class StrategySimulator : IStrategySimulator
         decimal totalInterest = 0m, totalTaxSaved = 0m, interestThisYear = 0m, esppSaved = 0m, iraRoom = 0m;
         int? payoffMonth = null;
         int? crossoverMonth = accounts.AfterTaxValue(household) >= balance ? 0 : null;
-        var years = new List<NetWorthYear>(HorizonInMonths / 12 + 1) { YearEnd(inputs, 0, balance, accounts, 0m) };
+        List<NetWorthYear> years = [YearEnd(inputs, 0, balance, accounts, 0m)];
 
         for (var month = 1; month <= HorizonInMonths; month++)
         {

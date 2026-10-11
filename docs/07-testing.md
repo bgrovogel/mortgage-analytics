@@ -1,10 +1,10 @@
 # 7. Testing and quality
 
-About 1,210 automated tests in seven suites, written test-first, with the standards enforced by the build.
+About 1,300 automated tests in seven suites, written test-first, with the standards enforced by the build.
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 353 | NUnit | < 1 s |
+| Domain | 436 | NUnit | < 1 s |
 | Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
 | API integration | 70 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
@@ -133,6 +133,29 @@ the same misunderstanding, they would agree and prove nothing.
 Coverage is a floor, not a goal: it tells you what is *unchecked*, not that what's checked is right. The
 independent models do that job.
 
+## Mutation testing
+
+**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 890 small changes
+(mutants) to `MortgageAnalytics.Domain` (`<` to `<=`, `+` to `-`, `Sum` to `Max`, an emptied message, a deleted
+statement) and runs the tests against each. A mutant no test notices *survives*, and points at an assertion that is
+missing. **The score is 97.4%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
+uploads the HTML report.
+
+The first run scored 87%, with 118 survivors. They sorted into:
+
+- **Untested guard limits.** `if (interval is < 1 or > 120)` survived becoming `>= 120`; seven of `Household`'s guards
+  could be deleted outright; many guard messages were never read. `GuardLimitTests` now has one row per limit: the
+  limit itself is accepted, and just past it is rejected with that guard's own message.
+- **Behaviour no test pinned.** An ARM without a margin falling to its lifetime floor, the periodic cap after the
+  first reset, an annual extra from payment 3 (from payment 6, `p − 6` and `p + 6` land on the same payments), an ARM
+  loan already being paid, the buydown cost at closing, a refinance that never breaks even, ESPP money in the IRA share.
+- **Code that could never change a result**, now removed: `RecastPolicy`'s `> 0` (the minimum is always positive),
+  `MonthlyCashPlan`'s `AfterTaxShare > 0` (at least 0.4 under the 60% cap), a balance check in the first year's
+  interest, and optional `null`s nobody passed.
+- **Equivalent mutants**, which no test can kill because they behave identically: `>>=` and `>>>=` on a non-negative
+  number, `First()` and `FirstOrDefault()` on a list that always has three entries, a `>=` that only differs on an
+  exact-to-the-cent tie. The 23 survivors are all of this kind.
+
 ## The CI pipeline (`.github/workflows/ci.yml`)
 
 On every push to `main` and every pull request:
@@ -145,6 +168,7 @@ frontend  ─┘           npm ci → lint → Jest with coverage; e2e runs only
                        and the calculator answers (runs if backend passes)
 
 docs      counts the tests (dotnet --list-tests, playwright --list, Jest) → every count in README and docs/ matches
+mutation  Stryker.NET on the domain → fails below a 95% mutation score, uploads the report
 ```
 
 The test counts in these pages are checked, not trusted: `tools/doc-check/doc_counts.py` holds one rule for each

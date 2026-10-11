@@ -32,3 +32,6 @@ __pycache__/
 
 # Approval tests: what a failing run received, for diffing against the approved file
 *.received.json
+
+# Stryker.NET mutation reports
+StrykerOutput/
