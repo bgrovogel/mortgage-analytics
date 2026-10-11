@@ -1,9 +1,9 @@
 # Mortgage Analytics
 
 A home-purchase and mortgage analysis engine. It builds fixed-rate amortization schedules, compares
-paying off early against **recasting**, and includes the full monthly cost of ownership:
-**school, county/city and MUD taxes (with homestead exemptions and the appraisal cap), PID
-assessments, homeowners insurance, PMI and HOA dues**. It then projects all of those costs year
+paying off early against **recasting**, handles **adjustable rates and temporary buydowns**, and includes the
+full monthly cost of ownership: **property taxes (one combined rate, or separate school, county/city and MUD taxes,
+with homestead exemptions and the appraisal cap), PID assessments, homeowners insurance, PMI and HOA dues**. It then projects all of those costs year
 by year over the life of the loan, so an owner can see where their payment is heading, not just
 where it starts.
 
@@ -26,6 +26,10 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
 | **Tests** | NUnit + NSubstitute: 643 backend tests · Jest: 459 Angular unit tests · Playwright: 70 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
+
+> **📚 Developer guide: [`docs/`](docs/README.md).** The tech stack, every command, the architecture with one
+> request traced end to end, the backend and frontend patterns, the mortgage math with worked numbers, the testing
+> approach, and an interview guide.
 
 ---
 
@@ -260,7 +264,7 @@ client/  src/app/core (models, API services, state, forms, charts) · src/app/fe
 ### Getting the money right
 
 - **`decimal` everywhere, never `double`.** `Math.Pow` works in `double`, so the annuity formula uses
-  exponentiation by squaring in `decimal` instead (`PaymentFormula.Pow`).
+  exponentiation by squaring in `decimal` instead (`DecimalMath.Pow`).
 - **One rounding policy, in one place.** `Money.Round` rounds to cents, half away from zero.
 - **Every schedule ends at exactly $0.00.** The final payment absorbs rounding drift, and the tests
   assert this across a range of loan shapes.
@@ -380,7 +384,6 @@ Accounts follow the same habit of not trusting the client:
   Every number box is one `app-number-field`, and money, rates and dates are formatted in one place (`format.ts`).
 - **A schedule you can make your own.** Lifetime totals for every cost above the table, and a Columns
   picker to show any category (school tax, PMI, HOA...) as its own column with its own total.
-
 - **Five fields up front, the rest one click away.** Price, down payment, rate, term and the monthly
   extra are always visible. Taxes, insurance/HOA/PMI, future increases and other payment options sit in
   collapsible sections, each summarized in one line ("School 1% · County/city 1.1% · MUD 0.85% ·
@@ -424,10 +427,10 @@ Accounts follow the same habit of not trusting the client:
 |---|---|---|
 | Domain (352) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values; where a loan stands on a given day (payments made, balance owed, next due date) against an independent Python schedule. Adjustable-rate resets (re-amortizing at each), the caps, the worst case, and temporary buydown payments and subsidies, against the independent model in `tools/rate-check/`. Every strategy, scenario, payoff, crossover and 30-year net worth against an independent Python model, to the cent, and against textbook formulas and identities (payoff month = NPER; at a 0% return, paying off first wins by exactly the interest it avoids; net worth = home − mortgage + investments every year); the standard deduction, the $750k limit, free money capped by the cash available, the ESPP limit, the hybrid split, after-tax account values. |
 | Application (206) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
-| Infrastructure (13) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
+| Infrastructure (16) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model, and saves in today's stored JSON format still load with every value. |
 | API integration (63) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (457) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| Angular (459) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (70) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
@@ -451,10 +454,11 @@ And by convention, supported by shared infrastructure:
 
 ## What I'd add next
 
+(See also the trade-offs table in the [interview guide](docs/08-interview-guide.md#trade-offs-and-what-youd-change).)
+
 - **Tax rate changes**: per-year rate schedules, and the ceiling transfer when a qualifying owner moves.
 - **Equity tracking**: home value minus loan balance, year by year.
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
-- **Adjustable-rate (ARM) loans**: a rate-schedule strategy.
 - **Rate limiting** on sign-in and registration, on top of Identity's lockout.
 - **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

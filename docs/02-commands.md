@@ -1,0 +1,163 @@
+# 2. Commands
+
+Every command you need, run from the repository root unless a line says `cd client`. The shell examples are
+bash; they work the same in PowerShell except where noted.
+
+## Prerequisites
+
+| Tool | Version | Check |
+|---|---|---|
+| .NET SDK | 9.0.x | `dotnet --version` |
+| Node.js | 22 | `node --version` |
+| Docker Desktop | any recent | `docker --version` (only for the container) |
+| Python | 3.10+ | `python --version` (only for the independent model checks) |
+
+## Run it
+
+### Option 1: Docker, the whole app in one command
+
+```bash
+docker compose up --build        # build the image and start the app + Mailpit
+docker compose up -d --build     # the same, in the background
+docker compose logs -f app       # follow the app's logs
+docker compose down              # stop (data is kept on the volume)
+docker compose down -v           # stop AND delete the data volume (accounts, saved calculations)
+```
+
+| URL | What |
+|---|---|
+| http://localhost:8080 | The app |
+| http://localhost:8080/swagger | API docs (Swagger UI) |
+| http://localhost:8080/health | Health check (`Healthy`) |
+| http://localhost:8025 | Mailpit: the sign-up and password-reset emails |
+
+The container runs in **Production** mode: no dev mailbox, emails go to Mailpit over SMTP.
+
+### Option 2: local development (two terminals)
+
+```bash
+# Terminal 1: the API on http://localhost:5080 (Development mode, opens Swagger)
+dotnet run --project src/MortgageAnalytics.Api
+
+# Terminal 2: Angular on http://localhost:4200, live reload
+cd client
+npm install          # first time, or after package.json changes
+npm start            # ng serve; proxies /api and /swagger to :5080 (client/proxy.conf.json)
+```
+
+Open http://localhost:4200. In Development the API writes emails to a file outbox (`src/MortgageAnalytics.Api/App_Data/outbox`),
+and the app shows them at **http://localhost:4200/dev/mailbox**: sign up, open the email there, click the link.
+
+`dotnet watch --project src/MortgageAnalytics.Api` restarts the API on every C# change.
+
+**Visual Studio / Rider:** open `MortgageAnalytics.sln`, set *MortgageAnalytics.Api* and *client* as multiple
+startup projects, and press F5.
+
+### Configuration you might set
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `ConnectionStrings:Calculations` | `Data Source=calculations.db` | The SQLite file |
+| `DataProtection:KeysDirectory` | `App_Data/keys` | Keys that sign sessions and emailed links |
+| `Email:Smtp:Host`, `Port`, `Username`, `Password` | none (file outbox) | Send real email |
+| `Email:From`, `Email:PublicUrl` | `no-reply@mortgage-analytics.local`, `http://localhost:4200` | Sender address; the site address used in email links |
+| `Email:OutboxDirectory` | `App_Data/outbox` | Where emails go when no SMTP host is set |
+| `ASPNETCORE_ENVIRONMENT` | `Development` locally, `Production` in Docker | The dev mailbox exists only in Development |
+
+Set them in `appsettings.Development.json`, with user secrets (`dotnet user-secrets set "Email:Smtp:Host" "smtp.example.com" --project src/MortgageAnalytics.Api`),
+or as environment variables with `__` for `:` (e.g. `Email__Smtp__Host`).
+
+## Test it
+
+```bash
+dotnet test                              # every .NET test: Domain, Application, Infrastructure, API, Conventions
+
+cd client
+npm test                                 # Jest unit tests + coverage; fails below 85%
+npm run test:watch                       # re-runs affected tests as you save (no coverage)
+npm run e2e:install                      # first time only: downloads Chromium for Playwright
+npm run e2e                              # Playwright: starts the API and Angular itself, or reuses running ones
+```
+
+### Run a subset
+
+```bash
+dotnet test tests/MortgageAnalytics.Domain.Tests                                  # one project
+dotnet test --filter "FullyQualifiedName~AdjustableRateTests"                    # one class
+dotnet test --filter "Name~TheMargin_IsTheFloor"                                 # one test
+
+cd client
+npx jest src/app/features/calculator/loan-form                                    # one folder
+npx jest -t "sends the ARM's margin"                                              # tests whose name matches
+npx playwright test e2e/calculator.spec.ts                                        # one e2e file
+npx playwright test -g "margin is its floor"                                      # e2e tests whose name matches
+npx playwright test --ui                                                          # Playwright's UI: step through, see the browser
+npx playwright show-report                                                        # the HTML report after a failure
+```
+
+### Coverage reports
+
+```bash
+# Backend: the same report and 85% gate CI uses
+dotnet tool restore
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+dotnet reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:coverage/report -reporttypes:Html
+# open coverage/report/index.html
+
+# Frontend: npm test writes client/coverage/lcov-report/index.html
+```
+
+### Type-check and build without running
+
+```bash
+dotnet build -warnaserror                # the same as CI: a warning or a missing doc comment fails
+cd client && npx tsc -p tsconfig.app.json --noEmit    # type-check the Angular app
+cd client && npm run build               # production build into client/dist/client/browser
+```
+
+## Change the database
+
+Saved calculations and accounts are stored with EF Core. After changing an entity or `CalculationsDbContext`:
+
+```bash
+dotnet tool restore                      # installs dotnet-ef (pinned in .config/dotnet-tools.json)
+dotnet ef migrations add <Name> --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
+dotnet ef migrations list   --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
+```
+
+You don't run `database update` by hand: the API applies pending migrations at startup (`MigrateDatabaseAsync`
+in `Program.cs`). A test (`SavedCalculationRepositoryTests`) fails if the model has changes that no migration
+covers.
+
+**Start from an empty database locally:** stop the API and delete `src/MortgageAnalytics.Api/calculations.db`.
+In Docker: `docker compose down -v`.
+
+## Check the math against the independent models
+
+```bash
+python tools/rate-check/rate_model.py              # prints the ARM and buydown reference values the tests pin
+python tools/strategy-check/strategy_model.py      # prints the reference households
+# with the API running on :5080:
+python tools/strategy-check/compare_with_api.py    # 300 random households, every field: expect 300 identical
+```
+
+## Ship it
+
+```bash
+git push                                  # CI runs on every push to main and on pull requests
+gh run list --limit 3                     # recent CI runs (GitHub CLI)
+gh run watch                              # follow the current run
+docker build -t mortgage-analytics .      # the image CI builds
+```
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `MSB3026: Could not copy ... being used by another process` | The API is still running and locks its DLLs. Stop it (Ctrl+C), then build or test. On Windows: `Get-NetTCPConnection -LocalPort 5080` finds it. |
+| The app shows "We couldn't run that calculation" everywhere | The API isn't running on :5080, or `npm start` was started before it. Start the API; the proxy picks it up. |
+| Port 4200 or 5080 already in use | An old `ng serve` or API. Stop it, or `npm start -- --port 4300`. |
+| Playwright tests time out on the first run | The first `dotnet run` compiles everything. Run `dotnet build` once first, or start both servers yourself (Playwright reuses them). |
+| Sign-in says the email isn't confirmed | Open the dev mailbox (`/dev/mailbox`) or Mailpit (:8025) and click the link. |
+| Styles don't update in `ng serve` | Restart `npm start`; a long-running dev server sometimes misses SCSS partial changes. |
+| `dotnet ef` not found | `dotnet tool restore`. |

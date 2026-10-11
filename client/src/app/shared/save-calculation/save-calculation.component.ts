@@ -7,7 +7,7 @@ import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculati
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 
 /**
- * Saves what a page is showing (calculator inputs or a refinance comparison) under a name. A new save
+ * Saves what a page is showing (calculator inputs, a refinance comparison, or a pay-off-or-invest comparison) under a name. A new save
  * starts from a suggested name; when the page is linked to a saved item (it came from History, or was
  * saved already) it can also update that item in place. The page owns the state: it passes in what to
  * save and what it is linked to, and records the link when `saved` fires.

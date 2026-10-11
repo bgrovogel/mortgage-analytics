@@ -1,0 +1,97 @@
+# 1. Tech stack
+
+Everything the app is built with, where each piece is used, and why it was chosen. Versions are the ones pinned
+in the repository today (`Directory.Packages.props`, `client/package.json`, `.config/dotnet-tools.json`).
+
+## At a glance
+
+```
+Browser ── Angular 19 SPA (TypeScript 5.7, RxJS 7.8, signals, Chart.js 4.5)
+   │  HTTP + JSON, cookie session
+   ▼
+ASP.NET Core 9 minimal API ── FluentValidation 12 ── ProblemDetails ── Swagger (Swashbuckle 10)
+   │                             ASP.NET Core Identity (accounts) ── MailKit (email)
+   ▼
+Application layer (use cases) ──► Domain (pure C#, no packages)
+   │
+   ▼
+Infrastructure ── EF Core 9 ── SQLite (one file)
+
+Tests: NUnit 4 · NSubstitute 6 · WebApplicationFactory · Jest 29 · Playwright 1.64 · Roslyn · Python Decimal
+Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions
+```
+
+## Backend (.NET 9, C# latest)
+
+| Technology | Where | Why |
+|---|---|---|
+| **.NET 9 / C# (latest)** | `src/*` | Records, primary constructors, collection expressions and pattern matching keep the domain short, and `decimal` gives exact money math. .NET 9 is a Standard Term Support release, so moving to .NET 10 (LTS) is the obvious next upgrade. |
+| **ASP.NET Core minimal APIs** | `src/MortgageAnalytics.Api/Endpoints/` | Endpoints are small static functions grouped with `MapGroup`. Less ceremony than controllers, and `TypedResults` lets OpenAPI infer response types from the code. |
+| **FluentValidation 12** | `src/MortgageAnalytics.Application/Validation/` | Readable, testable rules with field-level messages. One generic `ValidationFilter<T>` runs the right validator for every endpoint. |
+| **ProblemDetails (RFC 9457)** | `Program.cs`, `Errors/GlobalExceptionHandler.cs` | One standard JSON shape for every error (400 validation, 404, 500), which the Angular app turns into messages. |
+| **Swashbuckle (Swagger / OpenAPI) 10** | `Program.cs` | Interactive API docs at `/swagger`, built from the XML doc comments and `<example>` values. |
+| **EF Core 9 + SQLite** | `src/MortgageAnalytics.Infrastructure/` | Saved calculations and user accounts. SQLite is one file, needs no server, and fits a demo; EF Core migrations version the schema. Swapping to PostgreSQL or SQL Server is a provider change. |
+| **ASP.NET Core Identity** | `Api/Endpoints/AccountEndpoints.cs` | Built-in, well-reviewed accounts: password hashing, lockout, email confirmation, password reset, and the `MapIdentityApi` endpoints. No hand-rolled security. |
+| **Data Protection** | `AccountEndpoints.AddAccounts` | Signs the session cookie and the codes in emailed links; keys are kept on disk so restarts don't sign people out. |
+| **MailKit 4** | `Api/Email/SmtpMailTransport.cs` | Sends account emails over SMTP. Without SMTP settings, a file outbox is used instead (local dev needs no mail server). |
+| **Source-generated logging** | `[LoggerMessage]` in `GlobalExceptionHandler` | No boxing or template parsing at runtime; the analyzers recommend it. |
+| **`TimeProvider`** | Application services | "Today" is injected, so tests pin the date with `FakeTimeProvider`. |
+
+**Build settings** (`Directory.Build.props`, shared by every project):
+- `TreatWarningsAsErrors`: a warning fails the build.
+- `AnalysisLevel latest-recommended`: the .NET code-quality analyzers.
+- `Nullable enable`: nullable reference types.
+- `GenerateDocumentationFile` on production projects: a public member without an XML doc comment is error CS1591.
+- **Central package management** (`Directory.Packages.props`): each NuGet version is written once for the whole
+  solution.
+
+## Frontend (Angular 19)
+
+| Technology | Where | Why |
+|---|---|---|
+| **Angular 19** (standalone components) | `client/src/app/` | No NgModules: each component imports what it uses. A full framework (router, forms, HTTP, DI, testing) suits a form-heavy app. |
+| **Signals** (`signal`, `computed`, `input`, `output`) | Stores and components | Fine-grained reactive state that templates read directly; derived values (`computed`) update themselves. |
+| **OnPush change detection** | Every component | Angular only re-checks a component when its inputs or signals change. Fast, and it forces clear data flow. |
+| **Typed reactive forms** (`NonNullableFormBuilder`) | `features/*/…-form/` | The compiler checks every control name and value type. |
+| **RxJS 7.8** | `core/state/latest-request.ts`, forms | `debounceTime` + `switchMap` give "results as you type" without stale responses. Signals hold state; RxJS handles time. |
+| **Angular Router** | `app.routes.ts` | Pages and the calculator's result tabs each have a URL (bookmarkable, back button works). A functional guard protects History. |
+| **HttpClient** (`withFetch`) | `core/services/*-api.service.ts` | One thin service per API area; components never touch `HttpClient` directly. |
+| **Chart.js 4.5** | `core/charts/` | Line and stacked charts. Wrapped once (`buildLineChart`, `hostChart`) and injected through a factory, so tests use a fake. |
+| **SCSS** | `*.component.scss`, `core/forms/_*.scss` | Shared partials for form fields, segmented controls and scroll hints; CSS grid for the two-column layout; light and dark themes. |
+
+## Testing
+
+| Technology | Layer | What it does here |
+|---|---|---|
+| **NUnit 4** (constraint model) | All .NET tests | `Assert.That(actual, Is.EqualTo(x), "message")`, `Assert.Multiple`. NUnit.Analyzers checks usage. |
+| **NSubstitute 6** | Application, API | Test doubles: substitute an interface, return values, check calls. No hand-written fakes. |
+| **`FakeTimeProvider`** | Application | Pins "today". |
+| **`WebApplicationFactory`** | API integration tests | Hosts the real app in memory, with a temporary SQLite file. |
+| **Roslyn** (`Microsoft.CodeAnalysis.CSharp`) | Conventions tests | Parses every C# test file to enforce the test standards. |
+| **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
+| **Jest 29 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
+| **Playwright 1.64** | End-to-end | A real Chromium against the real API and Angular dev server, through page objects. |
+| **Python `Decimal`** | `tools/rate-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. |
+
+## Delivery
+
+| Technology | Where | Why |
+|---|---|---|
+| **Docker (multi-stage)** | `Dockerfile` | Stage 1 builds Angular (Node 22 Alpine), stage 2 publishes the API (.NET SDK), stage 3 is the small ASP.NET runtime image holding both. Runs as the non-root `app` user; data on a `/data` volume. |
+| **docker compose** | `docker-compose.yml` | The app on :8080 plus **Mailpit** (a local mail catcher, :8025) so sign-up emails can be read. |
+| **GitHub Actions** | `.github/workflows/ci.yml` | Four jobs on every push and pull request: .NET build + tests + coverage, Angular tests + coverage, Angular build + Playwright, Docker image build. |
+| **dotnet local tools** | `.config/dotnet-tools.json` | `dotnet-ef` 9.0.9 (migrations) and ReportGenerator 5.5 (coverage reports), restored with `dotnet tool restore`. |
+
+## Deliberately not used
+
+Choosing what to leave out is part of the design (KISS / YAGNI). Each of these is easy to add when a real need
+appears.
+
+| Not used | Because |
+|---|---|
+| MediatR | Each endpoint calls one service method. A mediator would add indirection without decoupling anything. |
+| AutoMapper | Mapping is explicit extension methods (`Application/Mapping/`). They are easy to read, debug and test, and the compiler checks them. |
+| NgRx / a state library | A few root services holding signals (`CalculationStore`) cover the app's state. |
+| A UI component library | The forms need custom number boxes and layouts; plain HTML and SCSS keep the bundle small and accessible. |
+| A separate database server | SQLite in one file is enough for a demo; EF Core keeps the door open. |
+| CORS configuration | The API serves the Angular build itself, so the browser only ever talks to one origin. |
