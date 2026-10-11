@@ -53,6 +53,9 @@
   --shadow-card: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
   --shadow-raised: 0 4px 8px -2px rgb(16 24 40 / 8%), 0 2px 4px -2px rgb(16 24 40 / 5%);
   --focus-ring: 0 0 0 3px rgb(37 99 235 / 25%);
+
+  // The typeface, self-hosted (the CSP allows fonts only from the app itself). The charts read it too.
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 @mixin dark-tokens {
@@ -113,8 +116,7 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--text-primary);
-  // Self-hosted (the CSP allows fonts only from the app itself), so every visitor sees the same type.
-  font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.45;
   // Money everywhere: digits of equal width keep amounts aligned in tables and steady while they update.
   font-variant-numeric: tabular-nums;

@@ -16,6 +16,23 @@ describe('buildLineChart', () => {
   // Chart.js callbacks are typed loosely; these helpers call them the way Chart.js would.
   const callbacks = () => buildLineChart(spec, host).options!.plugins!.tooltip!.callbacks! as unknown as Record<string, (items: unknown) => string>;
 
+  it("writes every label in the app's own typeface, from the --font-sans token", () => {
+    const styled = document.createElement('div');
+    styled.style.setProperty('--font-sans', "'Inter Variable', sans-serif");
+
+    const options = buildLineChart(spec, styled).options!;
+    const families = [
+      options.plugins!.legend!.labels!.font,
+      options.plugins!.tooltip!.titleFont,
+      options.plugins!.tooltip!.bodyFont,
+      options.plugins!.tooltip!.footerFont,
+      options.scales!['x']!.ticks!.font,
+      options.scales!['y']!.ticks!.font,
+    ].map((font) => (font as { family?: string }).family);
+
+    expect(families).toEqual(Array(6).fill("'Inter Variable', sans-serif"));
+  });
+
   it('creates one 2px line per series, without point markers', () => {
     const datasets = buildLineChart(spec, host).data.datasets;
 

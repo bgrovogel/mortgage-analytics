@@ -194,7 +194,10 @@ A calm fintech look, built from shared parts so every page stays consistent:
   drop-down, email and password field: same size, a firm border, a soft focus ring.
 - **Type:** Inter, self-hosted (`@fontsource-variable/inter`; the CSP allows fonts only from the app itself), with
   tabular figures everywhere, so amounts line up in tables and do not jitter while they update.
-- **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar.
+- **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar; the same mark
+  is the browser-tab icon (`public/favicon.svg`, with a PNG for iOS home screens), and the toolbar colour follows the bar.
+- **Charts in the same type:** `buildLineChart` reads `--font-sans` like its colours, so Chart.js draws its legend, axes
+  and tooltips in Inter rather than its default Helvetica or Arial.
 
 The flows are designed around the people using it:
 

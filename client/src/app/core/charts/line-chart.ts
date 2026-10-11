@@ -57,6 +57,8 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
   const tint = (name: string) => withAlpha(token(name), spec.stacked ? 0.55 : 0.28);
   const grid = token('--grid');
   const muted = token('--text-muted');
+  // The page's typeface (Chart.js would otherwise draw in Helvetica or Arial), on every label it draws.
+  const font = { family: token('--font-sans') };
   // As many x labels as fit the chart's width (so "Nov 2026" labels never run together on a phone), up to
   // MAX_X_TICKS. Chart.js calls the tick callback again whenever the chart resizes, with the new width.
   const labelWidth = Math.max(0, ...spec.labels.map((l) => l.length)) * LABEL_CHAR_PX + LABEL_GAP_PX;
@@ -101,6 +103,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           align: 'start',
           labels: {
             color: token('--text-secondary'),
+            font,
             usePointStyle: true,
             pointStyle: 'line',
             boxWidth: 24,
@@ -109,6 +112,9 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           },
         },
         tooltip: {
+          titleFont: font,
+          bodyFont: font,
+          footerFont: font,
           itemSort: (a, b) => a.datasetIndex - b.datasetIndex,
           callbacks: {
             title: (items) => spec.title(items[0].dataIndex, items[0].label),
@@ -124,6 +130,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           // Ticks are chosen here rather than by Chart.js's auto-skip, which can drop the last label.
           ticks: {
             color: muted,
+            font,
             maxRotation: 0,
             autoSkip: false,
             callback(this: { width?: number } | undefined, _value: unknown, index: number) {
@@ -136,7 +143,7 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
           beginAtZero: true,
           grid: { color: grid },
           border: { display: false },
-          ticks: { color: muted, callback: (value) => compactUsd(Number(value)) },
+          ticks: { color: muted, font, callback: (value) => compactUsd(Number(value)) },
         },
       },
     },
