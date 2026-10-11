@@ -282,7 +282,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 
 ## Stories for "tell me about a hard bug"
 
-All of these are **fixed**, and each has a test that fails if it ever comes back. That's what makes them good
+All five are **fixed**, and each has a test that fails if it ever comes back. That's what makes them good
 stories. Tell one as situation → what you did → result → how you made sure it stays fixed.
 
 1. **The half-cent (a real bug, fixed).** The refinance reference model disagreed with the engine by half a cent.
@@ -305,6 +305,27 @@ stories. Tell one as situation → what you did → result → how you made sure
      the `catchError` inside the `switchMap` keeps one failure from stopping every later update.
    - **Guarded by:** seven tests in `latest-request.spec.ts`, e.g. "ignores a slow response once a newer request has
      been made" and "recovers after a failure".
+4. **The token nobody asked for (a real security gap, fixed).** The whole design keeps the session in an HttpOnly
+   cookie, so no script can read it. But a new contract snapshot test listed `/account/refresh` and
+   `/account/manage/2fa`, which no screen uses. Following that up: Identity's built-in endpoints also sign in
+   *without* a cookie, and the API handed out a working bearer access token and refresh token. That was a second way
+   in, around the design, and nothing had ever called it.
+   - **What you did:** wrote the failing test first (sign in without `useCookies=true`; the response was a 200 with
+     `"accessToken"` in it), then one convention on Identity's endpoints: that sign-in is a 400, and `/refresh` and
+     `/manage/2fa` are 404s and gone from Swagger.
+   - **Guarded by:** `AccountApiTests` ("signing in without a cookie is refused, so no bearer token is ever issued";
+     the unused endpoints are not served), and the contract snapshot, which fails if they come back.
+   - **Lesson:** using a framework's defaults means owning everything they turn on. A test that pins the whole surface
+     shows you what you never chose.
+5. **The guards you could delete (weak tests, found and fixed).** Coverage was 98%, but mutation testing (Stryker.NET
+   changes the code in small ways and checks that a test fails) scored 87%. Seven of `Household`'s input guards could
+   be deleted with every test still passing: the lines ran, but nothing checked them. Limits like "at most 120 months"
+   could become "less than 120", and an ARM without a margin never fell to its floor in any test.
+   - **What you did:** sorted the 118 survivors into missing tests, code that could never change a result (four
+     conditions, removed), and equivalent mutants. Then `GuardLimitTests`, one row per limit: the limit is accepted,
+     and just past it is rejected with that guard's own message.
+   - **Result:** 97.4%; CI fails below 95%. The 23 survivors left behave identically to the original code.
+   - **Lesson:** coverage says a line ran. Mutation testing says a test would notice if it were wrong.
 
 ## If you're asked how you built it
 
