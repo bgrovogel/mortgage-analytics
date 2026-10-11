@@ -16,7 +16,7 @@ import { DevMailboxService } from '../../core/dev/dev-mailbox.service';
   `,
   styles: `
     .hint { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
-    a { color: var(--accent); }
+    a { color: var(--accent-text); }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

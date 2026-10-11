@@ -18,7 +18,7 @@
     letter-spacing: -0.02em;
   }
 
-  small {
+  dd.note {
     font-size: 0.85rem;
   }
 }
@@ -48,12 +48,15 @@
     letter-spacing: -0.01em;
   }
 
-  small {
+  // Notes under the value: small, quiet text, not a second figure.
+  dd.note {
     font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0;
     color: var(--text-muted);
   }
 
-  .with-extra {
+  dd.with-extra {
     color: var(--text-secondary);
     font-weight: 500;
   }

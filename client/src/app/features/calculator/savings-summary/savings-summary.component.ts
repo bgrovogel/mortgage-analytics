@@ -18,39 +18,40 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
   imports: [CurrencyPipe, DatePipe],
   template: `
     @let r = result();
+    <!-- Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt and dd). -->
     <dl class="tiles">
       @if (hasSavings()) {
         <div class="tile hero">
           <dt>Net savings from paying extra</dt>
           <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
           @if (savingsDetail(); as detail) {
-            <small data-testid="savings-detail">{{ detail }}</small>
+            <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
           }
           <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
-          <small>Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></small>
+          <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
         </div>
       } @else {
         <!-- Nothing extra is paid, so a $0 saving would say nothing: lead with what the loan costs instead. -->
         <div class="tile hero">
           <dt>Total interest over the loan</dt>
           <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-          <small data-testid="total-interest-detail">Add an extra payment to see how much you could save.</small>
+          <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
         </div>
       }
       <div class="tile">
         <dt>Required monthly payment</dt>
         <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
-        <small>
+        <dd class="note">
           <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span> principal &amp; interest
           @if (r.baseline.monthlyHousingCosts.total > 0) {
             + {{ r.baseline.monthlyHousingCosts.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
           }
-        </small>
+        </dd>
         @if (r.buydown) {
-          <small class="with-extra" data-testid="buydown-first-year">In year 1, with the buydown</small>
+          <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown</dd>
         }
         @if (withExtra(); as extra) {
-          <small class="with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</small>
+          <dd class="note with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</dd>
         }
       </div>
       <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
@@ -58,9 +59,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         <dt>Paid off</dt>
         <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
         @if (r.savings.paymentsSaved > 0) {
-          <small><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</small>
+          <dd class="note"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
         } @else if (r.accelerated.recasts.length > 0) {
-          <small data-testid="same-payoff">Same date: a recast lowers the payment instead</small>
+          <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
         }
       </div>
       @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
@@ -68,9 +69,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dt>PMI ends</dt>
           <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
           @if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
-            <small>instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</small>
+            <dd class="note">instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
           } @else {
-            <small>{{ r.purchase.downPaymentPercent }}% down</small>
+            <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
           }
         </div>
       }

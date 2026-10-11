@@ -155,7 +155,7 @@
     font-variant-numeric: tabular-nums;
 
     &.leads {
-      color: var(--accent);
+      color: var(--accent-text);
     }
   }
 
@@ -193,7 +193,7 @@
     }
 
     &[aria-selected='true'] {
-      color: var(--accent);
+      color: var(--accent-text);
       border-bottom-color: var(--accent);
       font-weight: 600;
     }

@@ -16,7 +16,10 @@
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
   --text-muted: #6f6e69;
-  --accent: #2a78d6;
+  // Checked with axe (WCAG AA): text in --accent-text is at least 4.5:1 on every surface, and so is --on-accent on
+  // --accent. In light mode one blue does both; in dark mode text needs a lighter blue than a fill behind white text.
+  --accent: #226ac4;
+  --accent-text: #226ac4;
   --on-accent: #ffffff;
   --accent-soft: #eef4fc;
   --accent-soft-border: #b7d3f6;
@@ -45,7 +48,8 @@
   --text-primary: #ffffff;
   --text-secondary: #c3c2b7;
   --text-muted: #9a9990;
-  --accent: #3987e5;
+  --accent: #2f72c4;
+  --accent-text: #5b9cf0;
   --on-accent: #ffffff;
   --accent-soft: #17263a;
   --accent-soft-border: #1c5cab;
@@ -125,7 +129,7 @@ app-root {
   }
 
   .back {
-    color: var(--accent);
+    color: var(--accent-text);
     text-decoration: none;
     font-weight: 500;
 
@@ -170,7 +174,7 @@ app-root {
     padding: 0 0.6rem;
     border: 0;
     background: transparent;
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;
@@ -205,13 +209,13 @@ app-root {
     }
 
     &.active {
-      color: var(--accent);
+      color: var(--accent-text);
       background: var(--accent-soft);
     }
 
     &.external {
       margin-left: 0.5rem;
-      color: var(--accent);
+      color: var(--accent-text);
     }
 
     &:focus-visible {

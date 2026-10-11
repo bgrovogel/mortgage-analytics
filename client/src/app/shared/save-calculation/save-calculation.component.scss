@@ -15,7 +15,7 @@
   color: var(--text-secondary);
 
   a {
-    color: var(--accent);
+    color: var(--accent-text);
   }
 }
 
@@ -43,7 +43,7 @@ button {
   &.link {
     border-color: transparent;
     background: transparent;
-    color: var(--accent);
+    color: var(--accent-text);
   }
 }
 

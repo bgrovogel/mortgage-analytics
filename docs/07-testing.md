@@ -10,7 +10,7 @@ About 1,170 automated tests in seven suites, written test-first, with the standa
 | API integration | 63 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 6 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 464 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 70 | Playwright (Chromium) | ~20 s |
+| End-to-end | 83 | Playwright (Chromium), axe-core | ~25 s |
 
 ## How a feature gets built (TDD)
 
@@ -66,6 +66,11 @@ Take the ARM margin floor as an example of the order of work:
 - ProblemDetails messages.
 
 **End-to-end (Playwright)**
+- **Accessibility** (`e2e/accessibility.spec.ts`): axe scans every page and results tab against WCAG 2.2 A and AA, in
+  light and dark mode, on desktop and a phone, signed in and out, with every form section open. A failure names
+  each rule broken and the elements that break it. Automated scans catch about a third of real problems (contrast,
+  missing names and roles, invalid structure); keyboard paths are covered by the other specs, and a screen-reader
+  pass still needs a person.
 - The real browser, the real API (a scratch database), through page objects and fixtures.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
 - Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History.

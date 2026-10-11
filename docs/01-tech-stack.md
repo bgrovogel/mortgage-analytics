@@ -17,7 +17,7 @@ Application layer (use cases) ──► Domain (pure C#, no packages)
    ▼
 Infrastructure ── EF Core 9 ── SQLite (one file)
 
-Tests: NUnit 4 · NSubstitute 6 · WebApplicationFactory · Jest 29 · Playwright 1.64 · Roslyn · Python Decimal
+Tests: NUnit 4 · NSubstitute 6 · WebApplicationFactory · Jest 29 · Playwright 1.64 · axe-core · Roslyn · Python Decimal
 Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions
 ```
 
@@ -71,6 +71,7 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
 | **Jest 29 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
 | **Playwright 1.64** | End-to-end | A real Chromium against the real API and Angular dev server, through page objects. |
+| **axe-core** (`@axe-core/playwright`) | End-to-end | Scans every page for WCAG 2.2 A/AA problems (contrast, names, roles, structure) in light and dark mode and on a phone. |
 | **Python `Decimal`** | `tools/rate-check`, `tools/calculator-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. |
 
 ## Delivery

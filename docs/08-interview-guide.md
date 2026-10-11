@@ -206,6 +206,16 @@ and ~99% Angular lines. Mutation testing (Stryker) would be the next step to mea
 - API tests with `WebApplicationFactory` (the real pipeline, in memory).
 - A thinner layer of Playwright tests for whole user journeys.
 
+**How do you test accessibility?**
+- **Automated:** axe-core runs inside the Playwright suite. It scans every page and results tab against WCAG 2.2 A and
+  AA, in light and dark mode, on desktop and a phone, signed in and out.
+- **What it found when added:** the blue accent was just under 4.5:1 contrast in places. In dark mode, text needed a
+  lighter blue than a button fill does, so the accent split into a fill token and a text token. It also found notes
+  inside a `<dl>` that weren't `<dd>` elements.
+- **By design:** charts have a written takeaway and a data table, and the tabs follow the WAI-ARIA pattern with arrow
+  keys.
+- **Limits:** automation catches about a third of real issues, so a manual screen-reader pass is still worth doing.
+
 ### DevOps
 
 **Walk me through the Dockerfile.**
@@ -280,5 +290,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 643 .NET · 464 Jest · 70 Playwright; 85% coverage gate |
+| Tests | 643 .NET · 464 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 9, EF Core 9, SQLite, Identity · Angular 19, signals, RxJS, Chart.js · Docker, GitHub Actions |

@@ -91,6 +91,7 @@ npx jest src/app/features/calculator/loan-form                                  
 npx jest -t "sends the ARM's margin"                                              # tests whose name matches
 npx playwright test e2e/calculator.spec.ts                                        # one e2e file
 npx playwright test -g "margin is its floor"                                      # e2e tests whose name matches
+npx playwright test e2e/accessibility.spec.ts                                    # only the axe accessibility scans
 npx playwright test --ui                                                          # Playwright's UI: step through, see the browser
 npx playwright show-report                                                        # the HTML report after a failure
 ```
