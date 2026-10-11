@@ -1,10 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Storage: user accounts (ASP.NET Core Identity) and saved calculations, in EF Core on SQLite. -->
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\MortgageAnalytics.Application\MortgageAnalytics.Application.csproj" />
   </ItemGroup>

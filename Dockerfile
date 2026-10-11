@@ -9,10 +9,10 @@ COPY client/ ./
 RUN npx ng build --configuration production
 
 # ---- 2. Build and test the .NET solution ----------------------------------------------
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS api
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
 WORKDIR /src
 # Restore first, in its own layer, so code edits don't invalidate the package cache.
-COPY Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/MortgageAnalytics.Domain/*.csproj src/MortgageAnalytics.Domain/
 COPY src/MortgageAnalytics.Application/*.csproj src/MortgageAnalytics.Application/
 COPY src/MortgageAnalytics.Infrastructure/*.csproj src/MortgageAnalytics.Infrastructure/
@@ -22,7 +22,7 @@ COPY src/ src/
 RUN dotnet publish src/MortgageAnalytics.Api/MortgageAnalytics.Api.csproj -c Release -o /app --no-restore
 
 # ---- 3. Runtime image -----------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=api /app ./
 COPY --from=client /client/dist/client/browser ./wwwroot

@@ -5,7 +5,6 @@
     clock, used by every test project so test data is written once.
   -->
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

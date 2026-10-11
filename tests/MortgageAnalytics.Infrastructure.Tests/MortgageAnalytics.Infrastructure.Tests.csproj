@@ -1,10 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Test packages, usings and coverage settings come from tests/Directory.Build.props. -->
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\MortgageAnalytics.Infrastructure\MortgageAnalytics.Infrastructure.csproj" />
   </ItemGroup>
