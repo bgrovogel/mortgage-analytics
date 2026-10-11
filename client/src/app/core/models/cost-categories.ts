@@ -15,6 +15,8 @@ export interface CostCategory {
  * Slot 1 (`--series-1`) is reserved for principal and interest.
  */
 export const COST_CATEGORIES: readonly CostCategory[] = [
+  // Property tax (one combined rate) and the separate taxes never appear together, so it shares school tax's slot.
+  { key: 'propertyTax', label: 'Property tax', color: '--series-2' },
   { key: 'schoolTax', label: 'School tax', color: '--series-2' },
   { key: 'localTax', label: 'County & city tax', color: '--series-3' },
   { key: 'mudTax', label: 'MUD tax', color: '--series-4' },

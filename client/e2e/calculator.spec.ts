@@ -13,7 +13,7 @@ const FIVE_PERCENT_DOWN = { homePrice: 250_000, downPayment: 12_500, rate: 6.5, 
 test.describe('Mortgage calculator', () => {
   test('shows a worked example with taxes, insurance and PMI on first load', async ({ calculator }) => {
     await expect(calculator.breakdown, 'the breakdown starts with principal and interest').toContainText('Principal & interest');
-    await expect(calculator.breakdown, 'the default example includes MUD tax').toContainText('MUD tax');
+    await expect(calculator.breakdown, 'the default example includes property tax, as one rate').toContainText('Property tax');
     await expect(calculator.breakdown, 'the default example has 5% down, so PMI').toContainText('PMI');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
     await expect(calculator.chart, 'the balance chart renders').toBeVisible();
@@ -26,12 +26,12 @@ test.describe('Mortgage calculator', () => {
       await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
     }
     await expect(calculator.sectionSummary('taxes-summary'), 'a closed section summarizes its values')
-      .toHaveText('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
-    await expect(calculator.field('school-tax-rate'), 'fields inside a closed section are hidden').toBeHidden();
+      .toHaveText('Tax 2.2% · Homestead $50,000 off');
+    await expect(calculator.field('property-tax-rate'), 'fields inside a closed section are hidden').toBeHidden();
 
     await calculator.openSection('section-taxes');
 
-    await expect(calculator.field('school-tax-rate'), 'opening the section reveals its fields').toBeVisible();
+    await expect(calculator.field('property-tax-rate'), 'opening the section reveals its fields').toBeVisible();
   });
 
   // At 1100px the page links wrap onto a second line, making the header taller: the form must still fit.
@@ -207,6 +207,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdownAmount('School tax'), 'taxed on the full $300,000 otherwise').toHaveText('$250.00');
   });
 
+  test('one property tax rate: the homestead exemption comes off the value, and the form says what it saves', async ({ calculator, page }) => {
+    // $300,000 home at 2%: a homestead pays on $250,000 ($5,000 a year, $416.67 a month); without it, on all of it ($500.00).
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
+    await calculator.clearHousingCosts();
+    await calculator.set('property-tax-rate', 2);
+    await calculator.set('homestead-exemption', 50_000);
+
+    await calculator.calculate();
+    await expect(calculator.breakdownAmount('Property tax'), 'taxed on $250,000 as a homestead').toHaveText('$416.67');
+    await expect(page.getByTestId('homestead-savings'), 'the exemption saves 2% of $50,000').toHaveText('In year 1 the exemption saves $1,000 in tax.');
+
+    await calculator.setChecked('is-homestead', false);
+    await calculator.calculate();
+    await expect(calculator.breakdownAmount('Property tax'), 'taxed on the full $300,000 otherwise').toHaveText('$500.00');
+  });
+
   test('each homestead exemption lowers its own tax, and the form says what they save', async ({ calculator, page }) => {
     // $300,000 home: school 1% with $140,000 exempt; county/city 1% with 20% exempt; MUD 1% with 10% exempt.
     await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
@@ -360,17 +376,17 @@ test.describe('Mortgage calculator', () => {
   test('totals every cost over the whole schedule, and lets you add each as a column', async ({ calculator, page }) => {
     await calculator.showResults('schedule');
     const totals = page.getByTestId('lifetime-totals');
-    await expect(totals, 'the lifetime totals include each tax').toContainText('School tax');
+    await expect(totals, 'the lifetime totals include the tax').toContainText('Property tax');
     await expect(totals, 'and what everything adds up to').toContainText('Everything paid');
-    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'categories start rolled up into Taxes & fees').toHaveCount(0);
+    await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'categories start rolled up into Taxes & fees').toHaveCount(0);
 
     await page.getByTestId('column-picker').locator('summary').click();
-    await page.getByRole('checkbox', { name: 'School tax' }).check();
+    await page.getByRole('checkbox', { name: 'Property tax' }).check();
 
-    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'the chosen column appears').toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'the chosen column appears').toBeVisible();
     await calculator.showResults('overview');
     await calculator.showResults('schedule');
-    await expect(page.getByRole('columnheader', { name: 'School tax' }), 'and the choice is remembered').toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'and the choice is remembered').toBeVisible();
   });
 
   test('can switch the table to the standard schedule', async ({ calculator }) => {

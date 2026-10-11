@@ -148,6 +148,20 @@ public sealed record LumpSumPaymentRequest(int PaymentNumber, decimal Amount);
 /// </remarks>
 public sealed record HousingCostsRequest
 {
+    /// <summary>
+    /// All property taxes as one combined rate, for when that is what is known (most places). Use it instead of the
+    /// separate <see cref="SchoolTaxRate"/>, <see cref="LocalTaxRate"/> and <see cref="MudTaxRate"/>, which must then be 0.
+    /// </summary>
+    /// <example>2.2</example>
+    public decimal PropertyTaxRate { get; init; }
+
+    /// <summary>
+    /// With <see cref="PropertyTaxRate"/>: the dollars of a homestead's value exempt from it. Applies only when
+    /// <see cref="IsHomestead"/> is set.
+    /// </summary>
+    /// <example>50000</example>
+    public decimal PropertyTaxHomesteadExemption { get; init; }
+
     /// <summary>School district tax rate. Kept separate because it has its own homestead exemption.</summary>
     /// <example>1.0</example>
     public decimal SchoolTaxRate { get; init; }

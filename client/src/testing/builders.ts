@@ -18,6 +18,7 @@ import { NetWorthYear, StrategyComparison, StrategyOutcome, StrategyProjection }
 /** Housing costs with every category at zero unless overridden. */
 export function aHousingCosts(overrides: Partial<HousingCosts> = {}): HousingCosts {
   const costs: HousingCosts = {
+    propertyTax: 0,
     schoolTax: 0,
     localTax: 0,
     mudTax: 0,
@@ -29,7 +30,7 @@ export function aHousingCosts(overrides: Partial<HousingCosts> = {}): HousingCos
     ...overrides,
   };
   if (overrides.total === undefined) {
-    costs.total = costs.schoolTax + costs.localTax + costs.mudTax + costs.pidAssessment
+    costs.total = costs.propertyTax + costs.schoolTax + costs.localTax + costs.mudTax + costs.pidAssessment
       + costs.homeownersInsurance + costs.mortgageInsurance + costs.hoaDues;
   }
   return costs;
@@ -85,6 +86,7 @@ export function aProjectionYear(year: number, overrides: Partial<YearProjection>
     schoolTaxableValue: null,
     localTaxableValue: null,
     mudTaxableValue: null,
+    propertyTaxableValue: null,
     costs: aHousingCosts(),
     ...overrides,
   };

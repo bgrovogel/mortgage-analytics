@@ -18,6 +18,8 @@ export const LOAN_RULES = {
   termYears: { label: 'Term', unit: 'years', min: 1, max: MAX_YEARS, whole: true },
   monthlyExtra: { label: 'Extra principal every month', unit: '$', min: 0, optional: true },
 
+  propertyTaxRate: { label: 'Property tax rate', unit: '%', min: 0, max: 15, decimals: 4, optional: true },
+  propertyTaxHomesteadExemption: { label: 'Homestead exemption', unit: '$', min: 0, max: 10_000_000, optional: true },
   schoolTaxRate: { label: 'School tax rate', unit: '%', min: 0, max: 10, decimals: 4, optional: true },
   localTaxRate: { label: 'County/city tax rate', unit: '%', min: 0, max: 10, decimals: 4, optional: true },
   mudTaxRate: { label: 'MUD tax rate', unit: '%', min: 0, max: 5, decimals: 4, optional: true },

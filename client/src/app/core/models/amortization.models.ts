@@ -45,6 +45,10 @@ export interface Over65OrDisabled {
 }
 
 export interface HousingCostsInput {
+  /** All property taxes as one rate (instead of the separate school, county/city and MUD rates, which are then 0). */
+  propertyTaxRate?: number;
+  /** With propertyTaxRate: the dollars of a homestead's value exempt from it. */
+  propertyTaxHomesteadExemption?: number;
   schoolTaxRate: number;
   localTaxRate: number;
   mudTaxRate: number;
@@ -104,6 +108,8 @@ export interface Purchase {
 }
 
 export interface HousingCosts {
+  /** All property taxes as one rate, when they are given that way. */
+  propertyTax: number;
   schoolTax: number;
   localTax: number;
   mudTax: number;
@@ -186,6 +192,8 @@ export interface YearProjection {
   schoolTaxableValue: number | null;
   localTaxableValue: number | null;
   mudTaxableValue: number | null;
+  /** What the single combined property tax is charged on; null when the taxes are given separately. */
+  propertyTaxableValue: number | null;
   costs: HousingCosts;
 }
 

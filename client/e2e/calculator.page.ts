@@ -13,6 +13,9 @@ export interface LoanInput {
  * Page object: tests describe intent ("fill the loan"); every selector, and the mechanics of the page
  * (collapsed sections, recalculating as you type), live here in one place.
  */
+/** Fields of the separate (Texas) taxes, shown once the form is switched to them. */
+const SEPARATE_TAX_FIELDS = ['school-tax-rate', 'local-tax-rate', 'mud-tax-rate', 'school-exemption', 'local-exemption', 'mud-exemption', 'is-over-65'];
+
 export class CalculatorPage {
   // Results
   readonly results: Locator;
@@ -119,9 +122,18 @@ export class CalculatorPage {
     return this.page.getByText(text);
   }
 
-  /** Types a value into a field, opening its collapsed section first if it is inside one. */
+  /**
+   * Types a value into a field, opening its collapsed section first if it is inside one. A field of the separate
+   * (Texas) taxes switches the form to them first, as a person would.
+   */
   async set(testId: string, value: number | string): Promise<void> {
+    if (SEPARATE_TAX_FIELDS.includes(testId)) await this.chooseTaxMode('separate');
     await (await this.reveal(testId)).fill(String(value));
+  }
+
+  /** Chooses one property tax rate, or the separate school, county/city and MUD taxes. */
+  async chooseTaxMode(mode: 'single' | 'separate'): Promise<void> {
+    await (await this.reveal(`tax-mode-${mode}`)).check();
   }
 
   /** Chooses how the rate works (fixed, a buydown, or adjustable), opening its section first. */
@@ -129,8 +141,9 @@ export class CalculatorPage {
     await (await this.reveal(`rate-type-${type}`)).check();
   }
 
-  /** Ticks or unticks a checkbox, opening its section first. */
+  /** Ticks or unticks a checkbox, opening its section first (switching to the separate taxes for over-65 relief). */
   async setChecked(testId: string, checked: boolean): Promise<void> {
+    if (SEPARATE_TAX_FIELDS.includes(testId)) await this.chooseTaxMode('separate');
     await (await this.reveal(testId)).setChecked(checked);
   }
 
@@ -152,7 +165,10 @@ export class CalculatorPage {
 
   /** Zeroes every tax, insurance and fee field, leaving principal and interest only. */
   async clearHousingCosts(): Promise<void> {
-    for (const id of ['school-tax-rate', 'local-tax-rate', 'mud-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
+    // Both ways of entering taxes: the separate rates (ready for a test that sets one), then the single rate, in use.
+    for (const id of ['school-tax-rate', 'local-tax-rate', 'mud-tax-rate']) await this.set(id, 0);
+    await this.chooseTaxMode('single');
+    for (const id of ['property-tax-rate', 'pid-annual', 'annual-insurance', 'monthly-hoa', 'pmi-rate']) {
       await this.set(id, 0);
     }
   }

@@ -226,4 +226,35 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
             Assert.That(projection[29].Costs.Total, Is.Zero, "and no costs");
         });
     }
+
+    [Test]
+    public void OnePropertyTaxRate_IsChargedOnTheValueLessItsHomesteadExemption()
+    {
+        var homestead = Service.Analyze(A.Request.WithHousingCosts(c => c.WithPropertyTax(2m, 50_000m).AsHomestead()));
+        var rental = Service.Analyze(A.Request.WithHousingCosts(c => c.WithPropertyTax(2m, 50_000m)));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(homestead.Baseline.MonthlyHousingCosts.PropertyTax, Is.EqualTo(333.33m), "2% of $200,000 = $4,000 a year: $50,000 of the $250,000 is exempt");
+            Assert.That(homestead.Baseline.MonthlyHousingCosts.SchoolTax, Is.Zero, "no separate taxes");
+            Assert.That(homestead.Projection[0].PropertyTaxableValue, Is.EqualTo(200_000m), "what it is charged on");
+            Assert.That(homestead.Projection[0].SchoolTaxableValue, Is.Null, "and no school tax at all");
+            Assert.That(rental.Baseline.MonthlyHousingCosts.PropertyTax, Is.EqualTo(416.67m), "a home that is not a homestead pays on the full $250,000");
+        });
+    }
+
+    [Test]
+    public void OnePropertyTaxRate_FollowsTheAppraisalCap_LikeTheSeparateTaxes()
+    {
+        // The home gains 10% in a year; a homestead's taxable value may rise only 5%: $262,500, less the $50,000 exempt.
+        var year2 = Service.Analyze(A.Request.WithHousingCosts(c => c.WithHomeValueGrowth(10m).AsHomestead(assessmentCap: 5m).WithPropertyTax(2m, 50_000m))).Projection[1];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(year2.MarketValue, Is.EqualTo(275_000m), "the market value");
+            Assert.That(year2.AssessedValue, Is.EqualTo(262_500m), "capped at 5% more");
+            Assert.That(year2.PropertyTaxableValue, Is.EqualTo(212_500m), "less the exemption");
+            Assert.That(year2.Costs.PropertyTax, Is.EqualTo(4_250m), "2% of it, for the year");
+        });
+    }
 }

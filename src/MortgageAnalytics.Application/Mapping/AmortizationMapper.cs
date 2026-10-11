@@ -97,6 +97,13 @@ internal static class AmortizationMapper
 
         var items = new List<IHousingCost>();
 
+        // One combined rate, when that is what is known: the homestead exemption comes off the value it is charged on.
+        if (costs.PropertyTaxRate > 0)
+        {
+            var exemption = costs.IsHomestead ? new TaxExemption(amount: costs.PropertyTaxHomesteadExemption) : TaxExemption.None;
+            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, exemption));
+        }
+
         if (costs.SchoolTaxRate > 0)
             items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption, schoolRelief));
 
@@ -201,6 +208,7 @@ internal static class AmortizationMapper
                 TaxableValue(HousingCostCategory.SchoolTax, index),
                 TaxableValue(HousingCostCategory.LocalTax, index),
                 TaxableValue(HousingCostCategory.MudTax, index),
+                TaxableValue(HousingCostCategory.PropertyTax, index),
                 ToResponse(year)))
             .ToList();
     }
@@ -256,5 +264,6 @@ internal static class AmortizationMapper
             breakdown[HousingCostCategory.HomeownersInsurance],
             breakdown[HousingCostCategory.MortgageInsurance],
             breakdown[HousingCostCategory.HoaDues],
+            breakdown[HousingCostCategory.PropertyTax],
             breakdown.Total);
 }

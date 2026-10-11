@@ -40,9 +40,19 @@ const lumpSumInThePast = (paymentNumber: number, next: number) =>
 /** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
 const CHECK_SECTION = 'Check the values in this section';
 
+/** How property taxes are entered: one combined rate (most places), or separate school, county/city and MUD rates (Texas). */
+export type TaxMode = 'single' | 'separate';
+
+/** The controls each way of entering taxes uses; the other way's are disabled, so they are neither checked nor sent. */
+const TAX_MODE_CONTROLS = {
+  single: ['propertyTaxRate', 'propertyTaxHomesteadExemption'],
+  separate: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
+    'mudHomesteadExemptionPercent', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
+} as const;
+
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
-  taxes: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
+  taxes: ['propertyTaxRate', 'propertyTaxHomesteadExemption', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
     'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
@@ -99,10 +109,11 @@ export class LoanFormComponent implements OnInit {
     if (!year || !v.isHomestead) return null;
     const saved = (taxable: number | null, rate: number | undefined) =>
       taxable === null ? 0 : Math.max(0, year.assessedValue - taxable) * (rate ?? 0) / 100;
+    const property = saved(year.propertyTaxableValue ?? null, v.propertyTaxRate);
     const school = saved(year.schoolTaxableValue, v.schoolTaxRate);
     const local = saved(year.localTaxableValue, v.localTaxRate);
     const mud = saved(year.mudTaxableValue, v.mudTaxRate);
-    return { total: school + local + mud, school, local, mud };
+    return { total: property + school + local + mud, school, local, mud };
   });
 
   /** A loan changed on another page since this one was last open: the form starts from it. */
@@ -134,6 +145,10 @@ export class LoanFormComponent implements OnInit {
     // Optional: a blank date lets the API default to the first of next month.
     firstPaymentDate: [firstOfNextMonth()],
 
+    // One combined rate and one homestead exemption, the way most places quote them; or the separate Texas taxes.
+    taxMode: this.fb.control<TaxMode>('single'),
+    propertyTaxRate: [2.2, validatorsFor(rules.propertyTaxRate)],
+    propertyTaxHomesteadExemption: [50_000, validatorsFor(rules.propertyTaxHomesteadExemption)],
     schoolTaxRate: [1.0, validatorsFor(rules.schoolTaxRate)],
     localTaxRate: [1.1, validatorsFor(rules.localTaxRate)],
     mudTaxRate: [0.85, validatorsFor(rules.mudTaxRate)],
@@ -201,23 +216,28 @@ export class LoanFormComponent implements OnInit {
   /** Homestead exemptions and the assessment cap apply only to a primary residence. */
   readonly isHomestead = computed(() => this.values().isHomestead === true);
 
-  /** Over-65 / disability relief applies only to a homestead. */
-  readonly isOver65 = computed(() => this.isHomestead() && this.values().isOver65 === true);
+  /** Over-65 / disability relief applies only to a homestead, with the separate taxes it is defined for. */
+  readonly isOver65 = computed(() => this.isHomestead() && this.taxMode() === 'separate' && this.values().isOver65 === true);
+
+  /** How property taxes are entered. */
+  readonly taxMode = computed(() => this.values().taxMode);
 
   /** One-line summary of the property-tax section. */
   readonly taxesSummary = computed(() => {
     const v = this.values();
     if (this.sectionInvalid('taxes')) return CHECK_SECTION;
 
-    const parts = [
-      v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
-      v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
-      v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
-      v.pidAnnual ? `PID ${usd(v.pidAnnual)}/yr` : '',
-    ].filter(Boolean);
+    const single = v.taxMode === 'single';
+    const parts = (single
+      ? [v.propertyTaxRate ? `Tax ${percent(v.propertyTaxRate)}` : '']
+      : [
+          v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
+          v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
+          v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
+        ]).concat(v.pidAnnual ? `PID ${usd(v.pidAnnual)}/yr` : '').filter(Boolean);
     if (parts.length === 0) return 'No property taxes';
 
-    if (this.isHomestead()) parts.push('Homestead');
+    if (this.isHomestead()) parts.push(single && v.propertyTaxHomesteadExemption ? `Homestead ${usd(v.propertyTaxHomesteadExemption)} off` : 'Homestead');
     if (this.isOver65()) parts.push('Over 65');
     return parts.join(' · ');
   });
@@ -284,6 +304,10 @@ export class LoanFormComponent implements OnInit {
   });
 
   constructor() {
+    // Only the chosen way of entering taxes is checked and sent.
+    this.syncTaxMode();
+    this.form.controls.taxMode.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.syncTaxMode());
+
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
     keepArmFieldsInStep(this.form.controls.rate);
 
@@ -352,6 +376,13 @@ export class LoanFormComponent implements OnInit {
         rounded: left === wanted ? null : { from: formatMonths(wanted), to: formatMonths(left) },
       });
     }
+  }
+
+  /** Enables the controls of the chosen way of entering taxes, and disables the other's. */
+  private syncTaxMode(): void {
+    const mode = this.form.controls.taxMode.value;
+    for (const name of TAX_MODE_CONTROLS[mode]) this.form.controls[name].enable({ emitEvent: false });
+    for (const name of TAX_MODE_CONTROLS[mode === 'single' ? 'separate' : 'single']) this.form.controls[name].disable({ emitEvent: false });
   }
 
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
@@ -434,6 +465,10 @@ export class LoanFormComponent implements OnInit {
       monthlyExtra: extras?.monthlyAmount ?? 0,
       annualExtra: extras?.annual?.amount ?? 0,
       ...(extras?.annual && { annualFirstPayment: extras.annual.firstPaymentNumber }),
+      // One rate when the request has one (or none at all); otherwise the separate rates it was saved with.
+      taxMode: (costs?.propertyTaxRate ?? 0) > 0 || !costs || costs.schoolTaxRate + costs.localTaxRate + costs.mudTaxRate === 0 ? 'single' : 'separate',
+      propertyTaxRate: costs?.propertyTaxRate ?? 0,
+      propertyTaxHomesteadExemption: costs?.propertyTaxHomesteadExemption ?? 0,
       schoolTaxRate: costs?.schoolTaxRate ?? 0,
       localTaxRate: costs?.localTaxRate ?? 0,
       mudTaxRate: costs?.mudTaxRate ?? 0,
@@ -460,6 +495,7 @@ export class LoanFormComponent implements OnInit {
       ...(costs && { pmiCancellation: costs.pmiCancellation }),
     });
     setRateOptions(this.form.controls.rate, r.buydown, r.adjustableRate);
+    this.syncTaxMode();
     this.restoring = false;
   }
 
@@ -473,6 +509,7 @@ export class LoanFormComponent implements OnInit {
   /** Converts form values (years, flat fields) into the API's request shape. */
   private toRequest(): AmortizationRequest {
     const v = this.form.getRawValue();
+    const single = v.taxMode === 'single';
     // On a loan already being paid, extra payments can only start with the next payment.
     const next = (this.existingLoan()?.made ?? 0) + 1;
     const annualFirst = v.annualFirstPayment < next ? v.annualFirstPayment + Math.ceil((next - v.annualFirstPayment) / 12) * 12 : v.annualFirstPayment;
@@ -491,15 +528,17 @@ export class LoanFormComponent implements OnInit {
         lumpSums: v.lumpSums,
       },
       housingCosts: {
-        schoolTaxRate: v.schoolTaxRate || 0,
-        localTaxRate: v.localTaxRate || 0,
-        mudTaxRate: v.mudTaxRate || 0,
+        propertyTaxRate: single ? v.propertyTaxRate || 0 : 0,
+        propertyTaxHomesteadExemption: single ? v.propertyTaxHomesteadExemption || 0 : 0,
+        schoolTaxRate: single ? 0 : v.schoolTaxRate || 0,
+        localTaxRate: single ? 0 : v.localTaxRate || 0,
+        mudTaxRate: single ? 0 : v.mudTaxRate || 0,
         isHomestead: v.isHomestead,
         schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
         localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
         mudHomesteadExemptionPercent: v.mudHomesteadExemptionPercent || 0,
         homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
-        over65OrDisabled: v.isHomestead && v.isOver65
+        over65OrDisabled: !single && v.isHomestead && v.isOver65
           ? {
               qualifiesInYear: v.over65Year || 1,
               schoolExemption: v.over65SchoolExemption || 0,

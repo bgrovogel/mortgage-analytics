@@ -3,14 +3,15 @@ import { usd } from '../../../core/formatting/format';
 import { YearProjection } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
 
-type TaxableKey = 'schoolTaxableValue' | 'localTaxableValue' | 'mudTaxableValue';
+type TaxableKey = 'propertyTaxableValue' | 'schoolTaxableValue' | 'localTaxableValue' | 'mudTaxableValue';
 
 /**
  * Each taxing unit: its taxable value in the projection, its cost category (for the color), and a line style
  * of its own. Taxes are often charged on the same value (county/city and MUD on the full value), so solid,
  * long-dashed and dotted lines (and the assessed value's short dashes) let each show through where they overlap.
  */
-const UNITS: readonly { key: TaxableKey; category: 'schoolTax' | 'localTax' | 'mudTax'; name: string; label: string; style: Partial<LineSeries> }[] = [
+const UNITS: readonly { key: TaxableKey; category: 'propertyTax' | 'schoolTax' | 'localTax' | 'mudTax'; name: string; label: string; style: Partial<LineSeries> }[] = [
+  { key: 'propertyTaxableValue', category: 'propertyTax', name: 'property tax', label: 'Taxable value', style: {} },
   { key: 'schoolTaxableValue', category: 'schoolTax', name: 'school tax', label: 'School taxable value', style: {} },
   // Long dashes: unlike the assessed value's short ones, which this line can sit on.
   { key: 'localTaxableValue', category: 'localTax', name: 'county & city tax', label: 'County & city taxable value', style: { dash: [12, 6] } },
@@ -93,6 +94,7 @@ export function valueNote(projection: YearProjection[]): string {
 /** The tooltip footer: that year's bill for each tax, e.g. "Tax this year: school $2,350 · county & city $4,125". */
 export function valueBills(year: YearProjection): string {
   const bills = [
+    ['property', year.costs.propertyTax],
     ['school', year.costs.schoolTax],
     ['county & city', year.costs.localTax],
     ['MUD', year.costs.mudTax],
@@ -105,7 +107,7 @@ export function valueBills(year: YearProjection): string {
  * The first year (1-based) from which a unit's bill stays the same to the end of the projection while the
  * value it is charged on grows: a tax ceiling. Null when there is none.
  */
-function ceilingYear(projection: YearProjection[], unit: { category: 'schoolTax' | 'localTax' | 'mudTax'; values: number[] }): number | null {
+function ceilingYear(projection: YearProjection[], unit: { category: 'propertyTax' | 'schoolTax' | 'localTax' | 'mudTax'; values: number[] }): number | null {
   const last = projection.length - 1;
   const bill = projection[last].costs[unit.category];
   if (bill <= 0) return null;

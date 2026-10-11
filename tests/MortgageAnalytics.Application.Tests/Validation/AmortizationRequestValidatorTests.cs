@@ -301,4 +301,17 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             AssertInvalid(A.Request.WithAdjustableRate(7m, lifetimeCap: 11m), "AdjustableRate.LifetimeCap", "caps of at most 10 points");
         });
     }
+
+    [Test]
+    public void OnePropertyTaxRate_IsUsedInsteadOfTheSeparateRates_NotWithThem()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertValid(A.Request.WithHousingCosts(c => c.WithPropertyTax(2.2m, 50_000m)), "one combined rate and a homestead exemption");
+            AssertInvalid(A.Request.WithHousingCosts(c => c.WithPropertyTax(2.2m, 50_000m).WithSchoolTax(1m)), "HousingCosts.PropertyTaxRate", "not with separate rates too");
+            AssertInvalid(A.Request.WithHousingCosts(c => c.WithPropertyTax(2.2m, 50_000m).AsHomestead().WithOver65()), "HousingCosts.Over65OrDisabled",
+                "over-65 relief needs the separate taxes");
+            AssertInvalid(A.Request.WithHousingCosts(c => c.WithPropertyTax(16m)), "HousingCosts.PropertyTaxRate", "at most 15%");
+        });
+    }
 }

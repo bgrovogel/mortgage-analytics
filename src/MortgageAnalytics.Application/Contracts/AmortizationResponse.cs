@@ -56,6 +56,7 @@ public sealed record RateChangeResponse(
 /// <param name="SchoolTaxableValue">What school tax is charged on: the assessed value minus the school homestead (and over-65) exemptions. Null when there is no school tax.</param>
 /// <param name="LocalTaxableValue">What county/city tax is charged on, after its own exemptions. Null when there is no county/city tax.</param>
 /// <param name="MudTaxableValue">What MUD tax is charged on (MUDs grant no homestead exemption). Null when there is no MUD tax.</param>
+/// <param name="PropertyTaxableValue">What the single combined property tax is charged on, after its homestead exemption. Null when the taxes are given separately.</param>
 /// <param name="Costs">Housing costs paid during the year, by category.</param>
 public sealed record YearProjectionResponse(
     int Year,
@@ -65,6 +66,7 @@ public sealed record YearProjectionResponse(
     decimal? SchoolTaxableValue,
     decimal? LocalTaxableValue,
     decimal? MudTaxableValue,
+    decimal? PropertyTaxableValue,
     HousingCostsResponse Costs);
 
 /// <summary>The purchase and the loan it produces.</summary>
@@ -117,6 +119,7 @@ public sealed record ScheduleResponse(
 /// <param name="HomeownersInsurance">Homeowners insurance.</param>
 /// <param name="MortgageInsurance">Private mortgage insurance (PMI).</param>
 /// <param name="HoaDues">Homeowners association dues.</param>
+/// <param name="PropertyTax">All property taxes as one rate, after its homestead exemption (instead of the separate taxes).</param>
 /// <param name="Total">The sum of every category.</param>
 public sealed record HousingCostsResponse(
     decimal SchoolTax,
@@ -126,6 +129,7 @@ public sealed record HousingCostsResponse(
     decimal HomeownersInsurance,
     decimal MortgageInsurance,
     decimal HoaDues,
+    decimal PropertyTax,
     decimal Total);
 
 /// <summary>A recast of the loan.</summary>

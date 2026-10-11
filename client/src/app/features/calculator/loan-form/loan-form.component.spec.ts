@@ -65,6 +65,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('summarizes each closed section in one line', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
       expect(text('growth-summary')).toBe('Home +4.3% · Insurance +4.8% · HOA +4%');
@@ -72,6 +74,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('updates the summaries as values change', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       controls().isOver65.setValue(true);
       controls().mudTaxRate.setValue(0);
       controls().pidAnnual.setValue(1_200);
@@ -90,6 +94,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('says when a section has nothing in it', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       for (const name of ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate'] as const) {
         controls()[name].setValue(0);
       }
@@ -105,6 +111,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('flags a closed section that contains an invalid value, so the problem is not hidden', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       controls().mudTaxRate.setValue(9);
       controls().pmiRate.setValue(-1);
       controls().hoaIncreaseRate.setValue(99);
@@ -224,6 +232,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('sends over-65 relief only for a homestead', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       controls().isOver65.setValue(true);
       controls().over65Year.setValue(6);
 
@@ -241,6 +251,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('sends zeros for blank optional amounts and null for a blank first payment date', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       const optional = [
         'monthlyExtra', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption',
         'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'homeValueGrowthRate', 'insuranceIncreaseRate',
@@ -404,6 +416,50 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('one property tax rate (the default)', () => {
+    it('sends one combined rate and its homestead exemption, and none of the separate taxes', () => {
+      expect(last().housingCosts).toEqual(expect.objectContaining({
+        propertyTaxRate: 2.2, propertyTaxHomesteadExemption: 50_000, schoolTaxRate: 0, localTaxRate: 0, mudTaxRate: 0, over65OrDisabled: null,
+      }));
+      expect(text('taxes-summary')).toBe('Tax 2.2% · Homestead $50,000 off');
+    });
+
+    it('sends the separate taxes instead once they are chosen, and checks only the fields in use', () => {
+      controls().propertyTaxRate.setValue(40); // out of range, but not in use once the taxes are separate
+      expect(component.form.valid).toBe(false);
+
+      controls().taxMode.setValue('separate');
+
+      expect(component.form.valid).toBe(true);
+      expect(last().housingCosts).toEqual(expect.objectContaining({ propertyTaxRate: 0, schoolTaxRate: 1, localTaxRate: 1.1, mudTaxRate: 0.85 }));
+    });
+
+    it('says what the exemption saves in year 1', () => {
+      fixture.componentRef.setInput('firstYear', {
+        year: 1, startDate: '2026-11-01', marketValue: 375_000, assessedValue: 375_000,
+        schoolTaxableValue: null, localTaxableValue: null, mudTaxableValue: null, propertyTaxableValue: 325_000,
+        costs: { propertyTax: 0, schoolTax: 0, localTax: 0, mudTax: 0, pidAssessment: 0, homeownersInsurance: 0, mortgageInsurance: 0, hoaDues: 0, total: 0 },
+      });
+      fixture.detectChanges();
+
+      expect(text('homestead-savings')).toBe('In year 1 the exemption saves $1,100 in tax.'); // 2.2% of the $50,000 exempt
+    });
+
+    it('reopens a calculation saved with separate taxes as separate taxes', () => {
+      controls().taxMode.setValue('separate');
+      const saved = last();
+
+      const restored = TestBed.createComponent(LoanFormComponent);
+      const sent: AmortizationRequest[] = [];
+      restored.componentInstance.calculate.subscribe((r) => sent.push(r));
+      restored.componentRef.setInput('initial', saved);
+      restored.detectChanges();
+
+      expect(restored.componentInstance.form.controls.taxMode.value).toBe('separate');
+      expect(sent[sent.length - 1]).toEqual(saved);
+    });
+  });
+
   describe('homestead exemptions', () => {
     const firstYear = {
       year: 1, startDate: '2026-11-01', marketValue: 375_000, assessedValue: 375_000,
@@ -412,6 +468,8 @@ describe('LoanFormComponent', () => {
     };
 
     it('says what each exemption saves in year 1, tax by tax', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       fixture.componentRef.setInput('firstYear', firstYear);
       fixture.detectChanges();
 
@@ -537,6 +595,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('reports everything wrong as it changes: bad numbers, bad lump sums, and nothing to borrow', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
       const reports: string[][] = [];
       component.problems.subscribe((p) => reports.push(p));
 
@@ -584,6 +643,8 @@ describe('LoanFormComponent', () => {
 
   describe('template', () => {
     it('shows homestead options only for a homestead, and over-65 options only when checked', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       expect(el('school-exemption')).not.toBeNull();
       expect(el('over-65-year')).toBeNull();
 
@@ -638,6 +699,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('spells out jargon for screen readers and on hover', () => {
+      controls().taxMode.setValue('separate'); // the separate (Texas) taxes
+      fixture.detectChanges();
       const titles = [...fixture.nativeElement.querySelectorAll('abbr')].map((a: HTMLElement) => a.title);
 
       expect(titles).toEqual(expect.arrayContaining([

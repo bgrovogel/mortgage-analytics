@@ -75,12 +75,22 @@
       <span class="section-summary" data-testid="taxes-summary">{{ taxesSummary() }}</span>
     </summary>
     <div class="section-body">
-      <div class="row three">
-        <app-number-field [control]="form.controls.schoolTaxRate" [rule]="rules.schoolTaxRate" testId="school-tax-rate" label="School" />
-        <app-number-field [control]="form.controls.localTaxRate" [rule]="rules.localTaxRate" testId="local-tax-rate" label="County/city" />
-        <app-number-field [control]="form.controls.mudTaxRate" [rule]="rules.mudTaxRate" testId="mud-tax-rate"><abbr title="Municipal Utility District">MUD</abbr></app-number-field>
+      <div class="segmented two" role="radiogroup" aria-label="How the taxes are given">
+        <label><input type="radio" formControlName="taxMode" value="single" data-testid="tax-mode-single" /> One tax rate</label>
+        <label><input type="radio" formControlName="taxMode" value="separate" data-testid="tax-mode-separate" /> Separate taxes</label>
       </div>
-      <p class="hint">Annual rates. A rate of "$0.85 per $100 of value" is entered as 0.85.</p>
+
+      @if (taxMode() === 'single') {
+        <app-number-field [control]="form.controls.propertyTaxRate" [rule]="rules.propertyTaxRate" testId="property-tax-rate" label="Property tax rate (all taxes)" />
+        <p class="hint">Your total yearly rate, as on your tax bill. A rate of "$2.20 per $100 of value" is entered as 2.2.</p>
+      } @else {
+        <div class="row three">
+          <app-number-field [control]="form.controls.schoolTaxRate" [rule]="rules.schoolTaxRate" testId="school-tax-rate" label="School" />
+          <app-number-field [control]="form.controls.localTaxRate" [rule]="rules.localTaxRate" testId="local-tax-rate" label="County/city" />
+          <app-number-field [control]="form.controls.mudTaxRate" [rule]="rules.mudTaxRate" testId="mud-tax-rate"><abbr title="Municipal Utility District">MUD</abbr></app-number-field>
+        </div>
+        <p class="hint">Annual rates, each with its own exemptions (as in Texas). "$0.85 per $100 of value" is entered as 0.85.</p>
+      }
 
       <div class="row">
         <app-number-field [control]="form.controls.pidAnnual" [rule]="rules.pidAnnual" testId="pid-annual"><abbr title="Public Improvement District">PID</abbr> per year</app-number-field>
@@ -93,7 +103,23 @@
         <span><strong>Homestead</strong> (primary residence): exemptions and the appraisal cap</span>
       </label>
 
-      @if (isHomestead()) {
+      @if (isHomestead() && taxMode() === 'single') {
+        <div class="row">
+          <app-number-field [control]="form.controls.propertyTaxHomesteadExemption" [rule]="rules.propertyTaxHomesteadExemption" testId="homestead-exemption" label="Homestead exemption" />
+          <app-number-field [control]="form.controls.homesteadAssessmentCap" [rule]="rules.homesteadAssessmentCap" testId="assessment-cap" label="Value can rise / yr" />
+        </div>
+        @if (homesteadSavings(); as saved) {
+          <p class="hint saved" data-testid="homestead-savings">
+            In year 1 the exemption saves <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> in tax.
+          </p>
+        }
+        <p class="hint">
+          The part of the home's value your taxes skip, in dollars: it comes off the value before the rate applies. Where
+          the homestead cap applies, the taxable value can also rise only so much a year (10% in Texas; leave it at 100 for none).
+        </p>
+      }
+
+      @if (isHomestead() && taxMode() === 'separate') {
         <div class="row three">
           <app-number-field [control]="form.controls.schoolHomesteadExemption" [rule]="rules.schoolHomesteadExemption" testId="school-exemption" label="School exempt" />
           <app-number-field [control]="form.controls.localHomesteadExemptionPercent" [rule]="rules.localHomesteadExemptionPercent" testId="local-exemption" label="County/city" />

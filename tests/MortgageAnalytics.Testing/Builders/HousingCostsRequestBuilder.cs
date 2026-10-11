@@ -19,6 +19,10 @@ public sealed class HousingCostsRequestBuilder
     /// <summary>Sets the MUD tax rate.</summary>
     public HousingCostsRequestBuilder WithMudTax(decimal rate) => With(c => c with { MudTaxRate = rate });
 
+    /// <summary>All property taxes as one rate, with the dollars of a homestead's value exempt from it.</summary>
+    public HousingCostsRequestBuilder WithPropertyTax(decimal rate, decimal homesteadExemption = 0m) =>
+        With(c => c with { PropertyTaxRate = rate, PropertyTaxHomesteadExemption = homesteadExemption });
+
     /// <summary>Marks the home as a homestead, with Texas defaults unless overridden.</summary>
     public HousingCostsRequestBuilder AsHomestead(decimal schoolExemption = 140_000m, decimal localExemptionPercent = 0m, decimal assessmentCap = 10m) =>
         With(c => c with

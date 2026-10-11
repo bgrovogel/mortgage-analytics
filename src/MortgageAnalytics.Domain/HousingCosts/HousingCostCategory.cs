@@ -23,4 +23,10 @@ public enum HousingCostCategory
 
     /// <summary>School district ad valorem tax, kept separate because it carries its own homestead exemption.</summary>
     SchoolTax = 6,
+
+    /// <summary>
+    /// All property taxes as one rate, for the common case where a single combined rate and one homestead exemption
+    /// are known; used instead of the separate school, county/city and MUD taxes.
+    /// </summary>
+    PropertyTax = 7,
 }

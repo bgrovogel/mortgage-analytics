@@ -143,6 +143,16 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             // Relief that starts after the last payment would silently do nothing.
             var loanYears = Math.Max(1, (termInMonths + 11) / 12);
 
+            RuleFor(h => h.PropertyTaxRate).Percentage(max: 15).WithName("Property tax rate");
+            RuleFor(h => h.PropertyTaxHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents().WithName("Homestead exemption");
+            RuleFor(h => h)
+                .Must(h => h.SchoolTaxRate == 0 && h.LocalTaxRate == 0 && h.MudTaxRate == 0)
+                .WithMessage("Use one property tax rate or the separate school, county/city and MUD rates, not both.")
+                .OverridePropertyName(nameof(HousingCostsRequest.PropertyTaxRate))
+                .When(h => h.PropertyTaxRate > 0);
+            RuleFor(h => h.Over65OrDisabled)
+                .Null().WithMessage("Over-65 relief applies to the separate school and county/city taxes; enter them separately to use it.")
+                .When(h => h.PropertyTaxRate > 0);
             RuleFor(h => h.SchoolTaxRate).Percentage(max: 10).WithName("School tax rate");
             RuleFor(h => h.LocalTaxRate).Percentage(max: 10).WithName("County/city tax rate");
             RuleFor(h => h.MudTaxRate).Percentage(max: 5).WithName("MUD tax rate");
