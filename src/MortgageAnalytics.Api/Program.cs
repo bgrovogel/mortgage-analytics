@@ -19,6 +19,11 @@ builder.Services.AddEmail(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+// A 30-year analysis is about 270 KB of JSON, sent again after each pause in typing; Brotli or gzip makes it a
+// fraction of that. Safe over HTTPS too (BREACH needs a secret in the compressed body, and the session is a cookie
+// header, never in one).
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
@@ -49,6 +54,7 @@ var app = builder.Build();
 // Create the saved-calculations database, or apply new migrations, before taking requests.
 await app.Services.MigrateDatabaseAsync();
 
+app.UseResponseCompression();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
