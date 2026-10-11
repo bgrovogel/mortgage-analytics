@@ -20,7 +20,15 @@ describe('SavingsSummaryComponent', () => {
 
     expect(text('total-monthly-payment')).toBe('$1,711.60');
     expect(text('monthly-payment')).toBe('$1,199.10');
-    expect(fixture.nativeElement.textContent).toContain('taxes & fees');
+    expect(text('housing-costs-label')).toBe('county/city tax');
+  });
+
+  it('names exactly the housing costs the payment includes', () => {
+    render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83, homeownersInsurance: 200, mortgageInsurance: 148.44, hoaDues: 50 }) }) }));
+    expect(text('housing-costs-label')).toBe('property tax, insurance, PMI & HOA');
+
+    render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ schoolTax: 100, localTax: 90, mudTax: 80, pidAssessment: 100, homeownersInsurance: 200 }) }) }));
+    expect(text('housing-costs-label')).toBe('property taxes, PID & insurance');
   });
 
   it('labels the payment as the required payment', () => {
@@ -96,7 +104,7 @@ describe('SavingsSummaryComponent', () => {
   it('omits the taxes line when there are no housing costs', () => {
     render(aResponse());
 
-    expect(fixture.nativeElement.textContent).not.toContain('taxes & fees');
+    expect(text('housing-costs-label')).toBeUndefined();
   });
 
   it('does not repeat the headline when the savings are all interest', () => {

@@ -50,11 +50,11 @@ const LOAN_COLUMNS: ScheduleColumn[] = [
 ];
 const COST_COLUMNS: ScheduleColumn[] = COST_CATEGORIES.map((c) => ({ key: c.key, label: c.label, value: (r) => r.costs[c.key] }));
 const SUMMARY_COLUMNS: ScheduleColumn[] = [
-  { key: 'housingCosts', label: 'Taxes & fees', value: (r) => r.housingCosts },
+  { key: 'housingCosts', label: 'Housing costs', value: (r) => r.housingCosts },
   { key: 'totalOutlay', label: 'Total', value: (r) => r.totalOutlay },
 ];
 
-/** Shown until the user chooses: everything except the separate cost categories, which "Taxes & fees" sums up. */
+/** Shown until the user chooses: everything except the separate cost categories, which "Housing costs" sums up. */
 const DEFAULT_HIDDEN: readonly string[] = COST_CATEGORIES.map((c) => c.key);
 
 /**

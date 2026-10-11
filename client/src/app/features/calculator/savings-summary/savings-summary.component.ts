@@ -2,7 +2,15 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
 import { usd } from '../../../core/formatting/format';
-import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { AmortizationResponse, HousingCosts } from '../../../core/models/amortization.models';
+
+/** Each tax, as the payment tile names it when it is the only one. */
+const TAXES: readonly [keyof HousingCosts, string][] = [
+  ['propertyTax', 'property tax'],
+  ['schoolTax', 'school tax'],
+  ['localTax', 'county/city tax'],
+  ['mudTax', 'MUD tax'],
+];
 
 /** Headline numbers. These are stat tiles rather than a chart, because each one is a single value. */
 @Component({
@@ -35,7 +43,7 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
         <small>
           <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span> principal &amp; interest
           @if (r.baseline.monthlyHousingCosts.total > 0) {
-            + {{ r.baseline.monthlyHousingCosts.total | currency }} taxes &amp; fees
+            + {{ r.baseline.monthlyHousingCosts.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
           }
         </small>
         @if (r.buydown) {
@@ -109,6 +117,23 @@ export class SavingsSummaryComponent {
     return first
       ? { loan: first.monthlyPayment, total: first.monthlyPayment + r.baseline.monthlyHousingCosts.total }
       : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment };
+  });
+
+  /**
+   * What the first payment's housing costs are made of, in words: "property tax, insurance, PMI & HOA". Only the
+   * costs this loan has are named, so a loan with no PMI or HOA doesn't mention them.
+   */
+  readonly housingCostsLabel = computed(() => {
+    const c = this.result().baseline.monthlyHousingCosts;
+    const taxes = TAXES.filter(([key]) => c[key] > 0).map(([, words]) => words);
+    const parts = [
+      ...(taxes.length > 1 ? ['property taxes'] : taxes),
+      ...(c.pidAssessment > 0 ? ['PID'] : []),
+      ...(c.homeownersInsurance > 0 ? ['insurance'] : []),
+      ...(c.mortgageInsurance > 0 ? ['PMI'] : []),
+      ...(c.hoaDues > 0 ? ['HOA'] : []),
+    ];
+    return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}` : (parts[0] ?? '');
   });
 
   /** True when extra payments change anything; otherwise savings tiles would only show zeros. */

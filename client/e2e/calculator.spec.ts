@@ -168,7 +168,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
   });
 
-  test('adds taxes and fees to the monthly payment but never counts them as savings', async ({ calculator }) => {
+  test('adds housing costs to the monthly payment but never counts them as savings', async ({ calculator }) => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.clearHousingCosts();
     await calculator.set('local-tax-rate', 2.1);
@@ -394,7 +394,7 @@ test.describe('Mortgage calculator', () => {
     const totals = page.getByTestId('lifetime-totals');
     await expect(totals, 'the lifetime totals include the tax').toContainText('Property tax');
     await expect(totals, 'and what everything adds up to').toContainText('Everything paid');
-    await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'categories start rolled up into Taxes & fees').toHaveCount(0);
+    await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'categories start rolled up into Housing costs').toHaveCount(0);
 
     await page.getByTestId('column-picker').locator('summary').click();
     await page.getByRole('checkbox', { name: 'Property tax' }).check();

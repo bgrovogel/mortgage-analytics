@@ -54,7 +54,7 @@ describe('ScheduleTableComponent', () => {
     });
     render(aResponse({ accelerated }));
 
-    expect(headers()).toEqual(expect.arrayContaining(['Taxes & fees', 'Total']));
+    expect(headers()).toEqual(expect.arrayContaining(['Housing costs', 'Total']));
     expect(rows()[0].textContent).toContain('PMI');
     expect(rows()[1].textContent).not.toContain('PMI');
   });
@@ -145,13 +145,13 @@ describe('ScheduleTableComponent', () => {
     it('offers every money column, and each cost this loan actually has', () => {
       render(withCosts());
 
-      expect(options()).toEqual(['Principal', 'Interest', 'Extra', 'School tax', 'HOA dues', 'Taxes & fees', 'Total']);
+      expect(options()).toEqual(['Principal', 'Interest', 'Extra', 'School tax', 'HOA dues', 'Housing costs', 'Total']);
     });
 
-    it('starts with the costs rolled up into one Taxes & fees column', () => {
+    it('starts with the costs rolled up into one Housing costs column', () => {
       render(withCosts());
 
-      expect(headers()).toEqual(['#', 'Date', 'Payment', 'Principal', 'Interest', 'Extra', 'Taxes & fees', 'Total', 'Balance']);
+      expect(headers()).toEqual(['#', 'Date', 'Payment', 'Principal', 'Interest', 'Extra', 'Housing costs', 'Total', 'Balance']);
     });
 
     it('adds a cost as its own column, with its own total', () => {
