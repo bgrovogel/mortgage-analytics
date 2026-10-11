@@ -348,6 +348,12 @@ Accounts follow the same habit of not trusting the client:
   on disk, so links (and sessions) survive a restart.
 - **Sign-in only returns to paths on this site** (`/history`, never `//evil.example`), so it cannot be
   turned into an open redirect.
+- **Account attempts are rate limited:** 10 sign-in, sign-up, resend and reset attempts per minute from one
+  address (`RateLimiting:AccountPermitsPerMinute`), then a 429 that says when to try again. Reads and the
+  calculators are not limited.
+- **Browser security headers on every response:** a Content-Security-Policy that allows scripts only from the
+  app's own files and no framing by other sites, plus `nosniff` and `Referrer-Policy: no-referrer` (emailed
+  links carry codes in the URL).
 
 ### API
 
@@ -461,5 +467,4 @@ And by convention, supported by shared infrastructure:
 - **Equity tracking**: home value minus loan balance, year by year.
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
-- **Rate limiting** on sign-in and registration, on top of Identity's lockout.
 - **Mutation testing** (Stryker.NET) on the domain, to measure how strong the tests are, not just how much they cover.

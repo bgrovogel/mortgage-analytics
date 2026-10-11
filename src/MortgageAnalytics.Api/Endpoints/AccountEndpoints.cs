@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -14,6 +15,12 @@ namespace MortgageAnalytics.Api.Endpoints;
 /// </summary>
 public static class AccountEndpoints
 {
+    /// <summary>The rate-limiting policy on account attempts.</summary>
+    public const string AttemptsPolicy = "account-attempts";
+
+    /// <summary>Account attempts allowed per client address per minute, unless configured otherwise.</summary>
+    public const int DefaultAttemptsPerMinute = 10;
+
     /// <summary>Registers Identity, its password rules, the session cookie and the keys that sign them.</summary>
     /// <param name="services">The container to add to.</param>
     /// <param name="configuration">The app's configuration (<c>DataProtection:KeysDirectory</c>).</param>
@@ -51,7 +58,41 @@ public static class AccountEndpoints
             options.SlidingExpiration = true;
         });
 
+        services.AddAttemptLimit(configuration.GetValue("RateLimiting:AccountPermitsPerMinute", DefaultAttemptsPerMinute));
+
         return services;
+    }
+
+    /// <summary>
+    /// Limits account attempts (sign-in, sign-up, emailed links, password resets) from one address to
+    /// <paramref name="permitsPerMinute"/>, so a script can't guess passwords at speed or flood someone's inbox. Reads
+    /// (who is signed in, asked on every page load) are never limited. Over the limit is a 429 problem that says when
+    /// to try again.
+    /// </summary>
+    private static void AddAttemptLimit(this IServiceCollection services, int permitsPerMinute)
+    {
+        services.AddRateLimiter(options =>
+        {
+            options.AddPolicy(AttemptsPolicy, context => HttpMethods.IsGet(context.Request.Method)
+                ? RateLimitPartition.GetNoLimiter("reads")
+                : RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions { PermitLimit = permitsPerMinute, Window = TimeSpan.FromMinutes(1) }));
+
+            options.OnRejected = async (rejected, cancellationToken) =>
+            {
+                var response = rejected.HttpContext.Response;
+                response.StatusCode = StatusCodes.Status429TooManyRequests;
+                if (rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                    response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                await rejected.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(new ProblemDetailsContext
+                {
+                    HttpContext = rejected.HttpContext,
+                    ProblemDetails = { Status = StatusCodes.Status429TooManyRequests, Title = "Too many attempts. Wait a minute, then try again." },
+                });
+            };
+        });
     }
 
     /// <summary>Maps the account endpoints under <c>/api/v1/account</c>.</summary>
@@ -59,7 +100,7 @@ public static class AccountEndpoints
     /// <returns>The same route builder, for chaining.</returns>
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/v1/account").WithTags("Account");
+        var group = routes.MapGroup("/api/v1/account").WithTags("Account").RequireRateLimiting(AttemptsPolicy);
 
         group.MapIdentityApi<IdentityUser>();
 

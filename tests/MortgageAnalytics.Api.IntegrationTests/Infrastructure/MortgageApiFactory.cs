@@ -17,8 +17,10 @@ namespace MortgageAnalytics.Api.IntegrationTests.Infrastructure;
 /// <param name="configureServices">Optional extra registrations, e.g. a substitute service for error-path tests.</param>
 /// <param name="environment">The hosting environment; "Development" turns on development-only endpoints.</param>
 /// <param name="captureMail">True to record email in <see cref="SentMail"/>; false to use the app's own transport.</param>
+/// <param name="settings">Configuration to override, e.g. a lower account rate limit.</param>
 public sealed class MortgageApiFactory(
-    Action<IServiceCollection>? configureServices = null, string environment = "Production", bool captureMail = true)
+    Action<IServiceCollection>? configureServices = null, string environment = "Production", bool captureMail = true,
+    Dictionary<string, string>? settings = null)
     : WebApplicationFactory<Program>
 {
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"mortgage-analytics-tests-{Guid.NewGuid():N}.db");
@@ -33,6 +35,10 @@ public sealed class MortgageApiFactory(
         builder.UseSetting("ConnectionStrings:Calculations", $"Data Source={_databasePath}");
         builder.UseSetting("DataProtection:KeysDirectory", Path.Combine(_appDataPath, "keys"));
         builder.UseSetting("Email:OutboxDirectory", Path.Combine(_appDataPath, "outbox"));
+        // The whole suite signs up and in from one address; the limit itself is tested with its own host.
+        builder.UseSetting("RateLimiting:AccountPermitsPerMinute", "10000");
+        foreach (var (key, value) in settings ?? [])
+            builder.UseSetting(key, value);
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<TimeProvider>(TestClock.Create());

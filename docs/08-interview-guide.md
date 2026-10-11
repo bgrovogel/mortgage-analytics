@@ -157,8 +157,14 @@ ASP.NET Core Identity (`MapIdentityApi`) handles it:
 - Return URLs after sign-in must be same-site paths, so there's no open redirect.
 - The dev mailbox endpoint exists only in Development.
 - The container runs as a non-root user.
-- **Missing, and next on my list:** rate limiting on sign-in and registration (ASP.NET Core has built-in
-  middleware for it).
+- **Account attempts are rate limited** with ASP.NET Core's built-in limiter: 10 POSTs a minute per address
+  (sign-in, sign-up, resend, reset), then a 429 with `Retry-After`. GETs are exempt, because the app asks who is
+  signed in on every page load.
+- **Security headers:** a Content-Security-Policy with `script-src 'self'` (no inline script; Angular's
+  critical-CSS inlining is off because it uses an inline `onload`), `frame-ancestors 'none'`, `nosniff`, and
+  `Referrer-Policy: no-referrer`, because reset links carry their code in the URL.
+- **Behind a reverse proxy** the limiter would see the proxy's address, so a deployment would add forwarded
+  headers first.
 
 ### Angular
 
@@ -257,7 +263,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 |---|---|---|
 | Database | SQLite, single writer | PostgreSQL via the EF provider; the abstractions are already there |
 | Client models | TypeScript mirrors of the C# contracts, kept in step by tests | Generate them from the OpenAPI document (NSwag or openapi-typescript) |
-| Security | Identity, lockout, SameSite cookies | Rate limiting on sign-in and registration |
+| Security | Identity, lockout, SameSite cookies, attempt limits, CSP | Forwarded headers behind a proxy, so the limit sees each client |
 | Runtime versions | .NET 10 (LTS), Angular 21 (LTS) | Angular 22 once the machines run Node 22.22+; `ng update`, one major at a time |
 | Test strength | Coverage gate + independent models | Mutation testing (Stryker.NET) on the domain |
 | History | Loads all of a user's saves | Pagination, once lists get long |

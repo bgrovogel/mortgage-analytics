@@ -107,16 +107,19 @@ Details worth knowing:
 | `Endpoints/*.cs` | One static class per area, each with a `Map…Endpoints` extension: amortization, refinance, strategies, saved calculations, account |
 | `Filters/ValidationFilter.cs` | Generic endpoint filter: finds the `TRequest` argument, validates it, returns a 400 ValidationProblem or calls the endpoint |
 | `Errors/GlobalExceptionHandler.cs` | `IExceptionHandler`: unreadable requests keep their status (400, 413); anything else is a logged, generic 500 |
+| `Security/SecurityHeaders.cs` | The Content-Security-Policy and the other browser security headers, on every response |
 | `Email/` | `AccountEmailSender` (the email text and links), `SmtpMailTransport` (MailKit), `FileOutbox` (local dev), `EmailSetup` (wiring, and the Development-only outbox endpoints) |
 
 ### The pipeline (in `Program.cs` order)
 
-1. `UseExceptionHandler()` + `UseStatusCodePages()`: every error becomes ProblemDetails.
-2. Swagger and Swagger UI (in every environment: the docs are part of the showcase).
-3. `UseDefaultFiles()` + `UseStaticFiles()`: the Angular app from `wwwroot`.
-4. `UseAuthentication()` + `UseAuthorization()`.
-5. Endpoints: `/health`, the API groups, the dev outbox (Development only).
-6. A JSON 404 for unknown `/api/...` routes, then `MapFallbackToFile("index.html")` so Angular's router handles
+1. `UseSecurityHeaders()`: first, so even errors and static files carry the CSP and the other headers.
+2. `UseResponseCompression()`: Brotli or gzip for the JSON and the app's own files.
+3. `UseExceptionHandler()` + `UseStatusCodePages()`: every error becomes ProblemDetails.
+4. Swagger and Swagger UI (in every environment: the docs are part of the showcase).
+5. `UseDefaultFiles()` + `UseStaticFiles()`: the Angular app from `wwwroot`.
+6. `UseAuthentication()` + `UseAuthorization()`, then `UseRateLimiter()` (the account attempt limit).
+7. Endpoints: `/health`, the API groups, the dev outbox (Development only).
+8. A JSON 404 for unknown `/api/...` routes, then `MapFallbackToFile("index.html")` so Angular's router handles
    every other URL.
 
 ### An endpoint, annotated

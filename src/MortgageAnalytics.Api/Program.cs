@@ -4,6 +4,7 @@ using Microsoft.OpenApi;
 using MortgageAnalytics.Api.Email;
 using MortgageAnalytics.Api.Endpoints;
 using MortgageAnalytics.Api.Errors;
+using MortgageAnalytics.Api.Security;
 using MortgageAnalytics.Application;
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Infrastructure;
@@ -54,6 +55,7 @@ var app = builder.Build();
 // Create the saved-calculations database, or apply new migrations, before taking requests.
 await app.Services.MigrateDatabaseAsync();
 
+app.UseSecurityHeaders();
 app.UseResponseCompression();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -72,6 +74,7 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
