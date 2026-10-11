@@ -4,6 +4,7 @@ import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { FieldRules, validatorsFor } from '../../core/forms/field-rules';
 import { pct } from '../../core/formatting/format';
 import { AdjustableRateInput, TemporaryBuydownInput } from '../../core/models/amortization.models';
+import { SharedRate } from '../../core/state/shared-loan.store';
 
 /** How a loan's rate works: fixed for the whole loan, bought down for the first years, or adjustable. */
 export type RateType = 'fixed' | 'buydown' | 'arm';
@@ -32,6 +33,8 @@ export const ARM_TYPES = [
   { value: '5/6', fixedMonths: 60, intervalMonths: 6 },
   { value: '7/6', fixedMonths: 84, intervalMonths: 6 },
   { value: '10/6', fixedMonths: 120, intervalMonths: 6 },
+  // Any other fixed period and reset interval, entered as numbers.
+  { value: 'other', fixedMonths: 0, intervalMonths: 0 },
 ] as const;
 
 export type ArmType = (typeof ARM_TYPES)[number]['value'];
@@ -96,7 +99,7 @@ function syncArmFields(form: RateOptionsForm): void {
 
 /** The months fixed and the reset interval, from the ARM's type or its payments until the next reset. */
 function armTiming(v: ReturnType<RateOptionsForm['getRawValue']>, mode: ArmMode) {
-  if (mode === 'reset') return { fixedMonths: v.armFixedMonths, intervalMonths: v.armIntervalMonths };
+  if (mode === 'reset' || v.armType === 'other') return { fixedMonths: v.armFixedMonths, intervalMonths: v.armIntervalMonths };
   const type = ARM_TYPES.find((t) => t.value === v.armType)!;
   return { fixedMonths: type.fixedMonths, intervalMonths: type.intervalMonths };
 }
@@ -131,7 +134,7 @@ export function setRateOptions(form: RateOptionsForm, buydown: TemporaryBuydownI
   } else if (arm) {
     const type = ARM_TYPES.find((t) => t.fixedMonths === arm.initialFixedMonths && t.intervalMonths === arm.adjustmentIntervalMonths);
     form.patchValue({
-      rateType: 'arm', armType: type?.value ?? form.controls.armType.value,
+      rateType: 'arm', armType: type?.value ?? 'other',
       armFixedMonths: arm.initialFixedMonths, armIntervalMonths: arm.adjustmentIntervalMonths, armExpectedRate: arm.expectedRate,
       armInitialCap: arm.initialCap, armPeriodicCap: arm.periodicCap, armLifetimeCap: arm.lifetimeCap,
     }, { emitEvent: false });
@@ -139,6 +142,27 @@ export function setRateOptions(form: RateOptionsForm, buydown: TemporaryBuydownI
     form.patchValue({ rateType: 'fixed' }, { emitEvent: false });
   }
   syncArmFields(form);
+}
+
+/**
+ * Takes the shared loan's rate type (see SharedRate), quietly, and says whether that changed anything.
+ * <paramref name="made"/> is the payments already made where an ARM's fixed period counts from the first payment
+ * (the shared one counts from today). A page without a buydown option shows a shared buydown as fixed.
+ */
+export function applySharedRate(form: RateOptionsForm, rate: SharedRate | null | undefined, made = 0, allowBuydown = true): boolean {
+  if (!rate) return false;
+  const before = JSON.stringify(form.getRawValue());
+  if (rate.kind === 'buydown' && allowBuydown) {
+    setRateOptions(form, { yearlyReductions: rate.yearlyReductions }, null);
+  } else if (rate.kind === 'arm') {
+    setRateOptions(form, null, {
+      initialFixedMonths: made + rate.nextResetIn, adjustmentIntervalMonths: rate.intervalMonths, expectedRate: rate.expectedRate,
+      initialCap: rate.initialCap, periodicCap: rate.periodicCap, lifetimeCap: rate.lifetimeCap,
+    });
+  } else {
+    setRateOptions(form, null, null);
+  }
+  return JSON.stringify(form.getRawValue()) !== before;
 }
 
 /** "4.5% in year 1, 5.5% in year 2, then 6.5%": the rate each year of a buydown is paid at. */
@@ -154,6 +178,7 @@ export function rateSummary(form: RateOptionsForm, mode: ArmMode, rate: number):
   if (v.rateType === 'arm') {
     const caps = `(caps ${v.armInitialCap}/${v.armPeriodicCap}/${v.armLifetimeCap})`;
     if (mode === 'reset') return `Adjustable: ${pct(rate)} for ${v.armFixedMonths} more payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
+    if (v.armType === 'other') return `ARM: ${pct(rate)} for ${v.armFixedMonths} payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
     const type = ARM_TYPES.find((t) => t.value === v.armType)!;
     return `${v.armType} ARM: ${pct(rate)} for ${type.fixedMonths / 12} yr, then toward ${pct(v.armExpectedRate)} ${caps}`;
   }

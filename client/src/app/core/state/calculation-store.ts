@@ -2,7 +2,7 @@ import { DestroyRef, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { INPUTS_FIELD, SavedCalculation, SavedCalculationKind, SavedInputs, savedInputsFor } from '../models/saved-calculation.models';
 import { latestRequest } from './latest-request';
-import { SharedLoan, SharedLoanChange, SharedLoanStore, sameLoan } from './shared-loan.store';
+import { SharedLoan, SharedLoanChange, SharedLoanStore, SharedRate, sameLoan, sameRate } from './shared-loan.store';
 
 /** The saved calculation a page is showing: enough to update it in place, and to name it. */
 export type SavedLink = Pick<SavedCalculation, 'id' | 'name'>;
@@ -104,12 +104,26 @@ export abstract class CalculationStore<TRequest, TResponse> {
    * a page that rounds the loan (the calculator's whole-year term) must not send the rounding back to the others.
    */
   protected matchesShared(request: TRequest, shared: SharedLoan): boolean {
-    return sameLoan(this.loanOf(request), shared);
+    const own = this.loanOf(request);
+    return sameLoan({ ...own, rate: null }, { ...shared, rate: null }) && this.rateMatches(own.rate ?? null, shared.rate ?? null);
+  }
+
+  /** False on a page that has no buydown option for this loan (it shows a shared buydown as fixed). */
+  protected readonly holdsBuydowns: boolean = true;
+
+  /**
+   * True when this page's rate type is the shared one, as closely as it can hold it: either side unknown counts as
+   * a match, and so does a fixed rate here for a shared buydown on a page that cannot hold buydowns.
+   */
+  protected rateMatches(own: SharedRate | null, shared: SharedRate | null): boolean {
+    if (own === null || shared === null) return true;
+    if (!this.holdsBuydowns && own.kind === 'fixed' && shared.kind === 'buydown') return true;
+    return sameRate(own, shared);
   }
 
   /** Makes this request's loan the one every page starts from. */
   private share(request: TRequest): void {
-    this.sharedLoan.update(this.loanOf(request), this.pageName);
+    this.sharedLoan.update(this.loanOf(request), this.pageName, this.holdsBuydowns);
     this.seenLoanVersion = this.sharedLoan.version();
   }
 

@@ -32,7 +32,7 @@
             <span>ARM type</span>
             <select formControlName="armType" [attr.data-testid]="p + 'arm-type'">
               @for (type of armTypes; track type.value) {
-                <option [value]="type.value">{{ type.value }}</option>
+                <option [value]="type.value">{{ type.value === 'other' ? 'Other' : type.value }}</option>
               }
             </select>
           </label>
@@ -41,7 +41,10 @@
         }
         <app-number-field [control]="f.controls.armExpectedRate" [rule]="rules.armExpectedRate" [testId]="p + 'arm-expected-rate'" label="Rate after that" />
       </div>
-      @if (mode() === 'reset') {
+      @if (mode() === 'type' && f.controls.armType.value === 'other') {
+        <app-number-field [control]="f.controls.armFixedMonths" [rule]="rules.armFixedMonths" [testId]="p + 'arm-fixed-months'" label="Fixed for (payments)" />
+      }
+      @if (mode() === 'reset' || f.controls.armType.value === 'other') {
         <label class="field">
           <span>Then resets every</span>
           <select formControlName="armIntervalMonths" [attr.data-testid]="p + 'arm-interval'">

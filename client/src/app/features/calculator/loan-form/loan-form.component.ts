@@ -18,7 +18,7 @@ import {
 import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
-import { RATE_OPTION_RULES, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
+import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
 
@@ -364,11 +364,13 @@ export class LoanFormComponent implements OnInit {
       termYears: years,
       firstPaymentDate,
     });
+    // The rate type too: an ARM's fixed period counts from the first payment here, from today when shared.
+    const rateChanged = applySharedRate(this.form.controls.rate, shared.loan.rate, made);
     // Let the form's derived values (the loan summary, the existing-loan note) see the new numbers, without sending.
     this.restoring = true;
     this.form.updateValueAndValidity();
     this.restoring = false;
-    if (changed || wasPercent) {
+    if (changed || wasPercent || rateChanged) {
       const left = years * 12 - made;
       const wanted = start ? start.termInMonths - made : remainingTermInMonths;
       this.sharedFrom.set({

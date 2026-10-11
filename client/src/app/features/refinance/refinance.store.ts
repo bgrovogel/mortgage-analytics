@@ -3,7 +3,8 @@ import { describeRefinance, suggestRefinanceName } from '../../core/formatting/d
 import { RefinanceRequest, RefinanceResponse } from '../../core/models/refinance.models';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
-import { SharedLoan } from '../../core/state/shared-loan.store';
+import { paymentsMade } from '../../core/loans/loan-progress';
+import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
 
 /** The refinance comparison's state. */
 @Injectable({ providedIn: 'root' })
@@ -25,8 +26,13 @@ export class RefinanceStore extends CalculationStore<RefinanceRequest, Refinance
       remainingTermInMonths: request.remainingTermInMonths,
       homeValue: null,
       start: request.originalLoan ?? null,
+      // The current loan's ARM counts from the next payment, or from the original first one when that is given.
+      rate: sharedRateFrom(null, request.currentAdjustableRate, request.originalLoan ? paymentsMade(request.originalLoan.firstPaymentDate, new Date()) : 0),
     };
   }
+
+  /** The current loan has no buydown option: a shared buydown shows here as fixed, and stays shared. */
+  protected override readonly holdsBuydowns = false;
 
   protected send$(request: RefinanceRequest) {
     return this.api.analyze(request);

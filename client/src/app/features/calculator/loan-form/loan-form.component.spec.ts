@@ -407,6 +407,27 @@ describe('LoanFormComponent', () => {
       expect(text('existing-loan')).toContain('payment 61 of 360 is next');
     });
 
+    it("takes a shared ARM as its type when it is one (a 5/1 from today), or by its months otherwise", () => {
+      const open = (nextResetIn: number) => {
+        fixture = TestBed.createComponent(LoanFormComponent);
+        component = fixture.componentInstance;
+        emitted = [];
+        component.calculate.subscribe((request) => emitted.push(request));
+        fixture.componentRef.setInput('loan', {
+          loan: { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 400_000,
+            rate: { kind: 'arm', nextResetIn, intervalMonths: 12, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 } },
+          from: 'Pay off or invest', version: 1,
+        });
+        fixture.detectChanges();
+        return emitted[0];
+      };
+
+      expect(open(60).adjustableRate).toEqual(expect.objectContaining({ initialFixedMonths: 60, adjustmentIntervalMonths: 12 }));
+      expect(component.form.controls.rate.controls.armType.value).toBe('5/1');
+      expect(open(30).adjustableRate).toEqual(expect.objectContaining({ initialFixedMonths: 30, adjustmentIntervalMonths: 12 }));
+      expect(component.form.controls.rate.controls.armType.value).toBe('other');
+    });
+
     it('rounds a part-year term, saying how many payments that leaves', () => {
       const request = openOn('2021-11-01', { balance: 180_000, annualInterestRate: 6, remainingTermInMonths: 295, homeValue: null });
 

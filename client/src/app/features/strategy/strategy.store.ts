@@ -3,7 +3,7 @@ import { describeStrategy, suggestStrategyName } from '../../core/formatting/des
 import { StrategyComparison, StrategyRequest } from '../../core/models/strategy.models';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
-import { SharedLoan } from '../../core/state/shared-loan.store';
+import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
 
 /** The pay-off-or-invest comparison's state. */
 @Injectable({ providedIn: 'root' })
@@ -23,6 +23,7 @@ export class StrategyStore extends CalculationStore<StrategyRequest, StrategyCom
       annualInterestRate: request.annualInterestRate,
       remainingTermInMonths: request.remainingTermInMonths,
       homeValue: request.homeValue,
+      rate: sharedRateFrom(request.buydown, request.adjustableRate),
     };
   }
 

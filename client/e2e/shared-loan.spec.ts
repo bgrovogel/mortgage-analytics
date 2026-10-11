@@ -118,6 +118,23 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'existing-loan'), 'the same loan, as far along').toContainText(`payment ${made + 1} of 360 is next`);
   });
 
+  test('the rate type carries over too: an ARM set on Pay off or invest reaches Refinance and the Calculator', async ({ page }) => {
+    await page.goto('/strategy');
+    await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');
+    await page.getByTestId('section-rate').locator('summary').click();
+    await page.getByTestId('rate-type-arm').check();
+    await box(page, 'arm-fixed-months').fill('60');
+    await box(page, 'arm-expected-rate').fill('8.5');
+
+    await go(page, 'Refinance');
+    await expect(box(page, 'current-rate-summary'), "the current loan is the same ARM, its reset 60 payments away")
+      .toHaveText('Adjustable: 6.5% for 60 more payments, then toward 8.5% (caps 5/2/5)');
+
+    await go(page, 'Calculator');
+    await expect(box(page, 'rate-summary'), 'a new loan fixed for 60 payments, then yearly: a 5/1 ARM')
+      .toHaveText('5/1 ARM: 6.5% for 5 yr, then toward 8.5% (caps 5/2/5)');
+  });
+
   test('just opening a page does not overwrite a loan typed elsewhere', async ({ page }) => {
     await page.goto('/refinance');
     await box(page, 'current-balance').fill('123000');

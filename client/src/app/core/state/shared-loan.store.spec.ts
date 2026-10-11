@@ -16,14 +16,14 @@ describe('SharedLoanStore', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan, balance: 250_000 }, 'Refinance');
 
-    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000, start: null }, from: 'Refinance', version: 2 });
+    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000, start: null, rate: null }, from: 'Refinance', version: 2 });
   });
 
   it('does not count the same loan sent again as a change', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan }, 'Pay off or invest');
 
-    expect(store.change()).toEqual({ loan: { ...loan, start: null }, from: 'Calculator', version: 1 });
+    expect(store.change()).toEqual({ loan: { ...loan, start: null, rate: null }, from: 'Calculator', version: 1 });
   });
 
   it('keeps how the loan started while the loan is unchanged, and drops it once a page without it changes the loan', () => {

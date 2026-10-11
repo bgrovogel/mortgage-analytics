@@ -11,7 +11,7 @@ import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
-import { RATE_OPTION_RULES, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
+import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 /** The usual new terms, in years. "keep" means the new loan ends when the current one would. */
 const TERMS = [30, 25, 20, 15, 10] as const;
@@ -194,7 +194,10 @@ export class RefinanceFormComponent implements OnInit {
     const changed = setChanged(this.form, start
       ? { currentAnnualInterestRate: annualInterestRate, originalAmount: start.amount, originalTermYears: start.termInMonths / 12, firstPaymentDate: start.firstPaymentDate }
       : { currentBalance: balance, currentAnnualInterestRate: annualInterestRate, yearsLeft: remainingTermInMonths / 12 });
-    if (changed || entryChanged) this.sharedFrom.set(shared.from);
+    // The rate type too: the current loan's ARM counts from its first payment when the original loan is known.
+    const made = start ? paymentsMade(start.firstPaymentDate, new Date()) : 0;
+    const rateChanged = applySharedRate(this.form.controls.currentRate, shared.loan.rate, made, false);
+    if (changed || entryChanged || rateChanged) this.sharedFrom.set(shared.from);
   }
 
   /**

@@ -9,7 +9,7 @@ import { InvestorRiskProfile, StrategyRequest, TaxFilingStatus } from '../../../
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
-import { RATE_OPTION_RULES, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
+import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 const rules = STRATEGY_RULES;
 
@@ -172,7 +172,8 @@ export class StrategyFormComponent implements OnInit {
         yearsLeft: remainingTermInMonths / 12,
         ...(homeValue === null ? {} : { homeValue }),
       });
-      if (changed) this.sharedFrom.set(shared.from);
+      const rateChanged = applySharedRate(this.form.controls.rate, shared.loan.rate);
+      if (changed || rateChanged) this.sharedFrom.set(shared.from);
     }
     if (this.form.valid) this.compare.emit(this.toRequest());
   }

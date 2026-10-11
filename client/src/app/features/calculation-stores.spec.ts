@@ -107,7 +107,7 @@ describe('CalculationStores', () => {
       calculator().send({ ...purchase, annualInterestRate: 6 });
 
       expect(refinancePage().loanToApply()).toEqual({
-        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, start: null },
+        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' } },
         from: 'Calculator',
         version: 1,
       });
@@ -159,7 +159,7 @@ describe('CalculationStores', () => {
 
       expect(refinancePage().loanToApply()!.loan).toEqual(
         { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: 250_000, // no growth given
-          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' } });
+          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' }, rate: { kind: 'fixed' } });
 
       refinancePage().send(refinance);
       refinancePage().send({ ...refinance, currentBalance: 186_000, currentAnnualInterestRate: 6, remainingTermInMonths: 300 });
@@ -184,6 +184,29 @@ describe('CalculationStores', () => {
       expect(calculator().loanToApply()).toBeNull();
     });
 
+    it('carries the rate type, counted from today, and leaves alone what a page cannot say or hold', () => {
+      jest.setSystemTime(new Date(2026, 9, 10));
+      const arm = { initialFixedMonths: 84, adjustmentIntervalMonths: 12, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 };
+      const existing = { ...purchase, homePrice: 250_000, downPayment: 50_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: '2021-11-01' };
+
+      // A 7/1 ARM on a loan 60 payments in: its next reset is 24 payments from today.
+      calculator().send(purchase);
+      calculator().send({ ...existing, adjustableRate: arm });
+      expect(strategyPage().loanToApply()!.loan.rate).toEqual(
+        { kind: 'arm', nextResetIn: 24, intervalMonths: 12, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 });
+
+      // A buydown chosen on Pay off or invest is kept when Refinance, which cannot hold one, changes the balance.
+      strategyPage().send(strategy);
+      strategyPage().send({ ...strategy, remainingTermInMonths: 360, buydown: { yearlyReductions: [2, 1] } });
+      refinancePage().send(refinance);
+      refinancePage().send({ ...refinance, currentBalance: 290_000 });
+      expect(calculator().loanToApply()!.loan.rate).toEqual({ kind: 'buydown', yearlyReductions: [2, 1] });
+
+      // An ARM past its first reset cannot be said from today: the rate is shared as unknown, so each page keeps its own.
+      calculator().send({ ...existing, adjustableRate: { ...arm, initialFixedMonths: 36 }, homePrice: 260_000 });
+      expect(strategyPage().loanToApply()!.loan.rate).toBeNull();
+    });
+
     it('treats opening a saved calculation as choosing its loan', () => {
       refinancePage().send(refinance);
       strategyPage().send({ ...strategy, currentBalance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300 });
@@ -191,7 +214,7 @@ describe('CalculationStores', () => {
       stores.of('Purchase').open(saved('Purchase', 'p'));
 
       expect(strategyPage().loanToApply()!.loan).toEqual(
-        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null });
+        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' } });
     });
   });
 

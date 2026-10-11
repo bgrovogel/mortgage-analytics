@@ -66,6 +66,24 @@ describe('StrategyFormComponent', () => {
     expect(text(root, 'loan-shared')).not.toContain('Filled in');
   });
 
+  it('takes the shared rate type: an ARM by its next reset, or a buydown', () => {
+    const open = (rate: object) => {
+      fixture = TestBed.createComponent(StrategyFormComponent);
+      emitted = [];
+      fixture.componentInstance.compare.subscribe((r) => emitted.push(r));
+      fixture.componentRef.setInput('loan', {
+        loan: { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 300, homeValue: 400_000, rate }, from: 'Refinance', version: 1,
+      });
+      fixture.detectChanges();
+      return emitted[0];
+    };
+
+    expect(open({ kind: 'arm', nextResetIn: 24, intervalMonths: 6, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 }).adjustableRate)
+      .toEqual({ initialFixedMonths: 24, adjustmentIntervalMonths: 6, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 });
+    expect(text(fixture.nativeElement, 'loan-shared')).toContain('Filled in from your loan on the Refinance page.');
+    expect(open({ kind: 'buydown', yearlyReductions: [3, 2, 1] }).buydown).toEqual({ yearlyReductions: [3, 2, 1] });
+  });
+
   it('starts from an earlier comparison', () => {
     render();
     const earlier = { ...emitted[0], currentBalance: 250_000, remainingTermInMonths: 240, riskProfile: 'Conservative' as const };

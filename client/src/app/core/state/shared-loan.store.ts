@@ -1,5 +1,36 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { AdjustableRateInput, TemporaryBuydownInput } from '../models/amortization.models';
 import { OriginalLoan } from '../models/refinance.models';
+
+/**
+ * How the shared loan's rate works, counted from today so every page can read it: fixed; a buydown starting with
+ * the next payment (the points off in each year); or adjustable, with the payments until its next reset, how often
+ * it resets after that, the rate expected, and the caps (the first one applying to that next reset).
+ */
+export type SharedRate =
+  | { kind: 'fixed' }
+  | { kind: 'buydown'; yearlyReductions: number[] }
+  | { kind: 'arm'; nextResetIn: number; intervalMonths: number; expectedRate: number; initialCap: number; periodicCap: number; lifetimeCap: number };
+
+/**
+ * The shared rate for a loan's buydown or adjustable rate, given the payments already made on it; null when it
+ * cannot be said from today (a buydown already under way, or an ARM past its first reset), so other pages keep theirs.
+ */
+export function sharedRateFrom(
+  buydown: TemporaryBuydownInput | null | undefined, arm: AdjustableRateInput | null | undefined, made = 0,
+): SharedRate | null {
+  if (buydown) return made === 0 ? { kind: 'buydown', yearlyReductions: [...buydown.yearlyReductions] } : null;
+  if (arm) {
+    const nextResetIn = arm.initialFixedMonths - made;
+    return nextResetIn >= 1
+      ? {
+          kind: 'arm', nextResetIn, intervalMonths: arm.adjustmentIntervalMonths, expectedRate: arm.expectedRate,
+          initialCap: arm.initialCap, periodicCap: arm.periodicCap, lifetimeCap: arm.lifetimeCap,
+        }
+      : null;
+  }
+  return { kind: 'fixed' };
+}
 
 /** The mortgage every page asks about: what is owed, at what rate, for how long, on a home worth how much. */
 export interface SharedLoan {
@@ -13,6 +44,8 @@ export interface SharedLoan {
    * pages then show the real start, and work from it rather than backwards from the balance.
    */
   start?: OriginalLoan | null;
+  /** How its rate works, when the page can say; null (or missing) leaves each page's own rate type alone. */
+  rate?: SharedRate | null;
 }
 
 /** The shared loan, and the page it was last changed on (e.g. "Calculator"). */
@@ -40,10 +73,11 @@ export class SharedLoanStore {
 
   /**
    * Records the loan a page has just sent. A page that does not know the home's value keeps the one already
-   * shared; one that does not know how the loan started keeps that too, as long as the loan itself is unchanged.
+   * shared; one that does not know how the loan started, or how its rate works, keeps those too, as long as the
+   * loan itself is unchanged. A page that cannot hold a buydown (it shows one as fixed) keeps a shared buydown.
    * Sending the same loan again is not a change.
    */
-  update(loan: SharedLoan, from: string): void {
+  update(loan: SharedLoan, from: string, holdsBuydowns = true): void {
     const current = this.latest();
     const unchanged = current !== null && current.loan.balance === loan.balance
       && current.loan.annualInterestRate === loan.annualInterestRate && current.loan.remainingTermInMonths === loan.remainingTermInMonths;
@@ -51,6 +85,9 @@ export class SharedLoanStore {
       ...loan,
       homeValue: loan.homeValue ?? current?.loan.homeValue ?? null,
       start: loan.start ?? (unchanged ? current.loan.start ?? null : null),
+      rate: !holdsBuydowns && loan.rate?.kind === 'fixed' && current?.loan.rate?.kind === 'buydown'
+        ? current.loan.rate
+        : loan.rate ?? (unchanged ? current.loan.rate ?? null : null),
     };
     if (current && sameLoan(current.loan, next)) return;
     this.latest.set({ loan: next, from, version: (current?.version ?? 0) + 1 });
@@ -63,7 +100,13 @@ export function sameLoan(a: SharedLoan, b: SharedLoan): boolean {
     && a.annualInterestRate === b.annualInterestRate
     && a.remainingTermInMonths === b.remainingTermInMonths
     && a.homeValue === b.homeValue
-    && sameStart(a.start ?? null, b.start ?? null);
+    && sameStart(a.start ?? null, b.start ?? null)
+    && sameRate(a.rate ?? null, b.rate ?? null);
+}
+
+/** True when two rate types are the same in every respect. */
+export function sameRate(a: SharedRate | null, b: SharedRate | null): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 function sameStart(a: OriginalLoan | null, b: OriginalLoan | null): boolean {

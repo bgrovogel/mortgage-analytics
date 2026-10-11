@@ -3,7 +3,7 @@ import { describeInputs, suggestName } from '../../core/formatting/describe-inpu
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
-import { SharedLoan } from '../../core/state/shared-loan.store';
+import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
 import { loanToday, toCents } from '../../core/loans/loan-progress';
 import { wholeYearsOf } from './loan-form/loan-fields';
 
@@ -39,6 +39,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
       start: today.made > 0 && request.firstPaymentDate
         ? { amount: toCents(request.homePrice - request.downPayment), termInMonths: request.termInMonths, firstPaymentDate: request.firstPaymentDate }
         : null,
+      // An ARM's fixed period counts from the first payment here; shared, it counts from today.
+      rate: sharedRateFrom(request.buydown, request.adjustableRate, today.made),
     };
   }
 
@@ -49,6 +51,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
    * own purchase price.
    */
   protected override matchesShared(request: AmortizationRequest, shared: SharedLoan): boolean {
+    const today = this.today(request);
+    if (!this.rateMatches(sharedRateFrom(request.buydown, request.adjustableRate, today.made), shared.rate ?? null)) return false;
     if (shared.start) {
       // The loan as it started: the calculator holds it exactly, but for a term in whole years.
       return request.firstPaymentDate === shared.start.firstPaymentDate
@@ -56,7 +60,6 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
         && request.annualInterestRate === shared.annualInterestRate
         && request.termInMonths === wholeYearsOf(shared.start.termInMonths) * 12;
     }
-    const today = this.today(request);
     return Math.abs(today.balance - shared.balance) < 1
       && request.annualInterestRate === shared.annualInterestRate
       && request.termInMonths === wholeYearsOf(today.made + shared.remainingTermInMonths) * 12
