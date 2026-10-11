@@ -25,7 +25,7 @@
       <span class="section-summary" data-testid="rate-summary">{{ rateSummary() }}</span>
     </summary>
     <div class="section-body">
-      <app-rate-options [form]="form.controls.rate" mode="reset" [rate]="form.controls.annualInterestRate.value ?? 0" />
+      <app-rate-options [form]="form.controls.rate" mode="reset" [rate]="form.controls.annualInterestRate.value" />
       <p class="hint">A buydown here starts with your next payment, as on a new loan; its subsidy is usually the seller's.</p>
     </div>
   </details>

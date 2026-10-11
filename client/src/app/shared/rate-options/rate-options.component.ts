@@ -27,8 +27,11 @@ export class RateOptionsComponent {
   /** True to offer a temporary buydown. */
   readonly allowBuydown = input(true);
 
-  /** The loan's (note or starting) rate, for the buydown's yearly rates. */
-  readonly rate = input(0);
+  /**
+   * The loan's (note or starting) rate, for the buydown's yearly rates. An emptied rate box holds null
+   * (NumberInputDirective), which reads as 0% until a rate is typed.
+   */
+  readonly rate = input(0, { transform: (value: number | null) => value ?? 0 });
 
   /** What the fixed period counts from, in 'reset' mode: "Next reset in (payments)" by default. */
   readonly resetLabel = input('Next reset in (payments)');

@@ -1,6 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { aResponse, aSavings } from '../../../testing/builders';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';

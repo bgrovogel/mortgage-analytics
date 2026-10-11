@@ -30,13 +30,13 @@ describe('HeaderHeightDirective', () => {
   });
 
   it('updates it when the header resizes (links wrapping), and stops watching when destroyed', () => {
-    let notify = () => {};
+    let notify: () => void = () => undefined;
     const disconnect = jest.fn();
     (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
       constructor(callback: () => void) {
         notify = callback;
       }
-      observe() {}
+      observe = jest.fn();
       disconnect = disconnect;
     };
     let height = 64;

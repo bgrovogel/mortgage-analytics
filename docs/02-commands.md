@@ -73,6 +73,7 @@ or as environment variables with `__` for `:` (e.g. `Email__Smtp__Host`).
 dotnet test                              # every .NET test: Domain, Application, Infrastructure, API, Conventions
 
 cd client
+npm run lint                             # angular-eslint: TypeScript and template rules (CI runs it)
 npm test                                 # Jest unit tests + coverage; fails below 85%
 npm run test:watch                       # re-runs affected tests as you save (no coverage)
 npm run e2e:install                      # first time only: downloads Chromium for Playwright

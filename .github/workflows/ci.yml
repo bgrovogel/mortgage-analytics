@@ -44,7 +44,7 @@ jobs:
           path: coverage/report
 
   frontend:
-    name: Angular unit tests & coverage
+    name: Angular lint, unit tests & coverage
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,6 +57,8 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
+      # angular-eslint: TypeScript and template rules, including the template accessibility checks.
+      - run: npm run lint
       # jest.config.js sets an 85% threshold on statements, branches, functions and lines.
       - run: npm test -- --ci
       - uses: actions/upload-artifact@v7

@@ -9,6 +9,7 @@ proxies `/api` to it (`proxy.conf.json`).
 ```bash
 npm ci              # install the exact versions in package-lock.json
 npm start           # dev server on http://localhost:4200, reloads on save
+npm run lint        # angular-eslint: TypeScript and template rules
 npm test            # Jest unit tests; fails below 85% coverage
 npm run e2e         # Playwright end-to-end tests, including axe accessibility scans; starts the API and the app
 npm run build       # production build into dist/client/browser (the Docker image serves it from the API)

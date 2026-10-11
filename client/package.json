@@ -9,7 +9,8 @@
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
     "test": "jest",
-    "test:watch": "jest --watch --coverage=false"
+    "test:watch": "jest --watch --coverage=false",
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
@@ -29,11 +30,15 @@
     "@angular/cli": "^21.2.26",
     "@angular/compiler-cli": "^21.2.25",
     "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
     "@types/jest": "^30.0.0",
+    "angular-eslint": "21.4.0",
+    "eslint": "^10.3.0",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "jest-preset-angular": "^17.0.2",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.59.2"
   }
 }

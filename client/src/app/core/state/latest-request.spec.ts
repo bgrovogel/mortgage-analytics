@@ -9,7 +9,7 @@ describe('latestRequest', () => {
   let store: LatestRequest<Req, string>;
   let calculate: jest.Mock<Observable<string>, [Req]>;
 
-  type Req = { extraPayments?: { monthlyAmount: number } };
+  interface Req { extraPayments?: { monthlyAmount: number } }
   const request = (monthlyAmount = 1): Req => ({ extraPayments: { monthlyAmount } });
   const aResponse = (label = 'ok') => label;
 

@@ -51,7 +51,7 @@
       </summary>
       <div class="section-body">
         <app-rate-options [form]="form.controls.currentRate" mode="reset" [allowBuydown]="false" idPrefix="current-"
-                          [rate]="form.controls.currentAnnualInterestRate.value ?? 0" [resetLabel]="currentResetLabel()" />
+                          [rate]="form.controls.currentAnnualInterestRate.value" [resetLabel]="currentResetLabel()" />
       </div>
     </details>
   </fieldset>
@@ -78,7 +78,7 @@
         <span class="section-summary" data-testid="new-rate-summary">{{ newRateSummary() }}</span>
       </summary>
       <div class="section-body">
-        <app-rate-options [form]="form.controls.newRate" idPrefix="new-" [rate]="form.controls.newAnnualInterestRate.value ?? 0" />
+        <app-rate-options [form]="form.controls.newRate" idPrefix="new-" [rate]="form.controls.newAnnualInterestRate.value" />
         <p class="hint">In a refinance you pay for a buydown yourself, at closing; it comes back as lower payments.</p>
       </div>
     </details>
