@@ -18,6 +18,10 @@
     <small>
       {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
     </small>
+    @if (r.newBuydown; as buydown) {
+      <!-- What is actually paid at first, as the calculator's payment tile says. -->
+      <small class="first-year" data-testid="refi-buydown-first-year">{{ cents(buydown.years[0].monthlyPayment) }} in year 1, with the buydown</small>
+    }
   </div>
   <div class="tile" data-testid="refi-break-even">
     <span class="label">Break-even</span>
@@ -125,7 +129,7 @@
           }
         </tr>
         <tr>
-          <th scope="row">Closing costs</th>
+          <th scope="row">{{ r.buydownCost > 0 ? 'Closing costs + buydown' : 'Closing costs' }}</th>
           @for (column of columns(); track column.label) {
             <td>{{ column.closing }}</td>
           }

@@ -277,6 +277,35 @@ td.best {
   color: var(--text-primary);
 }
 
+.short-name {
+  display: none;
+}
+
+// On a phone the four columns fit with short names, tighter padding and smaller figures.
+@media (max-width: 560px) {
+  table {
+    font-size: 0.82rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  thead th {
+    white-space: normal;
+    vertical-align: bottom;
+  }
+
+  .long-name {
+    display: none;
+  }
+
+  .short-name {
+    display: inline;
+  }
+}
+
 // The difference from Debt free ASAP, under each milestone value.
 td .gap {
   display: block;

@@ -39,6 +39,9 @@
             <li>{{ message }}</li>
           }
         </ul>
+        @if (state.request()) {
+          <button type="button" class="retry" data-testid="retry" [disabled]="state.busy()" (click)="state.retry()">Try again</button>
+        }
       </div>
     }
 

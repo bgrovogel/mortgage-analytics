@@ -90,6 +90,11 @@
     font-size: 0.82rem;
     color: var(--text-muted);
   }
+
+  small.first-year {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
 }
 
 .restart {

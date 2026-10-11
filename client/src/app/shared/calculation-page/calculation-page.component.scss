@@ -21,6 +21,8 @@
   contain: size;
   position: sticky;
   top: 1rem;
+  // When the results are short or missing (a placeholder, an error), the form still gets a usable height.
+  min-height: min(32rem, calc(100vh - var(--app-header-height, 4rem) - 4rem));
   max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
 
   @supports (animation-timeline: scroll()) {
@@ -97,6 +99,27 @@
   ul {
     margin: 0.4rem 0 0;
     padding-left: 1.2rem;
+  }
+
+  .retry {
+    margin-top: 0.75rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
   }
 }
 

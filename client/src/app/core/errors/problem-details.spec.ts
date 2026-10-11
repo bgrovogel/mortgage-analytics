@@ -28,7 +28,7 @@ describe('toErrorMessages', () => {
   });
 
   it('explains a network failure (status 0) in plain words', () => {
-    expect(toErrorMessages(httpError(0, null))).toEqual(['The server could not be reached. Is the API running?']);
+    expect(toErrorMessages(httpError(0, null))).toEqual(["We couldn't reach the server. Check your connection, then try again."]);
   });
 
   it('handles errors that are not HTTP errors', () => {

@@ -110,4 +110,18 @@ describe('CalculationPageComponent', () => {
     expect(text('calculation-errors')).toContain('That failed.');
     expect(text('results')).not.toContain('Working…');
   });
+
+  it('offers to try the same request again after a failure', () => {
+    const { host, fixture } = render();
+    const sent = jest.spyOn(host.store as unknown as { send$: (n: number) => Observable<string> }, 'send$');
+    host.store.send(7);
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+    host.store.responses.error({ status: 0 });
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="retry"]') as HTMLButtonElement).click();
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+    expect(sent.mock.calls.map(([n]) => n)).toEqual([7, 7]);
+  });
 });

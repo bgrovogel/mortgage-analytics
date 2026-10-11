@@ -76,6 +76,12 @@ export abstract class CalculationStore<TRequest, TResponse> {
     this.seenLoanVersion = this.sharedLoan.version();
   }
 
+  /** Sends the latest request again, e.g. after the server could not be reached. Nothing else changes. */
+  retry(): void {
+    const request = this.request();
+    if (request) this.latest.send(request);
+  }
+
   /** The loan another page has changed since this page last sent a request, or null when this page is up to date. */
   loanToApply(): SharedLoanChange | null {
     const change = this.sharedLoan.change();

@@ -154,5 +154,7 @@ describe('RefinanceResultsComponent', () => {
     expect(root.querySelector('[data-testid="refi-buydown"]')!.textContent).toBe(
       'The 2-1 buydown costs $6,655 at closing (in the cash at closing) and pays it back as lower payments: '
       + '$1,432.25 in year 1, $1,610.46 in year 2, $1,798.65 from year 3. It changes when you pay, not how much.');
+    expect(root.querySelector('[data-testid="refi-buydown-first-year"]')!.textContent).toBe('$1,432.25 in year 1, with the buydown');
+    expect(Array.from(root.querySelectorAll('[data-testid="refi-table"] th'), (th) => th.textContent!.trim())).toContain('Closing costs + buydown');
   });
 });

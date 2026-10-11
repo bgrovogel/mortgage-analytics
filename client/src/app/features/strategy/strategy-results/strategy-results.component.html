@@ -76,7 +76,8 @@
               <tr>
                 <th scope="col">Net worth</th>
                 @for (outcome of r.strategies; track outcome.strategy) {
-                  <th scope="col">{{ strategies[outcome.strategy].name }}</th>
+                  <!-- The short name on a phone, where four columns must fit. -->
+                  <th scope="col"><span class="long-name">{{ strategies[outcome.strategy].name }}</span><span class="short-name">{{ strategies[outcome.strategy].short }}</span></th>
                 }
               </tr>
             </thead>

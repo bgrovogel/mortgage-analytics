@@ -14,7 +14,7 @@ export function toErrorMessages(error: unknown): string[] {
   }
 
   if (error.status === 0) {
-    return ['The server could not be reached. Is the API running?'];
+    return ["We couldn't reach the server. Check your connection, then try again."];
   }
 
   if (error.status === 401) {

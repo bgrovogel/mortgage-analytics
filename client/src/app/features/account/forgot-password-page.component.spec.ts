@@ -52,6 +52,6 @@ describe('ForgotPasswordPageComponent', () => {
 
     send('alice@example.com');
 
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('could not be reached');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain("couldn't reach the server");
   });
 });

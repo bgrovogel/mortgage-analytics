@@ -439,15 +439,14 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.errorSummary, 'the server message is shown to the user').toContainText("'Lump sum' cannot exceed the loan amount.");
   });
 
-  test('recovers after a failed request', async ({ calculator }) => {
+  test('recovers after a failed request', async ({ calculator, page }) => {
     await calculator.failNextCalculation();
     await calculator.set('monthly-extra', 250);
-    await expect(calculator.errorSummary, 'a network failure is explained').toContainText('could not be reached');
+    await expect(calculator.errorSummary, 'a network failure is explained').toContainText("couldn't reach the server");
 
-    await calculator.set('monthly-extra', 300);
-    await calculator.calculate();
+    await page.getByTestId('retry').click();
 
-    await expect(calculator.errorSummary, 'the next success clears the error').toBeHidden();
+    await expect(calculator.errorSummary, 'trying again clears the error').toBeHidden();
     await expect(calculator.monthlyPayment, 'and results show again').toBeVisible();
   });
 });
