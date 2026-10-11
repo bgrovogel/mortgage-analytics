@@ -75,6 +75,32 @@ describe('CalculationPageComponent', () => {
     expect(text('results')).not.toContain('Working…');
   });
 
+  it('takes you from the results to the form, which a phone puts after them, and moves focus there', () => {
+    const { fixture } = render();
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = root.querySelector<HTMLElement>('[data-testid="form-panel"]')!;
+    panel.scrollIntoView = jest.fn();
+
+    root.querySelector<HTMLButtonElement>('[data-testid="edit-inputs"]')!.click();
+
+    expect(panel.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    expect(document.activeElement).toBe(panel);
+  });
+
+  it('jumps without animating for someone who prefers reduced motion', () => {
+    window.matchMedia = jest.fn().mockReturnValue({ matches: true });
+    const { fixture } = render();
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = root.querySelector<HTMLElement>('[data-testid="form-panel"]')!;
+    panel.scrollIntoView = jest.fn();
+
+    root.querySelector<HTMLButtonElement>('[data-testid="edit-inputs"]')!.click();
+
+    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+    expect(panel.scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
   it('says the results are for the last valid inputs while the form has problems', () => {
     const { host, fixture, text } = render();
     host.store.send(1);

@@ -27,14 +27,30 @@
   min-height: min(32rem, calc(100vh - var(--app-header-height, 4rem) - 4rem));
   max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
 
+  // Two scroll-linked effects: the form grows to the window as the header scrolls away, and its bottom edge fades
+  // while there is more of it below, so a cut-off section reads as "scroll for more" rather than broken. The fade
+  // follows the form's own scroll and is gone at the end.
   @supports (animation-timeline: scroll()) {
-    animation: form-grows-to-window linear both;
-    animation-timeline: scroll(root block);
-    animation-range: 0 var(--app-header-height, 4rem);
+    animation:
+      form-grows-to-window linear both,
+      form-more-below linear both;
+    animation-timeline: scroll(root block), scroll(self block);
+    animation-range: 0 var(--app-header-height, 4rem), normal;
   }
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+}
+
+@keyframes form-more-below {
+  0%,
+  95% {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+  }
+
+  100% {
+    mask-image: none;
+  }
 }
 
 @keyframes form-grows-to-window {
@@ -128,8 +144,39 @@
   background: var(--warning-soft);
 }
 
+// Only on a phone, where the form comes after the results (see below).
+.edit-inputs {
+  display: none;
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--accent-soft-border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+// The form takes focus when "Edit your numbers" brings it into view; the ring shows where focus went.
+.form-panel:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 // One column on a phone: the answer first, then the form.
 @media (max-width: 860px) {
+  .edit-inputs {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+  }
+
   .layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:

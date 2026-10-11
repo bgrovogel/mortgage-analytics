@@ -24,7 +24,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 740 backend tests · Jest: 475 Angular unit tests · Playwright: 84 E2E tests, including axe accessibility scans · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 740 backend tests · Jest: 484 Angular unit tests · Playwright: 86 E2E tests, including axe accessibility scans · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 > **📚 Developer guide: [`docs/`](docs/README.md).** The tech stack, every command, the architecture with one
@@ -109,9 +109,9 @@ dotnet test                       # 740 NUnit tests, including the convention te
 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
-npm test                          # 475 Jest unit tests; fails below 85% coverage
+npm test                          # 484 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 84 Playwright tests (13 are axe accessibility scans); builds the app and serves it from the API, as in production
+npm run e2e                       # 86 Playwright tests (13 are axe accessibility scans); builds the app and serves it from the API, as in production
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -381,6 +381,10 @@ Accounts follow the same habit of not trusting the client:
 - **One visual language.** Colour means the same thing on every page: green only for a good outcome, amber only for
   "look again", blue for plain facts and action. Cards, tiles, verdicts and every input box come from shared mixins and
   role-based tokens (light and dark defined once), in self-hosted Inter with tabular figures so amounts line up.
+- **Designed for the first visit, and for a phone.** Each form says its numbers are an example until the first edit.
+  On a phone, where the form follows the results, "Edit your numbers" takes you (and keyboard focus) straight to it. A
+  form taller than the window fades at its bottom edge while there is more below. Sign-in says what an account adds,
+  and that the calculators never need one.
 - **Pages and routed tabs.** Calculator, Refinance, Pay off or invest, and History are pages; the calculator's results are
   Overview, Projection and Schedule tabs with their own URLs (bookmarkable, back button works). Root
   stores hold each page's state, so moving between pages never loses a calculation.
@@ -445,8 +449,8 @@ Accounts follow the same habit of not trusting the client:
 | Infrastructure (18) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model, and saves in today's stored JSON format still load with every value. The health check reports a missing database. |
 | API integration (73) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. The contract itself: the OpenAPI document, without its prose, against an approved snapshot, so any change of a path, property, type or enum value fails until the TypeScript models follow. Brotli and gzip responses, the security headers on every response, and the account attempt limit (429 with Retry-After; reads and calculations never limited). |
 | Conventions (7) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs, including that every spec takes its `test` from the shared fixtures. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (475) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (84) | Playwright + axe-core | **Accessibility:** every page and results tab scanned with axe against WCAG 2.2 A and AA, in light and dark mode and on a phone, signed in and out (colour contrast, names, roles, structure). Real browser on the production build, served by the real API (on a scratch database) exactly as the container serves it, so every test runs under the Content-Security-Policy and fails if the browser blocks anything. Through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
+| Angular (484) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (86) | Playwright + axe-core | **Accessibility:** every page and results tab scanned with axe against WCAG 2.2 A and AA, in light and dark mode and on a phone, signed in and out (colour contrast, names, roles, structure). Real browser on the production build, served by the real API (on a scratch database) exactly as the container serves it, so every test runs under the Content-Security-Policy and fails if the browser blocks anything. Through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

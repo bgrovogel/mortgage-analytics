@@ -29,6 +29,19 @@ describe('LoanFormComponent', () => {
       expect(emitted).toHaveLength(1);
     });
 
+    it('says the numbers are an example until the first edit, and never for a restored loan', () => {
+      expect(text('example-note')).toContain('example numbers');
+
+      controls().homePrice.setValue(400_000);
+      fixture.detectChanges();
+      expect(el('example-note')).toBeNull();
+
+      const restored = TestBed.createComponent(LoanFormComponent);
+      restored.componentRef.setInput('initial', emitted[0]);
+      restored.detectChanges();
+      expect(restored.nativeElement.querySelector('[data-testid="example-note"]')).toBeNull();
+    });
+
     it('maps years to months and sends a complete Texas homestead example', () => {
       expect(emitted[0]).toMatchObject({
         homePrice: 375_000,

@@ -19,6 +19,18 @@ describe('RefinanceFormComponent', () => {
   const controls = () => component.form.controls;
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
 
+  it('says the numbers are an example until the first edit, and never for a restored comparison', () => {
+    create();
+    expect(el('example-note')?.textContent).toContain('example numbers');
+
+    controls().currentBalance.setValue(250_000);
+    fixture.detectChanges();
+    expect(el('example-note')).toBeNull();
+
+    create(last());
+    expect(el('example-note')).toBeNull();
+  });
+
   it('starts with a worked example that shows the clock restarting, and compares it at once', () => {
     create();
 

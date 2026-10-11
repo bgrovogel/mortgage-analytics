@@ -2,6 +2,9 @@
   <!-- The five main inputs are always visible; everything else is in a collapsible section below. -->
   <fieldset class="primary-fields">
     <legend>Your loan</legend>
+    @if (example()) {
+      <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
+    }
     <p class="hint" data-testid="loan-shared">
       @if (sharedFrom(); as shared) {
         Filled in from your loan on the {{ shared.from }} page@if (shared.rounded; as rounded) {, with {{ rounded.from }} left rounded to {{ rounded.to }}}.

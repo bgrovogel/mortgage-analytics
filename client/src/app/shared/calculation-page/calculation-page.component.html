@@ -1,7 +1,7 @@
 @let state = store();
 
 <div class="layout">
-  <aside class="panel form-panel" [class.sticky]="stickyForm()" data-testid="form-panel">
+  <aside #formPanel class="panel form-panel" [class.sticky]="stickyForm()" tabindex="-1" aria-label="Your numbers" data-testid="form-panel">
     <ng-content select="[form]" />
   </aside>
 
@@ -12,6 +12,8 @@
         <h2>{{ heading() }}</h2>
       }
       <ng-content select="[tabs]" />
+      <!-- On a phone the form comes after the results: one tap to get back to it. -->
+      <button type="button" class="edit-inputs" data-testid="edit-inputs" (click)="editInputs(formPanel)">Edit your numbers</button>
       <app-save-calculation [payload]="state.savePayload()" [suggestion]="state.suggestedName()" [linked]="state.saved()"
                             (saved)="state.linkTo($event)" />
     </div>

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { setChanged } from '../../../core/forms/set-changed';
@@ -48,6 +49,11 @@ export class StrategyFormComponent implements OnInit {
 
   /** The page the loan was filled in from, when starting from the shared loan changed anything. */
   readonly sharedFrom = signal<string | null>(null);
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** True while the form shows its worked example, until the visitor's first edit (see exampleUntilEdited). */
+  protected example: Signal<boolean> = signal(false);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly compare = output<StrategyRequest>();
@@ -170,6 +176,7 @@ export class StrategyFormComponent implements OnInit {
       const rateChanged = applySharedRate(this.form.controls.rate, shared.loan.rate);
       if (changed || rateChanged) this.sharedFrom.set(shared.from);
     }
+    this.example = exampleUntilEdited(this.form, !initial && !this.sharedFrom(), this.destroyRef);
     if (this.canSend()) this.compare.emit(this.toRequest());
   }
 

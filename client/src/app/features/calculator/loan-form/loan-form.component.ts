@@ -1,9 +1,10 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { problemsIn, problemsOf } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
+import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
@@ -87,6 +88,11 @@ export class LoanFormComponent implements OnInit {
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly calculate = output<AmortizationRequest>();
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** True while the form shows its worked example, until the visitor's first edit (see exampleUntilEdited). */
+  protected example: Signal<boolean> = signal(false);
 
   /** True while a request is being loaded into the form, so its many changes do not each emit. */
   private restoring = false;
@@ -206,6 +212,7 @@ export class LoanFormComponent implements OnInit {
     const initial = this.initial();
     if (initial) this.restore(initial);
     this.startFromSharedLoan();
+    this.example = exampleUntilEdited(this.form, !initial && !this.sharedFrom(), this.destroyRef);
     this.submit();
   }
 

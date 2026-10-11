@@ -4,6 +4,11 @@
   display: block;
 }
 
+// A fixed rate has no plan to show: take no room, so the page keeps one even gap between its rows.
+:host:empty {
+  display: none;
+}
+
 .panel {
   @include surfaces.card;
   padding: 1.25rem;

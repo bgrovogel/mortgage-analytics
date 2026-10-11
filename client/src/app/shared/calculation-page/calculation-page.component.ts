@@ -49,4 +49,14 @@ export class CalculationPageComponent {
    * the window. Off for a long form, which reads better scrolling with the page.
    */
   readonly stickyForm = input(true);
+
+  /**
+   * Brings the form into view and puts focus on it, so keyboard and screen-reader users land there too. Scrolls
+   * smoothly, unless the visitor prefers reduced motion.
+   */
+  editInputs(formPanel: HTMLElement): void {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    formPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    formPanel.focus({ preventScroll: true });
+  }
 }

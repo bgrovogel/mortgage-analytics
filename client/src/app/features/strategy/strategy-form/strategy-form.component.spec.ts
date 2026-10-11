@@ -18,6 +18,18 @@ describe('StrategyFormComponent', () => {
   const text = (root: HTMLElement, id: string) => root.querySelector(`[data-testid="${id}"]`)!.textContent!.replace(/\s+/g, ' ').trim();
   const controls = () => fixture.componentInstance.form.controls;
 
+  it('says the numbers are an example until the first edit, and never for a restored comparison', () => {
+    const root = render();
+    expect(text(root, 'example-note')).toContain('example numbers');
+
+    controls().currentBalance.setValue(250_000);
+    fixture.detectChanges();
+    expect(root.querySelector('[data-testid="example-note"]')).toBeNull();
+
+    const restored = render(emitted[emitted.length - 1]);
+    expect(restored.querySelector('[data-testid="example-note"]')).toBeNull();
+  });
+
   it('compares the typical household at once, sending years left as months', () => {
     render();
 

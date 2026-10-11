@@ -1,6 +1,9 @@
 <form [formGroup]="form" novalidate data-testid="refinance-form">
   <fieldset>
     <legend>Your loan today</legend>
+    @if (example()) {
+      <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
+    }
     <p class="hint" data-testid="loan-shared">
       @if (sharedFrom(); as from) {
         Filled in from your loan on the {{ from }} page.

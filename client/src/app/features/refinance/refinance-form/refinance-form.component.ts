@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
+import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { setChanged } from '../../../core/forms/set-changed';
@@ -55,6 +56,11 @@ export class RefinanceFormComponent implements OnInit {
 
   /** The page the loan was filled in from, when starting from the shared loan changed anything. */
   readonly sharedFrom = signal<string | null>(null);
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** True while the form shows its worked example, until the visitor's first edit (see exampleUntilEdited). */
+  protected example: Signal<boolean> = signal(false);
 
   /** Emits a complete request on load and after every change that leaves the form valid. */
   readonly analyze = output<RefinanceRequest>();
@@ -169,6 +175,7 @@ export class RefinanceFormComponent implements OnInit {
     this.restoring = true;
     this.form.updateValueAndValidity();
     this.restoring = false;
+    this.example = exampleUntilEdited(this.form, !initial && !this.sharedFrom(), this.destroyRef);
     if (this.canSend()) this.analyze.emit(this.toRequest());
   }
 

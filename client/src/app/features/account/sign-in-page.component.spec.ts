@@ -45,6 +45,15 @@ describe('SignInPageComponent', () => {
     type('account-password', password);
   };
 
+  it('says what an account is for, and that the calculators never need one', () => {
+    create();
+
+    const benefits = el('account-benefits')!.textContent!.replace(/\s+/g, ' ');
+    expect(benefits).toContain('Save any calculation');
+    expect(benefits).toContain('Private to you');
+    expect(benefits).toContain('The calculators never need an account.');
+  });
+
   it('signs in and goes back to where the user was heading', () => {
     create('/calculator/schedule');
     fillIn();

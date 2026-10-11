@@ -461,6 +461,15 @@ test.describe('On a phone', () => {
     expect(headline!.y, 'the headline sits above the form').toBeLessThan(form!.y);
   });
 
+  test('one tap takes you from the answer to the form below it', async ({ calculator, page }) => {
+    await expect(calculator.formPanel, 'the form starts below the results').not.toBeInViewport();
+
+    await page.getByTestId('edit-inputs').click();
+
+    await expect(calculator.formPanel, 'the form is brought into view').toBeInViewport();
+    await expect(calculator.formPanel, 'and focus goes with it, for keyboard and screen-reader users').toBeFocused();
+  });
+
   test('keeps the header to two short rows, with the page links on one line', async ({ calculator, page }) => {
     await expect(calculator.headline, 'the page has loaded').toBeVisible();
     const header = await page.locator('.app-header').boundingBox();
@@ -486,6 +495,14 @@ test.describe('On a phone', () => {
     await expect(calculator.summaryBar, 'and the savings').toContainText('Net savings $');
     await expect(calculator.summaryBar, 'it stays pinned in view while the form scrolls').toBeInViewport();
   });
+});
+
+test('spaces the overview evenly: no empty row adds a second gap above the charts', async ({ calculator, page }) => {
+  const headline = await calculator.headline.boundingBox();
+  const charts = await page.locator('app-overview-tab .charts').boundingBox();
+
+  expect(charts!.y - (headline!.y + headline!.height), 'one 1.25rem gap between the headline and the charts, for a fixed-rate loan')
+    .toBeLessThanOrEqual(21);
 });
 
 test('hides the phone summary bar on a desktop, where the tiles are in view', async ({ calculator }) => {
