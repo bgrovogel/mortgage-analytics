@@ -53,6 +53,27 @@ test.describe('Mortgage calculator', () => {
     });
   }
 
+  test('the form card ends level with the results', async ({ calculator, page }) => {
+    const bottoms = async () => {
+      const form = (await calculator.formPanel.boundingBox())!;
+      const results = (await calculator.results.boundingBox())!;
+      return [Math.round(form.y + form.height), Math.round(results.y + results.height)];
+    };
+
+    // A window tall enough for the whole Overview: level as soon as it opens.
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    const [form, results] = await bottoms();
+    expect(form, 'the cards end level when the results fit the window').toBe(results);
+
+    // A shorter window: the form fits the window first, and ends level with the results once scrolled to the end.
+    await page.setViewportSize({ width: 1440, height: 800 });
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(async () => {
+      const [formAtEnd, resultsAtEnd] = await bottoms();
+      return formAtEnd - resultsAtEnd;
+    }, { message: 'the cards end level at the end of the page' }).toBe(0);
+  });
+
   test('recalculates as you type, without a Calculate button', async ({ calculator }) => {
     await expect(calculator.calculateButton, 'there is no Calculate button any more').toHaveCount(0);
 

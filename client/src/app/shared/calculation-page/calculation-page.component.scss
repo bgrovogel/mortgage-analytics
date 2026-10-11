@@ -10,16 +10,37 @@
   grid-area: form;
 }
 
+// A sticky form is exactly as tall as the results, so the two cards end level: `contain: size` keeps the form's
+// own height out of the row's, so the results alone set it, and the form stretches to it, scrolling on its own when
+// it holds more. Beside long results it is capped to the window, so every section stays reachable: at first to the
+// window less the page header (measured, since its links can wrap; see HeaderHeightDirective), then, as the header
+// scrolls away, to the whole window less 1rem above and the page's 3rem below. It sticks while the results scroll
+// and, scrolled to the end, ends level with them.
 .form-panel.sticky {
+  align-self: stretch;
+  contain: size;
   position: sticky;
   top: 1rem;
-  // The results column is often much taller than the form. Capping the panel to the window, less the page
-  // header above it (measured, since its links can wrap; see HeaderHeightDirective) and the space around it,
-  // and letting it scroll on its own keeps every section reachable, even before the page has scrolled at all.
   max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
+
+  @supports (animation-timeline: scroll()) {
+    animation: form-grows-to-window linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 var(--app-header-height, 4rem);
+  }
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+}
+
+@keyframes form-grows-to-window {
+  from {
+    max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
+  }
+
+  to {
+    max-height: calc(100vh - 4rem);
+  }
 }
 
 .results {
@@ -96,6 +117,8 @@
 
   .form-panel.sticky {
     position: static;
+    contain: none;
+    animation: none;
     max-height: none;
     overflow: visible;
   }
