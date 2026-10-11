@@ -39,6 +39,22 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void Homestead_MudPercentageExemptionReducesMudTax_WithTheSameMinimum()
+    {
+        var mud = (decimal percent) => Service.Analyze(A.Request.WithHousingCosts(c => c.WithMudTax(0.85m).AsHomestead()
+            .With(h => h with { MudHomesteadExemptionPercent = percent }))).Baseline.MonthlyHousingCosts.MudTax;
+        var notHomestead = Service.Analyze(A.Request.WithHousingCosts(c => c.WithMudTax(0.85m)
+            .With(h => h with { MudHomesteadExemptionPercent = 20m }))).Baseline.MonthlyHousingCosts.MudTax;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(mud(20m), Is.EqualTo(141.67m), "0.85% of $200,000: 20% of $250,000 is exempt");
+            Assert.That(mud(1m), Is.EqualTo(173.54m), "1% would be $2,500, but a percentage exemption is never under $5,000");
+            Assert.That(notHomestead, Is.EqualTo(177.08m), "only a homestead is exempt");
+        });
+    }
+
+    [Test]
     public void Homestead_LocalPercentageExemptionReducesCountyAndCityTax()
     {
         var request = A.Request.WithHousingCosts(c => c.WithLocalTax(1.1m).AsHomestead(localExemptionPercent: 20m));

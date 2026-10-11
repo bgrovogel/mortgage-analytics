@@ -51,6 +51,7 @@ export interface HousingCostsInput {
   isHomestead: boolean;
   schoolHomesteadExemption: number;
   localHomesteadExemptionPercent: number;
+  mudHomesteadExemptionPercent?: number;
   homesteadAssessmentCap: number;
   over65OrDisabled: Over65OrDisabled | null;
   homeValueGrowthRate: number;

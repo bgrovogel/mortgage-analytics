@@ -25,6 +25,7 @@ export const LOAN_RULES = {
   pidYears: { label: 'PID years left', unit: 'years', min: 1, max: 50, whole: true, optional: true },
   schoolHomesteadExemption: { label: 'School exemption', unit: '$', min: 0, max: 10_000_000, optional: true },
   localHomesteadExemptionPercent: { label: 'County/city exemption', unit: '%', min: 0, max: 100, decimals: 4, optional: true },
+  mudHomesteadExemptionPercent: { label: 'MUD exemption', unit: '%', min: 0, max: 100, decimals: 4, optional: true },
   homesteadAssessmentCap: { label: 'Appraisal cap', unit: '%', min: 0, max: 100, decimals: 4, optional: true },
   over65Year: { label: 'Qualifying year', unit: 'number', min: 1, max: MAX_YEARS, whole: true, optional: true },
   over65SchoolExemption: { label: 'Extra school exemption', unit: '$', min: 0, max: 10_000_000, optional: true },

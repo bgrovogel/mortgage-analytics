@@ -13,6 +13,7 @@ import {
   AmortizationRequest,
   ExtraPaymentStrategy,
   MortgageInsuranceCancellation,
+  YearProjection,
 } from '../../../core/models/amortization.models';
 import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { ARM_RULES, ARM_TYPES, ArmType, BUYDOWNS, BuydownPlan, LOAN_RULES, LUMP_SUM_RULES, RateType, wholeYearsOf } from './loan-fields';
@@ -40,7 +41,7 @@ const CHECK_SECTION = 'Check the values in this section';
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
   taxes: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
-    'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
+    'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
@@ -86,6 +87,25 @@ export class LoanFormComponent implements OnInit {
   /** A request to start from (the last calculation, or a saved one) instead of the worked example. */
   readonly initial = input<AmortizationRequest | null>(null);
 
+  /** The first year of the latest result, to say what the homestead exemptions save. */
+  readonly firstYear = input<YearProjection | null>(null);
+
+  /**
+   * What the homestead exemptions save in year 1, by tax: the value each one takes off, times that tax's rate.
+   * Null when the home is not a homestead or there is no result yet.
+   */
+  readonly homesteadSavings = computed(() => {
+    const year = this.firstYear();
+    const v = this.values();
+    if (!year || !v.isHomestead) return null;
+    const saved = (taxable: number | null, rate: number | undefined) =>
+      taxable === null ? 0 : Math.max(0, year.assessedValue - taxable) * (rate ?? 0) / 100;
+    const school = saved(year.schoolTaxableValue, v.schoolTaxRate);
+    const local = saved(year.localTaxableValue, v.localTaxRate);
+    const mud = saved(year.mudTaxableValue, v.mudTaxRate);
+    return { total: school + local + mud, school, local, mud };
+  });
+
   /** A loan changed on another page since this one was last open: the form starts from it. */
   readonly loan = input<SharedLoanChange | null>(null);
 
@@ -124,6 +144,7 @@ export class LoanFormComponent implements OnInit {
     isHomestead: [true],
     schoolHomesteadExemption: [140_000, validatorsFor(rules.schoolHomesteadExemption)],
     localHomesteadExemptionPercent: [0, validatorsFor(rules.localHomesteadExemptionPercent)],
+    mudHomesteadExemptionPercent: [0, validatorsFor(rules.mudHomesteadExemptionPercent)],
     homesteadAssessmentCap: [10, validatorsFor(rules.homesteadAssessmentCap)],
     isOver65: [false],
     over65Year: [1, validatorsFor(rules.over65Year)],
@@ -455,6 +476,7 @@ export class LoanFormComponent implements OnInit {
       isHomestead: costs?.isHomestead ?? false,
       schoolHomesteadExemption: costs?.schoolHomesteadExemption ?? 0,
       localHomesteadExemptionPercent: costs?.localHomesteadExemptionPercent ?? 0,
+      mudHomesteadExemptionPercent: costs?.mudHomesteadExemptionPercent ?? 0,
       homesteadAssessmentCap: costs?.homesteadAssessmentCap ?? 0,
       isOver65: !!senior,
       ...(senior && {
@@ -512,6 +534,7 @@ export class LoanFormComponent implements OnInit {
         isHomestead: v.isHomestead,
         schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
         localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
+        mudHomesteadExemptionPercent: v.mudHomesteadExemptionPercent || 0,
         homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
         over65OrDisabled: v.isHomestead && v.isOver65
           ? {

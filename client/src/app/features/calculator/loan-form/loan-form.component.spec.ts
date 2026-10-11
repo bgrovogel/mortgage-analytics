@@ -404,6 +404,36 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('homestead exemptions', () => {
+    const firstYear = {
+      year: 1, startDate: '2026-11-01', marketValue: 375_000, assessedValue: 375_000,
+      schoolTaxableValue: 235_000, localTaxableValue: 300_000, mudTaxableValue: 375_000,
+      costs: { schoolTax: 0, localTax: 0, mudTax: 0, pidAssessment: 0, homeownersInsurance: 0, mortgageInsurance: 0, hoaDues: 0, total: 0 },
+    };
+
+    it('says what each exemption saves in year 1, tax by tax', () => {
+      fixture.componentRef.setInput('firstYear', firstYear);
+      fixture.detectChanges();
+
+      // School 1% on $140,000 exempt; county/city 1.1% on $75,000 (20%); MUD nothing exempt.
+      expect(text('homestead-savings')).toBe('In year 1 these save $2,225 in tax: school $1,400 · county/city $825 · MUD $0.');
+    });
+
+    it('says nothing when the home is not a homestead', () => {
+      fixture.componentRef.setInput('firstYear', firstYear);
+      controls().isHomestead.setValue(false);
+      fixture.detectChanges();
+
+      expect(text('homestead-savings')).toBeUndefined();
+    });
+
+    it('sends the MUD exemption', () => {
+      controls().mudHomesteadExemptionPercent.setValue(20);
+
+      expect(last().housingCosts?.mudHomesteadExemptionPercent).toBe(20);
+    });
+  });
+
   describe('the rate type', () => {
     it('is fixed by default, and sends neither a buydown nor an adjustable rate', () => {
       expect(text('rate-summary')).toBe('Fixed for the whole loan');

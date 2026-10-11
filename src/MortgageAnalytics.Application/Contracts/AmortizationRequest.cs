@@ -172,6 +172,10 @@ public sealed record HousingCostsRequest
     /// <example>0</example>
     public decimal LocalHomesteadExemptionPercent { get; init; }
 
+    /// <summary>Percentage of value the MUD exempts for a homestead. Like a county, a MUD may grant up to 20%; most grant none.</summary>
+    /// <example>0</example>
+    public decimal MudHomesteadExemptionPercent { get; init; }
+
     /// <summary>The most a homestead's taxable value may rise in one year, as a percentage. Texas caps it at 10%.</summary>
     /// <example>10</example>
     public decimal HomesteadAssessmentCap { get; init; } = 10m;

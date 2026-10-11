@@ -207,6 +207,25 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdownAmount('School tax'), 'taxed on the full $300,000 otherwise').toHaveText('$250.00');
   });
 
+  test('each homestead exemption lowers its own tax, and the form says what they save', async ({ calculator, page }) => {
+    // $300,000 home: school 1% with $140,000 exempt; county/city 1% with 20% exempt; MUD 1% with 10% exempt.
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });
+    await calculator.clearHousingCosts();
+    await calculator.set('school-tax-rate', 1);
+    await calculator.set('local-tax-rate', 1);
+    await calculator.set('mud-tax-rate', 1);
+    await calculator.set('school-exemption', 140_000);
+    await calculator.set('local-exemption', 20);
+    await calculator.set('mud-exemption', 10);
+
+    await calculator.calculate();
+    await expect(calculator.breakdownAmount('School tax'), 'school: taxed on $160,000').toHaveText('$133.33');
+    await expect(calculator.breakdownAmount('County & city tax'), 'county/city: taxed on $240,000').toHaveText('$200.00');
+    await expect(calculator.breakdownAmount('MUD tax'), 'MUD: taxed on $270,000').toHaveText('$225.00');
+    await expect(page.getByTestId('homestead-savings'), 'the form sums up what the exemptions save')
+      .toHaveText('In year 1 these save $2,300 in tax: school $1,400 · county/city $600 · MUD $300.');
+  });
+
   test('over 65: adds the extra school exemption and freezes school tax', async ({ calculator }) => {
     // $300,000 home, 1% school rate: ($300,000 - $140,000 - $60,000) x 1% = $1,000 a year = $83.33 a month.
     await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30 });

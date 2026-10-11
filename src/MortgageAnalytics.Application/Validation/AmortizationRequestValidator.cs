@@ -174,6 +174,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(h => h.MudTaxRate).Percentage(max: 5).WithName("MUD tax rate");
             RuleFor(h => h.SchoolHomesteadExemption).InclusiveBetween(0, 10_000_000).WholeCents().WithName("School homestead exemption");
             RuleFor(h => h.LocalHomesteadExemptionPercent).Percentage(max: 100).WithName("County/city exemption");
+            RuleFor(h => h.MudHomesteadExemptionPercent).Percentage(max: 100).WithName("MUD exemption");
             RuleFor(h => h.HomesteadAssessmentCap).Percentage(max: 100).WithName("Appraisal cap");
             RuleFor(h => h.HomeValueGrowthRate).Rate(-20, 25).WithName("Home value growth");
             RuleFor(h => h.InsuranceIncreaseRate).Rate(-20, 50).WithName("Insurance increase");

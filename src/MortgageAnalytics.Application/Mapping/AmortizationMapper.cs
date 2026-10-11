@@ -88,6 +88,7 @@ internal static class AmortizationMapper
 
         var schoolExemption = costs.IsHomestead ? new TaxExemption(amount: costs.SchoolHomesteadExemption) : TaxExemption.None;
         var localExemption = costs.IsHomestead ? new TaxExemption(percent: costs.LocalHomesteadExemptionPercent) : TaxExemption.None;
+        var mudExemption = costs.IsHomestead ? new TaxExemption(percent: costs.MudHomesteadExemptionPercent) : TaxExemption.None;
         var senior = costs.IsHomestead ? costs.Over65OrDisabled : null;
 
         // By law the school ceiling always applies to qualifying owners; the county/city ceiling is a local option.
@@ -103,7 +104,7 @@ internal static class AmortizationMapper
             items.Add(new ValueBasedTax(HousingCostCategory.LocalTax, valuation, costs.LocalTaxRate, localExemption, localRelief));
 
         if (costs.MudTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate));
+            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate, mudExemption));
 
         if (costs.Pid is { AnnualAssessment: > 0 } pid)
             items.Add(new AnnualFixedCost(HousingCostCategory.PidAssessment, pid.AnnualAssessment, pid.RemainingYears));

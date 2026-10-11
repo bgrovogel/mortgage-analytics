@@ -24,7 +24,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 620 backend tests · Jest: 442 Angular unit tests · Playwright: 63 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 621 backend tests · Jest: 445 Angular unit tests · Playwright: 64 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -38,7 +38,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 | **Extra payments** | Monthly, annual and one-time lump sums, in any combination. An extra payment that exceeds the remaining balance is capped. |
 | **Recasting** | A lender recasts only after a **single payment of at least its minimum** (default $10,000, never below $1,000) and charges a fee (default $250). Several smaller payments in one month do not add up to a qualifying one. A recast keeps the payoff date and re-amortizes to a lower payment; smaller extra payments still shorten the term. Each recast is recorded with the old payment, new payment and fee. |
 | **Property taxes** | Three taxing units, each an annual rate on the home's taxable value: **school**, **county/city/other** and **MUD**. Texas "per $100 of valuation" rates are entered as-is ($0.85 per $100 = 0.85%). Each year's bill is split into twelve installments that add up to the bill exactly. |
-| **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas, and never less than $5,000: Tax Code §11.13(n)). The school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. A MUD may offer its own percentage exemption; this app has no MUD exemption input, so MUD tax is charged on the full assessed value. |
+| **Homestead exemptions** | For a primary residence, the **school** tax exempts a fixed amount ($140,000 in Texas), and **county/city** tax can exempt a percentage (up to 20% in Texas, and never less than $5,000: Tax Code §11.13(n)). A **MUD** may grant its own percentage exemption the same way (most grant none). Each exemption lowers only its own tax: the school exemption deliberately does **not** reduce county, city or MUD tax, which matches the law. The form says what the exemptions save in year 1, tax by tax. |
 | **Over 65 or disabled** | For a homestead, from the year the owner qualifies: an **extra school exemption** ($60,000 in Texas since 2025) and a **school tax ceiling** that freezes school tax at that year's amount. It can fall but never rise. Counties and cities may add their own extra exemption and ceiling. |
 | **Appraisal cap** | A homestead's *taxable* value may rise at most a set percentage a year (10% in Texas), even when market value rises faster. |
 | **Future increases** | Home value growth drives each year's tax bill (subject to the cap); insurance and HOA dues rise by their own yearly rates. Defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), home insurance +4.8% a year (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024), HOA dues +4% (typically 3–5%). |
@@ -101,12 +101,12 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 620 NUnit tests, including the convention tests
+dotnet test                       # 621 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 442 Jest unit tests; fails below 85% coverage
+npm test                          # 445 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 63 Playwright tests; starts the API and Angular for you
+npm run e2e                       # 64 Playwright tests; starts the API and Angular for you
 ```
 
 Backend coverage report (the same gate CI applies):
@@ -247,7 +247,7 @@ tests/
   MortgageAnalytics.Testing/        Shared test data: A.Request builder, ReferenceLoans, ReferenceRefinances, ReferenceStrategies, TestClock
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
   MortgageAnalytics.Domain.Tests/   345 tests
-  MortgageAnalytics.Application.Tests/  193 tests (unit with NSubstitute, sociable scenarios, architecture)
+  MortgageAnalytics.Application.Tests/  194 tests (unit with NSubstitute, sociable scenarios, architecture)
   MortgageAnalytics.Infrastructure.Tests/  13 tests (real SQLite, built by the real migrations)
   MortgageAnalytics.Api.IntegrationTests/  63 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,strategy,history} · e2e/
@@ -423,12 +423,12 @@ Accounts follow the same habit of not trusting the client:
 | Layer | Tools | What it proves |
 |---|---|---|
 | Domain (345) | NUnit | Payment formula against known values. Invariants for every loan shape ($0.00 ending, principal sums to the loan, whole cents, a balance that never rises). Every guard, identified by its message. Exemptions, the appraisal cap, installments summing exactly, over-65 ceilings, PMI at 78% and 80%, recast boundaries and fees. Refinance savings, months added and break-even against independent reference values; where a loan stands on a given day (payments made, balance owed, next due date) against an independent Python schedule. Adjustable-rate resets (re-amortizing at each), the caps, the worst case, and temporary buydown payments and subsidies, against the independent model in `tools/rate-check/`. Every strategy, scenario, payoff, crossover and 30-year net worth against an independent Python model, to the cent, and against textbook formulas and identities (payoff month = NPER; at a 0% return, paying off first wins by exactly the interest it avoids; net worth = home − mortgage + investments every year); the standard deduction, the $750k limit, free money capped by the cash available, the ESPP limit, the hybrid split, after-tax account values. |
-| Application (193) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
+| Application (194) | NUnit + NSubstitute + FakeTimeProvider | **Unit:** the domain comparer is substituted, so each test checks one mapping decision (strategy to recast policy, defaults, PMI only below 20% down, zero amounts treated as none). **Sociable:** request in, reference numbers out, through the real engine. Validator rules and boundaries. |
 | Infrastructure (13) | NUnit + SQLite in memory | The repository on a real database built by the real migrations: each owner sees only their own calculations, every input (all three kinds) survives the round trip, newest-first order, case-insensitive literal search, a check that the migrations match the model. |
 | API integration (63) | NUnit + WebApplicationFactory + NSubstitute | The real pipeline in Production mode, on a temporary SQLite file: accounts (sign up, cookie flags, wrong password, password rules, sign out), email confirmation and password reset end to end through the captured emails, the dev mailbox only in Development, the email links and SMTP message format, saved-calculation CRUD as a signed-in user (201 + Location, 404 problems, 401 when signed out, another user's items are 404), refinance, strategy comparison (enum names in and out), JSON binding, camelCase error paths, malformed bodies, `includePayments=false`. Error handling, with a substitute service that throws: 500 with no details for any server-side failure (including a broken domain rule), and a bad request keeps its own status (400, 413). Swagger, health, the 404 for unknown API routes. |
 | Conventions (6) | NUnit + Roslyn + regex | The test standards themselves (below), for the C# tests and the Playwright specs. An architecture test also checks that API contracts never expose Domain types. |
-| Angular (442) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
-| End-to-end (63) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
+| Angular (445) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
+| End-to-end (64) | Playwright | Real browser and real API (on a scratch database), through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
 **Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 

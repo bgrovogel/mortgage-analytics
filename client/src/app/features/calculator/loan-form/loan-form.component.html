@@ -143,12 +143,22 @@
       @if (isHomestead()) {
         <div class="row three">
           <app-number-field [control]="form.controls.schoolHomesteadExemption" [rule]="rules.schoolHomesteadExemption" testId="school-exemption" label="School exempt" />
-          <app-number-field [control]="form.controls.localHomesteadExemptionPercent" [rule]="rules.localHomesteadExemptionPercent" testId="local-exemption" label="Local exempt" />
-          <app-number-field [control]="form.controls.homesteadAssessmentCap" [rule]="rules.homesteadAssessmentCap" testId="assessment-cap" label="Cap per year" />
+          <app-number-field [control]="form.controls.localHomesteadExemptionPercent" [rule]="rules.localHomesteadExemptionPercent" testId="local-exemption" label="County/city" />
+          <app-number-field [control]="form.controls.mudHomesteadExemptionPercent" [rule]="rules.mudHomesteadExemptionPercent" testId="mud-exemption" label="MUD" />
         </div>
+        <div class="row">
+          <app-number-field [control]="form.controls.homesteadAssessmentCap" [rule]="rules.homesteadAssessmentCap" testId="assessment-cap" label="Value can rise / yr" />
+        </div>
+        @if (homesteadSavings(); as saved) {
+          <p class="hint saved" data-testid="homestead-savings">
+            In year 1 these save <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> in tax:
+            school {{ saved.school | currency: 'USD' : 'symbol' : '1.0-0' }} · county/city {{ saved.local | currency: 'USD' : 'symbol' : '1.0-0' }}
+            · MUD {{ saved.mud | currency: 'USD' : 'symbol' : '1.0-0' }}.
+          </p>
+        }
         <p class="hint">
-          Texas: school districts exempt $140,000 of a homestead's value; counties and cities may exempt up to 20%.
-          Taxable value can rise at most 10% a year.
+          Each exemption lowers only its own tax. Texas school districts exempt $140,000 of a homestead's value; a county,
+          city or MUD may exempt up to 20% (at least $5,000), and many exempt nothing. Taxable value can rise at most 10% a year.
         </p>
 
         <label class="checkbox">
