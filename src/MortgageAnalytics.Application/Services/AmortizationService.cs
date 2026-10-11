@@ -1,6 +1,8 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.ExtraPayments;
+using MortgageAnalytics.Domain.HousingCosts;
 
 namespace MortgageAnalytics.Application.Services;
 
@@ -31,6 +33,13 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation);
         var comparison = comparer.Compare(loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(), plan);
 
-        return comparison.ToResponse(purchase, valuation, plan);
+        // An adjustable rate also shows its worst case: the standard schedule if rates rise as far as the caps allow.
+        var worstCase = request.ToAdjustableRate() is { } arm
+            ? comparer.Compare(
+                loan.WithRateChanges(arm.WorstCase(loan.AnnualInterestRate).RatePath(loan.AnnualInterestRate, loan.TermInMonths)),
+                ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline
+            : null;
+
+        return comparison.ToResponse(purchase, valuation, plan, new LoanRates(loan, request.ToBuydown(), worstCase));
     }
 }

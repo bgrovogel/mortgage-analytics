@@ -63,9 +63,25 @@ export interface HousingCostsInput {
   pmiCancellation: MortgageInsuranceCancellation;
 }
 
+/** A temporary buydown: how many points below the note rate each year is paid at, year 1 first ([2, 1] is a 2-1). */
+export interface TemporaryBuydownInput {
+  yearlyReductions: number[];
+}
+
+/** An adjustable rate: fixed for a while, then resetting toward the rate expected, within caps. */
+export interface AdjustableRateInput {
+  initialFixedMonths: number;
+  adjustmentIntervalMonths: number;
+  expectedRate: number;
+  initialCap: number;
+  periodicCap: number;
+  lifetimeCap: number;
+}
+
 export interface AmortizationRequest {
   homePrice: number;
   downPayment: number;
+  /** The note rate with a buydown; the starting rate with an adjustable rate. */
   annualInterestRate: number;
   termInMonths: number;
   firstPaymentDate: string | null; // ISO date, yyyy-MM-dd
@@ -73,6 +89,8 @@ export interface AmortizationRequest {
   recast: RecastTerms | null;
   extraPayments: ExtraPayments | null;
   housingCosts: HousingCostsInput | null;
+  buydown?: TemporaryBuydownInput | null;
+  adjustableRate?: AdjustableRateInput | null;
 }
 
 export interface Purchase {
@@ -113,8 +131,21 @@ export interface Payment {
   housingCosts: number;
   /** The same housing costs, by category. */
   costs: HousingCosts;
+  /** What the borrower pays: less any buydown subsidy. */
   totalOutlay: number;
   remainingBalance: number;
+  annualInterestRate: number;
+  buydownSubsidy: number;
+}
+
+/** A rate reset, and what it did to the payment. */
+export interface RateChange {
+  paymentNumber: number;
+  effectiveDate: string;
+  previousRate: number;
+  newRate: number;
+  previousPayment: number;
+  newPayment: number;
 }
 
 export interface Schedule {
@@ -129,6 +160,7 @@ export interface Schedule {
   payoffDate: string;
   recasts: Recast[];
   payments: Payment[];
+  rateChanges: RateChange[];
 }
 
 export interface Savings {
@@ -162,4 +194,20 @@ export interface AmortizationResponse {
   accelerated: Schedule;
   savings: Savings;
   projection: YearProjection[];
+  buydown: BuydownSummary | null;
+  adjustableRate: AdjustableRateSummary | null;
+}
+
+export interface BuydownSummary {
+  noteRate: number;
+  /** Each bought-down year, then the first year at the note rate. */
+  years: { year: number; annualInterestRate: number; monthlyPayment: number }[];
+  totalSubsidy: number;
+}
+
+/** An adjustable rate's worst case: rates rising as far and as fast as the caps allow. */
+export interface AdjustableRateSummary {
+  worstCaseRateChanges: RateChange[];
+  worstCasePeakPayment: number;
+  worstCaseTotalInterest: number;
 }

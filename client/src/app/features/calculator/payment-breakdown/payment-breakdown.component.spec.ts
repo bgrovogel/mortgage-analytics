@@ -66,4 +66,13 @@ describe('PaymentBreakdownComponent', () => {
 
     expect(component.slices()).toEqual([]);
   });
+  it('breaks down what is actually paid at first: year 1 of a buydown', () => {
+    const fixture = TestBed.createComponent(PaymentBreakdownComponent);
+    fixture.componentRef.setInput('schedule', aSchedule({ monthlyPayment: 1_199.1, totalMonthlyPayment: 1_199.1 }));
+    fixture.componentRef.setInput('principalAndInterest', 954.83);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.slices()[0]).toEqual(expect.objectContaining({ label: 'Principal & interest', amount: 954.83, share: 1 }));
+    expect(fixture.nativeElement.querySelector('[data-testid="breakdown-total"]').textContent).toBe('$954.83');
+  });
 });

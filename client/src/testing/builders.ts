@@ -49,6 +49,8 @@ export function aPayment(paymentNumber: number, overrides: Partial<Payment> = {}
     costs: aHousingCosts(),
     totalOutlay: 1_000,
     remainingBalance: Math.max(0, 3_000 - paymentNumber * 600),
+    annualInterestRate: 6,
+    buydownSubsidy: 0,
     ...overrides,
   };
 }
@@ -68,6 +70,7 @@ export function aSchedule(overrides: Partial<Schedule> = {}, paymentCount = 3): 
     payoffDate: payments[payments.length - 1].dueDate,
     recasts: [],
     payments,
+    rateChanges: [],
     ...overrides,
   };
 }
@@ -123,6 +126,8 @@ export function aResponse(overrides: Partial<AmortizationResponse> = {}): Amorti
     accelerated: aSchedule(),
     savings: aSavings(),
     projection: [1, 2, 3].map((y) => aProjectionYear(y)),
+    buydown: null,
+    adjustableRate: null,
     ...overrides,
   };
 }

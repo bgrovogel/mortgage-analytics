@@ -39,7 +39,7 @@ interface Slice {
       <tfoot>
         <tr>
           <th scope="row">Total</th>
-          <td data-testid="breakdown-total">{{ schedule().totalMonthlyPayment | currency }}</td>
+          <td data-testid="breakdown-total">{{ total() | currency }}</td>
           <td></td>
         </tr>
       </tfoot>
@@ -52,15 +52,24 @@ export class PaymentBreakdownComponent {
   /** The schedule whose first payment is broken down. */
   readonly schedule = input.required<Schedule>();
 
+  /** The principal and interest actually paid at first, when it is not the schedule's (year 1 of a buydown). */
+  readonly principalAndInterest = input<number | null>(null);
+
+  /** The first month's payment: principal and interest as paid, plus housing costs. */
+  readonly total = computed(() => {
+    const s = this.schedule();
+    return (this.principalAndInterest() ?? s.monthlyPayment) + s.monthlyHousingCosts.total;
+  });
+
   /** Non-zero slices in a fixed category order. */
   readonly slices = computed<Slice[]>(() => {
     const s = this.schedule();
     const c = s.monthlyHousingCosts;
     const all: Omit<Slice, 'share'>[] = [
-      { label: 'Principal & interest', amount: s.monthlyPayment, color: '--series-1' },
+      { label: 'Principal & interest', amount: this.principalAndInterest() ?? s.monthlyPayment, color: '--series-1' },
       ...COST_CATEGORIES.map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
     ];
-    const total = s.totalMonthlyPayment || 1;
+    const total = this.total() || 1;
     return all.filter((x) => x.amount > 0).map((x) => ({ ...x, share: x.amount / total }));
   });
 

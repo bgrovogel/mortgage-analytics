@@ -7,11 +7,13 @@ public sealed class AmortizationSchedule
     /// <param name="initialMonthlyPayment">The principal-and-interest payment at origination.</param>
     /// <param name="payments">Every payment in order, ending with the one that clears the balance.</param>
     /// <param name="recasts">Recasts that happened along the way. Pass none when the loan was never recast.</param>
+    /// <param name="rateChanges">Rate changes that happened along the way. Pass none for a fixed rate.</param>
     /// <exception cref="DomainValidationException">There are no payments.</exception>
     public AmortizationSchedule(
         decimal initialMonthlyPayment,
         IReadOnlyList<ScheduledPayment> payments,
-        IReadOnlyList<RecastEvent>? recasts = null)
+        IReadOnlyList<RecastEvent>? recasts = null,
+        IReadOnlyList<RateChangeEvent>? rateChanges = null)
     {
         if (payments.Count == 0)
             throw new DomainValidationException("A schedule must contain at least one payment.");
@@ -19,6 +21,7 @@ public sealed class AmortizationSchedule
         InitialMonthlyPayment = initialMonthlyPayment;
         Payments = payments;
         Recasts = recasts ?? [];
+        RateChanges = rateChanges ?? [];
         TotalInterest = payments.Sum(p => p.Interest);
         TotalPrincipal = payments.Sum(p => p.Principal + p.ExtraPrincipal);
         TotalRecastFees = Recasts.Sum(r => r.Fee);
@@ -32,6 +35,9 @@ public sealed class AmortizationSchedule
 
     /// <summary>Recasts that happened during the schedule, in order.</summary>
     public IReadOnlyList<RecastEvent> Recasts { get; }
+
+    /// <summary>Rate changes during the schedule, in order, with the payment before and after each.</summary>
+    public IReadOnlyList<RateChangeEvent> RateChanges { get; }
 
     /// <summary>All interest paid over the life of the loan.</summary>
     public decimal TotalInterest { get; }

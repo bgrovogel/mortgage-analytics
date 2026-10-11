@@ -1,4 +1,5 @@
 @use '../../../core/forms/form-fields' as fields;
+@use '../../../core/forms/segmented';
 
 @include fields.styles;
 
@@ -128,4 +129,8 @@
 // Comfortable touch targets for the small text buttons.
 .link-button {
   min-height: 40px;
+}
+
+.segmented {
+  @include segmented.styles(3);
 }

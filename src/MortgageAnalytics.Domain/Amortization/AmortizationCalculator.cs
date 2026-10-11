@@ -7,7 +7,9 @@ namespace MortgageAnalytics.Domain.Amortization;
 /// <remarks>
 /// Each period, in order:
 /// <list type="number">
-///   <item>Interest = opening balance × annual rate ÷ 1,200, rounded to cents (see <see cref="LoanTerms.MonthlyInterestOn"/>).</item>
+///   <item>When the rate changes (an adjustable-rate loan resetting), the payment is re-amortized: the opening
+///         balance over the payments left, at the new rate. A <see cref="RateChangeEvent"/> is recorded.</item>
+///   <item>Interest = opening balance × annual rate ÷ 1,200, rounded to cents (see <see cref="LoanTerms.MonthlyInterestOn(decimal)"/>).</item>
 ///   <item>Scheduled principal = payment − interest, capped at the balance. In the final scheduled
 ///         period the whole balance is due, which absorbs any rounding drift of a few cents.</item>
 ///   <item>Extra principal is capped at the balance that remains, so a prepayment can never overpay the loan.</item>
@@ -21,16 +23,26 @@ public sealed class AmortizationCalculator : IAmortizationCalculator
     /// <inheritdoc />
     public AmortizationSchedule Generate(LoanTerms loan, ExtraPaymentPlan extraPayments, RecastPolicy recastPolicy)
     {
-        var monthlyRate = loan.MonthlyRate;
-        var initialPayment = PaymentFormula.MonthlyPayment(loan.Principal, monthlyRate, loan.TermInMonths);
+        var rate = loan.AnnualInterestRate;
+        var initialPayment = PaymentFormula.MonthlyPayment(loan.Principal, MonthlyRateOf(rate), loan.TermInMonths);
         var payment = initialPayment;
         var balance = loan.Principal;
         var rows = new List<ScheduledPayment>(loan.TermInMonths);
         var recasts = new List<RecastEvent>();
+        var rateChanges = new List<RateChangeEvent>();
 
         for (var period = 1; period <= loan.TermInMonths && balance > 0; period++)
         {
-            var interest = loan.MonthlyInterestOn(balance);
+            var periodRate = loan.AnnualRateFor(period);
+            if (periodRate != rate)
+            {
+                var resetPayment = PaymentFormula.MonthlyPayment(balance, MonthlyRateOf(periodRate), loan.TermInMonths - period + 1);
+                rateChanges.Add(new RateChangeEvent(period, rate, periodRate, payment, resetPayment));
+                rate = periodRate;
+                payment = resetPayment;
+            }
+
+            var interest = LoanTerms.MonthlyInterestOn(balance, rate);
             var isFinalPeriod = period == loan.TermInMonths;
             var principal = isFinalPeriod ? balance : Math.Min(payment - interest, balance);
             balance -= principal;
@@ -43,12 +55,15 @@ public sealed class AmortizationCalculator : IAmortizationCalculator
             // A recast follows one qualifying payment, so compare the largest single prepayment, not the total.
             if (balance > 0 && recastPolicy.ShouldRecastAfter(extraPayments.LargestSinglePaymentFor(period)))
             {
-                var recastPayment = PaymentFormula.MonthlyPayment(balance, monthlyRate, loan.TermInMonths - period);
+                var recastPayment = PaymentFormula.MonthlyPayment(balance, MonthlyRateOf(rate), loan.TermInMonths - period);
                 recasts.Add(new RecastEvent(period, payment, recastPayment, recastPolicy.Fee));
                 payment = recastPayment;
             }
         }
 
-        return new AmortizationSchedule(initialPayment, rows, recasts);
+        return new AmortizationSchedule(initialPayment, rows, recasts, rateChanges);
     }
+
+    /// <summary>An annual percentage as a monthly fraction: 6 becomes 0.005.</summary>
+    private static decimal MonthlyRateOf(decimal annualRate) => annualRate / 100m / 12m;
 }

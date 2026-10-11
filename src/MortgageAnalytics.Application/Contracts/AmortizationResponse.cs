@@ -6,12 +6,47 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Accelerated">The loan with the requested extra payments (and recasts) applied.</param>
 /// <param name="Savings">What the extra payments save, net of recast fees.</param>
 /// <param name="Projection">Home value, taxable value and housing costs for each year of the standard schedule.</param>
+/// <param name="Buydown">A temporary buydown: its yearly rates and payments, and its cost. Null without one.</param>
+/// <param name="AdjustableRate">An adjustable rate's worst case. Null for a fixed rate.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
     ScheduleResponse Accelerated,
     SavingsResponse Savings,
-    IReadOnlyList<YearProjectionResponse> Projection);
+    IReadOnlyList<YearProjectionResponse> Projection,
+    BuydownResponse? Buydown = null,
+    AdjustableRateResponse? AdjustableRate = null);
+
+/// <summary>A temporary buydown: each bought-down year's rate and payment, and what the subsidy costs.</summary>
+/// <param name="NoteRate">The loan's actual rate, paid from the year after the buydown.</param>
+/// <param name="Years">Each bought-down year, then the first year at the note rate.</param>
+/// <param name="TotalSubsidy">Everything the subsidy covers: the buydown's cost, usually paid up front by the seller or builder.</param>
+public sealed record BuydownResponse(decimal NoteRate, IReadOnlyList<BuydownYearResponse> Years, decimal TotalSubsidy);
+
+/// <summary>One year of a buydown.</summary>
+/// <param name="Year">The 1-based year of the loan.</param>
+/// <param name="AnnualInterestRate">The rate the payment is figured at.</param>
+/// <param name="MonthlyPayment">The principal and interest the borrower pays each month that year.</param>
+public sealed record BuydownYearResponse(int Year, decimal AnnualInterestRate, decimal MonthlyPayment);
+
+/// <summary>An adjustable rate's worst case: rates rising as far and as fast as the caps allow.</summary>
+/// <param name="WorstCaseRateChanges">The resets in that case, with the payment before and after each.</param>
+/// <param name="WorstCasePeakPayment">The highest principal-and-interest payment it reaches.</param>
+/// <param name="WorstCaseTotalInterest">The interest over the loan in that case (without extra payments).</param>
+public sealed record AdjustableRateResponse(
+    IReadOnlyList<RateChangeResponse> WorstCaseRateChanges,
+    decimal WorstCasePeakPayment,
+    decimal WorstCaseTotalInterest);
+
+/// <summary>A rate reset and what it did to the payment.</summary>
+/// <param name="PaymentNumber">The first payment at the new rate.</param>
+/// <param name="EffectiveDate">Its due date.</param>
+/// <param name="PreviousRate">The annual rate before, as a percentage.</param>
+/// <param name="NewRate">The annual rate from then on.</param>
+/// <param name="PreviousPayment">The principal and interest before.</param>
+/// <param name="NewPayment">The principal and interest from then on.</param>
+public sealed record RateChangeResponse(
+    int PaymentNumber, DateOnly EffectiveDate, decimal PreviousRate, decimal NewRate, decimal PreviousPayment, decimal NewPayment);
 
 /// <summary>One loan year of the ownership projection.</summary>
 /// <param name="Year">The 1-based loan year.</param>
@@ -59,6 +94,7 @@ public sealed record PurchaseResponse(
 /// <param name="PayoffDate">Due date of the final payment.</param>
 /// <param name="Recasts">Recasts that happened, in order.</param>
 /// <param name="Payments">Every monthly payment.</param>
+/// <param name="RateChanges">Rate resets that happened (an adjustable rate), in order; empty for a fixed rate.</param>
 public sealed record ScheduleResponse(
     decimal MonthlyPayment,
     HousingCostsResponse MonthlyHousingCosts,
@@ -70,7 +106,8 @@ public sealed record ScheduleResponse(
     DateOnly? MortgageInsuranceEndDate,
     DateOnly PayoffDate,
     IReadOnlyList<RecastResponse> Recasts,
-    IReadOnlyList<PaymentResponse> Payments);
+    IReadOnlyList<PaymentResponse> Payments,
+    IReadOnlyList<RateChangeResponse> RateChanges);
 
 /// <summary>Housing costs by category, for one month, one year, or summed over the loan.</summary>
 /// <param name="SchoolTax">School district tax, after its homestead exemption.</param>
@@ -113,8 +150,10 @@ public sealed record RecastResponse(
 /// <param name="ExtraPrincipal">Additional principal prepaid this month.</param>
 /// <param name="HousingCosts">Taxes, insurance, PMI and dues this month.</param>
 /// <param name="Costs">The same housing costs, by category (school tax, PMI, HOA dues and so on).</param>
-/// <param name="TotalOutlay">Everything paid this month: scheduled payment, extra principal and housing costs.</param>
+/// <param name="TotalOutlay">Everything the borrower pays this month: scheduled payment, extra principal and housing costs, less any buydown subsidy.</param>
 /// <param name="RemainingBalance">The loan balance after this payment.</param>
+/// <param name="AnnualInterestRate">The rate this payment's interest is charged at.</param>
+/// <param name="BuydownSubsidy">What a buydown's subsidy pays of this payment; 0 without one.</param>
 public sealed record PaymentResponse(
     int PaymentNumber,
     DateOnly DueDate,
@@ -125,7 +164,9 @@ public sealed record PaymentResponse(
     decimal HousingCosts,
     HousingCostsResponse Costs,
     decimal TotalOutlay,
-    decimal RemainingBalance);
+    decimal RemainingBalance,
+    decimal AnnualInterestRate,
+    decimal BuydownSubsidy);
 
 /// <summary>What the extra payments are worth.</summary>
 /// <param name="InterestSaved">Interest avoided.</param>

@@ -55,7 +55,7 @@ describe('LoanFormComponent', () => {
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();
       }
-      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-taxes', 'section-costs', 'section-growth', 'section-options']);
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-growth', 'section-options']);
       expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
       expect(sections.every((s) => !s.open)).toBe(true);
     });
@@ -401,6 +401,62 @@ describe('LoanFormComponent', () => {
       expect(request.termInMonths).toBe(360); // 60 made + 295 left, to the nearest whole year
       expect(text('loan-shared')).toContain('with 24 yr 7 mo left rounded to 25 yr');
       expect(text('existing-loan')).toContain('with about $180,000 owed'); // the balance itself is kept
+    });
+  });
+
+  describe('the rate type', () => {
+    it('is fixed by default, and sends neither a buydown nor an adjustable rate', () => {
+      expect(text('rate-summary')).toBe('Fixed for the whole loan');
+      expect(last().buydown).toBeNull();
+      expect(last().adjustableRate).toBeNull();
+    });
+
+    it('sends a buydown, and says what each year is paid at', () => {
+      controls().rateType.setValue('buydown');
+      controls().annualInterestRate.setValue(5.99);
+      fixture.detectChanges();
+
+      expect(last().buydown).toEqual({ yearlyReductions: [2, 1] });
+      expect(last().adjustableRate).toBeNull();
+      expect(text('rate-summary')).toBe('2-1 buydown: 3.99% in year 1, 4.99% in year 2, then 5.99%');
+
+      controls().buydownPlan.setValue('3-2-1');
+      fixture.detectChanges();
+      expect(last().buydown).toEqual({ yearlyReductions: [3, 2, 1] });
+    });
+
+    it('sends an adjustable rate from its type, expected rate and caps, and checks them only while it is chosen', () => {
+      controls().armExpectedRate.enable();
+      controls().armExpectedRate.setValue(40);
+      expect(component.form.valid).toBe(false);
+      controls().rateType.setValue('fixed'); // switching away disables them again
+      expect(component.form.valid).toBe(true);
+
+      controls().rateType.setValue('arm');
+      controls().armExpectedRate.setValue(7.5);
+      controls().armType.setValue('5/6');
+      fixture.detectChanges();
+
+      expect(last().adjustableRate).toEqual({
+        initialFixedMonths: 60, adjustmentIntervalMonths: 6, expectedRate: 7.5, initialCap: 5, periodicCap: 2, lifetimeCap: 5,
+      });
+      expect(text('rate-summary')).toBe('5/6 ARM: 6.5% for 5 yr, then toward 7.5% (caps 5/2/5)');
+    });
+
+    it('reopens a saved buydown or adjustable rate as it was', () => {
+      controls().rateType.setValue('arm');
+      controls().armType.setValue('10/1');
+      controls().armLifetimeCap.setValue(6);
+      const saved = last();
+
+      const restored = TestBed.createComponent(LoanFormComponent);
+      const sent: AmortizationRequest[] = [];
+      restored.componentInstance.calculate.subscribe((r) => sent.push(r));
+      restored.componentRef.setInput('initial', saved);
+      restored.detectChanges();
+
+      expect(sent[sent.length - 1]).toEqual(saved);
+      expect(restored.componentInstance.form.controls.rateType.value).toBe('arm');
     });
   });
 

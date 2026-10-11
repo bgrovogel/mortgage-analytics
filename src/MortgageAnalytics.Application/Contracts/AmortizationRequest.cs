@@ -11,7 +11,10 @@ public sealed record AmortizationRequest
     /// <example>18750</example>
     public decimal DownPayment { get; init; }
 
-    /// <summary>Nominal annual interest rate as a percentage (6.5 means 6.5%).</summary>
+    /// <summary>
+    /// Nominal annual interest rate as a percentage (6.5 means 6.5%). With a <see cref="Buydown"/> it is the note
+    /// rate, the one the loan amortizes at; with an <see cref="AdjustableRate"/>, the starting rate.
+    /// </summary>
     /// <example>6.5</example>
     public decimal AnnualInterestRate { get; init; }
 
@@ -35,6 +38,54 @@ public sealed record AmortizationRequest
 
     /// <summary>Optional taxes, insurance, PMI and dues. Omit to see principal and interest only.</summary>
     public HousingCostsRequest? HousingCosts { get; init; }
+
+    /// <summary>A temporary buydown (2-1, 3-2-1...): lower payments for the first years. Omit for none.</summary>
+    public TemporaryBuydownRequest? Buydown { get; init; }
+
+    /// <summary>An adjustable rate (ARM): the rate resets after a fixed period. Omit for a fixed rate.</summary>
+    public AdjustableRateRequest? AdjustableRate { get; init; }
+}
+
+/// <summary>
+/// A temporary buydown: for the first years the payment is figured at a lower rate, and a subsidy (usually paid
+/// up front by the seller or builder) covers the difference. The loan itself stays at the note rate.
+/// </summary>
+public sealed record TemporaryBuydownRequest
+{
+    /// <summary>How many points below the note rate each year is paid at, year 1 first: [2, 1] is a 2-1 buydown.</summary>
+    /// <example>[2, 1]</example>
+    public IReadOnlyList<decimal> YearlyReductions { get; init; } = [];
+}
+
+/// <summary>
+/// An adjustable rate: <see cref="AmortizationRequest.AnnualInterestRate"/> for a fixed period, then a reset at
+/// each interval toward the rate expected, as far as the caps allow ("5/2/5": first reset, later resets, lifetime).
+/// </summary>
+public sealed record AdjustableRateRequest
+{
+    /// <summary>How many payments the starting rate lasts: 84 for a 7/1 or 7/6 ARM.</summary>
+    /// <example>84</example>
+    public int InitialFixedMonths { get; init; } = 84;
+
+    /// <summary>How often the rate resets after that, in months: 12, or 6 for most newer (SOFR) ARMs.</summary>
+    /// <example>12</example>
+    public int AdjustmentIntervalMonths { get; init; } = 12;
+
+    /// <summary>The rate each reset moves toward: an assumption about the index plus the margin, as a percentage.</summary>
+    /// <example>7.5</example>
+    public decimal ExpectedRate { get; init; }
+
+    /// <summary>The most the first reset can move the rate, in points.</summary>
+    /// <example>5</example>
+    public decimal InitialCap { get; init; } = 5m;
+
+    /// <summary>The most each later reset can move the rate, in points.</summary>
+    /// <example>1</example>
+    public decimal PeriodicCap { get; init; } = 1m;
+
+    /// <summary>The most the rate can ever differ from the starting rate, in points.</summary>
+    /// <example>5</example>
+    public decimal LifetimeCap { get; init; } = 5m;
 }
 
 /// <summary>What the borrower does with extra principal.</summary>

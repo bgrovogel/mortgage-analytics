@@ -15,6 +15,7 @@ export function describeInputs(r: AmortizationRequest): string {
     `${decimal(downPaymentPercent(r), 1)}% down`,
     `${decimal(r.annualInterestRate)}%`,
     term,
+    rateTypeOf(r),
     extra,
   ].filter(Boolean).join(' · ');
 }
@@ -51,6 +52,16 @@ export function describeStrategy(r: StrategyRequest): string {
 /** A starting name for a saved strategy comparison, e.g. "Pay off or invest: $1,000/mo, 6.5% mortgage". */
 export function suggestStrategyName(r: StrategyRequest): string {
   return `Pay off or invest: ${usd(r.monthlyCashToPutToWork)}/mo, ${decimal(r.annualInterestRate)}% mortgage`;
+}
+
+/** "2-1 buydown" or "7/1 ARM", or null for a fixed rate. */
+function rateTypeOf(r: AmortizationRequest): string | null {
+  if (r.buydown) return `${r.buydown.yearlyReductions.join('-')} buydown`;
+  if (r.adjustableRate) {
+    const a = r.adjustableRate;
+    return `${a.initialFixedMonths % 12 === 0 ? a.initialFixedMonths / 12 : `${a.initialFixedMonths} mo`}/${a.adjustmentIntervalMonths === 12 ? 1 : a.adjustmentIntervalMonths} ARM`;
+  }
+  return null;
 }
 
 /** 360 becomes "30 yr"; 100 becomes "100 mo". */

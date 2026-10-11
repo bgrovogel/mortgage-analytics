@@ -33,6 +33,24 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_ABuydownOrAnAdjustableRate_RoundTripsAsJson()
+    {
+        var buydown = await ReadJsonAsync(await PostCalculateAsync(A.Request.WithBuydown(2m, 1m).Build()));
+        var arm = await ReadJsonAsync(await PostCalculateAsync(A.Request.WithAdjustableRate(7.5m).Build()));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buydown.GetProperty("buydown").GetProperty("totalSubsidy").GetDecimal(), Is.EqualTo(4_436.76m), "the buydown's cost");
+            Assert.That(buydown.GetProperty("baseline").GetProperty("payments")[0].GetProperty("buydownSubsidy").GetDecimal(), Is.EqualTo(244.27m),
+                "each row says what the subsidy pays");
+            Assert.That(arm.GetProperty("baseline").GetProperty("rateChanges")[0].GetProperty("newPayment").GetDecimal(), Is.EqualTo(1_365.01m),
+                "the reset and its new payment");
+            Assert.That(arm.GetProperty("adjustableRate").GetProperty("worstCasePeakPayment").GetDecimal(), Is.EqualTo(1_787.42m), "the worst case");
+            Assert.That(arm.GetProperty("buydown").ValueKind, Is.EqualTo(JsonValueKind.Null), "no buydown on an ARM");
+        });
+    }
+
+    [Test]
     public async Task Calculate_WithoutPayments_LeavesOutTheMonthlyRowsButKeepsEverythingElse()
     {
         var response = await PostCalculateAsync(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra).Build(), query: "?includePayments=false");

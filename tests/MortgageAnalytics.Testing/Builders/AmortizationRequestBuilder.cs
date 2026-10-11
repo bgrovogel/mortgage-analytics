@@ -82,6 +82,22 @@ public sealed class AmortizationRequestBuilder
     public AmortizationRequestBuilder WithHousingCosts(Func<HousingCostsRequestBuilder, HousingCostsRequestBuilder> configure) =>
         With(r => r with { HousingCosts = configure(new HousingCostsRequestBuilder()).Build() });
 
+    /// <summary>Adds a temporary buydown: <c>WithBuydown(2, 1)</c> is a 2-1 buydown.</summary>
+    public AmortizationRequestBuilder WithBuydown(params decimal[] yearlyReductions) =>
+        With(r => r with { Buydown = new TemporaryBuydownRequest { YearlyReductions = yearlyReductions } });
+
+    /// <summary>Makes the rate adjustable: a 7/1 ARM by default, resetting toward <paramref name="expectedRate"/> within 5/2/5 caps.</summary>
+    public AmortizationRequestBuilder WithAdjustableRate(
+        decimal expectedRate, int initialFixedMonths = 84, int intervalMonths = 12, decimal initialCap = 5m, decimal periodicCap = 2m, decimal lifetimeCap = 5m) =>
+        With(r => r with
+        {
+            AdjustableRate = new AdjustableRateRequest
+            {
+                InitialFixedMonths = initialFixedMonths, AdjustmentIntervalMonths = intervalMonths, ExpectedRate = expectedRate,
+                InitialCap = initialCap, PeriodicCap = periodicCap, LifetimeCap = lifetimeCap,
+            },
+        });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 

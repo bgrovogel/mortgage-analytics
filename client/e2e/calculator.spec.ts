@@ -74,6 +74,35 @@ test.describe('Mortgage calculator', () => {
     }, { message: 'the cards end level at the end of the page' }).toBe(0);
   });
 
+  test('a 2-1 buydown: lower payments for two years, its cost, and the same loan underneath', async ({ calculator, page }) => {
+    // $375,000 with 5% down at 5.99%: the reference buydown in tools/rate-check/rate_model.py.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.chooseRateType('buydown');
+    await calculator.calculate();
+
+    const plan = page.getByTestId('rate-plan');
+    await expect(plan.locator('li'), 'each year, then the note rate').toHaveText([
+      /Year 1\s*3\.99%\s*\$1,698\.74\/mo/, /Year 2\s*4\.99%\s*\$1,910\.25\/mo/, /From year 3\s*5\.99%\s*\$2,133\.61\/mo/,
+    ]);
+    await expect(page.getByTestId('buydown-cost'), 'what the subsidy costs').toContainText('$7,899');
+    await expect(page.getByTestId('buydown-first-year'), 'the payment tile shows year 1').toBeVisible();
+  });
+
+  test('a 7/1 adjustable rate: the reset, the new payment, and the worst case the caps allow', async ({ calculator, page }) => {
+    await calculator.fillLoan(TWENTY_PERCENT_DOWN);
+    await calculator.clearHousingCosts();
+    await calculator.setExtras(0);
+    await calculator.chooseRateType('arm');
+    await calculator.set('arm-expected-rate', 7.5);
+    await calculator.calculate();
+
+    const plan = page.getByTestId('rate-plan');
+    await expect(plan.locator('li'), 'seven years at 6%, then 7.5% re-amortized').toHaveText([
+      /Jan 2036 to Dec 2042\s*6%\s*\$1,199\.10\/mo/, /From Jan 2043\s*7\.5%\s*\$1,365\.01\/mo/,
+    ]);
+    await expect(page.getByTestId('arm-worst-case'), '5/2/5 caps allow 11% at the first reset').toContainText('reaches 11% by Jan 2043 and the payment $1,787.42 a month');
+  });
+
   test('recalculates as you type, without a Calculate button', async ({ calculator }) => {
     await expect(calculator.calculateButton, 'there is no Calculate button any more').toHaveCount(0);
 

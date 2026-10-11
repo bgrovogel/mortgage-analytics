@@ -16,9 +16,25 @@ internal static class AmortizationMapper
     public static PropertyPurchase ToPurchase(this AmortizationRequest request) =>
         new(request.HomePrice, request.DownPayment);
 
-    /// <summary>Builds the loan terms, using <paramref name="defaultFirstPaymentDate"/> when the request has none.</summary>
-    public static LoanTerms ToLoanTerms(this AmortizationRequest request, PropertyPurchase purchase, DateOnly defaultFirstPaymentDate) =>
-        new(purchase.LoanAmount, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
+    /// <summary>
+    /// Builds the loan terms, using <paramref name="defaultFirstPaymentDate"/> when the request has none. An
+    /// adjustable rate becomes its expected resets.
+    /// </summary>
+    public static LoanTerms ToLoanTerms(this AmortizationRequest request, PropertyPurchase purchase, DateOnly defaultFirstPaymentDate)
+    {
+        var loan = new LoanTerms(purchase.LoanAmount, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
+        return request.ToAdjustableRate() is { } arm ? loan.WithRateChanges(arm.RatePath(loan.AnnualInterestRate, loan.TermInMonths)) : loan;
+    }
+
+    /// <summary>The adjustable rate, or null for a fixed rate.</summary>
+    public static AdjustableRate? ToAdjustableRate(this AmortizationRequest request) =>
+        request.AdjustableRate is { } arm
+            ? new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap)
+            : null;
+
+    /// <summary>The temporary buydown, or null for none.</summary>
+    public static TemporaryBuydown? ToBuydown(this AmortizationRequest request) =>
+        request.Buydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null;
 
     /// <summary>Converts the chosen strategy into a recast policy. Only <see cref="ExtraPaymentStrategy.Recast"/> ever recasts.</summary>
     public static RecastPolicy ToRecastPolicy(this AmortizationRequest request)
@@ -119,8 +135,9 @@ internal static class AmortizationMapper
     /// <param name="purchase">The price and down payment.</param>
     /// <param name="valuation">The home's projected market and assessed values.</param>
     /// <param name="plan">The housing costs, whose taxes report what each one is charged on.</param>
+    /// <param name="rates">The loan, and how its payments are figured: any buydown, and an adjustable rate's worst case.</param>
     public static AmortizationResponse ToResponse(
-        this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation, HousingCostPlan plan) =>
+        this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation, HousingCostPlan plan, LoanRates rates) =>
         new(
             new PurchaseResponse(
                 purchase.HomePrice,
@@ -129,8 +146,8 @@ internal static class AmortizationMapper
                 purchase.LoanAmount,
                 purchase.LoanToValuePercent,
                 purchase.RequiresMortgageInsurance),
-            ToResponse(comparison.Baseline, comparison.BaselineCosts),
-            ToResponse(comparison.Accelerated, comparison.AcceleratedCosts),
+            ToResponse(comparison.Baseline, comparison.BaselineCosts, rates),
+            ToResponse(comparison.Accelerated, comparison.AcceleratedCosts, rates),
             new SavingsResponse(
                 comparison.InterestSaved,
                 comparison.MortgageInsuranceSaved,
@@ -140,7 +157,28 @@ internal static class AmortizationMapper
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
-            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan));
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan),
+            rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline) : null,
+            rates.WorstCase is { } worst ? ToResponse(worst) : null);
+
+    /// <summary>The bought-down years, then the first at the note rate, and the subsidy over the standard schedule.</summary>
+    private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, AmortizationSchedule schedule) =>
+        new(
+            loan.AnnualInterestRate,
+            [.. Enumerable.Range(1, buydown.YearlyReductions.Count + 1)
+                .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
+            schedule.Payments.Sum(p => buydown.SubsidyFor(loan, p.PaymentNumber, p.ScheduledAmount)));
+
+    /// <summary>The worst case of an adjustable rate: its resets, the highest payment, and the interest.</summary>
+    private static AdjustableRateResponse ToResponse(AmortizationSchedule worst) =>
+        new(
+            ToRateChanges(worst),
+            worst.RateChanges.Select(c => c.NewPayment).Append(worst.InitialMonthlyPayment).Max(),
+            worst.TotalInterest);
+
+    private static List<RateChangeResponse> ToRateChanges(AmortizationSchedule schedule) =>
+        [.. schedule.RateChanges.Select(c => new RateChangeResponse(
+            c.PaymentNumber, DueDateOf(schedule, c.PaymentNumber), c.PreviousRate, c.NewRate, c.PreviousPayment, c.NewPayment))];
 
     /// <summary>
     /// One row per year of the standard schedule. The standard schedule is used because it spans
@@ -166,8 +204,10 @@ internal static class AmortizationMapper
             .ToList();
     }
 
-    private static ScheduleResponse ToResponse(AmortizationSchedule schedule, HousingCostSchedule costs)
+    private static ScheduleResponse ToResponse(AmortizationSchedule schedule, HousingCostSchedule costs, LoanRates rates)
     {
+        decimal Subsidy(ScheduledPayment p) => rates.Buydown?.SubsidyFor(rates.Loan, p.PaymentNumber, p.ScheduledAmount) ?? 0m;
+
         var firstMonth = costs.Periods[0];
 
         return new ScheduleResponse(
@@ -195,8 +235,11 @@ internal static class AmortizationMapper
                 p.ExtraPrincipal,
                 costs.Periods[i].Total,
                 ToResponse(costs.Periods[i]),
-                p.TotalPaid + costs.Periods[i].Total,
-                p.RemainingBalance)).ToList());
+                p.TotalPaid + costs.Periods[i].Total - Subsidy(p),
+                p.RemainingBalance,
+                rates.Loan.AnnualRateFor(p.PaymentNumber),
+                Subsidy(p))).ToList(),
+            ToRateChanges(schedule));
     }
 
     /// <summary>The due date of payment <paramref name="paymentNumber"/>; payments are numbered from 1 in order.</summary>

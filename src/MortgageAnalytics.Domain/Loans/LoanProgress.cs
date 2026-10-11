@@ -38,6 +38,12 @@ public static class LoanProgress
             throw new DomainValidationException("The loan is already paid off: every payment is behind that date.");
 
         var owed = calculator.Generate(original, ExtraPaymentPlan.None, RecastPolicy.Never).Payments[made - 1].RemainingBalance;
-        return new LoanTerms(owed, original.AnnualInterestRate, original.TermInMonths - made, original.DueDateOf(made + 1));
+        // An adjustable rate carries on: today's rate, and the changes still ahead, renumbered from the next payment.
+        var ahead = original.RateChanges
+            .Where(c => c.FromPaymentNumber > made + 1)
+            .Select(c => c with { FromPaymentNumber = c.FromPaymentNumber - made })
+            .ToList();
+        return new LoanTerms(owed, original.AnnualRateFor(made + 1), original.TermInMonths - made, original.DueDateOf(made + 1))
+            .WithRateChanges(ahead);
     }
 }

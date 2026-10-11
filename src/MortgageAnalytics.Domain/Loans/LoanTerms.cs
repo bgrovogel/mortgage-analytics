@@ -48,6 +48,45 @@ public sealed record LoanTerms
     /// <summary>The due date of the first payment.</summary>
     public DateOnly FirstPaymentDate { get; }
 
+    /// <summary>
+    /// Rate changes after the first payment, in order (an adjustable-rate loan). Empty for a fixed rate, where
+    /// <see cref="AnnualInterestRate"/> applies throughout.
+    /// </summary>
+    public IReadOnlyList<RateChange> RateChanges { get; private init; } = [];
+
+    /// <summary>The same loan with its rate changing as given.</summary>
+    /// <param name="changes">Each change's first payment (after the first, within the term, in increasing order) and rate.</param>
+    /// <returns>A copy of these terms with the rate changes.</returns>
+    /// <exception cref="DomainValidationException">A change is out of order, outside the term, or its rate out of range.</exception>
+    public LoanTerms WithRateChanges(IReadOnlyList<RateChange> changes)
+    {
+        var previous = 1;
+        foreach (var change in changes)
+        {
+            if (change.FromPaymentNumber <= previous || change.FromPaymentNumber > TermInMonths)
+                throw new DomainValidationException("Rate changes must fall after the first payment and within the term, in order.");
+            if (change.AnnualInterestRate is < 0 or > MaxAnnualInterestRate)
+                throw new DomainValidationException($"A changed rate must be between 0 and {MaxAnnualInterestRate}%.");
+            previous = change.FromPaymentNumber;
+        }
+
+        return this with { RateChanges = changes };
+    }
+
+    /// <summary>The annual rate charged on payment <paramref name="paymentNumber"/>, as a percentage.</summary>
+    /// <param name="paymentNumber">A 1-based payment number.</param>
+    public decimal AnnualRateFor(int paymentNumber)
+    {
+        var rate = AnnualInterestRate;
+        foreach (var change in RateChanges)
+        {
+            if (change.FromPaymentNumber > paymentNumber) break;
+            rate = change.AnnualInterestRate;
+        }
+
+        return rate;
+    }
+
     /// <summary>The periodic (monthly) rate as a fraction. 6.5% becomes 0.065 ÷ 12.</summary>
     public decimal MonthlyRate => AnnualInterestRate / 100m / 12m;
 
@@ -57,7 +96,12 @@ public sealed record LoanTerms
     /// pre-divided <see cref="MonthlyRate"/> can land a hair under an exact half cent and round the wrong way.
     /// </remarks>
     /// <param name="balance">The balance the interest accrues on.</param>
-    public decimal MonthlyInterestOn(decimal balance) => Money.Round(balance * AnnualInterestRate / 1_200m);
+    public decimal MonthlyInterestOn(decimal balance) => MonthlyInterestOn(balance, AnnualInterestRate);
+
+    /// <summary>One month's interest on <paramref name="balance"/> at <paramref name="annualRate"/> percent, rounded to cents.</summary>
+    /// <param name="balance">The balance the interest accrues on.</param>
+    /// <param name="annualRate">The annual rate, as a percentage.</param>
+    public static decimal MonthlyInterestOn(decimal balance, decimal annualRate) => Money.Round(balance * annualRate / 1_200m);
 
     /// <summary>Returns the due date of payment <paramref name="paymentNumber"/>, one month apart from the first.</summary>
     /// <remarks>A first payment on the 31st falls on the last day of shorter months.</remarks>

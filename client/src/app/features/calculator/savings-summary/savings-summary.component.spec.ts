@@ -83,6 +83,16 @@ describe('SavingsSummaryComponent', () => {
     expect(component.withExtra()).toEqual({ amount: 200, total: 1_399.1 });
   });
 
+  it('with a buydown, shows the reduced payment due in year 1', () => {
+    render(aResponse({
+      buydown: { noteRate: 6, years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 954.83 }, { year: 2, annualInterestRate: 6, monthlyPayment: 1_199.1 }], totalSubsidy: 2_930.04 },
+    }));
+
+    expect(text('total-monthly-payment')).toBe('$954.83');
+    expect(text('monthly-payment')).toBe('$954.83');
+    expect(text('buydown-first-year')).toBe('In year 1, with the buydown');
+  });
+
   it('omits the taxes line when there are no housing costs', () => {
     render(aResponse());
 

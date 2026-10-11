@@ -19,7 +19,7 @@ public interface IStrategySimulator
 /// Each month, in order:
 /// <list type="number">
 ///   <item>Every account grows by the scenario's monthly return.</item>
-///   <item>The required mortgage payment is made (interest per <see cref="Loans.LoanTerms.MonthlyInterestOn"/>).
+///   <item>The required mortgage payment is made (interest per <see cref="Loans.LoanTerms.MonthlyInterestOn(decimal)"/>).
 ///         Once the mortgage is gone, that payment becomes cash to put to work.</item>
 ///   <item>The 401(k) contribution and the employer match go in; ESPP savings build up and, at the end of each
 ///         purchase period, come back with the discount (minus income tax on it).</item>

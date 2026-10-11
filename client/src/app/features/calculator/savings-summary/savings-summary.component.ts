@@ -31,13 +31,16 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
       }
       <div class="tile">
         <dt>Required monthly payment</dt>
-        <dd data-testid="total-monthly-payment">{{ r.baseline.totalMonthlyPayment | currency }}</dd>
+        <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
         <small>
-          <span data-testid="monthly-payment">{{ r.baseline.monthlyPayment | currency }}</span> principal &amp; interest
+          <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span> principal &amp; interest
           @if (r.baseline.monthlyHousingCosts.total > 0) {
             + {{ r.baseline.monthlyHousingCosts.total | currency }} taxes &amp; fees
           }
         </small>
+        @if (r.buydown) {
+          <small class="with-extra" data-testid="buydown-first-year">In year 1, with the buydown</small>
+        }
         @if (withExtra(); as extra) {
           <small class="with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</small>
         }
@@ -94,6 +97,18 @@ export class SavingsSummaryComponent {
   readonly withExtra = computed(() => {
     const first = this.result().accelerated.payments.find((p) => p.extraPrincipal > 0);
     return first ? { amount: first.extraPrincipal, total: first.totalOutlay } : null;
+  });
+
+  /**
+   * The first payment due: principal and interest, and with housing costs. With a buydown it is year 1's reduced
+   * payment, which is what the borrower actually pays at first.
+   */
+  readonly firstPayment = computed(() => {
+    const r = this.result();
+    const first = r.buydown?.years[0];
+    return first
+      ? { loan: first.monthlyPayment, total: first.monthlyPayment + r.baseline.monthlyHousingCosts.total }
+      : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment };
   });
 
   /** True when extra payments change anything; otherwise savings tiles would only show zeros. */

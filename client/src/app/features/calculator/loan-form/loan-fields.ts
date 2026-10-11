@@ -44,6 +44,39 @@ export const LOAN_RULES = {
   recastFee: { label: 'Recast fee', unit: '$', min: 0, max: 10_000, optional: true },
 } as const satisfies FieldRules;
 
+/** The adjustable rate's numbers: where resets are expected to go, and the caps on them (AdjustableRateRequest). */
+export const ARM_RULES = {
+  armExpectedRate: { label: 'Rate after the fixed period', unit: '%', min: 0, max: 30, decimals: 4 },
+  armInitialCap: { label: 'First reset cap', unit: '%', min: 0, max: 10 },
+  armPeriodicCap: { label: 'Later reset cap', unit: '%', min: 0, max: 10 },
+  armLifetimeCap: { label: 'Lifetime cap', unit: '%', min: 0, max: 10 },
+} as const satisfies FieldRules;
+
+/** The usual temporary buydowns: points off the note rate in each year, year 1 first. */
+export const BUYDOWNS = [
+  { value: '1-0', label: '1-0 (1 point off in year 1)', reductions: [1] },
+  { value: '2-1', label: '2-1 (2 points off, then 1)', reductions: [2, 1] },
+  { value: '3-2-1', label: '3-2-1 (3, 2, then 1 off)', reductions: [3, 2, 1] },
+  { value: '1-1', label: '1-1 (1 point off for 2 years)', reductions: [1, 1] },
+] as const;
+
+export type BuydownPlan = (typeof BUYDOWNS)[number]['value'];
+
+/** The usual adjustable rates: how long the starting rate lasts, and how often it resets after that. */
+export const ARM_TYPES = [
+  { value: '5/1', fixedMonths: 60, intervalMonths: 12 },
+  { value: '7/1', fixedMonths: 84, intervalMonths: 12 },
+  { value: '10/1', fixedMonths: 120, intervalMonths: 12 },
+  { value: '5/6', fixedMonths: 60, intervalMonths: 6 },
+  { value: '7/6', fixedMonths: 84, intervalMonths: 6 },
+  { value: '10/6', fixedMonths: 120, intervalMonths: 6 },
+] as const;
+
+export type ArmType = (typeof ARM_TYPES)[number]['value'];
+
+/** How the rate works: fixed for the whole loan, bought down for the first years, or adjustable. */
+export type RateType = 'fixed' | 'buydown' | 'arm';
+
 /** The two numbers in each lump-sum row. */
 export const LUMP_SUM_RULES = {
   amount: { label: 'Lump sum', unit: '$', min: 0.01, max: MAX_AMOUNT },

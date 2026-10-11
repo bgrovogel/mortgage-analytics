@@ -261,4 +261,44 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     {
         AssertInvalid(A.Request.WithHousingCosts(c => c.With(change)), path, "each housing-cost field has a sensible range");
     }
+
+    [Test]
+    public void ABuydownOrAnAdjustableRate_IsValid()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertValid(A.Request.WithBuydown(2m, 1m), "a 2-1 buydown");
+            AssertValid(A.Request.WithBuydown(3m, 2m, 1m), "a 3-2-1 buydown");
+            AssertValid(A.Request.WithAdjustableRate(7.5m), "a 7/1 ARM");
+            AssertValid(A.Request.WithAdjustableRate(7.5m, initialFixedMonths: 60, intervalMonths: 6, initialCap: 2m, periodicCap: 1m), "a 5/6 ARM with 2/1/5 caps");
+        });
+    }
+
+    [Test]
+    public void ABuydownAndAnAdjustableRateTogether_AreRejected() =>
+        AssertInvalid(A.Request.WithBuydown(2m, 1m).WithAdjustableRate(7m), "AdjustableRate", "a loan is one or the other");
+
+    [Test]
+    public void AnUnusableBuydown_IsRejected()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(A.Request.WithBuydown(), "Buydown.YearlyReductions", "at least one year");
+            AssertInvalid(A.Request.WithBuydown(3m, 2m, 1m, 0.5m), "Buydown.YearlyReductions", "at most three years");
+            AssertInvalid(A.Request.WithBuydown(3.5m), "Buydown.YearlyReductions[0]", "at most three points off");
+            AssertInvalid(A.Request.WithBuydown(0m), "Buydown.YearlyReductions[0]", "a year with no reduction is no buydown");
+        });
+    }
+
+    [Test]
+    public void AnUnusableAdjustableRate_IsRejected()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(A.Request.WithAdjustableRate(7m, initialFixedMonths: 360), "AdjustableRate.InitialFixedMonths", "the fixed period must end before the loan does");
+            AssertInvalid(A.Request.WithAdjustableRate(7m, intervalMonths: 0), "AdjustableRate.AdjustmentIntervalMonths", "the rate must reset at some interval");
+            AssertInvalid(A.Request.WithAdjustableRate(31m), "AdjustableRate.ExpectedRate", "the expected rate has the usual limits");
+            AssertInvalid(A.Request.WithAdjustableRate(7m, lifetimeCap: 11m), "AdjustableRate.LifetimeCap", "caps of at most 10 points");
+        });
+    }
 }

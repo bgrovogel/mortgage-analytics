@@ -124,6 +124,11 @@ export class CalculatorPage {
     await (await this.reveal(testId)).fill(String(value));
   }
 
+  /** Chooses how the rate works (fixed, a buydown, or adjustable), opening its section first. */
+  async chooseRateType(type: 'fixed' | 'buydown' | 'arm'): Promise<void> {
+    await (await this.reveal(`rate-type-${type}`)).check();
+  }
+
   /** Ticks or unticks a checkbox, opening its section first. */
   async setChecked(testId: string, checked: boolean): Promise<void> {
     await (await this.reveal(testId)).setChecked(checked);

@@ -21,6 +21,13 @@ describe('describeInputs', () => {
     expect(describeInputs({ ...request, termInMonths: 100, extraPayments: { monthlyAmount: 0 } as never })).toContain('100 mo');
   });
 
+  it('names a buydown or an adjustable rate', () => {
+    expect(describeInputs({ ...request, buydown: { yearlyReductions: [2, 1] } })).toContain('6.5% · 30 yr · 2-1 buydown');
+    const arm = { initialFixedMonths: 84, adjustmentIntervalMonths: 12, expectedRate: 7.5, initialCap: 5, periodicCap: 2, lifetimeCap: 5 };
+    expect(describeInputs({ ...request, adjustableRate: arm })).toContain('7/1 ARM');
+    expect(describeInputs({ ...request, adjustableRate: { ...arm, initialFixedMonths: 60, adjustmentIntervalMonths: 6 } })).toContain('5/6 ARM');
+  });
+
   it('rounds the down payment percentage to one decimal, and copes with a zero price', () => {
     expect(describeInputs({ ...request, downPayment: 12_345 })).toContain('3.3% down');
     expect(describeInputs({ ...request, homePrice: 0, downPayment: 0 })).toContain('0% down');

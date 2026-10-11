@@ -3,16 +3,18 @@ import { InViewDirective } from '../../../core/layout/in-view.directive';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
 import { CalculatorStore } from '../calculator.store';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
+import { RatePlanComponent } from '../rate-plan/rate-plan.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
 
 /** The answer at a glance: the headline numbers, where each month's payment goes, and the payoff race. */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, PaymentBreakdownComponent, BalanceChartComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
+    <app-rate-plan [result]="result()" />
     <div class="charts">
-      <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" /></div>
+      <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>
     </div>
   `,
