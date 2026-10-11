@@ -193,7 +193,7 @@ describe('CalculationStores', () => {
       calculator().send(purchase);
       calculator().send({ ...existing, adjustableRate: arm });
       expect(strategyPage().loanToApply()!.loan.rate).toEqual(
-        { kind: 'arm', nextResetIn: 24, intervalMonths: 12, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 });
+        { kind: 'arm', nextResetIn: 24, intervalMonths: 12, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5, margin: null });
 
       // A buydown chosen on Pay off or invest is kept when Refinance, which cannot hold one, changes the balance.
       strategyPage().send(strategy);

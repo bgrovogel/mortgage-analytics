@@ -29,19 +29,8 @@ public static class RefinanceMapper
         new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts)
         {
             AdjustableRate = request.NewAdjustableRate.ToDomain(request.NewAnnualInterestRate, worstCase),
-            Buydown = request.NewBuydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null,
+            Buydown = request.NewBuydown.ToDomain(),
         };
-
-    /// <summary>An adjustable rate as a domain value (at its worst case if asked), or null for a fixed rate.</summary>
-    /// <param name="arm">The request's adjustable rate, if any.</param>
-    /// <param name="startingRate">The rate it starts at, for the worst case.</param>
-    /// <param name="worstCase">True to take it at the worst its caps allow.</param>
-    public static AdjustableRate? ToDomain(this AdjustableRateRequest? arm, decimal startingRate, bool worstCase = false)
-    {
-        if (arm is null) return null;
-        var rate = new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap);
-        return worstCase ? rate.WorstCase(startingRate) : rate;
-    }
 
     /// <summary>Maps the analysis to the response contract.</summary>
     /// <param name="analysis">The domain result.</param>

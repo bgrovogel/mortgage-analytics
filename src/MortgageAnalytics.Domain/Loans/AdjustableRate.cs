@@ -60,11 +60,29 @@ public sealed record AdjustableRate
     /// <summary>The most the rate can ever differ from the starting rate, in points.</summary>
     public decimal LifetimeCap { get; }
 
+    private readonly decimal? _margin;
+
+    /// <summary>
+    /// The margin over the index, which ARM notes make the rate's floor: resets never take the rate below it, and the
+    /// lifetime cap then only limits the rise. Null when not given: the lifetime cap then limits the fall as well.
+    /// </summary>
+    /// <exception cref="DomainValidationException">The margin is outside 0 to the highest rate accepted.</exception>
+    public decimal? Margin
+    {
+        get => _margin;
+        init
+        {
+            if (value is < 0 or > LoanTerms.MaxAnnualInterestRate)
+                throw new DomainValidationException($"The margin must be between 0 and {LoanTerms.MaxAnnualInterestRate}%.");
+            _margin = value;
+        }
+    }
+
     /// <summary>
     /// The resets of a loan starting at <paramref name="initialRate"/> over <paramref name="termInMonths"/> payments:
     /// at each, the rate moves toward the expected rate by at most the cap for that reset, and stays within the
-    /// lifetime cap of the starting rate (and between 0% and the highest rate accepted). Resets that leave the rate
-    /// where it is are left out.
+    /// lifetime cap of the starting rate, and never below the margin when one is given (never above the starting rate,
+    /// as a floor). Resets that leave the rate where it is are left out.
     /// </summary>
     /// <param name="initialRate">The starting rate, as a percentage.</param>
     /// <param name="termInMonths">The loan's term.</param>
@@ -72,7 +90,7 @@ public sealed record AdjustableRate
     public IReadOnlyList<RateChange> RatePath(decimal initialRate, int termInMonths)
     {
         var changes = new List<RateChange>();
-        var floor = Math.Max(0m, initialRate - LifetimeCap);
+        var floor = Margin is { } margin ? Math.Min(margin, initialRate) : Math.Max(0m, initialRate - LifetimeCap);
         var ceiling = Math.Min(LoanTerms.MaxAnnualInterestRate, initialRate + LifetimeCap);
         var rate = initialRate;
 
@@ -91,5 +109,5 @@ public sealed record AdjustableRate
     /// <param name="initialRate">The starting rate, as a percentage.</param>
     public AdjustableRate WorstCase(decimal initialRate) =>
         new(InitialFixedMonths, AdjustmentIntervalMonths, Math.Min(LoanTerms.MaxAnnualInterestRate, initialRate + LifetimeCap),
-            InitialCap, PeriodicCap, LifetimeCap);
+            InitialCap, PeriodicCap, LifetimeCap) { Margin = Margin };
 }

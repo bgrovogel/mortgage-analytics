@@ -314,4 +314,18 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             AssertInvalid(A.Request.WithHousingCosts(c => c.WithPropertyTax(16m)), "HousingCosts.PropertyTaxRate", "at most 15%");
         });
     }
+
+    [Test]
+    public void AnArmsMargin_IsAFloorNoHigherThanTheStartingRate()
+    {
+        var request = A.Request.WithAdjustableRate(7.5m).Build();
+        AmortizationRequest arm(decimal margin) => request with { AdjustableRate = request.AdjustableRate! with { Margin = margin } };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(arm(2.75m), "a usual margin");
+            AssertInvalid(arm(6.5m), "AdjustableRate.Margin", "above the 6% starting rate");
+            AssertInvalid(arm(-1m), "AdjustableRate.Margin", "negative");
+        });
+    }
 }

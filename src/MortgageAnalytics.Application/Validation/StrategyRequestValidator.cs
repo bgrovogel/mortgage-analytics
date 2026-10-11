@@ -54,7 +54,7 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
             .Null().WithMessage("Choose a buydown or an adjustable rate, not both.")
             .When(r => r.Buydown is not null);
         RuleFor(r => r.AdjustableRate!)
-            .SetValidator(r => new AdjustableRateRequestValidator(r.RemainingTermInMonths))
+            .SetValidator(r => new AdjustableRateRequestValidator(r.RemainingTermInMonths, r.AnnualInterestRate))
             .When(r => r.AdjustableRate is not null);
         RuleFor(r => r.Buydown!)
             .SetValidator(new TemporaryBuydownRequestValidator())

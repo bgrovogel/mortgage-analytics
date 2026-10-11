@@ -103,6 +103,22 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('arm-worst-case'), '5/2/5 caps allow 11% at the first reset').toContainText('reaches 11% by Jan 2043 and the payment $1,787.42 a month');
   });
 
+  test("an adjustable rate's margin is its floor: a falling rate stops there", async ({ calculator, page }) => {
+    // 6% falling toward 2% within 2/2/5 caps: 4% at the first reset, then 2.75%, the margin, not 2%.
+    await calculator.fillLoan(TWENTY_PERCENT_DOWN);
+    await calculator.clearHousingCosts();
+    await calculator.setExtras(0);
+    await calculator.chooseRateType('arm');
+    await calculator.set('arm-expected-rate', 2);
+    await calculator.set('arm-initial-cap', 2);
+    await calculator.set('arm-periodic-cap', 2);
+    await calculator.calculate();
+
+    await expect(page.getByTestId('rate-plan').locator('li'), 'down to the margin, and no further').toHaveText([
+      /6%\s*\$1,199\.10\/mo/, /From Jan 2043\s*4%\s*\$994\.55\/mo/, /From Jan 2044\s*2\.75%\s*\$881\.34\/mo/,
+    ]);
+  });
+
   test('recalculates as you type, without a Calculate button', async ({ calculator }) => {
     await expect(calculator.calculateButton, 'there is no Calculate button any more').toHaveCount(0);
 

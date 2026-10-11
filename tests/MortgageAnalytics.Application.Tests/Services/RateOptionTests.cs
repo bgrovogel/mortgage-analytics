@@ -64,4 +64,13 @@ public class RateOptionTests : SociableAnalysisTestBase
         Assert.That(response.Accelerated.RateChanges.Single().NewPayment, Is.LessThan(1_365.01m),
             "the smaller balance re-amortizes to a smaller payment");
     }
+
+    [Test]
+    public void AnArmsMargin_ReachesTheEngine()
+    {
+        var request = A.Request.WithAdjustableRate(2m, initialCap: 2m, periodicCap: 2m).Build();
+        var response = Service.Analyze(request with { AdjustableRate = request.AdjustableRate! with { Margin = 2.75m } });
+
+        Assert.That(response.Baseline.RateChanges.Select(c => c.NewRate), Is.EqualTo(new[] { 4m, 2.75m }), "the rate stops at the 2.75% margin");
+    }
 }

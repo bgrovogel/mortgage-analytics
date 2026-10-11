@@ -89,7 +89,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .When(r => r.Buydown is not null);
 
         RuleFor(r => r.AdjustableRate!)
-            .SetValidator(r => new AdjustableRateRequestValidator(r.TermInMonths))
+            .SetValidator(r => new AdjustableRateRequestValidator(r.TermInMonths, r.AnnualInterestRate))
             .When(r => r.AdjustableRate is not null);
     }
 

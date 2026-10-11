@@ -46,9 +46,10 @@ export const RATE_OPTION_RULES = {
   armInitialCap: { label: 'First reset cap', unit: '%', min: 0, max: 10 },
   armPeriodicCap: { label: 'Later reset cap', unit: '%', min: 0, max: 10 },
   armLifetimeCap: { label: 'Lifetime cap', unit: '%', min: 0, max: 10 },
+  armMargin: { label: 'Margin', unit: '%', min: 0, max: 30, decimals: 4, optional: true },
 } as const satisfies FieldRules;
 
-const ARM_NUMBERS = ['armFixedMonths', 'armExpectedRate', 'armInitialCap', 'armPeriodicCap', 'armLifetimeCap'] as const;
+const ARM_NUMBERS = ['armFixedMonths', 'armExpectedRate', 'armInitialCap', 'armPeriodicCap', 'armLifetimeCap', 'armMargin'] as const;
 
 /** The rate options' controls. */
 export type RateOptionsForm = FormGroup<{
@@ -61,6 +62,8 @@ export type RateOptionsForm = FormGroup<{
   armInitialCap: FormControl<number>;
   armPeriodicCap: FormControl<number>;
   armLifetimeCap: FormControl<number>;
+  /** The margin, the rate's floor; null (a blank box) for none. */
+  armMargin: FormControl<number | null>;
 }>;
 
 /**
@@ -80,6 +83,8 @@ export function rateOptionsForm(fb: NonNullableFormBuilder, expectedRate = 7.5, 
     armInitialCap: fb.control(disabled(5), validatorsFor(RATE_OPTION_RULES.armInitialCap)),
     armPeriodicCap: fb.control(disabled(2), validatorsFor(RATE_OPTION_RULES.armPeriodicCap)),
     armLifetimeCap: fb.control(disabled(5), validatorsFor(RATE_OPTION_RULES.armLifetimeCap)),
+    // A usual margin: the rate never falls below it.
+    armMargin: fb.control<number | null>(disabled(2.75), validatorsFor(RATE_OPTION_RULES.armMargin)),
   });
 }
 
@@ -118,6 +123,7 @@ export function rateOptionsRequest(form: RateOptionsForm, mode: ArmMode): { buyd
           initialCap: v.armInitialCap,
           periodicCap: v.armPeriodicCap,
           lifetimeCap: v.armLifetimeCap,
+          margin: v.armMargin ?? null,
         }
       : null,
   };
@@ -136,7 +142,7 @@ export function setRateOptions(form: RateOptionsForm, buydown: TemporaryBuydownI
     form.patchValue({
       rateType: 'arm', armType: type?.value ?? 'other',
       armFixedMonths: arm.initialFixedMonths, armIntervalMonths: arm.adjustmentIntervalMonths, armExpectedRate: arm.expectedRate,
-      armInitialCap: arm.initialCap, armPeriodicCap: arm.periodicCap, armLifetimeCap: arm.lifetimeCap,
+      armInitialCap: arm.initialCap, armPeriodicCap: arm.periodicCap, armLifetimeCap: arm.lifetimeCap, armMargin: arm.margin ?? null,
     }, { emitEvent: false });
   } else {
     form.patchValue({ rateType: 'fixed' }, { emitEvent: false });
@@ -157,7 +163,7 @@ export function applySharedRate(form: RateOptionsForm, rate: SharedRate | null |
   } else if (rate.kind === 'arm') {
     setRateOptions(form, null, {
       initialFixedMonths: made + rate.nextResetIn, adjustmentIntervalMonths: rate.intervalMonths, expectedRate: rate.expectedRate,
-      initialCap: rate.initialCap, periodicCap: rate.periodicCap, lifetimeCap: rate.lifetimeCap,
+      initialCap: rate.initialCap, periodicCap: rate.periodicCap, lifetimeCap: rate.lifetimeCap, margin: rate.margin ?? null,
     });
   } else {
     setRateOptions(form, null, null);
@@ -176,7 +182,7 @@ export function rateSummary(form: RateOptionsForm, mode: ArmMode, rate: number):
   const v = form.getRawValue();
   if (v.rateType === 'buydown') return `${v.buydownPlan} buydown: ${buydownSteps(v.buydownPlan, rate)}`;
   if (v.rateType === 'arm') {
-    const caps = `(caps ${v.armInitialCap}/${v.armPeriodicCap}/${v.armLifetimeCap})`;
+    const caps = `(caps ${v.armInitialCap}/${v.armPeriodicCap}/${v.armLifetimeCap}${v.armMargin === null ? '' : `, floor ${pct(v.armMargin)}`})`;
     if (mode === 'reset') return `Adjustable: ${pct(rate)} for ${v.armFixedMonths} more payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
     if (v.armType === 'other') return `ARM: ${pct(rate)} for ${v.armFixedMonths} payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
     const type = ARM_TYPES.find((t) => t.value === v.armType)!;

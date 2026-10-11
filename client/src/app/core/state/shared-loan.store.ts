@@ -10,7 +10,10 @@ import { OriginalLoan } from '../models/refinance.models';
 export type SharedRate =
   | { kind: 'fixed' }
   | { kind: 'buydown'; yearlyReductions: number[] }
-  | { kind: 'arm'; nextResetIn: number; intervalMonths: number; expectedRate: number; initialCap: number; periodicCap: number; lifetimeCap: number };
+  | {
+      kind: 'arm'; nextResetIn: number; intervalMonths: number; expectedRate: number; initialCap: number; periodicCap: number; lifetimeCap: number;
+      margin: number | null;
+    };
 
 /**
  * The shared rate for a loan's buydown or adjustable rate, given the payments already made on it; null when it
@@ -25,7 +28,7 @@ export function sharedRateFrom(
     return nextResetIn >= 1
       ? {
           kind: 'arm', nextResetIn, intervalMonths: arm.adjustmentIntervalMonths, expectedRate: arm.expectedRate,
-          initialCap: arm.initialCap, periodicCap: arm.periodicCap, lifetimeCap: arm.lifetimeCap,
+          initialCap: arm.initialCap, periodicCap: arm.periodicCap, lifetimeCap: arm.lifetimeCap, margin: arm.margin ?? null,
         }
       : null;
   }

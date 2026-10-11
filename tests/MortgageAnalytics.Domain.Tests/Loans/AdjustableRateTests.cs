@@ -82,6 +82,35 @@ public class AdjustableRateTests
     }
 
     [Test]
+    public void TheMargin_IsTheFloor_SoAFallingRateStopsThere()
+    {
+        // 6% falling toward 2% within 2/2/5 caps: 4%, then 2% without a floor, but 2.75% with a 2.75% margin.
+        var unfloored = Run(SevenOne(2m, 2m, 2m, 5m));
+        var floored = Run(SevenOne(2m, 2m, 2m, 5m) with { Margin = 2.75m });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(unfloored.RateChanges.Select(c => (c.PaymentNumber, c.NewRate, c.NewPayment)), Is.EqualTo(new[] { (85, 4m, 994.55m), (97, 2m, 817.23m) }),
+                "without a margin, the lifetime cap (1%) is the only floor");
+            Assert.That(floored.RateChanges.Select(c => (c.PaymentNumber, c.NewRate, c.NewPayment)), Is.EqualTo(new[] { (85, 4m, 994.55m), (97, 2.75m, 881.34m) }),
+                "with one, the rate stops at the margin");
+            Assert.That(floored.TotalInterest, Is.EqualTo(145_332.19m), "the interest on that path");
+        });
+    }
+
+    [Test]
+    public void AMarginAboveTheStartingRate_FloorsAtTheStartingRate() =>
+        Assert.That((SevenOne(3m, 2m, 2m, 5m) with { Margin = 7m }).RatePath(6m, 360), Is.Empty, "the rate can fall no lower than where it started");
+
+    [Test]
+    public void TheWorstCase_KeepsTheMargin() =>
+        Assert.That((SevenOne(7m, 2m, 2m, 5m) with { Margin = 2.75m }).WorstCase(6m).Margin, Is.EqualTo(2.75m), "the floor is part of the loan");
+
+    [Test]
+    public void AnUnusableMargin_IsRejected() =>
+        DomainAssert.Rejects(() => SevenOne(7m, 2m, 2m, 5m) with { Margin = -1m }, "margin", "the guard names the problem");
+
+    [Test]
     public void TheRateNeverPassesTheLifetimeCapOrZero()
     {
         var up = SevenOne(30m, 10m, 10m, 3m).RatePath(6m, 360);

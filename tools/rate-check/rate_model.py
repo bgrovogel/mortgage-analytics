@@ -26,8 +26,11 @@ def payment(principal, annual_rate, n):
     return money(principal * r * g / (g - 1))
 
 
-def arm_path(initial, term, fixed, interval, expected, initial_cap, periodic_cap, lifetime_cap):
-    floor, ceiling = max(D(0), initial - lifetime_cap), min(D(30), initial + lifetime_cap)
+def arm_path(initial, term, fixed, interval, expected, initial_cap, periodic_cap, lifetime_cap, margin=None):
+    # With a margin, the rate never falls below it (and the lifetime cap only limits the rise); without one, the
+    # lifetime cap limits the fall as well. Each reset moves by at most its cap first.
+    floor = min(margin, initial) if margin is not None else max(D(0), initial - lifetime_cap)
+    ceiling = min(D(30), initial + lifetime_cap)
     rate, changes = initial, []
     p = fixed + 1
     while p <= term:

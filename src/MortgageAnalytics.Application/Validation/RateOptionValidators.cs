@@ -12,7 +12,8 @@ internal sealed class AdjustableRateRequestValidator : AbstractValidator<Adjusta
 {
     /// <summary>Defines the rules.</summary>
     /// <param name="termInMonths">The loan's term (or payments left): the first reset must come before it ends.</param>
-    public AdjustableRateRequestValidator(int termInMonths)
+    /// <param name="startingRate">The rate it starts at: the margin, as its floor, can be no higher.</param>
+    public AdjustableRateRequestValidator(int termInMonths, decimal startingRate)
     {
         RuleFor(a => a.InitialFixedMonths)
             .InclusiveBetween(1, Math.Max(1, termInMonths - 1))
@@ -23,6 +24,12 @@ internal sealed class AdjustableRateRequestValidator : AbstractValidator<Adjusta
         RuleFor(a => a.InitialCap).Percentage(max: AdjustableRate.MaxCap).WithName("First reset cap");
         RuleFor(a => a.PeriodicCap).Percentage(max: AdjustableRate.MaxCap).WithName("Later reset cap");
         RuleFor(a => a.LifetimeCap).Percentage(max: AdjustableRate.MaxCap).WithName("Lifetime cap");
+        RuleFor(a => a.Margin!.Value)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
+            .LessThanOrEqualTo(startingRate).WithMessage("The margin is the rate's floor, so it can be no higher than the starting rate.")
+            .OverridePropertyName(nameof(AdjustableRateRequest.Margin))
+            .WithName("Margin")
+            .When(a => a.Margin is not null);
     }
 }
 

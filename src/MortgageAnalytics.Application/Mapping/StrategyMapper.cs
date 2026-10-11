@@ -32,16 +32,14 @@ public static class StrategyMapper
             request.AnnualIraContribution,
             new MarketAssumptions(request.ExpectedAnnualReturn, request.InflationRate, ToDomain(request.RiskProfile)))
         {
-            Buydown = request.Buydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null,
+            Buydown = request.Buydown.ToDomain(),
         };
 
     /// <summary>The mortgage as it stands today, with an adjustable rate's expected resets.</summary>
     private static LoanTerms ToMortgage(this StrategyRequest request, DateOnly defaultNextPaymentDate)
     {
         var loan = new LoanTerms(request.CurrentBalance, request.AnnualInterestRate, request.RemainingTermInMonths, request.NextPaymentDate ?? defaultNextPaymentDate);
-        if (request.AdjustableRate is not { } arm) return loan;
-        var rate = new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap);
-        return loan.WithRateChanges(rate.RatePath(loan.AnnualInterestRate, loan.TermInMonths));
+        return request.AdjustableRate.ToDomain() is { } rate ? loan.WithRateChanges(rate.RatePath(loan.AnnualInterestRate, loan.TermInMonths)) : loan;
     }
 
     /// <summary>Maps the comparison to the response contract.</summary>

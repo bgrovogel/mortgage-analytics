@@ -81,6 +81,8 @@ export interface AdjustableRateInput {
   initialCap: number;
   periodicCap: number;
   lifetimeCap: number;
+  /** The margin over the index: the rate's floor (no higher than the starting rate). Null for none. */
+  margin?: number | null;
 }
 
 export interface AmortizationRequest {

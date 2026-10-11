@@ -27,14 +27,10 @@ internal static class AmortizationMapper
     }
 
     /// <summary>The adjustable rate, or null for a fixed rate.</summary>
-    public static AdjustableRate? ToAdjustableRate(this AmortizationRequest request) =>
-        request.AdjustableRate is { } arm
-            ? new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap)
-            : null;
+    public static AdjustableRate? ToAdjustableRate(this AmortizationRequest request) => request.AdjustableRate.ToDomain();
 
     /// <summary>The temporary buydown, or null for none.</summary>
-    public static TemporaryBuydown? ToBuydown(this AmortizationRequest request) =>
-        request.Buydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null;
+    public static TemporaryBuydown? ToBuydown(this AmortizationRequest request) => request.Buydown.ToDomain();
 
     /// <summary>Converts the chosen strategy into a recast policy. Only <see cref="ExtraPaymentStrategy.Recast"/> ever recasts.</summary>
     public static RecastPolicy ToRecastPolicy(this AmortizationRequest request)

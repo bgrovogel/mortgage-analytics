@@ -58,10 +58,14 @@
         <app-number-field [control]="f.controls.armPeriodicCap" [rule]="rules.armPeriodicCap" [testId]="p + 'arm-periodic-cap'" label="Later cap" />
         <app-number-field [control]="f.controls.armLifetimeCap" [rule]="rules.armLifetimeCap" [testId]="p + 'arm-lifetime-cap'" label="Lifetime cap" />
       </div>
+      <div class="row">
+        <app-number-field [control]="f.controls.armMargin" [rule]="rules.armMargin" [testId]="p + 'arm-margin'" label="Margin (rate floor)" />
+      </div>
       <p class="hint">
         The interest rate is the starting rate. Nobody knows future rates: each reset moves toward the rate you expect,
-        as far as the caps allow (5/2/5: 5 points at the first reset, 2 at each later one, 5 in all). The results also
-        show the worst case.
+        as far as the caps allow (5/2/5: 5 points at the first reset, 2 at each later one, 5 in all), and never below the
+        margin, which your note sets as the floor (often 2.75%; leave it blank if yours has none). The results also show
+        the worst case.
       </p>
     }
     @default {

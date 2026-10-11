@@ -128,11 +128,11 @@ test.describe('One loan across the pages', () => {
 
     await go(page, 'Refinance');
     await expect(box(page, 'current-rate-summary'), "the current loan is the same ARM, its reset 60 payments away")
-      .toHaveText('Adjustable: 6.5% for 60 more payments, then toward 8.5% (caps 5/2/5)');
+      .toHaveText('Adjustable: 6.5% for 60 more payments, then toward 8.5% (caps 5/2/5, floor 2.75%)');
 
     await go(page, 'Calculator');
     await expect(box(page, 'rate-summary'), 'a new loan fixed for 60 payments, then yearly: a 5/1 ARM')
-      .toHaveText('5/1 ARM: 6.5% for 5 yr, then toward 8.5% (caps 5/2/5)');
+      .toHaveText('5/1 ARM: 6.5% for 5 yr, then toward 8.5% (caps 5/2/5, floor 2.75%)');
   });
 
   test('just opening a page does not overwrite a loan typed elsewhere', async ({ page }) => {

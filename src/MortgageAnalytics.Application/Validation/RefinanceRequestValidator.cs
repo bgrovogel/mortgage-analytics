@@ -60,10 +60,10 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .When(r => r.NextPaymentDate is not null);
 
         RuleFor(r => r.CurrentAdjustableRate!)
-            .SetValidator(r => new AdjustableRateRequestValidator(r.OriginalLoan?.TermInMonths ?? r.RemainingTermInMonths))
+            .SetValidator(r => new AdjustableRateRequestValidator(r.OriginalLoan?.TermInMonths ?? r.RemainingTermInMonths, r.CurrentAnnualInterestRate))
             .When(r => r.CurrentAdjustableRate is not null);
         RuleFor(r => r.NewAdjustableRate!)
-            .SetValidator(r => new AdjustableRateRequestValidator(r.NewTermInMonths))
+            .SetValidator(r => new AdjustableRateRequestValidator(r.NewTermInMonths, r.NewAnnualInterestRate))
             .When(r => r.NewAdjustableRate is not null);
         RuleFor(r => r.NewBuydown!)
             .SetValidator(new TemporaryBuydownRequestValidator())

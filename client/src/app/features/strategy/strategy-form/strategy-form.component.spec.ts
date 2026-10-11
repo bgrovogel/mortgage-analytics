@@ -79,7 +79,7 @@ describe('StrategyFormComponent', () => {
     };
 
     expect(open({ kind: 'arm', nextResetIn: 24, intervalMonths: 6, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 }).adjustableRate)
-      .toEqual({ initialFixedMonths: 24, adjustmentIntervalMonths: 6, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5 });
+      .toEqual({ initialFixedMonths: 24, adjustmentIntervalMonths: 6, expectedRate: 8, initialCap: 2, periodicCap: 1, lifetimeCap: 5, margin: null });
     expect(text(fixture.nativeElement, 'loan-shared')).toContain('Filled in from your loan on the Refinance page.');
     expect(open({ kind: 'buydown', yearlyReductions: [3, 2, 1] }).buydown).toEqual({ yearlyReductions: [3, 2, 1] });
   });

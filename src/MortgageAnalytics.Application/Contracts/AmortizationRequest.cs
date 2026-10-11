@@ -86,6 +86,13 @@ public sealed record AdjustableRateRequest
     /// <summary>The most the rate can ever differ from the starting rate, in points.</summary>
     /// <example>5</example>
     public decimal LifetimeCap { get; init; } = 5m;
+
+    /// <summary>
+    /// The margin over the index: the rate's floor. Resets never take the rate below it, and the lifetime cap then only
+    /// limits the rise. It can be no higher than the starting rate. Omit it to let the lifetime cap limit the fall too.
+    /// </summary>
+    /// <example>2.75</example>
+    public decimal? Margin { get; init; }
 }
 
 /// <summary>What the borrower does with extra principal.</summary>
