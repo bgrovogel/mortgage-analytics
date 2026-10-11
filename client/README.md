@@ -1,9 +1,9 @@
 # Client
 
-The Angular 21 single-page app for Mortgage Analytics. How it is built is in
+The Angular 22 single-page app for Mortgage Analytics. How it is built is in
 [docs/05-frontend.md](../docs/05-frontend.md); every command is in [docs/02-commands.md](../docs/02-commands.md).
 
-Run these from this folder (Node 22+). The API must be running on port 5080 for `npm start`; the dev server
+Run these from this folder (Node 22.22+ or 24+, which Angular 22 needs). The API must be running on port 5080 for `npm start`; the dev server
 proxies `/api` to it (`proxy.conf.json`).
 
 ```bash

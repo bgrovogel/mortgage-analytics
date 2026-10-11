@@ -6,7 +6,7 @@ code, so you can open the file and show it. Practise saying them out loud; don't
 ## The pitch
 
 **In 30 seconds:**
-> "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 21 app in one Docker
+> "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
 > The math is exact to the cent and checked against independent Python models, and about 1,170 tests run in CI."
@@ -264,7 +264,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Database | SQLite, single writer | PostgreSQL via the EF provider; the abstractions are already there |
 | Client models | TypeScript mirrors of the C# contracts, kept in step by tests | Generate them from the OpenAPI document (NSwag or openapi-typescript) |
 | Security | Identity, lockout, SameSite cookies, attempt limits, CSP | Forwarded headers behind a proxy, so the limit sees each client |
-| Runtime versions | .NET 10 (LTS), Angular 21 (LTS) | Angular 22 once the machines run Node 22.22+; `ng update`, one major at a time |
+| Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
 | Test strength | Coverage gate + independent models | Mutation testing (Stryker.NET) on the domain |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
@@ -311,4 +311,4 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
 | Tests | 652 .NET · 474 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
-| Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 21, signals, RxJS, Chart.js · Docker, GitHub Actions |
+| Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

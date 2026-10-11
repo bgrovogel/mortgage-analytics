@@ -28,7 +28,7 @@ one), so the code explains itself from there.
 
 ## The app in one paragraph
 
-A .NET 10 API and an Angular 21 single-page app, shipped as one Docker container. Three calculators (a home
+A .NET 10 API and an Angular 22 single-page app, shipped as one Docker container. Three calculators (a home
 purchase with every ownership cost, refinancing, and paying the mortgage off versus investing) share one loan,
 typed once. Accounts let people save calculations and reopen them. The money math lives in a domain project with
 no dependencies, uses `decimal` throughout, and is checked against independent Python models to the cent. More

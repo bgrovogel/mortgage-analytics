@@ -6,7 +6,7 @@ in the repository today (`Directory.Packages.props`, `client/package.json`, `.co
 ## At a glance
 
 ```
-Browser ── Angular 21 SPA (TypeScript 5.9, RxJS 7.8, signals, Chart.js 4.5)
+Browser ── Angular 22 SPA (TypeScript 6.0, RxJS 7.8, signals, Chart.js 4.5)
    │  HTTP + JSON, cookie session
    ▼
 ASP.NET Core 10 minimal API ── FluentValidation 12 ── ProblemDetails ── Swagger (Swashbuckle 10)
@@ -45,11 +45,11 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 - **Central package management** (`Directory.Packages.props`): each NuGet version is written once for the whole
   solution.
 
-## Frontend (Angular 21)
+## Frontend (Angular 22)
 
 | Technology | Where | Why |
 |---|---|---|
-| **Angular 21** (standalone components) | `client/src/app/` | No NgModules: each component imports what it uses. A full framework (router, forms, HTTP, DI, testing) suits a form-heavy app. |
+| **Angular 22** (standalone components) | `client/src/app/` | No NgModules: each component imports what it uses. A full framework (router, forms, HTTP, DI, testing) suits a form-heavy app. |
 | **Signals** (`signal`, `computed`, `input`, `output`) | Stores and components | Fine-grained reactive state that templates read directly; derived values (`computed`) update themselves. |
 | **OnPush change detection** | Every component | Angular only re-checks a component when its inputs or signals change. Fast, and it forces clear data flow. |
 | **Typed reactive forms** (`NonNullableFormBuilder`) | `features/*/…-form/` | The compiler checks every control name and value type. |
