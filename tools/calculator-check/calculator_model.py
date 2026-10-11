@@ -1,0 +1,358 @@
+"""
+An independent model of the purchase calculator, written in Python Decimal from the rules (not translated from the
+C# engine): the amortization schedule with extra payments, recasts and rate changes; temporary buydowns; PMI and its
+two removal rules; property taxes (one combined rate, or school / county-city / MUD with their own exemptions, the
+appraisal cap and over-65 relief); PID, insurance and HOA with yearly growth; the yearly projection; and the savings.
+
+compare_with_api.py checks the live API against it.
+"""
+import os
+import sys
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal as D, getcontext
+
+# More precision than the engine's decimal: if the two disagree at the cent, it is the rules that differ.
+getcontext().prec = 40
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'rate-check'))
+from rate_model import arm_path  # noqa: E402  the independent ARM model
+
+CENT = D('0.01')
+CATEGORIES = ['schoolTax', 'localTax', 'mudTax', 'pidAssessment', 'homeownersInsurance', 'mortgageInsurance', 'hoaDues', 'propertyTax']
+
+
+def money(x):
+    """Rounds to cents, half away from zero, as US lenders do."""
+    return D(x).quantize(CENT, rounding=ROUND_HALF_UP)
+
+
+def payment(principal, annual_rate, n):
+    """The level payment that repays `principal` over `n` months: M = P r (1+r)^n / ((1+r)^n - 1)."""
+    r = D(annual_rate) / 1200
+    if r == 0:
+        return money(principal / n)
+    g = (1 + r) ** n
+    return money(principal * r * g / (g - 1))
+
+
+def grow(amount, percent, years):
+    """`amount` compounded by `percent` a year for whole `years`, to the cent."""
+    return D(amount) if percent == 0 or years == 0 else money(D(amount) * (1 + D(percent) / 100) ** years)
+
+
+def add_months(d, months):
+    m = d.month - 1 + months
+    return date(d.year + m // 12, m % 12 + 1, d.day)
+
+
+def first_of_next_month(today):
+    return add_months(date(today.year, today.month, 1), 1)
+
+
+# ---------------------------------------------------------------------------------------------- the loan schedule
+
+def amortize(principal, rate, term, changes=(), extra=lambda p: (D(0), D(0)), recast=None):
+    """
+    Month by month: re-amortize at a rate change; interest on the opening balance; principal is the payment less
+    interest (the last month takes the whole balance); extra principal is capped at what is left; a single extra
+    payment of at least the lender's minimum recasts the loan over the months left.
+    `extra(p)` returns (the month's total extra, its largest single extra payment).
+    """
+    resets = dict(changes)
+    pay = initial = payment(principal, rate, term)
+    balance = principal
+    rows, recasts, rate_changes = [], [], []
+    for p in range(1, term + 1):
+        if balance <= 0:
+            break
+        if p in resets and resets[p] != rate:
+            new = payment(balance, resets[p], term - p + 1)
+            rate_changes.append({'paymentNumber': p, 'previousRate': rate, 'newRate': resets[p], 'previousPayment': pay, 'newPayment': new})
+            rate, pay = resets[p], new
+        opening = balance
+        interest = money(balance * rate / 1200)
+        principal_paid = balance if p == term else min(pay - interest, balance)
+        balance -= principal_paid
+        total_extra, largest = extra(p)
+        extra_paid = min(total_extra, balance)
+        balance -= extra_paid
+        rows.append({'p': p, 'opening': opening, 'interest': interest, 'principal': principal_paid, 'extra': extra_paid,
+                     'balance': balance, 'rate': rate, 'scheduled': interest + principal_paid})
+        if balance > 0 and recast and largest >= recast[0]:
+            new = payment(balance, rate, term - p)
+            recasts.append({'afterPaymentNumber': p, 'previousPayment': pay, 'newPayment': new, 'fee': recast[1]})
+            pay = new
+    return {'initial': initial, 'rows': rows, 'recasts': recasts, 'rateChanges': rate_changes}
+
+
+def extras_of(request):
+    """The month's extra principal, and its largest single payment (what a recast looks at)."""
+    e = request.get('extraPayments') or {}
+    monthly, start = D(str(e.get('monthlyAmount') or 0)), e.get('monthlyStartingPaymentNumber') or 1
+    annual = e.get('annual')
+    lumps = e.get('lumpSums') or []
+
+    def extra(p):
+        amounts = []
+        if monthly > 0 and p >= start:
+            amounts.append(monthly)
+        if annual and p >= annual['firstPaymentNumber'] and (p - annual['firstPaymentNumber']) % 12 == 0:
+            amounts.append(D(str(annual['amount'])))
+        amounts += [D(str(l['amount'])) for l in lumps if l['paymentNumber'] == p]
+        return (money(sum(amounts, D(0))), max(amounts, default=D(0)))
+    return extra
+
+
+# ---------------------------------------------------------------------------------------------- housing costs
+
+def installment(annual, p):
+    """Twelve installments that add up to the yearly bill: the twelfth takes what is left."""
+    share = money(annual / 12)
+    return annual - share * 11 if p % 12 == 0 else share
+
+
+def taxable(assessed, amount=D(0), percent=D(0)):
+    """Assessed value less a dollar exemption and a percentage one (at least $5,000, Texas Tax Code 11.13(n))."""
+    pct = max(money(assessed * percent / 100), D(5000)) if percent > 0 else D(0)
+    return max(D(0), assessed - pct - amount)
+
+
+class Costs:
+    """Every recurring cost of owning the home, by payment number, and the yearly projection."""
+
+    def __init__(self, request, years):
+        c = request.get('housingCosts')
+        self.c = c
+        price = D(str(request['homePrice']))
+        loan = price - D(str(request['downPayment']))
+        self.price, self.loan = price, loan
+        if not c:
+            self.market = self.assessed = [price] * years
+            return
+        num = lambda k: D(str(c.get(k) or 0))  # noqa: E731
+        growth = num('homeValueGrowthRate')
+        homestead = c.get('isHomestead')
+        cap = num('homesteadAssessmentCap') if homestead else None
+        self.market, self.assessed = [], []
+        for y in range(years):
+            m = grow(price, growth, y)
+            a = m if y == 0 or cap is None else min(m, money(self.assessed[y - 1] * (1 + cap / 100)))
+            self.market.append(m)
+            self.assessed.append(a)
+
+        senior = c.get('over65OrDisabled') if homestead else None
+        z = D(0)
+        # Each tax: rate, its exemption (amount, percent), and over-65 relief (start year, extra, ceiling).
+        self.taxes = {}
+        if num('propertyTaxRate') > 0:
+            self.taxes['propertyTax'] = (num('propertyTaxRate'), (num('propertyTaxHomesteadExemption') if homestead else z, z), None)
+        if num('schoolTaxRate') > 0:
+            self.taxes['schoolTax'] = (num('schoolTaxRate'), (num('schoolHomesteadExemption') if homestead else z, z),
+                                       (senior['qualifiesInYear'] - 1, D(str(senior['schoolExemption'])), True) if senior else None)
+        if num('localTaxRate') > 0:
+            self.taxes['localTax'] = (num('localTaxRate'), (z, num('localHomesteadExemptionPercent') if homestead else z),
+                                      (senior['qualifiesInYear'] - 1, D(str(senior['localExemption'])), senior['localTaxCeiling']) if senior else None)
+        if num('mudTaxRate') > 0:
+            self.taxes['mudTax'] = (num('mudTaxRate'), (z, num('mudHomesteadExemptionPercent') if homestead else z), None)
+
+        pid = c.get('pid')
+        self.pid = (D(str(pid['annualAssessment'])), pid.get('remainingYears')) if pid and pid['annualAssessment'] > 0 else None
+        self.insurance = (num('annualHomeownersInsurance'), num('insuranceIncreaseRate'))
+        self.hoa = (money(num('monthlyHoaDues')), num('hoaIncreaseRate'))
+        rate = num('pmiRate')
+        self.pmi_required = loan > price * 80 / 100
+        self.pmi_premium = money(loan * rate / 100 / 12) if self.pmi_required and rate > 0 else D(0)
+        self.pmi_by_request = c.get('pmiCancellation') == 'BorrowerRequested'
+        self.pmi_threshold = price * (80 if self.pmi_by_request else 78) / 100
+
+    def taxable_value(self, category, year):
+        rate, (amount, percent), senior = self.taxes[category]
+        if senior and year >= senior[0]:
+            amount += senior[1]
+        return taxable(self.assessed[year], amount, percent)
+
+    def tax(self, category, year):
+        rate, (amount, percent), senior = self.taxes[category]
+        bill = lambda y, extra: money(taxable(self.assessed[y], amount + extra, percent) * rate / 100)  # noqa: E731
+        if not senior or year < senior[0]:
+            return bill(year, D(0))
+        start, extra, ceiling = senior
+        return min(bill(year, extra), bill(start, extra)) if ceiling else bill(year, extra)
+
+    def for_payment(self, p, opening, scheduled_opening):
+        """Each category's charge with payment `p`, given the actual and the original schedule's opening balance."""
+        out = dict.fromkeys(CATEGORIES, D(0))
+        if not self.c:
+            return out
+        year = (p - 1) // 12
+        for category in self.taxes:
+            out[category] = installment(self.tax(category, year), p)
+        if self.pid and (self.pid[1] is None or p <= self.pid[1] * 12):
+            out['pidAssessment'] = installment(self.pid[0], p)
+        if self.insurance[0] > 0:
+            out['homeownersInsurance'] = installment(grow(self.insurance[0], self.insurance[1], year), p)
+        if self.hoa[0] > 0:
+            out['hoaDues'] = grow(self.hoa[0], self.hoa[1], year)
+        tested = opening if self.pmi_by_request else scheduled_opening
+        out['mortgageInsurance'] = self.pmi_premium if tested > self.pmi_threshold else D(0)
+        return out
+
+
+# ---------------------------------------------------------------------------------------------- the whole analysis
+
+def analyze(request, today):
+    price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
+    loan, rate, term = price - down, D(str(request['annualInterestRate'])), request['termInMonths']
+    first = date.fromisoformat(request['firstPaymentDate']) if request.get('firstPaymentDate') else first_of_next_month(today)
+    arm = request.get('adjustableRate')
+    changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], D(str(arm['expectedRate'])),
+                       D(str(arm['initialCap'])), D(str(arm['periodicCap'])), D(str(arm['lifetimeCap'])),
+                       D(str(arm['margin'])) if arm.get('margin') is not None else None) if arm else []
+    recast = None
+    if request.get('strategy') == 'Recast':
+        r = request.get('recast') or {'minimumLumpSum': 10000, 'fee': 250}
+        recast = (D(str(r['minimumLumpSum'])), D(str(r['fee'])))
+
+    baseline = amortize(loan, rate, term, changes)
+    accelerated = amortize(loan, rate, term, changes, extras_of(request), recast)
+    costs = Costs(request, (term + 11) // 12)
+
+    buydown = request.get('buydown')
+    note_payment = payment(loan, rate, term)
+
+    def subsidy(row):
+        if not buydown:
+            return D(0)
+        year = (row['p'] - 1) // 12 + 1
+        reductions = [D(str(x)) for x in buydown['yearlyReductions']]
+        if year > len(reductions):
+            return D(0)
+        return min(note_payment - payment(loan, max(D(0), rate - reductions[year - 1]), term), row['scheduled'])
+
+    def schedule_out(s, scheduled_openings):
+        rows = []
+        for row in s['rows']:
+            c = costs.for_payment(row['p'], row['opening'], scheduled_openings[row['p'] - 1])
+            c['total'] = sum(c.values(), D(0))
+            sub = subsidy(row)
+            rows.append({
+                'paymentNumber': row['p'], 'dueDate': add_months(first, row['p'] - 1).isoformat(),
+                'scheduledPayment': row['scheduled'], 'principal': row['principal'], 'interest': row['interest'],
+                'extraPrincipal': row['extra'], 'housingCosts': c['total'], 'costs': c,
+                'totalOutlay': row['scheduled'] + row['extra'] + c['total'] - sub,
+                'remainingBalance': row['balance'], 'annualInterestRate': row['rate'], 'buydownSubsidy': sub,
+            })
+        totals = {k: sum((r['costs'][k] for r in rows), D(0)) for k in CATEGORIES + ['total']}
+        pmi_rows = [r for r in rows if r['costs']['mortgageInsurance'] > 0]
+        return {
+            'monthlyPayment': s['initial'],
+            'monthlyHousingCosts': rows[0]['costs'],
+            'totalMonthlyPayment': s['initial'] + rows[0]['costs']['total'],
+            'numberOfPayments': len(rows),
+            'totalInterest': sum((r['interest'] for r in rows), D(0)),
+            'totalPaid': sum((r['scheduledPayment'] + r['extraPrincipal'] for r in rows), D(0)),
+            'totalHousingCosts': totals,
+            'mortgageInsuranceEndDate': pmi_rows[-1]['dueDate'] if pmi_rows else None,
+            'payoffDate': rows[-1]['dueDate'],
+            # A recast takes effect with the next payment.
+            'recasts': [dict(r, effectiveDate=add_months(first, r['afterPaymentNumber']).isoformat()) for r in s['recasts']],
+            'rateChanges': [dict(c, effectiveDate=add_months(first, c['paymentNumber'] - 1).isoformat()) for c in s['rateChanges']],
+            'payments': rows,
+        }
+
+    base_openings = [r['opening'] for r in baseline['rows']]
+    base = schedule_out(baseline, base_openings)
+    acc = schedule_out(accelerated, base_openings)
+
+    projection = []
+    for y in range(len(costs.market)):
+        year_rows = base['payments'][y * 12:(y + 1) * 12]
+        tv = lambda cat: costs.taxable_value(cat, y) if costs.c and cat in costs.taxes else None  # noqa: E731
+        totals = {k: sum((r['costs'][k] for r in year_rows), D(0)) for k in CATEGORIES + ['total']}
+        projection.append({
+            'year': y + 1, 'startDate': add_months(first, y * 12).isoformat(),
+            'marketValue': costs.market[y], 'assessedValue': costs.assessed[y],
+            'schoolTaxableValue': tv('schoolTax'), 'localTaxableValue': tv('localTax'), 'mudTaxableValue': tv('mudTax'),
+            'propertyTaxableValue': tv('propertyTax'), 'costs': totals,
+        })
+
+    interest_saved = base['totalInterest'] - acc['totalInterest']
+    pmi_saved = base['totalHousingCosts']['mortgageInsurance'] - acc['totalHousingCosts']['mortgageInsurance']
+    fees = sum((r['fee'] for r in accelerated['recasts']), D(0))
+    dp_percent = (down / price * 10000).to_integral_value(rounding='ROUND_DOWN') / 100
+
+    out = {
+        'purchase': {'homePrice': price, 'downPayment': down, 'downPaymentPercent': dp_percent, 'loanAmount': loan,
+                     'loanToValuePercent': 100 - dp_percent, 'mortgageInsuranceRequired': loan > price * 80 / 100},
+        'baseline': base, 'accelerated': acc,
+        'savings': {'interestSaved': interest_saved, 'mortgageInsuranceSaved': pmi_saved, 'recastFees': fees,
+                    'netSavings': interest_saved + pmi_saved - fees,
+                    'paymentsSaved': base['numberOfPayments'] - acc['numberOfPayments'],
+                    'totalExtraPrincipal': sum((r['extraPrincipal'] for r in acc['payments']), D(0)),
+                    'originalPayoffDate': base['payoffDate'], 'acceleratedPayoffDate': acc['payoffDate']},
+        'projection': projection,
+        'buydown': None, 'adjustableRate': None,
+    }
+    if buydown:
+        reductions = [D(str(x)) for x in buydown['yearlyReductions']]
+        years = []
+        for year in range(1, len(reductions) + 2):
+            r = max(D(0), rate - reductions[year - 1]) if year <= len(reductions) else rate
+            years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
+        out['buydown'] = {'noteRate': rate, 'years': years,
+                          'totalSubsidy': sum((r['buydownSubsidy'] for r in base['payments']), D(0))}
+    if arm:
+        worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
+        worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
+                                 D(str(arm['initialCap'])), D(str(arm['periodicCap'])), D(str(arm['lifetimeCap'])),
+                                 D(str(arm['margin'])) if arm.get('margin') is not None else None)
+        worst = amortize(loan, rate, term, worst_changes)
+        out['adjustableRate'] = {
+            'worstCaseRateChanges': [dict(c, effectiveDate=add_months(first, c['paymentNumber'] - 1).isoformat()) for c in worst['rateChanges']],
+            'worstCasePeakPayment': max([worst['initial']] + [c['newPayment'] for c in worst['rateChanges']]),
+            'worstCaseTotalInterest': sum((r['interest'] for r in worst['rows']), D(0)),
+        }
+    return out
+
+
+# ---------------------------------------------------------------------------------------------- refinancing
+
+def refinance(request):
+    """
+    Keep the current loan, or refinance it: the rest of the current loan, the new loan (closing costs financed or
+    paid up front), the new loan at today's payment when that is higher, lifetime savings and the break-even payment.
+    For the plain case: fixed rates, the loan given by what is owed now.
+    """
+    bal, cur_rate, left = D(str(request['currentBalance'])), D(str(request['currentAnnualInterestRate'])), request['remainingTermInMonths']
+    new_rate, new_term, closing = D(str(request['newAnnualInterestRate'])), request['newTermInMonths'], D(str(request['closingCosts']))
+    financed = request['financeClosingCosts']
+    current = amortize(bal, cur_rate, left)
+    principal = bal + closing if financed else bal
+    new = amortize(principal, new_rate, new_term)
+    upfront = D(0) if financed else closing
+    total = lambda s: sum((r['scheduled'] + r['extra'] for r in s['rows']), D(0))  # noqa: E731
+    interest = lambda s: sum((r['interest'] for r in s['rows']), D(0))  # noqa: E731
+
+    # Break-even: the first payment by which the interest saved so far covers the closing costs, financed or not.
+    break_even, saved = None, D(0)
+    for i, row in enumerate(new['rows']):
+        cur_interest = current['rows'][i]['interest'] if i < len(current['rows']) else D(0)
+        saved += cur_interest - row['interest']
+        if saved >= closing:
+            break_even = i + 1
+            break
+
+    keep = None
+    if current['initial'] > new['initial']:
+        extra = current['initial'] - new['initial']
+        k = amortize(principal, new_rate, new_term, extra=lambda p: (extra, extra))
+        keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k), 'lifetimeSavings': total(current) - (total(k) + upfront)}
+    return {
+        'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),
+        'newPayment': new['initial'], 'newInterest': interest(new), 'newPayments': len(new['rows']),
+        'monthlySavings': current['initial'] - new['initial'],
+        'lifetimeSavings': total(current) - (total(new) + upfront),
+        'monthsAdded': len(new['rows']) - len(current['rows']),
+        'breakEvenPaymentNumber': break_even,
+        'keepPayment': keep,
+    }

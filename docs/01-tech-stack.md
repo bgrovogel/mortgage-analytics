@@ -71,7 +71,7 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
 | **Jest 29 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
 | **Playwright 1.64** | End-to-end | A real Chromium against the real API and Angular dev server, through page objects. |
-| **Python `Decimal`** | `tools/rate-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. |
+| **Python `Decimal`** | `tools/rate-check`, `tools/calculator-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. |
 
 ## Delivery
 

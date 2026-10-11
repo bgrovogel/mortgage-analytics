@@ -185,6 +185,9 @@ rate over the payments left; a **buydown's** subsidy frees cash in every strateg
 The expected numbers in the tests don't come from this code. They come from Python `Decimal` models written from
 the rules:
 - `tools/rate-check/rate_model.py` for ARMs and buydowns;
+- `tools/calculator-check/calculator_model.py` for the purchase calculator (schedule, PMI, taxes, costs, projection,
+  savings) and the refinance comparison, plus `compare_with_api.py`, which checks 300 random purchases and 300 random
+  refinances against the live API, every field;
 - `tools/strategy-check/strategy_model.py` for pay off or invest, plus `compare_with_api.py`, which checks 300 random
   households against the live API, field by field.
 

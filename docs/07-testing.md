@@ -9,7 +9,7 @@ About 1,170 automated tests in seven suites, written test-first, with the standa
 | Infrastructure | 16 | NUnit, SQLite in memory | ~1 s |
 | API integration | 63 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 6 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 459 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 460 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 70 | Playwright (Chromium) | ~20 s |
 
 ## How a feature gets built (TDD)
@@ -101,6 +101,7 @@ inside `Assert.Multiple`.
 | Model | Checks | Run |
 |---|---|---|
 | `tools/rate-check/rate_model.py` | ARM resets, caps, margin, worst case; buydown payments and subsidies | `python tools/rate-check/rate_model.py` |
+| `tools/calculator-check/compare_with_api.py` | 300 random purchases and 300 refinances against the live API: every monthly row, cost, total, date, projection year and saving | API on :5080, then run it: expect all identical |
 | `tools/strategy-check/strategy_model.py` | Every strategy, scenario and year | `python tools/strategy-check/strategy_model.py` |
 | `tools/strategy-check/compare_with_api.py` | 300 random households (seeded) against the live API, every field | API on :5080, then run it: expect "300 identical" |
 

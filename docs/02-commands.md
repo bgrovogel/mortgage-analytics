@@ -139,6 +139,7 @@ python tools/rate-check/rate_model.py              # prints the ARM and buydown 
 python tools/strategy-check/strategy_model.py      # prints the reference households
 # with the API running on :5080:
 python tools/strategy-check/compare_with_api.py    # 300 random households, every field: expect 300 identical
+python tools/calculator-check/compare_with_api.py  # 300 purchases + 300 refinances, every field: expect all identical
 ```
 
 ## Ship it

@@ -139,6 +139,17 @@ describe('x-axis labels', () => {
     expect(label(60)).toBe('M61');
     expect(label(50)).toBeNull();
   });
+
+  it('shows only as many labels as fit the chart, so they never run together on a phone', () => {
+    const dates = Array.from({ length: 360 }, (_, i) => `Nov ${2026 + Math.floor(i / 12)}`);
+    const config = buildLineChart({ labels: dates, series: [], title: () => '', tickEvery: 12 }, document.createElement('div'));
+    const callback = (config.options!.scales!['x']!.ticks as unknown as { callback: (this: unknown, v: unknown, i: number) => string | null }).callback;
+    const shownAt = (width: number) => dates.map((_, i) => i).filter((i) => callback.call({ width }, i, i) !== null);
+
+    // "Nov 2026" needs about 62px: a 250px phone chart has room for 4, a wide one for the usual 7.
+    expect(shownAt(250)).toEqual([0, 120, 240, 359]);
+    expect(shownAt(1000)).toEqual([0, 60, 120, 180, 240, 300, 359]);
+  });
 });
 
 describe('tickIndices', () => {

@@ -57,7 +57,15 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
   const tint = (name: string) => withAlpha(token(name), spec.stacked ? 0.55 : 0.28);
   const grid = token('--grid');
   const muted = token('--text-muted');
-  const shownTicks = new Set(tickIndices(spec.labels.length, MAX_X_TICKS, spec.tickEvery));
+  // As many x labels as fit the chart's width (so "Nov 2026" labels never run together on a phone), up to
+  // MAX_X_TICKS. Chart.js calls the tick callback again whenever the chart resizes, with the new width.
+  const labelWidth = Math.max(0, ...spec.labels.map((l) => l.length)) * LABEL_CHAR_PX + LABEL_GAP_PX;
+  const ticksByCount = new Map<number, Set<number>>();
+  const shownTicks = (width: number | undefined) => {
+    const count = width ? Math.min(MAX_X_TICKS, Math.max(2, Math.floor(width / labelWidth))) : MAX_X_TICKS;
+    if (!ticksByCount.has(count)) ticksByCount.set(count, new Set(tickIndices(spec.labels.length, count, spec.tickEvery)));
+    return ticksByCount.get(count)!;
+  };
 
   return {
     type: 'line',
@@ -118,7 +126,9 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
             color: muted,
             maxRotation: 0,
             autoSkip: false,
-            callback: (_value, index) => (shownTicks.has(index) ? spec.labels[index] : null),
+            callback(this: { width?: number } | undefined, _value: unknown, index: number) {
+              return shownTicks(this?.width).has(index) ? spec.labels[index] : null;
+            },
           },
         },
         y: {
@@ -134,6 +144,10 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
 }
 
 const MAX_X_TICKS = 8;
+
+/** About how wide one character of an axis label is, in pixels, and the space kept between labels. */
+const LABEL_CHAR_PX = 6;
+const LABEL_GAP_PX = 14;
 
 /**
  * Which points get an x-axis label: at most `max`, evenly spaced in whole multiples of `every`,
