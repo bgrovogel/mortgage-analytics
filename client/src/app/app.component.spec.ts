@@ -55,6 +55,15 @@ describe('AppComponent', () => {
     expect(root.querySelector('a[href="/swagger"]')).not.toBeNull();
   });
 
+  it('links the brand home, named by the title alone: the mark beside it is decorative', () => {
+    const { root } = render();
+    const brand = root.querySelector('a.brand')!;
+
+    expect(brand.getAttribute('href')).toBe('/calculator');
+    expect(brand.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(brand.textContent?.trim()).toBe('Mortgage Analytics');
+  });
+
   it('offers to sign in when nobody is signed in', () => {
     const { root } = render();
 

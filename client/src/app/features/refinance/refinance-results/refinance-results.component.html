@@ -1,6 +1,6 @@
 @let r = result();
 
-<section class="hero" [class.warning]="costsMore()" data-testid="refi-verdict">
+<section class="hero" [class.warning]="costsMore()" [class.positive]="!costsMore()" data-testid="refi-verdict">
   @if (costsMore()) {
     <p class="eyebrow">Over the life of the loan</p>
     <p class="headline">Refinancing costs {{ dollars(-r.lifetimeSavings) }} more</p>

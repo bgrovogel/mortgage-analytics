@@ -1,3 +1,5 @@
+@use '../../../core/layout/surfaces';
+
 // A wrapping row: the supporting tiles always fill their row, however many there are and however wide the
 // page (a grid of fixed tracks left a gap beside them on desktop, and one tile alone in a row on a phone).
 .tiles {
@@ -7,11 +9,11 @@
   margin: 0;
 }
 
-// The headline answer gets its own full-width row; the supporting figures share the row below.
+// The headline answer gets its own full-width row; the supporting figures share the row below. Green when it is
+// money saved, blue when it is only what the loan costs.
 .tile.hero {
   flex-basis: 100%;
-  border-color: var(--accent-soft-border);
-  background: var(--accent-soft);
+  @include surfaces.verdict;
 
   dd {
     font-size: 2.6rem;
@@ -24,9 +26,7 @@
 }
 
 .tile {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  @include surfaces.tile;
   padding: 0.9rem 1rem;
   display: flex;
   flex-direction: column;
@@ -61,9 +61,10 @@
     font-weight: 500;
   }
 
-  &.highlight {
-    border-color: var(--accent-soft-border);
-    background: var(--accent-soft);
+  // Time saved is good news, said in green, without lifting the whole tile above the headline.
+  dd.gain {
+    color: var(--positive);
+    font-weight: 600;
   }
 }
 

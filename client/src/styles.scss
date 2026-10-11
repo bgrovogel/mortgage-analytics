@@ -1,32 +1,42 @@
 @use 'app/core/layout/scroll-hint';
+@use 'app/core/forms/form-fields' as fields;
 
 /*
- * Design tokens. Components reference roles (--text-secondary, --series-1, ...), never raw hex,
- * so light and dark mode are each defined exactly once, here.
+ * Design tokens. Components reference roles (--text-secondary, --positive, --series-1, ...), never raw hex, so light
+ * and dark mode are each defined exactly once, here.
+ *
+ * The look is a calm fintech one: white cards with a soft shadow on a cool grey page, one blue for action, green only
+ * for a good outcome, amber only for "be careful", red only for errors. Every text colour is at least 4.5:1 on the
+ * surfaces it sits on (checked by the axe scans in both modes).
  * Series colors are the validated categorical palette, in its fixed slot order (CVD-safe in both modes).
  */
 :root {
   color-scheme: light;
-  --page: #f4f4f1;
-  --surface-1: #fcfcfb;
-  --surface-2: #f7f7f5;
-  --row-alt: #f7f7f5;
-  --border: #e3e2dd;
-  --grid: #e8e7e2;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #6f6e69;
-  // Checked with axe (WCAG AA): text in --accent-text is at least 4.5:1 on every surface, and so is --on-accent on
-  // --accent. In light mode one blue does both; in dark mode text needs a lighter blue than a fill behind white text.
-  --accent: #226ac4;
-  --accent-text: #226ac4;
+  --page: #f5f7fa;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --row-alt: #f8fafc;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --grid: #eaecf0;
+  --text-primary: #101828;
+  --text-secondary: #475467;
+  --text-muted: #5d6679;
+  // In light mode one blue does both jobs; in dark mode text needs a lighter blue than a fill behind white text.
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-text: #2563eb;
   --on-accent: #ffffff;
-  --accent-soft: #eef4fc;
-  --accent-soft-border: #b7d3f6;
+  --accent-soft: #eef4ff;
+  --accent-soft-border: #c7d7fe;
+  --positive: #067647;
+  --positive-soft: #ecfdf3;
+  --positive-border: #abefc6;
   --critical: #c8302f;
-  --critical-soft: #fdf0ef;
-  --warning-soft: #fdf5e2;
-  --warning-border: #e2b84f;
+  --critical-soft: #fef3f2;
+  --warning-text: #93370d;
+  --warning-soft: #fffaeb;
+  --warning-border: #f5b83d;
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --series-3: #1baf7a;
@@ -35,28 +45,42 @@
   --series-6: #008300;
   --series-7: #4a3aa7;
   --series-8: #e34948;
+
+  // Shape and depth, shared by every card, tile and control.
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
+  --shadow-raised: 0 4px 8px -2px rgb(16 24 40 / 8%), 0 2px 4px -2px rgb(16 24 40 / 5%);
+  --focus-ring: 0 0 0 3px rgb(37 99 235 / 25%);
 }
 
 @mixin dark-tokens {
   color-scheme: dark;
-  --page: #121211;
-  --surface-1: #1a1a19;
-  --surface-2: #222220;
-  --row-alt: #1f1f1d;
-  --border: #33332f;
-  --grid: #2c2c29;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #9a9990;
-  --accent: #2f72c4;
-  --accent-text: #5b9cf0;
+  --page: #0c111d;
+  --surface-1: #141b2b;
+  --surface-2: #1a2235;
+  --row-alt: #182031;
+  --border: #283246;
+  --border-strong: #3a465c;
+  --grid: #222b3d;
+  --text-primary: #f5f7fa;
+  --text-secondary: #c2c9d6;
+  --text-muted: #9aa4b6;
+  --accent: #2f6be0;
+  --accent-hover: #3f7bf0;
+  --accent-text: #84aaff;
   --on-accent: #ffffff;
-  --accent-soft: #17263a;
-  --accent-soft-border: #1c5cab;
-  --critical: #e66767;
-  --critical-soft: #3a1d1d;
-  --warning-soft: #2c2413;
-  --warning-border: #8f6c1d;
+  --accent-soft: #16233f;
+  --accent-soft-border: #2b4c8c;
+  --positive: #5fd59a;
+  --positive-soft: #0f2a1f;
+  --positive-border: #1d6644;
+  --critical: #f47a70;
+  --critical-soft: #3a1915;
+  --warning-text: #fdcf6f;
+  --warning-soft: #2a2111;
+  --warning-border: #8a6514;
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
@@ -65,6 +89,9 @@
   --series-6: #008300;
   --series-7: #9085e9;
   --series-8: #e66767;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 35%);
+  --focus-ring: 0 0 0 3px rgb(132 170 255 / 35%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -86,56 +113,100 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  // Self-hosted (the CSP allows fonts only from the app itself), so every visitor sees the same type.
+  font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.45;
+  // Money everywhere: digits of equal width keep amounts aligned in tables and steady while they update.
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
 app-root {
   display: block;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding-bottom: 3rem;
 }
 
+// The bar's content, the tagline and the pages share one centred column.
+.app-bar,
+.tagline,
+main {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+// A white bar across the full width: the brand on the left, the pages and the account on the right.
 .app-header {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-bar {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-end;
-  gap: 0.75rem 1.5rem;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding-block: 0.65rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
 
   h1 {
     margin: 0;
-    font-size: 1.6rem;
-    letter-spacing: -0.02em;
+    font-size: 1.15rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
   }
 
-  p {
-    margin: 0.25rem 0 0;
-    color: var(--text-secondary);
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-// The page links, as pills; the current page is filled with the soft accent.
-// The focused header on account pages: the name (a link home) and a way back.
-.app-header.focused {
-  align-items: center;
+.mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
 
-  h1 a {
-    color: inherit;
-    text-decoration: none;
+  .mark-tile {
+    fill: var(--accent);
   }
 
-  .back {
-    color: var(--accent-text);
-    text-decoration: none;
-    font-weight: 500;
+  .mark-roof,
+  .mark-curve {
+    fill: none;
+    stroke: var(--on-accent);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
 
-    &:hover {
-      text-decoration: underline;
-    }
+.tagline {
+  margin-block: 1.25rem 1rem;
+  color: var(--text-secondary);
+}
+
+// Account pages have no tagline: the form starts a little below the bar.
+.app-header.focused + main {
+  margin-top: 2.5rem;
+}
+
+.app-header.focused .back {
+  color: var(--accent-text);
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 
@@ -173,19 +244,25 @@ app-root {
     align-items: center;
     padding: 0 0.6rem;
     border: 0;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--accent-text);
-    font-weight: 500;
+    font-weight: 600;
     text-decoration: none;
     cursor: pointer;
 
     &:hover {
-      text-decoration: underline;
+      background: var(--accent-soft);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
     }
   }
 }
 
-
+// The page links; the current page is filled with the soft accent.
 .app-nav {
   display: flex;
   flex-wrap: wrap;
@@ -196,12 +273,13 @@ app-root {
     display: inline-flex;
     align-items: center;
     min-height: 40px;
-    padding: 0 0.9rem;
-    border-radius: 999px;
+    padding: 0 0.85rem;
+    border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-weight: 500;
     text-decoration: none;
     white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease;
 
     &:hover {
       color: var(--text-primary);
@@ -211,40 +289,75 @@ app-root {
     &.active {
       color: var(--accent-text);
       background: var(--accent-soft);
+      font-weight: 600;
     }
 
     &.external {
       margin-left: 0.5rem;
-      color: var(--accent-text);
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
     &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
+      outline: none;
+      box-shadow: var(--focus-ring);
     }
   }
 }
 
-// On a phone the header is two compact rows instead of four: the name with Sign in beside it, then the page
-// links on one line that scrolls sideways. The tagline and the API docs link (a desktop, developer thing) step aside.
+// Every input box in the app looks and sizes alike: number boxes, dates, drop-downs, email and password.
+input[appNumber],
+input[type='date'],
+input[type='email'],
+input[type='password'],
+select {
+  @include fields.control;
+}
+
+// The browser's own drop-down arrow differs on every system: one quiet chevron instead (a data: image, which the CSP
+// allows).
+select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%23808a9c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  cursor: pointer;
+}
+
+// Someone who asks for less motion gets instant state changes. (Scroll-linked effects follow the scroll itself, so
+// they are left alone.)
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// On a phone the bar is two compact rows: the brand with Sign in beside it, then the page links on one line that
+// scrolls sideways. The tagline and the API docs link (a desktop, developer thing) step aside.
 @media (max-width: 640px) {
-  .app-header:not(.focused) {
+  .app-header:not(.focused) .app-bar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      'title account'
+      'brand account'
       'nav nav';
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 0.35rem;
+    padding-block: 0.5rem 0.35rem;
+  }
 
-    > div:first-child {
-      grid-area: title;
+  .app-header:not(.focused) .brand {
+    grid-area: brand;
+  }
 
-      p {
-        display: none;
-      }
-    }
+  .tagline {
+    display: none;
+  }
+
+  main {
+    margin-top: 1rem;
   }
 
   .header-actions {

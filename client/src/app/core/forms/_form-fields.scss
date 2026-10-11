@@ -3,6 +3,37 @@
 //   @use 'core/forms/form-fields' as fields;   @include fields.styles;
 // A component that is only one field (NumberFieldComponent) includes just `fields.field`.
 
+// The look of every text box, date and drop-down in the app: white, a firm border, a soft blue ring when focused.
+// Applied once, globally, in styles.scss (every form uses it, so a copy per component would only add weight).
+@mixin control {
+  font: inherit;
+  font-size: 0.95rem;
+  min-height: 40px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--text-muted);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--critical);
+  }
+}
+
 // One labelled box: the label, the input (with "$" before money and "%" after rates), and its error.
 @mixin field {
   .field {
@@ -11,33 +42,14 @@
     gap: 0.3rem;
     min-width: 0;
 
-    span {
+    // The label. (Not every span: the "$" / "%" wrapper around a number box is one too, and must not shrink it.)
+    > span:not(.affix) {
       font-size: 0.85rem;
+      font-weight: 500;
       color: var(--text-secondary);
     }
   }
 
-  input[appNumber],
-  input[type='date'],
-  select {
-    font: inherit;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text-primary);
-    width: 100%;
-    box-sizing: border-box;
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 1px;
-    }
-
-    &[aria-invalid='true'] {
-      border-color: var(--critical);
-    }
-  }
 
   .error {
     color: var(--critical);
@@ -139,7 +151,9 @@
     }
   }
 
-  .checkbox {
+  // A checkbox or radio with its label (.choice is the radio form of the same thing).
+  .checkbox,
+  .choice {
     display: flex;
     gap: 0.6rem;
     align-items: flex-start;
@@ -172,8 +186,13 @@
   // Collapsible sections: closed by default, summarized in one line.
   .section {
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--surface-1);
+    transition: border-color 0.15s ease;
+
+    &:hover {
+      border-color: var(--border-strong);
+    }
 
     &[open] {
       border-color: var(--accent-soft-border);
@@ -189,7 +208,7 @@
       padding: 0.6rem 2.75rem 0.6rem 0.9rem;
       position: relative;
       cursor: pointer;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
 
       &::-webkit-details-marker {
         display: none;
@@ -228,8 +247,8 @@
       }
 
       &:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
+        outline: none;
+        box-shadow: var(--focus-ring);
       }
     }
 

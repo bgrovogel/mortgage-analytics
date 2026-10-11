@@ -321,7 +321,7 @@ stories. Tell one as situation → what you did → result → how you made sure
    changes the code in small ways and checks that a test fails) scored 87%. Seven of `Household`'s input guards could
    be deleted with every test still passing: the lines ran, but nothing checked them. Limits like "at most 120 months"
    could become "less than 120", and an ARM without a margin never fell to its floor in any test.
-   - **What you did:** sorted the 118 survivors into missing tests, code that could never change a result (four
+   - **What you did:** sorted the 118 survivors into three kinds: missing tests, code that could never change a result (four
      conditions, removed), and equivalent mutants. Then `GuardLimitTests`, one row per limit: the limit is accepted,
      and just past it is rejected with that guard's own message.
    - **Result:** 97.4%; CI fails below 95%. The 23 survivors left behave identically to the original code.
@@ -341,5 +341,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 740 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 740 .NET · 475 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

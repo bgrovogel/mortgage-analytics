@@ -1,3 +1,4 @@
+@use '../../core/layout/surfaces';
 @use '../../core/forms/form-fields' as fields;
 
 // The look shared by the account pages (sign in, confirm email, forgot and reset password, dev mailbox):
@@ -17,10 +18,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    padding: 1.5rem;
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    padding: 1.75rem;
+    @include surfaces.card;
 
     h2 {
       margin: 0.5rem 0 0;
@@ -35,20 +34,6 @@
 
   form {
     margin-top: 0.5rem;
-  }
-
-  input[type='email'],
-  input[type='password'] {
-    font: inherit;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text-primary);
-
-    &[aria-invalid='true'] {
-      border-color: var(--critical);
-    }
   }
 
   .toggle {
@@ -93,6 +78,17 @@
     color: var(--on-accent);
     font-weight: 600;
     cursor: pointer;
+    box-shadow: var(--shadow-card);
+    transition: background-color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
 
     &:disabled {
       opacity: 0.6;

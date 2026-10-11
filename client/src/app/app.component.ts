@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { BrandMarkComponent } from './core/layout/brand-mark.component';
 import { HeaderHeightDirective } from './core/layout/header-height.directive';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
@@ -17,20 +18,20 @@ const PAGES = [
 /** The app shell: title, page navigation, the API docs, and who is signed in. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderHeightDirective],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderHeightDirective, BrandMarkComponent],
   template: `
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
       <header class="app-header focused">
-        <h1><a routerLink="/calculator">Mortgage Analytics</a></h1>
-        <a class="back" routerLink="/calculator" data-testid="back-to-app">← Back to the calculator</a>
+        <div class="app-bar">
+          <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
+          <a class="back" routerLink="/calculator" data-testid="back-to-app">← Back to the calculator</a>
+        </div>
       </header>
     } @else {
       <header class="app-header" appHeaderHeight>
-        <div>
-          <h1>Mortgage Analytics</h1>
-          <p>See what a home really costs, how extra payments or a refinance change it, and whether to pay it off or invest.</p>
-        </div>
+        <div class="app-bar">
+        <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
         <div class="header-actions">
           <nav class="app-nav" aria-label="Pages">
             @for (page of pages; track page.path) {
@@ -47,7 +48,9 @@ const PAGES = [
             }
           </div>
         </div>
+        </div>
       </header>
+      <p class="tagline">See what a home really costs, how extra payments or a refinance change it, and whether to pay it off or invest.</p>
     }
     <main>
       <router-outlet />

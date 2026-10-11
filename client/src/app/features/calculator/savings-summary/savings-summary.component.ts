@@ -21,7 +21,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
     <!-- Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt and dd). -->
     <dl class="tiles">
       @if (hasSavings()) {
-        <div class="tile hero">
+        <div class="tile hero positive">
           <dt>Net savings from paying extra</dt>
           <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
           @if (savingsDetail(); as detail) {
@@ -55,11 +55,11 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         }
       </div>
       <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
-      <div class="tile" [class.highlight]="r.savings.paymentsSaved > 0">
+      <div class="tile">
         <dt>Paid off</dt>
         <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
         @if (r.savings.paymentsSaved > 0) {
-          <dd class="note"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
+          <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
         } @else if (r.accelerated.recasts.length > 0) {
           <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
         }

@@ -1,0 +1,46 @@
+// The surfaces every page is built from, defined once so cards, tiles and verdicts look the same everywhere.
+//   @use 'core/layout/surfaces';   .panel { @include surfaces.card; padding: 1.25rem; }
+
+// A card: a white surface lifted off the page by a hairline border and a soft shadow.
+@mixin card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+
+// A tile: one figure (a label, a value, a note); a smaller card.
+@mixin tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+// A verdict: the page's headline answer. Its colour carries the meaning, the same way on every page:
+// blue for a plain fact, green (.positive) for a good outcome, amber (.warning) for "look again before you act".
+@mixin verdict {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent-soft-border);
+  background: var(--accent-soft);
+
+  &.positive {
+    background: var(--positive-soft);
+    border-color: var(--positive-border);
+  }
+
+  &.warning {
+    background: var(--warning-soft);
+    border-color: var(--warning-border);
+  }
+}
+
+// The small label above a headline figure.
+@mixin eyebrow {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}

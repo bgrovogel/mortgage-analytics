@@ -1,3 +1,4 @@
+@use '../../../core/layout/surfaces';
 @use '../../../core/forms/segmented';
 @use '../../../core/layout/scroll-hint';
 
@@ -9,10 +10,7 @@
 }
 
 .panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  min-width: 0;
+  @include surfaces.card;
 }
 
 .note {
@@ -24,15 +22,8 @@
 
 // The recommended path: blue when a bad decade would not change it, amber when it would.
 .hero {
+  @include surfaces.verdict;
   padding: 1.1rem 1.4rem;
-  border-radius: 14px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-soft-border);
-
-  &.warning {
-    background: var(--warning-soft);
-    border-color: var(--warning-border);
-  }
 
   p {
     margin: 0;
@@ -40,8 +31,7 @@
   }
 
   .eyebrow {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    @include surfaces.eyebrow;
   }
 
   .headline {
@@ -104,16 +94,14 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.9rem 1rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  @include surfaces.tile;
   border-top: 4px solid var(--strategy-color);
-  border-radius: 12px;
   position: relative;
 
   &.recommended {
     border-color: var(--accent-soft-border);
     border-top-color: var(--strategy-color);
-    box-shadow: 0 0 0 1px var(--accent-soft-border);
+    box-shadow: 0 0 0 1px var(--accent-soft-border), var(--shadow-raised);
   }
 
   header {

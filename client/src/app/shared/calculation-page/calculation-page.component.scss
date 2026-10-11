@@ -1,3 +1,5 @@
+@use '../../core/layout/surfaces';
+
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
@@ -76,11 +78,8 @@
 }
 
 .panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  @include surfaces.card;
   padding: 1.25rem;
-  min-width: 0;
 }
 
 .placeholder {
@@ -93,7 +92,7 @@
   border: 1px solid var(--critical);
   background: var(--critical-soft);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.9rem 1.1rem;
 
   ul {

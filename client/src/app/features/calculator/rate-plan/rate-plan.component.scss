@@ -1,11 +1,11 @@
+@use '../../../core/layout/surfaces';
+
 :host {
   display: block;
 }
 
 .panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  @include surfaces.card;
   padding: 1.25rem;
 }
 

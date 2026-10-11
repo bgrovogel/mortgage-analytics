@@ -178,6 +178,24 @@ component. Charts are created through an injected `ChartFactory`, so Jest tests 
 fake and assert on the configuration. Every chart has a written takeaway and a data table, and colors come from a
 palette checked for colorblind safety in light and dark mode.
 
+### Visual design
+
+A calm fintech look, built from shared parts so every page stays consistent:
+
+- **Tokens** (`styles.scss`): colours by role (`--surface-1`, `--text-secondary`, `--positive`), defined once for light
+  and once for dark mode, plus shape and depth (`--radius-md`, `--shadow-card`, `--focus-ring`). Components never use a
+  raw hex value. Every text colour meets WCAG AA on its surfaces; the axe scans check it in both modes.
+- **Colour carries meaning, the same way everywhere:** blue for action and plain facts, green only for a good outcome
+  (money saved, time saved), amber only for "look again" (a refinance that costs more, a recommendation a bad decade
+  would reverse), red only for errors.
+- **Surfaces** (`core/layout/_surfaces.scss`): `card`, `tile` and `verdict` mixins, so panels, figures and each page's
+  headline answer look alike on every page.
+- **Controls:** one `control` mixin (`core/forms/_form-fields.scss`), applied once globally to every number box, date,
+  drop-down, email and password field: same size, a firm border, a soft focus ring.
+- **Type:** Inter, self-hosted (`@fontsource-variable/inter`; the CSP allows fonts only from the app itself), with
+  tabular figures everywhere, so amounts line up in tables and do not jitter while they update.
+- **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar.
+
 ### Routing and auth
 
 `app.routes.ts`: `/calculator` (with child routes `overview`, `projection`, `schedule`), `/refinance`,
