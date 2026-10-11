@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
-import { aResponse, aSchedule, aSavings } from '../../../testing/builders';
+import { aHousingCosts, aResponse, aSchedule, aSavings } from '../../../testing/builders';
 import { fakeCharts } from '../../../testing/fake-charts';
 import { routes } from '../../app.routes';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
@@ -105,7 +105,21 @@ describe('CalculatorPageComponent', () => {
 
       const bar = el('[data-testid="summary-bar"]')!.textContent!.replace(/\s+/g, ' ');
       expect(bar).toContain('$3,455/mo');
-      expect(bar).toContain('Save $114,699');
+      expect(bar).toContain('Net savings $114,699');
+    });
+
+    it("shows the interest instead when nothing extra is paid, and a buydown's first-year payment", async () => {
+      calculate.mockReturnValue(of(aResponse({
+        baseline: aSchedule({ totalMonthlyPayment: 3_246.01, totalInterest: 454_378.85, monthlyHousingCosts: aHousingCosts({ propertyTax: 994.27 }) }),
+        savings: aSavings({ netSavings: 0 }),
+        buydown: { noteRate: 6.5, years: [{ year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07 }], totalSubsidy: 8_107.92 },
+      })));
+
+      await open('/calculator');
+
+      const bar = el('[data-testid="summary-bar"]')!.textContent!.replace(/\s+/g, ' ');
+      expect(bar).toContain('$2,799/mo'); // $1,805.07 in year 1 + $994.27 of housing costs
+      expect(bar).toContain('Interest $454,379');
     });
 
     it('hides while the headline numbers are on screen, so they are not shown twice', async () => {

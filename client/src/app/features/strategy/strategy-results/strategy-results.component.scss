@@ -108,6 +108,7 @@
   border: 1px solid var(--border);
   border-top: 4px solid var(--strategy-color);
   border-radius: 12px;
+  position: relative;
 
   &.recommended {
     border-color: var(--accent-soft-border);
@@ -127,7 +128,12 @@
     font-size: 0.95rem;
   }
 
+  // Sits on the card's top edge like a tag, so the title keeps its full width and the three cards line up.
   .badge {
+    position: absolute;
+    top: 0;
+    right: 0.75rem;
+    transform: translateY(-60%);
     font-size: 0.7rem;
     font-weight: 600;
     padding: 0.15rem 0.5rem;

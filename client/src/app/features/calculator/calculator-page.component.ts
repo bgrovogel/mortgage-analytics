@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
+import { AmortizationResponse } from '../../core/models/amortization.models';
 
 /** The result tabs, each its own URL so it can be bookmarked, shared and reached with the back button. */
 const RESULT_TABS = [
@@ -36,4 +37,10 @@ export class CalculatorPageComponent {
 
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);
+
+  /** The first payment due, with housing costs: with a buydown, year 1's reduced payment, as the headline tile shows. */
+  protected firstMonthlyPayment(r: AmortizationResponse): number {
+    const firstYear = r.buydown?.years[0];
+    return firstYear ? firstYear.monthlyPayment + r.baseline.monthlyHousingCosts.total : r.baseline.totalMonthlyPayment;
+  }
 }

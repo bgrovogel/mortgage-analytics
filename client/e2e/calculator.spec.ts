@@ -485,7 +485,7 @@ test.describe('On a phone', () => {
 
     await expect(calculator.summaryBar, 'the summary bar shows on small screens').toBeVisible();
     await expect(calculator.summaryBar, 'it shows the monthly payment').toContainText('/mo');
-    await expect(calculator.summaryBar, 'and the savings').toContainText('Save $');
+    await expect(calculator.summaryBar, 'and the savings').toContainText('Net savings $');
     await expect(calculator.summaryBar, 'it stays pinned in view while the form scrolls').toBeInViewport();
   });
 });

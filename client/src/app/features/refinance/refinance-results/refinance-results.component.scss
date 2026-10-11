@@ -1,3 +1,4 @@
+@use '../../../core/layout/scroll-hint';
 :host {
   display: flex;
   flex-direction: column;
@@ -101,6 +102,8 @@
 
 .table-wrap {
   overflow-x: auto;
+  // On a very narrow screen the table may still scroll: fade the edge that has more.
+  @include scroll-hint.fade-edge;
 }
 
 table {
@@ -121,6 +124,25 @@ td {
 thead th {
   color: var(--text-secondary);
   font-weight: 600;
+  // Long column names ("Refinance, keep payment") wrap, so the numbers decide the table's width.
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+// On a phone, three columns of dollars fit once the padding is tighter and the row names may wrap.
+@media (max-width: 560px) {
+  table {
+    font-size: 0.82rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  tbody th {
+    white-space: normal;
+  }
 }
 
 tbody th {

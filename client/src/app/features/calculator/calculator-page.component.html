@@ -1,8 +1,14 @@
 @if (store.result(); as r) {
   <!-- Phones only, and only while the headline numbers are off screen. -->
   <div class="summary-bar" [class.hidden]="store.headlineVisible()" data-testid="summary-bar" aria-hidden="true">
-    <span><strong>{{ r.baseline.totalMonthlyPayment | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong></span>
-    <span>Save <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+    <!-- The same figures the headline tiles lead with: the first payment due, and the net savings (or, without extra
+         payments, the interest over the loan). -->
+    <span><strong>{{ firstMonthlyPayment(r) | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong></span>
+    @if (r.savings.netSavings > 0) {
+      <span>Net savings <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+    } @else {
+      <span>Interest <strong>{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+    }
     @if (store.busy()) {
       <span class="updating">Updating…</span>
     }

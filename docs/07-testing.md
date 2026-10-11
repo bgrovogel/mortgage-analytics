@@ -9,7 +9,7 @@ About 1,170 automated tests in seven suites, written test-first, with the standa
 | Infrastructure | 16 | NUnit, SQLite in memory | ~1 s |
 | API integration | 63 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 6 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 461 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 462 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 70 | Playwright (Chromium) | ~20 s |
 
 ## How a feature gets built (TDD)
