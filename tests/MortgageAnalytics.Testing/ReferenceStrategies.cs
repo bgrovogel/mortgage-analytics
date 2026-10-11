@@ -183,6 +183,64 @@ public static class ReferenceStrategies
     }
 
     /// <summary>
+    /// The typical household on a 7/1 ARM with 60 payments still fixed at 6.5%, expected to reset to 8.5% within
+    /// 2/1/5 caps (8.5% at the first reset, held there). The rate it pays averages 8.10%, so paying down wins.
+    /// </summary>
+    public static StrategyInputs ArmInputs()
+    {
+        var loan = new LoanTerms(300_000m, 6.5m, 300, NextPaymentDate);
+        return TypicalInputs(mortgage: loan.WithRateChanges(new AdjustableRate(60, 12, 8.5m, 2m, 1m, 5m).RatePath(6.5m, 300)));
+    }
+
+    /// <summary>Reference values for <see cref="ArmInputs"/>, from tools/strategy-check/strategy_model.py.</summary>
+    public static class Arm
+    {
+        /// <summary>The rate paying down earns, on average over the payments left.</summary>
+        public const decimal AverageMortgageRate = 8.10m;
+
+        /// <summary>The hybrid's share invested.</summary>
+        public const decimal HybridInvestPercent = 48m;
+
+        /// <summary>First-year interest, all at the starting rate.</summary>
+        public const decimal FirstYearInterest = 19_354.15m;
+
+        /// <summary>Pay off first: net worth after 30 years at the risk-adjusted return.</summary>
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_577_419.84m;
+
+        /// <summary>Invest: net worth after 30 years at the risk-adjusted return.</summary>
+        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_567_099.07m;
+
+        /// <summary>Invest: total interest, the reset included.</summary>
+        public const decimal InvestTotalInterest = 387_399.16m;
+
+        /// <summary>Pay off first: when the mortgage is gone.</summary>
+        public const int PayOffFirstPayoffMonth = 206;
+    }
+
+    /// <summary>
+    /// The typical household on a new 30-year loan with a 2-1 buydown: the household pays as if at 4.5%, then 5.5%,
+    /// and the subsidy frees that difference to put to work.
+    /// </summary>
+    public static StrategyInputs BuydownInputs() =>
+        TypicalInputs(mortgage: new LoanTerms(300_000m, 6.5m, 360, NextPaymentDate)) with { Buydown = new TemporaryBuydown([2m, 1m]) };
+
+    /// <summary>Reference values for <see cref="BuydownInputs"/>, from tools/strategy-check/strategy_model.py.</summary>
+    public static class Buydown
+    {
+        /// <summary>What the subsidy pays over the two years.</summary>
+        public const decimal Subsidy = 6_827.64m;
+
+        /// <summary>Invest: net worth after 30 years at the risk-adjusted return.</summary>
+        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_235_044.66m;
+
+        /// <summary>Pay off first: net worth after 30 years at the risk-adjusted return.</summary>
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_170_861.22m;
+
+        /// <summary>Pay off first: when the mortgage is gone.</summary>
+        public const int PayOffFirstPayoffMonth = 273;
+    }
+
+    /// <summary>
     /// A $700,000 loan at 7% over 30 years on a $900,000 home; a single filer earning $250,000 at a 35% rate with
     /// $15,000 of other deductions and $3,000 a month to put to work. Itemizing wins, so the interest is deducted.
     /// </summary>

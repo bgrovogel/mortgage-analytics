@@ -59,6 +59,19 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .WithName("Next payment date")
             .When(r => r.NextPaymentDate is not null);
 
+        RuleFor(r => r.CurrentAdjustableRate!)
+            .SetValidator(r => new AdjustableRateRequestValidator(r.OriginalLoan?.TermInMonths ?? r.RemainingTermInMonths))
+            .When(r => r.CurrentAdjustableRate is not null);
+        RuleFor(r => r.NewAdjustableRate!)
+            .SetValidator(r => new AdjustableRateRequestValidator(r.NewTermInMonths))
+            .When(r => r.NewAdjustableRate is not null);
+        RuleFor(r => r.NewBuydown!)
+            .SetValidator(new TemporaryBuydownRequestValidator())
+            .When(r => r.NewBuydown is not null);
+        RuleFor(r => r.NewAdjustableRate)
+            .Null().WithMessage("Choose a buydown or an adjustable rate for the new loan, not both.")
+            .When(r => r.NewBuydown is not null);
+
         RuleFor(r => r.NewAnnualInterestRate)
             .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("New interest rate");

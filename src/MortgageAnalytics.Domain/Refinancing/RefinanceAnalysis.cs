@@ -1,4 +1,5 @@
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Domain.Refinancing;
 
@@ -17,12 +18,22 @@ namespace MortgageAnalytics.Domain.Refinancing;
 /// The new loan while still paying the current payment (the difference goes to principal), or null when
 /// the new payment is not lower.
 /// </param>
+/// <param name="NewLoan">The new loan's terms, with any rate resets.</param>
+/// <param name="BuydownCost">
+/// What a buydown on the new loan costs, paid in cash at closing; 0 without one. It comes back as lower payments in
+/// the buydown's years, so it is left out of the lifetime savings and the break-even, which it does not change.
+/// </param>
 public sealed record RefinanceAnalysis(
     RefinanceOffer Offer,
     AmortizationSchedule Current,
     AmortizationSchedule Refinanced,
-    AmortizationSchedule? KeepingCurrentPayment)
+    AmortizationSchedule? KeepingCurrentPayment,
+    LoanTerms NewLoan,
+    decimal BuydownCost = 0m)
 {
+    /// <summary>Cash due at closing: the closing costs unless they are financed, plus any buydown.</summary>
+    public decimal CashAtClosing => Offer.UpfrontCosts + BuydownCost;
+
     /// <summary>How much lower the new payment is. Negative when it is higher.</summary>
     public decimal MonthlySavings => Current.InitialMonthlyPayment - Refinanced.InitialMonthlyPayment;
 

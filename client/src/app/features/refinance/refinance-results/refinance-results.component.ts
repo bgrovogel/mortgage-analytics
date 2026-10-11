@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
-import { money, monthOf, usd, usdCents } from '../../../core/formatting/format';
+import { money, monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 
@@ -36,6 +36,31 @@ export class RefinanceResultsComponent {
   protected readonly money = money;
   protected readonly date = monthOf;
   protected readonly months = formatMonths;
+
+  /**
+   * What the rates do from here: each loan's resets (an adjustable rate), a buydown on the new loan and what it
+   * costs, and, when either loan adjusts, the lifetime result if rates rise as far as the caps allow. Null for two
+   * fixed rates.
+   */
+  readonly rates = computed(() => {
+    const r = this.result();
+    const resets = (option: RefinanceOption, loan: string) => option.rateChanges.map((c) =>
+      `${loan} resets from ${monthOf(c.effectiveDate)}: ${pct(c.previousRate)} → ${pct(c.newRate)}, ${usdCents(c.previousPayment)} → ${usdCents(c.newPayment)} a month.`);
+    const lines = [...resets(r.current, 'Your loan'), ...resets(r.refinanced, 'The new loan')];
+    const b = r.newBuydown;
+    const buydown = b
+      ? `The ${b.years.slice(0, -1).map((y) => Math.round((b.noteRate - y.annualInterestRate) * 100) / 100).join('-')} buydown costs `
+        + `${usd(r.buydownCost)} at closing (in the cash at closing) and pays it back as lower payments: `
+        + `${b.years.map((y, i) => `${usdCents(y.monthlyPayment)}${i === b.years.length - 1 ? ` from year ${y.year}` : ` in year ${y.year}`}`).join(', ')}. `
+        + 'It changes when you pay, not how much.'
+      : null;
+    const worst = r.worstCaseLifetimeSavings;
+    const worstCase = worst === null
+      ? null
+      : `If rates rise as far as the caps allow, refinancing would ${worst >= 0 ? 'save' : 'cost'} ${usd(Math.abs(worst))} over the life of the loan`
+        + ` (on the path you expect, it ${r.lifetimeSavings >= 0 ? 'saves' : 'costs'} ${usd(Math.abs(r.lifetimeSavings))}).`;
+    return lines.length > 0 || buydown || worstCase ? { resets: lines, buydown, worstCase } : null;
+  });
 
   /** True when refinancing costs more over the life of the loan, closing costs included. */
   readonly costsMore = computed(() => this.result().lifetimeSavings < 0);

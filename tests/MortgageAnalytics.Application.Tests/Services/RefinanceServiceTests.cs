@@ -123,4 +123,80 @@ public class RefinanceServiceTests
 
         Assert.That(response.Current.Payments[0].DueDate, Is.EqualTo(TestClock.FirstOfNextMonth), "both loans start with next month's payment");
     }
+
+    private static AdjustableRateRequest Arm(int fixedMonths, decimal expected, decimal initialCap, decimal periodicCap, decimal lifetimeCap) =>
+        new() { InitialFixedMonths = fixedMonths, AdjustmentIntervalMonths = 12, ExpectedRate = expected, InitialCap = initialCap, PeriodicCap = periodicCap, LifetimeCap = lifetimeCap };
+
+    // Expected values below come from tools/rate-check/rate_model.py, which reproduces the fixed-rate reference
+    // refinance (-17,415.28) exactly.
+
+    [Test]
+    public void ACurrentArmAboutToReset_MakesRefinancingWorthIt_AndTheWorstCaseMoreSo()
+    {
+        var response = _service.Analyze(Request() with { CurrentAdjustableRate = Arm(24, 9m, 2m, 2m, 5m) });
+        var reset = response.Current.RateChanges.Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That((reset.PaymentNumber, reset.PreviousRate, reset.NewRate, reset.PreviousPayment, reset.NewPayment),
+                Is.EqualTo((25, 7m, 9m, 2_120.34m, 2_496.08m)), "today's 7% resets to 9% after two years");
+            Assert.That(response.MonthlySavings, Is.EqualTo(ToSixPercentFor30Years.MonthlySavings), "today's payment is still today's");
+            Assert.That(response.LifetimeSavings, Is.EqualTo(86_292.68m), "the reset turns a $17,415 loss into a saving");
+            Assert.That(response.WorstCaseLifetimeSavings, Is.EqualTo(239_046.91m), "and if rates rise as far as the caps allow (9%, 11%, 12%), much more");
+        });
+    }
+
+    [Test]
+    public void ANewArm_StartsLower_ButItsResetsCount_AndSoDoesTheWorstCase()
+    {
+        var response = _service.Analyze(Request() with { NewAnnualInterestRate = 5.5m, NewAdjustableRate = Arm(60, 7m, 2m, 1m, 5m) });
+        var reset = response.Refinanced.RateChanges.Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Refinanced.MonthlyPayment, Is.EqualTo(1_703.37m), "5.5% for the first five years");
+            Assert.That((reset.PaymentNumber, reset.NewRate, reset.NewPayment), Is.EqualTo((61, 7m, 1_960.48m)), "then 7%");
+            Assert.That(response.LifetimeSavings, Is.EqualTo(-60_241.97m), "costing more over the life of the loan");
+            Assert.That(response.WorstCaseLifetimeSavings, Is.EqualTo(-236_278.22m), "and far more if rates rise as the caps allow");
+        });
+    }
+
+    [Test]
+    public void ABuydownOnTheNewLoan_IsPaidAtClosing_AndComesBackInLowerPayments_ChangingNothingOverall()
+    {
+        var response = _service.Analyze(Request() with { NewBuydown = new TemporaryBuydownRequest { YearlyReductions = [2m, 1m] } });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.BuydownCost, Is.EqualTo(6_655.08m), "the 2-1 buydown's cost");
+            Assert.That(response.UpfrontCosts, Is.EqualTo(ToSixPercentFor30Years.ClosingCosts + 6_655.08m), "due at closing, with the closing costs");
+            Assert.That(response.NewBuydown!.Years.Select(y => (y.AnnualInterestRate, y.MonthlyPayment)), Is.EqualTo(new[]
+            {
+                (4m, 1_432.25m), (5m, 1_610.46m), (6m, ToSixPercentFor30Years.MonthlyPayment),
+            }), "paid back as lower payments for two years");
+            Assert.That(response.LifetimeSavings, Is.EqualTo(ToSixPercentFor30Years.LifetimeSavings), "so it changes nothing over the life of the loan");
+            Assert.That(response.BreakEvenPaymentNumber, Is.EqualTo(ToSixPercentFor30Years.BreakEvenPaymentNumber), "nor the break-even");
+            Assert.That(response.WorstCaseLifetimeSavings, Is.Null, "neither loan adjusts");
+        });
+    }
+
+    [Test]
+    public void AnArmGivenByItsOriginalLoan_CountsItsFixedPeriodFromTheFirstPayment()
+    {
+        // $200,000 at 6% from January 2026, fixed for 12 payments: on the test clock (9 October 2026) ten are made,
+        // so the reset to 8% comes with the third payment from now.
+        var response = _service.Analyze(Request() with
+        {
+            CurrentAnnualInterestRate = 6m,
+            OriginalLoan = new OriginalLoanRequest { Amount = 200_000m, TermInMonths = 360, FirstPaymentDate = ReferenceLoans.FirstPaymentDate },
+            CurrentAdjustableRate = Arm(12, 8m, 2m, 2m, 5m),
+        });
+        var reset = response.Current.RateChanges.Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Current.LoanAmount, Is.EqualTo(197_963.60m), "what is owed today, as before");
+            Assert.That((reset.PaymentNumber, reset.NewRate), Is.EqualTo((3, 8m)), "the reset two payments from now");
+        });
+    }
 }

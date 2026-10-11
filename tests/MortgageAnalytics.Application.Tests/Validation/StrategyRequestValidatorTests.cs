@@ -116,4 +116,20 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
     [Test]
     public void ANextPaymentDateFarOutsideTheCalendar_IsRejected() =>
         AssertInvalid(TypicalRequest with { NextPaymentDate = new DateOnly(1800, 1, 1) }, "NextPaymentDate", "dates must stay within the supported range");
+
+    [Test]
+    public void AnAdjustableRateOrABuydown_AreChecked()
+    {
+        var arm = new AdjustableRateRequest { InitialFixedMonths = 60, AdjustmentIntervalMonths = 12, ExpectedRate = 8m, InitialCap = 2m, PeriodicCap = 1m, LifetimeCap = 5m };
+        var buydown = new TemporaryBuydownRequest { YearlyReductions = [2m, 1m] };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(TypicalRequest with { AdjustableRate = arm }, "a reset five years out");
+            AssertValid(TypicalRequest with { Buydown = buydown }, "a 2-1 buydown");
+            AssertInvalid(TypicalRequest with { AdjustableRate = arm with { InitialFixedMonths = 300 } }, "AdjustableRate.InitialFixedMonths", "the reset must come before the loan ends");
+            AssertInvalid(TypicalRequest with { Buydown = new TemporaryBuydownRequest { YearlyReductions = [4m] } }, "Buydown.YearlyReductions[0]", "at most 3 points off");
+            AssertInvalid(TypicalRequest with { AdjustableRate = arm, Buydown = buydown }, "AdjustableRate", "one or the other");
+        });
+    }
 }

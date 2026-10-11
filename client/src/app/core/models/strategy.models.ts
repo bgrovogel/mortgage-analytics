@@ -1,3 +1,4 @@
+import { AdjustableRateInput, TemporaryBuydownInput } from './amortization.models';
 /** TypeScript mirrors of the strategy contracts (MortgageAnalytics.Application.Contracts). */
 
 export type TaxFilingStatus = 'Single' | 'MarriedFilingJointly' | 'HeadOfHousehold';
@@ -33,6 +34,10 @@ export interface StrategyRequest {
   expectedAnnualReturn: number;
   inflationRate: number;
   riskProfile: InvestorRiskProfile;
+  /** The mortgage's rate adjusts: today's rate, then resets (the fixed period counts payments to the next one). */
+  adjustableRate?: AdjustableRateInput | null;
+  /** A temporary buydown on a new mortgage, starting with its next payment. */
+  buydown?: TemporaryBuydownInput | null;
 }
 
 export interface MonthlyCashPlan {
@@ -65,6 +70,10 @@ export interface StrategyRates {
   automaticAnnualStock: number;
   discretionaryAnnualCash: number;
   hybridInvestPercent: number;
+  /** The mortgage's rate averaged over its payments left: its rate, unless it adjusts. */
+  averageMortgageRate: number;
+  /** What a buydown's subsidy pays in all; 0 without one. */
+  buydownSubsidy: number;
 }
 
 /** Where a strategy stands at the end of a year (year 0 is today). */

@@ -65,54 +65,7 @@
       <span class="section-summary" data-testid="rate-summary">{{ rateSummary() }}</span>
     </summary>
     <div class="section-body">
-      <div class="segmented" role="radiogroup" aria-label="Rate type">
-        <label><input type="radio" formControlName="rateType" value="fixed" data-testid="rate-type-fixed" /> Fixed</label>
-        <label><input type="radio" formControlName="rateType" value="buydown" data-testid="rate-type-buydown" /> Buydown</label>
-        <label><input type="radio" formControlName="rateType" value="arm" data-testid="rate-type-arm" /> Adjustable</label>
-      </div>
-
-      @switch (rateType()) {
-        @case ('buydown') {
-          <label class="field">
-            <span>Buydown</span>
-            <select formControlName="buydownPlan" data-testid="buydown-plan">
-              @for (plan of buydowns; track plan.value) {
-                <option [value]="plan.value">{{ plan.label }}</option>
-              }
-            </select>
-          </label>
-          <p class="hint" data-testid="buydown-hint">
-            Paid at {{ buydownSteps() }} for the rest of the loan. The interest rate above is the loan's real (note) rate;
-            the difference is usually paid up front by the seller or builder.
-          </p>
-        }
-        @case ('arm') {
-          <div class="row">
-            <label class="field">
-              <span>ARM type</span>
-              <select formControlName="armType" data-testid="arm-type">
-                @for (type of armTypes; track type.value) {
-                  <option [value]="type.value">{{ type.value }}</option>
-                }
-              </select>
-            </label>
-            <app-number-field [control]="form.controls.armExpectedRate" [rule]="armRules.armExpectedRate" testId="arm-expected-rate" label="Rate after that" />
-          </div>
-          <div class="row three">
-            <app-number-field [control]="form.controls.armInitialCap" [rule]="armRules.armInitialCap" testId="arm-initial-cap" label="First reset cap" />
-            <app-number-field [control]="form.controls.armPeriodicCap" [rule]="armRules.armPeriodicCap" testId="arm-periodic-cap" label="Later cap" />
-            <app-number-field [control]="form.controls.armLifetimeCap" [rule]="armRules.armLifetimeCap" testId="arm-lifetime-cap" label="Lifetime cap" />
-          </div>
-          <p class="hint">
-            The interest rate above is the starting rate. A 7/1 ARM keeps it for 7 years, then resets every year (a 7/6,
-            every 6 months). Nobody knows future rates: each reset moves toward the rate you expect, as far as the caps
-            allow (5/2/5: 5 points at the first reset, 2 at each later one, 5 in all). The results also show the worst case.
-          </p>
-        }
-        @default {
-          <p class="hint">The same rate for the whole loan.</p>
-        }
-      }
+      <app-rate-options [form]="form.controls.rate" [rate]="form.controls.annualInterestRate.value ?? 0" />
     </div>
   </details>
 

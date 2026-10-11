@@ -148,6 +148,18 @@ public sealed record StrategyRequest
     /// <summary>How much of the expected return to count on.</summary>
     /// <example>Balanced</example>
     public InvestorRiskProfile RiskProfile { get; init; } = InvestorRiskProfile.Balanced;
+
+    /// <summary>
+    /// The mortgage's rate adjusts: <see cref="AnnualInterestRate"/> is today's rate, and the fixed period counts the
+    /// payments until its next reset. Omit for a fixed rate.
+    /// </summary>
+    public AdjustableRateRequest? AdjustableRate { get; init; }
+
+    /// <summary>
+    /// A temporary buydown on a new mortgage, starting with its next payment: <see cref="AnnualInterestRate"/> is the
+    /// note rate, and the subsidy (usually the seller's) pays part of each payment in its years. Omit for none.
+    /// </summary>
+    public TemporaryBuydownRequest? Buydown { get; init; }
 }
 
 /// <summary>Every strategy side by side, and the one to recommend.</summary>
@@ -204,6 +216,8 @@ public sealed record MonthlyCashPlanResponse(
 /// <param name="EmployerMatchPercent">The match: an instant return of this much on every matched dollar.</param>
 /// <param name="EsppGainPercent">The ESPP's gain on each purchase, before tax.</param>
 /// <param name="TargetInvestPercent">The share of all new savings the hybrid aims to put in the market.</param>
+/// <param name="AverageMortgageRate">The mortgage's rate averaged over its payments left: its rate, unless it adjusts.</param>
+/// <param name="BuydownSubsidy">What a buydown's subsidy pays in all; 0 without one.</param>
 /// <param name="AutomaticAnnualStock">Stock that arrives each year whatever the strategy (RSUs kept, ESOP).</param>
 /// <param name="DiscretionaryAnnualCash">The extra cash a strategy directs each year.</param>
 /// <param name="HybridInvestPercent">The share of extra cash the hybrid invests.</param>
@@ -227,7 +241,9 @@ public sealed record StrategyRatesResponse(
     decimal TargetInvestPercent,
     decimal AutomaticAnnualStock,
     decimal DiscretionaryAnnualCash,
-    decimal HybridInvestPercent);
+    decimal HybridInvestPercent,
+    decimal AverageMortgageRate,
+    decimal BuydownSubsidy);
 
 /// <summary>One strategy in each market scenario.</summary>
 /// <param name="Strategy">Which strategy.</param>

@@ -28,9 +28,26 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
     /// <inheritdoc />
     public RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true)
     {
-        var current = request.ToOriginalLoan() is { } original
-            ? calculator.RemainingAsOf(original, clock.Today())
-            : request.ToCurrentLoan(clock.FirstOfNextMonth());
-        return analyzer.Analyze(current, request.ToOffer()).ToResponse(includePayments);
+        var analysis = analyzer.Analyze(CurrentLoan(request, worstCase: false), request.ToOffer());
+
+        // When either loan adjusts, the comparison also runs with rates rising as far as the caps allow.
+        var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
+        var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true)).LifetimeSavings : (decimal?)null;
+
+        return analysis.ToResponse(includePayments, worst);
+    }
+
+    /// <summary>
+    /// The current loan as it stands today, with an adjustable rate's resets ahead: counted from the original first
+    /// payment for a loan given as it was taken out (then brought up to today), otherwise from the next payment.
+    /// </summary>
+    private LoanTerms CurrentLoan(RefinanceRequest request, bool worstCase)
+    {
+        var arm = request.CurrentAdjustableRate.ToDomain(request.CurrentAnnualInterestRate, worstCase);
+        LoanTerms WithResets(LoanTerms loan) => arm is null ? loan : loan.WithRateChanges(arm.RatePath(loan.AnnualInterestRate, loan.TermInMonths));
+
+        return request.ToOriginalLoan() is { } original
+            ? calculator.RemainingAsOf(WithResets(original), clock.Today())
+            : WithResets(request.ToCurrentLoan(clock.FirstOfNextMonth()));
     }
 }

@@ -118,4 +118,26 @@ public class StrategyServiceTests
         Assert.That(Outcome(response, PayoffStrategy.PayOffFirst).RiskAdjusted.PayoffDate, Is.EqualTo(TestClock.FirstOfNextMonth.AddMonths(Typical.PayOffFirst.PayoffMonth - 1)),
             "the payoff counts from next month's payment");
     }
+
+    [Test]
+    public void AnAdjustableRateOrABuydown_ReachTheEngine_AndTheirRatesComeBack()
+    {
+        var arm = _service.Compare(TypicalRequest with
+        {
+            AdjustableRate = new AdjustableRateRequest { InitialFixedMonths = 60, AdjustmentIntervalMonths = 12, ExpectedRate = 8.5m, InitialCap = 2m, PeriodicCap = 1m, LifetimeCap = 5m },
+        });
+        var buydown = _service.Compare(TypicalRequest with
+        {
+            RemainingTermInMonths = 360,
+            Buydown = new TemporaryBuydownRequest { YearlyReductions = [2m, 1m] },
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(arm.Rates.AverageMortgageRate, Is.EqualTo(ReferenceStrategies.Arm.AverageMortgageRate), "the ARM household's average rate");
+            Assert.That(arm.Rates.HybridInvestPercent, Is.EqualTo(ReferenceStrategies.Arm.HybridInvestPercent), "and its hybrid split");
+            Assert.That(buydown.Rates.BuydownSubsidy, Is.EqualTo(ReferenceStrategies.Buydown.Subsidy), "the buydown household's subsidy");
+            Assert.That(buydown.Rates.AverageMortgageRate, Is.EqualTo(6.5m), "at the note rate");
+        });
+    }
 }

@@ -49,6 +49,16 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
         RuleFor(r => r.ExpectedAnnualReturn).Rate(-10, 30).WithName("Expected return");
         RuleFor(r => r.InflationRate).Rate(-5, 20).WithName("Inflation");
         RuleFor(r => r.RiskProfile).IsInEnum().WithName("Risk profile");
+
+        RuleFor(r => r.AdjustableRate)
+            .Null().WithMessage("Choose a buydown or an adjustable rate, not both.")
+            .When(r => r.Buydown is not null);
+        RuleFor(r => r.AdjustableRate!)
+            .SetValidator(r => new AdjustableRateRequestValidator(r.RemainingTermInMonths))
+            .When(r => r.AdjustableRate is not null);
+        RuleFor(r => r.Buydown!)
+            .SetValidator(new TemporaryBuydownRequestValidator())
+            .When(r => r.Buydown is not null);
     }
 
     private void Amount(Expression<Func<StrategyRequest, decimal>> field, string name) =>

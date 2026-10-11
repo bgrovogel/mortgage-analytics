@@ -65,4 +65,10 @@ public sealed record StrategyInputs
 
     /// <summary>The market assumptions.</summary>
     public MarketAssumptions Market { get; }
+
+    /// <summary>
+    /// A temporary buydown on the mortgage, starting with its first payment (a new loan), or null. Its subsidy,
+    /// usually paid by the seller or builder, pays part of the payment in its years.
+    /// </summary>
+    public TemporaryBuydown? Buydown { get; init; }
 }

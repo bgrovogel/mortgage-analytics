@@ -1,0 +1,68 @@
+@let f = form();
+@let p = idPrefix();
+
+<div class="rate-options" [formGroup]="f">
+  <div class="segmented" [class.two]="!allowBuydown()" role="radiogroup" aria-label="Rate type">
+    <label><input type="radio" formControlName="rateType" value="fixed" [attr.data-testid]="p + 'rate-type-fixed'" /> Fixed</label>
+    @if (allowBuydown()) {
+      <label><input type="radio" formControlName="rateType" value="buydown" [attr.data-testid]="p + 'rate-type-buydown'" /> Buydown</label>
+    }
+    <label><input type="radio" formControlName="rateType" value="arm" [attr.data-testid]="p + 'rate-type-arm'" /> Adjustable</label>
+  </div>
+
+  @switch (f.controls.rateType.value) {
+    @case ('buydown') {
+      <label class="field">
+        <span>Buydown</span>
+        <select formControlName="buydownPlan" [attr.data-testid]="p + 'buydown-plan'">
+          @for (plan of buydowns; track plan.value) {
+            <option [value]="plan.value">{{ plan.label }}</option>
+          }
+        </select>
+      </label>
+      <p class="hint" [attr.data-testid]="p + 'buydown-hint'">
+        Paid at {{ buydownStepsNow() }} for the rest of the loan. The interest rate is the loan's real (note) rate; the
+        buydown pays the difference.
+      </p>
+    }
+    @case ('arm') {
+      <div class="row">
+        @if (mode() === 'type') {
+          <label class="field">
+            <span>ARM type</span>
+            <select formControlName="armType" [attr.data-testid]="p + 'arm-type'">
+              @for (type of armTypes; track type.value) {
+                <option [value]="type.value">{{ type.value }}</option>
+              }
+            </select>
+          </label>
+        } @else {
+          <app-number-field [control]="f.controls.armFixedMonths" [rule]="rules.armFixedMonths" [testId]="p + 'arm-fixed-months'" [label]="resetLabel()" />
+        }
+        <app-number-field [control]="f.controls.armExpectedRate" [rule]="rules.armExpectedRate" [testId]="p + 'arm-expected-rate'" label="Rate after that" />
+      </div>
+      @if (mode() === 'reset') {
+        <label class="field">
+          <span>Then resets every</span>
+          <select formControlName="armIntervalMonths" [attr.data-testid]="p + 'arm-interval'">
+            <option [ngValue]="12">12 months</option>
+            <option [ngValue]="6">6 months</option>
+          </select>
+        </label>
+      }
+      <div class="row three">
+        <app-number-field [control]="f.controls.armInitialCap" [rule]="rules.armInitialCap" [testId]="p + 'arm-initial-cap'" label="First reset cap" />
+        <app-number-field [control]="f.controls.armPeriodicCap" [rule]="rules.armPeriodicCap" [testId]="p + 'arm-periodic-cap'" label="Later cap" />
+        <app-number-field [control]="f.controls.armLifetimeCap" [rule]="rules.armLifetimeCap" [testId]="p + 'arm-lifetime-cap'" label="Lifetime cap" />
+      </div>
+      <p class="hint">
+        The interest rate is the starting rate. Nobody knows future rates: each reset moves toward the rate you expect,
+        as far as the caps allow (5/2/5: 5 points at the first reset, 2 at each later one, 5 in all). The results also
+        show the worst case.
+      </p>
+    }
+    @default {
+      <p class="hint">The same rate for the whole loan.</p>
+    }
+  }
+</div>

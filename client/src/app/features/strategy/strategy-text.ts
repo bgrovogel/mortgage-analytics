@@ -91,8 +91,13 @@ export function facts(result: StrategyComparison): string[] {
   const { rates, plan } = result;
   const lines: string[] = [];
 
-  lines.push(`Paying down the mortgage earns ${pct(rates.afterTaxMortgageRate)} for certain${rates.interestIsDeducted ? ' after tax' : ''}. `
-    + `The market's ${pct(rates.expectedReturn)} is an average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}.`);
+  const adjusts = rates.averageMortgageRate !== rates.mortgageRate;
+  lines.push(adjusts
+    ? `Your rate adjusts: ${pct(rates.mortgageRate)} now, ${pct(rates.averageMortgageRate)} on average over the loan on the path you expect, `
+      + `so paying it down earns about ${pct(rates.afterTaxMortgageRate)}${rates.interestIsDeducted ? ' after tax' : ''}: certain for the fixed years, `
+      + `an estimate after. The market's ${pct(rates.expectedReturn)} is an average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}.`
+    : `Paying down the mortgage earns ${pct(rates.afterTaxMortgageRate)} for certain${rates.interestIsDeducted ? ' after tax' : ''}. `
+      + `The market's ${pct(rates.expectedReturn)} is an average, not a promise, so the ranking counts on ${pct(rates.riskAdjustedReturn)}.`);
 
   const edge = rates.rateEdge > 0
     ? `That leaves investing ${decimal(rates.rateEdge)} points ahead.`
@@ -108,6 +113,10 @@ export function facts(result: StrategyComparison): string[] {
   if (plan.employerMatch > 0) {
     lines.push(`Every strategy first collects the full 401(k) match: ${usd(plan.employerMatch)} a month free for ${usd(plan.retirementContributionCost)} `
       + `of take-home pay, an instant ${pct(rates.employerMatchPercent)} return no mortgage can beat.`);
+  }
+
+  if (rates.buydownSubsidy > 0) {
+    lines.push(`The buydown pays ${usd(rates.buydownSubsidy)} of your payments in its first years: in every strategy, that cash goes to work too.`);
   }
 
   if (plan.esppContribution > 0) {

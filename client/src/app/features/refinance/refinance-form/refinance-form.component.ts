@@ -10,6 +10,8 @@ import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../co
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
+import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
+import { RATE_OPTION_RULES, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 /** The usual new terms, in years. "keep" means the new loan ends when the current one would. */
 const TERMS = [30, 25, 20, 15, 10] as const;
@@ -47,7 +49,7 @@ function firstOfMonthFromNext(months: number): string {
  */
 @Component({
   selector: 'app-refinance-form',
-  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe],
+  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe, RateOptionsComponent],
   templateUrl: './refinance-form.component.html',
   styleUrl: './refinance-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,12 +89,20 @@ export class RefinanceFormComponent implements OnInit {
     newTerm: this.fb.control<NewTerm>('30'),
     closingCosts: [6_000, validatorsFor(rules.closingCosts)],
     financeClosingCosts: [false],
+    // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
+    // the new one may adjust (a 7/1 by default) or be bought down.
+    currentRate: rateOptionsForm(this.fb, 9, 24),
+    newRate: rateOptionsForm(this.fb, 7.5),
   });
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   /** Emits what is wrong whenever that changes: an empty list once every field is valid again. */
   readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
+
+  /** One line for each loan's closed rate section. */
+  readonly currentRateSummary = computed(() => rateSummary(this.form.controls.currentRate, 'reset', this.values().currentAnnualInterestRate ?? 0));
+  readonly newRateSummary = computed(() => rateSummary(this.form.controls.newRate, 'type', this.values().newAnnualInterestRate ?? 0));
 
   /** True while the loan is described as it was taken out. */
   readonly byOriginalLoan = computed(() => this.values().loanEntry === 'original');
@@ -131,6 +141,8 @@ export class RefinanceFormComponent implements OnInit {
   constructor() {
     // Switching how the loan is described converts the one into the other, so it stays the same loan.
     this.form.controls.loanEntry.valueChanges.pipe(takeUntilDestroyed()).subscribe((entry) => this.describeBy(entry));
+    keepArmFieldsInStep(this.form.controls.currentRate);
+    keepArmFieldsInStep(this.form.controls.newRate);
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (!this.quiet && this.canSend()) this.analyze.emit(this.toRequest());
@@ -143,7 +155,9 @@ export class RefinanceFormComponent implements OnInit {
     if (initial) {
       const original = initial.originalLoan;
       this.enableFor(original ? 'original' : 'today');
-      this.form.setValue(
+      setRateOptions(this.form.controls.currentRate, null, initial.currentAdjustableRate);
+      setRateOptions(this.form.controls.newRate, initial.newBuydown, initial.newAdjustableRate);
+      this.form.patchValue(
         {
           loanEntry: original ? 'original' : 'today',
           currentBalance: initial.currentBalance,
@@ -216,7 +230,12 @@ export class RefinanceFormComponent implements OnInit {
 
   /** Everything wrong with the form, including an original loan whose term is already behind it. */
   private currentProblems(): string[] {
-    return [...problemsIn(rules, this.form.controls), ...(this.loanToday()?.paidOff ? [PAID_OFF_ALREADY] : [])];
+    return [
+      ...problemsIn(rules, this.form.controls),
+      ...problemsIn(RATE_OPTION_RULES, this.form.controls.currentRate.controls),
+      ...problemsIn(RATE_OPTION_RULES, this.form.controls.newRate.controls),
+      ...(this.loanToday()?.paidOff ? [PAID_OFF_ALREADY] : []),
+    ];
   }
 
   /** True when the form can be sent: nothing wrong with it. */
@@ -224,10 +243,16 @@ export class RefinanceFormComponent implements OnInit {
     return this.form.valid && !this.loanToday()?.paidOff;
   }
 
+  /** What the current loan's fixed period counts from: the next payment, or the original first one. */
+  protected currentResetLabel(): string {
+    return this.byOriginalLoan() ? 'Fixed for (payments from the first)' : 'Next reset in (payments)';
+  }
+
   private toRequest(): RefinanceRequest {
     const v = this.form.getRawValue();
     const today = this.loanToday();
     const remaining = this.remainingMonths();
+    const newRate = rateOptionsRequest(this.form.controls.newRate, 'type');
     return {
       // With the original loan, the API works these out itself, to the cent; these are close, for the other pages.
       currentBalance: today ? today.balance : v.currentBalance,
@@ -241,6 +266,9 @@ export class RefinanceFormComponent implements OnInit {
       originalLoan: today
         ? { amount: v.originalAmount, termInMonths: Math.round(v.originalTermYears * 12), firstPaymentDate: v.firstPaymentDate }
         : null,
+      currentAdjustableRate: rateOptionsRequest(this.form.controls.currentRate, 'reset').adjustableRate,
+      newAdjustableRate: newRate.adjustableRate,
+      newBuydown: newRate.buydown,
     };
   }
 }

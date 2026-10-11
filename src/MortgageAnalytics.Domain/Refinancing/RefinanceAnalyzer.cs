@@ -28,6 +28,8 @@ public sealed class RefinanceAnalyzer(IAmortizationCalculator calculator) : IRef
 
         // The new loan pays off the current balance (plus the closing costs, if financed) from the same next due date.
         var newLoan = new LoanTerms(offer.NewLoanAmount(current.Principal), offer.AnnualInterestRate, offer.TermInMonths, current.FirstPaymentDate);
+        if (offer.AdjustableRate is { } arm)
+            newLoan = newLoan.WithRateChanges(arm.RatePath(newLoan.AnnualInterestRate, newLoan.TermInMonths));
         var refinanced = calculator.Generate(newLoan, ExtraPaymentPlan.None, RecastPolicy.Never);
 
         var difference = currentSchedule.InitialMonthlyPayment - refinanced.InitialMonthlyPayment;
@@ -35,6 +37,10 @@ public sealed class RefinanceAnalyzer(IAmortizationCalculator calculator) : IRef
             ? calculator.Generate(newLoan, new ExtraPaymentPlan([new MonthlyExtraPayment(difference)]), RecastPolicy.Never)
             : null;
 
-        return new RefinanceAnalysis(offer, currentSchedule, refinanced, keepingCurrentPayment);
+        var buydownCost = offer.Buydown is { } buydown
+            ? refinanced.Payments.Sum(p => buydown.SubsidyFor(newLoan, p.PaymentNumber, p.ScheduledAmount))
+            : 0m;
+
+        return new RefinanceAnalysis(offer, currentSchedule, refinanced, keepingCurrentPayment, newLoan, buydownCost);
     }
 }

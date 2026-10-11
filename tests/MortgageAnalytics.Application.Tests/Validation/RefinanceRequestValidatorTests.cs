@@ -97,4 +97,20 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
     [Test]
     public void ANextPaymentDateFarOutsideTheCalendar_IsRejected() =>
         AssertInvalid(Valid with { NextPaymentDate = new DateOnly(1800, 1, 1) }, "NextPaymentDate", "dates must stay within the supported range");
+
+    [Test]
+    public void AdjustableRatesAndABuydown_AreChecked()
+    {
+        var arm = new AdjustableRateRequest { InitialFixedMonths = 24, AdjustmentIntervalMonths = 12, ExpectedRate = 9m, InitialCap = 2m, PeriodicCap = 2m, LifetimeCap = 5m };
+        var buydown = new TemporaryBuydownRequest { YearlyReductions = [2m, 1m] };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(Valid with { CurrentAdjustableRate = arm, NewAdjustableRate = arm }, "both loans can adjust");
+            AssertValid(Valid with { NewBuydown = buydown }, "the new loan can be bought down");
+            AssertInvalid(Valid with { CurrentAdjustableRate = arm with { InitialFixedMonths = 300 } }, "CurrentAdjustableRate.InitialFixedMonths", "the reset must come before the loan ends");
+            AssertInvalid(Valid with { NewAdjustableRate = arm with { LifetimeCap = 11m } }, "NewAdjustableRate.LifetimeCap", "caps of at most 10 points");
+            AssertInvalid(Valid with { NewAdjustableRate = arm, NewBuydown = buydown }, "NewAdjustableRate", "the new loan is one or the other");
+        });
+    }
 }

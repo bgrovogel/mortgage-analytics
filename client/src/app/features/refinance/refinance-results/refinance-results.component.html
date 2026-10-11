@@ -67,6 +67,23 @@
   </section>
 }
 
+@if (rates(); as rates) {
+  <section class="panel rates" data-testid="refi-rates">
+    <h3>Rates ahead</h3>
+    <ul>
+      @for (line of rates.resets; track line) {
+        <li>{{ line }}</li>
+      }
+      @if (rates.buydown) {
+        <li data-testid="refi-buydown">{{ rates.buydown }}</li>
+      }
+    </ul>
+    @if (rates.worstCase) {
+      <p class="worst" data-testid="refi-worst-case">{{ rates.worstCase }}</p>
+    }
+  </section>
+}
+
 <div class="panel">
   <app-refinance-chart [result]="r" />
 </div>

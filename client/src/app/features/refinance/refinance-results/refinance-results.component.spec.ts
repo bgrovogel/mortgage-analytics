@@ -121,4 +121,38 @@ describe('RefinanceResultsComponent', () => {
       expect(headers).toEqual(['', 'Keep current loan', 'Refinance']);
     });
   });
+  it('shows nothing about rates when both are fixed', () => {
+    render(aRefinanceResponse());
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="refi-rates"]')).toBeNull();
+  });
+
+  it("lists each loan's resets and the worst case when a rate adjusts", () => {
+    const reset = { paymentNumber: 25, effectiveDate: '2028-01-01', previousRate: 7, newRate: 9, previousPayment: 2_120.34, newPayment: 2_496.08 };
+    render(aRefinanceResponse({
+      current: aRefinanceOption({ rateChanges: [reset] }),
+      lifetimeSavings: 86_292.68,
+      worstCaseLifetimeSavings: 239_046.91,
+    }));
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('[data-testid="refi-rates"] li')!.textContent).toBe('Your loan resets from Jan 2028: 7% → 9%, $2,120.34 → $2,496.08 a month.');
+    expect(root.querySelector('[data-testid="refi-worst-case"]')!.textContent!.trim()).toBe(
+      'If rates rise as far as the caps allow, refinancing would save $239,047 over the life of the loan (on the path you expect, it saves $86,293).');
+  });
+
+  it('explains that a buydown on the new loan changes when you pay, not how much', () => {
+    render(aRefinanceResponse({
+      buydownCost: 6_655.08,
+      newBuydown: {
+        noteRate: 6, totalSubsidy: 6_655.08,
+        years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 1_432.25 }, { year: 2, annualInterestRate: 5, monthlyPayment: 1_610.46 }, { year: 3, annualInterestRate: 6, monthlyPayment: 1_798.65 }],
+      },
+    }));
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('[data-testid="refi-buydown"]')!.textContent).toBe(
+      'The 2-1 buydown costs $6,655 at closing (in the cash at closing) and pays it back as lower payments: '
+      + '$1,432.25 in year 1, $1,610.46 in year 2, $1,798.65 from year 3. It changes when you pay, not how much.');
+  });
 });

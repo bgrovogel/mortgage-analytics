@@ -68,14 +68,15 @@ def show_arm(name, *, expected, caps):
     print('   total interest', interest, 'payments', payments)
 
 
-print('Fixed 6%: payment', payment(D(200000), D(6), 360))
-show_arm('7/1 ARM to 7.5% (caps 5/2/5)', expected='7.5', caps=('5', '2', '5'))
-show_arm('7/1 ARM to 9% (caps 2/1/5)', expected='9', caps=('2', '1', '5'))
-show_arm('7/1 ARM worst case (caps 2/2/5)', expected='11', caps=('2', '2', '5'))
-show_arm('7/1 ARM down to 4% (caps 2/1/5)', expected='4', caps=('2', '1', '5'))
+if __name__ == '__main__':
+    print('Fixed 6%: payment', payment(D(200000), D(6), 360))
+    show_arm('7/1 ARM to 7.5% (caps 5/2/5)', expected='7.5', caps=('5', '2', '5'))
+    show_arm('7/1 ARM to 9% (caps 2/1/5)', expected='9', caps=('2', '1', '5'))
+    show_arm('7/1 ARM worst case (caps 2/2/5)', expected='11', caps=('2', '2', '5'))
+    show_arm('7/1 ARM down to 4% (caps 2/1/5)', expected='4', caps=('2', '1', '5'))
 
-loan, note = D(356250), D('5.99')
-note_payment = payment(loan, note, 360)
-y1, y2 = payment(loan, D('3.99'), 360), payment(loan, D('4.99'), 360)
-print('2-1 buydown on $356,250 at 5.99%: note payment', note_payment, 'year 1', y1, 'year 2', y2,
-      'subsidy', (note_payment - y1) * 12 + (note_payment - y2) * 12)
+    loan, note = D(356250), D('5.99')
+    note_payment = payment(loan, note, 360)
+    y1, y2 = payment(loan, D('3.99'), 360), payment(loan, D('4.99'), 360)
+    print('2-1 buydown on $356,250 at 5.99%: note payment', note_payment, 'year 1', y1, 'year 2', y2,
+          'subsidy', (note_payment - y1) * 12 + (note_payment - y2) * 12)

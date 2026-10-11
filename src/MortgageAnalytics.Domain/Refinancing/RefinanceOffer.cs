@@ -41,6 +41,15 @@ public sealed record RefinanceOffer
     /// <summary>What is paid in cash at closing: the closing costs, unless they are financed.</summary>
     public decimal UpfrontCosts => FinanceClosingCosts ? 0m : ClosingCosts;
 
+    /// <summary>The new loan's rate adjusts (its rate is the starting rate), or null for a fixed rate.</summary>
+    public AdjustableRate? AdjustableRate { get; init; }
+
+    /// <summary>
+    /// A temporary buydown on the new loan, or null. In a refinance the borrower pays for it, in cash at closing, and
+    /// gets the same amount back as lower payments in its years: it changes when the money is paid, not how much.
+    /// </summary>
+    public TemporaryBuydown? Buydown { get; init; }
+
     /// <summary>The new loan amount: the balance being paid off, plus the closing costs when they are financed.</summary>
     /// <param name="balance">The balance of the loan being replaced.</param>
     public decimal NewLoanAmount(decimal balance) => FinanceClosingCosts ? balance + ClosingCosts : balance;

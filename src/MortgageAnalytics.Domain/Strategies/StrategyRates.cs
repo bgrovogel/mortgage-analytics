@@ -1,3 +1,5 @@
+using MortgageAnalytics.Domain.Loans;
+
 namespace MortgageAnalytics.Domain.Strategies;
 
 /// <summary>
@@ -20,6 +22,8 @@ namespace MortgageAnalytics.Domain.Strategies;
 /// <param name="AutomaticAnnualStock">What goes into stock each year anyway (RSUs kept as shares, ESOP), counted toward that share.</param>
 /// <param name="DiscretionaryAnnualCash">The extra cash a strategy directs each year.</param>
 /// <param name="HybridInvestPercent">The share of extra cash the hybrid invests; the rest goes to principal.</param>
+/// <param name="AverageMortgageRate">The mortgage's rate averaged over its payments left: its rate, unless it adjusts. Paying down earns this.</param>
+/// <param name="BuydownSubsidy">What a buydown's subsidy pays of the payments, in all; 0 without one.</param>
 public sealed record StrategyRates(
     decimal MortgageRate,
     decimal FirstYearInterest,
@@ -36,7 +40,9 @@ public sealed record StrategyRates(
     decimal TargetInvestPercent,
     decimal AutomaticAnnualStock,
     decimal DiscretionaryAnnualCash,
-    decimal HybridInvestPercent)
+    decimal HybridInvestPercent,
+    decimal AverageMortgageRate,
+    decimal BuydownSubsidy)
 {
     /// <summary>How much more the market is counted on to earn than paying down the mortgage, after tax, in points. Negative when the mortgage wins.</summary>
     public decimal RateEdge => AfterTaxRiskAdjustedReturn - AfterTaxMortgageRate;
@@ -59,11 +65,13 @@ public sealed record StrategyRates(
         var household = inputs.Household;
         var market = inputs.Market;
 
-        var firstYearInterest = FirstYearInterestOf(inputs, plan.MortgagePayment);
+        var firstYearInterest = FirstYearInterestOf(inputs);
+        // Paying down a loan whose rate adjusts earns its rate month by month: on average, the rate over its payments left.
+        var averageRate = Percent(Enumerable.Range(1, loan.TermInMonths).Sum(loan.AnnualRateFor) / loan.TermInMonths);
         var deductible = TaxDeductions.DeductibleInterest(firstYearInterest, loan.Principal);
         var standard = TaxDeductions.StandardDeduction(household.FilingStatus);
         var deducted = household.OtherItemizedDeductions + deductible > standard;
-        var afterTaxMortgage = deducted ? Percent(loan.AnnualInterestRate * household.AfterTaxShare) : loan.AnnualInterestRate;
+        var afterTaxMortgage = deducted ? Percent(averageRate * household.AfterTaxShare) : averageRate;
 
         var automatic = household.AnnualAutomaticStock;
         var discretionary = 12m * (plan.ExtraCash + plan.EsppContribution) + (household.SellRsusAtVest ? household.AnnualRsuVesting : 0m);
@@ -94,19 +102,31 @@ public sealed record StrategyRates(
             target,
             automatic,
             discretionary,
-            hybrid);
+            hybrid,
+            averageRate,
+            BuydownSubsidyOf(inputs));
     }
 
-    private static decimal FirstYearInterestOf(StrategyInputs inputs, decimal payment)
+    /// <summary>What a buydown's subsidy pays over its years, on the scheduled payment.</summary>
+    private static decimal BuydownSubsidyOf(StrategyInputs inputs)
+    {
+        if (inputs.Buydown is not { } buydown) return 0m;
+        var loan = inputs.Mortgage;
+        var payment = PaymentFormula.MonthlyPayment(loan.Principal, loan.MonthlyRate, loan.TermInMonths);
+        return Enumerable.Range(1, Math.Min(12 * buydown.YearlyReductions.Count, loan.TermInMonths)).Sum(m => buydown.SubsidyFor(loan, m, payment));
+    }
+
+    private static decimal FirstYearInterestOf(StrategyInputs inputs)
     {
         var loan = inputs.Mortgage;
+        var mortgage = new MortgagePayments(loan, buydown: null);
         var balance = loan.Principal;
         var interest = 0m;
         for (var month = 1; month <= Math.Min(12, loan.TermInMonths) && balance > 0; month++)
         {
-            var thisMonth = loan.MonthlyInterestOn(balance);
+            var (thisMonth, principal, _) = mortgage.Pay(month, balance);
             interest += thisMonth;
-            balance -= month == loan.TermInMonths ? balance : Math.Min(payment - thisMonth, balance);
+            balance -= principal;
         }
         return interest;
     }

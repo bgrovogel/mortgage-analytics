@@ -134,4 +134,13 @@ describe('strategy text', () => {
     expect(['riskAdjusted', 'expected', 'badDecade'].map((s) => scenarioLabel(result, s as never)))
       .toEqual(['Risk-adjusted (8%)', 'Expected (10%)', 'Bad decade first']);
   });
+  it('says an adjustable rate earns its average, and that a buydown frees cash', () => {
+    const arm = aStrategyComparison();
+    arm.rates = { ...arm.rates, mortgageRate: 6.5, averageMortgageRate: 8.1, afterTaxMortgageRate: 8.1, interestIsDeducted: false };
+    expect(facts(arm)[0]).toContain('Your rate adjusts: 6.5% now, 8.1% on average over the loan on the path you expect, so paying it down earns about 8.1%');
+
+    const buydown = aStrategyComparison();
+    buydown.rates = { ...buydown.rates, buydownSubsidy: 6_827.64 };
+    expect(facts(buydown)).toContain('The buydown pays $6,828 of your payments in its first years: in every strategy, that cash goes to work too.');
+  });
 });

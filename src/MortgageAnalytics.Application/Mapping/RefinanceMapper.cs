@@ -22,27 +22,55 @@ public static class RefinanceMapper
             ? new LoanTerms(original.Amount, request.CurrentAnnualInterestRate, original.TermInMonths, original.FirstPaymentDate)
             : null;
 
-    /// <summary>The refinance offer as a domain value.</summary>
+    /// <summary>The refinance offer as a domain value, with any adjustable rate (or its worst case) and buydown.</summary>
     /// <param name="request">A validated request.</param>
-    public static RefinanceOffer ToOffer(this RefinanceRequest request) =>
-        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts);
+    /// <param name="worstCase">True to take an adjustable rate at the worst its caps allow.</param>
+    public static RefinanceOffer ToOffer(this RefinanceRequest request, bool worstCase = false) =>
+        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts)
+        {
+            AdjustableRate = request.NewAdjustableRate.ToDomain(request.NewAnnualInterestRate, worstCase),
+            Buydown = request.NewBuydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null,
+        };
+
+    /// <summary>An adjustable rate as a domain value (at its worst case if asked), or null for a fixed rate.</summary>
+    /// <param name="arm">The request's adjustable rate, if any.</param>
+    /// <param name="startingRate">The rate it starts at, for the worst case.</param>
+    /// <param name="worstCase">True to take it at the worst its caps allow.</param>
+    public static AdjustableRate? ToDomain(this AdjustableRateRequest? arm, decimal startingRate, bool worstCase = false)
+    {
+        if (arm is null) return null;
+        var rate = new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap);
+        return worstCase ? rate.WorstCase(startingRate) : rate;
+    }
 
     /// <summary>Maps the analysis to the response contract.</summary>
     /// <param name="analysis">The domain result.</param>
     /// <param name="includePayments">False to leave out every payment row and keep only the summaries.</param>
-    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, bool includePayments) =>
+    /// <param name="worstCaseLifetimeSavings">The lifetime savings if rates rise as far as the caps allow, when either loan adjusts.</param>
+    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, bool includePayments, decimal? worstCaseLifetimeSavings = null) =>
         new(
             ToResponse(analysis.Current, includePayments),
             ToResponse(analysis.Refinanced, includePayments),
             analysis.KeepingCurrentPayment is null ? null : ToResponse(analysis.KeepingCurrentPayment, includePayments),
-            analysis.Offer.UpfrontCosts,
+            analysis.CashAtClosing,
             analysis.MonthlySavings,
             analysis.InterestSaved,
             analysis.LifetimeSavings,
             analysis.KeepingCurrentPaymentLifetimeSavings,
             analysis.MonthsAdded,
             analysis.BreakEvenPaymentNumber,
-            analysis.BreakEvenDate);
+            analysis.BreakEvenDate,
+            analysis.BuydownCost,
+            analysis.Offer.Buydown is { } buydown ? ToResponse(buydown, analysis.NewLoan, analysis.BuydownCost) : null,
+            worstCaseLifetimeSavings);
+
+    /// <summary>The new loan's bought-down years, then the first at its note rate, and what the buydown costs.</summary>
+    private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, decimal cost) =>
+        new(
+            loan.AnnualInterestRate,
+            [.. Enumerable.Range(1, buydown.YearlyReductions.Count + 1)
+                .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
+            cost);
 
     private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule, bool includePayments) =>
         new(
@@ -55,5 +83,7 @@ public static class RefinanceMapper
             schedule.PayoffDate,
             includePayments
                 ? [.. schedule.Payments.Select(p => new LoanPaymentResponse(p.PaymentNumber, p.DueDate, p.Principal, p.Interest, p.ExtraPrincipal, p.RemainingBalance))]
-                : []);
+                : [],
+            [.. schedule.RateChanges.Select(c => new RateChangeResponse(
+                c.PaymentNumber, schedule.Payments[c.PaymentNumber - 1].DueDate, c.PreviousRate, c.NewRate, c.PreviousPayment, c.NewPayment))]);
 }

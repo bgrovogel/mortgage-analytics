@@ -19,8 +19,10 @@ public interface IStrategySimulator
 /// Each month, in order:
 /// <list type="number">
 ///   <item>Every account grows by the scenario's monthly return.</item>
-///   <item>The required mortgage payment is made (interest per <see cref="Loans.LoanTerms.MonthlyInterestOn(decimal)"/>).
-///         Once the mortgage is gone, that payment becomes cash to put to work.</item>
+///   <item>The required mortgage payment is made: interest at that month's rate, re-amortized at each rate change
+///         (see <see cref="MortgagePayments"/>), less any buydown subsidy. The household's budget is what it pays on
+///         the mortgage now plus the extra cash, so a reset that raises the payment leaves less cash, and a lower one
+///         more. Once the mortgage is gone, the whole budget becomes cash to put to work.</item>
 ///   <item>The 401(k) contribution and the employer match go in; ESPP savings build up and, at the end of each
 ///         purchase period, come back with the discount (minus income tax on it).</item>
 ///   <item>At each year end: RSUs vest (kept as shares, or sold for cash), the ESOP contribution goes in, and the
@@ -47,6 +49,8 @@ public sealed class StrategySimulator : IStrategySimulator
         var espp = inputs.StockPurchasePlan;
         var plan = MonthlyCashPlan.For(inputs);
         var accounts = new InvestmentAccounts(household.CurrentRetirementSavings, household.CurrentInvestments);
+        var mortgage = new MortgagePayments(loan, inputs.Buydown);
+        var budget = mortgage.HouseholdPaymentNow;
 
         var balance = loan.Principal;
         var balanceAtYearStart = balance;
@@ -68,16 +72,15 @@ public sealed class StrategySimulator : IStrategySimulator
             // The required payment. A smaller final payment, or none once the loan is gone, frees the rest.
             if (balance > 0)
             {
-                var interest = loan.MonthlyInterestOn(balance);
-                var principal = month >= loan.TermInMonths ? balance : Math.Min(plan.MortgagePayment - interest, balance);
+                var (interest, principal, subsidy) = mortgage.Pay(month, balance);
                 balance -= principal;
                 totalInterest += interest;
                 interestThisYear += interest;
-                cash += plan.MortgagePayment - interest - principal;
+                cash += budget - (interest + principal - subsidy);
             }
             else
             {
-                cash += plan.MortgagePayment;
+                cash += budget;
             }
 
             // Free money first, in every strategy.

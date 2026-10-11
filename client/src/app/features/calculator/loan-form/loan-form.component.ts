@@ -16,7 +16,9 @@ import {
   YearProjection,
 } from '../../../core/models/amortization.models';
 import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
-import { ARM_RULES, ARM_TYPES, ArmType, BUYDOWNS, BuydownPlan, LOAN_RULES, LUMP_SUM_RULES, RateType, wholeYearsOf } from './loan-fields';
+import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
+import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
+import { RATE_OPTION_RULES, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
 
@@ -45,11 +47,8 @@ const SECTION_CONTROLS = {
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
-  rate: ['armExpectedRate', 'armInitialCap', 'armPeriodicCap', 'armLifetimeCap'],
+  rate: ['rate'],
 } as const;
-
-/** The adjustable rate's controls, which are disabled (and so not checked) unless the rate is adjustable. */
-const ARM_CONTROLS = ['armExpectedRate', 'armInitialCap', 'armPeriodicCap', 'armLifetimeCap'] as const;
 
 
 
@@ -76,7 +75,7 @@ function firstOfNextMonth(): string {
  */
 @Component({
   selector: 'app-loan-form',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, RateOptionsComponent],
   templateUrl: './loan-form.component.html',
   styleUrl: './loan-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,9 +118,6 @@ export class LoanFormComponent implements OnInit {
   private restoring = false;
 
   protected readonly rules = rules;
-  protected readonly armRules = ARM_RULES;
-  protected readonly buydowns = BUYDOWNS;
-  protected readonly armTypes = ARM_TYPES;
   protected readonly lumpSumRules = LUMP_SUM_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
@@ -171,14 +167,8 @@ export class LoanFormComponent implements OnInit {
 
     strategy: this.fb.control<ExtraPaymentStrategy>('ShortenTerm'),
 
-    rateType: this.fb.control<RateType>('fixed'),
-    buydownPlan: this.fb.control<BuydownPlan>('2-1'),
-    armType: this.fb.control<ArmType>('7/1'),
-    // A 7/1 ARM with the usual 5/2/5 caps, expected to reset a point higher.
-    armExpectedRate: [{ value: 7.5, disabled: true }, validatorsFor(ARM_RULES.armExpectedRate)],
-    armInitialCap: [{ value: 5, disabled: true }, validatorsFor(ARM_RULES.armInitialCap)],
-    armPeriodicCap: [{ value: 2, disabled: true }, validatorsFor(ARM_RULES.armPeriodicCap)],
-    armLifetimeCap: [{ value: 5, disabled: true }, validatorsFor(ARM_RULES.armLifetimeCap)],
+    // Fixed, a buydown, or a 7/1 ARM with the usual 5/2/5 caps, expected to reset a point higher.
+    rate: rateOptionsForm(this.fb, 7.5),
     recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
     recastFee: [250, validatorsFor(rules.recastFee)],
   });
@@ -278,26 +268,8 @@ export class LoanFormComponent implements OnInit {
   readonly rateSummary = computed(() => {
     const v = this.values();
     if (this.sectionInvalid('rate')) return CHECK_SECTION;
-    if (v.rateType === 'buydown') return `${v.buydownPlan} buydown: ${this.buydownSteps()}`;
-    if (v.rateType === 'arm') {
-      const type = ARM_TYPES.find((t) => t.value === v.armType)!;
-      return `${v.armType} ARM: ${percent(v.annualInterestRate ?? 0)} for ${type.fixedMonths / 12} yr, then toward ${percent(v.armExpectedRate ?? 0)}`
-        + ` (caps ${v.armInitialCap}/${v.armPeriodicCap}/${v.armLifetimeCap})`;
-    }
-    return 'Fixed for the whole loan';
+    return rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
   });
-
-  /** "4.5% in year 1, 5.5% in year 2, then 6.5%": the rate each year of the buydown is paid at. */
-  readonly buydownSteps = computed(() => {
-    const v = this.values();
-    const rate = v.annualInterestRate ?? 0;
-    const plan = BUYDOWNS.find((b) => b.value === v.buydownPlan)!;
-    const years = plan.reductions.map((r, i) => `${percent(Math.max(0, rate - r))} in year ${i + 1}`);
-    return `${years.join(', ')}, then ${percent(rate)}`;
-  });
-
-  /** How the rate works, for the template. */
-  readonly rateType = computed(() => this.values().rateType);
 
   readonly optionsSummary = computed(() => {
     const v = this.values();
@@ -313,7 +285,7 @@ export class LoanFormComponent implements OnInit {
 
   constructor() {
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
-    this.form.controls.rateType.valueChanges.pipe(takeUntilDestroyed()).subscribe((type) => this.enableArm(type === 'arm'));
+    keepArmFieldsInStep(this.form.controls.rate);
 
     // Switching between $ and % converts the value, so the down payment itself stays the same.
     this.form.controls.downPaymentMode.valueChanges.pipe(takeUntilDestroyed()).subscribe((mode) => {
@@ -382,14 +354,6 @@ export class LoanFormComponent implements OnInit {
     }
   }
 
-  /** Enables the adjustable rate's controls, or disables them so a fixed or bought-down rate ignores them. */
-  private enableArm(on: boolean): void {
-    for (const name of ARM_CONTROLS) {
-      if (on) this.form.controls[name].enable({ emitEvent: false });
-      else this.form.controls[name].disable({ emitEvent: false });
-    }
-  }
-
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
   addLumpSum(): void {
     this.lumpSums.push(this.lumpSumGroup(12, 10_000));
@@ -428,7 +392,7 @@ export class LoanFormComponent implements OnInit {
     const existing = this.form.controls.termYears.valid ? this.existingLoan() : null;
     return [
       ...problemsIn(rules, this.form.controls),
-      ...problemsIn(ARM_RULES, this.form.controls),
+      ...problemsIn(RATE_OPTION_RULES, this.form.controls.rate.controls),
       ...this.lumpSums.controls.flatMap((row) => problemsIn(LUMP_SUM_RULES, row.controls)),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
@@ -494,9 +458,8 @@ export class LoanFormComponent implements OnInit {
       monthlyHoa: costs?.monthlyHoaDues ?? 0,
       pmiRate: costs?.pmiRate ?? 0,
       ...(costs && { pmiCancellation: costs.pmiCancellation }),
-      ...rateControlsOf(r),
     });
-    this.enableArm(this.form.controls.rateType.value === 'arm');
+    setRateOptions(this.form.controls.rate, r.buydown, r.adjustableRate);
     this.restoring = false;
   }
 
@@ -553,39 +516,9 @@ export class LoanFormComponent implements OnInit {
         pmiRate: v.pmiRate || 0,
         pmiCancellation: v.pmiCancellation,
       },
-      buydown: v.rateType === 'buydown' ? { yearlyReductions: [...BUYDOWNS.find((b) => b.value === v.buydownPlan)!.reductions] } : null,
-      adjustableRate: v.rateType === 'arm'
-        ? {
-            initialFixedMonths: ARM_TYPES.find((t) => t.value === v.armType)!.fixedMonths,
-            adjustmentIntervalMonths: ARM_TYPES.find((t) => t.value === v.armType)!.intervalMonths,
-            expectedRate: v.armExpectedRate,
-            initialCap: v.armInitialCap,
-            periodicCap: v.armPeriodicCap,
-            lifetimeCap: v.armLifetimeCap,
-          }
-        : null,
+      ...rateOptionsRequest(this.form.controls.rate, 'type'),
     };
   }
-}
-
-/**
- * The rate controls for a request: the buydown or ARM it names (the closest usual one), or a fixed rate. Fields
- * that do not apply keep their defaults.
- */
-function rateControlsOf(r: AmortizationRequest) {
-  if (r.buydown) {
-    const plan = BUYDOWNS.find((b) => b.reductions.join() === r.buydown!.yearlyReductions.join()) ?? BUYDOWNS[1];
-    return { rateType: 'buydown' as const, buydownPlan: plan.value };
-  }
-  if (r.adjustableRate) {
-    const arm = r.adjustableRate;
-    const type = ARM_TYPES.find((t) => t.fixedMonths === arm.initialFixedMonths && t.intervalMonths === arm.adjustmentIntervalMonths) ?? ARM_TYPES[1];
-    return {
-      rateType: 'arm' as const, armType: type.value, armExpectedRate: arm.expectedRate,
-      armInitialCap: arm.initialCap, armPeriodicCap: arm.periodicCap, armLifetimeCap: arm.lifetimeCap,
-    };
-  }
-  return { rateType: 'fixed' as const };
 }
 
 /** The down payment in dollars: as entered, or the entered percentage of the price, rounded to cents. */

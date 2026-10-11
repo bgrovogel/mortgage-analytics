@@ -442,7 +442,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('sends a buydown, and says what each year is paid at', () => {
-      controls().rateType.setValue('buydown');
+      controls().rate.controls.rateType.setValue('buydown');
       controls().annualInterestRate.setValue(5.99);
       fixture.detectChanges();
 
@@ -450,21 +450,21 @@ describe('LoanFormComponent', () => {
       expect(last().adjustableRate).toBeNull();
       expect(text('rate-summary')).toBe('2-1 buydown: 3.99% in year 1, 4.99% in year 2, then 5.99%');
 
-      controls().buydownPlan.setValue('3-2-1');
+      controls().rate.controls.buydownPlan.setValue('3-2-1');
       fixture.detectChanges();
       expect(last().buydown).toEqual({ yearlyReductions: [3, 2, 1] });
     });
 
     it('sends an adjustable rate from its type, expected rate and caps, and checks them only while it is chosen', () => {
-      controls().armExpectedRate.enable();
-      controls().armExpectedRate.setValue(40);
+      controls().rate.controls.armExpectedRate.enable();
+      controls().rate.controls.armExpectedRate.setValue(40);
       expect(component.form.valid).toBe(false);
-      controls().rateType.setValue('fixed'); // switching away disables them again
+      controls().rate.controls.rateType.setValue('fixed'); // switching away disables them again
       expect(component.form.valid).toBe(true);
 
-      controls().rateType.setValue('arm');
-      controls().armExpectedRate.setValue(7.5);
-      controls().armType.setValue('5/6');
+      controls().rate.controls.rateType.setValue('arm');
+      controls().rate.controls.armExpectedRate.setValue(7.5);
+      controls().rate.controls.armType.setValue('5/6');
       fixture.detectChanges();
 
       expect(last().adjustableRate).toEqual({
@@ -474,9 +474,9 @@ describe('LoanFormComponent', () => {
     });
 
     it('reopens a saved buydown or adjustable rate as it was', () => {
-      controls().rateType.setValue('arm');
-      controls().armType.setValue('10/1');
-      controls().armLifetimeCap.setValue(6);
+      controls().rate.controls.rateType.setValue('arm');
+      controls().rate.controls.armType.setValue('10/1');
+      controls().rate.controls.armLifetimeCap.setValue(6);
       const saved = last();
 
       const restored = TestBed.createComponent(LoanFormComponent);
@@ -486,7 +486,7 @@ describe('LoanFormComponent', () => {
       restored.detectChanges();
 
       expect(sent[sent.length - 1]).toEqual(saved);
-      expect(restored.componentInstance.form.controls.rateType.value).toBe('arm');
+      expect(restored.componentInstance.form.controls.rate.controls.rateType.value).toBe('arm');
     });
   });
 

@@ -43,6 +43,17 @@
         <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
       </div>
     }
+
+    <details class="section" data-testid="section-current-rate">
+      <summary>
+        <span class="section-title">Rate type</span>
+        <span class="section-summary" data-testid="current-rate-summary">{{ currentRateSummary() }}</span>
+      </summary>
+      <div class="section-body">
+        <app-rate-options [form]="form.controls.currentRate" mode="reset" [allowBuydown]="false" idPrefix="current-"
+                          [rate]="form.controls.currentAnnualInterestRate.value ?? 0" [resetLabel]="currentResetLabel()" />
+      </div>
+    </details>
   </fieldset>
 
   <fieldset>
@@ -60,6 +71,17 @@
         </select>
       </label>
     </div>
+
+    <details class="section" data-testid="section-new-rate">
+      <summary>
+        <span class="section-title">Rate type</span>
+        <span class="section-summary" data-testid="new-rate-summary">{{ newRateSummary() }}</span>
+      </summary>
+      <div class="section-body">
+        <app-rate-options [form]="form.controls.newRate" idPrefix="new-" [rate]="form.controls.newAnnualInterestRate.value ?? 0" />
+        <p class="hint">In a refinance you pay for a buydown yourself, at closing; it comes back as lower payments.</p>
+      </div>
+    </details>
 
     <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
     <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>

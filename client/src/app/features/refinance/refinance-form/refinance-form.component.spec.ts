@@ -31,7 +31,7 @@ describe('RefinanceFormComponent', () => {
       newTermInMonths: 360,
       closingCosts: 6_000,
       financeClosingCosts: false,
-      originalLoan: null,
+      originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
     }]);
   });
 
@@ -158,6 +158,7 @@ describe('RefinanceFormComponent', () => {
         currentBalance: 186_108.71, currentAnnualInterestRate: 6, remainingTermInMonths: 300, nextPaymentDate: null,
         newAnnualInterestRate: 5, newTermInMonths: 360, closingCosts: 4_000, financeClosingCosts: false,
         originalLoan: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' },
+        currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
       };
 
       create(saved);
@@ -189,7 +190,7 @@ describe('RefinanceFormComponent', () => {
   it('restores a previous comparison instead of the example', () => {
     const previous: RefinanceRequest = {
       currentBalance: 250_000, currentAnnualInterestRate: 7.5, remainingTermInMonths: 240, nextPaymentDate: null,
-      newAnnualInterestRate: 5.75, newTermInMonths: 240, closingCosts: 4_500, financeClosingCosts: true, originalLoan: null,
+      newAnnualInterestRate: 5.75, newTermInMonths: 240, closingCosts: 4_500, financeClosingCosts: true, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
     };
 
     create(previous);

@@ -19,6 +19,17 @@
     </div>
   </fieldset>
 
+  <details class="section" data-testid="section-rate">
+    <summary>
+      <span class="section-title">Rate type</span>
+      <span class="section-summary" data-testid="rate-summary">{{ rateSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <app-rate-options [form]="form.controls.rate" mode="reset" [rate]="form.controls.annualInterestRate.value ?? 0" />
+      <p class="hint">A buydown here starts with your next payment, as on a new loan; its subsidy is usually the seller's.</p>
+    </div>
+  </details>
+
   <fieldset>
     <legend>Cash to put to work</legend>
     <app-number-field [control]="form.controls.monthlyCashToPutToWork" [rule]="rules.monthlyCashToPutToWork" testId="monthly-cash" label="Each month" />

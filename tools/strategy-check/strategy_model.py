@@ -52,17 +52,53 @@ def cash_plan(i):
 
 def interest_on(bal, rate): return r2(bal * rate / 1200)
 
+# Adjustable rates and buydowns: the rules in tools/rate-check/rate_model.py. An ARM's path is a list of
+# (first payment, rate); at each change the balance is re-amortized over the payments left. A buydown's subsidy
+# pays the gap between the note payment and the year's reduced payment (on the original amount, full term).
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'rate-check'))
+from rate_model import arm_path  # noqa: E402
+
+def rate_for(i, m):
+    rate = i['rate']
+    for first, r in i['changes']:
+        if first <= m: rate = r
+    return rate
+
+def subsidy(i, m, scheduled):
+    year = (m - 1) // 12 + 1
+    if year > len(i['buydown']): return D(0)
+    note = payment(i['balance'], i['rate'], i['term'])
+    reduced = payment(i['balance'], max(D(0), i['rate'] - i['buydown'][year - 1]), i['term'])
+    return min(note - reduced, scheduled)
+
+class Mortgage:
+    # The required payment month by month: at the note rate, re-amortized at each rate change.
+    def __init__(self, i):
+        self.i = i; self.rate = i['rate']; self.pay = payment(i['balance'], i['rate'], i['term'])
+    def pay_month(self, m, bal):
+        r = rate_for(self.i, m)
+        if r != self.rate:
+            self.pay = payment(bal, r, self.i['term'] - m + 1); self.rate = r
+        it = interest_on(bal, self.rate)
+        pr = bal if m >= self.i['term'] else min(self.pay - it, bal)
+        return it, pr, subsidy(self.i, m, it + pr)
+
+def average_rate(i):
+    return r2(sum(rate_for(i, m) for m in range(1, i['term'] + 1)) / i['term'])
+
 def rates(i, plan):
     h = i['h']; after = 1 - h['tax'] / 100
-    bal = i['balance']; fy = D(0)
+    bal = i['balance']; fy = D(0); mortgage = Mortgage(i)
     for m in range(1, min(12, i['term']) + 1):
         if bal <= 0: break
-        it = interest_on(bal, i['rate']); fy += it
-        bal -= bal if m == i['term'] else min(plan['pay'] - it, bal)
+        it, pr, _ = mortgage.pay_month(m, bal); fy += it
+        bal -= pr
     ded = deductible(fy, i['balance'])
     std = STANDARD[h['status']]
     deducted = h['other'] + ded > std
-    atm = r2(i['rate'] * after) if deducted else i['rate']
+    avg = average_rate(i)
+    atm = r2(avg * after) if deducted else avg
     ra = i['ret'] - MARGIN[i['risk']]
     disc = 12 * (plan['extra'] + plan['espp']) + (h['rsu'] if h['sell_rsu'] else D(0))
     sheltered = D(100) if disc == 0 else (min(D(1), i['ira'] / disc) * 100).quantize(D(1), rounding=ROUND_HALF_UP)
@@ -80,7 +116,9 @@ def rates(i, plan):
     else:
         hyb = ((target / 100 * (auto + disc) - auto) / disc * 100).quantize(D(1), rounding=ROUND_HALF_UP)
         hyb = min(max(hyb, D(0)), D(100))
+    sub_total = sum(subsidy(i, m, payment(i['balance'], i['rate'], i['term'])) for m in range(1, 12 * len(i['buydown']) + 1))
     return dict(first_year_interest=fy, first_year_tax_saved=tax_saved(h, ded), deducted=deducted, sheltered=sheltered, taxable=taxable,
+                average_rate=avg, buydown_subsidy=sub_total,
                 after_tax_mortgage=atm, risk_adjusted=ra, after_tax_market=atr, target=target, hybrid=hyb)
 
 def simulate(i, invest, scenario):
@@ -94,6 +132,10 @@ def simulate(i, invest, scenario):
     bal = i['balance']; bal_ys = bal
     tot_i = D(0); tot_t = D(0); i_year = D(0); saved = D(0); room = D(0)
     payoff = None; cross = 0 if at_value() >= bal else None
+    mortgage = Mortgage(i)
+    # The monthly budget is what the household pays on the mortgage now (less any buydown subsidy) plus the extra
+    # cash: a reset that raises the payment leaves less to put to work, a lower one more.
+    budget = plan['pay'] - subsidy(i, 1, plan['pay'])
     def year_end(y):
         home = i['home'] if (i['growth'] == 0 or y == 0) else r2(i['home'] * (1 + i['growth'] / 100) ** y)
         inv = at_value() + saved; nw = home - bal + inv
@@ -107,12 +149,11 @@ def simulate(i, invest, scenario):
         retire = r2(retire * g); roth = r2(roth * g); taxable = r2(taxable * g)
         cash = plan['extra']
         if bal > 0:
-            it = interest_on(bal, i['rate'])
-            pr = bal if m >= i['term'] else min(plan['pay'] - it, bal)
+            it, pr, sub = mortgage.pay_month(m, bal)
             bal -= pr; tot_i += it; i_year += it
-            cash += plan['pay'] - it - pr
+            cash += budget - (it + pr - sub)
         else:
-            cash += plan['pay']
+            cash += budget
         retire += plan['contrib'] + plan['match']
         if plan['espp'] > 0:
             saved += plan['espp']
@@ -152,10 +193,14 @@ def household(**kw):
     h.update(kw); return h
 
 def inputs(**kw):
-    i = dict(balance=D(300000), rate=D('6.5'), term=300, first=datetime.date(2026, 1, 1), home=D(400000),
+    i = dict(balance=D(300000), rate=D('6.5'), term=300, changes=[], buydown=[], first=datetime.date(2026, 1, 1), home=D(400000),
              growth=D('4.3'), h=household(), match=D(50), upto=D(6), espp_pct=D(0), espp_disc=D(15),
              espp_period=6, ira=D(7500), ret=D(10), infl=D(3), risk='balanced')
-    h = kw.pop('h', {}); i.update(kw); i['h'] = household(**h); return i
+    h = kw.pop('h', {}); arm = kw.pop('arm', None); i.update(kw); i['h'] = household(**h)
+    if arm:  # (fixed months, interval, expected, initial cap, periodic cap, lifetime cap)
+        f, n, e, c1, c2, c3 = arm
+        i['changes'] = arm_path(i['rate'], i['term'], f, n, D(e), D(c1), D(c2), D(c3))
+    return i
 
 SCENARIOS = {
     'Typical': inputs(),
@@ -164,6 +209,9 @@ SCENARIOS = {
     'WithEspp': inputs(espp_pct=D(10), h=dict(cash=D(2000))),
     'Conservative': inputs(risk='conservative'),
     'EsppEvery5': inputs(espp_pct=D(10), espp_period=5, h=dict(cash=D(2000))),
+    # A 7/1 ARM with 5 years still fixed, expected to reset to 8.5% (caps 2/1/5), and a 2-1 buydown on a new loan.
+    'Arm': inputs(arm=(60, 12, '8.5', '2', '1', '5')),
+    'Buydown': inputs(term=360, buydown=[D(2), D(1)]),
 }
 
 if __name__ == '__main__':

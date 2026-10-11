@@ -1,4 +1,5 @@
 /** TypeScript mirrors of the refinance contracts (MortgageAnalytics.Application.Contracts). */
+import { AdjustableRateInput, BuydownSummary, RateChange, TemporaryBuydownInput } from './amortization.models';
 
 /** A loan as it was taken out (mirrors OriginalLoanRequest). */
 export interface OriginalLoan {
@@ -19,6 +20,12 @@ export interface RefinanceRequest {
   financeClosingCosts: boolean;
   /** The current loan as it was taken out, when known. */
   originalLoan?: OriginalLoan | null;
+  /** The current loan's rate adjusts (its fixed period counts from the next payment, or from the original first one). */
+  currentAdjustableRate?: AdjustableRateInput | null;
+  /** The new loan's rate adjusts. */
+  newAdjustableRate?: AdjustableRateInput | null;
+  /** A temporary buydown on the new loan, paid for at closing. */
+  newBuydown?: TemporaryBuydownInput | null;
 }
 
 /** One payment on a loan, without housing costs. */
@@ -41,6 +48,7 @@ export interface RefinanceOption {
   totalPaid: number;
   payoffDate: string;
   payments: LoanPayment[];
+  rateChanges: RateChange[];
 }
 
 export interface RefinanceResponse {
@@ -55,4 +63,9 @@ export interface RefinanceResponse {
   monthsAdded: number;
   breakEvenPaymentNumber: number | null;
   breakEvenDate: string | null;
+  /** What a buydown on the new loan costs at closing (included in upfrontCosts). */
+  buydownCost: number;
+  newBuydown: BuydownSummary | null;
+  /** When either loan adjusts: the lifetime savings if rates rise as far as the caps allow. */
+  worstCaseLifetimeSavings: number | null;
 }

@@ -151,6 +151,7 @@ export function aRefinanceOption(overrides: Partial<RefinanceOption> = {}, payme
     totalPaid: paymentCount * 150,
     payoffDate: payments[paymentCount - 1].dueDate,
     payments,
+    rateChanges: [],
     ...overrides,
   };
 }
@@ -178,6 +179,9 @@ export function aRefinanceResponse(overrides: Partial<RefinanceResponse> = {}): 
     monthsAdded: 60,
     breakEvenPaymentNumber: 25,
     breakEvenDate: '2028-01-01',
+    buydownCost: 0,
+    newBuydown: null,
+    worstCaseLifetimeSavings: null,
     ...overrides,
   };
 }
@@ -227,7 +231,7 @@ export function aStrategyComparison(overrides: Partial<StrategyComparison> = {})
       mortgageRate: 6.5, firstYearInterest: 19_354.15, firstYearTaxSaved: 0, standardDeduction: 32_200, interestIsDeducted: false,
       afterTaxMortgageRate: 6.5, expectedReturn: 10, riskMargin: 2, riskAdjustedReturn: 8, iraShelteredPercent: 100, taxableAfterTaxReturn: 7.41,
       afterTaxRiskAdjustedReturn: 8, rateEdge: 1.5, badDecadeReturn: -1, employerMatchPercent: 50, esppGainPercent: 0, targetInvestPercent: 88,
-      automaticAnnualStock: 0, discretionaryAnnualCash: 6_528, hybridInvestPercent: 88,
+      automaticAnnualStock: 0, discretionaryAnnualCash: 6_528, hybridInvestPercent: 88, averageMortgageRate: 6.5, buydownSubsidy: 0,
     },
     strategies: [
       outcome('PayOffFirst', 0, 4_700_702.7, 3_719_026.59, 3_187_295.65, { payoffMonth: 186, payoffDate: '2041-06-01', crossoverMonth: 93, crossoverDate: '2033-09-01', totalInterest: 176_023.74 }),

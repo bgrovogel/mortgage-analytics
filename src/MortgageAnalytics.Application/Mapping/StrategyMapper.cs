@@ -12,7 +12,7 @@ public static class StrategyMapper
     /// <param name="defaultNextPaymentDate">Used when the request gives no next payment date.</param>
     public static StrategyInputs ToInputs(this StrategyRequest request, DateOnly defaultNextPaymentDate) =>
         new(
-            new LoanTerms(request.CurrentBalance, request.AnnualInterestRate, request.RemainingTermInMonths, request.NextPaymentDate ?? defaultNextPaymentDate),
+            request.ToMortgage(defaultNextPaymentDate),
             request.HomeValue,
             request.HomeGrowthRate,
             new Household(
@@ -30,7 +30,19 @@ public static class StrategyMapper
             new EmployerMatch(request.EmployerMatchPercent, request.MatchUpToPercentOfPay),
             new StockPurchasePlan(request.EsppContributionPercent, request.EsppDiscountPercent, request.EsppPurchasePeriodMonths),
             request.AnnualIraContribution,
-            new MarketAssumptions(request.ExpectedAnnualReturn, request.InflationRate, ToDomain(request.RiskProfile)));
+            new MarketAssumptions(request.ExpectedAnnualReturn, request.InflationRate, ToDomain(request.RiskProfile)))
+        {
+            Buydown = request.Buydown is { } buydown ? new TemporaryBuydown(buydown.YearlyReductions) : null,
+        };
+
+    /// <summary>The mortgage as it stands today, with an adjustable rate's expected resets.</summary>
+    private static LoanTerms ToMortgage(this StrategyRequest request, DateOnly defaultNextPaymentDate)
+    {
+        var loan = new LoanTerms(request.CurrentBalance, request.AnnualInterestRate, request.RemainingTermInMonths, request.NextPaymentDate ?? defaultNextPaymentDate);
+        if (request.AdjustableRate is not { } arm) return loan;
+        var rate = new AdjustableRate(arm.InitialFixedMonths, arm.AdjustmentIntervalMonths, arm.ExpectedRate, arm.InitialCap, arm.PeriodicCap, arm.LifetimeCap);
+        return loan.WithRateChanges(rate.RatePath(loan.AnnualInterestRate, loan.TermInMonths));
+    }
 
     /// <summary>Maps the comparison to the response contract.</summary>
     /// <param name="comparison">The domain result.</param>
@@ -68,7 +80,9 @@ public static class StrategyMapper
                 rates.TargetInvestPercent,
                 rates.AutomaticAnnualStock,
                 rates.DiscretionaryAnnualCash,
-                rates.HybridInvestPercent),
+                rates.HybridInvestPercent,
+                rates.AverageMortgageRate,
+                rates.BuydownSubsidy),
             [.. comparison.Outcomes.Select(o => new StrategyOutcomeResponse(
                 ToContract(o.Kind), o.InvestPercent, ToResponse(o.Expected), ToResponse(o.RiskAdjusted), ToResponse(o.BadDecade)))]);
     }

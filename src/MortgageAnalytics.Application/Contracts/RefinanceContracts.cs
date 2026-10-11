@@ -45,6 +45,19 @@ public sealed record RefinanceRequest
     /// <summary>True to add the closing costs to the new loan instead of paying them at closing.</summary>
     /// <example>false</example>
     public bool FinanceClosingCosts { get; init; }
+
+    /// <summary>
+    /// The current loan's rate adjusts. Its fixed period counts payments from the next one (or, with
+    /// <see cref="OriginalLoan"/>, from the original first payment, and <see cref="CurrentAnnualInterestRate"/> is then
+    /// its starting rate). Omit for a fixed rate.
+    /// </summary>
+    public AdjustableRateRequest? CurrentAdjustableRate { get; init; }
+
+    /// <summary>The new loan's rate adjusts: <see cref="NewAnnualInterestRate"/> is its starting rate. Omit for a fixed rate.</summary>
+    public AdjustableRateRequest? NewAdjustableRate { get; init; }
+
+    /// <summary>A temporary buydown on the new loan, paid for in cash at closing. Omit for none.</summary>
+    public TemporaryBuydownRequest? NewBuydown { get; init; }
 }
 
 /// <summary>A loan as it was taken out.</summary>
@@ -75,6 +88,9 @@ public sealed record OriginalLoanRequest
 /// <param name="MonthsAdded">How many more payments the new loan takes than the current one has left: the amortization clock restarting.</param>
 /// <param name="BreakEvenPaymentNumber">The payment by which the interest saved first covers the closing costs, or null when it never does.</param>
 /// <param name="BreakEvenDate">The due date of that payment, or null.</param>
+/// <param name="BuydownCost">What a buydown on the new loan costs at closing (included in <paramref name="UpfrontCosts"/>); it comes back as lower payments.</param>
+/// <param name="NewBuydown">The new loan's buydown years and payments, or null without one.</param>
+/// <param name="WorstCaseLifetimeSavings">When either loan adjusts: the lifetime savings if rates rise as far as the caps allow. Null when neither does.</param>
 public sealed record RefinanceResponse(
     RefinanceOptionResponse Current,
     RefinanceOptionResponse Refinanced,
@@ -86,7 +102,10 @@ public sealed record RefinanceResponse(
     decimal? KeepingCurrentPaymentLifetimeSavings,
     int MonthsAdded,
     int? BreakEvenPaymentNumber,
-    DateOnly? BreakEvenDate);
+    DateOnly? BreakEvenDate,
+    decimal BuydownCost,
+    BuydownResponse? NewBuydown,
+    decimal? WorstCaseLifetimeSavings);
 
 /// <summary>One way of repaying: its loan, payment and totals, and (optionally) every payment.</summary>
 /// <param name="LoanAmount">The amount being repaid.</param>
@@ -97,6 +116,7 @@ public sealed record RefinanceResponse(
 /// <param name="TotalPaid">All principal and interest paid.</param>
 /// <param name="PayoffDate">The due date of the last payment.</param>
 /// <param name="Payments">Every payment, in order; empty when the request asked for summaries only.</param>
+/// <param name="RateChanges">Rate resets along the way (an adjustable rate), with the payment before and after each.</param>
 public sealed record RefinanceOptionResponse(
     decimal LoanAmount,
     decimal MonthlyPayment,
@@ -105,7 +125,8 @@ public sealed record RefinanceOptionResponse(
     decimal TotalInterest,
     decimal TotalPaid,
     DateOnly PayoffDate,
-    IReadOnlyList<LoanPaymentResponse> Payments);
+    IReadOnlyList<LoanPaymentResponse> Payments,
+    IReadOnlyList<RateChangeResponse> RateChanges);
 
 /// <summary>One payment on a loan, without housing costs.</summary>
 /// <param name="PaymentNumber">The 1-based payment number.</param>

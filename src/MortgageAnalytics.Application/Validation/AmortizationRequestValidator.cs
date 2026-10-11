@@ -84,39 +84,13 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .Null().WithMessage("Choose a buydown or an adjustable rate, not both.")
             .When(r => r.Buydown is not null);
 
-        RuleFor(r => r.Buydown!.YearlyReductions)
-            .Must(years => years.Count is >= 1 and <= TemporaryBuydown.MaxYears)
-            .WithMessage($"A buydown covers 1 to {TemporaryBuydown.MaxYears} years.")
-            .OverridePropertyName("Buydown.YearlyReductions")
-            .When(r => r.Buydown is not null);
-
-        RuleForEach(r => r.Buydown!.YearlyReductions)
-            .GreaterThan(0)
-            .LessThanOrEqualTo(TemporaryBuydown.MaxReduction)
-            .PrecisionScale(6, 4, ignoreTrailingZeros: true)
-            .OverridePropertyName("Buydown.YearlyReductions")
-            .WithName("Buydown reduction")
+        RuleFor(r => r.Buydown!)
+            .SetValidator(new TemporaryBuydownRequestValidator())
             .When(r => r.Buydown is not null);
 
         RuleFor(r => r.AdjustableRate!)
-            .SetValidator(r => new AdjustableRateValidator(r.TermInMonths))
+            .SetValidator(r => new AdjustableRateRequestValidator(r.TermInMonths))
             .When(r => r.AdjustableRate is not null);
-    }
-
-    private sealed class AdjustableRateValidator : AbstractValidator<AdjustableRateRequest>
-    {
-        public AdjustableRateValidator(int termInMonths)
-        {
-            RuleFor(a => a.InitialFixedMonths)
-                .InclusiveBetween(1, Math.Max(1, termInMonths - 1))
-                .WithMessage($"The fixed period must be at least one payment and end before the loan does (payment {termInMonths}).")
-                .WithName("Fixed period");
-            RuleFor(a => a.AdjustmentIntervalMonths).InclusiveBetween(1, 120).WithName("Reset interval");
-            RuleFor(a => a.ExpectedRate).Percentage(max: LoanTerms.MaxAnnualInterestRate).WithName("Expected rate");
-            RuleFor(a => a.InitialCap).Percentage(max: Domain.Loans.AdjustableRate.MaxCap).WithName("First reset cap");
-            RuleFor(a => a.PeriodicCap).Percentage(max: Domain.Loans.AdjustableRate.MaxCap).WithName("Later reset cap");
-            RuleFor(a => a.LifetimeCap).Percentage(max: Domain.Loans.AdjustableRate.MaxCap).WithName("Lifetime cap");
-        }
     }
 
     private sealed class RecastTermsValidator : AbstractValidator<RecastTermsRequest>
