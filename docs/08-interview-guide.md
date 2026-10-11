@@ -266,7 +266,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Area | Today | Next |
 |---|---|---|
 | Database | SQLite, single writer | PostgreSQL via the EF provider; the abstractions are already there |
-| Client models | TypeScript mirrors of the C# contracts, kept in step by tests | Generate them from the OpenAPI document (NSwag or openapi-typescript) |
+| Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Security | Identity, lockout, SameSite cookies, attempt limits, CSP | Forwarded headers behind a proxy, so the limit sees each client |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
 | Test strength | Coverage gate + independent models | Mutation testing (Stryker.NET) on the domain |
@@ -314,5 +314,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 653 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 654 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

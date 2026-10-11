@@ -1,0 +1,2443 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Mortgage Analytics API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/account/register": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {},
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/login": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "parameters": [
+          {
+            "name": "useCookies",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "useSessionCookies",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/refresh": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/confirmEmail": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "MapIdentityApi-/api/v1/account/confirmEmail",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "changedEmail",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/account/resendConfirmationEmail": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendConfirmationEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/account/forgotPassword": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {},
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/resetPassword": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {},
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/manage/2fa": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {}
+        }
+      }
+    },
+    "/api/v1/account/manage/info": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {}
+        }
+      },
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {}
+        }
+      }
+    },
+    "/api/v1/account/logout": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "SignOut",
+        "responses": {
+          "204": {}
+        }
+      }
+    },
+    "/api/v1/amortization/calculate": {
+      "post": {
+        "tags": [
+          "Amortization"
+        ],
+        "operationId": "CalculateAmortization",
+        "parameters": [
+          {
+            "name": "includePayments",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmortizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmortizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/refinance/analyze": {
+      "post": {
+        "tags": [
+          "Refinance"
+        ],
+        "operationId": "AnalyzeRefinance",
+        "parameters": [
+          {
+            "name": "includePayments",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefinanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefinanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calculations": {
+      "get": {
+        "tags": [
+          "Saved calculations"
+        ],
+        "operationId": "ListCalculations",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedCalculationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Saved calculations"
+        ],
+        "operationId": "SaveCalculation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCalculationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedCalculationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calculations/{id}": {
+      "get": {
+        "tags": [
+          "Saved calculations"
+        ],
+        "operationId": "GetCalculation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedCalculationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Saved calculations"
+        ],
+        "operationId": "UpdateCalculation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCalculationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedCalculationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Saved calculations"
+        ],
+        "operationId": "DeleteCalculation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {}
+        }
+      }
+    },
+    "/api/v1/strategies/compare": {
+      "post": {
+        "tags": [
+          "Strategies"
+        ],
+        "operationId": "CompareStrategies",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyComparisonResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessTokenResponse": {
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "refreshToken"
+        ],
+        "type": "object",
+        "properties": {
+          "tokenType": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "accessToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdjustableRateRequest": {
+        "type": "object",
+        "properties": {
+          "initialFixedMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "adjustmentIntervalMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expectedRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "initialCap": {
+            "type": "number",
+            "format": "double"
+          },
+          "periodicCap": {
+            "type": "number",
+            "format": "double"
+          },
+          "lifetimeCap": {
+            "type": "number",
+            "format": "double"
+          },
+          "margin": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdjustableRateResponse": {
+        "type": "object",
+        "properties": {
+          "worstCaseRateChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateChangeResponse"
+            },
+            "nullable": true
+          },
+          "worstCasePeakPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "worstCaseTotalInterest": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AmortizationRequest": {
+        "type": "object",
+        "properties": {
+          "homePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/ExtraPaymentStrategy"
+          },
+          "recast": {
+            "$ref": "#/components/schemas/RecastTermsRequest"
+          },
+          "extraPayments": {
+            "$ref": "#/components/schemas/ExtraPaymentsRequest"
+          },
+          "housingCosts": {
+            "$ref": "#/components/schemas/HousingCostsRequest"
+          },
+          "buydown": {
+            "$ref": "#/components/schemas/TemporaryBuydownRequest"
+          },
+          "adjustableRate": {
+            "$ref": "#/components/schemas/AdjustableRateRequest"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AmortizationResponse": {
+        "type": "object",
+        "properties": {
+          "purchase": {
+            "$ref": "#/components/schemas/PurchaseResponse"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/ScheduleResponse"
+          },
+          "accelerated": {
+            "$ref": "#/components/schemas/ScheduleResponse"
+          },
+          "savings": {
+            "$ref": "#/components/schemas/SavingsResponse"
+          },
+          "projection": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/YearProjectionResponse"
+            },
+            "nullable": true
+          },
+          "buydown": {
+            "$ref": "#/components/schemas/BuydownResponse"
+          },
+          "adjustableRate": {
+            "$ref": "#/components/schemas/AdjustableRateResponse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AnnualExtraPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "firstPaymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BuydownResponse": {
+        "type": "object",
+        "properties": {
+          "noteRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuydownYearResponse"
+            },
+            "nullable": true
+          },
+          "totalSubsidy": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BuydownYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExtraPaymentStrategy": {
+        "enum": [
+          "ShortenTerm",
+          "Recast"
+        ],
+        "type": "string"
+      },
+      "ExtraPaymentsRequest": {
+        "type": "object",
+        "properties": {
+          "monthlyAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyStartingPaymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "annual": {
+            "$ref": "#/components/schemas/AnnualExtraPaymentRequest"
+          },
+          "lumpSums": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LumpSumPaymentRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ForgotPasswordRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HousingCostsRequest": {
+        "type": "object",
+        "properties": {
+          "propertyTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "propertyTaxHomesteadExemption": {
+            "type": "number",
+            "format": "double"
+          },
+          "schoolTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "localTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "mudTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "isHomestead": {
+            "type": "boolean"
+          },
+          "schoolHomesteadExemption": {
+            "type": "number",
+            "format": "double"
+          },
+          "localHomesteadExemptionPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "mudHomesteadExemptionPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "homesteadAssessmentCap": {
+            "type": "number",
+            "format": "double"
+          },
+          "over65OrDisabled": {
+            "$ref": "#/components/schemas/Over65OrDisabledRequest"
+          },
+          "homeValueGrowthRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "insuranceIncreaseRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "hoaIncreaseRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "pid": {
+            "$ref": "#/components/schemas/PidAssessmentRequest"
+          },
+          "annualHomeownersInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyHoaDues": {
+            "type": "number",
+            "format": "double"
+          },
+          "pmiRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "pmiCancellation": {
+            "$ref": "#/components/schemas/PmiCancellation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HousingCostsResponse": {
+        "type": "object",
+        "properties": {
+          "schoolTax": {
+            "type": "number",
+            "format": "double"
+          },
+          "localTax": {
+            "type": "number",
+            "format": "double"
+          },
+          "mudTax": {
+            "type": "number",
+            "format": "double"
+          },
+          "pidAssessment": {
+            "type": "number",
+            "format": "double"
+          },
+          "homeownersInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "hoaDues": {
+            "type": "number",
+            "format": "double"
+          },
+          "propertyTax": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "InfoRequest": {
+        "type": "object",
+        "properties": {
+          "newEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "newPassword": {
+            "type": "string",
+            "nullable": true
+          },
+          "oldPassword": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InfoResponse": {
+        "required": [
+          "email",
+          "isEmailConfirmed"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "isEmailConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvestorRiskProfile": {
+        "enum": [
+          "Conservative",
+          "Balanced",
+          "Aggressive"
+        ],
+        "type": "string"
+      },
+      "LoanPaymentResponse": {
+        "type": "object",
+        "properties": {
+          "paymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "principal": {
+            "type": "number",
+            "format": "double"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "extraPrincipal": {
+            "type": "number",
+            "format": "double"
+          },
+          "remainingBalance": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequest": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "twoFactorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "twoFactorRecoveryCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LumpSumPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "paymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MonthlyCashPlanResponse": {
+        "type": "object",
+        "properties": {
+          "mortgagePayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "retirementContribution": {
+            "type": "number",
+            "format": "double"
+          },
+          "employerMatch": {
+            "type": "number",
+            "format": "double"
+          },
+          "retirementContributionCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "esppContribution": {
+            "type": "number",
+            "format": "double"
+          },
+          "extraCash": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NetWorthYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "homeValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "homeEquity": {
+            "type": "number",
+            "format": "double"
+          },
+          "investments": {
+            "type": "number",
+            "format": "double"
+          },
+          "netWorth": {
+            "type": "number",
+            "format": "double"
+          },
+          "netWorthInTodaysDollars": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OriginalLoanRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstPaymentDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Over65OrDisabledRequest": {
+        "type": "object",
+        "properties": {
+          "qualifiesInYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "schoolExemption": {
+            "type": "number",
+            "format": "double"
+          },
+          "localExemption": {
+            "type": "number",
+            "format": "double"
+          },
+          "localTaxCeiling": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "paymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "scheduledPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "principal": {
+            "type": "number",
+            "format": "double"
+          },
+          "interest": {
+            "type": "number",
+            "format": "double"
+          },
+          "extraPrincipal": {
+            "type": "number",
+            "format": "double"
+          },
+          "housingCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/HousingCostsResponse"
+          },
+          "totalOutlay": {
+            "type": "number",
+            "format": "double"
+          },
+          "remainingBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "buydownSubsidy": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PayoffStrategy": {
+        "enum": [
+          "PayOffFirst",
+          "InvestTheDifference",
+          "Hybrid"
+        ],
+        "type": "string"
+      },
+      "PidAssessmentRequest": {
+        "type": "object",
+        "properties": {
+          "annualAssessment": {
+            "type": "number",
+            "format": "double"
+          },
+          "remainingYears": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PmiCancellation": {
+        "enum": [
+          "Automatic",
+          "BorrowerRequested"
+        ],
+        "type": "string"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "PurchaseResponse": {
+        "type": "object",
+        "properties": {
+          "homePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPaymentPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "loanAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "loanToValuePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageInsuranceRequired": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RateChangeResponse": {
+        "type": "object",
+        "properties": {
+          "paymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "previousRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "newRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "previousPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "newPayment": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecastResponse": {
+        "type": "object",
+        "properties": {
+          "afterPaymentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "previousPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "newPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "fee": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecastTermsRequest": {
+        "type": "object",
+        "properties": {
+          "minimumLumpSum": {
+            "type": "number",
+            "format": "double"
+          },
+          "fee": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RefinanceOptionResponse": {
+        "type": "object",
+        "properties": {
+          "loanAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "extraMonthlyPrincipal": {
+            "type": "number",
+            "format": "double"
+          },
+          "numberOfPayments": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPaid": {
+            "type": "number",
+            "format": "double"
+          },
+          "payoffDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LoanPaymentResponse"
+            },
+            "nullable": true
+          },
+          "rateChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateChangeResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RefinanceRequest": {
+        "type": "object",
+        "properties": {
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "currentAnnualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "remainingTermInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "originalLoan": {
+            "$ref": "#/components/schemas/OriginalLoanRequest"
+          },
+          "nextPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "newAnnualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "newTermInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "closingCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "financeClosingCosts": {
+            "type": "boolean"
+          },
+          "currentAdjustableRate": {
+            "$ref": "#/components/schemas/AdjustableRateRequest"
+          },
+          "newAdjustableRate": {
+            "$ref": "#/components/schemas/AdjustableRateRequest"
+          },
+          "newBuydown": {
+            "$ref": "#/components/schemas/TemporaryBuydownRequest"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RefinanceResponse": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/RefinanceOptionResponse"
+          },
+          "refinanced": {
+            "$ref": "#/components/schemas/RefinanceOptionResponse"
+          },
+          "keepingCurrentPayment": {
+            "$ref": "#/components/schemas/RefinanceOptionResponse"
+          },
+          "upfrontCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlySavings": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "lifetimeSavings": {
+            "type": "number",
+            "format": "double"
+          },
+          "keepingCurrentPaymentLifetimeSavings": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "monthsAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breakEvenPaymentNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "breakEvenDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "buydownCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "newBuydown": {
+            "$ref": "#/components/schemas/BuydownResponse"
+          },
+          "worstCaseLifetimeSavings": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RefreshRequest": {
+        "required": [
+          "refreshToken"
+        ],
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterRequest": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResendConfirmationEmailRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResetPasswordRequest": {
+        "required": [
+          "email",
+          "newPassword",
+          "resetCode"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "resetCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "newPassword": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaveCalculationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/AmortizationRequest"
+          },
+          "refinance": {
+            "$ref": "#/components/schemas/RefinanceRequest"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/StrategyRequest"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SavedCalculationKind": {
+        "enum": [
+          "Purchase",
+          "Refinance",
+          "Strategy"
+        ],
+        "type": "string"
+      },
+      "SavedCalculationResponse": {
+        "required": [
+          "createdAt",
+          "id",
+          "inputs",
+          "kind",
+          "name",
+          "refinance",
+          "strategy",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SavedCalculationKind"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/AmortizationRequest"
+          },
+          "refinance": {
+            "$ref": "#/components/schemas/RefinanceRequest"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/StrategyRequest"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SavingsResponse": {
+        "type": "object",
+        "properties": {
+          "interestSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageInsuranceSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "recastFees": {
+            "type": "number",
+            "format": "double"
+          },
+          "netSavings": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentsSaved": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalExtraPrincipal": {
+            "type": "number",
+            "format": "double"
+          },
+          "originalPayoffDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "acceleratedPayoffDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyHousingCosts": {
+            "$ref": "#/components/schemas/HousingCostsResponse"
+          },
+          "totalMonthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "numberOfPayments": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPaid": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalHousingCosts": {
+            "$ref": "#/components/schemas/HousingCostsResponse"
+          },
+          "mortgageInsuranceEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "payoffDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "recasts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecastResponse"
+            },
+            "nullable": true
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentResponse"
+            },
+            "nullable": true
+          },
+          "rateChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateChangeResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrategyComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "recommended": {
+            "$ref": "#/components/schemas/PayoffStrategy"
+          },
+          "runnerUp": {
+            "$ref": "#/components/schemas/PayoffStrategy"
+          },
+          "lead": {
+            "type": "number",
+            "format": "double"
+          },
+          "leadPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "expectedWinner": {
+            "$ref": "#/components/schemas/PayoffStrategy"
+          },
+          "badDecadeWinner": {
+            "$ref": "#/components/schemas/PayoffStrategy"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/MonthlyCashPlanResponse"
+          },
+          "rates": {
+            "$ref": "#/components/schemas/StrategyRatesResponse"
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrategyOutcomeResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrategyOutcomeResponse": {
+        "type": "object",
+        "properties": {
+          "strategy": {
+            "$ref": "#/components/schemas/PayoffStrategy"
+          },
+          "investPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "expected": {
+            "$ref": "#/components/schemas/StrategyProjectionResponse"
+          },
+          "riskAdjusted": {
+            "$ref": "#/components/schemas/StrategyProjectionResponse"
+          },
+          "badDecade": {
+            "$ref": "#/components/schemas/StrategyProjectionResponse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrategyProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "totalInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalTaxSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "payoffMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "payoffDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "crossoverMonth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "crossoverDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetWorthYearResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrategyRatesResponse": {
+        "type": "object",
+        "properties": {
+          "mortgageRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "firstYearInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "firstYearTaxSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "standardDeduction": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestIsDeducted": {
+            "type": "boolean"
+          },
+          "afterTaxMortgageRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "riskMargin": {
+            "type": "number",
+            "format": "double"
+          },
+          "riskAdjustedReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "iraShelteredPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxableAfterTaxReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "afterTaxRiskAdjustedReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateEdge": {
+            "type": "number",
+            "format": "double"
+          },
+          "badDecadeReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "employerMatchPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "esppGainPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "targetInvestPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "automaticAnnualStock": {
+            "type": "number",
+            "format": "double"
+          },
+          "discretionaryAnnualCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "hybridInvestPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageMortgageRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "buydownSubsidy": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrategyRequest": {
+        "type": "object",
+        "properties": {
+          "currentBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "remainingTermInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "homeValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "homeGrowthRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossAnnualIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "marginalTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "capitalGainsTaxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "filingStatus": {
+            "$ref": "#/components/schemas/TaxFilingStatus"
+          },
+          "otherItemizedDeductions": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyCashToPutToWork": {
+            "type": "number",
+            "format": "double"
+          },
+          "employerMatchPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchUpToPercentOfPay": {
+            "type": "number",
+            "format": "double"
+          },
+          "esppContributionPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "esppDiscountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "esppPurchasePeriodMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "annualIraContribution": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualRsuVesting": {
+            "type": "number",
+            "format": "double"
+          },
+          "sellRsusAtVest": {
+            "type": "boolean"
+          },
+          "annualEsopContribution": {
+            "type": "number",
+            "format": "double"
+          },
+          "currentRetirementSavings": {
+            "type": "number",
+            "format": "double"
+          },
+          "currentInvestments": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedAnnualReturn": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflationRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "riskProfile": {
+            "$ref": "#/components/schemas/InvestorRiskProfile"
+          },
+          "adjustableRate": {
+            "$ref": "#/components/schemas/AdjustableRateRequest"
+          },
+          "buydown": {
+            "$ref": "#/components/schemas/TemporaryBuydownRequest"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TaxFilingStatus": {
+        "enum": [
+          "Single",
+          "MarriedFilingJointly",
+          "HeadOfHousehold"
+        ],
+        "type": "string"
+      },
+      "TemporaryBuydownRequest": {
+        "type": "object",
+        "properties": {
+          "yearlyReductions": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TwoFactorRequest": {
+        "type": "object",
+        "properties": {
+          "enable": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "twoFactorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "resetSharedKey": {
+            "type": "boolean"
+          },
+          "resetRecoveryCodes": {
+            "type": "boolean"
+          },
+          "forgetMachine": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TwoFactorResponse": {
+        "required": [
+          "isMachineRemembered",
+          "isTwoFactorEnabled",
+          "recoveryCodesLeft",
+          "sharedKey"
+        ],
+        "type": "object",
+        "properties": {
+          "sharedKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "recoveryCodesLeft": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recoveryCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "isTwoFactorEnabled": {
+            "type": "boolean"
+          },
+          "isMachineRemembered": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "YearProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "marketValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "assessedValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "schoolTaxableValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "localTaxableValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mudTaxableValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "propertyTaxableValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "costs": {
+            "$ref": "#/components/schemas/HousingCostsResponse"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Account"
+    },
+    {
+      "name": "Amortization"
+    },
+    {
+      "name": "Refinance"
+    },
+    {
+      "name": "Saved calculations"
+    },
+    {
+      "name": "Strategies"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ About 1,210 automated tests in seven suites, written test-first, with the standa
 | Domain | 353 | NUnit | < 1 s |
 | Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
-| API integration | 69 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 70 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 474 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 84 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -57,6 +57,10 @@ Take the ARM margin floor as an example of the order of work:
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.
+- **The contract itself:** `ContractSnapshotTests` compares the OpenAPI document (its shape, without the prose)
+  with `Snapshots/openapi.v1.approved.json`. Any change of a path, property, type or enum value fails in seconds and
+  writes `openapi.v1.received.json` beside it: diff the two, update the TypeScript models, then copy received over
+  approved. Renaming one field's JSON name compiles and passes the C# tests that share the types; this catches it.
 
 **Angular (Jest)**
 - Every component and service: form-to-request mapping, derived values, validation messages, restoring a saved

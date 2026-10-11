@@ -190,8 +190,10 @@ redirect).
 
 One service per area (`AmortizationApiService`, `RefinanceApiService`, `StrategyApiService`,
 `SavedCalculationsApiService`, `AuthService`), each a thin wrapper over `HttpClient` with the URL and types.
-Models in `core/models/` mirror the C# contracts by hand; the e2e consistency suite and the API tests keep them
-honest.
+Models in `core/models/` mirror the C# contracts by hand. A contract snapshot test (`ContractSnapshotTests`) fails
+on any change to the API's shape (a path, schema, property, type or enum value) and leaves a `.received.json` file
+to diff against the approved one, so the change to follow here is spelled out; the e2e consistency suite then checks
+the numbers the pages show.
 
 ## Testing the frontend
 

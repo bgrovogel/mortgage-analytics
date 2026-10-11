@@ -29,3 +29,6 @@ Thumbs.db
 
 # Python bytecode from the tools/ models
 __pycache__/
+
+# Approval tests: what a failing run received, for diffing against the approved file
+*.received.json
