@@ -1,7 +1,11 @@
 <div class="bar">
   @if (status(); as s) {
     <p class="status" role="status" data-testid="save-status">
-      {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">View history</a>
+      @if (changedSinceSave()) {
+        Changed since you saved “{{ s.name }}”: Save to update it.
+      } @else {
+        {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">View history</a>
+      }
     </p>
   }
   <button type="button" class="open" data-testid="save-open" [disabled]="!payload()" [attr.aria-expanded]="editing()"

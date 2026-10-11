@@ -48,11 +48,8 @@
               <div class="info">
                 <h3>{{ c.name }}</h3>
                 <p class="summary">
-                  @if (c.kind === 'Refinance') {
-                    <span class="badge" data-testid="kind-badge">Refinance</span>
-                  } @else if (c.kind === 'Strategy') {
-                    <span class="badge" data-testid="kind-badge">Pay off or invest</span>
-                  }
+                  <!-- Every item names its kind, the same words as the filter above. -->
+                  <span class="badge" [attr.data-kind]="c.kind" data-testid="kind-badge">{{ kindLabel(c.kind) }}</span>
                   {{ describe(c) }}
                 </p>
                 <p class="when">{{ when(c) }}</p>

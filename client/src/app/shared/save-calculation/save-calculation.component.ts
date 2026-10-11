@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { Observable } from 'rxjs';
@@ -49,6 +49,15 @@ export class SaveCalculationComponent {
 
   /** What the last successful save did, e.g. { verb: 'Saved as', name: 'Oak St' }. */
   readonly status = signal<{ verb: string; name: string } | null>(null);
+
+  /** What was saved last, to tell when the inputs have changed since. */
+  private readonly savedPayload = signal<string | null>(null);
+
+  /** True when the inputs differ from what was last saved here, so "Saved as" would no longer be true. */
+  readonly changedSinceSave = computed(() => {
+    const saved = this.savedPayload();
+    return saved !== null && JSON.stringify(this.payload()) !== saved;
+  });
 
   /** True while a save is on its way, so it cannot be sent twice. */
   readonly saving = signal(false);
@@ -102,6 +111,7 @@ export class SaveCalculationComponent {
       next: (saved) => {
         this.saved.emit(saved);
         this.status.set({ verb, name: saved.name });
+        this.savedPayload.set(JSON.stringify(payload));
         this.editing.set(false);
         this.saving.set(false);
       },

@@ -41,7 +41,7 @@ const PAGES = [
           <div class="account">
             @if (auth.user(); as user) {
               <span class="who" data-testid="signed-in-as">{{ user.email }}</span>
-              <button type="button" class="link" (click)="signOut()" data-testid="sign-out">Sign out</button>
+              <button type="button" class="link" (click)="signOut()" data-testid="sign-out" [attr.title]="'Signed in as ' + user.email">Sign out</button>
             } @else {
               <a routerLink="/sign-in" data-testid="sign-in-link">Sign in</a>
             }

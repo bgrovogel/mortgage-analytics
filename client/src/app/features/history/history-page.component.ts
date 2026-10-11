@@ -64,6 +64,11 @@ export class HistoryPageComponent {
     { value: 'Strategy', label: 'Pay off or invest' },
   ];
 
+  /** A kind's name, as the filter shows it: "Calculator", "Refinance", "Pay off or invest". */
+  protected kindLabel(kind: SavedCalculationKind): string {
+    return this.kinds.find((k) => k.value === kind)!.label;
+  }
+
   constructor() {
     // The first list loads at once; later searches wait for a pause in typing. switchMap drops the
     // results of a search that a newer one has replaced, and errors are caught per search.

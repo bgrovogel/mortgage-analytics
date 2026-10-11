@@ -82,6 +82,22 @@ describe('SaveCalculationComponent', () => {
     expect(el('save-status')!.querySelector('a')!.getAttribute('href')).toBe('/history');
   });
 
+  it('says so when the inputs change after saving, and goes back once they match again', () => {
+    create();
+    api.save.mockReturnValue(of(savedAs('Oak St')));
+    click('save-open');
+    typeName('Oak St');
+    click('save-new');
+
+    fixture.componentRef.setInput('payload', { inputs: { ...inputs, annualInterestRate: 7 } });
+    fixture.detectChanges();
+    expect(el('save-status')!.textContent).toContain('Changed since you saved “Oak St”: Save to update it.');
+
+    fixture.componentRef.setInput('payload', { inputs: { ...inputs } });
+    fixture.detectChanges();
+    expect(el('save-status')!.textContent).toContain('Saved as “Oak St”');
+  });
+
   it('asks for a name instead of saving a blank one', () => {
     create();
     click('save-open');

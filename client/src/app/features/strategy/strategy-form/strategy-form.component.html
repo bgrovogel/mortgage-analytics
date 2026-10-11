@@ -61,22 +61,23 @@
         <app-number-field [control]="form.controls.grossAnnualIncome" [rule]="rules.grossAnnualIncome" testId="income" label="Gross income / year" />
         <app-number-field [control]="form.controls.marginalTaxRate" [rule]="rules.marginalTaxRate" testId="tax-rate" label="Tax rate (federal + state)" />
       </div>
+      <!-- Its own row: "Married filing jointly" doesn't fit half the form's width. -->
+      <label class="field">
+        <span>Filing status</span>
+        <select formControlName="filingStatus" data-testid="filing-status">
+          @for (status of filingStatuses; track status.value) {
+            <option [value]="status.value">{{ status.label }}</option>
+          }
+        </select>
+      </label>
       <div class="row">
-        <label class="field">
-          <span>Filing status</span>
-          <select formControlName="filingStatus" data-testid="filing-status">
-            @for (status of filingStatuses; track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
-            }
-          </select>
-        </label>
         <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" label="Other deductions / year" />
+        <app-number-field [control]="form.controls.capitalGainsTaxRate" [rule]="rules.capitalGainsTaxRate" testId="capital-gains-rate" />
       </div>
       <p class="hint">
-        State and local taxes (up to the cap) and charity. Mortgage interest only saves tax on the part of your
-        deductions above the standard deduction, so this decides whether it saves anything at all.
+        Other deductions: state and local taxes (up to the cap) and charity. Mortgage interest only saves tax on the
+        part of your deductions above the standard deduction, so this decides whether it saves anything at all.
       </p>
-      <app-number-field [control]="form.controls.capitalGainsTaxRate" [rule]="rules.capitalGainsTaxRate" testId="capital-gains-rate" />
     </div>
   </details>
 

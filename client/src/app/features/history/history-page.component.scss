@@ -75,8 +75,9 @@ input {
   font-weight: 600;
   line-height: 1.6;
   vertical-align: middle;
-  background: var(--warning-soft);
-  border: 1px solid var(--warning-border);
+  // A plain label, not a warning: every item has one now, so it takes the calm accent tint.
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-border);
   color: var(--text-primary);
 }
 

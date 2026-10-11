@@ -229,7 +229,7 @@ describe('HistoryPageComponent', () => {
 
       expect(items()[1].querySelector('[data-testid="kind-badge"]')!.textContent!.trim()).toBe('Refinance');
       expect(items()[1].textContent).toContain('$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs');
-      expect(items()[0].querySelector('[data-testid="kind-badge"]')).toBeNull();
+      expect(items()[0].querySelector('[data-testid="kind-badge"]')!.textContent!.trim()).toBe('Calculator');
     });
 
     it('open on the Refinance page', () => {

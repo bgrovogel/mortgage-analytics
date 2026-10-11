@@ -252,8 +252,10 @@ app-root {
     padding-left: 0;
     border-left: 0;
 
+    // On a phone the email would squeeze the app's name onto two lines (and still be cut off): Sign out says it
+    // all, and its tooltip names the account.
     .who {
-      max-width: 9rem;
+      display: none;
     }
   }
 
