@@ -23,7 +23,7 @@ internal static class AmortizationMapper
     public static LoanTerms ToLoanTerms(this AmortizationRequest request, PropertyPurchase purchase, DateOnly defaultFirstPaymentDate)
     {
         var loan = new LoanTerms(purchase.LoanAmount, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
-        return request.ToAdjustableRate() is { } arm ? loan.WithRateChanges(arm.RatePath(loan.AnnualInterestRate, loan.TermInMonths)) : loan;
+        return loan.WithAdjustableRate(request.ToAdjustableRate());
     }
 
     /// <summary>The adjustable rate, or null for a fixed rate.</summary>

@@ -46,7 +46,13 @@ public class RefinanceApiTests : ApiTestBase
     {
         var body = await ReadJsonAsync(await Client.PostAsJsonAsync($"{AnalyzeUrl}?includePayments=false", ReferenceBody));
 
-        Assert.That(body.GetProperty("refinanced").GetProperty("payments").GetArrayLength(), Is.Zero, "summaries only");
+        Assert.Multiple(() =>
+        {
+            foreach (var option in new[] { "current", "refinanced", "keepingCurrentPayment" })
+                Assert.That(body.GetProperty(option).GetProperty("payments").GetArrayLength(), Is.Zero, $"no payment rows in {option}");
+            Assert.That(body.GetProperty("refinanced").GetProperty("numberOfPayments").GetInt32(),
+                Is.EqualTo(ToSixPercentFor30Years.TermInMonths), "the summaries are still there");
+        });
     }
 
     [Test]

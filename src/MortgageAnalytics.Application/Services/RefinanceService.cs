@@ -11,9 +11,8 @@ public interface IRefinanceService
 {
     /// <summary>Runs the comparison for an already-validated request.</summary>
     /// <param name="request">A request that has passed <see cref="Validation.RefinanceRequestValidator"/>.</param>
-    /// <param name="includePayments">False to leave out every payment row and keep only the summaries.</param>
     /// <returns>The current, refinanced and keep-the-payment options, and what refinancing saves or costs.</returns>
-    RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true);
+    RefinanceResponse Analyze(RefinanceRequest request);
 }
 
 /// <summary>
@@ -26,7 +25,7 @@ public interface IRefinanceService
 public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationCalculator calculator, TimeProvider clock) : IRefinanceService
 {
     /// <inheritdoc />
-    public RefinanceResponse Analyze(RefinanceRequest request, bool includePayments = true)
+    public RefinanceResponse Analyze(RefinanceRequest request)
     {
         var analysis = analyzer.Analyze(CurrentLoan(request, worstCase: false), request.ToOffer());
 
@@ -34,7 +33,7 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
         var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
         var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true)).LifetimeSavings : (decimal?)null;
 
-        return analysis.ToResponse(includePayments, worst);
+        return analysis.ToResponse(worst);
     }
 
     /// <summary>
@@ -44,10 +43,9 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
     private LoanTerms CurrentLoan(RefinanceRequest request, bool worstCase)
     {
         var arm = request.CurrentAdjustableRate.ToDomain(request.CurrentAnnualInterestRate, worstCase);
-        LoanTerms WithResets(LoanTerms loan) => arm is null ? loan : loan.WithRateChanges(arm.RatePath(loan.AnnualInterestRate, loan.TermInMonths));
 
         return request.ToOriginalLoan() is { } original
-            ? calculator.RemainingAsOf(WithResets(original), clock.Today())
-            : WithResets(request.ToCurrentLoan(clock.FirstOfNextMonth()));
+            ? calculator.RemainingAsOf(original.WithAdjustableRate(arm), clock.Today())
+            : request.ToCurrentLoan(clock.FirstOfNextMonth()).WithAdjustableRate(arm);
     }
 }

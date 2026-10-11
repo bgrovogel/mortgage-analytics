@@ -19,7 +19,19 @@ public class AdjustableRateTests
         new(84, 12, expected, initialCap, periodicCap, lifetimeCap);
 
     private AmortizationSchedule Run(AdjustableRate arm) =>
-        _calculator.Generate(Fixed.WithRateChanges(arm.RatePath(6m, 360)), ExtraPaymentPlan.None, RecastPolicy.Never);
+        _calculator.Generate(Fixed.WithAdjustableRate(arm), ExtraPaymentPlan.None, RecastPolicy.Never);
+
+    [Test]
+    public void WithAdjustableRate_FollowsTheResets_FromTheLoansOwnRateAndTerm_AndNoneLeavesItFixed()
+    {
+        var arm = SevenOne(8m, 5m, 2m, 5m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Fixed.WithAdjustableRate(arm).RateChanges, Is.EqualTo(arm.RatePath(6m, 360)), "the resets of a 6% loan over 360 payments");
+            Assert.That(Fixed.WithAdjustableRate(null), Is.SameAs(Fixed), "a fixed rate leaves the loan as it is");
+        });
+    }
 
     [Test]
     public void ARateWithinTheFirstCap_IsReachedAtTheFirstReset_AndThePaymentReAmortizes()
@@ -130,7 +142,7 @@ public class AdjustableRateTests
     [Test]
     public void ExtraPayments_LowerThePaymentAtTheReset()
     {
-        var loan = Fixed.WithRateChanges(SevenOne(7.5m, 5m, 2m, 5m).RatePath(6m, 360));
+        var loan = Fixed.WithAdjustableRate(SevenOne(7.5m, 5m, 2m, 5m));
         var schedule = _calculator.Generate(loan, new ExtraPaymentPlan([new MonthlyExtraPayment(200m)]), RecastPolicy.Never);
 
         Assert.That(schedule.RateChanges[0].NewPayment, Is.LessThan(1_365.01m),

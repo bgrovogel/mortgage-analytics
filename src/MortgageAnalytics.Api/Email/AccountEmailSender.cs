@@ -39,11 +39,7 @@ public sealed class AccountEmailSender(
     public Task SendPasswordResetCodeAsync(IdentityUser user, string email, string resetCode)
     {
         var query = QueryString.Create([new KeyValuePair<string, string?>("email", email), new("code", WebUtility.HtmlDecode(resetCode))]);
-        var link = $"{SiteAddress()}/reset-password{query}";
-        return SendAsync(email, "Reset your Mortgage Analytics password",
-            "Someone (hopefully you) asked to reset your password. Choose a new one with the link below.",
-            "Choose a new password", link,
-            "If you did not ask for this, you can ignore this email: your password stays the same.");
+        return SendResetAsync(email, $"{SiteAddress()}/reset-password{query}");
     }
 
     /// <summary>Sends a reset link as given. (Identity's API endpoints send a code instead; see above.)</summary>
@@ -52,9 +48,12 @@ public sealed class AccountEmailSender(
     /// <param name="resetLink">The link, HTML-encoded.</param>
     /// <returns>A task that completes once the email is sent.</returns>
     public Task SendPasswordResetLinkAsync(IdentityUser user, string email, string resetLink) =>
-        SendAsync(email, "Reset your Mortgage Analytics password",
+        SendResetAsync(email, WebUtility.HtmlDecode(resetLink));
+
+    private Task SendResetAsync(string to, string link) =>
+        SendAsync(to, "Reset your Mortgage Analytics password",
             "Someone (hopefully you) asked to reset your password. Choose a new one with the link below.",
-            "Choose a new password", WebUtility.HtmlDecode(resetLink),
+            "Choose a new password", link,
             "If you did not ask for this, you can ignore this email: your password stays the same.");
 
     private Task SendAsync(string to, string subject, string intro, string action, string link, string footer)

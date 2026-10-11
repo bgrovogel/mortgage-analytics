@@ -189,7 +189,7 @@ public static class ReferenceStrategies
     public static StrategyInputs ArmInputs()
     {
         var loan = new LoanTerms(300_000m, 6.5m, 300, NextPaymentDate);
-        return TypicalInputs(mortgage: loan.WithRateChanges(new AdjustableRate(60, 12, 8.5m, 2m, 1m, 5m).RatePath(6.5m, 300)));
+        return TypicalInputs(mortgage: loan.WithAdjustableRate(new AdjustableRate(60, 12, 8.5m, 2m, 1m, 5m)));
     }
 
     /// <summary>Reference values for <see cref="ArmInputs"/>, from tools/strategy-check/strategy_model.py.</summary>

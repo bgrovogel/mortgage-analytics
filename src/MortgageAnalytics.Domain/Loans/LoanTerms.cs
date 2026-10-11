@@ -73,6 +73,12 @@ public sealed record LoanTerms
         return this with { RateChanges = changes };
     }
 
+    /// <summary>The same loan following an adjustable rate's resets, from its own rate and over its own term.</summary>
+    /// <param name="rate">The adjustable rate, or null for a fixed rate.</param>
+    /// <returns>These terms with the resets, or these terms unchanged when <paramref name="rate"/> is null.</returns>
+    public LoanTerms WithAdjustableRate(AdjustableRate? rate) =>
+        rate is null ? this : WithRateChanges(rate.RatePath(AnnualInterestRate, TermInMonths));
+
     /// <summary>The annual rate charged on payment <paramref name="paymentNumber"/>, as a percentage.</summary>
     /// <param name="paymentNumber">A 1-based payment number.</param>
     public decimal AnnualRateFor(int paymentNumber)

@@ -17,6 +17,11 @@ export class CalculationStores {
     inject(StrategyStore),
   ];
 
+  /** Each kind of saved calculation and the page it opens on, in the navigation's order. */
+  pages(): { kind: SavedCalculationKind; pageName: string }[] {
+    return this.all.map(({ kind, pageName }) => ({ kind, pageName }));
+  }
+
   /** The store for one kind of saved calculation. */
   of(kind: SavedCalculationKind): CalculationStore<unknown, unknown> {
     return this.all.find((store) => store.kind === kind)!;

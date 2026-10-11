@@ -57,16 +57,15 @@ export class HistoryPageComponent {
     return kind === 'all' ? this.calculations() : this.calculations().filter((c) => c.kind === kind);
   });
 
+  /** The filter's choices: all, then each kind by the name of the page it opens on. */
   protected readonly kinds: { value: SavedCalculationKind | 'all'; label: string }[] = [
     { value: 'all', label: 'All' },
-    { value: 'Purchase', label: 'Calculator' },
-    { value: 'Refinance', label: 'Refinance' },
-    { value: 'Strategy', label: 'Pay off or invest' },
+    ...this.stores.pages().map(({ kind, pageName }) => ({ value: kind, label: pageName })),
   ];
 
-  /** A kind's name, as the filter shows it: "Calculator", "Refinance", "Pay off or invest". */
+  /** A kind's name, as the navigation shows its page: "Calculator", "Refinance", "Pay off or invest". */
   protected kindLabel(kind: SavedCalculationKind): string {
-    return this.kinds.find((k) => k.value === kind)!.label;
+    return this.stores.of(kind).pageName;
   }
 
   constructor() {

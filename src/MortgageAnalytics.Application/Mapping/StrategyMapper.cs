@@ -39,7 +39,7 @@ public static class StrategyMapper
     private static LoanTerms ToMortgage(this StrategyRequest request, DateOnly defaultNextPaymentDate)
     {
         var loan = new LoanTerms(request.CurrentBalance, request.AnnualInterestRate, request.RemainingTermInMonths, request.NextPaymentDate ?? defaultNextPaymentDate);
-        return request.AdjustableRate.ToDomain() is { } rate ? loan.WithRateChanges(rate.RatePath(loan.AnnualInterestRate, loan.TermInMonths)) : loan;
+        return loan.WithAdjustableRate(request.AdjustableRate.ToDomain());
     }
 
     /// <summary>Maps the comparison to the response contract.</summary>

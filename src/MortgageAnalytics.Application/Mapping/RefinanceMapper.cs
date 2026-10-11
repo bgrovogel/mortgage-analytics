@@ -34,13 +34,12 @@ public static class RefinanceMapper
 
     /// <summary>Maps the analysis to the response contract.</summary>
     /// <param name="analysis">The domain result.</param>
-    /// <param name="includePayments">False to leave out every payment row and keep only the summaries.</param>
     /// <param name="worstCaseLifetimeSavings">The lifetime savings if rates rise as far as the caps allow, when either loan adjusts.</param>
-    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, bool includePayments, decimal? worstCaseLifetimeSavings = null) =>
+    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, decimal? worstCaseLifetimeSavings = null) =>
         new(
-            ToResponse(analysis.Current, includePayments),
-            ToResponse(analysis.Refinanced, includePayments),
-            analysis.KeepingCurrentPayment is null ? null : ToResponse(analysis.KeepingCurrentPayment, includePayments),
+            ToResponse(analysis.Current),
+            ToResponse(analysis.Refinanced),
+            analysis.KeepingCurrentPayment is null ? null : ToResponse(analysis.KeepingCurrentPayment),
             analysis.CashAtClosing,
             analysis.MonthlySavings,
             analysis.InterestSaved,
@@ -61,7 +60,7 @@ public static class RefinanceMapper
                 .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
             cost);
 
-    private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule, bool includePayments) =>
+    private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule) =>
         new(
             schedule.TotalPrincipal,
             schedule.InitialMonthlyPayment,
@@ -70,9 +69,7 @@ public static class RefinanceMapper
             schedule.TotalInterest,
             schedule.TotalPaid,
             schedule.PayoffDate,
-            includePayments
-                ? [.. schedule.Payments.Select(p => new LoanPaymentResponse(p.PaymentNumber, p.DueDate, p.Principal, p.Interest, p.ExtraPrincipal, p.RemainingBalance))]
-                : [],
+            [.. schedule.Payments.Select(p => new LoanPaymentResponse(p.PaymentNumber, p.DueDate, p.Principal, p.Interest, p.ExtraPrincipal, p.RemainingBalance))],
             [.. schedule.RateChanges.Select(c => new RateChangeResponse(
                 c.PaymentNumber, schedule.Payments[c.PaymentNumber - 1].DueDate, c.PreviousRate, c.NewRate, c.PreviousPayment, c.NewPayment))]);
 }

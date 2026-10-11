@@ -102,17 +102,14 @@ public class RefinanceServiceTests
     }
 
     [Test]
-    public void Analyze_IncludesEveryPayment_UnlessAskedForSummariesOnly()
+    public void Analyze_IncludesEveryPayment()
     {
         var full = _service.Analyze(Request());
-        var summaries = _service.Analyze(Request(), includePayments: false);
 
         Assert.Multiple(() =>
         {
             Assert.That(full.Refinanced.Payments, Has.Count.EqualTo(ToSixPercentFor30Years.TermInMonths), "one row per payment");
             Assert.That(full.Refinanced.Payments[^1].RemainingBalance, Is.Zero, "ending at zero");
-            Assert.That(summaries.Current.Payments, Is.Empty, "summaries only");
-            Assert.That(summaries.KeepingCurrentPayment!.Payments, Is.Empty, "for every option");
         });
     }
 

@@ -54,8 +54,10 @@ shared across requests.
 5. If the period's **largest single** prepayment meets the `RecastPolicy` minimum, re-amortize over the remaining
    term (the payoff date stays, the payment drops). Record a `RecastEvent` with its fee.
 
-ARMs don't change this loop: `AdjustableRate.RatePath()` turns the ARM into a list of `RateChange`s, and
-`LoanTerms.WithRateChanges()` attaches them. The loop only asks `loan.AnnualRateFor(period)`.
+ARMs don't change this loop: `loan.WithAdjustableRate(arm)` asks the ARM for its `RatePath()` (a list of
+`RateChange`s) from the loan's own rate and term, and attaches it. The loop only asks `loan.AnnualRateFor(period)`.
+Every caller (the calculator, both refinance loans, the strategy mortgage, the ARM worst case) goes through that one
+method.
 
 ## Application (`src/MortgageAnalytics.Application`)
 

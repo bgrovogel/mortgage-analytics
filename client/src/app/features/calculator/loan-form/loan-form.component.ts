@@ -8,13 +8,13 @@ import { NumberInputDirective } from '../../../core/forms/number-input.directive
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { pct, signedPct, usd } from '../../../core/formatting/format';
 import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import { LumpSumForm, downPaymentAmountOf, loanForm, lumpSumGroup, restoreLoanForm, syncTaxMode, toLoanRequest } from './loan-form.model';
+import { costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
 const rules = LOAN_RULES;
 
@@ -37,12 +37,6 @@ const SECTION_CONTROLS = {
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
   rate: ['rate'],
 } as const;
-
-/** 1 becomes "1%", 0.85 becomes "0.85%": rates here have up to four decimals. */
-const percent = (value: number) => pct(value, 4);
-
-/** 4 becomes "+4%", -2 becomes "-2%", 0 becomes "0%". */
-const signedPercent = (value: number) => signedPct(value, 4);
 
 /**
  * Presentational component: owns the form and emits a ready-to-send request whenever a change
@@ -139,46 +133,15 @@ export class LoanFormComponent implements OnInit {
   readonly taxMode = computed(() => this.values().taxMode);
 
   /** One-line summary of the property-tax section. */
-  readonly taxesSummary = computed(() => {
-    const v = this.values();
-    if (this.sectionInvalid('taxes')) return CHECK_SECTION;
+  readonly taxesSummary = computed(() =>
+    this.sectionInvalid('taxes') ? CHECK_SECTION : taxesSummary(this.values(), { homestead: this.isHomestead(), over65: this.isOver65() }));
 
-    const single = v.taxMode === 'single';
-    const parts = (single
-      ? [v.propertyTaxRate ? `Tax ${percent(v.propertyTaxRate)}` : '']
-      : [
-          v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
-          v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
-          v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
-        ]).concat(v.pidAnnual ? `PID ${usd(v.pidAnnual)}/yr` : '').filter(Boolean);
-    if (parts.length === 0) return 'No property taxes';
-
-    if (this.isHomestead()) parts.push(single && v.propertyTaxHomesteadExemption ? `Homestead ${usd(v.propertyTaxHomesteadExemption)} off` : 'Homestead');
-    if (this.isOver65()) parts.push('Over 65');
-    return parts.join(' · ');
-  });
-
-  /** One-line summary of the insurance, HOA, PID and PMI section. */
-  readonly costsSummary = computed(() => {
-    const v = this.values();
-    if (this.sectionInvalid('costs')) return CHECK_SECTION;
-
-    const parts = [
-      v.annualInsurance ? `Insurance ${usd(v.annualInsurance)}/yr` : '',
-      v.monthlyHoa ? `HOA ${usd(v.monthlyHoa)}/mo` : '',
-      this.pmiApplies() && v.pmiRate ? `PMI ${percent(v.pmiRate)}` : '',
-    ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : 'None';
-  });
+  /** One-line summary of the insurance, HOA and PMI section. */
+  readonly costsSummary = computed(() =>
+    this.sectionInvalid('costs') ? CHECK_SECTION : costsSummary(this.values(), { pmiApplies: this.pmiApplies() }));
 
   /** One-line summary of the yearly-increase assumptions. */
-  readonly growthSummary = computed(() => {
-    const v = this.values();
-    if (this.sectionInvalid('growth')) return CHECK_SECTION;
-
-    return `Home ${signedPercent(v.homeValueGrowthRate ?? 0)} · Insurance ${signedPercent(v.insuranceIncreaseRate ?? 0)}`
-      + ` · HOA ${signedPercent(v.hoaIncreaseRate ?? 0)}`;
-  });
+  readonly growthSummary = computed(() => (this.sectionInvalid('growth') ? CHECK_SECTION : growthSummary(this.values())));
 
   /**
    * A loan already being paid (its first payment is in the past): the payments behind it, the next one, and about
@@ -208,17 +171,7 @@ export class LoanFormComponent implements OnInit {
   });
 
   /** One-line summary of the extra payments beyond monthly, and what they are applied to. */
-  readonly optionsSummary = computed(() => {
-    const v = this.values();
-    if (this.sectionInvalid('options')) return CHECK_SECTION;
-
-    const lumpSums = v.lumpSums?.length ?? 0;
-    return [
-      v.annualExtra ? `${usd(v.annualExtra)} yearly` : '',
-      lumpSums ? `${lumpSums} lump sum${lumpSums === 1 ? '' : 's'}` : '',
-      v.strategy === 'Recast' ? `Recast (min ${usd(v.recastMinimum ?? 0)})` : 'Pay off sooner',
-    ].filter(Boolean).join(' · ');
-  });
+  readonly optionsSummary = computed(() => (this.sectionInvalid('options') ? CHECK_SECTION : optionsSummary(this.values())));
 
   constructor() {
     // Only the chosen way of entering taxes is checked and sent.

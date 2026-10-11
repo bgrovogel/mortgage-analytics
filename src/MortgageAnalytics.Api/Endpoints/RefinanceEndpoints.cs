@@ -32,6 +32,21 @@ public static class RefinanceEndpoints
     }
 
     /// <summary>Runs the comparison. The request has already been validated by <see cref="ValidationFilter{TRequest}"/>.</summary>
-    private static Ok<RefinanceResponse> Analyze(RefinanceRequest request, IRefinanceService service, bool includePayments = true) =>
-        TypedResults.Ok(service.Analyze(request, includePayments));
+    /// <param name="request">The current loan and the offer.</param>
+    /// <param name="service">The application service.</param>
+    /// <param name="includePayments">False to leave out every payment row and keep only the summaries.</param>
+    private static Ok<RefinanceResponse> Analyze(RefinanceRequest request, IRefinanceService service, bool includePayments = true)
+    {
+        var response = service.Analyze(request);
+        return TypedResults.Ok(includePayments ? response : WithoutPayments(response));
+    }
+
+    /// <summary>The same response with the payment rows removed from every option.</summary>
+    private static RefinanceResponse WithoutPayments(RefinanceResponse response) =>
+        response with
+        {
+            Current = response.Current with { Payments = [] },
+            Refinanced = response.Refinanced with { Payments = [] },
+            KeepingCurrentPayment = response.KeepingCurrentPayment is { } keeping ? keeping with { Payments = [] } : null,
+        };
 }

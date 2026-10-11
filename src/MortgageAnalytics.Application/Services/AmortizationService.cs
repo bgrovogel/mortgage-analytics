@@ -36,7 +36,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         // An adjustable rate also shows its worst case: the standard schedule if rates rise as far as the caps allow.
         var worstCase = request.ToAdjustableRate() is { } arm
             ? comparer.Compare(
-                loan.WithRateChanges(arm.WorstCase(loan.AnnualInterestRate).RatePath(loan.AnnualInterestRate, loan.TermInMonths)),
+                loan.WithAdjustableRate(arm.WorstCase(loan.AnnualInterestRate)),
                 ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline
             : null;
 

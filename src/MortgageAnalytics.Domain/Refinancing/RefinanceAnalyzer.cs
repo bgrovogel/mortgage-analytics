@@ -27,9 +27,8 @@ public sealed class RefinanceAnalyzer(IAmortizationCalculator calculator) : IRef
         var currentSchedule = calculator.Generate(current, ExtraPaymentPlan.None, RecastPolicy.Never);
 
         // The new loan pays off the current balance (plus the closing costs, if financed) from the same next due date.
-        var newLoan = new LoanTerms(offer.NewLoanAmount(current.Principal), offer.AnnualInterestRate, offer.TermInMonths, current.FirstPaymentDate);
-        if (offer.AdjustableRate is { } arm)
-            newLoan = newLoan.WithRateChanges(arm.RatePath(newLoan.AnnualInterestRate, newLoan.TermInMonths));
+        var newLoan = new LoanTerms(offer.NewLoanAmount(current.Principal), offer.AnnualInterestRate, offer.TermInMonths, current.FirstPaymentDate)
+            .WithAdjustableRate(offer.AdjustableRate);
         var refinanced = calculator.Generate(newLoan, ExtraPaymentPlan.None, RecastPolicy.Never);
 
         var difference = currentSchedule.InitialMonthlyPayment - refinanced.InitialMonthlyPayment;

@@ -42,7 +42,7 @@ Then trace one request: [Architecture → One request, end to end](03-architectu
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 352 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 353 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -54,6 +54,20 @@ don't need storage. The Infrastructure project only appeared when saved calculat
 - **L:** every `IExtraPaymentRule` and `IHousingCost` can stand in for another inside the composites.
 - **I:** small interfaces of one or two members each.
 - **D:** services depend on `ILoanComparer` and `TimeProvider`; Application owns `ISavedCalculationRepository`.
+
+**Where does the code bend SOLID, and why?** (A good answer names the trade-off.)
+- **`StrategySimulator.Simulate` is one long loop.** Each month's steps must happen in a fixed order (growth, the
+  payment, free money, year-end tax, then the split), and the order is the logic. One loop, with the order
+  written in the remarks, is easier to check against the Python model than five classes passing state around.
+- **`SavedCalculation` has a nullable field per kind**, so a fourth kind means touching the entity, the contracts and
+  the validator. That is the price of plain JSON columns that the stored-format tests can pin down. With many
+  more kinds, it would become a type discriminator with one payload.
+- **`CalculationStore` does several jobs:** the request, the saved link, and keeping the shared loan in step. They
+  change together whenever a page is added, so they live in one base class, and each page fills in four members.
+- **What a review fixed:** an ARM's resets were attached in five places with the same expression; that is now
+  `LoanTerms.WithAdjustableRate()`, so the domain decides it (tell, don't ask). The refinance service took an
+  `includePayments` flag, which is how the HTTP response is shaped, not the use case, so trimming moved to the
+  endpoint, like the calculator's. The loan form's summary text moved into pure, separately tested functions.
 
 **What design patterns did you use?**
 - **Composite:** `ExtraPaymentPlan`, `HousingCostPlan`.
@@ -290,5 +304,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 643 .NET · 464 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 644 .NET · 472 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 9, EF Core 9, SQLite, Identity · Angular 19, signals, RxJS, Chart.js · Docker, GitHub Actions |
