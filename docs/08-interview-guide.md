@@ -242,18 +242,29 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 
 ## Stories for "tell me about a hard bug"
 
-Pick one and tell it as situation → what you did → result.
+All of these are **fixed**, and each has a test that fails if it ever comes back. That's what makes them good
+stories. Tell one as situation → what you did → result → how you made sure it stays fixed.
 
-1. **The half-cent.** The refinance reference model disagreed with the engine by half a cent. The cause: monthly
-   interest computed as balance × (7% ÷ 12), and 7 ÷ 12 repeats forever, so `decimal` rounded the rate before the
-   multiplication. The fix was balance × rate ÷ 1,200. Lesson: an independent model finds what self-consistent
-   tests never will.
-2. **The echoing loan.** The calculator rounds a shared loan's term to whole years. Its rounded version was being
-   shared back, quietly changing the loan on the other pages. The fix was `matchesShared`: a page recognises "this
-   is the shared loan, as close as I can hold it" and doesn't re-share it. An e2e test covers it.
-3. **The stale response.** While typing, an older slow response could arrive after a newer one and overwrite it.
-   `switchMap` cancels the old request; numbering requests keeps `busy` true until the latest answers; and the
-   `catchError` inside the `switchMap` keeps one failure from stopping every later update.
+1. **The half-cent (a real bug, fixed).** The refinance reference model disagreed with the engine by half a cent.
+   The cause: monthly interest was computed as balance × (7% ÷ 12). 7 ÷ 12 repeats forever, so `decimal` rounded
+   the monthly rate before the multiplication, and an exact half cent came out a hair under and rounded down.
+   - **Fix:** balance × rate ÷ 1,200, in one place (`LoanTerms.MonthlyInterestOn`).
+   - **Guarded by:** `AmortizationCalculatorTests` ("an exact half cent rounds up, away from zero") and the
+     refinance reference values in `ReferenceRefinances`.
+   - **Lesson:** an independent model finds what self-consistent tests never will.
+2. **The echoing loan (a real bug, fixed).** The calculator rounds a shared loan's term to whole years. Its rounded
+   version was being shared back, quietly changing the loan on the other pages.
+   - **Fix:** `matchesShared`: a page recognises "this is the shared loan, as close as I can hold it" and doesn't
+     re-share it.
+   - **Guarded by:** the e2e test "the Calculator takes the loan too, rounding part years without changing them
+     elsewhere" (22.5 years left shows as 23 on the Calculator and stays 22.5 on the other pages).
+3. **The stale response (a race, designed out).** In an "update as you type" UI, an older slow response can
+   arrive after a newer one and overwrite it, or end the loading state too early. It was designed out from the start
+   rather than found in production, so tell it as a design decision.
+   - **How:** `switchMap` cancels the old request; numbering requests keeps `busy` true until the latest answers;
+     the `catchError` inside the `switchMap` keeps one failure from stopping every later update.
+   - **Guarded by:** seven tests in `latest-request.spec.ts`, e.g. "ignores a slow response once a newer request has
+     been made" and "recovers after a failure".
 
 ## If you're asked how you built it
 
