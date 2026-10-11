@@ -1,4 +1,5 @@
-import { Page, expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * The pay-off-or-invest comparison against the real API. The defaults are the server's reference household

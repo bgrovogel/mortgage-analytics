@@ -9,7 +9,7 @@ code, so you can open the file and show it. Practise saying them out loud; don't
 > "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
-> The math is exact to the cent and checked against independent Python models, and about 1,170 tests run in CI."
+> The math is exact to the cent and checked against independent Python models, and over 1,200 tests run in CI."
 
 **In 2 minutes, add:**
 1. **Architecture:** Clean Architecture in four projects. The domain has no dependencies at all, so the money
@@ -162,7 +162,9 @@ ASP.NET Core Identity (`MapIdentityApi`) handles it:
   signed in on every page load.
 - **Security headers:** a Content-Security-Policy with `script-src 'self'` (no inline script; Angular's
   critical-CSS inlining is off because it uses an inline `onload`), `frame-ancestors 'none'`, `nosniff`, and
-  `Referrer-Policy: no-referrer`, because reset links carry their code in the URL.
+  `Referrer-Policy: no-referrer`, because reset links carry their code in the URL. Every Playwright test runs on the
+  production build under this policy and fails if the browser blocks anything, so a change that needs an inline
+  script cannot slip through (the Angular dev server sends no CSP, which is why the tests don't use it).
 - **Behind a reverse proxy** the limiter would see the proxy's address, so a deployment would add forwarded
   headers first.
 
@@ -250,8 +252,9 @@ Compose adds Mailpit to catch emails locally.
 **What does CI do?**
 - **Backend:** builds with warnings as errors, runs every .NET test with coverage, fails below 85%.
 - **Frontend:** runs Jest with its own 85% gate.
-- **End-to-end:** once both pass, builds Angular and runs Playwright against the real API.
-- **Docker:** builds the image.
+- **End-to-end:** once both pass, runs Playwright against the production build of the app, served by the real API
+  as in the container, so the tests run under the real security headers.
+- **Docker:** builds the image, starts it, and checks it is healthy and serves the app with its CSP.
 
 Coverage and failure reports are uploaded as artifacts.
 
@@ -310,5 +313,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 652 .NET · 474 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 653 .NET · 474 Jest · 84 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |

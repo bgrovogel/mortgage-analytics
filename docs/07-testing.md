@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-About 1,170 automated tests in seven suites, written test-first, with the standards enforced by the build.
+About 1,210 automated tests in seven suites, written test-first, with the standards enforced by the build.
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
@@ -8,9 +8,9 @@ About 1,170 automated tests in seven suites, written test-first, with the standa
 | Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
 | API integration | 69 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
-| Conventions | 6 | NUnit, Roslyn, regex | < 1 s |
+| Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 474 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 83 | Playwright (Chromium), axe-core | ~25 s |
+| End-to-end | 84 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ## How a feature gets built (TDD)
 
@@ -71,7 +71,11 @@ Take the ARM margin floor as an example of the order of work:
   each rule broken and the elements that break it. Automated scans catch about a third of real problems (contrast,
   missing names and roles, invalid structure); keyboard paths are covered by the other specs, and a screen-reader
   pass still needs a person.
-- The real browser, the real API (a scratch database), through page objects and fixtures.
+- The real browser on the **production build, served by the real API** (a scratch database), as the container
+  serves it, through page objects and fixtures. So every test runs under the API's Content-Security-Policy, and an
+  automatic fixture (`withinContentSecurityPolicy`) fails any test in which the browser blocked something; the Angular
+  dev server sends no CSP, so tests run against it would never notice. `security.spec.ts` checks the page carries
+  the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
 - Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History.
 - A consistency suite checks every number on the Pay off or invest page against the API response it came from.
@@ -86,6 +90,8 @@ regex, and fails listing each violation as `file:line`:
    (`expect(actual, 'message')`).
 3. **More than one assertion in a test means `Assert.Multiple`**, so one run reports every failure, not just the
    first.
+4. **Every Playwright spec takes `test` from `e2e/fixtures.ts`**, so checks shared by every test (the
+   Content-Security-Policy guard) cannot be skipped by importing from `@playwright/test` directly.
 
 They catch real slips: while adding `StoredFormatTests`, rule 3 failed the build until the setup check moved
 inside `Assert.Multiple`.
@@ -129,7 +135,7 @@ On every push to `main` and every pull request:
 
 ```
 backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → test with coverage → report → 85% gate
-           ├─► e2e     npm ci → ng build → install Chromium → Playwright (starts API + Angular itself)
+           ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
 frontend  ─┘           npm ci → lint → Jest with coverage; e2e runs only if backend and frontend pass
            └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
                        and the calculator answers (runs if backend passes)

@@ -1,4 +1,5 @@
-import { Page, expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * Adjustable rates and buydowns on the Refinance and Pay off or invest pages, against the real API. The expected

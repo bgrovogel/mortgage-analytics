@@ -92,8 +92,8 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
-      - run: npm run build
       - run: npm run e2e:install
+      # Builds the production app and runs it from the API, as the container does, under its security headers.
       - run: npm run e2e
       - uses: actions/upload-artifact@v7
         if: failure()

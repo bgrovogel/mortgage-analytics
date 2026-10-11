@@ -1,4 +1,3 @@
-import { API_URL } from './env';
 import { expect, test } from './fixtures';
 
 // The reference loans start in the future: a first payment in the past would make them loans already being paid,
@@ -494,7 +493,7 @@ test('hides the phone summary bar on a desktop, where the tiles are in view', as
 });
 
 test('serves interactive API documentation', async ({ page }) => {
-  await page.goto(`${API_URL}/swagger`);
+  await page.goto('/swagger');
 
   await expect(page.getByRole('heading', { name: /Mortgage Analytics API/ }), 'Swagger UI loads').toBeVisible();
   await expect(page.getByText('/api/v1/amortization/calculate'), 'the endpoint is listed').toBeVisible();

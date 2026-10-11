@@ -1,3 +1,5 @@
-/** Where the end-to-end tests find the app and the API. Override with environment variables in other setups. */
-export const APP_URL = process.env['APP_URL'] ?? 'http://localhost:4200';
-export const API_URL = process.env['API_URL'] ?? 'http://localhost:5080';
+/**
+ * Where the end-to-end tests find the app: the API serving the production build, as the container does. Its own
+ * port, so it never collides with the development API on 5080. Override with APP_URL to test another setup.
+ */
+export const APP_URL = process.env['APP_URL'] ?? 'http://localhost:5090';

@@ -39,6 +39,23 @@ public partial class EndToEndConventionTests
             "write expect(actual, 'what a failure means').toX(...):\n" + string.Join('\n', violations));
     }
 
+    [Test]
+    public void EverySpec_TakesItsTestFromTheFixtures()
+    {
+        var violations = Directory.EnumerateFiles(E2EFolder, "*.spec.ts")
+            .Where(file => !FixturesImport().IsMatch(File.ReadAllText(file)))
+            .Select(Path.GetFileName)
+            .ToList();
+
+        Assert.That(violations, Is.Empty,
+            "import { expect, test } from './fixtures', so every test gets the shared checks (such as the Content-Security-Policy guard):\n"
+            + string.Join('\n', violations));
+    }
+
+    /// <summary>An import of <c>test</c> from the shared fixtures file.</summary>
+    [GeneratedRegex(@"import\s*\{[^}]*\btest\b[^}]*\}\s*from\s*'\./fixtures'")]
+    private static partial Regex FixturesImport();
+
     private static int LineOf(string text, int index) => text[..index].Count(c => c == '\n') + 1;
 
     /// <summary>client/e2e, found from this file's compile-time path so it works wherever the binaries are.</summary>

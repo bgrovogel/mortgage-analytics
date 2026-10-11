@@ -1,4 +1,5 @@
-import { Page, expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * The refinance comparison against the real API. The worked example is the reference refinance

@@ -1,4 +1,5 @@
-import { Page, expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * Every number the Pay off or invest page shows, checked against the API response it came from: the banner,

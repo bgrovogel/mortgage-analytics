@@ -70,7 +70,7 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **Roslyn** (`Microsoft.CodeAnalysis.CSharp`) | Conventions tests | Parses every C# test file to enforce the test standards. |
 | **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
 | **Jest 30 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
-| **Playwright 1.64** | End-to-end | A real Chromium against the real API and Angular dev server, through page objects. |
+| **Playwright 1.64** | End-to-end | A real Chromium against the production build, served by the real API as in the container, through page objects. |
 | **axe-core** (`@axe-core/playwright`) | End-to-end | Scans every page for WCAG 2.2 A/AA problems (contrast, names, roles, structure) in light and dark mode and on a phone. |
 | **Python `Decimal`** | `tools/rate-check`, `tools/calculator-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. |
 

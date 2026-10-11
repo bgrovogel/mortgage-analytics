@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { API_URL, APP_URL } from './e2e/env';
+import { APP_URL } from './e2e/env';
 
 /**
- * End-to-end tests run against the real stack: the .NET API plus the Angular dev server,
- * which proxies /api to it. Playwright starts both (or reuses ones already running locally).
+ * End-to-end tests run against what ships: the production build of the Angular app, served by the .NET API, as in
+ * the container. So the tests also run under the API's security headers (the Content-Security-Policy among them),
+ * which the Angular dev server never sends. Playwright builds the app and starts the API (or reuses one already
+ * running on APP_URL locally).
  */
 export default defineConfig({
   testDir: './e2e',
@@ -22,8 +24,10 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: `dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls ${API_URL}`,
-      url: `${API_URL}/health`,
+      command:
+        'npm run build && ' +
+        `dotnet run --project ../src/MortgageAnalytics.Api --no-launch-profile --urls ${APP_URL} --webroot "${join(__dirname, 'dist', 'client', 'browser')}"`,
+      url: `${APP_URL}/health`,
       env: {
         // Saved calculations and accounts go to a scratch database, not the one used for local development.
         ConnectionStrings__Calculations: `Data Source=${join(tmpdir(), 'mortgage-analytics-e2e.db')}`,
@@ -32,13 +36,8 @@ export default defineConfig({
         ASPNETCORE_ENVIRONMENT: 'Development',
       },
       reuseExistingServer: !process.env['CI'],
-      timeout: 180_000,
-    },
-    {
-      command: `npm start -- --port ${new URL(APP_URL).port}`,
-      url: APP_URL,
-      reuseExistingServer: !process.env['CI'],
-      timeout: 180_000,
+      // A production build of the app, then a build of the API.
+      timeout: 300_000,
     },
   ],
 });

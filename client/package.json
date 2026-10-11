@@ -23,7 +23,7 @@
     "chart.js": "^4.5.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.16.3"
   },
   "devDependencies": {
     "@angular/build": "^22.2.2",
@@ -39,6 +39,6 @@
     "jest-environment-jsdom": "^30.5.2",
     "jest-preset-angular": "^17.0.2",
     "typescript": "~6.0.3",
-    "typescript-eslint": "8.59.2"
+    "typescript-eslint": "8.71.1"
   }
 }

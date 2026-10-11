@@ -32,4 +32,4 @@ A .NET 10 API and an Angular 22 single-page app, shipped as one Docker container
 purchase with every ownership cost, refinancing, and paying the mortgage off versus investing) share one loan,
 typed once. Accounts let people save calculations and reopen them. The money math lives in a domain project with
 no dependencies, uses `decimal` throughout, and is checked against independent Python models to the cent. More
-than 1,100 tests across five layers run in CI, which also enforces the test standards and an 85% coverage floor.
+than 1,200 tests across five layers run in CI, which also enforces the test standards and an 85% coverage floor.

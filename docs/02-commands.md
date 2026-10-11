@@ -77,7 +77,7 @@ npm run lint                             # angular-eslint: TypeScript and templa
 npm test                                 # Jest unit tests + coverage; fails below 85%
 npm run test:watch                       # re-runs affected tests as you save (no coverage)
 npm run e2e:install                      # first time only: downloads Chromium for Playwright
-npm run e2e                              # Playwright: starts the API and Angular itself, or reuses running ones
+npm run e2e                              # Playwright: builds the app and serves it from the API on :5090, as in production
 ```
 
 ### Run a subset

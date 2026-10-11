@@ -21,8 +21,27 @@ export const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36)
  * - `account`: a new user, registered, confirmed (with the link from the dev mailbox) and signed in through
  *   the API. `page.request` shares the browser's cookies, so the browser is signed in too.
  * - `signedIn`: the calculator, opened after signing in.
+ * - `withinContentSecurityPolicy` (automatic): fails any test in which the browser blocked something under the
+ *   app's Content-Security-Policy, so a change that only works without the policy cannot pass.
  */
-export const test = base.extend<{ calculator: CalculatorPage; account: Account; signedIn: CalculatorPage }>({
+export const test = base.extend<{
+  calculator: CalculatorPage;
+  account: Account;
+  signedIn: CalculatorPage;
+  withinContentSecurityPolicy: void;
+}>({
+  withinContentSecurityPolicy: [
+    async ({ page }, use) => {
+      const violations: string[] = [];
+      page.on('console', (message) => {
+        if (message.type() === 'error' && message.text().includes('Content Security Policy')) violations.push(message.text());
+      });
+      await use();
+      expect(violations, 'the browser blocked nothing under the Content-Security-Policy').toEqual([]);
+    },
+    { auto: true },
+  ],
+
   calculator: async ({ page }, use) => {
     const calculator = new CalculatorPage(page);
     await calculator.open();
