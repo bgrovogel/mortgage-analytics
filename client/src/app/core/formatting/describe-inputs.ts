@@ -3,7 +3,6 @@ import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
 import { decimal, usd } from './format';
 
-
 const downPaymentPercent = (r: AmortizationRequest) => (r.homePrice > 0 ? (r.downPayment / r.homePrice) * 100 : 0);
 
 /** "$375,000 home · 5% down · 6.5% · 30 yr · $200/mo extra": enough to tell saved calculations apart. */

@@ -4,7 +4,6 @@ import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
 import { LoanPayment, RefinanceResponse } from '../../../core/models/refinance.models';
 import { monthOf } from '../../../core/formatting/format';
 
-
 /** Each option's balance after every payment, padded with $0 once it is paid off. */
 const balances = (payments: LoanPayment[], length: number) =>
   Array.from({ length }, (_, i) => payments[i]?.remainingBalance ?? 0);

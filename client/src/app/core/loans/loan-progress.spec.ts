@@ -1,4 +1,4 @@
-import { balanceAfter, loanToday, originalAmount, paymentsMade } from './loan-progress';
+import { balanceAfter, firstOfMonthFromNext, loanToday, originalAmount, paymentsMade } from './loan-progress';
 
 describe('existing loan', () => {
   const today = new Date(2026, 9, 10); // Oct 10, 2026
@@ -18,6 +18,12 @@ describe('existing loan', () => {
     expect(balanceAfter(200_000, 6, 360, 0)).toBe(200_000);
     expect(balanceAfter(200_000, 6, 360, 360)).toBe(0);
     expect(balanceAfter(120_000, 0, 120, 30)).toBe(90_000); // no interest: straight-line
+  });
+
+  it('dates a first payment some months from the first of next month, across year ends', () => {
+    expect(firstOfMonthFromNext(0, today)).toBe('2026-11-01'); // the API's default first payment
+    expect(firstOfMonthFromNext(-34, today)).toBe('2024-01-01'); // a loan 34 payments in
+    expect(firstOfMonthFromNext(2, new Date(2026, 11, 31))).toBe('2027-03-01');
   });
 
   it('works back from what is owed to what was first borrowed', () => {

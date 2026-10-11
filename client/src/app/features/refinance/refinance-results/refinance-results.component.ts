@@ -4,7 +4,6 @@ import { money, monthOf, pct, usd, usdCents } from '../../../core/formatting/for
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 
-
 /** One column of the comparison table. */
 interface TableColumn {
   label: string;

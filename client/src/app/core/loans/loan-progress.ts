@@ -61,5 +61,17 @@ export function loanToday(
   };
 }
 
+/** Shown when a loan's first payment is so long ago that the whole term is behind it. */
+export const PAID_OFF_ALREADY = 'With that first payment, the whole term is already behind you: pick a later date or a longer term.';
+
+/**
+ * The first of the month `months` after the first of next month (before it, when negative), as yyyy-MM-dd. With 0,
+ * the first of next month: the API's default first payment date.
+ */
+export function firstOfMonthFromNext(months: number, today = new Date()): string {
+  const date = new Date(today.getFullYear(), today.getMonth() + 1 + months, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
 /** Rounds to cents, the way the API stores amounts. */
 export const toCents = (value: number) => Math.round(value * 100) / 100;

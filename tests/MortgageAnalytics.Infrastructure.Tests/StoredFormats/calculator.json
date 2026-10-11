@@ -1,0 +1,70 @@
+{
+  "homePrice": 250000,
+  "downPayment": 12500,
+  "annualInterestRate": 6.5,
+  "termInMonths": 360,
+  "firstPaymentDate": "2024-01-01",
+  "strategy": "Recast",
+  "recast": {
+    "minimumLumpSum": 10000,
+    "fee": 250
+  },
+  "extraPayments": {
+    "monthlyAmount": 300,
+    "monthlyStartingPaymentNumber": 22,
+    "annual": {
+      "amount": 2000,
+      "firstPaymentNumber": 24
+    },
+    "lumpSums": [
+      {
+        "paymentNumber": 36,
+        "amount": 25000
+      }
+    ]
+  },
+  "housingCosts": {
+    "propertyTaxRate": 2.2,
+    "propertyTaxHomesteadExemption": 50000,
+    "schoolTaxRate": 1,
+    "localTaxRate": 1.1,
+    "mudTaxRate": 0.85,
+    "isHomestead": true,
+    "schoolHomesteadExemption": 140000,
+    "localHomesteadExemptionPercent": 20,
+    "mudHomesteadExemptionPercent": 10,
+    "homesteadAssessmentCap": 10,
+    "over65OrDisabled": {
+      "qualifiesInYear": 3,
+      "schoolExemption": 60000,
+      "localExemption": 0,
+      "localTaxCeiling": true
+    },
+    "homeValueGrowthRate": 4.3,
+    "insuranceIncreaseRate": 4.8,
+    "hoaIncreaseRate": 4,
+    "pid": {
+      "annualAssessment": 1200,
+      "remainingYears": 12
+    },
+    "annualHomeownersInsurance": 2400,
+    "monthlyHoaDues": 50,
+    "pmiRate": 0.5,
+    "pmiCancellation": "BorrowerRequested"
+  },
+  "buydown": {
+    "yearlyReductions": [
+      2,
+      1
+    ]
+  },
+  "adjustableRate": {
+    "initialFixedMonths": 84,
+    "adjustmentIntervalMonths": 12,
+    "expectedRate": 7.5,
+    "initialCap": 5,
+    "periodicCap": 2,
+    "lifetimeCap": 5,
+    "margin": 2.75
+  }
+}

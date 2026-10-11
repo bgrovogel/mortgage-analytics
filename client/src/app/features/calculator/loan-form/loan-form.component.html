@@ -117,6 +117,10 @@
           The part of the home's value your taxes skip, in dollars: it comes off the value before the rate applies. Where
           the homestead cap applies, the taxable value can also rise only so much a year (10% in Texas; leave it at 100 for none).
         </p>
+        <p class="hint" data-testid="over-65-pointer">
+          Over 65 or disabled? That relief (an extra exemption and a school tax ceiling) is set per tax: choose
+          <strong>Separate taxes</strong> above.
+        </p>
       }
 
       @if (isHomestead() && taxMode() === 'separate') {
@@ -174,7 +178,6 @@
         <app-number-field [control]="form.controls.annualInsurance" [rule]="rules.annualInsurance" testId="annual-insurance" label="Home insurance per year" />
         <app-number-field [control]="form.controls.monthlyHoa" [rule]="rules.monthlyHoa" testId="monthly-hoa" label="HOA dues per month" />
       </div>
-
 
       <div class="row">
         <app-number-field [control]="form.controls.pmiRate" [rule]="rules.pmiRate" testId="pmi-rate" label="PMI per year" />

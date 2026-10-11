@@ -24,7 +24,7 @@ cancellation) is rich enough to show real engineering judgment, while the codeba
 |---|---|
 | **Backend** | ASP.NET Core 9 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 19 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js |
-| **Tests** | NUnit + NSubstitute: 640 backend tests · Jest: 457 Angular unit tests · Playwright: 70 E2E tests · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 643 backend tests · Jest: 459 Angular unit tests · Playwright: 70 E2E tests · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (single container) · GitHub Actions CI |
 
 ---
@@ -101,10 +101,10 @@ Set **MortgageAnalytics.Api** and **client** as multiple startup projects to run
 ### Running the tests
 
 ```bash
-dotnet test                       # 640 NUnit tests, including the convention tests
+dotnet test                       # 643 NUnit tests, including the convention tests
 
 cd client
-npm test                          # 457 Jest unit tests; fails below 85% coverage
+npm test                          # 459 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 70 Playwright tests; starts the API and Angular for you
 ```
@@ -248,7 +248,7 @@ tests/
   MortgageAnalytics.Conventions.Tests/  Checks that every test (C# and Playwright) follows the assertion standards
   MortgageAnalytics.Domain.Tests/   352 tests
   MortgageAnalytics.Application.Tests/  206 tests (unit with NSubstitute, sociable scenarios, architecture)
-  MortgageAnalytics.Infrastructure.Tests/  13 tests (real SQLite, built by the real migrations)
+  MortgageAnalytics.Infrastructure.Tests/  16 tests (real SQLite, built by the real migrations; saves in today's stored format still load)
   MortgageAnalytics.Api.IntegrationTests/  63 tests (shared WebApplicationFactory fixture, temp SQLite file)
 client/  src/app/core (models, API services, state, forms, charts) · src/app/features/{calculator,refinance,strategy,history} · e2e/
 ```
@@ -312,7 +312,7 @@ client/  src/app/core (models, API services, state, forms, charts) · src/app/fe
 | **Interface Segregation** | Small interfaces with one or two members each: `IExtraPaymentRule`, `IHousingCost`, `IAmortizationCalculator`, `ILoanComparer`, `IAmortizationService`. |
 | **Dependency Inversion** | The service depends on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. |
 | **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are each written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and color everywhere. |
-| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project and the repository arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole. |
+| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project and the repository arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole. That JSON has no version number yet: every change so far only adds fields, and a test loads saves in today's format so that a rename or removal fails CI instead of quietly dropping values. A version and an upgrade-on-load step come with the first change that needs one. |
 
 ### Documentation is enforced, not hoped for
 

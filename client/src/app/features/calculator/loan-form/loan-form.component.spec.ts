@@ -498,6 +498,15 @@ describe('LoanFormComponent', () => {
       expect(text('homestead-savings')).toBe('In year 1 these save $2,225 in tax: school $1,400 · county/city $825 · MUD $0.');
     });
 
+    it('points to the separate taxes for over-65 relief, which is set per tax', () => {
+      fixture.detectChanges();
+      expect(text('over-65-pointer')).toContain('Separate taxes');
+
+      controls().taxMode.setValue('separate');
+      fixture.detectChanges();
+      expect(text('over-65-pointer')).toBeUndefined();
+    });
+
     it('says nothing when the home is not a homestead', () => {
       fixture.componentRef.setInput('firstYear', firstYear);
       controls().isHomestead.setValue(false);

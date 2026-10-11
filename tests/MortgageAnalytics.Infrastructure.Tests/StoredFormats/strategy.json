@@ -1,0 +1,42 @@
+{
+  "currentBalance": 300000,
+  "annualInterestRate": 6.5,
+  "remainingTermInMonths": 300,
+  "nextPaymentDate": "2026-11-01",
+  "homeValue": 400000,
+  "homeGrowthRate": 4.3,
+  "grossAnnualIncome": 120000,
+  "marginalTaxRate": 24,
+  "capitalGainsTaxRate": 15,
+  "filingStatus": "HeadOfHousehold",
+  "otherItemizedDeductions": 10000,
+  "monthlyCashToPutToWork": 1000,
+  "employerMatchPercent": 50,
+  "matchUpToPercentOfPay": 6,
+  "esppContributionPercent": 10,
+  "esppDiscountPercent": 15,
+  "esppPurchasePeriodMonths": 6,
+  "annualIraContribution": 7500,
+  "annualRsuVesting": 10000,
+  "sellRsusAtVest": true,
+  "annualEsopContribution": 2000,
+  "currentRetirementSavings": 50000,
+  "currentInvestments": 20000,
+  "expectedAnnualReturn": 10,
+  "inflationRate": 3,
+  "riskProfile": "Conservative",
+  "adjustableRate": {
+    "initialFixedMonths": 60,
+    "adjustmentIntervalMonths": 12,
+    "expectedRate": 7.5,
+    "initialCap": 5,
+    "periodicCap": 2,
+    "lifetimeCap": 5,
+    "margin": 2.75
+  },
+  "buydown": {
+    "yearlyReductions": [
+      1
+    ]
+  }
+}

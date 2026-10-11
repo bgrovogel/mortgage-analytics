@@ -1,0 +1,39 @@
+{
+  "currentBalance": 280000,
+  "currentAnnualInterestRate": 7,
+  "remainingTermInMonths": 300,
+  "originalLoan": {
+    "amount": 300000,
+    "termInMonths": 360,
+    "firstPaymentDate": "2021-11-01"
+  },
+  "nextPaymentDate": "2026-11-01",
+  "newAnnualInterestRate": 6,
+  "newTermInMonths": 360,
+  "closingCosts": 6000,
+  "financeClosingCosts": true,
+  "currentAdjustableRate": {
+    "initialFixedMonths": 24,
+    "adjustmentIntervalMonths": 12,
+    "expectedRate": 9,
+    "initialCap": 5,
+    "periodicCap": 2,
+    "lifetimeCap": 5,
+    "margin": 2.75
+  },
+  "newAdjustableRate": {
+    "initialFixedMonths": 84,
+    "adjustmentIntervalMonths": 12,
+    "expectedRate": 7.5,
+    "initialCap": 5,
+    "periodicCap": 2,
+    "lifetimeCap": 5,
+    "margin": 2.75
+  },
+  "newBuydown": {
+    "yearlyReductions": [
+      2,
+      1
+    ]
+  }
+}

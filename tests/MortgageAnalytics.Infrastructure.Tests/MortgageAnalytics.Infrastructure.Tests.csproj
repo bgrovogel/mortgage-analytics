@@ -9,4 +9,9 @@
     <ProjectReference Include="..\..\src\MortgageAnalytics.Infrastructure\MortgageAnalytics.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Saved calculations as stored today: StoredFormatTests checks they keep loading. -->
+    <None Include="StoredFormats\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

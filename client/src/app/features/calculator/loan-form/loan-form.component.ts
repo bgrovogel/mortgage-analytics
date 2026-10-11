@@ -1,37 +1,25 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
+import { FormArray, FormControl, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { problemsIn, problemsOf } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { pct, signedPct, usd } from '../../../core/formatting/format';
-import {
-  AmortizationRequest,
-  ExtraPaymentStrategy,
-  MortgageInsuranceCancellation,
-  YearProjection,
-} from '../../../core/models/amortization.models';
-import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
+import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
+import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
-import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
-
-type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
-
-/** Whether the down payment field holds dollars or a percentage of the price. */
-export type DownPaymentMode = 'amount' | 'percent';
+import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
+import { LumpSumForm, downPaymentAmountOf, loanForm, lumpSumGroup, restoreLoanForm, syncTaxMode, toLoanRequest } from './loan-form.model';
 
 const rules = LOAN_RULES;
 
 /** Shown while the down payment leaves nothing to borrow. */
 export const NOTHING_TO_BORROW = 'The down payment must be less than the home price.';
-
-/** Shown when the first payment is so long ago that the whole term is behind it. */
-export const PAID_OFF_ALREADY = 'With that first payment, the whole term is already behind you: pick a later date or a longer term.';
 
 /** Shown for a lump sum on a payment already made. */
 const lumpSumInThePast = (paymentNumber: number, next: number) =>
@@ -39,16 +27,6 @@ const lumpSumInThePast = (paymentNumber: number, next: number) =>
 
 /** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
 const CHECK_SECTION = 'Check the values in this section';
-
-/** How property taxes are entered: one combined rate (most places), or separate school, county/city and MUD rates (Texas). */
-export type TaxMode = 'single' | 'separate';
-
-/** The controls each way of entering taxes uses; the other way's are disabled, so they are neither checked nor sent. */
-const TAX_MODE_CONTROLS = {
-  single: ['propertyTaxRate', 'propertyTaxHomesteadExemption'],
-  separate: ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption', 'localHomesteadExemptionPercent',
-    'mudHomesteadExemptionPercent', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
-} as const;
 
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
@@ -60,20 +38,11 @@ const SECTION_CONTROLS = {
   rate: ['rate'],
 } as const;
 
-
-
 /** 1 becomes "1%", 0.85 becomes "0.85%": rates here have up to four decimals. */
 const percent = (value: number) => pct(value, 4);
 
 /** 4 becomes "+4%", -2 becomes "-2%", 0 becomes "0%". */
 const signedPercent = (value: number) => signedPct(value, 4);
-
-/** Returns the first day of next month as yyyy-MM-dd, the API's default first payment date. */
-function firstOfNextMonth(): string {
-  const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-01`;
-}
 
 /**
  * Presentational component: owns the form and emits a ready-to-send request whenever a change
@@ -133,60 +102,7 @@ export class LoanFormComponent implements OnInit {
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
 
-  // Defaults describe a typical Texas homestead purchase with 5% down, so PMI, MUD tax, the $140,000
-  // school exemption and yearly increases are all visible on load.
-  readonly form = this.fb.group({
-    homePrice: [375_000, validatorsFor(rules.homePrice)],
-    downPaymentMode: this.fb.control<DownPaymentMode>('amount'),
-    // Dollars or a percentage of the price, depending on downPaymentMode.
-    downPayment: [18_750, validatorsFor(rules.downPayment)],
-    annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
-    termYears: [30, validatorsFor(rules.termYears)],
-    // Optional: a blank date lets the API default to the first of next month.
-    firstPaymentDate: [firstOfNextMonth()],
-
-    // One combined rate and one homestead exemption, the way most places quote them; or the separate Texas taxes.
-    taxMode: this.fb.control<TaxMode>('single'),
-    propertyTaxRate: [2.2, validatorsFor(rules.propertyTaxRate)],
-    propertyTaxHomesteadExemption: [50_000, validatorsFor(rules.propertyTaxHomesteadExemption)],
-    schoolTaxRate: [1.0, validatorsFor(rules.schoolTaxRate)],
-    localTaxRate: [1.1, validatorsFor(rules.localTaxRate)],
-    mudTaxRate: [0.85, validatorsFor(rules.mudTaxRate)],
-    isHomestead: [true],
-    schoolHomesteadExemption: [140_000, validatorsFor(rules.schoolHomesteadExemption)],
-    localHomesteadExemptionPercent: [0, validatorsFor(rules.localHomesteadExemptionPercent)],
-    mudHomesteadExemptionPercent: [0, validatorsFor(rules.mudHomesteadExemptionPercent)],
-    homesteadAssessmentCap: [10, validatorsFor(rules.homesteadAssessmentCap)],
-    isOver65: [false],
-    over65Year: [1, validatorsFor(rules.over65Year)],
-    over65SchoolExemption: [60_000, validatorsFor(rules.over65SchoolExemption)],
-    over65LocalExemption: [0, validatorsFor(rules.over65LocalExemption)],
-    over65LocalCeiling: [false],
-    // Long-run US averages (sources are shown under the fields):
-    // home values +4.3% a year (FHFA House Price Index, 1975-2025); home insurance +4.8% a year
-    // (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024); HOA dues +4% (typically 3-5%).
-    homeValueGrowthRate: [4.3, validatorsFor(rules.homeValueGrowthRate)],
-    insuranceIncreaseRate: [4.8, validatorsFor(rules.insuranceIncreaseRate)],
-    hoaIncreaseRate: [4, validatorsFor(rules.hoaIncreaseRate)],
-    pidAnnual: [0, validatorsFor(rules.pidAnnual)],
-    pidYears: [null as number | null, validatorsFor(rules.pidYears)],
-    annualInsurance: [2_400, validatorsFor(rules.annualInsurance)],
-    monthlyHoa: [50, validatorsFor(rules.monthlyHoa)],
-    pmiRate: [0.5, validatorsFor(rules.pmiRate)],
-    pmiCancellation: this.fb.control<MortgageInsuranceCancellation>('Automatic'),
-
-    monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
-    annualExtra: [0, validatorsFor(rules.annualExtra)],
-    annualFirstPayment: [12, validatorsFor(rules.annualFirstPayment)],
-    lumpSums: this.fb.array<LumpSumForm>([]),
-
-    strategy: this.fb.control<ExtraPaymentStrategy>('ShortenTerm'),
-
-    // Fixed, a buydown, or a 7/1 ARM with the usual 5/2/5 caps, expected to reset a point higher.
-    rate: rateOptionsForm(this.fb, 7.5),
-    recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
-    recastFee: [250, validatorsFor(rules.recastFee)],
-  });
+  readonly form = loanForm(this.fb);
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
@@ -284,13 +200,14 @@ export class LoanFormComponent implements OnInit {
     };
   });
 
-  /** One-line summary of the first payment date, extra payments beyond monthly, and the strategy. */
+  /** One-line summary of the rate type: fixed, a buydown, or an ARM and its caps. */
   readonly rateSummary = computed(() => {
     const v = this.values();
     if (this.sectionInvalid('rate')) return CHECK_SECTION;
     return rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
   });
 
+  /** One-line summary of the extra payments beyond monthly, and what they are applied to. */
   readonly optionsSummary = computed(() => {
     const v = this.values();
     if (this.sectionInvalid('options')) return CHECK_SECTION;
@@ -305,8 +222,8 @@ export class LoanFormComponent implements OnInit {
 
   constructor() {
     // Only the chosen way of entering taxes is checked and sent.
-    this.syncTaxMode();
-    this.form.controls.taxMode.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.syncTaxMode());
+    syncTaxMode(this.form);
+    this.form.controls.taxMode.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => syncTaxMode(this.form));
 
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
     keepArmFieldsInStep(this.form.controls.rate);
@@ -322,7 +239,7 @@ export class LoanFormComponent implements OnInit {
 
     // Recalculate as the user types: every change that leaves the form valid produces a request.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      if (!this.restoring && this.isComplete()) this.calculate.emit(this.toRequest());
+      if (!this.restoring && this.canSend()) this.calculate.emit(this.toRequest());
     });
   }
 
@@ -380,16 +297,9 @@ export class LoanFormComponent implements OnInit {
     }
   }
 
-  /** Enables the controls of the chosen way of entering taxes, and disables the other's. */
-  private syncTaxMode(): void {
-    const mode = this.form.controls.taxMode.value;
-    for (const name of TAX_MODE_CONTROLS[mode]) this.form.controls[name].enable({ emitEvent: false });
-    for (const name of TAX_MODE_CONTROLS[mode === 'single' ? 'separate' : 'single']) this.form.controls[name].disable({ emitEvent: false });
-  }
-
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
   addLumpSum(): void {
-    this.lumpSums.push(this.lumpSumGroup(12, 10_000));
+    this.lumpSums.push(lumpSumGroup(this.fb, 12, 10_000));
   }
 
   /** Removes the lump-sum row at `index`. */
@@ -404,7 +314,7 @@ export class LoanFormComponent implements OnInit {
 
   /** Emits the request if the form is valid; otherwise reveals every error. */
   submit(): void {
-    if (!this.isComplete()) {
+    if (!this.canSend()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -412,7 +322,7 @@ export class LoanFormComponent implements OnInit {
   }
 
   /** True when the form can be sent: nothing wrong with it. */
-  private isComplete(): boolean {
+  private canSend(): boolean {
     return this.currentProblems().length === 0;
   }
 
@@ -441,129 +351,15 @@ export class LoanFormComponent implements OnInit {
     return SECTION_CONTROLS[section].some((name) => this.form.controls[name].invalid);
   }
 
-  /**
-   * Fills the form from a request: the reverse of toRequest. The down payment comes back in dollars.
-   * Parts the request leaves out (no extras, no housing costs) become zero; fields that only matter
-   * when an option is on (recast terms, over-65 details) keep their defaults when it is off.
-   */
+  /** Fills the form from a saved or last request, without sending a request for each of its changes. */
   private restore(r: AmortizationRequest): void {
-    const extras = r.extraPayments;
-    const costs = r.housingCosts;
-    const senior = costs?.over65OrDisabled;
     this.restoring = true;
-    this.form.controls.downPaymentMode.setValue('amount', { emitEvent: false });
-    this.lumpSums.clear({ emitEvent: false });
-    for (const lump of extras?.lumpSums ?? []) {
-      this.lumpSums.push(this.lumpSumGroup(lump.paymentNumber, lump.amount), { emitEvent: false });
-    }
-    this.form.patchValue({
-      homePrice: r.homePrice,
-      downPayment: r.downPayment,
-      annualInterestRate: r.annualInterestRate,
-      termYears: Math.round(r.termInMonths / 12),
-      firstPaymentDate: r.firstPaymentDate ?? '',
-      strategy: r.strategy,
-      ...(r.recast && { recastMinimum: r.recast.minimumLumpSum, recastFee: r.recast.fee }),
-      monthlyExtra: extras?.monthlyAmount ?? 0,
-      annualExtra: extras?.annual?.amount ?? 0,
-      ...(extras?.annual && { annualFirstPayment: extras.annual.firstPaymentNumber }),
-      // One rate when the request has one (or none at all); otherwise the separate rates it was saved with.
-      taxMode: (costs?.propertyTaxRate ?? 0) > 0 || !costs || costs.schoolTaxRate + costs.localTaxRate + costs.mudTaxRate === 0 ? 'single' : 'separate',
-      propertyTaxRate: costs?.propertyTaxRate ?? 0,
-      propertyTaxHomesteadExemption: costs?.propertyTaxHomesteadExemption ?? 0,
-      schoolTaxRate: costs?.schoolTaxRate ?? 0,
-      localTaxRate: costs?.localTaxRate ?? 0,
-      mudTaxRate: costs?.mudTaxRate ?? 0,
-      isHomestead: costs?.isHomestead ?? false,
-      schoolHomesteadExemption: costs?.schoolHomesteadExemption ?? 0,
-      localHomesteadExemptionPercent: costs?.localHomesteadExemptionPercent ?? 0,
-      mudHomesteadExemptionPercent: costs?.mudHomesteadExemptionPercent ?? 0,
-      homesteadAssessmentCap: costs?.homesteadAssessmentCap ?? 0,
-      isOver65: !!senior,
-      ...(senior && {
-        over65Year: senior.qualifiesInYear,
-        over65SchoolExemption: senior.schoolExemption,
-        over65LocalExemption: senior.localExemption,
-        over65LocalCeiling: senior.localTaxCeiling,
-      }),
-      homeValueGrowthRate: costs?.homeValueGrowthRate ?? 0,
-      insuranceIncreaseRate: costs?.insuranceIncreaseRate ?? 0,
-      hoaIncreaseRate: costs?.hoaIncreaseRate ?? 0,
-      pidAnnual: costs?.pid?.annualAssessment ?? 0,
-      pidYears: costs?.pid?.remainingYears ?? null,
-      annualInsurance: costs?.annualHomeownersInsurance ?? 0,
-      monthlyHoa: costs?.monthlyHoaDues ?? 0,
-      pmiRate: costs?.pmiRate ?? 0,
-      ...(costs && { pmiCancellation: costs.pmiCancellation }),
-    });
-    setRateOptions(this.form.controls.rate, r.buydown, r.adjustableRate);
-    this.syncTaxMode();
+    restoreLoanForm(this.form, this.fb, r);
     this.restoring = false;
   }
 
-  private lumpSumGroup(paymentNumber: number, amount: number): LumpSumForm {
-    return this.fb.group({
-      paymentNumber: [paymentNumber, validatorsFor(LUMP_SUM_RULES.paymentNumber)],
-      amount: [amount, validatorsFor(LUMP_SUM_RULES.amount)],
-    });
-  }
-
-  /** Converts form values (years, flat fields) into the API's request shape. */
+  /** The request for the form's values; on a loan already being paid, extra payments start with the next payment. */
   private toRequest(): AmortizationRequest {
-    const v = this.form.getRawValue();
-    const single = v.taxMode === 'single';
-    // On a loan already being paid, extra payments can only start with the next payment.
-    const next = (this.existingLoan()?.made ?? 0) + 1;
-    const annualFirst = v.annualFirstPayment < next ? v.annualFirstPayment + Math.ceil((next - v.annualFirstPayment) / 12) * 12 : v.annualFirstPayment;
-    return {
-      homePrice: v.homePrice,
-      downPayment: downPaymentAmountOf(v),
-      annualInterestRate: v.annualInterestRate,
-      termInMonths: v.termYears * 12,
-      firstPaymentDate: v.firstPaymentDate || null,
-      strategy: v.strategy,
-      recast: v.strategy === 'Recast' ? { minimumLumpSum: v.recastMinimum, fee: v.recastFee } : null,
-      extraPayments: {
-        monthlyAmount: v.monthlyExtra || 0,
-        monthlyStartingPaymentNumber: next,
-        annual: v.annualExtra > 0 ? { amount: v.annualExtra, firstPaymentNumber: annualFirst } : null,
-        lumpSums: v.lumpSums,
-      },
-      housingCosts: {
-        propertyTaxRate: single ? v.propertyTaxRate || 0 : 0,
-        propertyTaxHomesteadExemption: single ? v.propertyTaxHomesteadExemption || 0 : 0,
-        schoolTaxRate: single ? 0 : v.schoolTaxRate || 0,
-        localTaxRate: single ? 0 : v.localTaxRate || 0,
-        mudTaxRate: single ? 0 : v.mudTaxRate || 0,
-        isHomestead: v.isHomestead,
-        schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
-        localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
-        mudHomesteadExemptionPercent: v.mudHomesteadExemptionPercent || 0,
-        homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
-        over65OrDisabled: !single && v.isHomestead && v.isOver65
-          ? {
-              qualifiesInYear: v.over65Year || 1,
-              schoolExemption: v.over65SchoolExemption || 0,
-              localExemption: v.over65LocalExemption || 0,
-              localTaxCeiling: v.over65LocalCeiling,
-            }
-          : null,
-        homeValueGrowthRate: v.homeValueGrowthRate || 0,
-        insuranceIncreaseRate: v.insuranceIncreaseRate || 0,
-        hoaIncreaseRate: v.hoaIncreaseRate || 0,
-        pid: v.pidAnnual > 0 ? { annualAssessment: v.pidAnnual, remainingYears: v.pidYears || null } : null,
-        annualHomeownersInsurance: v.annualInsurance || 0,
-        monthlyHoaDues: v.monthlyHoa || 0,
-        pmiRate: v.pmiRate || 0,
-        pmiCancellation: v.pmiCancellation,
-      },
-      ...rateOptionsRequest(this.form.controls.rate, 'type'),
-    };
+    return toLoanRequest(this.form, (this.existingLoan()?.made ?? 0) + 1);
   }
-}
-
-/** The down payment in dollars: as entered, or the entered percentage of the price, rounded to cents. */
-function downPaymentAmountOf(v: { homePrice?: number; downPayment?: number; downPaymentMode?: DownPaymentMode }): number {
-  const entered = v.downPayment ?? 0;
-  return v.downPaymentMode === 'percent' ? toCents(((v.homePrice ?? 0) * entered) / 100) : entered;
 }

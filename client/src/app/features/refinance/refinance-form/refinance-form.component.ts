@@ -6,7 +6,7 @@ import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
-import { balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
+import { PAID_OFF_ALREADY, balanceAfter, firstOfMonthFromNext, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
@@ -27,16 +27,6 @@ const ENTRY_CONTROLS = {
   today: ['currentBalance', 'yearsLeft'],
   original: ['originalAmount', 'originalTermYears', 'firstPaymentDate'],
 } as const;
-
-/** Shown when the original loan's last payment is already behind today. */
-export const PAID_OFF_ALREADY = 'With that first payment, the whole term is already behind you: pick a later date or a longer term.';
-
-/** The first of the month `months` before (or after) the first of next month, as yyyy-MM-dd. */
-function firstOfMonthFromNext(months: number): string {
-  const now = new Date();
-  const date = new Date(now.getFullYear(), now.getMonth() + 1 + months, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
-}
 
 /**
  * Presentational: the loan today and the refinance offer. Emits a ready-to-send request on load and
@@ -70,7 +60,7 @@ export class RefinanceFormComponent implements OnInit {
   readonly analyze = output<RefinanceRequest>();
 
   /** True while values are being loaded into the form, so its changes do not each send a request. */
-  private quiet = false;
+  private restoring = false;
 
   protected readonly terms = TERMS;
   protected readonly rules = rules;
@@ -145,7 +135,7 @@ export class RefinanceFormComponent implements OnInit {
     keepArmFieldsInStep(this.form.controls.newRate);
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      if (!this.quiet && this.canSend()) this.analyze.emit(this.toRequest());
+      if (!this.restoring && this.canSend()) this.analyze.emit(this.toRequest());
     });
   }
 
@@ -176,9 +166,9 @@ export class RefinanceFormComponent implements OnInit {
     }
     this.startFromSharedLoan();
     // Let everything derived from the values (payments left, the original loan today, the problems) see them.
-    this.quiet = true;
+    this.restoring = true;
     this.form.updateValueAndValidity();
-    this.quiet = false;
+    this.restoring = false;
     if (this.canSend()) this.analyze.emit(this.toRequest());
   }
 
@@ -241,7 +231,10 @@ export class RefinanceFormComponent implements OnInit {
     ];
   }
 
-  /** True when the form can be sent: nothing wrong with it. */
+  /**
+   * True when the form can be sent: nothing wrong with it. It checks the form's own validity rather than the problems
+   * list, because the first payment date (required while it is shown) is not a numeric field with a rule.
+   */
   private canSend(): boolean {
     return this.form.valid && !this.loanToday()?.paidOff;
   }

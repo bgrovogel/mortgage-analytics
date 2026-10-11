@@ -15,7 +15,6 @@ import { compactUsd, usd } from '../formatting/format';
 // Register only what the line charts use, so the rest of Chart.js is tree-shaken out.
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler);
 
-
 /** One line on a chart. */
 export interface LineSeries {
   label: string;

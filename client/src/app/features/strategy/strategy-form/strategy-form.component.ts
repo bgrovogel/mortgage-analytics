@@ -13,7 +13,6 @@ import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsFor
 
 const rules = STRATEGY_RULES;
 
-
 export const FILING_STATUSES: readonly { value: TaxFilingStatus; label: string }[] = [
   { value: 'MarriedFilingJointly', label: 'Married filing jointly' },
   { value: 'Single', label: 'Single' },
@@ -25,7 +24,6 @@ export const RISK_PROFILES: readonly { value: InvestorRiskProfile; label: string
   { value: 'Balanced', label: 'Balanced', margin: 2 },
   { value: 'Aggressive', label: 'Aggressive', margin: 0 },
 ];
-
 
 /**
  * Presentational: the mortgage, the household, its investment options and the market. Emits a ready-to-send
@@ -101,10 +99,7 @@ export class StrategyFormComponent implements OnInit {
    * Emits what is wrong whenever that changes: an empty list once every field is valid again. While a field
    * is invalid no request is sent, so the page can say its results are for the last valid inputs.
    */
-  readonly problems = outputFromObservable(problemsOf(this.form, () => [
-    ...problemsIn(rules, this.form.controls),
-    ...problemsIn(RATE_OPTION_RULES, this.form.controls.rate.controls),
-  ]));
+  readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
 
   /** One line for the closed rate section. */
   readonly rateSummary = computed(() => {
@@ -151,7 +146,7 @@ export class StrategyFormComponent implements OnInit {
   constructor() {
     keepArmFieldsInStep(this.form.controls.rate);
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      if (this.form.valid) this.compare.emit(this.toRequest());
+      if (this.canSend()) this.compare.emit(this.toRequest());
     });
   }
 
@@ -175,7 +170,20 @@ export class StrategyFormComponent implements OnInit {
       const rateChanged = applySharedRate(this.form.controls.rate, shared.loan.rate);
       if (changed || rateChanged) this.sharedFrom.set(shared.from);
     }
-    if (this.form.valid) this.compare.emit(this.toRequest());
+    if (this.canSend()) this.compare.emit(this.toRequest());
+  }
+
+  /** Everything wrong with the form: each invalid number. */
+  private currentProblems(): string[] {
+    return [
+      ...problemsIn(rules, this.form.controls),
+      ...problemsIn(RATE_OPTION_RULES, this.form.controls.rate.controls),
+    ];
+  }
+
+  /** True when the form can be sent: nothing wrong with it. */
+  private canSend(): boolean {
+    return this.currentProblems().length === 0;
   }
 
   private toRequest(): StrategyRequest {

@@ -4,7 +4,6 @@ import { buildLineChart } from '../../../core/charts/line-chart';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { monthOf } from '../../../core/formatting/format';
 
-
 /** Remaining loan balance over time: standard payoff against accelerated payoff. */
 @Component({
   selector: 'app-balance-chart',
