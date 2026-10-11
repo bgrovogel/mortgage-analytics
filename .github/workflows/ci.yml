@@ -18,8 +18,12 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+          # NuGet packages are cached, keyed on the lock files.
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
       - run: dotnet tool restore
-      - run: dotnet restore MortgageAnalytics.sln
+      # Locked mode: fails if a project's packages no longer match its packages.lock.json.
+      - run: dotnet restore MortgageAnalytics.sln --locked-mode
       - run: dotnet build MortgageAnalytics.sln -c Release --no-restore
       # Includes the convention tests, so a missing assertion message or Assert.Multiple fails the build.
       - run: dotnet test MortgageAnalytics.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
@@ -79,6 +83,9 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+          # NuGet packages are cached, keyed on the lock files.
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -95,9 +102,21 @@ jobs:
           path: client/playwright-report
 
   docker:
-    name: Docker image builds
+    name: Docker image builds & runs
     runs-on: ubuntu-latest
     needs: backend
     steps:
       - uses: actions/checkout@v7
       - run: docker build -t mortgage-analytics:ci .
+      # Prove the image runs, not just that it builds: it must start, create its database, report healthy,
+      # and serve the app with its security headers.
+      - name: Smoke test the image
+        run: |
+          docker run -d --name smoke -p 8080:8080 mortgage-analytics:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:8080/health && break; sleep 2; done
+          echo
+          curl -sf http://localhost:8080/health | grep -qx Healthy || { docker logs smoke; exit 1; }
+          curl -sf http://localhost:8080/ | grep -q '<app-root>' || { echo "::error::The app is not served"; exit 1; }
+          curl -sfI http://localhost:8080/ | grep -qi "^content-security-policy:" || { echo "::error::No CSP header"; exit 1; }
+          loan='{"homePrice":400000,"downPayment":80000,"annualInterestRate":6.5,"termInMonths":360}'
+          curl -sf -X POST http://localhost:8080/api/v1/amortization/calculate -H 'Content-Type: application/json' -d "$loan" | grep -q '"baseline"' || { echo "::error::The calculator API did not answer"; exit 1; }

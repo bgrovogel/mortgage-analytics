@@ -13,11 +13,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
 WORKDIR /src
 # Restore first, in its own layer, so code edits don't invalidate the package cache.
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
-COPY src/MortgageAnalytics.Domain/*.csproj src/MortgageAnalytics.Domain/
-COPY src/MortgageAnalytics.Application/*.csproj src/MortgageAnalytics.Application/
-COPY src/MortgageAnalytics.Infrastructure/*.csproj src/MortgageAnalytics.Infrastructure/
-COPY src/MortgageAnalytics.Api/*.csproj src/MortgageAnalytics.Api/
-RUN dotnet restore src/MortgageAnalytics.Api/MortgageAnalytics.Api.csproj
+COPY src/MortgageAnalytics.Domain/*.csproj src/MortgageAnalytics.Domain/packages.lock.json src/MortgageAnalytics.Domain/
+COPY src/MortgageAnalytics.Application/*.csproj src/MortgageAnalytics.Application/packages.lock.json src/MortgageAnalytics.Application/
+COPY src/MortgageAnalytics.Infrastructure/*.csproj src/MortgageAnalytics.Infrastructure/packages.lock.json src/MortgageAnalytics.Infrastructure/
+COPY src/MortgageAnalytics.Api/*.csproj src/MortgageAnalytics.Api/packages.lock.json src/MortgageAnalytics.Api/
+RUN dotnet restore src/MortgageAnalytics.Api/MortgageAnalytics.Api.csproj --locked-mode
 COPY src/ src/
 RUN dotnet publish src/MortgageAnalytics.Api/MortgageAnalytics.Api.csproj -c Release -o /app --no-restore
 

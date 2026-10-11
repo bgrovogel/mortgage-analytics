@@ -7,7 +7,10 @@ namespace MortgageAnalytics.Infrastructure;
 /// <summary>Registers this layer's storage with the dependency-injection container.</summary>
 public static class DependencyInjection
 {
-    /// <summary>Registers the SQLite database and the repository the application layer asks for.</summary>
+    /// <summary>
+    /// Registers the SQLite database, the repository the application layer asks for, and a health check that the
+    /// database answers (so <c>/health</c> reports a missing or broken database volume).
+    /// </summary>
     /// <param name="services">The container to add to.</param>
     /// <param name="connectionString">A SQLite connection string, e.g. <c>Data Source=calculations.db</c>.</param>
     /// <returns>The same container, for chaining.</returns>
@@ -15,6 +18,7 @@ public static class DependencyInjection
     {
         services.AddDbContext<CalculationsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ISavedCalculationRepository, SavedCalculationRepository>();
+        services.AddHealthChecks().AddDbContextCheck<CalculationsDbContext>("database");
         return services;
     }
 

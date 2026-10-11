@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- packages.lock.json pins every package, transitive ones included, like package-lock.json does for npm.
+         CI and Docker restore in locked mode, and CI caches packages keyed on these files. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <!--

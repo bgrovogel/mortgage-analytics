@@ -310,5 +310,5 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 644 .NET · 474 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 652 .NET · 474 Jest · 83 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 21, signals, RxJS, Chart.js · Docker, GitHub Actions |

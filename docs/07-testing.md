@@ -6,8 +6,8 @@ About 1,170 automated tests in seven suites, written test-first, with the standa
 |---|---|---|---|
 | Domain | 353 | NUnit | < 1 s |
 | Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 16 | NUnit, SQLite in memory | ~1 s |
-| API integration | 63 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
+| API integration | 69 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 6 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 474 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 83 | Playwright (Chromium), axe-core | ~25 s |
@@ -128,12 +128,14 @@ independent models do that job.
 On every push to `main` and every pull request:
 
 ```
-backend   ─┐  dotnet restore → build (Release, warnings as errors) → test with coverage → report → 85% gate
+backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → test with coverage → report → 85% gate
            ├─► e2e     npm ci → ng build → install Chromium → Playwright (starts API + Angular itself)
-frontend  ─┘           (runs only if backend and frontend pass)
-           └─► docker  docker build (runs if backend passes)
+frontend  ─┘           npm ci → lint → Jest with coverage; e2e runs only if backend and frontend pass
+           └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
+                       and the calculator answers (runs if backend passes)
 ```
 
+NuGet packages are cached on the `packages.lock.json` files, and npm packages on `package-lock.json`.
 Coverage reports and, on failure, the Playwright report (with traces and screenshots) are uploaded as artifacts.
 
 ## Code-quality settings that act like tests

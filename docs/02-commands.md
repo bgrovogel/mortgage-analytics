@@ -164,3 +164,5 @@ docker build -t mortgage-analytics .      # the image CI builds
 | Sign-in says the email isn't confirmed | Open the dev mailbox (`/dev/mailbox`) or Mailpit (:8025) and click the link. |
 | Styles don't update in `ng serve` | Restart `npm start`; a long-running dev server sometimes misses SCSS partial changes. |
 | `dotnet ef` not found | `dotnet tool restore`. |
+| `NU1004: The packages lock file is inconsistent` | A package changed in `Directory.Packages.props` (or a project) but its `packages.lock.json` didn't. Run `dotnet restore --force-evaluate` and commit the lock files with the change. |
+| `A compatible .NET SDK was not found` (requires 10.0.100) | `global.json` asks for the .NET 10 SDK. Install it (`winget install Microsoft.DotNet.SDK.10`). |
