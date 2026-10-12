@@ -512,6 +512,69 @@ def amortization_engine():
     s.save("amortization-engine.svg")
 
 
+def schema():
+    s = Svg(960, 500, "The database schema",
+            "SavedCalculations has Id, OwnerId, Name, three JSON columns (Inputs, Refinance, Strategy, one set per row), "
+            "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
+            "with cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
+            "__EFMigrationsHistory records the applied migrations.")
+    s.card("The database", "One SQLite file: the app's own table, ASP.NET Core Identity's, and EF Core's bookkeeping")
+
+    def table(x, y, w, name, kind, rows, note=None):
+        fill, stroke, color = KINDS[kind]
+        h = 44 + len(rows) * 26 + (24 if note else 6)
+        s.rect(x, y, w, h, fill=SURFACE, stroke=stroke, rx=12, sw=1.2)
+        s.rect(x, y, w, 40, fill=fill, stroke=stroke, rx=12, sw=1.2)
+        s.rect(x + 1, y + 28, w - 2, 12, fill=fill, stroke=fill, rx=0)
+        s.text(x + 16, y + 26, name, size=14, weight=650, fill=color)
+        for i, (col, typ, flag) in enumerate(rows):
+            ry = y + 64 + i * 26
+            if i:
+                s.line(x + 12, ry - 18, x + w - 12, ry - 18, stroke=GRID)
+            s.text(x + 16, ry, col, size=12.5, weight=600 if flag in ("PK", "FK") else 400, fill=INK, mono=True)
+            s.text(x + w - 16, ry, typ, size=11.5, fill=INK_3, anchor="end")
+            if flag:
+                fw = text_width(flag, 10, 700) + 10
+                s.rect(x + w - 16 - text_width(typ, 11.5) - fw - 8, ry - 13, fw, 17, fill=fill, stroke=stroke, rx=8.5)
+                s.text(x + w - 16 - text_width(typ, 11.5) - fw / 2 - 8, ry - 1, flag, size=10, weight=700, fill=color,
+                       anchor="middle")
+        if note:
+            s.text(x + 16, y + h - 12, note, size=11, fill=INK_2, italic=True)
+        return h
+
+    table(28, 88, 400, "SavedCalculations", "accent", [
+        ("Id", "TEXT · GUID v7", "PK"),
+        ("OwnerId", "TEXT", "FK"),
+        ("Name", "TEXT · ≤ 100", ""),
+        ("Inputs", "TEXT · JSON", ""),
+        ("Refinance", "TEXT · JSON", ""),
+        ("Strategy", "TEXT · JSON", ""),
+        ("CreatedAt", "INTEGER", ""),
+        ("UpdatedAt", "INTEGER", ""),
+    ], note="Index (OwnerId, UpdatedAt) · one JSON column set per row")
+    table(532, 88, 400, "AspNetUsers", "neutral", [
+        ("Id", "TEXT", "PK"),
+        ("Email · NormalizedEmail", "TEXT", ""),
+        ("EmailConfirmed", "INTEGER", ""),
+        ("PasswordHash", "TEXT", ""),
+        ("SecurityStamp", "TEXT", ""),
+        ("LockoutEnd · AccessFailedCount", "", ""),
+    ], note="… and Identity's other columns, unused here")
+    s.arrow([(428, 174), (480, 174), (480, 148), (530, 148)], color=ACCENT, sw=2)
+    s.text(436, 196, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
+    s.text(436, 210, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
+
+    s.rect(532, 324, 400, 78, fill=SURFACE_2, stroke=BORDER_STRONG, rx=12, dash="5 4")
+    s.text(548, 348, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
+    s.text(548, 370, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
+    s.text(548, 388, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
+    s.rect(28, 412, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
+    s.text(44, 436, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
+    s.text(44, 458, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
+                    "while it does)", size=12, fill=INK_2)
+    s.save("schema.svg")
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # Charts, from the reference loans
 # ---------------------------------------------------------------------------------------------------------------
@@ -713,6 +776,7 @@ if __name__ == "__main__":
     ci_pipeline()
     tech_stack()
     amortization_engine()
+    schema()
     payment_split()
     extra_payments()
     arm_paths()

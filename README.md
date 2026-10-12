@@ -127,6 +127,7 @@ How each layer is tested, the standards the build enforces, coverage and mutatio
 | `GET` · `PUT` · `DELETE /api/v1/calculations/{id}` 🔒 | Read, rename or replace, delete one |
 | `POST /api/v1/calculations` 🔒 | Save a calculation, refinance or strategy comparison under a name (201 with `Location`) |
 | `GET` · `DELETE /api/v1/dev/outbox` | **Development only:** the local email outbox |
+| `GET /health` | `Healthy` when the app and its database answer |
 
 🔒 needs a signed-in user (401 otherwise). Another user's calculation is a **404**, not a 403, so the API never confirms
 that it exists. Errors are RFC 9457 ProblemDetails, with validation errors keyed by JSON path. A full request and
@@ -161,6 +162,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 | 7 | [Testing and quality](docs/07-testing.md) | TDD, the test layers, the enforced standards, independent models, CI |
 | 8 | [Interview guide](docs/08-interview-guide.md) | The pitch, likely questions, trade-offs and stories, grounded in the code |
 | 9 | [SOLID by example](docs/09-solid-by-example.md) | SOLID in one section of the code, the amortization engine, with real snippets |
+| 10 | [Data and storage](docs/10-data-and-storage.md) | What is stored and where, the schema, every query, migrations, backups |
 
 ---
 
@@ -185,5 +187,6 @@ Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).
 - **FHA and VA loans:** up-front and annual MIP and the VA funding fee, as new `IHousingCost` implementations.
 - **Discount points** (a permanent buydown): points paid at closing for a lower note rate, with the break-even.
 - **Mutation testing beyond the domain:** the Application layer's mapping and validators.
+- **Delete my account:** the database already cascades a user's saves; it needs an endpoint and a confirm step.
 
 The design's known limits, and what would change them: [Trade-offs](docs/08-interview-guide.md#trade-offs-and-what-youd-change).

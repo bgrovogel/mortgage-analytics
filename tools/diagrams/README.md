@@ -45,6 +45,7 @@ It also stops if a row of the tech-stack picture would run past the card's edge.
 | `tech-stack.svg` | Tech stack |
 | `ci-pipeline.svg` | Testing and quality |
 | `amortization-engine.svg` | Backend, SOLID by example |
+| `schema.svg` | Data and storage |
 | `chart-*.svg` | The mortgage math |
 
 [All tools](../README.md)

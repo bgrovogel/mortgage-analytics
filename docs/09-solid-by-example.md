@@ -276,4 +276,4 @@ More of these, across the whole code base: [Interview guide](08-interview-guide.
 
 ---
 
-← Previous: [8. Interview guide](08-interview-guide.md) · [Guide contents](README.md)
+← Previous: [8. Interview guide](08-interview-guide.md) · [Guide contents](README.md) · Next: [10. Data and storage](10-data-and-storage.md) →

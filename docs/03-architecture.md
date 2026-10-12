@@ -170,6 +170,8 @@ validator). "Today" comes from the injected `TimeProvider`.
 - Opening a saved calculation from History calls `CalculationStores.of(kind).open(saved)`: the right page's store
   loads it and the form restores itself from the request.
 
+The tables, a stored row, every query and the migrations: [Data and storage](10-data-and-storage.md).
+
 ---
 
 ## Signing in

@@ -157,7 +157,8 @@ already versioned (`/api/v1`).
 - The owner id comes from the session's claims, never from the request.
 - The repository filters **in the query** (`WHERE OwnerId = @user`), not after loading.
 - Another user's item returns **404, not 403**, so its existence isn't revealed.
-- Deleting a user cascades to their calculations.
+- The schema cascades a user's calculations when the user is deleted. Be ready for the follow-up: there is no
+  delete-account endpoint yet, so that is the next thing to add (it is in the trade-offs below).
 
 ### Security
 
@@ -312,6 +313,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
 | Saved JSON | No version; a test guards the format | `schemaVersion` + upgrade on load, at the first breaking change |
+| Accounts | No way to delete an account; lockout and the cascade rely on defaults no test pins | `DELETE /api/v1/account` with a confirm step, and tests for the cascade and the lockout |
 
 ---
 

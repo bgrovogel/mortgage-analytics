@@ -1,9 +1,9 @@
 # Mortgage Analytics: developer guide
 
 > **How the code is built, why, and how to run and change it.** The [main README](../README.md) is the front page;
-> these ten pages are the guide behind it. Read them in order to be able to explain, or extend, any part of the app.
+> these eleven pages are the guide behind it. Read them in order to be able to explain, or extend, any part of the app.
 
-**Total read time:** about 2 hours · **Shortest route to presenting it:** [1 hour](#where-to-start)
+**Total read time:** about 2¼ hours · **Shortest route to presenting it:** [1 hour](#where-to-start)
 
 ---
 
@@ -34,6 +34,7 @@ mutation-score floor on the domain.
 | 7 | [**Testing and quality**](07-testing.md) | TDD, the test layers, the rules the build enforces, independent models, coverage, mutation testing, CI | 12 min |
 | 8 | [**Interview guide**](08-interview-guide.md) | The pitch, the questions you are likely to get, trade-offs and stories, with answers grounded in this code | 20 min |
 | 9 | [**SOLID by example**](09-solid-by-example.md) | All five SOLID principles in one section of the code, the amortization engine, with the real code for each | 15 min |
+| 10 | [**Data and storage**](10-data-and-storage.md) | Everything the app keeps and where: the schema, a stored row, every query, accounts, migrations, backups, and the known gaps | 12 min |
 
 ---
 
@@ -45,6 +46,7 @@ mutation-score floor on the domain.
 | **Run it and its tests** (10 min) | [2. Commands](02-commands.md) |
 | **Find your way around the code** (30 min) | [3. Architecture](03-architecture.md), then [4. Backend](04-backend.md) or [5. Frontend](05-frontend.md) |
 | **Check the numbers** | [6. The mortgage math](06-mortgage-math.md) and [7. Testing and quality](07-testing.md) |
+| **Know what happens to the data** (12 min) | [10. Data and storage](10-data-and-storage.md) |
 | **Prepare to present it** (1 hour) | [3. Architecture, "One request, end to end"](03-architecture.md#one-request-end-to-end) (15 min), [6. The mortgage math](06-mortgage-math.md) (15 min), [8. Interview guide](08-interview-guide.md) (20 min, out loud), [9. SOLID by example](09-solid-by-example.md) (15 min), then run it once with [2. Commands](02-commands.md) (10 min) |
 
 Every class and public member has a doc comment (the build fails without one), so the code explains itself once you
