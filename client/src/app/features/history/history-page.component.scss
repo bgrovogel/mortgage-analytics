@@ -1,3 +1,5 @@
+@use '../../core/layout/surfaces';
+
 .history {
   display: flex;
   flex-direction: column;
@@ -90,16 +92,26 @@ input {
   gap: 0.75rem;
 }
 
+// Two columns: what it is on the left (wrapping as it needs to), the actions on the right, in the same place on every
+// card however long the description. One column on a phone.
 .item {
-  display: flex;
-  flex-wrap: wrap;
+  @include surfaces.card;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem 1.5rem;
   padding: 1rem 1.25rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+
+  // Renaming takes the whole card.
+  > .rename {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .item {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .info {

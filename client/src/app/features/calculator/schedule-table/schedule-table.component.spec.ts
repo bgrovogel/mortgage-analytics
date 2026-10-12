@@ -47,16 +47,16 @@ describe('ScheduleTableComponent', () => {
     expect(headers()).not.toContain('Total');
   });
 
-  it('adds the taxes and total columns, and tags months that include PMI', () => {
+  it('adds the taxes and total columns, and tags the payment where PMI ends, not every month that has it', () => {
+    const pmi = { housingCosts: 100, costs: aHousingCosts({ mortgageInsurance: 100 }) };
     const accelerated = aSchedule({
-      totalHousingCosts: aHousingCosts({ mortgageInsurance: 300 }),
-      payments: [aPayment(1, { housingCosts: 100, costs: aHousingCosts({ mortgageInsurance: 100 }) }), aPayment(2, { housingCosts: 0 })],
+      totalHousingCosts: aHousingCosts({ mortgageInsurance: 200 }),
+      payments: [aPayment(1, pmi), aPayment(2, pmi), aPayment(3, { housingCosts: 0 })],
     });
     render(aResponse({ accelerated }));
 
     expect(headers()).toEqual(expect.arrayContaining(['Housing costs', 'Total']));
-    expect(rows()[0].textContent).toContain('PMI');
-    expect(rows()[1].textContent).not.toContain('PMI');
+    expect([...rows()].map((r) => r.querySelector('[data-testid="pmi-ends-tag"]')?.textContent?.trim() ?? null)).toEqual([null, 'PMI ends', null]);
   });
 
   describe('yearly view', () => {

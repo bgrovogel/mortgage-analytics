@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: repeat($count, minmax(0, 1fr));
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 
   label {
@@ -13,6 +13,10 @@
     align-items: center;
     justify-content: center;
     min-height: 40px;
+    // A label that wraps on a phone ("Risk-adjusted (8%)") stays centred and tight, level with its neighbours.
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    line-height: 1.2;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);

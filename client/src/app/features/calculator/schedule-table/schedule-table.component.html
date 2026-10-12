@@ -73,8 +73,8 @@
                 @case ('housingCosts') {
                   <td>
                     {{ row.housingCosts | currency }}
-                    @if (row.includesPmi) {
-                      <span class="tag muted" title="Includes PMI">PMI</span>
+                    @if (row.pmiEnds) {
+                      <span class="tag" data-testid="pmi-ends-tag">PMI ends</span>
                     }
                   </td>
                 }

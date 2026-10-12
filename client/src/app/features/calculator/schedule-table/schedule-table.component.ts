@@ -24,8 +24,8 @@ export interface ScheduleRow {
   totalOutlay: number;
   /** The balance after the row's last payment. */
   remainingBalance: number;
-  /** True when any payment in the row included PMI. */
-  includesPmi: boolean;
+  /** True when the row holds the last payment with PMI: from the next one, it is gone. */
+  pmiEnds: boolean;
   /** True when a recast followed this payment (monthly rows only). */
   recast: boolean;
 }
@@ -91,6 +91,17 @@ export class ScheduleTableComponent {
   /** Payment numbers that were followed by a recast, so their rows can be marked. */
   readonly recastAfter = computed(() => new Set(this.schedule().recasts.map((r) => r.afterPaymentNumber)));
 
+  /**
+   * The last payment that includes PMI, when PMI stops before the loan does; null otherwise. The schedule tags it
+   * ("PMI ends") rather than every month that has PMI, which said nothing new on each row.
+   */
+  readonly lastPmiPayment = computed(() => {
+    const payments = this.schedule().payments;
+    const withPmi = payments.filter((p) => p.costs.mortgageInsurance > 0);
+    const last = withPmi.at(-1);
+    return last && last !== payments.at(-1) ? last.paymentNumber : null;
+  });
+
   /** Every money column this schedule can show: the loan columns, plus each cost it actually has. */
   readonly available = computed<ScheduleColumn[]>(() => {
     if (!this.hasHousingCosts()) return LOAN_COLUMNS;
@@ -143,7 +154,7 @@ export class ScheduleTableComponent {
       housingCosts: sum(payments, (p) => p.housingCosts),
       totalOutlay: sum(payments, (p) => p.totalOutlay),
       remainingBalance: last.remainingBalance,
-      includesPmi: payments.some((p) => p.costs.mortgageInsurance > 0),
+      pmiEnds: payments.some((p) => p.paymentNumber === this.lastPmiPayment()),
       recast: payments.length === 1 && this.recastAfter().has(last.paymentNumber),
     };
   }

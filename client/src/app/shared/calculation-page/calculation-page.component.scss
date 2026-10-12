@@ -2,7 +2,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
   grid-template-areas: 'form results';
   gap: 1.25rem;
   align-items: start;

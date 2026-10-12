@@ -103,30 +103,42 @@ h2 {
 
 // Lifetime totals: every cost over the whole schedule, as compact label/value pairs.
 .lifetime {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  margin: 0 0 0.9rem;
-  font-size: 0.85rem;
+  // A grid of figures, each label above its amount, so eight totals scan at a glance instead of running together.
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0 0 1rem;
 
   div {
     display: flex;
-    gap: 0.35rem;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
   }
 
   dt {
+    font-size: 0.78rem;
     color: var(--text-secondary);
   }
 
   dd {
     margin: 0;
-    color: var(--text-primary);
+    font-size: 0.95rem;
     font-weight: 600;
+    color: var(--text-primary);
     font-variant-numeric: tabular-nums;
   }
 
-  .all dd {
-    color: var(--accent-text);
+  // The total of everything, picked out from the parts.
+  .all {
+    padding: 0.35rem 0.6rem;
+    margin: -0.35rem -0.6rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+
+    dd {
+      color: var(--accent-text);
+    }
   }
 }
 
@@ -150,7 +162,7 @@ table {
 
 th,
 td {
-  padding: 0.45rem 0.5rem;
+  padding: 0.45rem 0.45rem;
   text-align: right;
   white-space: nowrap;
 }
@@ -169,9 +181,13 @@ tfoot td {
   font-weight: 600;
 }
 
+// Headers may wrap ("Housing / costs"), so a long name does not widen a column of short amounts: every default column
+// then fits beside the form on a desktop, the balance included.
 thead th {
   top: 0;
   border-bottom: 1px solid var(--border);
+  white-space: normal;
+  vertical-align: bottom;
 }
 
 tfoot th,
@@ -194,9 +210,10 @@ tbody td {
   color: var(--text-secondary);
 }
 
+// An event on a row ("recast", "PMI ends"), under its amount, so it marks the row without widening the column.
 .tag {
-  display: inline-block;
-  margin-left: 0.35rem;
+  display: table;
+  margin: 0.15rem 0 0 auto;
   padding: 0 0.4rem;
   border-radius: 999px;
   font-size: 0.7rem;

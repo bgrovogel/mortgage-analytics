@@ -424,8 +424,10 @@ Accounts follow the same habit of not trusting the client:
 - **One chart card, three tabs.** Balance, yearly costs and home value share a card that follows the
   WAI-ARIA tabs pattern (arrow keys, Home/End, one tab in the tab order). X-axis labels are chosen in
   code (`tickIndices`) so the last point is always labelled, on whole years for monthly data.
-- **A schedule you can scan.** Monthly or yearly rows, totals under each column, and the # and Date
-  columns pinned while the table scrolls sideways on a phone (a fade shows there is more).
+- **A schedule you can scan.** Monthly or yearly rows, totals under each column, and every default column (the balance
+  included) fits beside the form on a 1280px screen. The lifetime totals above it are a grid of figures, each label
+  above its amount. Events are tagged once, on their row ("recast", "PMI ends"), not on every month. On a phone the #
+  and Date columns stay pinned while the table scrolls sideways (a fade shows there is more).
 - **Down payment in dollars or percent.** A $ | % switch converts the value; the API always receives dollars.
 - **The form scrolls on its own.** The results column is much longer, so the form panel is capped to the
   window and scrolls independently, keeping every section toggle reachable.
