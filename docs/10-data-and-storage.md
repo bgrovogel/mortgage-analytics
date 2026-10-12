@@ -24,6 +24,7 @@
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
 | **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files | First startup, then when a key nears expiry |
 | **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email | Sign-up, resend, forgot password |
+| **Backups** of the database | `backups/` folder beside it, `calculations-<UTC time>.db` | At startup and then daily; the newest 7 are kept |
 
 **Results are never stored.** A saved calculation keeps only what was typed; opening it sends those inputs to the
 API again. So a reopened save always shows numbers from today's engine: if a rule is fixed, old saves show the fixed
@@ -234,7 +235,39 @@ python -c "import sqlite3; db = sqlite3.connect('file:src/MortgageAnalytics.Api/
 
 Opened read-only (`mode=ro`), it is safe while the API runs.
 
-**Back up.** Locally, SQLite's own backup copies a consistent snapshot even while the app writes:
+**Automatic backups.** The app copies the database itself (`Infrastructure/Backups`): at startup, then every hour it
+checks, and takes a copy once the last is a day old, so restarts don't pile copies up. The copy is SQLite's
+`VACUUM INTO`, one consistent snapshot taken while the app keeps serving, which opens on its own. The newest 7 are kept.
+
+| Setting | Default | |
+|---|---|---|
+| `Backups:Enabled` | `true` | `false` leaves backups to the platform (a managed volume's snapshots) |
+| `Backups:Directory` | `backups/` beside the database | In Docker, `/data/backups`, on the volume |
+| `Backups:IntervalHours` | `24` | The least time between two copies |
+| `Backups:Keep` | `7` | Older copies are deleted |
+
+They sit on the same volume as the database, so they cover a bad migration, a corrupted file or a deleted account,
+not the loss of the volume itself: copy them off the machine for that.
+
+```bash
+docker compose exec app ls /data/backups                         # the copies
+docker compose cp app:/data/backups ./backups                    # off the machine
+```
+
+To restore one, stop the app, put the copy in place of the database, delete the old `-wal` and `-shm`, give the file
+back to the app's user (`docker compose cp` writes it as root, and SQLite would open it read-only), and start again:
+
+```bash
+docker compose stop app
+docker compose cp ./backups/calculations-20261012T164229Z.db app:/data/calculations.db
+docker compose run --rm --no-deps --user root --entrypoint sh app -c "rm -f /data/calculations.db-wal /data/calculations.db-shm && chown app:app /data/calculations.db"
+docker compose start app
+```
+
+(Tried end to end: an account created after the copy is gone once it is restored. In Git Bash on Windows, set
+`MSYS_NO_PATHCONV=1` first, or it rewrites the `/data` paths.)
+
+**Back up by hand.** Locally, SQLite's own backup copies a consistent snapshot even while the app writes:
 
 ```bash
 python -c "import sqlite3; sqlite3.connect('src/MortgageAnalytics.Api/calculations.db').backup(sqlite3.connect('backup.db'))"
@@ -258,13 +291,12 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one. (Five more were found here too and are
-closed: an untested cascade, an untested lockout, no way to delete an account, then no screen for it, and a
-session cookie that was never `Secure` behind an HTTPS proxy.)
+Found while writing this page; each is a known gap, not a hidden one. (Six more were found here too and are
+closed: an untested cascade, an untested lockout, no way to delete an account, then no screen for it, a session
+cookie that was never `Secure` behind an HTTPS proxy, and no automatic backups.)
 
 | Gap | Today | What would close it |
 |---|---|---|
-| **No automatic backups** | Manual, as above | A scheduled copy of the volume, or a managed database |
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
 | **Saved JSON has no version** | `StoredFormatTests` guard it | `schemaVersion` and an upgrade on load, at the first breaking change |
 

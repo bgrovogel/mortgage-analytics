@@ -63,4 +63,19 @@ public class PlatformEndpointTests : ApiTestBase
 
         await AssertProblemAsync(response, HttpStatusCode.NotFound, "unknown API routes must not fall through to index.html");
     }
+
+    [Test]
+    public async Task TheApp_BacksUpItsDatabase_OnceItHasStarted()
+    {
+        using var host = new MortgageApiFactory();
+        using var client = host.CreateClient();
+        await client.GetAsync("/health");
+
+        // The backup runs in the background, so give it a moment.
+        for (var wait = 0; wait < 50 && !(Directory.Exists(host.BackupDirectory) && Directory.GetFiles(host.BackupDirectory).Length > 0); wait++)
+            await Task.Delay(100);
+
+        Assert.That(Directory.GetFiles(host.BackupDirectory).Select(Path.GetFileName), Is.EqualTo(new[] { "calculations-20261009T153000Z.db" }),
+            "a first copy is taken as soon as the app runs, named for when it was taken");
+    }
 }

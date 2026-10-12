@@ -13,8 +13,10 @@ using MortgageAnalytics.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Calculations")
-    ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string."));
+var database = builder.Configuration.GetConnectionString("Calculations")
+    ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string.");
+builder.Services.AddInfrastructure(database);
+builder.Services.AddDatabaseBackups(builder.Configuration, database);
 builder.Services.AddAccounts(builder.Configuration, builder.Environment);
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddProxyHeaders(builder.Configuration);

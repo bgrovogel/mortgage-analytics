@@ -39,6 +39,9 @@ public sealed class MortgageApiFactory(
     /// </summary>
     public const string RemoteAddressHeader = "X-Test-Remote-Address";
 
+    /// <summary>Where this host's automatic database backups go.</summary>
+    public string BackupDirectory => Path.Combine(_appDataPath, "backups");
+
     /// <summary>Everything the API has logged, with its scopes.</summary>
     public CapturedLogs Logs { get; } = new();
 
@@ -53,6 +56,7 @@ public sealed class MortgageApiFactory(
         builder.UseSetting("ConnectionStrings:Calculations", $"Data Source={_databasePath}");
         builder.UseSetting("DataProtection:KeysDirectory", Path.Combine(_appDataPath, "keys"));
         builder.UseSetting("Email:OutboxDirectory", Path.Combine(_appDataPath, "outbox"));
+        builder.UseSetting("Backups:Directory", BackupDirectory);
         // The whole suite signs up and in from one address; the limit itself is tested with its own host.
         builder.UseSetting("RateLimiting:AccountPermitsPerMinute", "10000");
         foreach (var (key, value) in settings ?? [])

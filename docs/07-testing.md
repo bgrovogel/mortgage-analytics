@@ -15,8 +15,8 @@
 |---|---|---|---|
 | Domain | 454 | NUnit | < 1 s |
 | Application | 223 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
-| API integration | 101 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Infrastructure | 24 | NUnit, SQLite in memory | ~1 s |
+| API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 541 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 93 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -65,6 +65,8 @@ Take the ARM margin floor as an example of the order of work:
 - **Stored format** (`StoredFormatTests`): a save of each kind, in today's JSON (`StoredFormats/*.json`, every
   option set), must still load with every value. Adding a field passes; renaming or removing one fails and names
   it. That is the signal to keep the old name, or to add a version to the stored JSON and upgrade it on load.
+- **Automatic backups:** a whole copy that opens on its own, one a day at most, only the newest kept, and the
+  settings; an API test sees the first copy taken at startup.
 
 **API integration**
 - The real pipeline in Production mode, on a temporary SQLite file, with one shared host (`[SetUpFixture]`).

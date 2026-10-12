@@ -1,6 +1,9 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MortgageAnalytics.Application.SavedCalculations;
+using MortgageAnalytics.Infrastructure.Backups;
 
 namespace MortgageAnalytics.Infrastructure;
 
@@ -19,6 +22,31 @@ public static class DependencyInjection
         services.AddDbContext<CalculationsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ISavedCalculationRepository, SavedCalculationRepository>();
         services.AddHealthChecks().AddDbContextCheck<CalculationsDbContext>("database");
+        return services;
+    }
+
+    /// <summary>
+    /// Backs the database up automatically (<see cref="DatabaseBackupService"/>), as the <c>Backups</c> settings say:
+    /// <c>Enabled</c> (default true), <c>Directory</c> (default a <c>backups</c> folder beside the database, on the same
+    /// volume in Docker), <c>IntervalHours</c> (default 24) and <c>Keep</c> (default 7).
+    /// </summary>
+    /// <param name="services">The container to add to.</param>
+    /// <param name="configuration">The app's configuration.</param>
+    /// <param name="connectionString">The database's connection string, which says where the database file is.</param>
+    /// <returns>The same container, for chaining.</returns>
+    public static IServiceCollection AddDatabaseBackups(this IServiceCollection services, IConfiguration configuration, string connectionString)
+    {
+        var section = configuration.GetSection("Backups");
+        var database = Path.GetFullPath(new SqliteConnectionStringBuilder(connectionString).DataSource);
+        var options = new BackupOptions(
+            Enabled: !bool.TryParse(section["Enabled"], out var enabled) || enabled,
+            Directory: section["Directory"] is { Length: > 0 } directory ? directory : Path.Combine(Path.GetDirectoryName(database)!, "backups"),
+            Interval: TimeSpan.FromHours(double.TryParse(section["IntervalHours"], System.Globalization.CultureInfo.InvariantCulture, out var hours) ? hours : 24),
+            Keep: int.TryParse(section["Keep"], out var keep) ? keep : 7);
+
+        services.AddSingleton(options);
+        services.AddSingleton<DatabaseBackup>();
+        services.AddHostedService<DatabaseBackupService>();
         return services;
     }
 
