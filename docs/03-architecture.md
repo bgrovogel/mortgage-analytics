@@ -14,21 +14,24 @@
 
 ## The shape of the system
 
-```mermaid
-flowchart TB
-    subgraph browser["Browser: the Angular SPA"]
-        direction LR
-        pages[pages] --> forms[form components] --> stores["stores (signals)"] --> services[API services]
-    end
-    subgraph process["One ASP.NET Core process"]
-        api["<b>Api</b><br/>endpoints · ValidationFilter#lt;T#gt; · exception handler<br/>Identity (accounts) · email · Swagger · serves the SPA"]
-        app["<b>Application</b><br/>contracts (request/response DTOs) · validators · mappers<br/>services (use cases) · ISavedCalculationRepository (a port)"]
-        dom["<b>Domain</b><br/>the money math<br/><i>no dependencies</i>"]
-        infra["<b>Infrastructure</b><br/>EF Core · SQLite · migrations · repository"]
-        api -- calls --> app -- calls --> dom
-        infra -. implements .-> app
-    end
-    services -- "HTTP / JSON, /api/v1/..." --> api
+```text
+┌──────────────────────── Browser ────────────────────────┐
+│  Angular SPA                                            │
+│   pages ─► form components ─► stores (signals) ─► API services ──┐
+└─────────────────────────────────────────────────────────┘        │ HTTP/JSON  /api/v1/...
+                                                                   ▼
+┌──────────────────── One ASP.NET Core process ───────────────────────────────┐
+│  Api            endpoints · ValidationFilter<T> · exception handler ·        │
+│                 Identity (accounts) · email · Swagger · serves the SPA        │
+│     │ calls                                                                   │
+│     ▼                                                                         │
+│  Application    contracts (request/response DTOs) · validators · mappers ·    │
+│                 services (use cases) · ISavedCalculationRepository (a port)   │
+│     │ calls                          ▲ implements                             │
+│     ▼                                │                                        │
+│  Domain         the money math      Infrastructure   EF Core · SQLite ·       │
+│                 (no dependencies)                    migrations · repository  │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 This is a **Clean Architecture** (also called onion or ports-and-adapters) layout in four .NET projects:

@@ -204,23 +204,16 @@ The first run scored 87%, with 118 survivors. They sorted into:
 
 On every push to `main` and every pull request:
 
-```mermaid
-flowchart LR
-    push(["Push to main,<br/>or a pull request"])
-    backend["<b>backend</b><br/>restore (locked) → build (Release, warnings as errors)<br/>→ no vulnerable packages → test with coverage<br/>→ report → 85% gate"]
-    frontend["<b>frontend</b><br/>npm ci → npm audit (shipped deps)<br/>→ lint → typecheck → Jest with coverage"]
-    e2e["<b>e2e</b><br/>install Chromium → Playwright<br/>on the production build, served from the API"]
-    docker["<b>docker</b><br/>build the image → run it → /health is Healthy<br/>→ served with its CSP → the calculator answers"]
-    docs["<b>docs</b><br/>count the tests → every count<br/>in README and docs/ matches"]
-    mutation["<b>mutation</b><br/>Stryker.NET on the domain<br/>→ fails below a 95% score"]
-    push --> backend & frontend & docs & mutation
-    backend --> e2e
-    frontend --> e2e
-    backend --> docker
-```
+```text
+backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → no vulnerable packages → test with coverage → report → 85% gate
+           ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
+frontend  ─┘           npm ci → npm audit (shipped deps) → lint → typecheck → Jest with coverage; e2e runs only if backend and frontend pass
+           └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
+                       and the calculator answers (runs if backend passes)
 
-**e2e** runs only when backend and frontend pass; **docker** runs when backend passes. **docs** and **mutation** run
-on their own.
+docs      counts the tests (dotnet --list-tests, playwright --list, Jest) → every count in README and docs/ matches
+mutation  Stryker.NET on the domain → fails below a 95% mutation score, uploads the report
+```
 
 The test counts in these pages are checked, not trusted: `tools/doc-check/doc_counts.py` holds one rule for each
 place a count appears and fails CI naming the file and line of any that is stale. A "N ... tests" phrase that no rule

@@ -17,58 +17,26 @@
 
 ## The section in one picture
 
-```mermaid
-classDiagram
-    direction LR
-    class AmortizationService {
-        +Analyze(request) AmortizationResponse
-    }
-    class ILoanComparer {
-        <<interface>>
-        +Compare(loan, extras, recast, costs) LoanComparison
-    }
-    class LoanComparer
-    class IAmortizationCalculator {
-        <<interface>>
-        +Generate(loan, extras, recast) AmortizationSchedule
-    }
-    class AmortizationCalculator
-    class ExtraPaymentPlan {
-        +AmountFor(payment) decimal
-        +LargestSinglePaymentFor(payment) decimal
-    }
-    class IExtraPaymentRule {
-        <<interface>>
-        +AmountFor(payment) decimal
-    }
-    class HousingCostPlan {
-        +ApplyTo(schedule) HousingCostSchedule
-    }
-    class IHousingCost {
-        <<interface>>
-        +Category
-        +AmountFor(period) decimal
-    }
-
-    AmortizationService --> ILoanComparer : depends on
-    AmortizationService --> TimeProvider : depends on
-    LoanComparer ..|> ILoanComparer
-    LoanComparer --> IAmortizationCalculator : depends on
-    AmortizationCalculator ..|> IAmortizationCalculator
-    AmortizationCalculator --> ExtraPaymentPlan : asks for a total
-    ExtraPaymentPlan o-- IExtraPaymentRule : holds any number of
-    IExtraPaymentRule <|.. MonthlyExtraPayment
-    IExtraPaymentRule <|.. AnnualExtraPayment
-    IExtraPaymentRule <|.. LumpSumExtraPayment
-    LoanComparer --> HousingCostPlan : applies
-    HousingCostPlan o-- IHousingCost : holds any number of
-    IHousingCost <|.. ValueBasedTax
-    IHousingCost <|.. MonthlyFixedCost
-    IHousingCost <|.. AnnualFixedCost
-    IHousingCost <|.. MortgageInsurance
+```text
+AmortizationService            maps a request to domain objects, and the result back to a response
+  │  depends on ILoanComparer and TimeProvider
+  ▼
+LoanComparer                   runs the loan with and without extras, and pairs up the costs
+  │  depends on IAmortizationCalculator         │  applies
+  ▼                                             ▼
+AmortizationCalculator                        HousingCostPlan
+  │  asks "how much extra this month?"          │  sums any number of
+  ▼                                             ▼
+ExtraPaymentPlan                              «IHousingCost»
+  │  sums any number of                         ├── ValueBasedTax       property, school, local and MUD taxes
+  ▼                                             ├── AnnualFixedCost     homeowners insurance, PID assessment
+«IExtraPaymentRule»                             ├── MonthlyFixedCost    HOA dues
+  ├── MonthlyExtraPayment                       └── MortgageInsurance   PMI
+  ├── AnnualExtraPayment
+  └── LumpSumExtraPayment
 ```
 
-Read it left to right: the **service** asks a **comparer** to run a loan twice (with and without extra payments). The
+Read it top to bottom: the **service** asks a **comparer** to run a loan twice (with and without extra payments). The
 comparer asks a **calculator** for each schedule. The calculator asks a **plan** for each month's extra payment, and
 the plan asks each of its **rules**. Housing costs work the same way, through their own plan.
 
@@ -122,7 +90,6 @@ var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation);
 var comparison = comparer.Compare(loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(), plan);
 ```
 
-> [!TIP]
 > **Why it matters here:** when separate property taxes, exemptions and the over-65 tax ceiling arrived, the only
 > domain files that changed were in `HousingCosts/`. The calculator, the comparer and their tests were untouched.
 > Small classes with one job meant small, safe changes.
@@ -167,8 +134,7 @@ public sealed class RoundUpExtraPayment(decimal scheduledPayment) : IExtraPaymen
 `AmortizationCalculator`, `ExtraPaymentPlan`, `LoanComparer` and their tests are untouched. Housing costs work
 exactly the same way: flood insurance would be a new `IHousingCost`.
 
-> [!NOTE]
-> This is how the code actually grew. Separate school, county/city and MUD taxes, homestead exemptions and the
+> **Note:** This is how the code actually grew. Separate school, county/city and MUD taxes, homestead exemptions and the
 > over-65 ceiling went into `ValueBasedTax` and its helpers (`TaxExemption`, `SeniorTaxRelief`), behind the same
 > `IHousingCost` interface, with no change to the amortization engine.
 
@@ -200,7 +166,6 @@ Housing costs make the same promises, through `AmountFor(CostPeriod)`: an amount
 cost's guard), whatever the period. So `HousingCostPlan` sums a property tax, PMI and HOA dues without knowing which
 is which.
 
-> [!TIP]
 > **How the tests prove it:** `GuardLimitTests` checks each guard at its limit and just past it (a $0 extra payment
 > is accepted, -$0.01 is rejected), and the calculator's invariant tests check that every loan shape, from a
 > one-dollar loan to the maximum, repays its principal to the cent.
@@ -288,8 +253,7 @@ public void Analyze_ShortenTerm_NeverRecasts_EvenWhenRecastTermsAreSent()
 }
 ```
 
-> [!NOTE]
-> The same idea runs through the layers: Application owns `ISavedCalculationRepository`, and Infrastructure implements
+> **Note:** The same idea runs through the layers: Application owns `ISavedCalculationRepository`, and Infrastructure implements
 > it with EF Core. The use cases never know a database exists. See [Architecture](03-architecture.md).
 
 ---

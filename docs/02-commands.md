@@ -82,7 +82,6 @@ or as environment variables with `__` for `:` (e.g. `Email__Smtp__Host`).
 
 ## Test it
 
-> [!IMPORTANT]
 > **Stop the dev API before you build or test.** A running API locks its DLLs, and the build fails with
 > `MSB3026: Could not copy ... being used by another process`.
 

@@ -87,7 +87,6 @@ npm install
 npm start
 ```
 
-> [!TIP]
 > **Accounts work with no mail server.** Without SMTP settings the API writes emails to a local outbox, and in
 > Development the app shows them at http://localhost:4200/dev/mailbox (the sign-up and forgot-password screens link
 > to it). To send real email, set `Email:Smtp:Host`, `Port`, `Username`, `Password` and `Email:From`.
@@ -137,15 +136,13 @@ response: [Calling the API](docs/04-backend.md#calling-the-api). The full contra
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    ui["<b>Angular app</b><br/>pages · stores · forms · charts"]
-    api["<b>Api</b><br/>endpoints · filters · errors"]
-    app["<b>Application</b><br/>contracts · validators · mapping<br/>services · ports"]
-    dom["<b>Domain</b><br/>loans · amortization · taxes<br/>refinancing · strategies<br/><i>no dependencies at all</i>"]
-    infra["<b>Infrastructure</b><br/>EF Core + SQLite<br/>saved-calculations repository · migrations"]
-    ui -- "HTTP / JSON" --> api --> app --> dom
-    infra -. implements the ports .-> app
+```text
+Angular app ──HTTP──► Api ──────────► Application ──────────► Domain
+(pages, stores,       endpoints,       contracts, validators,     loans, amortization, taxes,
+ forms, charts)       filters, errors  mapping, services, ports   refinancing, strategies
+                                             ▲                    (no dependencies at all)
+                      Infrastructure ────────┘
+                      EF Core + SQLite: the saved-calculations repository, migrations
 ```
 
 Dependencies point inward only: **Api → Application → Domain**, and **Infrastructure → Application**. Application owns

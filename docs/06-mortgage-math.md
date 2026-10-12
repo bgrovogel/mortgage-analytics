@@ -20,11 +20,9 @@
 
 A fixed-rate mortgage has one level monthly payment that pays off the loan exactly over its term:
 
-```math
-M = P \cdot \frac{r\,(1 + r)^n}{(1 + r)^n - 1}
+```text
+M = P × r × (1 + r)ⁿ / ((1 + r)ⁿ − 1)        P = principal, r = annual rate ÷ 12, n = number of payments
 ```
-
-where **P** is the principal, **r** the annual rate ÷ 12, and **n** the number of payments.
 
 `PaymentFormula.MonthlyPayment` computes it in `decimal`. For the reference loan, **M = $1,199.10**.
 

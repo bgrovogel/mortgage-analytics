@@ -13,24 +13,21 @@
 
 ## At a glance
 
-```mermaid
-flowchart TB
-    browser["<b>Browser</b><br/>Angular 22 SPA · TypeScript 6.0 · RxJS 7.8 · signals · Chart.js 4.5"]
-    api["<b>ASP.NET Core 10 minimal API</b><br/>FluentValidation 12 · ProblemDetails · Swagger (Swashbuckle 10)<br/>ASP.NET Core Identity (accounts) · MailKit (email)"]
-    app["<b>Application</b><br/>use cases"]
-    dom["<b>Domain</b><br/>pure C#, no packages"]
-    infra["<b>Infrastructure</b><br/>EF Core 10"]
-    db[("<b>SQLite</b><br/>one file")]
-    browser -- "HTTP + JSON, cookie session" --> api
-    api --> app --> dom
-    infra -. implements .-> app
-    infra --> db
-```
+```text
+Browser ── Angular 22 SPA (TypeScript 6.0, RxJS 7.8, signals, Chart.js 4.5)
+   │  HTTP + JSON, cookie session
+   ▼
+ASP.NET Core 10 minimal API ── FluentValidation 12 ── ProblemDetails ── Swagger (Swashbuckle 10)
+   │                             ASP.NET Core Identity (accounts) ── MailKit (email)
+   ▼
+Application layer (use cases) ──► Domain (pure C#, no packages)
+   │
+   ▼
+Infrastructure ── EF Core 10 ── SQLite (one file)
 
-| | |
-|---|---|
-| **Tests** | NUnit 5 · NSubstitute 6 · WebApplicationFactory · Jest 30 · Playwright 1.64 · axe-core · Roslyn · Python `Decimal` |
-| **Delivery** | Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions |
+Tests: NUnit 5 · NSubstitute 6 · WebApplicationFactory · Jest 30 · Playwright 1.64 · axe-core · Roslyn · Python Decimal
+Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions
+```
 
 ---
 

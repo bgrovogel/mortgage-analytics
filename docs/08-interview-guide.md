@@ -1,10 +1,7 @@
 # 8. Interview guide
 
 > **How to present this project, and answers to the questions you are likely to get.** Every answer points to
-> real code, so you can open the file and show it.
-
-> [!TIP]
-> Practise the answers out loud; don't memorise them word for word.
+> real code, so you can open the file and show it. Practise them out loud; don't memorise them word for word.
 
 **Read time:** 20 min, out loud · **Best for:** the pitch, likely questions, trade-offs and stories
 
