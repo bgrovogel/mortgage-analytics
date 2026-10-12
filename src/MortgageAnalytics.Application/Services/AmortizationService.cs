@@ -40,6 +40,6 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
                 ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline
             : null;
 
-        return comparison.ToResponse(purchase, valuation, plan, new LoanRates(loan, request.ToBuydown(), worstCase));
+        return comparison.ToResponse(purchase, valuation, plan, new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain()));
     }
 }

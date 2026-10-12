@@ -127,6 +127,19 @@ For the reference loan with a 2-1:
 
 The subsidy is the sum of the differences: **$4,436.76**. Options: 1-0, 2-1, 3-2-1, 1-1.
 
+**Who pays for it decides what it saves.** The loan charges its note-rate interest either way ($231,677.04 on the
+reference loan), and the principal paid each month does not change, so the subsidy pays interest:
+
+- **The seller or builder pays** (a concession, the usual case): you pay **$231,677.04 − $4,436.76 = $227,240.28** of
+  the interest. Each buydown saves a different amount: a 3-2-1 more than a 2-1, a 1-0 less.
+- **You pay, at closing:** the subsidy is your own money, paid up front and returned as lower payments over the
+  buydown years. It changes **when** you pay, not how much: you pay all $231,677.04.
+
+`TemporaryBuydown.InterestYouPay` applies this to each schedule (with extra payments too: a loan paid off during the
+buydown years needs less subsidy), and every schedule in the response carries `buydownSubsidy` and `interestYouPay`.
+The headline and the rate plan say which case applies. (A **permanent** buydown, discount points, is different: it
+lowers the note rate for the whole loan, so enter the lower rate.)
+
 ## Refinancing
 
 Compare the rest of the current loan with a new one. Reference: **$300,000 left at 7%, 25 years to go**

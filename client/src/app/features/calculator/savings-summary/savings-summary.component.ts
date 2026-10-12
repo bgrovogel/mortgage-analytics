@@ -29,6 +29,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           }
           <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
           <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
+          @if (buydownNote(); as note) {
+            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+          }
         </div>
       } @else {
         <!-- Nothing extra is paid, so a $0 saving would say nothing: lead with what the loan costs instead. -->
@@ -36,6 +39,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dt>Total interest over the loan</dt>
           <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
           <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
+          @if (buydownNote(); as note) {
+            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+          }
         </div>
       }
       <div class="tile">
@@ -135,6 +141,19 @@ export class SavingsSummaryComponent {
       ...(c.hoaDues > 0 ? ['HOA'] : []),
     ];
     return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}` : (parts[0] ?? '');
+  });
+
+  /**
+   * With a buydown, who pays the interest shown: a subsidy from the seller or builder pays part of it (the loan's own
+   * interest does not change), while one bought at closing only lowers the early payments. Said of the schedule the
+   * headline shows: with extra payments, the accelerated one.
+   */
+  readonly buydownNote = computed(() => {
+    const r = this.result();
+    if (!r.buydown) return null;
+    if (r.buydown.paidBy === 'Borrower') return 'Your buydown, paid for at closing, lowers the early payments, not the interest.';
+    const schedule = this.hasSavings() ? r.accelerated : r.baseline;
+    return `The seller's buydown pays ${usd(schedule.buydownSubsidy)} of it, so you pay ${usd(schedule.interestYouPay)}.`;
   });
 
   /** True when extra payments change anything; otherwise savings tiles would only show zeros. */

@@ -313,6 +313,8 @@ describe('LoanFormComponent', () => {
       component.addLumpSum();
       controls().strategy.setValue('Recast');
       controls().recastFee.setValue(300);
+      controls().rate.controls.rateType.setValue('buydown');
+      controls().buydownPaidBy.setValue('Borrower');
       const original = last();
 
       const { sent } = restore(original);
@@ -549,11 +551,25 @@ describe('LoanFormComponent', () => {
 
       expect(last().buydown).toEqual({ yearlyReductions: [2, 1] });
       expect(last().adjustableRate).toBeNull();
-      expect(text('rate-summary')).toBe('2-1 buydown: 3.99% in year 1, 4.99% in year 2, then 5.99%');
+      expect(text('rate-summary')).toBe('2-1 buydown: 3.99% in year 1, 4.99% in year 2, then 5.99% · the seller pays for it');
 
       controls().rate.controls.buydownPlan.setValue('3-2-1');
       fixture.detectChanges();
       expect(last().buydown).toEqual({ yearlyReductions: [3, 2, 1] });
+    });
+
+    it('asks who pays for a buydown only once one is chosen, and sends the answer: the seller unless you did', () => {
+      expect(el('buydown-paid-by')).toBeNull();
+      expect(last().buydownPaidBy).toBe('Seller');
+
+      controls().rate.controls.rateType.setValue('buydown');
+      fixture.detectChanges();
+      expect(el('buydown-paid-by')).not.toBeNull();
+
+      (el('buydown-paid-by-you') as HTMLInputElement).click();
+      fixture.detectChanges();
+      expect(last().buydownPaidBy).toBe('Borrower');
+      expect(text('rate-summary')).toContain('you pay for it');
     });
 
     it('sends an adjustable rate from its type, expected rate and caps, and checks them only while it is chosen', () => {

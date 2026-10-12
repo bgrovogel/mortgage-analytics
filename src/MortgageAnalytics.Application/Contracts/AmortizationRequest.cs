@@ -42,6 +42,13 @@ public sealed record AmortizationRequest
     /// <summary>A temporary buydown (2-1, 3-2-1...): lower payments for the first years. Omit for none.</summary>
     public TemporaryBuydownRequest? Buydown { get; init; }
 
+    /// <summary>
+    /// Who pays for the buydown's subsidy. Paid by the seller or builder, it saves the borrower that much interest; paid
+    /// by the borrower at closing, it only moves their money earlier. Ignored without a buydown.
+    /// </summary>
+    /// <example>Seller</example>
+    public BuydownFunding BuydownPaidBy { get; init; } = BuydownFunding.Seller;
+
     /// <summary>An adjustable rate (ARM): the rate resets after a fixed period. Omit for a fixed rate.</summary>
     public AdjustableRateRequest? AdjustableRate { get; init; }
 }
@@ -55,6 +62,16 @@ public sealed record TemporaryBuydownRequest
     /// <summary>How many points below the note rate each year is paid at, year 1 first: [2, 1] is a 2-1 buydown.</summary>
     /// <example>[2, 1]</example>
     public IReadOnlyList<decimal> YearlyReductions { get; init; } = [];
+}
+
+/// <summary>Who pays for a temporary buydown's subsidy.</summary>
+public enum BuydownFunding
+{
+    /// <summary>The seller or builder, as a concession: the borrower pays that much less interest.</summary>
+    Seller,
+
+    /// <summary>The borrower, up front at closing: lower early payments, the same interest overall.</summary>
+    Borrower,
 }
 
 /// <summary>

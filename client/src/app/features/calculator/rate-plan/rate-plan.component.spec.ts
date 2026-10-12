@@ -27,14 +27,33 @@ describe('RatePlanComponent', () => {
           { year: 2, annualInterestRate: 4.99, monthlyPayment: 1_910.25 },
           { year: 3, annualInterestRate: 5.99, monthlyPayment: 2_133.61 },
         ],
-        totalSubsidy: 7_898.76,
+        totalSubsidy: 7_898.76, paidBy: 'Seller',
       },
     }));
 
     expect(text('rate-plan')).toContain('2-1 buydown');
     expect(rows()).toEqual(['Year 13.99%$1,698.74/mo', 'Year 24.99%$1,910.25/mo', 'From year 35.99%$2,133.61/mo']);
-    expect(text('buydown-cost')).toContain('The buydown costs $7,899');
+    expect(text('buydown-cost')).toContain('The seller or builder pays $7,899 up front');
+    expect(text('buydown-cost')).toContain('you pay $7,899 less interest over the loan');
     expect(text('buydown-cost')).toContain('The loan itself is at 5.99% throughout');
+  });
+
+  it('says a buydown you pay for at closing changes when you pay, not how much', () => {
+    const { text } = render(aResponse({
+      buydown: {
+        noteRate: 5.99,
+        years: [
+          { year: 1, annualInterestRate: 3.99, monthlyPayment: 1_698.74 },
+          { year: 2, annualInterestRate: 4.99, monthlyPayment: 1_910.25 },
+          { year: 3, annualInterestRate: 5.99, monthlyPayment: 2_133.61 },
+        ],
+        totalSubsidy: 7_898.76, paidBy: 'Borrower',
+      },
+    }));
+
+    expect(text('buydown-cost')).toContain('You pay $7,899 at closing');
+    expect(text('buydown-cost')).toContain('back as lower payments over 2 years');
+    expect(text('buydown-cost')).toContain('it changes when you pay, not how much');
   });
 
   it("lists an adjustable rate's resets on the expected path, and warns of the worst case", () => {

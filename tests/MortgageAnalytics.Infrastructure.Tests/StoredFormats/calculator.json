@@ -58,6 +58,7 @@
       1
     ]
   },
+  "buydownPaidBy": "Borrower",
   "adjustableRate": {
     "initialFixedMonths": 84,
     "adjustmentIntervalMonths": 12,

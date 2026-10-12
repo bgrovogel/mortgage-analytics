@@ -1,3 +1,5 @@
+using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Domain.Tests.Loans;
@@ -40,6 +42,46 @@ public class TemporaryBuydownTests
             Assert.That(total, Is.EqualTo(7_898.76m), "the buydown's cost: what the seller or builder pays up front");
             Assert.That(TwoOne.SubsidyFor(Loan, 12, 100m), Is.EqualTo(100m), "never more than a (final, small) payment itself");
         });
+    }
+
+    [Test]
+    public void TheSubsidyOverASchedule_IsEveryBoughtDownPaymentsGap()
+    {
+        var schedule = new AmortizationCalculator().Generate(Loan, ExtraPaymentPlan.None, RecastPolicy.Never);
+
+        Assert.That(TwoOne.TotalSubsidy(Loan, schedule), Is.EqualTo(7_898.76m), "24 payments, at $434.87 then $223.36 a month");
+    }
+
+    [Test]
+    public void ALoanPaidOffDuringTheBuydown_NeedsLessSubsidy()
+    {
+        // A lump sum pays the loan off with payment 13: twelve year-1 gaps and one year-2 gap.
+        var schedule = new AmortizationCalculator().Generate(Loan, new ExtraPaymentPlan([new LumpSumExtraPayment(1_000_000m, 13)]), RecastPolicy.Never);
+
+        Assert.That(TwoOne.TotalSubsidy(Loan, schedule), Is.EqualTo(5_441.80m), "12 × $434.87 + $223.36: nothing is owed after that");
+    }
+
+    [Test]
+    public void TheInterestYouPay_IsLessTheSubsidy_WhenTheSellerPaysForIt_AndAllOfIt_WhenYouDo()
+    {
+        var schedule = new AmortizationCalculator().Generate(Loan, ExtraPaymentPlan.None, RecastPolicy.Never);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(schedule.TotalInterest, Is.EqualTo(411_848.49m), "the loan charges its note-rate interest either way");
+            Assert.That(TwoOne.InterestYouPay(Loan, schedule, BuydownPayer.Seller), Is.EqualTo(403_949.73m),
+                "the seller's subsidy pays $7,898.76 of the early payments, and the principal paid does not change, so it is interest");
+            Assert.That(TwoOne.InterestYouPay(Loan, schedule, BuydownPayer.Borrower), Is.EqualTo(411_848.49m),
+                "paid for at closing, the subsidy is your own money: lower early payments, the same interest");
+        });
+    }
+
+    [Test]
+    public void TheInterestYouPay_OnALoanPaidOffEarly_CountsOnlyTheSubsidyItUsed()
+    {
+        var schedule = new AmortizationCalculator().Generate(Loan, new ExtraPaymentPlan([new LumpSumExtraPayment(1_000_000m, 13)]), RecastPolicy.Never);
+
+        Assert.That(TwoOne.InterestYouPay(Loan, schedule, BuydownPayer.Seller), Is.EqualTo(17_534.95m), "$22,976.75 of interest less $5,441.80");
     }
 
     [TestCase(new double[0], TestName = "No years")]

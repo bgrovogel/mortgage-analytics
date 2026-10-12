@@ -69,6 +69,17 @@
     </summary>
     <div class="section-body">
       <app-rate-options [form]="form.controls.rate" [rate]="form.controls.annualInterestRate.value" />
+      @if (values().rate?.rateType === 'buydown') {
+        <!-- Who pays decides whether it saves anything: the seller's money, or your own paid earlier. -->
+        <div class="field">
+          <span id="buydown-paid-by-label">Who pays for the buydown?</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="buydown-paid-by-label" data-testid="buydown-paid-by">
+            <label><input type="radio" formControlName="buydownPaidBy" value="Seller" data-testid="buydown-paid-by-seller" /> Seller or builder</label>
+            <label><input type="radio" formControlName="buydownPaidBy" value="Borrower" data-testid="buydown-paid-by-you" /> You, at closing</label>
+          </div>
+        </div>
+        <p class="hint">Paid by the seller or builder, it saves you its cost in interest. Paid by you, it only lowers your early payments.</p>
+      }
     </div>
   </details>
 

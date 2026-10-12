@@ -162,16 +162,29 @@ internal static class AmortizationMapper
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
             ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan),
-            rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline) : null,
+            rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
             rates.WorstCase is { } worst ? ToResponse(worst) : null);
 
-    /// <summary>The bought-down years, then the first at the note rate, and the subsidy over the standard schedule.</summary>
-    private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, AmortizationSchedule schedule) =>
+    /// <summary>The bought-down years, then the first at the note rate, the subsidy over the standard schedule, and who pays it.</summary>
+    private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, AmortizationSchedule schedule, BuydownPayer paidBy) =>
         new(
             loan.AnnualInterestRate,
             [.. Enumerable.Range(1, buydown.YearlyReductions.Count + 1)
                 .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
-            schedule.Payments.Sum(p => buydown.SubsidyFor(loan, p.PaymentNumber, p.ScheduledAmount)));
+            buydown.TotalSubsidy(loan, schedule),
+            paidBy.ToResponse());
+
+    /// <summary>Who pays for a buydown, in the request's terms.</summary>
+    private static BuydownFunding ToResponse(this BuydownPayer paidBy) =>
+        paidBy == BuydownPayer.Borrower ? BuydownFunding.Borrower : BuydownFunding.Seller;
+
+    /// <summary>Who pays for a buydown, in the domain's terms.</summary>
+    internal static BuydownPayer ToDomain(this BuydownFunding paidBy) => paidBy switch
+    {
+        BuydownFunding.Seller => BuydownPayer.Seller,
+        BuydownFunding.Borrower => BuydownPayer.Borrower,
+        _ => throw new ArgumentOutOfRangeException(nameof(paidBy), paidBy, "Validated before mapping."),
+    };
 
     /// <summary>The worst case of an adjustable rate: its resets, the highest payment, and the interest.</summary>
     private static AdjustableRateResponse ToResponse(AmortizationSchedule worst) =>
@@ -244,7 +257,9 @@ internal static class AmortizationMapper
                 p.RemainingBalance,
                 rates.Loan.AnnualRateFor(p.PaymentNumber),
                 Subsidy(p))).ToList(),
-            ToRateChanges(schedule));
+            ToRateChanges(schedule),
+            rates.Buydown?.TotalSubsidy(rates.Loan, schedule) ?? 0m,
+            rates.Buydown?.InterestYouPay(rates.Loan, schedule, rates.BuydownPaidBy) ?? schedule.TotalInterest);
     }
 
     /// <summary>The due date of payment <paramref name="paymentNumber"/>; payments are numbered from 1 in order.</summary>

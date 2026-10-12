@@ -86,6 +86,13 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     }
 
     [Test]
+    public void BuydownPaidBy_UndefinedEnumValue_IsRejected()
+    {
+        AssertInvalid(A.Request.WithBuydown(2m, 1m).WithBuydownPaidBy((BuydownFunding)9), nameof(AmortizationRequest.BuydownPaidBy),
+            "only the seller or the borrower can pay for a buydown");
+    }
+
+    [Test]
     public void Strategy_UndefinedEnumValue_IsRejected()
     {
         AssertInvalid(A.Request.WithStrategy((ExtraPaymentStrategy)99), nameof(AmortizationRequest.Strategy), "only defined strategies are accepted");

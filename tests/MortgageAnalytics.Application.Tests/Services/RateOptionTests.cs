@@ -1,5 +1,7 @@
+using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Testing;
 using static MortgageAnalytics.Testing.ReferenceLoans;
+using Extra200 = MortgageAnalytics.Testing.ReferenceLoans.StandardWithMonthlyExtra200;
 
 namespace MortgageAnalytics.Application.Tests.Services;
 
@@ -30,6 +32,49 @@ public class RateOptionTests : SociableAnalysisTestBase
             Assert.That(response.Baseline.Payments[24].BuydownSubsidy, Is.Zero, "and nothing is subsidized from year 3");
             Assert.That(response.Baseline.TotalInterest, Is.EqualTo(plain.Baseline.TotalInterest), "the loan itself is unchanged");
             Assert.That(response.AdjustableRate, Is.Null, "a fixed rate has no worst case");
+        });
+    }
+
+    [Test]
+    public void ABuydownTheSellerPaysFor_LowersTheInterestYouPay_AndOneYouPayForYourself_DoesNot()
+    {
+        var sellerPaid = Service.Analyze(A.Request.WithBuydown(2m, 1m));
+        var youPaid = Service.Analyze(A.Request.WithBuydown(2m, 1m).WithBuydownPaidBy(BuydownFunding.Borrower));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(sellerPaid.Buydown!.PaidBy, Is.EqualTo(BuydownFunding.Seller), "the seller or builder pays, unless the request says otherwise");
+            Assert.That(sellerPaid.Baseline.BuydownSubsidy, Is.EqualTo(4_436.76m), "the subsidy over the loan's schedule");
+            Assert.That(sellerPaid.Baseline.InterestYouPay, Is.EqualTo(Standard.TotalInterest - 4_436.76m),
+                "the subsidy pays part of the early payments' interest, so the borrower pays that much less");
+            Assert.That(youPaid.Buydown!.PaidBy, Is.EqualTo(BuydownFunding.Borrower), "said back, so the page can explain it");
+            Assert.That(youPaid.Baseline.InterestYouPay, Is.EqualTo(Standard.TotalInterest),
+                "paid for at closing, it is the borrower's own money: lower early payments, the same interest");
+            Assert.That(youPaid.Baseline.TotalInterest, Is.EqualTo(sellerPaid.Baseline.TotalInterest), "the loan charges the same either way");
+        });
+    }
+
+    [Test]
+    public void WithExtraPayments_TheInterestYouPay_IsCountedOnThatSchedule()
+    {
+        var response = Service.Analyze(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra).WithBuydown(2m, 1m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Accelerated.BuydownSubsidy, Is.EqualTo(4_436.76m), "the loan still runs past the buydown years");
+            Assert.That(response.Accelerated.InterestYouPay, Is.EqualTo(Extra200.TotalInterest - 4_436.76m), "its own interest, less the subsidy");
+        });
+    }
+
+    [Test]
+    public void WithoutABuydown_YouPayAllTheInterest()
+    {
+        var response = Service.Analyze(A.Request);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Baseline.BuydownSubsidy, Is.Zero, "nothing is subsidized");
+            Assert.That(response.Baseline.InterestYouPay, Is.EqualTo(Standard.TotalInterest), "so the interest you pay is all of it");
         });
     }
 

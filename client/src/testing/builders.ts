@@ -72,6 +72,8 @@ export function aSchedule(overrides: Partial<Schedule> = {}, paymentCount = 3): 
     recasts: [],
     payments,
     rateChanges: [],
+    buydownSubsidy: 0,
+    interestYouPay: overrides.totalInterest ?? 1_200,
     ...overrides,
   };
 }

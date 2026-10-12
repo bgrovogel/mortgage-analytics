@@ -1,3 +1,5 @@
+using MortgageAnalytics.Domain.Amortization;
+
 namespace MortgageAnalytics.Domain.Loans;
 
 /// <summary>
@@ -60,4 +62,24 @@ public sealed record TemporaryBuydown
         var gap = PaymentFormula.MonthlyPayment(loan.Principal, loan.MonthlyRate, loan.TermInMonths) - PaymentForYear(loan, year);
         return Math.Min(gap, scheduledAmount);
     }
+
+    /// <summary>
+    /// The whole subsidy over <paramref name="schedule"/>: every bought-down payment's gap. A loan paid off during the
+    /// buydown years needs less.
+    /// </summary>
+    /// <param name="loan">The loan, at its note rate.</param>
+    /// <param name="schedule">The loan's schedule, with or without extra payments.</param>
+    public decimal TotalSubsidy(LoanTerms loan, AmortizationSchedule schedule) =>
+        schedule.Payments.Sum(p => SubsidyFor(loan, p.PaymentNumber, p.ScheduledAmount));
+
+    /// <summary>
+    /// The interest the borrower pays. The loan charges its note-rate interest either way, and the principal paid does
+    /// not change, so a subsidy from the seller or builder pays interest: the borrower pays that much less. A subsidy
+    /// the borrower paid for at closing is their own money, so they pay all of the interest.
+    /// </summary>
+    /// <param name="loan">The loan, at its note rate.</param>
+    /// <param name="schedule">The loan's schedule, with or without extra payments.</param>
+    /// <param name="paidBy">Who paid for the buydown.</param>
+    public decimal InterestYouPay(LoanTerms loan, AmortizationSchedule schedule, BuydownPayer paidBy) =>
+        schedule.TotalInterest - (paidBy == BuydownPayer.Seller ? TotalSubsidy(loan, schedule) : 0m);
 }

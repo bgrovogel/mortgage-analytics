@@ -87,6 +87,28 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('buydown-first-year'), 'the payment tile shows year 1').toBeVisible();
   });
 
+  test('each buydown saves a different amount of interest when the seller pays, and none when you do', async ({ calculator, page }) => {
+    // The same loan, with its $200 a month extra: the loan's interest is $316,575 whatever the buydown
+    // (tools/calculator-check/calculator_model.py).
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.chooseRateType('buydown');
+    await calculator.calculate();
+    const note = page.getByTestId('interest-you-pay');
+
+    await expect(calculator.totalInterest, 'the loan charges the same interest').toHaveText('$316,575');
+    await expect(note, 'the seller pays by default, and a 2-1 pays $7,899 of it').toHaveText("The seller's buydown pays $7,899 of it, so you pay $308,676.");
+
+    await page.getByTestId('buydown-plan').selectOption('3-2-1');
+    await calculator.calculate();
+    await expect(calculator.totalInterest, 'still the same loan underneath').toHaveText('$316,575');
+    await expect(note, 'a 3-2-1 pays more of it').toHaveText("The seller's buydown pays $15,502 of it, so you pay $301,073.");
+
+    await page.getByTestId('buydown-paid-by-you').check();
+    await calculator.calculate();
+    await expect(note, 'bought with your own money, it saves no interest').toHaveText('Your buydown, paid for at closing, lowers the early payments, not the interest.');
+    await expect(page.getByTestId('buydown-cost'), 'it only moves your money earlier').toContainText('You pay $15,502 at closing');
+  });
+
   test('a 7/1 adjustable rate: the reset, the new payment, and the worst case the caps allow', async ({ calculator, page }) => {
     await calculator.fillLoan(TWENTY_PERCENT_DOWN);
     await calculator.clearHousingCosts();

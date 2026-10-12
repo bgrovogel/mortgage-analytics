@@ -1,16 +1,16 @@
 # 7. Testing and quality
 
-About 1,310 automated tests in seven suites, written test-first, with the standards enforced by the build.
+About 1,330 automated tests in seven suites, written test-first, with the standards enforced by the build.
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 436 | NUnit | < 1 s |
-| Application | 206 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 440 | NUnit | < 1 s |
+| Application | 210 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
 | API integration | 73 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 485 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 86 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 491 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 87 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ## How a feature gets built (TDD)
 

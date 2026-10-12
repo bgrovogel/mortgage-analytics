@@ -97,8 +97,16 @@ export interface AmortizationRequest {
   extraPayments: ExtraPayments | null;
   housingCosts: HousingCostsInput | null;
   buydown?: TemporaryBuydownInput | null;
+  /** Who pays for the buydown's subsidy; the seller or builder unless said. */
+  buydownPaidBy?: BuydownFunding;
   adjustableRate?: AdjustableRateInput | null;
 }
+
+/**
+ * Who pays for a temporary buydown. Paid by the seller or builder, it saves the borrower its cost in interest; paid
+ * by the borrower at closing, it only moves their money earlier.
+ */
+export type BuydownFunding = 'Seller' | 'Borrower';
 
 export interface Purchase {
   homePrice: number;
@@ -170,6 +178,10 @@ export interface Schedule {
   recasts: Recast[];
   payments: Payment[];
   rateChanges: RateChange[];
+  /** What a buydown's subsidy pays over this schedule; 0 without one. */
+  buydownSubsidy: number;
+  /** The interest the borrower pays: totalInterest, less the subsidy when the seller or builder pays for a buydown. */
+  interestYouPay: number;
 }
 
 export interface Savings {
@@ -214,6 +226,7 @@ export interface BuydownSummary {
   /** Each bought-down year, then the first year at the note rate. */
   years: { year: number; annualInterestRate: number; monthlyPayment: number }[];
   totalSubsidy: number;
+  paidBy: BuydownFunding;
 }
 
 /** An adjustable rate's worst case: rates rising as far and as fast as the caps allow. */

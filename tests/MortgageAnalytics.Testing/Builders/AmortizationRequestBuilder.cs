@@ -86,6 +86,10 @@ public sealed class AmortizationRequestBuilder
     public AmortizationRequestBuilder WithBuydown(params decimal[] yearlyReductions) =>
         With(r => r with { Buydown = new TemporaryBuydownRequest { YearlyReductions = yearlyReductions } });
 
+    /// <summary>Says who pays for the buydown's subsidy (the seller or builder, unless set).</summary>
+    public AmortizationRequestBuilder WithBuydownPaidBy(BuydownFunding paidBy) =>
+        With(r => r with { BuydownPaidBy = paidBy });
+
     /// <summary>Makes the rate adjustable: a 7/1 ARM by default, resetting toward <paramref name="expectedRate"/> within 5/2/5 caps.</summary>
     public AmortizationRequestBuilder WithAdjustableRate(
         decimal expectedRate, int initialFixedMonths = 84, int intervalMonths = 12, decimal initialCap = 5m, decimal periodicCap = 2m, decimal lifetimeCap = 5m) =>

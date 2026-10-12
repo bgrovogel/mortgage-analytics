@@ -112,7 +112,7 @@ describe('CalculatorPageComponent', () => {
       calculate.mockReturnValue(of(aResponse({
         baseline: aSchedule({ totalMonthlyPayment: 3_246.01, totalInterest: 454_378.85, monthlyHousingCosts: aHousingCosts({ propertyTax: 994.27 }) }),
         savings: aSavings({ netSavings: 0 }),
-        buydown: { noteRate: 6.5, years: [{ year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07 }], totalSubsidy: 8_107.92 },
+        buydown: { noteRate: 6.5, years: [{ year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07 }], totalSubsidy: 8_107.92, paidBy: 'Seller' },
       })));
 
       await open('/calculator');

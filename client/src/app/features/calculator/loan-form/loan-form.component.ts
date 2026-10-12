@@ -104,7 +104,7 @@ export class LoanFormComponent implements OnInit {
 
   readonly form = loanForm(this.fb);
 
-  private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   /** Emits what is wrong whenever that changes: an empty list once the form can be sent again. */
   readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
@@ -173,7 +173,9 @@ export class LoanFormComponent implements OnInit {
   readonly rateSummary = computed(() => {
     const v = this.values();
     if (this.sectionInvalid('rate')) return CHECK_SECTION;
-    return rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
+    const summary = rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
+    if (v.rate?.rateType !== 'buydown') return summary;
+    return `${summary} · ${v.buydownPaidBy === 'Borrower' ? 'you pay for it' : 'the seller pays for it'}`;
   });
 
   /** One-line summary of the extra payments beyond monthly, and what they are applied to. */

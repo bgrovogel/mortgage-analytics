@@ -20,8 +20,9 @@ public sealed record AmortizationResponse(
 /// <summary>A temporary buydown: each bought-down year's rate and payment, and what the subsidy costs.</summary>
 /// <param name="NoteRate">The loan's actual rate, paid from the year after the buydown.</param>
 /// <param name="Years">Each bought-down year, then the first year at the note rate.</param>
-/// <param name="TotalSubsidy">Everything the subsidy covers: the buydown's cost, usually paid up front by the seller or builder.</param>
-public sealed record BuydownResponse(decimal NoteRate, IReadOnlyList<BuydownYearResponse> Years, decimal TotalSubsidy);
+/// <param name="TotalSubsidy">Everything the subsidy covers over the standard schedule: the buydown's cost.</param>
+/// <param name="PaidBy">Who pays for it: the seller or builder (which saves the borrower that much interest), or the borrower.</param>
+public sealed record BuydownResponse(decimal NoteRate, IReadOnlyList<BuydownYearResponse> Years, decimal TotalSubsidy, BuydownFunding PaidBy);
 
 /// <summary>One year of a buydown.</summary>
 /// <param name="Year">The 1-based year of the loan.</param>
@@ -97,6 +98,9 @@ public sealed record PurchaseResponse(
 /// <param name="Recasts">Recasts that happened, in order.</param>
 /// <param name="Payments">Every monthly payment.</param>
 /// <param name="RateChanges">Rate resets that happened (an adjustable rate), in order; empty for a fixed rate.</param>
+/// <param name="BuydownSubsidy">What a temporary buydown's subsidy pays over this schedule; zero without one.</param>
+/// <param name="InterestYouPay">The interest the borrower pays: <paramref name="TotalInterest"/>, less the subsidy when the
+/// seller or builder pays for a buydown (the subsidy pays part of the early payments' interest).</param>
 public sealed record ScheduleResponse(
     decimal MonthlyPayment,
     HousingCostsResponse MonthlyHousingCosts,
@@ -109,7 +113,9 @@ public sealed record ScheduleResponse(
     DateOnly PayoffDate,
     IReadOnlyList<RecastResponse> Recasts,
     IReadOnlyList<PaymentResponse> Payments,
-    IReadOnlyList<RateChangeResponse> RateChanges);
+    IReadOnlyList<RateChangeResponse> RateChanges,
+    decimal BuydownSubsidy,
+    decimal InterestYouPay);
 
 /// <summary>Housing costs by category, for one month, one year, or summed over the loan.</summary>
 /// <param name="SchoolTax">School district tax, after its homestead exemption.</param>

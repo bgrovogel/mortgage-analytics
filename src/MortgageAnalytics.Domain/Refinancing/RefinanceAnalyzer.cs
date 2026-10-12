@@ -37,7 +37,7 @@ public sealed class RefinanceAnalyzer(IAmortizationCalculator calculator) : IRef
             : null;
 
         var buydownCost = offer.Buydown is { } buydown
-            ? refinanced.Payments.Sum(p => buydown.SubsidyFor(newLoan, p.PaymentNumber, p.ScheduledAmount))
+            ? buydown.TotalSubsidy(newLoan, refinanced)
             : 0m;
 
         return new RefinanceAnalysis(offer, currentSchedule, refinanced, keepingCurrentPayment, newLoan, buydownCost);

@@ -808,6 +808,9 @@
           "buydown": {
             "$ref": "#/components/schemas/TemporaryBuydownRequest"
           },
+          "buydownPaidBy": {
+            "$ref": "#/components/schemas/BuydownFunding"
+          },
           "adjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateRequest"
           }
@@ -859,6 +862,13 @@
         },
         "additionalProperties": false
       },
+      "BuydownFunding": {
+        "enum": [
+          "Seller",
+          "Borrower"
+        ],
+        "type": "string"
+      },
       "BuydownResponse": {
         "type": "object",
         "properties": {
@@ -876,6 +886,9 @@
           "totalSubsidy": {
             "type": "number",
             "format": "double"
+          },
+          "paidBy": {
+            "$ref": "#/components/schemas/BuydownFunding"
           }
         },
         "additionalProperties": false
@@ -1905,6 +1918,14 @@
               "$ref": "#/components/schemas/RateChangeResponse"
             },
             "nullable": true
+          },
+          "buydownSubsidy": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestYouPay": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

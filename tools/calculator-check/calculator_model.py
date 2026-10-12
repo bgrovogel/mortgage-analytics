@@ -219,6 +219,9 @@ def analyze(request, today):
 
     buydown = request.get('buydown')
     note_payment = payment(loan, rate, term)
+    # Paid for by the seller or builder, the subsidy pays interest the borrower would otherwise pay; paid for by the
+    # borrower at closing, it is their own money, so they pay all of the interest.
+    paid_by = request.get('buydownPaidBy') or 'Seller'
 
     def subsidy(row):
         if not buydown:
@@ -244,6 +247,8 @@ def analyze(request, today):
             })
         totals = {k: sum((r['costs'][k] for r in rows), D(0)) for k in CATEGORIES + ['total']}
         pmi_rows = [r for r in rows if r['costs']['mortgageInsurance'] > 0]
+        total_interest = sum((r['interest'] for r in rows), D(0))
+        subsidy_total = sum((r['buydownSubsidy'] for r in rows), D(0))
         return {
             'monthlyPayment': s['initial'],
             'monthlyHousingCosts': rows[0]['costs'],
@@ -258,6 +263,8 @@ def analyze(request, today):
             'recasts': [dict(r, effectiveDate=add_months(first, r['afterPaymentNumber']).isoformat()) for r in s['recasts']],
             'rateChanges': [dict(c, effectiveDate=add_months(first, c['paymentNumber'] - 1).isoformat()) for c in s['rateChanges']],
             'payments': rows,
+            'buydownSubsidy': subsidy_total,
+            'interestYouPay': total_interest - (subsidy_total if paid_by == 'Seller' else D(0)),
         }
 
     base_openings = [r['opening'] for r in baseline['rows']]
@@ -300,7 +307,7 @@ def analyze(request, today):
             r = max(D(0), rate - reductions[year - 1]) if year <= len(reductions) else rate
             years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
         out['buydown'] = {'noteRate': rate, 'years': years,
-                          'totalSubsidy': sum((r['buydownSubsidy'] for r in base['payments']), D(0))}
+                          'totalSubsidy': base['buydownSubsidy'], 'paidBy': paid_by}
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,

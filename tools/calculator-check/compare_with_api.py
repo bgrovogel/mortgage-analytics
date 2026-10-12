@@ -113,6 +113,7 @@ def random_purchase(rng):
     kind = rng.random()
     if kind < 0.2 and rate > 3:
         request['buydown'] = {'yearlyReductions': rng.choice([[1], [2, 1], [3, 2, 1], [1, 1]])}
+        request['buydownPaidBy'] = rng.choice(['Seller', 'Borrower'])
     elif kind < 0.45:
         fixed = rng.choice([60, 84, 120])
         if fixed < term:

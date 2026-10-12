@@ -52,13 +52,17 @@ public static class RefinanceMapper
             analysis.Offer.Buydown is { } buydown ? ToResponse(buydown, analysis.NewLoan, analysis.BuydownCost) : null,
             worstCaseLifetimeSavings);
 
-    /// <summary>The new loan's bought-down years, then the first at its note rate, and what the buydown costs.</summary>
+    /// <summary>
+    /// The new loan's bought-down years, then the first at its note rate, and what the buydown costs. On a refinance the
+    /// borrower buys it at closing, so it changes when they pay, not how much.
+    /// </summary>
     private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, decimal cost) =>
         new(
             loan.AnnualInterestRate,
             [.. Enumerable.Range(1, buydown.YearlyReductions.Count + 1)
                 .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
-            cost);
+            cost,
+            BuydownFunding.Borrower);
 
     private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule) =>
         new(

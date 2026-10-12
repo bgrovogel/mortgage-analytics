@@ -78,6 +78,55 @@ describe('SavingsSummaryComponent', () => {
     expect(text('total-interest-detail')).toBe('Add an extra payment to see how much you could save.');
   });
 
+  describe('with a buydown', () => {
+    const twoOne = (paidBy: 'Seller' | 'Borrower') => ({
+      noteRate: 6.5,
+      years: [
+        { year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07 },
+        { year: 2, annualInterestRate: 5.5, monthlyPayment: 2_022.75 },
+        { year: 3, annualInterestRate: 6.5, monthlyPayment: 2_251.74 },
+      ],
+      totalSubsidy: 8_107.92,
+      paidBy,
+    });
+
+    it('the seller pays: says how much of the interest its subsidy pays, and what you pay', () => {
+      render(aResponse({
+        buydown: twoOne('Seller'),
+        baseline: aSchedule({ totalInterest: 454_378.85, buydownSubsidy: 8_107.92, interestYouPay: 446_270.93 }),
+      }));
+
+      expect(text('total-interest')).toBe('$454,379');
+      expect(text('interest-you-pay')).toBe("The seller's buydown pays $8,108 of it, so you pay $446,271.");
+    });
+
+    it('with extra payments, says it of the interest with them', () => {
+      render(aResponse({
+        buydown: twoOne('Seller'),
+        baseline: aSchedule({ totalInterest: 231_677.04 }),
+        accelerated: aSchedule({ totalInterest: 151_876.18, buydownSubsidy: 4_436.76, interestYouPay: 147_439.42 }),
+        savings: aSavings({ interestSaved: 79_800.86, netSavings: 79_800.86, paymentsSaved: 108 }),
+      }));
+
+      expect(text('interest-you-pay')).toBe("The seller's buydown pays $4,437 of it, so you pay $147,439.");
+    });
+
+    it('you pay for it: says it lowers the early payments, not the interest', () => {
+      render(aResponse({
+        buydown: twoOne('Borrower'),
+        baseline: aSchedule({ totalInterest: 454_378.85, buydownSubsidy: 8_107.92, interestYouPay: 454_378.85 }),
+      }));
+
+      expect(text('interest-you-pay')).toBe('Your buydown, paid for at closing, lowers the early payments, not the interest.');
+    });
+
+    it('says nothing about it without one', () => {
+      render(aResponse());
+
+      expect(text('interest-you-pay')).toBeUndefined();
+    });
+  });
+
   it('without extra payments, hides the time-saved tile rather than showing 0 months', () => {
     render(aResponse());
 
@@ -93,7 +142,7 @@ describe('SavingsSummaryComponent', () => {
 
   it('with a buydown, shows the reduced payment due in year 1', () => {
     render(aResponse({
-      buydown: { noteRate: 6, years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 954.83 }, { year: 2, annualInterestRate: 6, monthlyPayment: 1_199.1 }], totalSubsidy: 2_930.04 },
+      buydown: { noteRate: 6, years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 954.83 }, { year: 2, annualInterestRate: 6, monthlyPayment: 1_199.1 }], totalSubsidy: 2_930.04, paidBy: 'Seller' },
     }));
 
     expect(text('total-monthly-payment')).toBe('$954.83');

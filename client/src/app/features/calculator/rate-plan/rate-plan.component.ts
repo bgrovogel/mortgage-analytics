@@ -26,8 +26,14 @@ interface Step {
           }
         </ol>
         <p class="note" data-testid="buydown-cost">
-          The buydown costs {{ b.cost }}: the subsidy that makes up the difference, usually paid up front by the seller or
-          builder. The loan itself is at {{ b.noteRate }} throughout, so its interest and payoff do not change.
+          @if (b.sellerPays) {
+            The seller or builder pays {{ b.cost }} up front to make up the difference. That money pays part of your early
+            interest, so you pay {{ b.cost }} less interest over the loan.
+          } @else {
+            You pay {{ b.cost }} at closing to make up the difference, and get it back as lower payments over {{ b.years }}:
+            it changes when you pay, not how much.
+          }
+          The loan itself is at {{ b.noteRate }} throughout, so its interest and payoff do not change.
         </p>
       </section>
     }
@@ -64,6 +70,8 @@ export class RatePlanComponent {
       })),
       cost: usd(b.totalSubsidy),
       noteRate: pct(b.noteRate),
+      sellerPays: b.paidBy === 'Seller',
+      years: last - 1 === 1 ? '1 year' : `${last - 1} years`,
     };
   });
 

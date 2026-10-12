@@ -1,7 +1,7 @@
 import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { validatorsFor } from '../../../core/forms/field-rules';
 import { firstOfMonthFromNext, toCents } from '../../../core/loans/loan-progress';
-import { AmortizationRequest, ExtraPaymentStrategy, MortgageInsuranceCancellation } from '../../../core/models/amortization.models';
+import { AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, MortgageInsuranceCancellation } from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { LOAN_RULES as rules, LUMP_SUM_RULES } from './loan-fields';
 
@@ -79,6 +79,8 @@ export function loanForm(fb: NonNullableFormBuilder) {
 
     // Fixed, a buydown, or a 7/1 ARM with the usual 5/2/5 caps, expected to reset a point higher.
     rate: rateOptionsForm(fb, 7.5),
+    // Who pays for a buydown: the seller or builder (a concession), unless the buyer says they do, at closing.
+    buydownPaidBy: fb.control<BuydownFunding>('Seller'),
     recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
     recastFee: [250, validatorsFor(rules.recastFee)],
   });
@@ -160,6 +162,7 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       pmiCancellation: v.pmiCancellation,
     },
     ...rateOptionsRequest(form.controls.rate, 'type'),
+    buydownPaidBy: v.buydownPaidBy,
   };
 }
 
@@ -218,6 +221,7 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     monthlyHoa: costs?.monthlyHoaDues ?? 0,
     pmiRate: costs?.pmiRate ?? 0,
     ...(costs && { pmiCancellation: costs.pmiCancellation }),
+    buydownPaidBy: r.buydownPaidBy ?? 'Seller',
   });
   setRateOptions(form.controls.rate, r.buydown, r.adjustableRate);
   syncTaxMode(form);

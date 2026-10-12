@@ -62,6 +62,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .When(r => r.FirstPaymentDate is not null);
 
         RuleFor(r => r.Strategy).IsInEnum();
+        RuleFor(r => r.BuydownPaidBy).IsInEnum().WithName("Who pays for the buydown");
 
         // Terms that would be silently ignored are a client mistake, so they are rejected rather than dropped.
         RuleFor(r => r.Recast)
