@@ -311,6 +311,33 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.homeValueNote, 'a 15% market against a 10% cap opens a gap').toContainText('the homestead cap keeps');
   });
 
+  test('gives the quick numbers for any year, from the same figures as the chart', async ({ calculator, page }) => {
+    // A fresh calculation, so the test has the very response the page shows.
+    const answer = page.waitForResponse((r) => r.url().includes('/api/v1/amortization/calculate') && r.ok());
+    await calculator.set('home-price', 400_000);
+    const projection: { costs: { total: number } }[] = (await (await answer).json()).projection;
+    await calculator.calculate();
+    await calculator.showResults('projection');
+    const usd = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+    const sum = (years: { costs: { total: number } }[]) => years.reduce((s, y) => s + y.costs.total, 0);
+    const total = page.getByTestId('cost-totals-total');
+
+    await page.getByTestId('cost-totals-year').selectOption('10');
+
+    await expect(page.getByTestId('cost-totals').locator('thead th'), 'the year, everything through it, and the whole loan')
+      .toHaveText(['Cost', /^Year 10 \(\d{4}\)$/, 'Through year 10', 'All 30 years']);
+    await expect(total.locator('td').nth(0), "year 10's costs, and a month of them").toContainText(usd(projection[9].costs.total));
+    await expect(total.locator('td').nth(1), 'years 1 to 10 added up').toHaveText(usd(sum(projection.slice(0, 10))));
+    await expect(total.locator('td').nth(2), 'all 30 years added up').toHaveText(usd(sum(projection)));
+
+    // A click on the chart (through the locator, which scrolls it into view) picks that year for the numbers.
+    const chart = (await calculator.projectionChart.boundingBox())!;
+    await calculator.projectionChart.click({ position: { x: chart.width / 2, y: chart.height / 2 } });
+    await expect(page.getByTestId('cost-totals-year'), 'a year in the middle of the loan is picked').not.toHaveValue('10');
+    const picked = await page.getByTestId('cost-totals-year').inputValue();
+    await expect(page.getByTestId('cost-totals').locator('thead th').nth(2), 'and the numbers follow it').toHaveText(`Through year ${picked}`);
+  });
+
   test('splits the results into tabs with their own URLs, and keeps the form as it was', async ({ calculator, page }) => {
     await calculator.set('home-price', 300_000);
     await calculator.calculate();

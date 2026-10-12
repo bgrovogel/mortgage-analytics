@@ -13,10 +13,12 @@ import { ScheduleTabComponent } from './schedule-tab.component';
 /** The three routed result tabs. Each reads the current result from the store. */
 describe('result tabs', () => {
   let store: CalculatorStore;
+  let charts: ReturnType<typeof fakeCharts>;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    TestBed.configureTestingModule({ providers: [fakeCharts().provider, { provide: AmortizationApiService, useValue: { calculate: () => of(aResponse()) } }] });
+    charts = fakeCharts();
+    TestBed.configureTestingModule({ providers: [charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(aResponse()) } }] });
     store = TestBed.inject(CalculatorStore);
     store.send({} as AmortizationRequest);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -56,6 +58,18 @@ describe('result tabs', () => {
 
       expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value, and what each tax is charged on']);
       expect(root.querySelectorAll('canvas')).toHaveLength(2);
+    });
+
+    it('gives the quick numbers above the charts, for the year clicked on the costs chart', () => {
+      const fixture = render(ProjectionTabComponent);
+      const root = fixture.nativeElement as HTMLElement;
+      const costsChart = charts.config(0);
+
+      (costsChart.options!.onClick as unknown as (event: unknown, elements: { index: number }[]) => void)({}, [{ index: 2 }]);
+      fixture.detectChanges();
+
+      expect(root.firstElementChild?.querySelector('app-cost-totals')).not.toBeNull(); // the numbers come first
+      expect(root.querySelector<HTMLSelectElement>('[data-testid="cost-totals-year"]')!.value).toBe('3');
     });
   });
 

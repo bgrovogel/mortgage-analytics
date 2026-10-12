@@ -34,6 +34,16 @@ describe('CostProjectionComponent', () => {
   });
 
   describe('yearly costs view', () => {
+    it('passes on the year clicked, so the quick numbers can show it', () => {
+      const component = render(rising);
+      const picked: number[] = [];
+      component.yearPicked.subscribe((year) => picked.push(year));
+
+      (charts.lastConfig().options!.onClick as unknown as (event: unknown, elements: { index: number }[]) => void)({}, [{ index: 1 }]);
+
+      expect(picked).toEqual([2]);
+    });
+
     it('stacks the categories as areas, so the top edge is the total cost', () => {
       render(rising);
 

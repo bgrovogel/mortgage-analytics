@@ -208,6 +208,11 @@ The flows are designed around the people using it:
 - **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
   scroll-driven effect that follows the form's own scroll and is gone at the end.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.
+- **"What will I have paid by year 10?"** The Projection tab opens on the quick numbers (`CostTotalsComponent`): for a
+  chosen year, each cost that year, through it, and over the whole loan, from the same projection as the chart
+  (`cost-totals.ts`, pure functions). It starts at the year the loan is in now, so "through" is what has been paid; the
+  picker or a click on the chart (`buildLineChart`'s `onPick`, with a pointer over the plot) chooses another. On a phone
+  the cost names stay pinned while the amounts scroll sideways.
 
 ### Routing and auth
 

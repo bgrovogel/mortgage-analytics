@@ -12,6 +12,8 @@ export function fakeCharts() {
     provider: { provide: CHART_FACTORY, useValue: create },
     /** The configuration of the most recently created chart. */
     lastConfig: () => create.mock.calls[create.mock.calls.length - 1][1],
+    /** The configuration of the chart created `index`th (0 for the first), for a page with several. */
+    config: (index: number) => create.mock.calls[index][1],
     /** How many charts have been created so far. */
     count: () => create.mock.calls.length,
   };

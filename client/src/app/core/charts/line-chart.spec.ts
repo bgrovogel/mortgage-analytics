@@ -33,6 +33,33 @@ describe('buildLineChart', () => {
     expect(families).toEqual(Array(6).fill("'Inter Variable', sans-serif"));
   });
 
+  it('reports which point was clicked, when asked to, and nothing for a click between points', () => {
+    const onPick = jest.fn();
+    const onClick = buildLineChart({ ...spec, onPick }, host).options!.onClick as unknown as (event: unknown, elements: { index: number }[]) => void;
+
+    onClick({}, [{ index: 1 }]);
+    onClick({}, []);
+
+    expect(onPick.mock.calls).toEqual([[1]]);
+  });
+
+  it('is not clickable unless asked to be', () => {
+    const options = buildLineChart(spec, host).options!;
+
+    expect([options.onClick, options.onHover]).toEqual([undefined, undefined]);
+  });
+
+  it('shows a pointer over the plot when a click picks a point, so it reads as clickable', () => {
+    const canvas = document.createElement('canvas');
+    const onHover = buildLineChart({ ...spec, onPick: jest.fn() }, host).options!.onHover as unknown as (event: { native: { target: HTMLElement } }, elements: unknown[]) => void;
+
+    onHover({ native: { target: canvas } }, [{ index: 0 }]);
+    const over = canvas.style.cursor;
+    onHover({ native: { target: canvas } }, []);
+
+    expect([over, canvas.style.cursor]).toEqual(['pointer', '']);
+  });
+
   it('creates one 2px line per series, without point markers', () => {
     const datasets = buildLineChart(spec, host).data.datasets;
 

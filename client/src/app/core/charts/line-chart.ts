@@ -43,6 +43,8 @@ export interface LineChartSpec {
   stacked?: boolean;
   /** Label the x-axis in steps of this many points, e.g. 12 for whole years of monthly data. Defaults to 1. */
   tickEvery?: number;
+  /** Called with the index of the point clicked (the crosshair's), so a page can select it; leave out for none. */
+  onPick?: (index: number) => void;
 }
 
 /**
@@ -97,6 +99,14 @@ export function buildLineChart(spec: LineChartSpec, host: HTMLElement): ChartCon
       maintainAspectRatio: false,
       animation: false,
       interaction: { mode: 'index', intersect: false },
+      onClick: spec.onPick ? (_event, elements) => { if (elements.length > 0) spec.onPick!(elements[0].index); } : undefined,
+      // A pointer over the plot says a click there does something.
+      onHover: spec.onPick
+        ? (event, elements) => {
+          const target = event.native?.target;
+          if (target instanceof HTMLElement) target.style.cursor = elements.length > 0 ? 'pointer' : '';
+        }
+        : undefined,
       plugins: {
         legend: {
           position: 'top',

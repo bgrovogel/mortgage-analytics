@@ -1,0 +1,99 @@
+@use '../../../core/layout/scroll-hint';
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.9rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+
+  select {
+    width: auto;
+  }
+}
+
+// A phone keeps the four columns and scrolls them sideways, rather than squeezing the amounts: the cost's name stays
+// pinned, and the edge with more to show fades (as the schedule table does).
+.table-wrap {
+  overflow-x: auto;
+  @include scroll-hint.fade-edge;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: 0.4rem 0 0.4rem 1rem;
+    text-align: right;
+  }
+
+  th:first-child {
+    padding-left: 0;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    // Room between the pinned name and the amounts sliding under it.
+    padding-right: 0.75rem;
+    background: var(--surface-1);
+  }
+
+  thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody th {
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+
+  // The category's colour, as the chart draws it.
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 0.55rem;
+    vertical-align: -1px;
+  }
+
+  tfoot th,
+  tfoot td {
+    border-top: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  small {
+    display: block;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+}
+
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}

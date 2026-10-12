@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
 import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
 import { usd } from '../../../core/formatting/format';
@@ -37,6 +37,9 @@ export class CostProjectionComponent {
 
   /** Which view is shown; the tabs around the chart choose it. */
   readonly view = input<ProjectionView>('costs');
+
+  /** The loan year clicked on the costs chart, so the page can show its quick numbers. */
+  readonly yearPicked = output<number>();
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
@@ -83,6 +86,7 @@ export class CostProjectionComponent {
             footer: (i) => `Total: ${usd(projection[i].costs.total)}`,
             // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
             stacked: true,
+            onPick: (i) => this.yearPicked.emit(projection[i].year),
           },
           host,
         );
