@@ -17,7 +17,7 @@ import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
-  LumpSumForm, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+  FHA_DOWN_TOO_LOW, LumpSumForm, belowFhaMinimum, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
@@ -38,6 +38,7 @@ const SECTION_CONTROLS = {
   taxes: ['propertyTaxRate', 'propertyTaxHomesteadExemption', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
     'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
+  program: [],
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
@@ -107,6 +108,7 @@ export class LoanFormComponent implements OnInit {
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
   protected readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
+  protected readonly fhaDownMessage = FHA_DOWN_TOO_LOW;
 
   readonly form = loanForm(this.fb);
 
@@ -131,7 +133,24 @@ export class LoanFormComponent implements OnInit {
   readonly downPaymentInPercent = computed(() => this.values().downPaymentMode === 'percent');
 
   /** PMI applies only with less than 20% down. */
-  readonly pmiApplies = computed(() => this.downPaymentPercent() < 20);
+  readonly pmiApplies = computed(() => this.values().loanProgram === 'Conventional' && this.downPaymentPercent() < 20);
+
+  /** The kind of loan chosen. */
+  readonly loanProgram = computed(() => this.values().loanProgram ?? 'Conventional');
+
+  /** True while an FHA loan has less than its minimum down payment. */
+  readonly fhaDownTooLow = computed(() =>
+    this.loanProgram() === 'Fha' && belowFhaMinimum(this.downPaymentAmount(), this.values().homePrice ?? 0));
+
+  /** One-line summary of the loan type, and for FHA or VA how its fee is paid. */
+  readonly programSummary = computed(() => {
+    const v = this.values();
+    const paid = v.financeUpfrontFee === false ? 'paid at closing' : 'added to the loan';
+    if (v.loanProgram === 'Fha') return `FHA · upfront MIP ${paid}`;
+    if (v.loanProgram !== 'Va') return 'Conventional';
+    if (v.vaUse === 'Exempt') return 'VA · exempt from the funding fee';
+    return `VA · ${v.vaUse === 'SubsequentUse' ? 'used before' : 'first use'} · funding fee ${paid}`;
+  });
 
   readonly isRecast = computed(() => this.values().strategy === 'Recast');
 
@@ -327,6 +346,8 @@ export class LoanFormComponent implements OnInit {
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
       ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
+      ...(v.loanProgram === 'Fha' && this.form.controls.homePrice.valid && this.form.controls.downPayment.valid
+        && belowFhaMinimum(downPaymentAmountOf(v), v.homePrice) ? [FHA_DOWN_TOO_LOW] : []),
       ...(pointsApply(v) && this.form.controls.rateWithoutPoints.valid && this.form.controls.annualInterestRate.valid
         && v.rateWithoutPoints <= v.annualInterestRate ? [POINTS_RATE_TOO_LOW] : []),
       ...(existing && !existing.paidOff

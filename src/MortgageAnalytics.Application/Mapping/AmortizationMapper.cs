@@ -18,12 +18,33 @@ internal static class AmortizationMapper
         new(request.HomePrice, request.DownPayment);
 
     /// <summary>
-    /// Builds the loan terms, using <paramref name="defaultFirstPaymentDate"/> when the request has none. An
-    /// adjustable rate becomes its expected resets.
+    /// The FHA or VA loan, or null for a conventional one. The year the loan closes, which picks FHA's loan-size limit,
+    /// is taken as the year of the month before the first payment.
     /// </summary>
-    public static LoanTerms ToLoanTerms(this AmortizationRequest request, PropertyPurchase purchase, DateOnly defaultFirstPaymentDate)
+    public static GovernmentLoan? ToGovernmentLoan(this AmortizationRequest request, PropertyPurchase purchase, DateOnly firstPaymentDate) =>
+        request.Program switch
+        {
+            { Type: LoanProgramType.Fha } p => GovernmentLoan.Fha(purchase, request.TermInMonths, firstPaymentDate.AddMonths(-1).Year, p.FinanceUpfrontFee),
+            { Type: LoanProgramType.Va } p => GovernmentLoan.Va(purchase, p.VaUse.ToDomain(), p.FinanceUpfrontFee),
+            _ => null,
+        };
+
+    private static VaFundingFeeUse ToDomain(this VaFundingFeeType? use) => use switch
     {
-        var loan = new LoanTerms(purchase.LoanAmount, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
+        null or VaFundingFeeType.FirstUse => VaFundingFeeUse.FirstUse,
+        VaFundingFeeType.SubsequentUse => VaFundingFeeUse.SubsequentUse,
+        VaFundingFeeType.Exempt => VaFundingFeeUse.Exempt,
+        _ => throw new ArgumentOutOfRangeException(nameof(use), use, "Validated before mapping."),
+    };
+
+    /// <summary>
+    /// Builds the loan terms for <paramref name="principal"/> (the purchase's loan, plus a financed FHA or VA fee),
+    /// using <paramref name="defaultFirstPaymentDate"/> when the request has none. An adjustable rate becomes its
+    /// expected resets.
+    /// </summary>
+    public static LoanTerms ToLoanTerms(this AmortizationRequest request, decimal principal, DateOnly defaultFirstPaymentDate)
+    {
+        var loan = new LoanTerms(principal, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
         return loan.WithAdjustableRate(request.ToAdjustableRate());
     }
 
@@ -160,7 +181,7 @@ internal static class AmortizationMapper
                 purchase.DownPaymentPercent,
                 purchase.LoanAmount,
                 purchase.LoanToValuePercent,
-                purchase.RequiresMortgageInsurance),
+                rates.Program is null && purchase.RequiresMortgageInsurance),
             ToResponse(comparison.Baseline, comparison.BaselineCosts, rates),
             ToResponse(comparison.Accelerated, comparison.AcceleratedCosts, rates),
             new SavingsResponse(
@@ -172,16 +193,27 @@ internal static class AmortizationMapper
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
-            ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, purchase, valuation, plan),
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, rates.Loan.Principal, valuation, plan),
             rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
             rates.WorstCase is { } worst ? ToResponse(worst) : null,
             closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)),
-            rates is { Points: { } points, WithoutPoints: { } without } ? ToResponse(points, purchase, comparison.Baseline, without) : null);
+            rates is { Points: { } points, WithoutPoints: { } without } ? ToResponse(points, rates.Loan.Principal, comparison.Baseline, without) : null,
+            rates.Program is { } program ? ToResponse(program) : null);
+
+    private static LoanProgramResponse ToResponse(GovernmentLoan program) =>
+        new(
+            program.Program == LoanProgram.Fha ? LoanProgramType.Fha : LoanProgramType.Va,
+            program.UpfrontFeePercent,
+            program.UpfrontFee,
+            program.UpfrontFeeFinanced,
+            program.LoanAmount,
+            program.AnnualMipPercent,
+            program.MipPayments);
 
     /// <summary>The points against the rate without them, each on its standard schedule.</summary>
-    private static DiscountPointsResponse ToResponse(DiscountPoints points, PropertyPurchase purchase, AmortizationSchedule withPoints, AmortizationSchedule without)
+    private static DiscountPointsResponse ToResponse(DiscountPoints points, decimal loanAmount, AmortizationSchedule withPoints, AmortizationSchedule without)
     {
-        var comparison = points.Compare(purchase.LoanAmount, withPoints, without);
+        var comparison = points.Compare(loanAmount, withPoints, without);
         return new DiscountPointsResponse(
             points.Points,
             comparison.Cost,
@@ -208,8 +240,9 @@ internal static class AmortizationMapper
             ? buydown.TotalSubsidy(rates.Loan, comparison.Baseline)
             : 0m;
 
-        return closing.CashToClose(purchase, rates.Loan.AnnualInterestRate, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buydownCost,
-            rates.Points?.CostFor(purchase.LoanAmount) ?? 0m);
+        return closing.CashToClose(purchase, rates.Loan, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buydownCost,
+            rates.Points?.CostFor(rates.Loan.Principal) ?? 0m,
+            rates.Program is { UpfrontFeeFinanced: false } program ? program.UpfrontFee : 0m);
     }
 
     private static CashToCloseResponse ToResponse(CashToClose cash) =>
@@ -226,6 +259,7 @@ internal static class AmortizationMapper
             cash.EscrowDeposit,
             cash.BuydownCost,
             cash.DiscountPoints,
+            cash.UpfrontMortgageFee,
             cash.ClosingCosts,
             cash.Credits,
             cash.UnusedCredits,
@@ -269,12 +303,12 @@ internal static class AmortizationMapper
     /// and equity follow the <paramref name="accelerated"/> schedule instead: what will actually be owed on the plan.
     /// </summary>
     private static List<YearProjectionResponse> ToProjection(
-        AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, PropertyPurchase purchase,
+        AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, decimal principal,
         PropertyValuation valuation, HousingCostPlan plan)
     {
         // Owed at the start of a year: the loan before the first payment, then the balance after the year before's last.
         decimal BalanceAtStartOf(int index) =>
-            index == 0 ? purchase.LoanAmount
+            index == 0 ? principal
             : index * 12 <= accelerated.Payments.Count ? accelerated.Payments[(index * 12) - 1].RemainingBalance
             : 0m;
 

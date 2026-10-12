@@ -26,6 +26,15 @@ describe('PaymentBreakdownComponent', () => {
     expect(component.slices().map((s) => s.label)).toEqual(['Principal & interest', 'School tax', 'HOA dues']);
   });
 
+  it("names an FHA loan's mortgage insurance MIP", () => {
+    fixture = TestBed.createComponent(PaymentBreakdownComponent);
+    fixture.componentRef.setInput('schedule', aSchedule({ monthlyPayment: 1_861.86, monthlyHousingCosts: aHousingCosts({ mortgageInsurance: 134.33 }) }));
+    fixture.componentRef.setInput('program', { type: 'Fha' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.slices().map((s) => s.label)).toEqual(['Principal & interest', 'FHA MIP']);
+  });
+
   it('gives each slice its share of the total payment', () => {
     const component = withCosts(schedule);
 

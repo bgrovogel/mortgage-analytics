@@ -47,7 +47,7 @@ describe('LoanFormComponent', () => {
 
       expect(details.querySelector('h3')?.textContent).toBe('More details');
       expect([...details.querySelectorAll('details.section')].map((d) => d.getAttribute('data-testid')))
-        .toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
+        .toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
     });
 
     it('says the numbers are an example until the first edit, and never for a restored loan', () => {
@@ -90,7 +90,7 @@ describe('LoanFormComponent', () => {
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();
       }
-      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
       expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
       expect(sections.every((s) => !s.open)).toBe(true);
     });
@@ -661,6 +661,66 @@ describe('LoanFormComponent', () => {
 
       expect(sent[sent.length - 1]).toEqual(saved);
       expect(restored.componentInstance.form.controls.rate.controls.rateType.value).toBe('arm');
+    });
+  });
+
+  describe('FHA and VA loans', () => {
+    const choose = (type: 'Conventional' | 'Fha' | 'Va') => {
+      controls().loanProgram.setValue(type);
+      fixture.detectChanges();
+    };
+
+    it('are conventional unless chosen, with PMI', () => {
+      expect(last().program).toBeNull();
+      expect(last().housingCosts?.pmiRate).toBe(0.5);
+      expect(text('program-summary')).toBe('Conventional');
+    });
+
+    it('send an FHA loan, its upfront MIP financed, and no PMI', () => {
+      controls().downPayment.setValue(13_125); // 3.5% of $375,000
+      choose('Fha');
+
+      expect(last().program).toEqual({ type: 'Fha', vaUse: null, financeUpfrontFee: true });
+      expect(last().housingCosts?.pmiRate).toBe(0);
+      expect(text('program-summary')).toBe('FHA · upfront MIP added to the loan');
+      expect(el('pmi-rate')).toBeNull();
+      expect(text('pmi-hint')).toContain('FHA charges its own mortgage insurance');
+    });
+
+    it('need 3.5% down for FHA, or nothing is sent', () => {
+      controls().downPayment.setValue(13_124);
+      const sent = emitted.length;
+
+      choose('Fha');
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('fha-down-error')).toBe('An FHA loan needs at least 3.5% down.');
+    });
+
+    it('send a VA loan with its funding-fee use, which can be paid at closing', () => {
+      choose('Va');
+      controls().vaUse.setValue('SubsequentUse');
+      controls().financeUpfrontFee.setValue(false);
+      fixture.detectChanges();
+
+      expect(last().program).toEqual({ type: 'Va', vaUse: 'SubsequentUse', financeUpfrontFee: false });
+      expect(last().housingCosts?.pmiRate).toBe(0);
+      expect(text('program-summary')).toBe('VA · used before · funding fee paid at closing');
+      expect(text('pmi-hint')).toContain('VA loans have no mortgage insurance');
+    });
+
+    it('come back as they were saved', () => {
+      choose('Va');
+      controls().vaUse.setValue('Exempt');
+      const original = last();
+
+      const restored = TestBed.createComponent(LoanFormComponent);
+      const sent: AmortizationRequest[] = [];
+      restored.componentInstance.calculate.subscribe((r) => sent.push(r));
+      restored.componentRef.setInput('initial', original);
+      restored.detectChanges();
+
+      expect(sent[0].program).toEqual({ type: 'Va', vaUse: 'Exempt', financeUpfrontFee: true });
     });
   });
 

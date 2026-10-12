@@ -1,4 +1,4 @@
-import { HousingCosts } from './amortization.models';
+import { HousingCosts, LoanProgramType } from './amortization.models';
 
 /** Display metadata for one housing-cost category. */
 export interface CostCategory {
@@ -25,3 +25,15 @@ export const COST_CATEGORIES: readonly CostCategory[] = [
   { key: 'mortgageInsurance', label: 'PMI', color: '--series-7' },
   { key: 'hoaDues', label: 'HOA dues', color: '--series-8' },
 ];
+
+/** What a loan's mortgage insurance is called: MIP on an FHA loan, PMI otherwise (VA loans have none). */
+export function mortgageInsuranceName(program: { type: LoanProgramType } | null | undefined): 'MIP' | 'PMI' {
+  return program?.type === 'Fha' ? 'MIP' : 'PMI';
+}
+
+/** The categories for a loan: the same order and colors, with the mortgage insurance named for its program. */
+export function costCategoriesFor(program: { type: LoanProgramType } | null | undefined): readonly CostCategory[] {
+  return mortgageInsuranceName(program) === 'MIP'
+    ? COST_CATEGORIES.map((c) => (c.key === 'mortgageInsurance' ? { ...c, label: 'FHA MIP' } : c))
+    : COST_CATEGORIES;
+}

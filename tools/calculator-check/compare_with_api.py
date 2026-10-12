@@ -114,6 +114,18 @@ def random_purchase(rng):
             'credits': rng.choice([0, 0, money(rng, 500, 10_000, 100), 50_000]),
         },
     }
+    # FHA (at least 3.5% down) or VA (any down payment), neither with PMI; the fee financed or paid at closing.
+    program = rng.choice(['Conventional', 'Conventional', 'Fha', 'Va'])
+    if program != 'Conventional':
+        request['program'] = {'type': program, 'financeUpfrontFee': rng.random() < 0.8,
+                              'vaUse': rng.choice(['FirstUse', 'SubsequentUse', 'Exempt']) if program == 'Va' else None}
+        request['housingCosts']['pmiRate'] = 0
+        if program == 'Fha':
+            # Half at the 3.5% minimum, the usual FHA purchase (over 95% LTV); the rest with their own down payment.
+            minimum = int(price * 35 / 1000) + 1
+            request['downPayment'] = minimum if rng.random() < 0.5 else max(request['downPayment'], minimum)
+        elif rng.random() < 0.4:
+            request['downPayment'] = 0
     if rng.random() < 0.3:
         request['strategy'] = 'Recast'
         request['recast'] = {'minimumLumpSum': money(rng, 5_000, 20_000, 500), 'fee': money(rng, 0, 500, 50)}

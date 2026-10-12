@@ -1,7 +1,7 @@
 import { CurrencyPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { Schedule } from '../../../core/models/amortization.models';
-import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { LoanProgramType, Schedule } from '../../../core/models/amortization.models';
+import { costCategoriesFor } from '../../../core/models/cost-categories';
 
 /** One slice of the monthly payment. */
 interface Slice {
@@ -52,6 +52,9 @@ export class PaymentBreakdownComponent {
   /** The schedule whose first payment is broken down. */
   readonly schedule = input.required<Schedule>();
 
+  /** The loan's program, which names its mortgage insurance; null for a conventional loan. */
+  readonly program = input<{ type: LoanProgramType } | null>(null);
+
   /** The principal and interest actually paid at first, when it is not the schedule's (year 1 of a buydown). */
   readonly principalAndInterest = input<number | null>(null);
 
@@ -67,7 +70,7 @@ export class PaymentBreakdownComponent {
     const c = s.monthlyHousingCosts;
     const all: Omit<Slice, 'share'>[] = [
       { label: 'Principal & interest', amount: this.principalAndInterest() ?? s.monthlyPayment, color: '--series-1' },
-      ...COST_CATEGORIES.map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
+      ...costCategoriesFor(this.program()).map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
     ];
     const total = this.total() || 1;
     return all.filter((x) => x.amount > 0).map((x) => ({ ...x, share: x.amount / total }));

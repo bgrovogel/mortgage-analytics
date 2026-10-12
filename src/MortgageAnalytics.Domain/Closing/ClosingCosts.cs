@@ -70,17 +70,18 @@ public sealed record ClosingCosts
     /// multiplied, as a Loan Estimate shows it ("$63.44 per day for 15 days"). Credits pay closing costs only, never
     /// the down payment, so any beyond them go unused.
     /// </summary>
-    /// <param name="purchase">The price, down payment and loan.</param>
-    /// <param name="annualInterestRate">The note rate, as a percentage (an adjustable rate's starting rate).</param>
+    /// <param name="purchase">The price and down payment.</param>
+    /// <param name="loan">The loan: its amount (with any financed upfront fee) and note rate (an adjustable rate's starting rate).</param>
     /// <param name="yearOneTaxes">The property taxes billed for the first loan year.</param>
     /// <param name="yearOneInsurance">The first year's homeowners insurance premium.</param>
     /// <param name="buydownCost">A temporary buydown's subsidy, when the buyer pays for it; otherwise zero.</param>
     /// <param name="discountPoints">What discount points cost; otherwise zero.</param>
+    /// <param name="upfrontMortgageFee">An FHA upfront MIP or VA funding fee paid at closing; otherwise zero.</param>
     public CashToClose CashToClose(
-        PropertyPurchase purchase, decimal annualInterestRate, decimal yearOneTaxes, decimal yearOneInsurance, decimal buydownCost,
-        decimal discountPoints = 0m)
+        PropertyPurchase purchase, LoanTerms loan, decimal yearOneTaxes, decimal yearOneInsurance, decimal buydownCost = 0m,
+        decimal discountPoints = 0m, decimal upfrontMortgageFee = 0m)
     {
-        var dailyInterest = Money.Round(purchase.LoanAmount * annualInterestRate / 100m / DaysInYear);
+        var dailyInterest = Money.Round(loan.Principal * loan.AnnualInterestRate / 100m / DaysInYear);
         var monthlyEscrow = Money.Round((yearOneTaxes + yearOneInsurance) / 12m);
 
         return new CashToClose(
@@ -94,6 +95,7 @@ public sealed record ClosingCosts
             EscrowMonths,
             buydownCost,
             discountPoints,
+            upfrontMortgageFee,
             Credits);
     }
 }

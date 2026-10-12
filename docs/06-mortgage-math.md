@@ -9,6 +9,7 @@
 
 **On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) ·
 [Net savings](#net-savings) · [Equity](#equity) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
+[FHA and VA loans](#fha-and-va-loans) ·
 [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) ·
 [Temporary buydowns](#temporary-buydowns) · [Discount points](#discount-points) · [Cash to close](#cash-to-close) · [Refinancing](#refinancing) ·
 [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) ·
@@ -92,6 +93,49 @@ reference loan with 3% growth, year 2 starts owing $197,543.99 of a home worth $
   - **On request at 80%**, which may use the **actual** balance, so extra payments bring it forward, and that
     saving counts in net savings.
 - Each month therefore carries two balances: the actual one and the original schedule's.
+
+---
+
+## FHA and VA loans
+
+Neither has PMI. Each has an **upfront fee** on the base loan (the price less the down payment), usually added to
+the loan, so everything after (the payment, interest, prepaid interest, points, equity) is on the larger amount.
+
+**FHA** ([HUD Mortgagee Letter 2023-05](https://www.hud.gov/sites/dfiles/OCHCO/documents/2023-05hsgml.pdf), case
+numbers endorsed from 20 March 2023): at least 3.5% down, a **1.75%** upfront MIP, and an annual MIP from this table,
+by the base loan's LTV and whether it is above the national conforming loan limit
+([FHFA](https://www.fhfa.gov/news/news-release/fhfa-announces-conforming-loan-limit-values-for-2026): $726,200 in
+2023, $766,550 in 2024, $806,500 in 2025, $832,750 in 2026; the year the loan closes, taken as the month before the
+first payment):
+
+| Term | Base loan | LTV | Annual MIP | For |
+|---|---|---|---|---|
+| Over 15 years | Up to the limit | ≤ 90% | 0.50% | 11 years |
+| | | > 90%, ≤ 95% | 0.50% | the whole loan |
+| | | > 95% | 0.55% | the whole loan |
+| | Above the limit | ≤ 90% / ≤ 95% / > 95% | 0.70% / 0.70% / 0.75% | 11 years / whole / whole |
+| 15 years or less | Up to the limit | ≤ 90% / > 90% | 0.15% / 0.40% | 11 years / whole |
+| | Above the limit | ≤ 78% / ≤ 90% / > 90% | 0.15% / 0.40% / 0.65% | 11 / 11 years / whole |
+
+Each loan year's monthly MIP is `round(round(average balance × rate) ÷ 12)`, the average being that year's 12
+opening balances on the **original** schedule at the starting rate, so extra payments don't lower it; paying the loan
+off ends it. $300,000 with 3.5% down at 6.5%: $289,500 base loan, $5,066.25 upfront MIP, $294,566.25 borrowed; 0.55%
+for 360 payments; $134.33 a month in year 1, $132.77 in year 2, $31,790.40 over the loan.
+
+**VA** ([VA.gov, from 7 April 2023](https://www.va.gov/housing-assistance/home-loans/funding-fee-and-closing-costs/)):
+no down payment needed and no mortgage insurance. The funding fee for a purchase:
+
+| Down payment | First use | Used before |
+|---|---|---|
+| Less than 5% | 2.15% | 3.3% |
+| 5% or more | 1.5% | 1.5% |
+| 10% or more | 1.25% | 1.25% |
+
+Veterans receiving compensation for a service-connected disability (and some others) pay none. $400,000 with nothing
+down, first use: $8,600, so $408,600 is borrowed.
+
+What is **not** modelled: FHA's county loan limits (the most FHA will insure), its credit-score tiers (10% down below
+580), loans endorsed before 20 March 2023 (which paid more MIP), and the VA's limits on what the buyer may pay.
 
 ---
 

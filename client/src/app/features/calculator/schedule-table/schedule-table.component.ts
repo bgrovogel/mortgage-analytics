@@ -1,7 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
-import { COST_CATEGORIES, CostCategory } from '../../../core/models/cost-categories';
+import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { monthOf } from '../../../core/formatting/format';
 
 type View = 'accelerated' | 'baseline';
@@ -48,7 +48,9 @@ const LOAN_COLUMNS: ScheduleColumn[] = [
   { key: 'interest', label: 'Interest', value: (r) => r.interest },
   { key: 'extraPrincipal', label: 'Extra', value: (r) => r.extraPrincipal },
 ];
-const COST_COLUMNS: ScheduleColumn[] = COST_CATEGORIES.map((c) => ({ key: c.key, label: c.label, value: (r) => r.costs[c.key] }));
+/** One column per cost, named for the loan (an FHA loan's mortgage insurance is MIP). */
+const costColumns = (categories: readonly CostCategory[]): ScheduleColumn[] =>
+  categories.map((c) => ({ key: c.key, label: c.label, value: (r) => r.costs[c.key] }));
 const SUMMARY_COLUMNS: ScheduleColumn[] = [
   { key: 'housingCosts', label: 'Housing costs', value: (r) => r.housingCosts },
   { key: 'totalOutlay', label: 'Total', value: (r) => r.totalOutlay },
@@ -88,6 +90,9 @@ export class ScheduleTableComponent {
   /** True when any housing cost is present, which brings in the cost columns. */
   readonly hasHousingCosts = computed(() => this.schedule().totalHousingCosts.total > 0);
 
+  /** What the loan's mortgage insurance is called, for the tag where it ends. */
+  readonly insuranceName = computed(() => mortgageInsuranceName(this.result().program));
+
   /** Payment numbers that were followed by a recast, so their rows can be marked. */
   readonly recastAfter = computed(() => new Set(this.schedule().recasts.map((r) => r.afterPaymentNumber)));
 
@@ -106,7 +111,8 @@ export class ScheduleTableComponent {
   readonly available = computed<ScheduleColumn[]>(() => {
     if (!this.hasHousingCosts()) return LOAN_COLUMNS;
     const totals = this.schedule().totalHousingCosts;
-    return [...LOAN_COLUMNS, ...COST_COLUMNS.filter((c) => totals[c.key as CostKey] > 0), ...SUMMARY_COLUMNS];
+    const costs = costColumns(costCategoriesFor(this.result().program));
+    return [...LOAN_COLUMNS, ...costs.filter((c) => totals[c.key as CostKey] > 0), ...SUMMARY_COLUMNS];
   });
 
   /** The money columns shown, in order. */

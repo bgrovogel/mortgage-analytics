@@ -1,7 +1,9 @@
 import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { validatorsFor } from '../../../core/forms/field-rules';
 import { firstOfMonthFromNext, toCents } from '../../../core/loans/loan-progress';
-import { AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, MortgageInsuranceCancellation } from '../../../core/models/amortization.models';
+import {
+  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, VaFundingFeeType,
+} from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { LOAN_RULES as rules, LUMP_SUM_RULES } from './loan-fields';
 
@@ -32,6 +34,10 @@ const TAX_MODE_CONTROLS = {
 export function loanForm(fb: NonNullableFormBuilder) {
   return fb.group({
     homePrice: [375_000, validatorsFor(rules.homePrice)],
+    // Conventional unless chosen. FHA and VA have their own fees and no PMI.
+    loanProgram: fb.control<LoanProgramType>('Conventional'),
+    vaUse: fb.control<VaFundingFeeType>('FirstUse'),
+    financeUpfrontFee: [true],
     downPaymentMode: fb.control<DownPaymentMode>('amount'),
     // Dollars or a percentage of the price, depending on downPaymentMode.
     downPayment: [18_750, validatorsFor(rules.downPayment)],
@@ -114,6 +120,15 @@ export function downPaymentAmountOf(v: { homePrice?: number; downPayment?: numbe
   return v.downPaymentMode === 'percent' ? toCents(((v.homePrice ?? 0) * entered) / 100) : entered;
 }
 
+/**
+ * True when a down payment is below FHA's 3.5% minimum. Compared as whole numbers (down × 1,000 against price × 35),
+ * because 375,000 × 0.035 is 13,125.000000000002 in floating point, which would refuse exactly 3.5%.
+ */
+export const belowFhaMinimum = (down: number, price: number) => down * 1_000 < price * 35;
+
+/** Shown while an FHA loan has less than 3.5% down. */
+export const FHA_DOWN_TOO_LOW = 'An FHA loan needs at least 3.5% down.';
+
 /** True when discount points are chosen, on a rate they can be compared on (not an adjustable one). */
 export function pointsApply(v: { usePoints?: boolean; rate?: { rateType?: string } }): boolean {
   return !!v.usePoints && v.rate?.rateType !== 'arm';
@@ -194,11 +209,15 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       pid: v.pidAnnual > 0 ? { annualAssessment: v.pidAnnual, remainingYears: v.pidYears || null } : null,
       annualHomeownersInsurance: v.annualInsurance || 0,
       monthlyHoaDues: v.monthlyHoa || 0,
-      pmiRate: v.pmiRate || 0,
+      // PMI is a conventional loan's: FHA has its own MIP, worked out by the API, and VA none.
+      pmiRate: v.loanProgram === 'Conventional' ? v.pmiRate || 0 : 0,
       pmiCancellation: v.pmiCancellation,
     },
     ...rateOptionsRequest(form.controls.rate, 'type'),
     buydownPaidBy: v.buydownPaidBy,
+    program: v.loanProgram === 'Conventional'
+      ? null
+      : { type: v.loanProgram, vaUse: v.loanProgram === 'Va' ? v.vaUse : null, financeUpfrontFee: v.financeUpfrontFee },
     discountPoints: pointsApply(v) ? { points: v.points, rateWithoutPoints: v.rateWithoutPoints } : null,
     closingCosts: {
       loanCosts: v.loanCosts || 0,
@@ -268,6 +287,9 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     pmiRate: costs?.pmiRate ?? 0,
     ...(costs && { pmiCancellation: costs.pmiCancellation }),
     buydownPaidBy: r.buydownPaidBy ?? 'Seller',
+    loanProgram: r.program?.type ?? 'Conventional',
+    ...(r.program && { financeUpfrontFee: r.program.financeUpfrontFee }),
+    ...(r.program?.vaUse && { vaUse: r.program.vaUse }),
     usePoints: !!r.discountPoints,
     ...(r.discountPoints && { points: r.discountPoints.points, rateWithoutPoints: r.discountPoints.rateWithoutPoints }),
     loanCosts: closing?.loanCosts ?? 0,

@@ -1,7 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { usd, usdCents } from '../../../core/formatting/format';
-import { CashToClose } from '../../../core/models/amortization.models';
+import { CashToClose, LoanProgramType } from '../../../core/models/amortization.models';
 
 /** One line of the cash to close: what it is, how it was worked out (when that helps), and the amount. */
 interface Line {
@@ -54,6 +54,9 @@ export class CashToCloseComponent {
   /** The API's cash to close. */
   readonly cash = input.required<CashToClose>();
 
+  /** The loan's program, which names an upfront fee paid at closing; null for a conventional loan. */
+  readonly program = input<{ type: LoanProgramType } | null | undefined>(null);
+
   /** What closing adds to the down payment, and what credits take off, in one sentence. */
   readonly intro = computed(() => {
     const c = this.cash();
@@ -75,6 +78,7 @@ export class CashToCloseComponent {
       { label: 'Escrow deposit', detail: `${c.escrowMonths} months at ${usdCents(c.monthlyEscrow)}`, amount: c.escrowDeposit },
       { label: 'Temporary buydown', detail: 'you pay for it', amount: c.buydownCost },
       { label: 'Discount points', detail: '', amount: c.discountPoints },
+      { label: this.program()?.type === 'Va' ? 'VA funding fee' : 'FHA upfront MIP', detail: 'not added to the loan', amount: c.upfrontMortgageFee },
       { label: 'Credits', detail: 'seller and lender', amount: c.credits, credit: true },
     ];
     return [{ label: 'Down payment', detail: '', amount: c.downPayment }, ...all.filter((line) => line.amount > 0)];

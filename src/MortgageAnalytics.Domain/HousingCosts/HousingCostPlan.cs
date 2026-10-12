@@ -22,6 +22,10 @@ public sealed class HousingCostPlan
     /// <summary>True when the plan holds no costs.</summary>
     public bool IsEmpty => _costs.Count == 0;
 
+    /// <summary>A plan with <paramref name="cost"/> added to these costs; this plan is unchanged.</summary>
+    /// <param name="cost">The cost to add, such as FHA's mortgage insurance.</param>
+    public HousingCostPlan With(IHousingCost cost) => new([.. _costs, cost]);
+
     /// <summary>Calculates every cost for every payment in a schedule that is itself the original schedule (no extra payments).</summary>
     /// <param name="schedule">The amortization schedule the costs are charged alongside.</param>
     public HousingCostSchedule ApplyTo(AmortizationSchedule schedule) => ApplyTo(schedule, schedule);

@@ -118,3 +118,8 @@
 .segmented {
   @include segmented.styles(2);
 }
+
+// The loan type, and a VA loan's funding fee: three choices each.
+.segmented.three {
+  @include segmented.styles(3);
+}

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import { usd } from '../../../core/formatting/format';
-import { YearProjection } from '../../../core/models/amortization.models';
+import { LoanProgramType, YearProjection } from '../../../core/models/amortization.models';
+import { costCategoriesFor } from '../../../core/models/cost-categories';
 import { costTotals, startingYear } from './cost-totals';
 
 /**
@@ -65,13 +66,16 @@ export class CostTotalsComponent {
   /** The yearly projection (one row per loan year). */
   readonly projection = input.required<readonly YearProjection[]>();
 
+  /** The loan's program, which names its mortgage insurance; null for a conventional loan. */
+  readonly program = input<{ type: LoanProgramType } | null | undefined>(null);
+
   /** The year chosen (1-based), shared with the chart; null until someone chooses, which shows the starting year. */
   readonly year = model<number | null>(null);
 
   /** The year on show: the one chosen, or where the loan is now. */
   protected readonly shown = computed(() => this.year() ?? startingYear(this.projection(), new Date()));
 
-  protected readonly totals = computed(() => costTotals(this.projection(), this.shown()));
+  protected readonly totals = computed(() => costTotals(this.projection(), this.shown(), costCategoriesFor(this.program())));
 
   protected readonly money = usd;
 

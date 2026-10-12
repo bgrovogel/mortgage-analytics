@@ -104,6 +104,38 @@ export interface AmortizationRequest {
   closingCosts?: ClosingCostsInput | null;
   /** Discount points paid for the rate, against the rate without them; not with an adjustable rate. */
   discountPoints?: DiscountPointsInput | null;
+  /** An FHA or VA loan; leave out for a conventional one. */
+  program?: LoanProgramInput | null;
+}
+
+/** The kind of loan. */
+export type LoanProgramType = 'Conventional' | 'Fha' | 'Va';
+
+/** Which VA funding fee applies. */
+export type VaFundingFeeType = 'FirstUse' | 'SubsequentUse' | 'Exempt';
+
+/** An FHA or VA loan: FHA's upfront and annual MIP, or VA's funding fee; neither has PMI. */
+export interface LoanProgramInput {
+  type: LoanProgramType;
+  /** VA only: a first use, a later one, or exempt. */
+  vaUse: VaFundingFeeType | null;
+  /** True to add the upfront fee to the loan; false to pay it at closing. */
+  financeUpfrontFee: boolean;
+}
+
+/** An FHA or VA loan's upfront fee and mortgage insurance, as the API works them out. */
+export interface LoanProgramSummary {
+  type: LoanProgramType;
+  /** FHA's upfront MIP or VA's funding fee, as a percentage of the base loan. */
+  upfrontFeePercent: number;
+  upfrontFee: number;
+  upfrontFeeFinanced: boolean;
+  /** What is borrowed: the base loan, plus the fee when financed. */
+  loanAmount: number;
+  /** FHA's annual MIP; 0 for VA. */
+  annualMipPercent: number;
+  /** How many payments carry FHA's annual MIP: 132 (11 years) or the whole term. */
+  mipPayments: number;
 }
 
 /** Discount points: a fee at closing, a percentage of the loan, for a lower rate for the whole loan. */
@@ -166,6 +198,8 @@ export interface CashToClose {
   buydownCost: number;
   /** Discount points; zero without them. */
   discountPoints: number;
+  /** An FHA upfront MIP or VA funding fee paid at closing; zero when financed or for a conventional loan. */
+  upfrontMortgageFee: number;
   /** Everything besides the down payment, before credits. */
   closingCosts: number;
   /** The credits used: never more than the closing costs. */
@@ -300,6 +334,8 @@ export interface AmortizationResponse {
   cashToClose?: CashToClose | null;
   /** Null without discount points. */
   discountPoints?: DiscountPointsSummary | null;
+  /** Null for a conventional loan. */
+  program?: LoanProgramSummary | null;
 }
 
 export interface BuydownSummary {

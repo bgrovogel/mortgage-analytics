@@ -12,7 +12,7 @@ import { CostTotalsComponent } from '../cost-projection/cost-totals.component';
   selector: 'app-projection-tab',
   imports: [CostProjectionComponent, CostTotalsComponent],
   template: `
-    <div class="panel"><app-cost-totals [projection]="result().projection" [(year)]="year" /></div>
+    <div class="panel"><app-cost-totals [projection]="result().projection" [program]="result().program" [(year)]="year" /></div>
     <div class="panel"><app-cost-projection [result]="result()" view="costs" (yearPicked)="year.set($event)" /></div>
     <div class="panel"><app-cost-projection [result]="result()" view="value" /></div>
     <div class="panel"><app-cost-projection [result]="result()" view="equity" /></div>

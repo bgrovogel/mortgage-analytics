@@ -78,6 +78,24 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .SetValidator(r => new ExtraPaymentsValidator(r.HomePrice - r.DownPayment, r.TermInMonths))
             .When(r => r.ExtraPayments is not null);
 
+        RuleFor(r => r.Program!.Type).IsInEnum().OverridePropertyName("Program.Type").WithName("Loan type").When(r => r.Program is not null);
+        RuleFor(r => r.Program!.VaUse)
+            .IsInEnum().OverridePropertyName("Program.VaUse").WithName("VA funding fee")
+            .When(r => r.Program?.VaUse is not null);
+        RuleFor(r => r.Program!.VaUse)
+            .Null().WithMessage("Only a VA loan has a funding fee.").OverridePropertyName("Program.VaUse")
+            .When(r => r.Program is { Type: not LoanProgramType.Va });
+
+        RuleFor(r => r.DownPayment)
+            .Must((r, down) => down >= r.HomePrice * GovernmentLoan.FhaMinimumDownPaymentPercent / 100m)
+            .WithMessage($"An FHA loan needs at least {GovernmentLoan.FhaMinimumDownPaymentPercent}% down.")
+            .When(r => r.Program?.Type == LoanProgramType.Fha);
+
+        RuleFor(r => r.HousingCosts!.PmiRate)
+            .Equal(0m).WithMessage("FHA and VA loans have no PMI: FHA has its own mortgage insurance, worked out from the loan, and VA none.")
+            .OverridePropertyName("HousingCosts.PmiRate")
+            .When(r => r.HousingCosts is not null && r.Program?.Type is LoanProgramType.Fha or LoanProgramType.Va);
+
         RuleFor(r => r.DiscountPoints!.Points)
             .GreaterThan(0).LessThanOrEqualTo(DiscountPoints.MaxPoints)
             .Must(points => decimal.Round(points, 3) == points).WithMessage("'Points' can have at most 3 decimal places.")

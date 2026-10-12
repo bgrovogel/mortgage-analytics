@@ -74,7 +74,7 @@
                   <td>
                     {{ row.housingCosts | currency }}
                     @if (row.pmiEnds) {
-                      <span class="tag" data-testid="pmi-ends-tag">PMI ends</span>
+                      <span class="tag" data-testid="pmi-ends-tag">{{ insuranceName() }} ends</span>
                     }
                   </td>
                 }

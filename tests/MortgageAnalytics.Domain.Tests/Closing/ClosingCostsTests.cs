@@ -14,8 +14,10 @@ public class ClosingCostsTests
     private static readonly PropertyPurchase Purchase = new(375_000m, 18_750m);
     private static readonly ClosingCosts Typical = new(loanCosts: 4_000m, otherFees: 1_000m, prepaidInterestDays: 15, escrowMonths: 3, credits: 3_000m);
 
-    private static CashToClose CashFor(ClosingCosts costs, decimal buydownCost = 0m, decimal discountPoints = 0m) =>
-        costs.CashToClose(Purchase, annualInterestRate: 6.5m, yearOneTaxes: 7_150m, yearOneInsurance: 2_400m, buydownCost, discountPoints);
+    private static readonly LoanTerms Loan = new(356_250m, 6.5m, 360, new DateOnly(2026, 11, 1));
+
+    private static CashToClose CashFor(ClosingCosts costs, decimal buydownCost = 0m, decimal discountPoints = 0m, decimal upfrontFee = 0m) =>
+        costs.CashToClose(Purchase, Loan, yearOneTaxes: 7_150m, yearOneInsurance: 2_400m, buydownCost, discountPoints, upfrontFee);
 
     [Test]
     public void PrepaidInterest_IsTheDailyInterest_RoundedToCents_TimesTheDays()
@@ -78,6 +80,26 @@ public class ClosingCostsTests
             Assert.That(cash.DiscountPoints, Is.EqualTo(3_562.50m), "one point on the $356,250 loan");
             Assert.That(cash.ClosingCosts, Is.EqualTo(14_301.59m), "on top of the other closing costs");
         });
+    }
+
+    [Test]
+    public void AnUpfrontMortgageFeePaidInCash_IsAClosingCost()
+    {
+        var cash = CashFor(Typical, upfrontFee: 6_234.38m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.UpfrontMortgageFee, Is.EqualTo(6_234.38m), "an FHA upfront MIP not added to the loan");
+            Assert.That(cash.ClosingCosts, Is.EqualTo(16_973.47m), "is paid with the other closing costs");
+        });
+    }
+
+    [Test]
+    public void PrepaidInterest_IsOnTheWholeLoan_AFinancedFeeIncluded()
+    {
+        var cash = Typical.CashToClose(Purchase, new LoanTerms(362_484.38m, 6.5m, 360, new DateOnly(2026, 11, 1)), 7_150m, 2_400m);
+
+        Assert.That(cash.DailyInterest, Is.EqualTo(64.55m), "interest accrues on everything borrowed: 362,484.38 × 6.5% ÷ 365");
     }
 
     [Test]

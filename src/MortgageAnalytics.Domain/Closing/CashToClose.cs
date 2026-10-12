@@ -11,6 +11,7 @@ namespace MortgageAnalytics.Domain.Closing;
 /// <param name="EscrowMonths">Months of it paid into escrow.</param>
 /// <param name="BuydownCost">A temporary buydown's subsidy, when the buyer pays for it.</param>
 /// <param name="DiscountPoints">What discount points cost.</param>
+/// <param name="UpfrontMortgageFee">An FHA upfront MIP or VA funding fee paid at closing rather than financed.</param>
 /// <param name="CreditsOffered">What the seller and lender offered toward closing costs.</param>
 public sealed record CashToClose(
     decimal DownPayment,
@@ -23,6 +24,7 @@ public sealed record CashToClose(
     int EscrowMonths,
     decimal BuydownCost,
     decimal DiscountPoints,
+    decimal UpfrontMortgageFee,
     decimal CreditsOffered)
 {
     /// <summary>The interest from closing to the end of the month.</summary>
@@ -32,7 +34,7 @@ public sealed record CashToClose(
     public decimal EscrowDeposit => MonthlyEscrow * EscrowMonths;
 
     /// <summary>Everything paid at closing besides the down payment, before credits.</summary>
-    public decimal ClosingCosts => LoanCosts + OtherFees + PrepaidInterest + HomeownersInsurance + EscrowDeposit + BuydownCost + DiscountPoints;
+    public decimal ClosingCosts => LoanCosts + OtherFees + PrepaidInterest + HomeownersInsurance + EscrowDeposit + BuydownCost + DiscountPoints + UpfrontMortgageFee;
 
     /// <summary>The credits used: they pay closing costs, and no more.</summary>
     public decimal Credits => Math.Min(CreditsOffered, ClosingCosts);

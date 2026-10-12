@@ -28,10 +28,21 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     public AmortizationResponse Analyze(AmortizationRequest request)
     {
         var purchase = request.ToPurchase();
-        var loan = request.ToLoanTerms(purchase, clock.FirstOfNextMonth());
+        var firstPayment = request.FirstPaymentDate ?? clock.FirstOfNextMonth();
+        // An FHA or VA loan borrows its upfront fee too, unless it is paid at closing.
+        var program = request.ToGovernmentLoan(purchase, firstPayment);
+        var loan = request.ToLoanTerms(program?.LoanAmount ?? purchase.LoanAmount, firstPayment);
         var valuation = request.HousingCosts.ToValuation(purchase);
 
         var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation);
+        if (program is { Program: LoanProgram.Fha })
+        {
+            // FHA's MIP is figured on the original schedule at the starting rate, whatever the rate does later.
+            var original = comparer.Compare(
+                new LoanTerms(loan.Principal, loan.AnnualInterestRate, loan.TermInMonths, loan.FirstPaymentDate),
+                ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline;
+            plan = plan.With(new FhaMortgageInsurance(program, original));
+        }
         var comparison = comparer.Compare(loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(), plan);
 
         // An adjustable rate also shows its worst case: the standard schedule if rates rise as far as the caps allow.
@@ -49,7 +60,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
                 new LoanTerms(loan.Principal, points.RateWithoutPoints, loan.TermInMonths, loan.FirstPaymentDate),
                 ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline;
 
-        var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints);
+        var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program);
         return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts());
     }
 }

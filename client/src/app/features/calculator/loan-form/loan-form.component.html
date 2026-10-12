@@ -36,6 +36,9 @@
     } @else {
       <small class="error">The down payment must be less than the home price.</small>
     }
+    @if (fhaDownTooLow()) {
+      <small class="error" data-testid="fha-down-error">{{ fhaDownMessage }}</small>
+    }
 
     <div class="row">
       <app-number-field [control]="form.controls.annualInterestRate" [rule]="rules.annualInterestRate" testId="interest-rate" />
@@ -67,6 +70,51 @@
 
   <section class="more-details" aria-labelledby="loan-more-details" data-testid="more-details">
   <h3 id="loan-more-details">More details</h3>
+  <details class="section" data-testid="section-program">
+    <summary>
+      <span class="section-title">Loan type</span>
+      <span class="section-summary" data-testid="program-summary">{{ programSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="segmented three" role="radiogroup" aria-label="Loan type">
+        <label><input type="radio" formControlName="loanProgram" value="Conventional" data-testid="program-conventional" /> Conventional</label>
+        <label><input type="radio" formControlName="loanProgram" value="Fha" data-testid="program-fha" /> <abbr title="Federal Housing Administration">FHA</abbr></label>
+        <label><input type="radio" formControlName="loanProgram" value="Va" data-testid="program-va" /> <abbr title="Department of Veterans Affairs">VA</abbr></label>
+      </div>
+      @switch (loanProgram()) {
+        @case ('Fha') {
+          <p class="hint">
+            At least 3.5% down. A 1.75% upfront MIP, and an annual MIP from HUD's table (0.55% of the balance for most
+            30-year loans with less than 5% down), for 11 years with 10% or more down, otherwise for the whole loan.
+          </p>
+        }
+        @case ('Va') {
+          <div class="field">
+            <span id="va-use-label">VA funding fee</span>
+            <div class="segmented three" role="radiogroup" aria-labelledby="va-use-label" data-testid="va-use">
+              <label><input type="radio" formControlName="vaUse" value="FirstUse" data-testid="va-use-first" /> First use</label>
+              <label><input type="radio" formControlName="vaUse" value="SubsequentUse" data-testid="va-use-subsequent" /> Used before</label>
+              <label><input type="radio" formControlName="vaUse" value="Exempt" data-testid="va-use-exempt" /> Exempt</label>
+            </div>
+          </div>
+          <p class="hint">
+            No down payment needed and no mortgage insurance. The funding fee is 2.15% (3.3% if used before) with less than
+            5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated for a service-connected disability are exempt.
+          </p>
+        }
+        @default {
+          <p class="hint">PMI, below 20% down, is set under Insurance, HOA &amp; PMI.</p>
+        }
+      }
+      @if (loanProgram() !== 'Conventional') {
+        <label class="checkbox">
+          <input type="checkbox" formControlName="financeUpfrontFee" data-testid="finance-upfront-fee" />
+          <span>Add the {{ loanProgram() === 'Fha' ? 'upfront MIP' : 'funding fee' }} to the loan (most do), rather than pay it at closing</span>
+        </label>
+      }
+    </div>
+  </details>
+
   <details class="section" data-testid="section-rate">
     <summary>
       <span class="section-title">Rate type</span>
@@ -217,18 +265,24 @@
         <app-number-field [control]="form.controls.monthlyHoa" [rule]="rules.monthlyHoa" testId="monthly-hoa" label="HOA dues per month" />
       </div>
 
-      <div class="row">
-        <app-number-field [control]="form.controls.pmiRate" [rule]="rules.pmiRate" testId="pmi-rate" label="PMI per year" />
-        <label class="field">
-          <span>PMI removal</span>
-          <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
-            <option value="Automatic">Auto at 78%</option>
-            <option value="BorrowerRequested">Ask at 80%</option>
-          </select>
-        </label>
-      </div>
+      @if (loanProgram() === 'Conventional') {
+        <div class="row">
+          <app-number-field [control]="form.controls.pmiRate" [rule]="rules.pmiRate" testId="pmi-rate" label="PMI per year" />
+          <label class="field">
+            <span>PMI removal</span>
+            <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
+              <option value="Automatic">Auto at 78%</option>
+              <option value="BorrowerRequested">Ask at 80%</option>
+            </select>
+          </label>
+        </div>
+      }
       <p class="hint" data-testid="pmi-hint">
-        @if (pmiApplies()) {
+        @if (loanProgram() === 'Fha') {
+          No PMI: FHA charges its own mortgage insurance (MIP), worked out from the loan. See Loan type.
+        } @else if (loanProgram() === 'Va') {
+          No PMI: VA loans have no mortgage insurance.
+        } @else if (pmiApplies()) {
           PMI applies because less than 20% is down. It is removed automatically when the original schedule
           reaches 78% of the price; extra payments only count if you ask at 80%.
         } @else {

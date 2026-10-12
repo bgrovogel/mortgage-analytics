@@ -120,9 +120,11 @@ def taxable(assessed, amount=D(0), percent=D(0)):
 class Costs:
     """Every recurring cost of owning the home, by payment number, and the yearly projection."""
 
-    def __init__(self, request, years):
+    def __init__(self, request, years, fha_mip=None):
         c = request.get('housingCosts')
         self.c = c
+        # FHA and VA loans have no PMI: FHA's own MIP (any housing costs or none), or none at all for VA.
+        self.government_mip = fha_mip
         price = D(str(request['homePrice']))
         loan = price - D(str(request['downPayment']))
         self.price, self.loan = price, loan
@@ -182,6 +184,8 @@ class Costs:
     def for_payment(self, p, opening, scheduled_opening):
         """Each category's charge with payment `p`, given the actual and the original schedule's opening balance."""
         out = dict.fromkeys(CATEGORIES, D(0))
+        if self.government_mip:
+            out['mortgageInsurance'] = self.government_mip(p)
         if not self.c:
             return out
         year = (p - 1) // 12
@@ -193,17 +197,90 @@ class Costs:
             out['homeownersInsurance'] = installment(grow(self.insurance[0], self.insurance[1], year), p)
         if self.hoa[0] > 0:
             out['hoaDues'] = grow(self.hoa[0], self.hoa[1], year)
-        tested = opening if self.pmi_by_request else scheduled_opening
-        out['mortgageInsurance'] = self.pmi_premium if tested > self.pmi_threshold else D(0)
+        if not self.government_mip:
+            tested = opening if self.pmi_by_request else scheduled_opening
+            out['mortgageInsurance'] = self.pmi_premium if tested > self.pmi_threshold else D(0)
         return out
+
+
+# ---------------------------------------------------------------------------------------------- FHA and VA
+
+# The national conforming loan limit (FHFA), by year. Since HUD Mortgagee Letter 2023-05 (case numbers endorsed from
+# 20 March 2023) it is the base loan amount above which FHA's annual MIP is higher.
+CONFORMING_LIMITS = {2023: D(726_200), 2024: D(766_550), 2025: D(806_500), 2026: D(832_750)}
+
+
+def conforming_limit(year):
+    """The limit for `year`: the latest known for later years, the first (2023) for earlier ones."""
+    known = [y for y in CONFORMING_LIMITS if y <= year]
+    return CONFORMING_LIMITS[max(known)] if known else CONFORMING_LIMITS[min(CONFORMING_LIMITS)]
+
+
+def fha_annual_mip(base_loan, price, term, closing_year):
+    """HUD ML 2023-05's table: the annual MIP rate (percent) and whether it lasts 11 years or the whole term."""
+    ltv = base_loan / price  # exact, against 0.90, 0.95, 0.78
+    big = base_loan > conforming_limit(closing_year)
+    if term > 180:
+        rate = (D('0.70') if big else D('0.50')) if ltv <= D('0.95') else (D('0.75') if big else D('0.55'))
+    elif not big:
+        rate = D('0.15') if ltv <= D('0.90') else D('0.40')
+    else:
+        rate = D('0.15') if ltv <= D('0.78') else D('0.40') if ltv <= D('0.90') else D('0.65')
+    return rate, ltv <= D('0.90')
+
+
+def va_funding_fee_rate(down, price, use):
+    """The VA funding fee for a purchase (percent), by down payment and first or later use, since 7 April 2023."""
+    if use == 'Exempt':
+        return D(0)
+    share = down / price
+    if share >= D('0.10'):
+        return D('1.25')
+    if share >= D('0.05'):
+        return D('1.5')
+    return D('2.15') if use == 'FirstUse' else D('3.3')
+
+
+def program_of(request, price, down, rate, term, first):
+    """The loan program: the upfront fee, the loan with it, and FHA's annual MIP by payment number."""
+    base = price - down
+    program = request.get('program') or {}
+    kind = program.get('type', 'Conventional')
+    if kind == 'Conventional':
+        return None, base, lambda p: D(0)
+    financed = program.get('financeUpfrontFee', True)
+    fee_rate = D('1.75') if kind == 'Fha' else va_funding_fee_rate(down, price, program.get('vaUse') or 'FirstUse')
+    fee = money(base * fee_rate / 100)
+    loan = base + fee if financed else base
+    out = {'type': kind, 'upfrontFeePercent': fee_rate, 'upfrontFee': fee, 'upfrontFeeFinanced': financed,
+           'loanAmount': loan, 'annualMipPercent': D(0), 'mipPayments': 0}
+    if kind == 'Va':
+        return out, loan, lambda p: D(0)
+
+    # FHA: the annual rate on each loan year's average balance on the original schedule, at the starting rate, a
+    # twelfth of it a month, for 11 years (132 payments) at 90% LTV or less, otherwise the whole term.
+    closing_year = add_months(first, -1).year
+    mip_rate, eleven_years = fha_annual_mip(base, price, term, closing_year)
+    original = amortize(loan, rate, term)
+    openings = [r['opening'] for r in original['rows']]
+    mip_payments = min(132, term) if eleven_years else term
+    out['annualMipPercent'], out['mipPayments'] = mip_rate, mip_payments
+
+    def monthly(p):
+        if p > mip_payments:
+            return D(0)
+        year = openings[(p - 1) // 12 * 12:(p - 1) // 12 * 12 + 12]
+        return money(money(sum(year, D(0)) / len(year) * mip_rate / 100) / 12)
+    return out, loan, monthly
 
 
 # ---------------------------------------------------------------------------------------------- the whole analysis
 
 def analyze(request, today):
     price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
-    loan, rate, term = price - down, D(str(request['annualInterestRate'])), request['termInMonths']
+    rate, term = D(str(request['annualInterestRate'])), request['termInMonths']
     first = date.fromisoformat(request['firstPaymentDate']) if request.get('firstPaymentDate') else first_of_next_month(today)
+    program, loan, fha_mip = program_of(request, price, down, rate, term, first)
     arm = request.get('adjustableRate')
     changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], D(str(arm['expectedRate'])),
                        D(str(arm['initialCap'])), D(str(arm['periodicCap'])), D(str(arm['lifetimeCap'])),
@@ -215,7 +292,7 @@ def analyze(request, today):
 
     baseline = amortize(loan, rate, term, changes)
     accelerated = amortize(loan, rate, term, changes, extras_of(request), recast)
-    costs = Costs(request, (term + 11) // 12)
+    costs = Costs(request, (term + 11) // 12, fha_mip if program else None)
 
     buydown = request.get('buydown')
     note_payment = payment(loan, rate, term)
@@ -296,8 +373,9 @@ def analyze(request, today):
     dp_percent = (down / price * 10000).to_integral_value(rounding='ROUND_DOWN') / 100
 
     out = {
-        'purchase': {'homePrice': price, 'downPayment': down, 'downPaymentPercent': dp_percent, 'loanAmount': loan,
-                     'loanToValuePercent': 100 - dp_percent, 'mortgageInsuranceRequired': loan > price * 80 / 100},
+        'purchase': {'homePrice': price, 'downPayment': down, 'downPaymentPercent': dp_percent, 'loanAmount': price - down,
+                     'loanToValuePercent': 100 - dp_percent,
+                     'mortgageInsuranceRequired': program is None and price - down > price * 80 / 100},
         'baseline': base, 'accelerated': acc,
         'savings': {'interestSaved': interest_saved, 'mortgageInsuranceSaved': pmi_saved, 'recastFees': fees,
                     'netSavings': interest_saved + pmi_saved - fees,
@@ -315,12 +393,14 @@ def analyze(request, today):
             years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
         out['buydown'] = {'noteRate': rate, 'years': years,
                           'totalSubsidy': base['buydownSubsidy'], 'paidBy': paid_by}
+    out['program'] = program
     points = request.get('discountPoints')
     out['discountPoints'] = discount_points(points, loan, term, first, baseline) if points else None
     closing = request.get('closingCosts')
     out['cashToClose'] = cash_to_close(closing, down, loan, rate, projection[0]['costs'],
                                        base['buydownSubsidy'] if paid_by == 'Borrower' else D(0),
-                                       out['discountPoints']['cost'] if points else D(0)) if closing else None
+                                       out['discountPoints']['cost'] if points else D(0),
+                                       program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0)) if closing else None
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
@@ -361,7 +441,7 @@ def discount_points(points, loan, term, first, with_points):
     }
 
 
-def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost):
+def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost, upfront_fee):
     """
     The Loan Estimate's way: fees as entered; prepaid interest at a day's interest (a 365-day year, to the cent) for the
     days given; the first year's insurance premium; and months of the first year's taxes and insurance into escrow, a
@@ -374,14 +454,14 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost
     insurance = year_one['homeownersInsurance']
     monthly = money((taxes + insurance) / 12)
     loan_costs, other = D(str(closing.get('loanCosts', 0))), D(str(closing.get('otherFees', 0)))
-    costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost + points_cost
+    costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost + points_cost + upfront_fee
     offered = D(str(closing.get('credits', 0)))
     credits = min(offered, costs)
     return {
         'downPayment': down, 'loanCosts': loan_costs, 'otherFees': other,
         'dailyInterest': daily, 'prepaidInterestDays': days, 'prepaidInterest': daily * days,
         'homeownersInsurance': insurance, 'monthlyEscrow': monthly, 'escrowMonths': months, 'escrowDeposit': monthly * months,
-        'buydownCost': buydown_cost, 'discountPoints': points_cost, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
+        'buydownCost': buydown_cost, 'discountPoints': points_cost, 'upfrontMortgageFee': upfront_fee, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
         'total': down + costs - credits,
     }
 

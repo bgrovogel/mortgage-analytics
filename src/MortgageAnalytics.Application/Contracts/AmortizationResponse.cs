@@ -10,6 +10,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="AdjustableRate">An adjustable rate's worst case. Null for a fixed rate.</param>
 /// <param name="CashToClose">What the buyer brings to closing, line by line. Null when the request has no closing costs.</param>
 /// <param name="DiscountPoints">What discount points are worth against the rate without them. Null without points.</param>
+/// <param name="Program">An FHA or VA loan's upfront fee and mortgage insurance. Null for a conventional loan.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -19,7 +20,25 @@ public sealed record AmortizationResponse(
     BuydownResponse? Buydown = null,
     AdjustableRateResponse? AdjustableRate = null,
     CashToCloseResponse? CashToClose = null,
-    DiscountPointsResponse? DiscountPoints = null);
+    DiscountPointsResponse? DiscountPoints = null,
+    LoanProgramResponse? Program = null);
+
+/// <summary>An FHA or VA loan's upfront fee and mortgage insurance.</summary>
+/// <param name="Type">FHA or VA.</param>
+/// <param name="UpfrontFeePercent">The upfront fee (FHA's upfront MIP, VA's funding fee), as a percentage of the base loan.</param>
+/// <param name="UpfrontFee">The upfront fee in dollars.</param>
+/// <param name="UpfrontFeeFinanced">True when it is added to the loan; false when it is paid at closing.</param>
+/// <param name="LoanAmount">The amount borrowed: the base loan, plus the fee when financed. Payments, interest and equity use it.</param>
+/// <param name="AnnualMipPercent">FHA's annual MIP rate; zero for VA.</param>
+/// <param name="MipPayments">How many payments carry FHA's annual MIP: 132 (11 years) or the whole term; zero for VA.</param>
+public sealed record LoanProgramResponse(
+    LoanProgramType Type,
+    decimal UpfrontFeePercent,
+    decimal UpfrontFee,
+    bool UpfrontFeeFinanced,
+    decimal LoanAmount,
+    decimal AnnualMipPercent,
+    int MipPayments);
 
 /// <summary>Discount points against the rate without them, each loan on its standard schedule.</summary>
 /// <param name="Points">The points paid, as a percentage of the loan.</param>
@@ -55,6 +74,7 @@ public sealed record DiscountPointsResponse(
 /// <param name="EscrowDeposit">The deposit that starts the escrow account.</param>
 /// <param name="BuydownCost">A temporary buydown's subsidy when the buyer pays for it; zero otherwise.</param>
 /// <param name="DiscountPoints">What discount points cost; zero without them.</param>
+/// <param name="UpfrontMortgageFee">An FHA upfront MIP or VA funding fee paid at closing rather than financed; zero otherwise.</param>
 /// <param name="ClosingCosts">Everything paid at closing besides the down payment, before credits.</param>
 /// <param name="Credits">The seller's and lender's credits used: never more than the closing costs.</param>
 /// <param name="UnusedCredits">Credits beyond the closing costs, which cannot pay the down payment.</param>
@@ -72,6 +92,7 @@ public sealed record CashToCloseResponse(
     decimal EscrowDeposit,
     decimal BuydownCost,
     decimal DiscountPoints,
+    decimal UpfrontMortgageFee,
     decimal ClosingCosts,
     decimal Credits,
     decimal UnusedCredits,
@@ -141,7 +162,7 @@ public sealed record YearProjectionResponse(
 /// <param name="DownPaymentPercent">The down payment as a percentage of the price.</param>
 /// <param name="LoanAmount">The amount borrowed.</param>
 /// <param name="LoanToValuePercent">The loan as a percentage of the price.</param>
-/// <param name="MortgageInsuranceRequired">True when less than 20% is put down.</param>
+/// <param name="MortgageInsuranceRequired">True when a conventional loan needs PMI: less than 20% down. FHA and VA loans have no PMI.</param>
 public sealed record PurchaseResponse(
     decimal HomePrice,
     decimal DownPayment,

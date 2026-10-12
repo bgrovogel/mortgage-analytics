@@ -8,12 +8,13 @@ describe('CashToCloseComponent', () => {
     downPayment: 18_750, loanCosts: 4_000, otherFees: 1_000,
     dailyInterest: 63.44, prepaidInterestDays: 15, prepaidInterest: 951.6,
     homeownersInsurance: 2_400, monthlyEscrow: 795.83, escrowMonths: 3, escrowDeposit: 2_387.49,
-    buydownCost: 0, discountPoints: 0, closingCosts: 10_739.09, credits: 3_000, unusedCredits: 0, total: 26_489.09,
+    buydownCost: 0, discountPoints: 0, upfrontMortgageFee: 0, closingCosts: 10_739.09, credits: 3_000, unusedCredits: 0, total: 26_489.09,
   };
 
-  const render = (cash: CashToClose) => {
+  const render = (cash: CashToClose, program: 'Fha' | 'Va' | null = null) => {
     const fixture = TestBed.createComponent(CashToCloseComponent);
     fixture.componentRef.setInput('cash', cash);
+    fixture.componentRef.setInput('program', program ? { type: program } : null);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     const text = (id: string) => root.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
@@ -58,6 +59,14 @@ describe('CashToCloseComponent', () => {
 
   it('shows a buydown you pay for at closing', () => {
     expect(render({ ...typical, buydownCost: 4_436.76 }).rows()).toContain('Temporary buydown | you pay for it | $4,436.76');
+  });
+
+  it("shows an FHA or VA loan's upfront fee when it is paid at closing, by its name", () => {
+    const fha = render({ ...typical, upfrontMortgageFee: 5_066.25 }, 'Fha').rows();
+    const va = render({ ...typical, upfrontMortgageFee: 8_600 }, 'Va').rows();
+
+    expect(fha).toContain('FHA upfront MIP | not added to the loan | $5,066.25');
+    expect(va).toContain('VA funding fee | not added to the loan | $8,600.00');
   });
 
   it('shows discount points, paid at closing', () => {

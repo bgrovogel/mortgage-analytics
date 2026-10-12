@@ -150,6 +150,21 @@ public class HousingCostPlanTests : AmortizationTestBase
     }
 
     [Test]
+    public void With_AddsACost_AndLeavesThePlanItCameFromAlone()
+    {
+        var schedule = StandardSchedule(A.Loan());
+        var dues = new HousingCostPlan([new MonthlyFixedCost(HousingCostCategory.HoaDues, 75m)]);
+
+        var withInsurance = dues.With(new MonthlyFixedCost(HousingCostCategory.MortgageInsurance, 100m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(withInsurance.ApplyTo(schedule).Periods[0].Total, Is.EqualTo(175m), "both costs are charged");
+            Assert.That(dues.ApplyTo(schedule).Periods[0].Total, Is.EqualTo(75m), "the original plan is unchanged");
+        });
+    }
+
+    [Test]
     public void Schedule_RejectsBreakdownsThatDoNotMatchThePayments()
     {
         var schedule = StandardSchedule(A.Loan(1_000m, 0m, 2));

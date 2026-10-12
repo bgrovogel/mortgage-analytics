@@ -52,6 +52,9 @@ public sealed record AmortizationRequest
     /// <summary>An adjustable rate (ARM): the rate resets after a fixed period. Omit for a fixed rate.</summary>
     public AdjustableRateRequest? AdjustableRate { get; init; }
 
+    /// <summary>An FHA or VA loan, with its upfront fee and mortgage insurance. Omit for a conventional loan.</summary>
+    public LoanProgramRequest? Program { get; init; }
+
     /// <summary>
     /// Discount points paid for <see cref="AnnualInterestRate"/>, compared with the rate offered without them. Omit for
     /// none. Not with an <see cref="AdjustableRate"/>.
@@ -60,6 +63,52 @@ public sealed record AmortizationRequest
 
     /// <summary>What is paid at closing besides the down payment, for the cash to close. Omit for no estimate.</summary>
     public ClosingCostsRequest? ClosingCosts { get; init; }
+}
+
+/// <summary>
+/// The kind of loan. FHA: a 1.75% upfront MIP and an annual MIP (HUD Mortgagee Letter 2023-05), at least 3.5% down.
+/// VA: a funding fee by down payment and use, no mortgage insurance. Neither has PMI, so <c>HousingCosts.PmiRate</c>
+/// must be 0.
+/// </summary>
+public sealed record LoanProgramRequest
+{
+    /// <summary>Conventional, FHA or VA.</summary>
+    /// <example>Fha</example>
+    public LoanProgramType Type { get; init; } = LoanProgramType.Conventional;
+
+    /// <summary>For a VA loan: a first use, a later one, or exempt from the fee. Defaults to a first use; only for VA.</summary>
+    /// <example>FirstUse</example>
+    public VaFundingFeeType? VaUse { get; init; }
+
+    /// <summary>True (the default) to add the upfront fee to the loan; false to pay it at closing.</summary>
+    /// <example>true</example>
+    public bool FinanceUpfrontFee { get; init; } = true;
+}
+
+/// <summary>The kind of loan.</summary>
+public enum LoanProgramType
+{
+    /// <summary>A conventional loan: PMI below 20% down.</summary>
+    Conventional,
+
+    /// <summary>An FHA-insured loan.</summary>
+    Fha,
+
+    /// <summary>A VA-guaranteed loan.</summary>
+    Va,
+}
+
+/// <summary>Which VA funding fee applies.</summary>
+public enum VaFundingFeeType
+{
+    /// <summary>The first VA loan.</summary>
+    FirstUse,
+
+    /// <summary>A VA loan after an earlier one.</summary>
+    SubsequentUse,
+
+    /// <summary>No fee, as for a veteran compensated for a service-connected disability.</summary>
+    Exempt,
 }
 
 /// <summary>Discount points: a fee at closing, a percentage of the loan, for a lower rate for the whole loan.</summary>

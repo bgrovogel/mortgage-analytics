@@ -3,7 +3,7 @@ import { hostChart } from '../../../core/charts/chart-host';
 import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
 import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
-import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { costCategoriesFor } from '../../../core/models/cost-categories';
 import { equityFooter, equityLines, equityNote } from './equity-lines';
 import { valueBills, valueLines, valueNote } from './value-lines';
 
@@ -101,7 +101,7 @@ export class CostProjectionComponent {
           );
         }
 
-        const series: LineSeries[] = COST_CATEGORIES
+        const series: LineSeries[] = costCategoriesFor(this.result().program)
           .filter((c) => projection.some((y) => y.costs[c.key] > 0))
           .map((c) => ({ label: c.label, color: c.color, data: projection.map((y) => y.costs[c.key]) }));
 

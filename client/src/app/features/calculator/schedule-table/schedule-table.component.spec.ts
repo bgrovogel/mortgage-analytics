@@ -59,6 +59,17 @@ describe('ScheduleTableComponent', () => {
     expect([...rows()].map((r) => r.querySelector('[data-testid="pmi-ends-tag"]')?.textContent?.trim() ?? null)).toEqual([null, 'PMI ends', null]);
   });
 
+  it("tags where an FHA loan's MIP ends, by that name", () => {
+    const mip = { housingCosts: 100, costs: aHousingCosts({ mortgageInsurance: 100 }) };
+    const accelerated = aSchedule({
+      totalHousingCosts: aHousingCosts({ mortgageInsurance: 100 }),
+      payments: [aPayment(1, mip), aPayment(2, { housingCosts: 0 })],
+    });
+    render(aResponse({ accelerated, program: { type: 'Fha', upfrontFeePercent: 1.75, upfrontFee: 1_750, upfrontFeeFinanced: true, loanAmount: 101_750, annualMipPercent: 0.55, mipPayments: 1 } }));
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pmi-ends-tag"]').textContent.trim()).toBe('MIP ends');
+  });
+
   describe('yearly view', () => {
     /** Two loan years: 24 payments of $1,000 ($600 principal, $400 interest), $100 extra on payment 13. */
     const twoYears = () => aResponse({

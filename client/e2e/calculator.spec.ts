@@ -111,6 +111,30 @@ test.describe('Mortgage calculator', () => {
     await expect(total, 'a 2-1 buydown you pay for is paid at closing: $7,898.76 more').toHaveText('$34,313.15');
   });
 
+  test('an FHA loan: the upfront MIP borrowed, the annual MIP instead of PMI, and its end with the loan', async ({ calculator, page }) => {
+    // $300,000 with FHA's 3.5% minimum down at 6.5%: $5,066.25 of upfront MIP makes the loan $294,566.25, and the
+    // annual MIP is 0.55% for the whole term, $134.33 a month in year 1 (tools/calculator-check).
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 10_500, rate: 6.5, years: 30, firstPayment: '2036-01-01' });
+    await calculator.setChecked('program-fha', true);
+    await calculator.calculate();
+
+    await expect(calculator.monthlyPayment, 'principal and interest on the loan with its upfront MIP').toHaveText('$1,861.86');
+    await expect(calculator.breakdownAmount('FHA MIP'), 'the annual MIP, named as such').toHaveText('$134.33');
+    await expect(page.getByTestId('program-note'), 'what the loan program adds')
+      .toHaveText('The 1.75% upfront MIP, $5,066.25, is added to the loan, so you borrow $294,566.25. The annual MIP is 0.55% of the balance, $134.33 a month in year 1, for the whole loan: with 10% or more down it would end after 11 years.');
+  });
+
+  test('a VA loan: nothing down, the funding fee borrowed, and no mortgage insurance', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 400_000, downPayment: 0, rate: 6.5, years: 30, firstPayment: '2036-01-01' });
+    await calculator.setChecked('program-va', true);
+    await calculator.calculate();
+
+    await expect(calculator.monthlyPayment, 'principal and interest on $408,600').toHaveText('$2,582.63');
+    await expect(page.getByTestId('program-note'), 'a 2.15% first-use fee, and no mortgage insurance')
+      .toHaveText('The 2.15% funding fee, $8,600.00, is added to the loan, so you borrow $408,600.00. There is no mortgage insurance, whatever the down payment.');
+    await expect(calculator.breakdown, 'no PMI with nothing down').not.toContainText('PMI');
+  });
+
   test('discount points: what they cost, when they pay for themselves, and their line in the cash to close', async ({ calculator, page }) => {
     // The reference loan, $200,000 at 6%, bought down with one point from 6.25% (tools/calculator-check).
     await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });

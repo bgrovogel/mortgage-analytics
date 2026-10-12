@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { formatMonths } from '../../../core/formatting/duration';
 import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts } from '../../../core/models/amortization.models';
+import { mortgageInsuranceName } from '../../../core/models/cost-categories';
 
 /** Each tax, as the payment tile names it when it is the only one. */
 const TAXES: readonly [keyof HousingCosts, string][] = [
@@ -72,7 +73,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
       </div>
       @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
         <div class="tile">
-          <dt>PMI ends</dt>
+          <dt>{{ insuranceName() }} ends</dt>
           <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
           @if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
             <dd class="note">instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
@@ -126,6 +127,9 @@ export class SavingsSummaryComponent {
       : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment };
   });
 
+  /** What the loan's mortgage insurance is called: MIP on an FHA loan, PMI otherwise. */
+  readonly insuranceName = computed(() => mortgageInsuranceName(this.result().program));
+
   /**
    * What the first payment's housing costs are made of, in words: "property tax, insurance, PMI & HOA". Only the
    * costs this loan has are named, so a loan with no PMI or HOA doesn't mention them.
@@ -137,7 +141,7 @@ export class SavingsSummaryComponent {
       ...(taxes.length > 1 ? ['property taxes'] : taxes),
       ...(c.pidAssessment > 0 ? ['PID'] : []),
       ...(c.homeownersInsurance > 0 ? ['insurance'] : []),
-      ...(c.mortgageInsurance > 0 ? ['PMI'] : []),
+      ...(c.mortgageInsurance > 0 ? [this.insuranceName()] : []),
       ...(c.hoaDues > 0 ? ['HOA'] : []),
     ];
     return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}` : (parts[0] ?? '');
@@ -172,7 +176,7 @@ export class SavingsSummaryComponent {
   readonly savingsDetail = computed(() => {
     const s = this.result().savings;
     const parts = [`${usd(s.interestSaved)} interest`];
-    if (s.mortgageInsuranceSaved > 0) parts.push(`+ ${usd(s.mortgageInsuranceSaved)} PMI`);
+    if (s.mortgageInsuranceSaved > 0) parts.push(`+ ${usd(s.mortgageInsuranceSaved)} ${this.insuranceName()}`);
     if (s.recastFees > 0) parts.push(`− ${usd(s.recastFees)} fees`);
     return parts.length > 1 ? parts.join(' ') : null;
   });

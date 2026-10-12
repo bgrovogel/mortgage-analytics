@@ -1,5 +1,5 @@
 import { YearProjection } from '../../../core/models/amortization.models';
-import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { COST_CATEGORIES, CostCategory } from '../../../core/models/cost-categories';
 
 /** One cost's figures for a chosen year: that year, every year up to it, and the whole loan. */
 export interface CostTotalRow {
@@ -23,12 +23,14 @@ export interface CostTotal {
  * The projection's quick numbers for loan year `year` (1-based): each cost that year, through that year, and over
  * the whole term, plus their total. Costs never paid are left out, as the chart leaves them out.
  */
-export function costTotals(projection: readonly YearProjection[], year: number): { rows: CostTotalRow[]; total: CostTotal } {
+export function costTotals(
+  projection: readonly YearProjection[], year: number, categories: readonly CostCategory[] = COST_CATEGORIES,
+): { rows: CostTotalRow[]; total: CostTotal } {
   const sum = (years: readonly YearProjection[], pick: (y: YearProjection) => number) => years.reduce((s, y) => s + pick(y), 0);
   const toDate = projection.slice(0, year);
   const thisYear = projection[year - 1];
 
-  const rows = COST_CATEGORIES
+  const rows = categories
     .filter((c) => projection.some((y) => y.costs[c.key] > 0))
     .map((c) => ({
       label: c.label,

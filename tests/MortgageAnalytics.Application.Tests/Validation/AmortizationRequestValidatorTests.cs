@@ -287,6 +287,42 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     }
 
     [Test]
+    public void AnFhaLoan_NeedsThreePointFivePercentDown()
+    {
+        var request = A.Request.WithHomePrice(300_000m).WithDownPayment(10_499.99m).WithProgram(LoanProgramType.Fha);
+
+        AssertErrorMessage(request, "DownPayment", "An FHA loan needs at least 3.5% down.", "FHA's minimum down payment");
+    }
+
+    [Test]
+    public void AVaLoan_NeedsNoDownPayment()
+    {
+        AssertValid(A.Request.WithDownPayment(0m).WithProgram(LoanProgramType.Va, VaFundingFeeType.FirstUse), "a VA loan can be 100% financed");
+    }
+
+    [TestCase(LoanProgramType.Fha, TestName = "PMI on an FHA loan")]
+    [TestCase(LoanProgramType.Va, TestName = "PMI on a VA loan")]
+    public void Pmi_IsRejected_OnAGovernmentLoan(LoanProgramType type)
+    {
+        var request = A.Request.WithProgram(type).WithHousingCosts(c => c.WithPmi(0.5m));
+
+        AssertErrorMessage(request, "HousingCosts.PmiRate", "FHA and VA loans have no PMI: FHA has its own mortgage insurance, worked out from the loan, and VA none.",
+            "PMI that would be silently ignored is a client mistake");
+    }
+
+    [Test]
+    public void AFundingFeeUse_IsOnlyForAVaLoan()
+    {
+        AssertInvalid(A.Request.WithProgram(LoanProgramType.Fha, VaFundingFeeType.SubsequentUse), "Program.VaUse", "only a VA loan has a funding fee");
+    }
+
+    [Test]
+    public void AnUnknownProgram_IsRejected()
+    {
+        AssertInvalid(A.Request.WithProgram((LoanProgramType)7), "Program.Type", "only conventional, FHA and VA loans are modelled");
+    }
+
+    [Test]
     public void DiscountPoints_OnAnAdjustableRate_AreRejected()
     {
         AssertErrorMessage(A.Request.WithRate(6.5m).WithAdjustableRate(7.5m).WithDiscountPoints(1m, 6.75m), "DiscountPoints",

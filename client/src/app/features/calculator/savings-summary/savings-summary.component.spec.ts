@@ -209,6 +209,19 @@ describe('SavingsSummaryComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('instead of Mar 2037');
   });
 
+  it("names an FHA loan's mortgage insurance MIP", () => {
+    const component = render(aResponse({
+      program: { type: 'Fha', upfrontFeePercent: 1.75, upfrontFee: 5_066.25, upfrontFeeFinanced: true, loanAmount: 294_566.25, annualMipPercent: 0.55, mipPayments: 360 },
+      baseline: aSchedule({ mortgageInsuranceEndDate: '2056-10-01', monthlyHousingCosts: aHousingCosts({ mortgageInsurance: 134.33 }) }),
+      accelerated: aSchedule({ mortgageInsuranceEndDate: '2049-02-01' }),
+      savings: aSavings({ interestSaved: 10_000, mortgageInsuranceSaved: 4_000, netSavings: 14_000, paymentsSaved: 90 }),
+    }));
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pmi-end"]').previousElementSibling.textContent.trim()).toBe('MIP ends');
+    expect(text('housing-costs-label')).toBe('MIP');
+    expect(component.savingsDetail()).toBe('$10,000 interest + $4,000 MIP');
+  });
+
   it('shows the down payment instead when the PMI end date did not move', () => {
     render(aResponse({
       baseline: aSchedule({ mortgageInsuranceEndDate: '2037-03-01' }),

@@ -838,6 +838,9 @@
           "adjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateRequest"
           },
+          "program": {
+            "$ref": "#/components/schemas/LoanProgramRequest"
+          },
           "discountPoints": {
             "$ref": "#/components/schemas/DiscountPointsRequest"
           },
@@ -880,6 +883,9 @@
           },
           "discountPoints": {
             "$ref": "#/components/schemas/DiscountPointsResponse"
+          },
+          "program": {
+            "$ref": "#/components/schemas/LoanProgramResponse"
           }
         },
         "additionalProperties": false
@@ -995,6 +1001,10 @@
             "format": "double"
           },
           "discountPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "upfrontMortgageFee": {
             "type": "number",
             "format": "double"
           },
@@ -1380,6 +1390,61 @@
           }
         },
         "additionalProperties": false
+      },
+      "LoanProgramRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/LoanProgramType"
+          },
+          "vaUse": {
+            "$ref": "#/components/schemas/VaFundingFeeType"
+          },
+          "financeUpfrontFee": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoanProgramResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/LoanProgramType"
+          },
+          "upfrontFeePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "upfrontFee": {
+            "type": "number",
+            "format": "double"
+          },
+          "upfrontFeeFinanced": {
+            "type": "boolean"
+          },
+          "loanAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualMipPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "mipPayments": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoanProgramType": {
+        "enum": [
+          "Conventional",
+          "Fha",
+          "Va"
+        ],
+        "type": "string"
       },
       "LoginRequest": {
         "required": [
@@ -2457,6 +2522,14 @@
           }
         },
         "additionalProperties": false
+      },
+      "VaFundingFeeType": {
+        "enum": [
+          "FirstUse",
+          "SubsequentUse",
+          "Exempt"
+        ],
+        "type": "string"
       },
       "YearProjectionResponse": {
         "type": "object",
