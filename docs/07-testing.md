@@ -140,8 +140,8 @@ the same misunderstanding, they would agree and prove nothing.
 
 | | Lines | Branches | Gate |
 |---|---|---|---|
-| Backend | ~98% | ~95% | CI fails below 85% (ReportGenerator summary + `jq`) |
-| Angular | ~99% | ~90% | `npm test` fails below 85% (`jest.config.js` `coverageThreshold`) |
+| Backend | ~99% | ~97% | CI fails below 85% (ReportGenerator summary + `jq`) |
+| Angular | ~99% | ~91% | `npm test` fails below 85% (`jest.config.js` `coverageThreshold`) |
 
 Coverage is a floor, not a goal: it tells you what is *unchecked*, not that what's checked is right. The
 independent models do that job.
@@ -176,7 +176,7 @@ On every push to `main` and every pull request:
 ```
 backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → no vulnerable packages → test with coverage → report → 85% gate
            ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
-frontend  ─┘           npm ci → npm audit (shipped deps) → lint → Jest with coverage; e2e runs only if backend and frontend pass
+frontend  ─┘           npm ci → npm audit (shipped deps) → lint → typecheck → Jest with coverage; e2e runs only if backend and frontend pass
            └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
                        and the calculator answers (runs if backend passes)
 

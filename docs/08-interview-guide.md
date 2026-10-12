@@ -235,7 +235,7 @@ classic assert is used. Code review standards become automatic.
 
 **Is 85% coverage enough? Why not 100%?**
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
-code from arriving; correctness comes from the independent reference values. The actual figures are ~98% backend
+code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
 domain code about 890 ways and checks a test fails each time. It scores 97.4%, and CI fails below 95%. Its first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
@@ -270,7 +270,7 @@ Compose adds Mailpit to catch emails locally.
 
 **What does CI do?**
 - **Backend:** builds with warnings as errors, runs every .NET test with coverage, fails below 85%.
-- **Frontend:** runs Jest with its own 85% gate.
+- **Frontend:** audits the shipped npm packages, lints, type-checks the test code, and runs Jest with its own 85% gate.
 - **End-to-end:** once both pass, runs Playwright against the production build of the app, served by the real API
   as in the container, so the tests run under the real security headers.
 - **Docker:** builds the image, starts it, and checks it is healthy and serves the app with its CSP.

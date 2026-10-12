@@ -74,6 +74,7 @@ dotnet test                              # every .NET test: Domain, Application,
 
 cd client
 npm run lint                             # angular-eslint: TypeScript and template rules (CI runs it)
+npm run typecheck                        # tsc over the Jest and Playwright code, which run without checking types (CI runs it)
 npm test                                 # Jest unit tests + coverage; fails below 85%
 npm run test:watch                       # re-runs affected tests as you save (no coverage)
 npm run e2e:install                      # first time only: downloads Chromium for Playwright

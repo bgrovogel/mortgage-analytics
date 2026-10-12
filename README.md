@@ -109,6 +109,7 @@ dotnet test                       # 748 NUnit tests, including the convention te
 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
+npm run typecheck                 # tsc over the test code, which Jest and Playwright run without checking types
 npm test                          # 513 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 88 Playwright tests (13 are axe accessibility scans); builds the app and serves it from the API, as in production
@@ -454,7 +455,7 @@ Accounts follow the same habit of not trusting the client:
 | Angular (513) | Jest + jest-preset-angular | Every component and service: form-to-request mapping, derived values, validation, the switchMap cancel/recover behaviour, chart configuration (through an injected fake chart factory), ProblemDetails messages. |
 | End-to-end (88) | Playwright + axe-core | **Accessibility:** every page and results tab scanned with axe against WCAG 2.2 A and AA, in light and dark mode and on a phone, signed in and out (colour contrast, names, roles, structure). Real browser on the production build, served by the real API (on a scratch database) exactly as the container serves it, so every test runs under the Content-Security-Policy and fails if the browser blocks anything. Through page objects and fixtures (each History test runs as a brand-new user): the calculator, one loan carried between the pages, sign-up with the confirmation email from the dev mailbox, password reset, sign-out, saving while signed out, saving and reopening all three kinds from History, the refinance comparison, and pay off or invest (the recommendation, a bad decade, stock-heavy households, risk profiles), all against the reference numbers. A consistency suite checks every number the Pay off or invest page shows (banner, cards, milestones in each scenario and in today's dollars, crossover notes, fact sheet) against the API response it came from, for three very different households, and that the form and the API agree on every field's limits. |
 
-**Coverage:** backend 98.5% lines / 94.7% branches (compiler-generated code and migrations excluded); Angular 99.3% lines / 92.4% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
+**Coverage:** backend 98.6% lines / 96.6% branches (compiler-generated code and migrations excluded); Angular 99.4% lines / 91.0% branches. CI fails if any figure drops below **85%**, so new behaviour arrives with its tests (TDD).
 
 **Mutation score:** 97.4% on the domain. Stryker.NET makes about 890 small changes to the domain code (`<` to `<=`, `+` to `-`, a deleted line) and checks that a test fails for each; CI fails below 95%. Coverage says a line ran; this says a test would notice it being wrong. The first run scored 87% and found real gaps: guard limits nobody tested, guards that could be deleted unnoticed, an ARM without a margin never falling to its floor. Those are now tested, and four conditions that could never change a result were removed. The 23 changes that survive behave identically to the original (a `First()` that could be `FirstOrDefault()` on a list that always has three entries).
 
@@ -485,4 +486,5 @@ And by convention, supported by shared infrastructure:
 - **Equity tracking**: home value minus loan balance, year by year.
 - **Closing costs and cash to close**: an upfront-costs summary alongside the down payment.
 - **FHA / VA loans**: upfront and annual MIP, and the VA funding fee, as new `IHousingCost` implementations.
+- **Discount points** (a permanent buydown): pay points at closing for a lower note rate, with the break-even, beside the temporary buydowns.
 - **Mutation testing beyond the domain**: the Application layer's mapping and validators.
