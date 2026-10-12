@@ -2431,6 +2431,14 @@
           },
           "costs": {
             "$ref": "#/components/schemas/HousingCostsResponse"
+          },
+          "loanBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "equity": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

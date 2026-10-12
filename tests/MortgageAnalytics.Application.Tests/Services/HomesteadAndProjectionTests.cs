@@ -1,3 +1,6 @@
+using Extra200 = MortgageAnalytics.Testing.ReferenceLoans.StandardWithMonthlyExtra200;
+using Standard = MortgageAnalytics.Testing.ReferenceLoans.Standard;
+
 namespace MortgageAnalytics.Application.Tests.Services;
 
 /// <summary>
@@ -255,6 +258,38 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
             Assert.That(year2.AssessedValue, Is.EqualTo(262_500m), "capped at 5% more");
             Assert.That(year2.PropertyTaxableValue, Is.EqualTo(212_500m), "less the exemption");
             Assert.That(year2.Costs.PropertyTax, Is.EqualTo(4_250m), "2% of it, for the year");
+        });
+    }
+
+    [Test]
+    public void Equity_IsTheHomesValue_LessWhatIsStillOwed_AtTheStartOfEachYear()
+    {
+        var projection = Service.Analyze(A.Request.WithHousingCosts(c => c.WithHomeValueGrowth(3m))).Projection;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projection[0].LoanBalance, Is.EqualTo(Standard.LoanAmount), "year 1 starts owing the whole loan");
+            Assert.That(projection[0].Equity, Is.EqualTo(Standard.DownPayment), "so the equity is the down payment");
+            Assert.That(projection[1].LoanBalance, Is.EqualTo(197_543.99m), "year 2 starts after 12 payments (tools/calculator-check)");
+            Assert.That(projection[1].Equity, Is.EqualTo(257_500m - 197_543.99m), "against the home's value then: $250,000 grown 3%");
+            Assert.That(projection[10].LoanBalance, Is.EqualTo(167_371.60m), "year 11 starts after 120 payments");
+        });
+    }
+
+    [Test]
+    public void Equity_FollowsTheExtraPayments_AndIsTheWholeHomeOncePaidOff()
+    {
+        var response = Service.Analyze(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra));
+        var projection = response.Projection;
+        var paidOffInYear = Extra200.NumberOfPayments / 12 + 1;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projection[1].LoanBalance, Is.EqualTo(response.Accelerated.Payments[11].RemainingBalance),
+                "the balance is what you will owe on your plan, extra payments included");
+            Assert.That(projection[1].LoanBalance, Is.LessThan(197_543.99m), "less than without them");
+            Assert.That(projection[paidOffInYear].LoanBalance, Is.Zero, $"nothing is owed once the loan is paid off in year {paidOffInYear}");
+            Assert.That(projection[paidOffInYear].Equity, Is.EqualTo(projection[paidOffInYear].MarketValue), "so the whole home is equity");
         });
     }
 }

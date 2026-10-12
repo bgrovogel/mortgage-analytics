@@ -69,11 +69,11 @@ describe('result tabs', () => {
   });
 
   describe('Projection', () => {
-    it('shows the yearly costs and the home value side by side, as two charts', () => {
+    it('shows the yearly costs, the home value and the equity, as three charts', () => {
       const root = render(ProjectionTabComponent).nativeElement as HTMLElement;
 
-      expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value, and what each tax is charged on']);
-      expect(root.querySelectorAll('canvas')).toHaveLength(2);
+      expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value, and what each tax is charged on', 'Equity: what is yours, and what is owed']);
+      expect(root.querySelectorAll('canvas')).toHaveLength(3);
     });
 
     it('gives the quick numbers above the charts, for the year clicked on the costs chart', () => {

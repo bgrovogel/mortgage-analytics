@@ -271,6 +271,12 @@ def analyze(request, today):
     base = schedule_out(baseline, base_openings)
     acc = schedule_out(accelerated, base_openings)
 
+    # Owed at the start of each year, on the plan with its extra payments: the loan, then each year's closing balance.
+    def owed_at_start(y):
+        if y == 0:
+            return loan
+        return acc['payments'][y * 12 - 1]['remainingBalance'] if y * 12 <= len(acc['payments']) else D(0)
+
     projection = []
     for y in range(len(costs.market)):
         year_rows = base['payments'][y * 12:(y + 1) * 12]
@@ -281,6 +287,7 @@ def analyze(request, today):
             'marketValue': costs.market[y], 'assessedValue': costs.assessed[y],
             'schoolTaxableValue': tv('schoolTax'), 'localTaxableValue': tv('localTax'), 'mudTaxableValue': tv('mudTax'),
             'propertyTaxableValue': tv('propertyTax'), 'costs': totals,
+            'loanBalance': owed_at_start(y), 'equity': costs.market[y] - owed_at_start(y),
         })
 
     interest_saved = base['totalInterest'] - acc['totalInterest']

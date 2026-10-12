@@ -90,6 +90,8 @@ export function aProjectionYear(year: number, overrides: Partial<YearProjection>
     mudTaxableValue: null,
     propertyTaxableValue: null,
     costs: aHousingCosts(),
+    loanBalance: 200_000,
+    equity: 50_000,
     ...overrides,
   };
 }

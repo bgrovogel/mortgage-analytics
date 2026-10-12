@@ -254,6 +254,10 @@ export interface YearProjection {
   /** What the single combined property tax is charged on; null when the taxes are given separately. */
   propertyTaxableValue: number | null;
   costs: HousingCosts;
+  /** Owed at the start of the year, on the plan with its extra payments; 0 once paid off. */
+  loanBalance: number;
+  /** The market value less what is owed. */
+  equity: number;
 }
 
 export interface AmortizationResponse {

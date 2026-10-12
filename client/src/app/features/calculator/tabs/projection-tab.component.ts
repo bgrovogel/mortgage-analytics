@@ -5,8 +5,8 @@ import { CostTotalsComponent } from '../cost-projection/cost-totals.component';
 
 /**
  * The long view, year by year: the quick numbers for a chosen year first (that year, through it, the whole loan),
- * then what the home costs to own, and what it is worth against what is taxed. A click on the costs chart chooses
- * the year the numbers are for.
+ * then what the home costs to own, what it is worth against what is taxed, and how much of it is yours. A click on
+ * the costs chart chooses the year the numbers are for.
  */
 @Component({
   selector: 'app-projection-tab',
@@ -15,6 +15,7 @@ import { CostTotalsComponent } from '../cost-projection/cost-totals.component';
     <div class="panel"><app-cost-totals [projection]="result().projection" [(year)]="year" /></div>
     <div class="panel"><app-cost-projection [result]="result()" view="costs" (yearPicked)="year.set($event)" /></div>
     <div class="panel"><app-cost-projection [result]="result()" view="value" /></div>
+    <div class="panel"><app-cost-projection [result]="result()" view="equity" /></div>
   `,
   styleUrl: './result-tab.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

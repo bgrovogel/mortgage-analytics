@@ -168,7 +168,7 @@ internal static class AmortizationMapper
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
-            ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan),
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, purchase, valuation, plan),
             rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
             rates.WorstCase is { } worst ? ToResponse(worst) : null,
             closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)));
@@ -241,11 +241,19 @@ internal static class AmortizationMapper
 
     /// <summary>
     /// One row per year of the standard schedule. The standard schedule is used because it spans
-    /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early.
+    /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early. The balance
+    /// and equity follow the <paramref name="accelerated"/> schedule instead: what will actually be owed on the plan.
     /// </summary>
     private static List<YearProjectionResponse> ToProjection(
-        AmortizationSchedule schedule, HousingCostSchedule costs, PropertyValuation valuation, HousingCostPlan plan)
+        AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, PropertyPurchase purchase,
+        PropertyValuation valuation, HousingCostPlan plan)
     {
+        // Owed at the start of a year: the loan before the first payment, then the balance after the year before's last.
+        decimal BalanceAtStartOf(int index) =>
+            index == 0 ? purchase.LoanAmount
+            : index * 12 <= accelerated.Payments.Count ? accelerated.Payments[(index * 12) - 1].RemainingBalance
+            : 0m;
+
         var taxes = plan.Taxes.ToDictionary(t => t.Category);
         decimal? TaxableValue(HousingCostCategory category, int year) =>
             taxes.TryGetValue(category, out var tax) ? tax.TaxableValueInYear(year) : null;
@@ -260,7 +268,9 @@ internal static class AmortizationMapper
                 TaxableValue(HousingCostCategory.LocalTax, index),
                 TaxableValue(HousingCostCategory.MudTax, index),
                 TaxableValue(HousingCostCategory.PropertyTax, index),
-                ToResponse(year)))
+                ToResponse(year),
+                BalanceAtStartOf(index),
+                valuation.MarketValueInYear(index) - BalanceAtStartOf(index)))
             .ToList();
     }
 

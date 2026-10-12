@@ -8,7 +8,7 @@
 **Read time:** 14 min · **Best for:** checking the numbers · **Code:** `src/MortgageAnalytics.Domain/`, `tools/`
 
 **On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) ·
-[Net savings](#net-savings) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
+[Net savings](#net-savings) · [Equity](#equity) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
 [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) ·
 [Temporary buydowns](#temporary-buydowns) · [Cash to close](#cash-to-close) · [Refinancing](#refinancing) ·
 [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) ·
@@ -70,6 +70,15 @@ and **lowers the payment** instead: the lender re-amortizes the smaller balance 
 **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and HOA dues are left out on
 purpose: they don't stop when the loan is paid off, so counting the months of escrow you "skip" would overstate
 the benefit. A test locks this in.
+
+---
+
+## Equity
+
+**Equity = the home's market value − what is owed**, at the start of each loan year. What is owed follows your plan,
+extra payments included, because that is what you will actually owe: the whole loan in year 1 (so the equity is the
+down payment), the balance after each year's last payment after that, and nothing once the loan is paid off. On the
+reference loan with 3% growth, year 2 starts owing $197,543.99 of a home worth $257,500: $59,956.01 of equity.
 
 ---
 

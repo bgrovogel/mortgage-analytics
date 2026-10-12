@@ -99,7 +99,9 @@ interest and 3 months of escrow on the $375,000 home come to **$10,739.09** on t
   the loan is paid off and how much sooner, and when PMI ends; the payment breakdown; and the balance over time,
   with the gap between the two payoffs shaded; and the cash to close.
 - **Projection:** the **quick numbers** for any year (each cost that year, through that year, and over the whole
-  loan), then the yearly costs as stacked areas, and the home's market value against what each tax is charged on.
+  loan), then the yearly costs as stacked areas, the home's market value against what each tax is charged on, and
+  your **equity**: what is still owed (on your plan, extra payments included) stacked under what is yours, so the top
+  edge is the home's value. It starts at the down payment, and is the whole home from the year the loan is paid off.
   The year starts where the loan is now; pick another, or click the chart.
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.

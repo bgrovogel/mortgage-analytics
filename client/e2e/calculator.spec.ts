@@ -335,6 +335,18 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.homeValueNote, 'a 15% market against a 10% cap opens a gap').toContainText('the homestead cap keeps');
   });
 
+  test('shows the equity growing, and the whole home yours once the loan is paid off', async ({ calculator, page }) => {
+    // The reference loan, $200,000 of a $250,000 home at 6%, with the form's $200 a month extra: paid off after 252
+    // payments, so nothing is owed from the start of year 22.
+    await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showYearlyCosts();
+
+    await expect(page.getByTestId('projection-chart-equity'), 'the equity chart renders').toBeVisible();
+    await expect(page.getByTestId('projection-note-equity'), 'it starts with the down payment, and ends with the loan paid off')
+      .toContainText(/^Your equity grows from \$50,000 \(the down payment\) to \$[\d,]+ by year 30\. The loan is paid off by year 22,/);
+  });
+
   test('gives the quick numbers for any year, from the same figures as the chart', async ({ calculator, page }) => {
     // A fresh calculation, so the test has the very response the page shows.
     const answer = page.waitForResponse((r) => r.url().includes('/api/v1/amortization/calculate') && r.ok());

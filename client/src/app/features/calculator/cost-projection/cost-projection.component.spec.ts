@@ -94,6 +94,36 @@ describe('CostProjectionComponent', () => {
     });
   });
 
+  describe('equity view', () => {
+    const owning = aResponse({
+      projection: [
+        aProjectionYear(1, { marketValue: 250_000, loanBalance: 200_000, equity: 50_000 }),
+        aProjectionYear(2, { marketValue: 260_000, loanBalance: 195_000, equity: 65_000 }),
+      ],
+    });
+    const showEquity = () => {
+      fixture.componentRef.setInput('view', 'equity');
+      fixture.detectChanges();
+    };
+
+    it('stacks what is owed under the equity, with the home value and the share that is yours in the tooltip', () => {
+      render(owning);
+      showEquity();
+
+      expect(fixture.nativeElement.querySelector('figcaption').textContent.trim()).toBe('Equity: what is yours, and what is owed');
+      expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Owed on the loan', 'Your equity']);
+      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBe(true);
+      expect(tooltip()['footer']([{ dataIndex: 1 }])).toBe('Home value: $260,000 · 25% yours');
+    });
+
+    it('says how the equity grows', () => {
+      const component = render(owning);
+      showEquity();
+
+      expect(component.note()).toBe('Your equity grows from $50,000 (the down payment) to $65,000 by year 2.');
+    });
+  });
+
   it('names the chart for the view shown, and draws a new chart when the view changes', () => {
     render(rising);
     const caption = () => fixture.nativeElement.querySelector('figcaption').textContent.trim();

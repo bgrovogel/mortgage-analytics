@@ -4,10 +4,18 @@ import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
 import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { equityFooter, equityLines, equityNote } from './equity-lines';
 import { valueBills, valueLines, valueNote } from './value-lines';
 
-/** The two views of the projection. */
-export type ProjectionView = 'costs' | 'value';
+/** The three views of the projection. */
+export type ProjectionView = 'costs' | 'value' | 'equity';
+
+/** Each view's caption. */
+const CAPTIONS: Record<ProjectionView, string> = {
+  costs: 'Projected yearly taxes & costs',
+  value: 'Home value, and what each tax is charged on',
+  equity: 'Equity: what is yours, and what is owed',
+};
 
 /**
  * The long-term picture, year by year over the full term:
@@ -15,13 +23,14 @@ export type ProjectionView = 'costs' | 'value';
  *   total, and rises and drop-offs (PMI ending, a PID paid off) show as bands growing or vanishing.
  * - "Home value": market value, the capped assessed value, and what each tax is charged on after its
  *   own exemptions (see value-lines.ts).
- * The two views are separate charts because their scales differ by two orders of magnitude.
+ * - "Equity": what is owed and what is yours, stacked, so the top edge is the home's value (see equity-lines.ts).
+ * The views are separate charts because their scales differ by two orders of magnitude.
  */
 @Component({
   selector: 'app-cost-projection',
   template: `
     <figure>
-      <figcaption [id]="'projection-title-' + view()">{{ view() === 'costs' ? 'Projected yearly taxes & costs' : 'Home value, and what each tax is charged on' }}</figcaption>
+      <figcaption [id]="'projection-title-' + view()">{{ caption() }}</figcaption>
       <div class="canvas-wrap">
         <canvas #canvas role="img" [attr.aria-labelledby]="'projection-title-' + view()" [attr.data-testid]="'projection-chart-' + view()"></canvas>
       </div>
@@ -43,6 +52,9 @@ export class CostProjectionComponent {
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
+  /** The chart's caption. */
+  protected readonly caption = computed(() => CAPTIONS[this.view()]);
+
   /** A one-line takeaway under the chart, e.g. how much taxes rise from year 1 to the last year. */
   readonly note = computed(() => {
     const projection = this.result().projection;
@@ -50,6 +62,7 @@ export class CostProjectionComponent {
     const first = projection[0];
     const last = projection[projection.length - 1];
     if (this.view() === 'value') return valueNote(projection);
+    if (this.view() === 'equity') return equityNote(projection);
     return `Yearly taxes & costs go from ${usd(first.costs.total)} in year 1 to ${usd(last.costs.total)} in year ${last.year}.`;
   });
 
@@ -60,6 +73,20 @@ export class CostProjectionComponent {
         const projection = this.result().projection;
         const labels = projection.map((y) => `Year ${y.year}`);
         const startYear = (i: number) => new Date(projection[i].startDate).getUTCFullYear();
+
+        if (this.view() === 'equity') {
+          return buildLineChart(
+            {
+              labels,
+              series: equityLines(projection),
+              footer: (i) => equityFooter(projection[i]),
+              title: (i, label) => `${label} (from ${startYear(i)})`,
+              // Owed and yours add up to the home's value, which is the top edge.
+              stacked: true,
+            },
+            host,
+          );
+        }
 
         if (this.view() === 'value') {
           return buildLineChart(

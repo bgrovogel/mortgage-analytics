@@ -94,6 +94,9 @@ public sealed record RateChangeResponse(
 /// <param name="MudTaxableValue">What MUD tax is charged on (MUDs grant no homestead exemption). Null when there is no MUD tax.</param>
 /// <param name="PropertyTaxableValue">What the single combined property tax is charged on, after its homestead exemption. Null when the taxes are given separately.</param>
 /// <param name="Costs">Housing costs paid during the year, by category.</param>
+/// <param name="LoanBalance">What is owed at the start of the year, on the plan with its extra payments: the whole loan
+/// in year 1, nothing once it is paid off.</param>
+/// <param name="Equity">The home's market value less <paramref name="LoanBalance"/>: the part of the home that is yours.</param>
 public sealed record YearProjectionResponse(
     int Year,
     DateOnly StartDate,
@@ -103,7 +106,9 @@ public sealed record YearProjectionResponse(
     decimal? LocalTaxableValue,
     decimal? MudTaxableValue,
     decimal? PropertyTaxableValue,
-    HousingCostsResponse Costs);
+    HousingCostsResponse Costs,
+    decimal LoanBalance,
+    decimal Equity);
 
 /// <summary>The purchase and the loan it produces.</summary>
 /// <param name="HomePrice">The purchase price.</param>
