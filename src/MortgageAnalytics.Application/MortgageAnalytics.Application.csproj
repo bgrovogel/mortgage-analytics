@@ -5,6 +5,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- HUD's FHA county loan limits, built by tools/fha-limits. -->
+    <EmbeddedResource Include="Data\fha-loan-limits.json" LogicalName="MortgageAnalytics.Application.Data.fha-loan-limits.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
   </ItemGroup>

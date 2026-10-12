@@ -163,4 +163,36 @@ public class AmortizationApiTests : ApiTestBase
 
         await AssertProblemAsync(response, HttpStatusCode.BadRequest, "a body that cannot be bound is the client's error");
     }
+
+    [Test]
+    public async Task FhaLoanLimits_AreHudsTable_ForTheCountyList()
+    {
+        var response = await Client.GetAsync("/api/v1/fha/loan-limits");
+        var json = await ReadJsonAsync(response);
+        var bexar = json.GetProperty("counties").EnumerateArray().Single(c => c.GetProperty("fips").GetString() == "48029");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "anyone may read them");
+            Assert.That(response.Headers.CacheControl?.MaxAge, Is.EqualTo(TimeSpan.FromDays(1)), "and keep them for a day: they change once a year");
+            Assert.That(json.GetProperty("year").GetInt32(), Is.EqualTo(2026), "HUD's 2026 table");
+            Assert.That(json.GetProperty("counties").GetArrayLength(), Is.EqualTo(3_235), "every county");
+            Assert.That((bexar.GetProperty("name").GetString(), bexar.GetProperty("limit").GetDecimal()), Is.EqualTo(("Bexar County", 557_750m)), "with its limit");
+            Assert.That(json.GetProperty("states").GetProperty("TX").GetString(), Is.EqualTo("Texas"), "and each state's name");
+        });
+    }
+
+    [Test]
+    public async Task AnFhaLoanOverItsCountysLimit_IsAValidationProblem_InDollars()
+    {
+        var response = await PostCalculateAsync(new
+        {
+            homePrice = 600_000, downPayment = 21_000, annualInterestRate = 6.5, termInMonths = 360,
+            program = new { type = "Fha", countyFips = "48029" },
+        });
+
+        var errors = (await ReadJsonAsync(response)).GetProperty("errors");
+        Assert.That(errors.GetProperty("downPayment")[0].GetString(), Does.StartWith("FHA insures at most $557,750 in Bexar County, TX (2026)"),
+            "the limit in dollars, whatever the server's culture");
+    }
 }

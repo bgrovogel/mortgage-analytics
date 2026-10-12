@@ -15,9 +15,10 @@ import { AmortizationRequest, YearProjection } from '../../../core/models/amorti
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
+import { FhaCountyComponent } from './fha-county.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
-  FHA_DOWN_TOO_LOW, LumpSumForm, RateChangeForm, belowFhaMinimum, chargedTaxes, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+  LumpSumForm, RateChangeForm, chargedTaxes, fhaDownProblem, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
@@ -39,7 +40,7 @@ const SECTION_CONTROLS = {
     'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption',
     'transferredCeilingPercent', 'rateChanges'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
-  program: [],
+  program: ['creditScore'],
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
@@ -56,7 +57,7 @@ const SECTION_CONTROLS = {
  */
 @Component({
   selector: 'app-loan-form',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, RateOptionsComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, RateOptionsComponent, FhaCountyComponent],
   templateUrl: './loan-form.component.html',
   styleUrl: './loan-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,7 +111,6 @@ export class LoanFormComponent implements OnInit {
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
   protected readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
-  protected readonly fhaDownMessage = FHA_DOWN_TOO_LOW;
 
   readonly form = loanForm(this.fb);
 
@@ -140,9 +140,9 @@ export class LoanFormComponent implements OnInit {
   /** The kind of loan chosen. */
   readonly loanProgram = computed(() => this.values().loanProgram ?? 'Conventional');
 
-  /** True while an FHA loan has less than its minimum down payment. */
-  readonly fhaDownTooLow = computed(() =>
-    this.loanProgram() === 'Fha' && belowFhaMinimum(this.downPaymentAmount(), this.values().homePrice ?? 0));
+  /** What stops an FHA loan from being sent, by its credit score and down payment, or null. */
+  readonly fhaDownProblem = computed(() =>
+    this.loanProgram() === 'Fha' ? fhaDownProblem(this.downPaymentAmount(), this.values().homePrice ?? 0, this.values().creditScore) : null);
 
   /** One-line summary of the loan type, and for FHA or VA how its fee is paid. */
   readonly programSummary = computed(() => {
@@ -372,7 +372,7 @@ export class LoanFormComponent implements OnInit {
         ? [NOTHING_TO_BORROW] : []),
       ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
       ...(v.loanProgram === 'Fha' && this.form.controls.homePrice.valid && this.form.controls.downPayment.valid
-        && belowFhaMinimum(downPaymentAmountOf(v), v.homePrice) ? [FHA_DOWN_TOO_LOW] : []),
+        && fhaDownProblem(downPaymentAmountOf(v), v.homePrice, v.creditScore) ? [fhaDownProblem(downPaymentAmountOf(v), v.homePrice, v.creditScore)!] : []),
       ...(pointsApply(v) && this.form.controls.rateWithoutPoints.valid && this.form.controls.annualInterestRate.valid
         && v.rateWithoutPoints <= v.annualInterestRate ? [POINTS_RATE_TOO_LOW] : []),
       ...(existing && !existing.paidOff

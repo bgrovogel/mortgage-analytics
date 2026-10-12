@@ -103,8 +103,15 @@ public sealed class AmortizationRequestBuilder
         });
 
     /// <summary>Makes the loan FHA or VA (conventional unless set), with its funding-fee use and whether the upfront fee is financed.</summary>
-    public AmortizationRequestBuilder WithProgram(LoanProgramType type, VaFundingFeeType? vaUse = null, bool financeUpfrontFee = true) =>
-        With(r => r with { Program = new LoanProgramRequest { Type = type, VaUse = vaUse, FinanceUpfrontFee = financeUpfrontFee } });
+    public AmortizationRequestBuilder WithProgram(
+        LoanProgramType type, VaFundingFeeType? vaUse = null, bool financeUpfrontFee = true, int? creditScore = null, string? countyFips = null) =>
+        With(r => r with
+        {
+            Program = new LoanProgramRequest
+            {
+                Type = type, VaUse = vaUse, FinanceUpfrontFee = financeUpfrontFee, CreditScore = creditScore, CountyFips = countyFips,
+            },
+        });
 
     /// <summary>Pays <paramref name="points"/> discount points for the request's rate, against <paramref name="rateWithoutPoints"/> without them.</summary>
     public AmortizationRequestBuilder WithDiscountPoints(decimal points, decimal rateWithoutPoints) =>

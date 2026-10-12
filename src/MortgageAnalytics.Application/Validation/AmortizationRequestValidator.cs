@@ -1,5 +1,6 @@
 using FluentValidation;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Data;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
 
@@ -17,6 +18,9 @@ namespace MortgageAnalytics.Application.Validation;
 /// </remarks>
 public sealed class AmortizationRequestValidator : AbstractValidator<AmortizationRequest>
 {
+    /// <summary>Whole dollars as people read them, "$557,750", whatever the server's culture.</summary>
+    private static string Dollars(decimal amount) => "$" + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>The most lump sums one request may contain.</summary>
     public const int MaxLumpSums = 120;
 
@@ -90,6 +94,39 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .Must((r, down) => down >= r.HomePrice * GovernmentLoan.FhaMinimumDownPaymentPercent / 100m)
             .WithMessage($"An FHA loan needs at least {GovernmentLoan.FhaMinimumDownPaymentPercent}% down.")
             .When(r => r.Program?.Type == LoanProgramType.Fha);
+        RuleFor(r => r.DownPayment)
+            .Must((r, down) => down >= r.HomePrice * GovernmentLoan.FhaLowScoreMinimumDownPaymentPercent / 100m)
+            .WithMessage($"With a credit score below {GovernmentLoan.FhaFullFinancingCreditScore}, an FHA loan needs at least {GovernmentLoan.FhaLowScoreMinimumDownPaymentPercent}% down.")
+            .When(r => r.Program is { Type: LoanProgramType.Fha, CreditScore: >= GovernmentLoan.FhaMinimumCreditScore and < GovernmentLoan.FhaFullFinancingCreditScore });
+        RuleFor(r => r.DownPayment)
+            .Must((r, _) => r.HomePrice - r.DownPayment <= FhaLoanLimitData.Current.Find(r.Program!.CountyFips!)!.Limit)
+            .WithMessage(r =>
+            {
+                var county = FhaLoanLimitData.Current.Find(r.Program!.CountyFips!)!;
+                return $"FHA insures at most {Dollars(county.Limit)} in {county.Name}, {county.State} ({FhaLoanLimitData.Current.Year}); "
+                    + $"this loan is {Dollars(r.HomePrice - r.DownPayment)}. Put more down, or choose another loan type.";
+            })
+            .When(r => r.Program is { Type: LoanProgramType.Fha, CountyFips: { } fips } && FhaLoanLimitData.Current.Find(fips) is not null);
+
+        RuleFor(r => r.Program!.CreditScore)
+            .InclusiveBetween(300, 850).OverridePropertyName("Program.CreditScore").WithName("Credit score")
+            .When(r => r.Program?.CreditScore is not null);
+        RuleFor(r => r.Program!.CreditScore)
+            .GreaterThanOrEqualTo(GovernmentLoan.FhaMinimumCreditScore)
+            .WithMessage($"FHA insures loans only for credit scores of {GovernmentLoan.FhaMinimumCreditScore} or more.")
+            .OverridePropertyName("Program.CreditScore")
+            .When(r => r.Program is { Type: LoanProgramType.Fha, CreditScore: >= 300 });
+        RuleFor(r => r.Program!.CountyFips)
+            .Must(fips => FhaLoanLimitData.Current.Find(fips!) is not null)
+            .WithMessage(r => $"Choose a county from the list: '{r.Program!.CountyFips}' is not one HUD sets a limit for.")
+            .OverridePropertyName("Program.CountyFips")
+            .When(r => r.Program is { Type: LoanProgramType.Fha, CountyFips: not null });
+        RuleFor(r => r.Program!.CreditScore)
+            .Null().WithMessage("A credit score is used only for an FHA loan here.").OverridePropertyName("Program.CreditScore")
+            .When(r => r.Program is not null && r.Program.Type != LoanProgramType.Fha);
+        RuleFor(r => r.Program!.CountyFips)
+            .Null().WithMessage("A county is used only for an FHA loan's limit here.").OverridePropertyName("Program.CountyFips")
+            .When(r => r.Program is not null && r.Program.Type != LoanProgramType.Fha);
 
         RuleFor(r => r.HousingCosts!.PmiRate)
             .Equal(0m).WithMessage("FHA and VA loans have no PMI: FHA has its own mortgage insurance, worked out from the loan, and VA none.")

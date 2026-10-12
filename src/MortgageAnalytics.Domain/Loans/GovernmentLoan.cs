@@ -50,6 +50,15 @@ public sealed record GovernmentLoan(
     /// <summary>FHA's smallest down payment, as a percentage of the price (with a credit score of 580 or more).</summary>
     public const decimal FhaMinimumDownPaymentPercent = 3.5m;
 
+    /// <summary>The lowest credit score FHA insures a loan for.</summary>
+    public const int FhaMinimumCreditScore = 500;
+
+    /// <summary>The credit score from which FHA's 3.5% minimum down payment applies; below it, 10%.</summary>
+    public const int FhaFullFinancingCreditScore = 580;
+
+    /// <summary>FHA's smallest down payment with a credit score from 500 to 579, as a percentage of the price.</summary>
+    public const decimal FhaLowScoreMinimumDownPaymentPercent = 10m;
+
     /// <summary>FHA's upfront MIP, as a percentage of the base loan.</summary>
     public const decimal FhaUpfrontMipPercent = 1.75m;
 
@@ -64,11 +73,22 @@ public sealed record GovernmentLoan(
     /// <param name="termInMonths">The term, which picks the MIP table.</param>
     /// <param name="closingYear">The year the loan closes, whose conforming limit splits the table by loan size.</param>
     /// <param name="financeUpfrontFee">True to add the upfront MIP to the loan, as most borrowers do.</param>
-    /// <exception cref="DomainValidationException">Less than 3.5% down.</exception>
-    public static GovernmentLoan Fha(PropertyPurchase purchase, int termInMonths, int closingYear, bool financeUpfrontFee)
+    /// <param name="creditScore">The borrower's decision credit score, or null when it is 580 or more (or unknown).</param>
+    /// <param name="countyLimit">The most FHA insures in the home's county (its one-unit limit), or null not to check.</param>
+    /// <exception cref="DomainValidationException">
+    /// A credit score below 500; less down than the score allows (3.5% from 580, 10% from 500); or a base loan above the
+    /// county's limit.
+    /// </exception>
+    public static GovernmentLoan Fha(
+        PropertyPurchase purchase, int termInMonths, int closingYear, bool financeUpfrontFee, int? creditScore = null, decimal? countyLimit = null)
     {
-        if (purchase.DownPayment < purchase.HomePrice * FhaMinimumDownPaymentPercent / 100m)
-            throw new DomainValidationException($"An FHA loan needs at least {FhaMinimumDownPaymentPercent}% down.");
+        if (creditScore < FhaMinimumCreditScore)
+            throw new DomainValidationException($"FHA insures loans only for credit scores of {FhaMinimumCreditScore} or more.");
+        var minimumDown = creditScore < FhaFullFinancingCreditScore ? FhaLowScoreMinimumDownPaymentPercent : FhaMinimumDownPaymentPercent;
+        if (purchase.DownPayment < purchase.HomePrice * minimumDown / 100m)
+            throw new DomainValidationException($"An FHA loan needs at least {minimumDown}% down with this credit score.");
+        if (purchase.LoanAmount > countyLimit)
+            throw new DomainValidationException($"FHA insures at most {countyLimit:N0} in this county.");
 
         var baseLoan = purchase.LoanAmount;
         var ltv = baseLoan / purchase.HomePrice;

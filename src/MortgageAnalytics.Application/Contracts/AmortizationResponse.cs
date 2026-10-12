@@ -31,6 +31,9 @@ public sealed record AmortizationResponse(
 /// <param name="LoanAmount">The amount borrowed: the base loan, plus the fee when financed. Payments, interest and equity use it.</param>
 /// <param name="AnnualMipPercent">FHA's annual MIP rate; zero for VA.</param>
 /// <param name="MipPayments">How many payments carry FHA's annual MIP: 132 (11 years) or the whole term; zero for VA.</param>
+/// <param name="CountyName">For FHA in a given county: its name and state ("Bexar County, TX"); otherwise null.</param>
+/// <param name="CountyLoanLimit">The most FHA insures there (its one-unit limit); otherwise null.</param>
+/// <param name="LoanLimitYear">The year of HUD's limits; otherwise null.</param>
 public sealed record LoanProgramResponse(
     LoanProgramType Type,
     decimal UpfrontFeePercent,
@@ -38,7 +41,33 @@ public sealed record LoanProgramResponse(
     bool UpfrontFeeFinanced,
     decimal LoanAmount,
     decimal AnnualMipPercent,
-    int MipPayments);
+    int MipPayments,
+    string? CountyName = null,
+    decimal? CountyLoanLimit = null,
+    int? LoanLimitYear = null);
+
+/// <summary>HUD's FHA loan limits for one-unit homes, by county.</summary>
+/// <param name="Year">The year they apply to.</param>
+/// <param name="Source">Where they come from.</param>
+/// <param name="Floor">The lowest limit: most counties have it.</param>
+/// <param name="Ceiling">The highest in the contiguous states (Alaska, Hawaii and the territories can be higher).</param>
+/// <param name="States">Each state's and territory's name, by its two-letter code.</param>
+/// <param name="Counties">Every county and county equivalent, by FIPS code.</param>
+public sealed record FhaLoanLimitsResponse(
+    int Year, string Source, decimal Floor, decimal Ceiling, IReadOnlyDictionary<string, string> States, IReadOnlyList<FhaCountyLimitResponse> Counties)
+{
+    private readonly Dictionary<string, FhaCountyLimitResponse> _byFips = Counties.ToDictionary(c => c.Fips);
+
+    /// <summary>The county with this five-digit FIPS code, or null when HUD lists none.</summary>
+    public FhaCountyLimitResponse? Find(string fips) => _byFips.GetValueOrDefault(fips);
+}
+
+/// <summary>One county's FHA limit.</summary>
+/// <param name="Fips">Its five-digit FIPS code: the state's two digits, then the county's three.</param>
+/// <param name="State">Its state's two-letter code.</param>
+/// <param name="Name">Its name, such as "Bexar County".</param>
+/// <param name="Limit">The most FHA insures there for a one-unit home.</param>
+public sealed record FhaCountyLimitResponse(string Fips, string State, string Name, decimal Limit);
 
 /// <summary>Discount points against the rate without them, each loan on its standard schedule.</summary>
 /// <param name="Points">The points paid, as a percentage of the loan.</param>

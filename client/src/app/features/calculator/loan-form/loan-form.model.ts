@@ -47,6 +47,9 @@ export function loanForm(fb: NonNullableFormBuilder) {
     loanProgram: fb.control<LoanProgramType>('Conventional'),
     vaUse: fb.control<VaFundingFeeType>('FirstUse'),
     financeUpfrontFee: [true],
+    // FHA only: a credit score (blank for 580 or more) and the county whose loan limit applies (blank not to check).
+    creditScore: [null as number | null, validatorsFor(rules.creditScore)],
+    countyFips: [''],
     downPaymentMode: fb.control<DownPaymentMode>('amount'),
     // Dollars or a percentage of the price, depending on downPaymentMode.
     downPayment: [18_750, validatorsFor(rules.downPayment)],
@@ -178,6 +181,22 @@ export const belowFhaMinimum = (down: number, price: number) => down * 1_000 < p
 /** Shown while an FHA loan has less than 3.5% down. */
 export const FHA_DOWN_TOO_LOW = 'An FHA loan needs at least 3.5% down.';
 
+/** Shown while an FHA loan with a credit score from 500 to 579 has less than 10% down. */
+export const FHA_LOW_SCORE_DOWN_TOO_LOW = 'With a credit score below 580, an FHA loan needs at least 10% down.';
+
+/** Shown for an FHA loan with a credit score below 500. */
+export const FHA_SCORE_TOO_LOW = 'FHA insures loans only for credit scores of 500 or more.';
+
+/**
+ * What stops an FHA loan from being sent, by the borrower's credit score (blank counts as 580 or more): below 500,
+ * none is insured; from 500 to 579 it needs 10% down; otherwise 3.5%. Null when nothing does.
+ */
+export function fhaDownProblem(down: number, price: number, creditScore: number | null | undefined): string | null {
+  if (creditScore !== null && creditScore !== undefined && creditScore < 500) return FHA_SCORE_TOO_LOW;
+  if (creditScore !== null && creditScore !== undefined && creditScore < 580) return down * 10 < price ? FHA_LOW_SCORE_DOWN_TOO_LOW : null;
+  return belowFhaMinimum(down, price) ? FHA_DOWN_TOO_LOW : null;
+}
+
 /** True when discount points are chosen, on a rate they can be compared on (not an adjustable one). */
 export function pointsApply(v: { usePoints?: boolean; rate?: { rateType?: string } }): boolean {
   return !!v.usePoints && v.rate?.rateType !== 'arm';
@@ -268,7 +287,13 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
     buydownPaidBy: v.buydownPaidBy,
     program: v.loanProgram === 'Conventional'
       ? null
-      : { type: v.loanProgram, vaUse: v.loanProgram === 'Va' ? v.vaUse : null, financeUpfrontFee: v.financeUpfrontFee },
+      : {
+          type: v.loanProgram,
+          vaUse: v.loanProgram === 'Va' ? v.vaUse : null,
+          financeUpfrontFee: v.financeUpfrontFee,
+          creditScore: v.loanProgram === 'Fha' ? v.creditScore || null : null,
+          countyFips: v.loanProgram === 'Fha' ? v.countyFips || null : null,
+        },
     discountPoints: pointsApply(v) ? { points: v.points, rateWithoutPoints: v.rateWithoutPoints } : null,
     closingCosts: {
       loanCosts: v.loanCosts || 0,
@@ -346,6 +371,8 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     loanProgram: r.program?.type ?? 'Conventional',
     ...(r.program && { financeUpfrontFee: r.program.financeUpfrontFee }),
     ...(r.program?.vaUse && { vaUse: r.program.vaUse }),
+    creditScore: r.program?.creditScore ?? null,
+    countyFips: r.program?.countyFips ?? '',
     usePoints: !!r.discountPoints,
     ...(r.discountPoints && { points: r.discountPoints.points, rateWithoutPoints: r.discountPoints.rateWithoutPoints }),
     loanCosts: closing?.loanCosts ?? 0,

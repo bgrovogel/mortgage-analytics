@@ -8,6 +8,8 @@ compare_with_api.py checks the live API against it.
 """
 import os
 import sys
+import json
+import pathlib
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal as D, getcontext
 
@@ -220,6 +222,12 @@ class Costs:
 CONFORMING_LIMITS = {2023: D(726_200), 2024: D(766_550), 2025: D(806_500), 2026: D(832_750)}
 
 
+# HUD's county limits, as the app ships them (tools/fha-limits builds the file from HUD's): data, not logic, so shared.
+_LIMITS_FILE = pathlib.Path(__file__).resolve().parents[2] / 'src' / 'MortgageAnalytics.Application' / 'Data' / 'fha-loan-limits.json'
+_limits = json.loads(_LIMITS_FILE.read_text(encoding='utf-8'))
+FHA_LIMITS = {'year': _limits['year'], 'counties': {c['fips']: c for c in _limits['counties']}}
+
+
 def conforming_limit(year):
     """The limit for `year`: the latest known for later years, the first (2023) for earlier ones."""
     known = [y for y in CONFORMING_LIMITS if y <= year]
@@ -263,7 +271,12 @@ def program_of(request, price, down, rate, term, first):
     fee = money(base * fee_rate / 100)
     loan = base + fee if financed else base
     out = {'type': kind, 'upfrontFeePercent': fee_rate, 'upfrontFee': fee, 'upfrontFeeFinanced': financed,
-           'loanAmount': loan, 'annualMipPercent': D(0), 'mipPayments': 0}
+           'loanAmount': loan, 'annualMipPercent': D(0), 'mipPayments': 0,
+           'countyName': None, 'countyLoanLimit': None, 'loanLimitYear': None}
+    county = FHA_LIMITS['counties'].get(program.get('countyFips')) if kind == 'Fha' else None
+    if county:
+        out['countyName'] = f"{county['name']}, {county['state']}"
+        out['countyLoanLimit'], out['loanLimitYear'] = D(county['limit']), FHA_LIMITS['year']
     if kind == 'Va':
         return out, loan, lambda p: D(0)
 

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { pct, usdCents } from '../../../core/formatting/format';
+import { pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 
 /**
@@ -42,9 +42,10 @@ export class ProgramSummaryComponent {
       ? 'for 11 years.'
       : 'for the whole loan: with 10% or more down it would end after 11 years.';
     const monthly = usdCents(result.baseline.monthlyHousingCosts.mortgageInsurance);
+    const county = p.countyName && p.countyLoanLimit ? ` FHA's ${p.loanLimitYear} limit in ${p.countyName} is ${usd(p.countyLoanLimit)}.` : '';
     return {
       title: 'FHA loan',
-      note: `${upfront} The annual MIP is ${p.annualMipPercent.toFixed(2)}% of the balance, ${monthly} a month in year 1, ${forWhole}`,
+      note: `${upfront} The annual MIP is ${p.annualMipPercent.toFixed(2)}% of the balance, ${monthly} a month in year 1, ${forWhole}${county}`,
     };
   });
 }

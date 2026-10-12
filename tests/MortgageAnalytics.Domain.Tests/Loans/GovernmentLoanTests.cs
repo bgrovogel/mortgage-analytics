@@ -97,6 +97,41 @@ public class GovernmentLoanTests : AmortizationTestBase
         Assert.That(ConformingLoanLimit.For(year), Is.EqualTo(limit), "FHFA's baseline one-unit limit");
     }
 
+    [TestCase(580, 10_500, TestName = "Score580_Needs3Point5PercentDown")]
+    [TestCase(579, 30_000, TestName = "Score579_Needs10PercentDown")]
+    [TestCase(500, 30_000, TestName = "Score500_IsTheLowestAccepted")]
+    public void Fha_AcceptsTheSmallestDownPaymentForTheCreditScore(int score, decimal down)
+    {
+        DomainAssert.Accepts(() => GovernmentLoan.Fha(new PropertyPurchase(300_000m, down), 360, 2026, true, creditScore: score),
+            "580 and up needs 3.5% down; 500 to 579, 10%");
+    }
+
+    [Test]
+    public void Fha_WithACreditScoreBelow580_NeedsTenPercentDown()
+    {
+        DomainAssert.Rejects(() => GovernmentLoan.Fha(new PropertyPurchase(300_000m, 29_999.99m), 360, 2026, true, creditScore: 579), "10%",
+            "a score from 500 to 579 limits the loan to 90% of the value");
+    }
+
+    [Test]
+    public void Fha_NeedsACreditScoreOfAtLeast500()
+    {
+        DomainAssert.Rejects(() => GovernmentLoan.Fha(new PropertyPurchase(300_000m, 60_000m), 360, 2026, true, creditScore: 499), "500",
+            "FHA does not insure a loan to a borrower scoring below 500, whatever the down payment");
+    }
+
+    [Test]
+    public void Fha_BorrowsNoMoreThanTheCountysLimit()
+    {
+        Assert.Multiple(() =>
+        {
+            DomainAssert.Accepts(() => GovernmentLoan.Fha(new PropertyPurchase(578_000m, 20_250m), 360, 2026, true, countyLimit: 557_750m),
+                "a $557,750 base loan is at Bexar County's limit");
+            DomainAssert.Rejects(() => GovernmentLoan.Fha(new PropertyPurchase(578_000m, 20_249.99m), 360, 2026, true, countyLimit: 557_750m),
+                "557,750", "a cent over the county's limit is more than FHA insures there");
+        });
+    }
+
     [Test]
     public void Fha_NeedsAtLeast3Point5PercentDown()
     {

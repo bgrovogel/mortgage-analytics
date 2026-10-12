@@ -122,6 +122,17 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdownAmount('FHA MIP'), 'the annual MIP, named as such').toHaveText('$134.33');
     await expect(page.getByTestId('program-note'), 'what the loan program adds')
       .toHaveText('The 1.75% upfront MIP, $5,066.25, is added to the loan, so you borrow $294,566.25. The annual MIP is 0.55% of the balance, $134.33 a month in year 1, for the whole loan: with 10% or more down it would end after 11 years.');
+
+    // The county: HUD's 2026 limit in Bexar County, Texas, is $557,750.
+    await page.getByTestId('fha-state').selectOption('TX');
+    await page.getByTestId('fha-county').selectOption('48029');
+    await calculator.calculate();
+    await expect(page.getByTestId('fha-limit'), 'the most FHA insures there').toHaveText("FHA's 2026 limit in Bexar County, TX: $557,750.");
+    await expect(page.getByTestId('program-note'), 'and the results say it too').toContainText("FHA's 2026 limit in Bexar County, TX is $557,750.");
+
+    await calculator.set('home-price', 600_000);
+    await calculator.set('down-payment', 21_000);
+    await expect(page.getByTestId('fha-over-limit'), 'a $579,000 loan is over it').toContainText('This loan, $579,000, is over it');
   });
 
   test('a VA loan: nothing down, the funding fee borrowed, and no mortgage insurance', async ({ calculator, page }) => {

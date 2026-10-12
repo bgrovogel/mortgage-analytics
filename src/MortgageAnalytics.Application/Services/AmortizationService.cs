@@ -1,4 +1,5 @@
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Data;
 using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.ExtraPayments;
@@ -60,7 +61,8 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
                 new LoanTerms(loan.Principal, points.RateWithoutPoints, loan.TermInMonths, loan.FirstPaymentDate),
                 ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline;
 
-        var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program);
+        var county = request.Program is { Type: LoanProgramType.Fha, CountyFips: { } fips } ? FhaLoanLimitData.Current.Find(fips) : null;
+        var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program, county);
         return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts());
     }
 }

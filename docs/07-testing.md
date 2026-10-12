@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,620 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,650 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -13,12 +13,12 @@
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 511 | NUnit | < 1 s |
-| Application | 295 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 517 | NUnit | < 1 s |
+| Application | 306 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
-| API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 104 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 581 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 591 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 98 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
@@ -114,6 +114,7 @@ Take the ARM margin floor as an example of the order of work:
   dev server sends no CSP, so tests run against it would never notice. `security.spec.ts` checks the page carries
   the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
+- FHA's county: the limit shown, in the results too, and a warning once the loan is over it.
 - FHA and VA: the payment on the loan with its upfront fee, the MIP named as such, and the VA's funding fee.
 - A tax rate change: the quick numbers before and after its year.
 - Discount points: both payments, the break-even payment and date, and the line in the cash to close.

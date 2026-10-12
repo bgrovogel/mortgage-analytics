@@ -39,7 +39,7 @@ What a purchase costs month by month and year by year, and what extra payments d
 | Loan | Down payment | Mortgage insurance and fees |
 |---|---|---|
 | **Conventional** | Any | PMI below 20% down (see the costs below) |
-| **FHA** | At least 3.5% | A **1.75% upfront MIP**, and an **annual MIP** from HUD's table: 0.55% of the balance for most 30-year loans with less than 5% down, 0.50% with 5% or more; lower on 15-year loans, higher above the national conforming limit ($832,750 in 2026). It lasts **11 years** at 90% LTV or less, otherwise the **whole loan** |
+| **FHA** | At least 3.5% (10% with a credit score from 500 to 579; none below 500) | A **1.75% upfront MIP**, and an **annual MIP** from HUD's table: 0.55% of the balance for most 30-year loans with less than 5% down, 0.50% with 5% or more; lower on 15-year loans, higher above the national conforming limit ($832,750 in 2026). It lasts **11 years** at 90% LTV or less, otherwise the **whole loan**. The loan must be within **the county's limit**: pick the state and county, and the form shows HUD's 2026 limit there ($541,287 in most counties, up to $1,249,125) |
 | **VA** | None needed | A **funding fee**: 2.15% with less than 5% down (3.3% when used before), 1.5% with 5%, 1.25% with 10%; none for veterans compensated for a service-connected disability. **No mortgage insurance** |
 
 The upfront fee is added to the loan unless you choose to pay it at closing (then it is a cash-to-close line), so

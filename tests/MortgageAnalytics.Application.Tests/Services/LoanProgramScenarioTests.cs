@@ -1,4 +1,5 @@
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Data;
 using MortgageAnalytics.Testing.Builders;
 
 namespace MortgageAnalytics.Application.Tests.Services;
@@ -104,5 +105,33 @@ public class LoanProgramScenarioTests : SociableAnalysisTestBase
             .WithProgram(LoanProgramType.Fha);
 
         Assert.That(Service.Analyze(request).Program!.AnnualMipPercent, Is.EqualTo(0.70m), "$810,000 is above 2025's limit, though within 2026's");
+    }
+
+    [Test]
+    public void AnFhaLoanInACounty_SaysItsLimit()
+    {
+        var program = Service.Analyze(Fha().WithProgram(LoanProgramType.Fha, countyFips: "48029")).Program!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.CountyName, Is.EqualTo("Bexar County, TX"), "the county, named");
+            Assert.That(program.CountyLoanLimit, Is.EqualTo(557_750m), "and the most FHA insures there");
+            Assert.That(program.LoanLimitYear, Is.EqualTo(2026), "in HUD's 2026 table");
+        });
+    }
+
+    [Test]
+    public void TheCountyLimits_AreHudsWholeTable()
+    {
+        var limits = FhaLoanLimitData.Current;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(limits.Counties, Has.Count.EqualTo(3_235), "every county and county equivalent HUD lists");
+            Assert.That((limits.Floor, limits.Ceiling), Is.EqualTo((541_287m, 1_249_125m)), "between HUD's 2026 floor and ceiling");
+            Assert.That(limits.Find("06037")?.Limit, Is.EqualTo(1_249_125m), "Los Angeles County is at the ceiling");
+            Assert.That(limits.Find("09110")?.Name, Is.EqualTo("Capitol Planning Region"), "Connecticut's planning regions are named");
+            Assert.That(limits.States["DC"], Is.EqualTo("District of Columbia"), "and every state and territory");
+        });
     }
 }

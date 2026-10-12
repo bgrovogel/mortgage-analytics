@@ -83,6 +83,20 @@ public sealed record LoanProgramRequest
     /// <summary>True (the default) to add the upfront fee to the loan; false to pay it at closing.</summary>
     /// <example>true</example>
     public bool FinanceUpfrontFee { get; init; } = true;
+
+    /// <summary>
+    /// For FHA: the borrower's decision credit score. 580 or more needs 3.5% down; 500 to 579, 10%; below 500, FHA does
+    /// not insure the loan. Omit for 580 or more.
+    /// </summary>
+    /// <example>620</example>
+    public int? CreditScore { get; init; }
+
+    /// <summary>
+    /// For FHA: the home's county, as its five-digit FIPS code ("48029" is Bexar County, Texas). The base loan must be
+    /// within HUD's limit there (<c>GET /api/v1/fha/loan-limits</c>). Omit not to check it.
+    /// </summary>
+    /// <example>48029</example>
+    public string? CountyFips { get; init; }
 }
 
 /// <summary>The kind of loan.</summary>

@@ -134,8 +134,17 @@ no down payment needed and no mortgage insurance. The funding fee for a purchase
 Veterans receiving compensation for a service-connected disability (and some others) pay none. $400,000 with nothing
 down, first use: $8,600, so $408,600 is borrowed.
 
-What is **not** modelled: FHA's county loan limits (the most FHA will insure), its credit-score tiers (10% down below
-580), loans endorsed before 20 March 2023 (which paid more MIP), and the VA's limits on what the buyer may pay.
+**FHA's other limits:**
+- **Credit score** (the decision score; [HUD ML 2010-29](https://www.hud.gov/sites/documents/10-29ml.pdf)): 580 or
+  more needs the 3.5% minimum down; 500 to 579, 10% (a 90% LTV at most); below 500, FHA does not insure the loan.
+  Left blank, the score counts as 580 or more.
+- **The county's loan limit** ([HUD ML 2025-23](https://www.hud.gov/sites/dfiles/hudclips/documents/2025-23hsgml.pdf),
+  one-unit homes, case numbers from 1 January 2026): the base loan must be within it. The app ships HUD's whole table,
+  3,235 counties from the $541,287 floor to the $1,249,125 ceiling (higher in Alaska, Hawaii and the territories),
+  built from HUD's own file by `tools/fha-limits`; Bexar County, Texas, is $557,750.
+
+What is **not** modelled: loans endorsed before 20 March 2023 (which paid more MIP), FHA limits for two to four units,
+and the VA's limits on what the buyer may pay.
 
 ---
 

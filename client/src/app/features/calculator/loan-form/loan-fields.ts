@@ -42,6 +42,7 @@ export const LOAN_RULES = {
   insuranceIncreaseRate: { label: 'Insurance increase', unit: '%', min: -20, max: 50, decimals: 4, optional: true },
   hoaIncreaseRate: { label: 'HOA increase', unit: '%', min: -20, max: 50, decimals: 4, optional: true },
 
+  creditScore: { label: 'Credit score', unit: 'number', min: 300, max: 850, whole: true, optional: true },
   points: { label: 'Points', unit: 'number', min: 0.001, max: 5, decimals: 3, optional: true },
   rateWithoutPoints: { label: 'Rate without points', unit: '%', min: 0, max: 30, decimals: 4, optional: true },
 

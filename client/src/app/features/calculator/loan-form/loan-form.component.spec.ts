@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AmortizationRequest } from '../../../core/models/amortization.models';
+import { of } from 'rxjs';
+import { FhaLimitsService } from '../../../core/services/fha-limits.service';
+import { FHA_LIMITS as LIMITS } from '../../../../testing/builders';
 import { LoanFormComponent } from './loan-form.component';
 
 describe('LoanFormComponent', () => {
@@ -8,6 +11,7 @@ describe('LoanFormComponent', () => {
   let emitted: AmortizationRequest[];
 
   beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [{ provide: FhaLimitsService, useValue: { limits: () => of(LIMITS) } }] });
     fixture = TestBed.createComponent(LoanFormComponent);
     component = fixture.componentInstance;
     emitted = [];
@@ -747,7 +751,7 @@ describe('LoanFormComponent', () => {
       controls().downPayment.setValue(13_125); // 3.5% of $375,000
       choose('Fha');
 
-      expect(last().program).toEqual({ type: 'Fha', vaUse: null, financeUpfrontFee: true });
+      expect(last().program).toEqual({ type: 'Fha', vaUse: null, financeUpfrontFee: true, creditScore: null, countyFips: null });
       expect(last().housingCosts?.pmiRate).toBe(0);
       expect(text('program-summary')).toBe('FHA · upfront MIP added to the loan');
       expect(el('pmi-rate')).toBeNull();
@@ -764,13 +768,46 @@ describe('LoanFormComponent', () => {
       expect(text('fha-down-error')).toBe('An FHA loan needs at least 3.5% down.');
     });
 
+    it('send an FHA loan with its credit score and county', () => {
+      controls().downPayment.setValue(13_125);
+      choose('Fha');
+      controls().creditScore.setValue(640);
+      controls().countyFips.setValue('48029');
+
+      expect(last().program).toEqual({ type: 'Fha', vaUse: null, financeUpfrontFee: true, creditScore: 640, countyFips: '48029' });
+    });
+
+    it('need 10% down for FHA with a credit score below 580', () => {
+      controls().downPayment.setValue(13_125);
+      choose('Fha');
+      const sent = emitted.length;
+
+      controls().creditScore.setValue(579);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('fha-down-error')).toBe('With a credit score below 580, an FHA loan needs at least 10% down.');
+    });
+
+    it('refuse FHA below a credit score of 500', () => {
+      controls().downPayment.setValue(75_000);
+      choose('Fha');
+      const sent = emitted.length;
+
+      controls().creditScore.setValue(499);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('fha-down-error')).toBe('FHA insures loans only for credit scores of 500 or more.');
+    });
+
     it('send a VA loan with its funding-fee use, which can be paid at closing', () => {
       choose('Va');
       controls().vaUse.setValue('SubsequentUse');
       controls().financeUpfrontFee.setValue(false);
       fixture.detectChanges();
 
-      expect(last().program).toEqual({ type: 'Va', vaUse: 'SubsequentUse', financeUpfrontFee: false });
+      expect(last().program).toEqual({ type: 'Va', vaUse: 'SubsequentUse', financeUpfrontFee: false, creditScore: null, countyFips: null });
       expect(last().housingCosts?.pmiRate).toBe(0);
       expect(text('program-summary')).toBe('VA · used before · funding fee paid at closing');
       expect(text('pmi-hint')).toContain('VA loans have no mortgage insurance');
@@ -787,7 +824,7 @@ describe('LoanFormComponent', () => {
       restored.componentRef.setInput('initial', original);
       restored.detectChanges();
 
-      expect(sent[0].program).toEqual({ type: 'Va', vaUse: 'Exempt', financeUpfrontFee: true });
+      expect(sent[0].program).toEqual({ type: 'Va', vaUse: 'Exempt', financeUpfrontFee: true, creditScore: null, countyFips: null });
     });
   });
 

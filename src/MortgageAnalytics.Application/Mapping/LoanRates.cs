@@ -11,6 +11,8 @@ namespace MortgageAnalytics.Application.Mapping;
 /// <param name="Points">Discount points, or null.</param>
 /// <param name="WithoutPoints">The standard schedule at the rate without points, or null without them.</param>
 /// <param name="Program">An FHA or VA loan's terms, or null for a conventional loan.</param>
+/// <param name="County">An FHA loan's county and its limit, or null.</param>
 internal sealed record LoanRates(
     LoanTerms Loan, TemporaryBuydown? Buydown, AmortizationSchedule? WorstCase, BuydownPayer BuydownPaidBy = BuydownPayer.Seller,
-    DiscountPoints? Points = null, AmortizationSchedule? WithoutPoints = null, GovernmentLoan? Program = null);
+    DiscountPoints? Points = null, AmortizationSchedule? WithoutPoints = null, GovernmentLoan? Program = null,
+    Contracts.FhaCountyLimitResponse? County = null);

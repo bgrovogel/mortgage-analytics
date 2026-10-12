@@ -1,4 +1,5 @@
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Data;
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.ExtraPayments;
@@ -24,7 +25,9 @@ internal static class AmortizationMapper
     public static GovernmentLoan? ToGovernmentLoan(this AmortizationRequest request, PropertyPurchase purchase, DateOnly firstPaymentDate) =>
         request.Program switch
         {
-            { Type: LoanProgramType.Fha } p => GovernmentLoan.Fha(purchase, request.TermInMonths, firstPaymentDate.AddMonths(-1).Year, p.FinanceUpfrontFee),
+            { Type: LoanProgramType.Fha } p => GovernmentLoan.Fha(
+                purchase, request.TermInMonths, firstPaymentDate.AddMonths(-1).Year, p.FinanceUpfrontFee, p.CreditScore,
+                p.CountyFips is { } fips ? FhaLoanLimitData.Current.Find(fips)?.Limit : null),
             { Type: LoanProgramType.Va } p => GovernmentLoan.Va(purchase, p.VaUse.ToDomain(), p.FinanceUpfrontFee),
             _ => null,
         };
@@ -205,9 +208,9 @@ internal static class AmortizationMapper
             rates.WorstCase is { } worst ? ToResponse(worst) : null,
             closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)),
             rates is { Points: { } points, WithoutPoints: { } without } ? ToResponse(points, rates.Loan.Principal, comparison.Baseline, without) : null,
-            rates.Program is { } program ? ToResponse(program) : null);
+            rates.Program is { } program ? ToResponse(program, rates.County) : null);
 
-    private static LoanProgramResponse ToResponse(GovernmentLoan program) =>
+    private static LoanProgramResponse ToResponse(GovernmentLoan program, FhaCountyLimitResponse? county) =>
         new(
             program.Program == LoanProgram.Fha ? LoanProgramType.Fha : LoanProgramType.Va,
             program.UpfrontFeePercent,
@@ -215,7 +218,10 @@ internal static class AmortizationMapper
             program.UpfrontFeeFinanced,
             program.LoanAmount,
             program.AnnualMipPercent,
-            program.MipPayments);
+            program.MipPayments,
+            county is null ? null : $"{county.Name}, {county.State}",
+            county?.Limit,
+            county is null ? null : FhaLoanLimitData.Current.Year);
 
     /// <summary>The points against the rate without them, each on its standard schedule.</summary>
     private static DiscountPointsResponse ToResponse(DiscountPoints points, decimal loanAmount, AmortizationSchedule withPoints, AmortizationSchedule without)

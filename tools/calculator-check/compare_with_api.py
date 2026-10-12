@@ -19,7 +19,7 @@ import urllib.request
 from datetime import date
 from decimal import Decimal as D
 
-from calculator_model import analyze, refinance
+from calculator_model import FHA_LIMITS, analyze, refinance
 
 API = 'http://localhost:5080/api/v1'
 
@@ -124,6 +124,15 @@ def random_purchase(rng):
             # Half at the 3.5% minimum, the usual FHA purchase (over 95% LTV); the rest with their own down payment.
             minimum = int(price * 35 / 1000) + 1
             request['downPayment'] = minimum if rng.random() < 0.5 else max(request['downPayment'], minimum)
+            # Sometimes a credit score (from 500 to 579, 10% down), and a county whose limit the loan is within.
+            if rng.random() < 0.3:
+                request['program']['creditScore'] = rng.randint(500, 579)
+                request['downPayment'] = max(request['downPayment'], int(price / 10) + 1)
+            elif rng.random() < 0.3:
+                request['program']['creditScore'] = rng.randint(580, 850)
+            fitting = [f for f, c in FHA_LIMITS['counties'].items() if c['limit'] >= price - request['downPayment']]
+            if fitting and rng.random() < 0.5:
+                request['program']['countyFips'] = rng.choice(sorted(fitting))
         elif rng.random() < 0.4:
             request['downPayment'] = 0
     # Tax rates that change: a few later years, each changing one or more of the taxes charged.

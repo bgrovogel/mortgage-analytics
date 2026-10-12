@@ -36,8 +36,8 @@
     } @else {
       <small class="error">The down payment must be less than the home price.</small>
     }
-    @if (fhaDownTooLow()) {
-      <small class="error" data-testid="fha-down-error">{{ fhaDownMessage }}</small>
+    @if (fhaDownProblem(); as problem) {
+      <small class="error" data-testid="fha-down-error">{{ problem }}</small>
     }
 
     <div class="row">
@@ -87,6 +87,9 @@
             At least 3.5% down. A 1.75% upfront MIP, and an annual MIP from HUD's table (0.55% of the balance for most
             30-year loans with less than 5% down), for 11 years with 10% or more down, otherwise for the whole loan.
           </p>
+          <app-number-field [control]="form.controls.creditScore" [rule]="rules.creditScore" testId="credit-score" placeholder="580 or more" />
+          <p class="hint">With a score from 500 to 579, FHA needs 10% down; below 500, it does not insure the loan.</p>
+          <app-fha-county [county]="form.controls.countyFips" [loanAmount]="loanAmount()" />
         }
         @case ('Va') {
           <div class="field">

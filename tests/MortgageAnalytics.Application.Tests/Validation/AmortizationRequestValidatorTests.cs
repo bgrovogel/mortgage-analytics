@@ -560,4 +560,76 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
 
         AssertInvalid(request, $"HousingCosts.{field}", "each exemption has its range");
     }
+
+    // ---------------------------------------------------------------------------------------
+    // FHA's credit-score tiers and county loan limits.
+    // ---------------------------------------------------------------------------------------
+
+    /// <summary>$300,000 with the given down payment, as an FHA loan.</summary>
+    private static AmortizationRequestBuilder Fha(decimal down, int? creditScore = null, string? county = null) =>
+        A.Request.WithHomePrice(300_000m).WithDownPayment(down).WithProgram(LoanProgramType.Fha, creditScore: creditScore, countyFips: county);
+
+    [Test]
+    public void ACreditScoreBelow580_NeedsTenPercentDown()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertErrorMessage(Fha(10_500m, creditScore: 579), "DownPayment", "With a credit score below 580, an FHA loan needs at least 10% down.",
+                "a score from 500 to 579 limits the loan to 90% of the value");
+            AssertNoErrorFor(Fha(30_000m, creditScore: 579), "DownPayment", "10% down is enough");
+            AssertNoErrorFor(Fha(10_500m, creditScore: 580), "DownPayment", "from 580, 3.5% is enough");
+        });
+    }
+
+    [Test]
+    public void ACreditScoreBelow500_IsRefused()
+    {
+        AssertErrorMessage(Fha(60_000m, creditScore: 499), "Program.CreditScore", "FHA insures loans only for credit scores of 500 or more.",
+            "no down payment makes up for it");
+    }
+
+    [TestCase(299, TestName = "CreditScore_Below300")]
+    [TestCase(851, TestName = "CreditScore_Above850")]
+    public void ACreditScoreOutsideTheScale_IsRejected(int score)
+    {
+        AssertInvalid(Fha(30_000m, creditScore: score), "Program.CreditScore", "credit scores run from 300 to 850");
+    }
+
+    [Test]
+    public void ALoanAboveTheCountysLimit_IsRefused_WithTheLimit()
+    {
+        // Bexar County, Texas: $557,750 in 2026.
+        var request = A.Request.WithHomePrice(600_000m).WithDownPayment(21_000m).WithProgram(LoanProgramType.Fha, countyFips: "48029");
+
+        AssertErrorMessage(request, "DownPayment",
+            "FHA insures at most $557,750 in Bexar County, TX (2026); this loan is $579,000. Put more down, or choose another loan type.",
+            "the county's limit, the loan, and what to do about it");
+    }
+
+    [Test]
+    public void ALoanWithinTheCountysLimit_IsValid()
+    {
+        AssertNoErrorFor(A.Request.WithHomePrice(578_000m).WithDownPayment(20_250m).WithProgram(LoanProgramType.Fha, countyFips: "48029"), "DownPayment",
+            "a $557,750 loan is at Bexar County's limit");
+    }
+
+    [Test]
+    public void AnUnknownCounty_IsRejected()
+    {
+        AssertErrorMessage(Fha(10_500m, county: "99999"), "Program.CountyFips", "Choose a county from the list: '99999' is not one HUD sets a limit for.",
+            "a county must be one HUD lists");
+    }
+
+    [TestCase(LoanProgramType.Va, TestName = "CountyAndScore_OnAVaLoan")]
+    [TestCase(LoanProgramType.Conventional, TestName = "CountyAndScore_OnAConventionalLoan")]
+    public void ACountyOrCreditScore_IsOnlyForAnFhaLoan(LoanProgramType type)
+    {
+        var request = A.Request.WithProgram(type, creditScore: 700, countyFips: "48029");
+
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(request, "Program.CreditScore", "only FHA's rules here depend on the score");
+            AssertInvalid(request, "Program.CountyFips", "only FHA's limit here depends on the county");
+        });
+    }
 }

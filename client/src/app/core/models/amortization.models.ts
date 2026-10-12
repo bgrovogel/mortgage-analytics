@@ -134,6 +134,29 @@ export interface LoanProgramInput {
   vaUse: VaFundingFeeType | null;
   /** True to add the upfront fee to the loan; false to pay it at closing. */
   financeUpfrontFee: boolean;
+  /** FHA only: the decision credit score (580+ needs 3.5% down, 500 to 579 needs 10%); null for 580 or more. */
+  creditScore?: number | null;
+  /** FHA only: the county's five-digit FIPS code, whose loan limit the loan must be within; null not to check. */
+  countyFips?: string | null;
+}
+
+/** HUD's FHA loan limits for one-unit homes, by county. */
+export interface FhaLoanLimits {
+  year: number;
+  source: string;
+  floor: number;
+  ceiling: number;
+  /** Each state's and territory's name, by its two-letter code. */
+  states: Record<string, string>;
+  counties: FhaCountyLimit[];
+}
+
+/** One county's FHA limit. */
+export interface FhaCountyLimit {
+  fips: string;
+  state: string;
+  name: string;
+  limit: number;
 }
 
 /** An FHA or VA loan's upfront fee and mortgage insurance, as the API works them out. */
@@ -149,6 +172,10 @@ export interface LoanProgramSummary {
   annualMipPercent: number;
   /** How many payments carry FHA's annual MIP: 132 (11 years) or the whole term. */
   mipPayments: number;
+  /** For FHA in a given county: "Bexar County, TX", its limit, and the year of HUD's table. */
+  countyName?: string | null;
+  countyLoanLimit?: number | null;
+  loanLimitYear?: number | null;
 }
 
 /** Discount points: a fee at closing, a percentage of the loan, for a lower rate for the whole loan. */

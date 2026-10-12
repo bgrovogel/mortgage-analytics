@@ -44,6 +44,12 @@ describe('ProgramSummaryComponent', () => {
       + 'the balance, $134.33 a month in year 1, for 11 years.');
   });
 
+  it("names the county's limit when the loan has one", () => {
+    const text = render({ ...fha, countyName: 'Bexar County, TX', countyLoanLimit: 557_750, loanLimitYear: 2026 });
+
+    expect(text('program-note')).toContain("FHA's 2026 limit in Bexar County, TX is $557,750.");
+  });
+
   it('explains a VA loan: the funding fee, and no mortgage insurance', () => {
     const text = render(va);
 

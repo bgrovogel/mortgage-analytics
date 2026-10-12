@@ -1,5 +1,6 @@
 import {
   AmortizationResponse,
+  FhaLoanLimits,
   HousingCosts,
   Payment,
   Purchase,
@@ -247,3 +248,14 @@ export function aStrategyComparison(overrides: Partial<StrategyComparison> = {})
     ...overrides,
   };
 }
+
+/** A few real counties from HUD's 2026 table. */
+export const FHA_LIMITS: FhaLoanLimits = {
+  year: 2026, source: 'HUD', floor: 541_287, ceiling: 1_249_125,
+  states: { FL: 'Florida', TX: 'Texas' },
+  counties: [
+    { fips: '12086', state: 'FL', name: 'Miami-Dade County', limit: 667_000 },
+    { fips: '48029', state: 'TX', name: 'Bexar County', limit: 557_750 },
+    { fips: '48201', state: 'TX', name: 'Harris County', limit: 541_287 },
+  ],
+};

@@ -348,6 +348,25 @@
         }
       }
     },
+    "/api/v1/fha/loan-limits": {
+      "get": {
+        "tags": [
+          "FHA"
+        ],
+        "operationId": "FhaLoanLimits",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FhaLoanLimitsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/refinance/analyze": {
       "post": {
         "tags": [
@@ -1166,6 +1185,64 @@
         },
         "additionalProperties": false
       },
+      "FhaCountyLimitResponse": {
+        "type": "object",
+        "properties": {
+          "fips": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "limit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FhaLoanLimitsResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "floor": {
+            "type": "number",
+            "format": "double"
+          },
+          "ceiling": {
+            "type": "number",
+            "format": "double"
+          },
+          "states": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "counties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FhaCountyLimitResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ForgotPasswordRequest": {
         "required": [
           "email"
@@ -1409,6 +1486,15 @@
           },
           "financeUpfrontFee": {
             "type": "boolean"
+          },
+          "creditScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyFips": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1441,6 +1527,20 @@
           "mipPayments": {
             "type": "integer",
             "format": "int32"
+          },
+          "countyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "countyLoanLimit": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "loanLimitYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2634,6 +2734,9 @@
     },
     {
       "name": "Amortization"
+    },
+    {
+      "name": "FHA"
     },
     {
       "name": "Refinance"
