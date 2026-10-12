@@ -308,6 +308,9 @@ def analyze(request, today):
             years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
         out['buydown'] = {'noteRate': rate, 'years': years,
                           'totalSubsidy': base['buydownSubsidy'], 'paidBy': paid_by}
+    closing = request.get('closingCosts')
+    out['cashToClose'] = cash_to_close(closing, down, loan, rate, projection[0]['costs'],
+                                       base['buydownSubsidy'] if paid_by == 'Borrower' else D(0)) if closing else None
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
@@ -320,6 +323,33 @@ def analyze(request, today):
             'worstCaseTotalInterest': sum((r['interest'] for r in worst['rows']), D(0)),
         }
     return out
+
+
+# ---------------------------------------------------------------------------------------------- cash to close
+
+def cash_to_close(closing, down, loan, rate, year_one, buydown_cost):
+    """
+    The Loan Estimate's way: fees as entered; prepaid interest at a day's interest (a 365-day year, to the cent) for the
+    days given; the first year's insurance premium; and months of the first year's taxes and insurance into escrow, a
+    month being a twelfth of the year to the cent. Credits pay closing costs, never the down payment.
+    """
+    days = closing.get('prepaidInterestDays', 15)
+    months = closing.get('escrowMonths', 3)
+    daily = money(loan * rate / 100 / 365)
+    taxes = year_one['propertyTax'] + year_one['schoolTax'] + year_one['localTax'] + year_one['mudTax']
+    insurance = year_one['homeownersInsurance']
+    monthly = money((taxes + insurance) / 12)
+    loan_costs, other = D(str(closing.get('loanCosts', 0))), D(str(closing.get('otherFees', 0)))
+    costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost
+    offered = D(str(closing.get('credits', 0)))
+    credits = min(offered, costs)
+    return {
+        'downPayment': down, 'loanCosts': loan_costs, 'otherFees': other,
+        'dailyInterest': daily, 'prepaidInterestDays': days, 'prepaidInterest': daily * days,
+        'homeownersInsurance': insurance, 'monthlyEscrow': monthly, 'escrowMonths': months, 'escrowDeposit': monthly * months,
+        'buydownCost': buydown_cost, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
+        'total': down + costs - credits,
+    }
 
 
 # ---------------------------------------------------------------------------------------------- refinancing

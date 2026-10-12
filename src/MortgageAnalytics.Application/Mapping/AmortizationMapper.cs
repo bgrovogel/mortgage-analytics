@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
@@ -31,6 +32,10 @@ internal static class AmortizationMapper
 
     /// <summary>The temporary buydown, or null for none.</summary>
     public static TemporaryBuydown? ToBuydown(this AmortizationRequest request) => request.Buydown.ToDomain();
+
+    /// <summary>The closing costs, or null when the request asks for no cash-to-close estimate.</summary>
+    public static ClosingCosts? ToClosingCosts(this AmortizationRequest request) =>
+        request.ClosingCosts is { } c ? new ClosingCosts(c.LoanCosts, c.OtherFees, c.PrepaidInterestDays, c.EscrowMonths, c.Credits) : null;
 
     /// <summary>Converts the chosen strategy into a recast policy. Only <see cref="ExtraPaymentStrategy.Recast"/> ever recasts.</summary>
     public static RecastPolicy ToRecastPolicy(this AmortizationRequest request)
@@ -140,8 +145,10 @@ internal static class AmortizationMapper
     /// <param name="valuation">The home's projected market and assessed values.</param>
     /// <param name="plan">The housing costs, whose taxes report what each one is charged on.</param>
     /// <param name="rates">The loan, and how its payments are figured: any buydown, and an adjustable rate's worst case.</param>
+    /// <param name="closing">The closing costs, or null for no cash-to-close estimate.</param>
     public static AmortizationResponse ToResponse(
-        this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation, HousingCostPlan plan, LoanRates rates) =>
+        this LoanComparison comparison, PropertyPurchase purchase, PropertyValuation valuation, HousingCostPlan plan, LoanRates rates,
+        ClosingCosts? closing = null) =>
         new(
             new PurchaseResponse(
                 purchase.HomePrice,
@@ -163,7 +170,42 @@ internal static class AmortizationMapper
                 comparison.Accelerated.PayoffDate),
             ToProjection(comparison.Baseline, comparison.BaselineCosts, valuation, plan),
             rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
-            rates.WorstCase is { } worst ? ToResponse(worst) : null);
+            rates.WorstCase is { } worst ? ToResponse(worst) : null,
+            closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)));
+
+    /// <summary>
+    /// Prices the closing costs from the loan: interest at the note rate, and the first loan year's property taxes and
+    /// insurance (the escrowed costs; PID, HOA dues and PMI are left out). A buydown the buyer pays for is paid at closing.
+    /// </summary>
+    private static CashToClose CashToCloseFor(ClosingCosts closing, PropertyPurchase purchase, LoanComparison comparison, LoanRates rates)
+    {
+        var yearOne = comparison.BaselineCosts.ByYear[0];
+        var taxes = yearOne[HousingCostCategory.PropertyTax] + yearOne[HousingCostCategory.SchoolTax]
+            + yearOne[HousingCostCategory.LocalTax] + yearOne[HousingCostCategory.MudTax];
+        var buydownCost = rates is { Buydown: { } buydown, BuydownPaidBy: BuydownPayer.Borrower }
+            ? buydown.TotalSubsidy(rates.Loan, comparison.Baseline)
+            : 0m;
+
+        return closing.CashToClose(purchase, rates.Loan.AnnualInterestRate, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buydownCost);
+    }
+
+    private static CashToCloseResponse ToResponse(CashToClose cash) =>
+        new(
+            cash.DownPayment,
+            cash.LoanCosts,
+            cash.OtherFees,
+            cash.DailyInterest,
+            cash.PrepaidInterestDays,
+            cash.PrepaidInterest,
+            cash.HomeownersInsurance,
+            cash.MonthlyEscrow,
+            cash.EscrowMonths,
+            cash.EscrowDeposit,
+            cash.BuydownCost,
+            cash.ClosingCosts,
+            cash.Credits,
+            cash.UnusedCredits,
+            cash.Total);
 
     /// <summary>The bought-down years, then the first at the note rate, the subsidy over the standard schedule, and who pays it.</summary>
     private static BuydownResponse ToResponse(TemporaryBuydown buydown, LoanTerms loan, AmortizationSchedule schedule, BuydownPayer paidBy) =>

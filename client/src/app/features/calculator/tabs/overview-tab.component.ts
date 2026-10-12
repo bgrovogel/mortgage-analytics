@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { InViewDirective } from '../../../core/layout/in-view.directive';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
+import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { CalculatorStore } from '../calculator.store';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
 import { RatePlanComponent } from '../rate-plan/rate-plan.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
 
-/** The answer at a glance: the headline numbers, where each month's payment goes, and the payoff race. */
+/** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, and the cash to close. */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, RatePlanComponent, PaymentBreakdownComponent, BalanceChartComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-rate-plan [result]="result()" />
@@ -17,6 +18,9 @@ import { SavingsSummaryComponent } from '../savings-summary/savings-summary.comp
       <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>
     </div>
+    @if (result().cashToClose; as cash) {
+      <div class="panel"><app-cash-to-close [cash]="cash" /></div>
+    }
   `,
   styleUrl: './result-tab.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

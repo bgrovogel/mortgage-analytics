@@ -51,6 +51,29 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_ClosingCosts_FillInTheirDefaults_AndReturnTheCashToClose()
+    {
+        // Only the loan costs are sent: 15 days of interest and 3 months of escrow are the request's defaults.
+        var response = await PostCalculateAsync(new
+        {
+            homePrice = Standard.HomePrice, downPayment = Standard.DownPayment, annualInterestRate = Standard.AnnualInterestRate,
+            termInMonths = Standard.TermInMonths, closingCosts = new { loanCosts = 4_000 },
+        });
+        var invalid = await PostCalculateAsync(A.Request.WithClosingCosts(escrowMonths: 15).Build());
+
+        var cash = (await ReadJsonAsync(response)).GetProperty("cashToClose");
+        Assert.Multiple(async () =>
+        {
+            Assert.That(cash.GetProperty("prepaidInterestDays").GetInt32(), Is.EqualTo(15), "half a month of interest unless told otherwise");
+            Assert.That(cash.GetProperty("escrowMonths").GetInt32(), Is.EqualTo(3), "and three months of escrow");
+            Assert.That(cash.GetProperty("prepaidInterest").GetDecimal(), Is.EqualTo(493.20m), "200,000 × 6% ÷ 365 = $32.88 a day, for 15 days");
+            Assert.That(cash.GetProperty("total").GetDecimal(), Is.EqualTo(54_493.20m), "50,000 down, 4,000 of loan costs and the interest: no taxes or insurance to prepay");
+            Assert.That((await ReadJsonAsync(invalid)).GetProperty("errors").TryGetProperty("closingCosts.escrowMonths", out _), Is.True,
+                "a bad closing cost is reported at its JSON path");
+        });
+    }
+
+    [Test]
     public async Task Calculate_WithoutPayments_LeavesOutTheMonthlyRowsButKeepsEverythingElse()
     {
         var response = await PostCalculateAsync(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra).Build(), query: "?includePayments=false");

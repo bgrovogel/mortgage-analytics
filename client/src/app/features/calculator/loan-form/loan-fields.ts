@@ -41,6 +41,12 @@ export const LOAN_RULES = {
   insuranceIncreaseRate: { label: 'Insurance increase', unit: '%', min: -20, max: 50, decimals: 4, optional: true },
   hoaIncreaseRate: { label: 'HOA increase', unit: '%', min: -20, max: 50, decimals: 4, optional: true },
 
+  loanCosts: { label: 'Loan costs', unit: '$', min: 0, max: 1_000_000, optional: true },
+  otherFees: { label: 'Other fees', unit: '$', min: 0, max: 1_000_000, optional: true },
+  prepaidInterestDays: { label: 'Days of prepaid interest', unit: 'number', min: 0, max: 31, whole: true, optional: true },
+  escrowMonths: { label: 'Months of escrow', unit: 'months', min: 0, max: 14, whole: true, optional: true },
+  closingCredits: { label: 'Seller and lender credits', unit: '$', min: 0, max: 1_000_000, optional: true },
+
   annualExtra: { label: 'Extra once a year', unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
   annualFirstPayment: { label: 'First yearly payment', unit: 'number', min: 1, max: MAX_YEARS * 12, whole: true, optional: true },
   recastMinimum: { label: 'Recast minimum', unit: '$', min: 1_000, max: MAX_AMOUNT, optional: true },

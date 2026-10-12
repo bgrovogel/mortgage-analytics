@@ -4,7 +4,8 @@ response with the independent model in calculator_model.py:
 
 - POST /api/v1/amortization/calculate: both schedules row by row (principal, interest, extra, each cost, the
   outlay, the balance, the rate, the buydown subsidy, the due date), every total, PMI's end, the payoff, the
-  recasts and rate changes, the savings, the yearly projection, the buydown table and the ARM's worst case.
+  recasts and rate changes, the savings, the yearly projection, the buydown table, the ARM's worst case and the
+  cash to close.
 - POST /api/v1/refinance/analyze: both loans, keeping today's payment, lifetime savings, months added, break-even.
 
     dotnet run --project src/MortgageAnalytics.Api      # the API on http://localhost:5080
@@ -106,6 +107,12 @@ def random_purchase(rng):
         },
         'buydown': None,
         'adjustableRate': None,
+        # Sometimes none, sometimes credits larger than the costs, so unused credits are checked too.
+        'closingCosts': None if rng.random() < 0.2 else {
+            'loanCosts': money(rng, 0, 12_000, 25), 'otherFees': money(rng, 0, 5_000, 25),
+            'prepaidInterestDays': rng.randint(0, 31), 'escrowMonths': rng.randint(0, 14),
+            'credits': rng.choice([0, 0, money(rng, 500, 10_000, 100), 50_000]),
+        },
     }
     if rng.random() < 0.3:
         request['strategy'] = 'Recast'

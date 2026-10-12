@@ -4,7 +4,7 @@ import { aResponse } from '../../../../testing/builders';
 import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
-import { AmortizationRequest } from '../../../core/models/amortization.models';
+import { AmortizationRequest, AmortizationResponse } from '../../../core/models/amortization.models';
 import { of } from 'rxjs';
 import { OverviewTabComponent } from './overview-tab.component';
 import { ProjectionTabComponent } from './projection-tab.component';
@@ -14,11 +14,13 @@ import { ScheduleTabComponent } from './schedule-tab.component';
 describe('result tabs', () => {
   let store: CalculatorStore;
   let charts: ReturnType<typeof fakeCharts>;
+  let response: AmortizationResponse;
 
   beforeEach(() => {
+    response = aResponse();
     jest.useFakeTimers();
     charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(aResponse()) } }] });
+    TestBed.configureTestingModule({ providers: [charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(response) } }] });
     store = TestBed.inject(CalculatorStore);
     store.send({} as AmortizationRequest);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -39,6 +41,20 @@ describe('result tabs', () => {
       expect(root.querySelector('app-savings-summary')).not.toBeNull();
       expect(root.querySelector('app-payment-breakdown')).not.toBeNull();
       expect(root.querySelector('[data-testid="balance-chart"]')).not.toBeNull();
+    });
+
+    it('shows the cash to close when the request had closing costs, and only then', () => {
+      expect(render(OverviewTabComponent).nativeElement.querySelector('app-cash-to-close')).toBeNull();
+
+      response = aResponse({ cashToClose: {
+        downPayment: 18_750, loanCosts: 4_000, otherFees: 1_000, dailyInterest: 63.44, prepaidInterestDays: 15, prepaidInterest: 951.6,
+        homeownersInsurance: 2_400, monthlyEscrow: 795.83, escrowMonths: 3, escrowDeposit: 2_387.49, buydownCost: 0,
+        closingCosts: 10_739.09, credits: 0, unusedCredits: 0, total: 29_489.09,
+      } });
+      store.send({ homePrice: 1 } as AmortizationRequest);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+      expect(render(OverviewTabComponent).nativeElement.querySelector('[data-testid="cash-to-close-total"]')?.textContent).toBe('$29,489.09');
     });
 
     it('tells the store while the headline is on screen, and that it is gone once the tab closes', () => {

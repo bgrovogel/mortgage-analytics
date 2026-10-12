@@ -51,6 +51,36 @@ public sealed record AmortizationRequest
 
     /// <summary>An adjustable rate (ARM): the rate resets after a fixed period. Omit for a fixed rate.</summary>
     public AdjustableRateRequest? AdjustableRate { get; init; }
+
+    /// <summary>What is paid at closing besides the down payment, for the cash to close. Omit for no estimate.</summary>
+    public ClosingCostsRequest? ClosingCosts { get; init; }
+}
+
+/// <summary>
+/// Closing costs as a Loan Estimate shows them: the fees as totals, and the prepaids and escrow as counts the loan
+/// turns into dollars. The first year of homeowners insurance is always prepaid.
+/// </summary>
+public sealed record ClosingCostsRequest
+{
+    /// <summary>The lender's and its services' charges: origination, appraisal, credit report, title (Loan Estimate section D).</summary>
+    /// <example>4000</example>
+    public decimal LoanCosts { get; init; }
+
+    /// <summary>Recording fees and transfer taxes, an owner's title policy, HOA transfer fees (Loan Estimate sections E and H).</summary>
+    /// <example>1000</example>
+    public decimal OtherFees { get; init; }
+
+    /// <summary>Days of interest paid at closing, from the closing date to the end of that month.</summary>
+    /// <example>15</example>
+    public int PrepaidInterestDays { get; init; } = 15;
+
+    /// <summary>Months of property taxes and insurance paid into escrow at closing, cushion included.</summary>
+    /// <example>3</example>
+    public int EscrowMonths { get; init; } = 3;
+
+    /// <summary>What the seller and lender pay toward closing costs. Credits never pay the down payment.</summary>
+    /// <example>0</example>
+    public decimal Credits { get; init; }
 }
 
 /// <summary>

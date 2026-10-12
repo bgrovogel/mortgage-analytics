@@ -102,7 +102,7 @@ export class CalculatorPage {
 
   /** Opens every collapsed section, making the form as tall as it gets. */
   async openAllSections(): Promise<void> {
-    for (const id of ['section-taxes', 'section-costs', 'section-growth', 'section-options']) {
+    for (const id of ['section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']) {
       await this.openSection(id);
     }
   }

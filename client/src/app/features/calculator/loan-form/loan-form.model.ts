@@ -70,6 +70,14 @@ export function loanForm(fb: NonNullableFormBuilder) {
     pmiRate: [0.5, validatorsFor(rules.pmiRate)],
     pmiCancellation: fb.control<MortgageInsuranceCancellation>('Automatic'),
 
+    // Closing costs, as an example to replace with the Loan Estimate's own: fees as totals, then half a month of
+    // interest and three months of escrow, which the API prices from the loan.
+    loanCosts: [4_000, validatorsFor(rules.loanCosts)],
+    otherFees: [1_000, validatorsFor(rules.otherFees)],
+    prepaidInterestDays: [15, validatorsFor(rules.prepaidInterestDays)],
+    escrowMonths: [3, validatorsFor(rules.escrowMonths)],
+    closingCredits: [0, validatorsFor(rules.closingCredits)],
+
     monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
     annualExtra: [0, validatorsFor(rules.annualExtra)],
     annualFirstPayment: [12, validatorsFor(rules.annualFirstPayment)],
@@ -163,19 +171,28 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
     },
     ...rateOptionsRequest(form.controls.rate, 'type'),
     buydownPaidBy: v.buydownPaidBy,
+    closingCosts: {
+      loanCosts: v.loanCosts || 0,
+      otherFees: v.otherFees || 0,
+      prepaidInterestDays: v.prepaidInterestDays || 0,
+      escrowMonths: v.escrowMonths || 0,
+      credits: v.closingCredits || 0,
+    },
   };
 }
 
 /**
  * Fills the form from a request: the reverse of toLoanRequest. The value changes it emits are for what the page
  * shows; the caller keeps them from sending a request. The down payment comes back in
- * dollars. Parts the request leaves out (no extras, no housing costs) become zero; fields that only matter when an
- * option is on (recast terms, over-65 details) keep their defaults when it is off.
+ * dollars. Parts the request leaves out (no extras, no housing costs, no closing costs) become zero; fields that only
+ * matter when an option is on (recast terms, over-65 details) keep their defaults when it is off, and so do the days
+ * of interest and months of escrow, which every closing has.
  */
 export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: AmortizationRequest): void {
   const extras = r.extraPayments;
   const costs = r.housingCosts;
   const senior = costs?.over65OrDisabled;
+  const closing = r.closingCosts;
   const quietly = { emitEvent: false };
   form.controls.downPaymentMode.setValue('amount', quietly);
   form.controls.lumpSums.clear(quietly);
@@ -222,6 +239,10 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     pmiRate: costs?.pmiRate ?? 0,
     ...(costs && { pmiCancellation: costs.pmiCancellation }),
     buydownPaidBy: r.buydownPaidBy ?? 'Seller',
+    loanCosts: closing?.loanCosts ?? 0,
+    otherFees: closing?.otherFees ?? 0,
+    ...(closing && { prepaidInterestDays: closing.prepaidInterestDays, escrowMonths: closing.escrowMonths }),
+    closingCredits: closing?.credits ?? 0,
   });
   setRateOptions(form.controls.rate, r.buydown, r.adjustableRate);
   syncTaxMode(form);

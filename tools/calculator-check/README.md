@@ -26,7 +26,7 @@ path, the expected and actual values, and the request that produced it.
 |---|---|
 | **Each monthly row** | Principal, interest, extra principal, each cost, the outlay, the balance, the rate, the buydown subsidy and the due date |
 | **Each schedule** | Every total, the interest you pay after a buydown subsidy, PMI's end, the payoff, the recasts and the rate changes |
-| **The rest** | The savings, every year of the projection, the buydown table (with who pays) and the ARM's worst case |
+| **The rest** | The savings, every year of the projection, the buydown table (with who pays), the ARM's worst case and the cash to close |
 | **Refinance** | Both loans, keeping today's payment, lifetime savings, months added and the break-even payment |
 
 ## What the model covers
@@ -37,6 +37,8 @@ path, the expected and actual values, and the request that produced it.
 - **Property taxes:** one combined rate, or school, county/city and MUD with their own exemptions (percentage
   exemptions at least $5,000), the appraisal cap, and over-65 relief with its ceiling.
 - **Other costs:** PID, insurance and HOA, with yearly growth, each yearly bill in twelve exact installments.
+- **Cash to close:** the fees, prepaid interest at the daily rate, the first year's insurance, months of escrow, a
+  buydown the borrower pays for, and credits capped at the closing costs.
 
 ## Files
 

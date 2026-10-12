@@ -49,6 +49,17 @@ export function costsSummary(v: LoanFormValues, { pmiApplies }: { pmiApplies: bo
   ]) || 'None';
 }
 
+/** The closing-costs section: the fees together, the prepaid interest and escrow, and any credits. */
+export function closingSummary(v: LoanFormValues): string {
+  const fees = (v.loanCosts ?? 0) + (v.otherFees ?? 0);
+  return joined([
+    fees ? `Fees ${usd(fees)}` : '',
+    v.prepaidInterestDays ? `${v.prepaidInterestDays} days interest` : '',
+    v.escrowMonths ? `${v.escrowMonths} mo escrow` : '',
+    v.closingCredits ? `Credits ${usd(v.closingCredits)}` : '',
+  ]) || 'No fees';
+}
+
 /** The yearly-increase assumptions, each signed; a blank counts as no change. */
 export function growthSummary(v: LoanFormValues): string {
   return joined([

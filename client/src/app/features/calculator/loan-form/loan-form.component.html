@@ -219,6 +219,35 @@
     </div>
   </details>
 
+  <details class="section" data-testid="section-closing">
+    <summary>
+      <span class="section-title">Closing costs</span>
+      <span class="section-summary" data-testid="closing-summary">{{ closingSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="row">
+        <app-number-field [control]="form.controls.loanCosts" [rule]="rules.loanCosts" testId="loan-costs" />
+        <app-number-field [control]="form.controls.otherFees" [rule]="rules.otherFees" testId="other-fees" />
+      </div>
+      <p class="hint">
+        From page 2 of your Loan Estimate: loan costs are its total D (origination, appraisal, title); other fees are
+        sections E and H (recording fees, transfer taxes, an owner's title policy).
+      </p>
+
+      <div class="row">
+        <app-number-field [control]="form.controls.prepaidInterestDays" [rule]="rules.prepaidInterestDays" testId="prepaid-interest-days" label="Days of interest" />
+        <app-number-field [control]="form.controls.escrowMonths" [rule]="rules.escrowMonths" testId="escrow-months" />
+      </div>
+      <p class="hint">
+        Interest is paid from closing to the end of that month, and escrow starts with a few months of the taxes and
+        insurance above. The first year of insurance is always paid at closing.
+      </p>
+
+      <app-number-field [control]="form.controls.closingCredits" [rule]="rules.closingCredits" testId="closing-credits" />
+      <p class="hint">Credits from the seller or lender pay closing costs, never the down payment.</p>
+    </div>
+  </details>
+
   <details class="section" data-testid="section-growth">
     <summary>
       <span class="section-title">Future increases</span>

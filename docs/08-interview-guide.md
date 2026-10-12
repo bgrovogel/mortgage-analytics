@@ -19,7 +19,7 @@
 > "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
-> The math is exact to the cent and checked against independent Python models, and over 1,300 tests run in CI."
+> The math is exact to the cent and checked against independent Python models, and over 1,400 tests run in CI."
 
 **In 2 minutes, add:**
 1. **Architecture:** Clean Architecture in four projects. The domain has no dependencies at all, so the money
@@ -58,7 +58,7 @@ Then trace one request: [Architecture → One request, end to end](03-architectu
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 440 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 454 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -381,7 +381,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 757 .NET · 526 Jest · 91 Playwright (15 axe scans); 85% coverage gate |
+| Tests | 785 .NET · 534 Jest · 92 Playwright (15 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

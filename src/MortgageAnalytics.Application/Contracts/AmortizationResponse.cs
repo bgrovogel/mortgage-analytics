@@ -8,6 +8,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Projection">Home value, taxable value and housing costs for each year of the standard schedule.</param>
 /// <param name="Buydown">A temporary buydown: its yearly rates and payments, and its cost. Null without one.</param>
 /// <param name="AdjustableRate">An adjustable rate's worst case. Null for a fixed rate.</param>
+/// <param name="CashToClose">What the buyer brings to closing, line by line. Null when the request has no closing costs.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -15,7 +16,41 @@ public sealed record AmortizationResponse(
     SavingsResponse Savings,
     IReadOnlyList<YearProjectionResponse> Projection,
     BuydownResponse? Buydown = null,
-    AdjustableRateResponse? AdjustableRate = null);
+    AdjustableRateResponse? AdjustableRate = null,
+    CashToCloseResponse? CashToClose = null);
+
+/// <summary>The cash the buyer brings to closing, laid out as a Loan Estimate lays it out.</summary>
+/// <param name="DownPayment">Cash paid toward the price.</param>
+/// <param name="LoanCosts">The lender's and its services' charges.</param>
+/// <param name="OtherFees">Government and other fees.</param>
+/// <param name="DailyInterest">A day's interest on the loan at the note rate, over a 365-day year, to the cent.</param>
+/// <param name="PrepaidInterestDays">Days of interest paid at closing.</param>
+/// <param name="PrepaidInterest">The daily interest times the days.</param>
+/// <param name="HomeownersInsurance">The first year's homeowners insurance premium, prepaid.</param>
+/// <param name="MonthlyEscrow">A month of the first year's property taxes and insurance, to the cent.</param>
+/// <param name="EscrowMonths">Months of it paid into escrow.</param>
+/// <param name="EscrowDeposit">The deposit that starts the escrow account.</param>
+/// <param name="BuydownCost">A temporary buydown's subsidy when the buyer pays for it; zero otherwise.</param>
+/// <param name="ClosingCosts">Everything paid at closing besides the down payment, before credits.</param>
+/// <param name="Credits">The seller's and lender's credits used: never more than the closing costs.</param>
+/// <param name="UnusedCredits">Credits beyond the closing costs, which cannot pay the down payment.</param>
+/// <param name="Total">The cash to close: the down payment plus closing costs, less credits.</param>
+public sealed record CashToCloseResponse(
+    decimal DownPayment,
+    decimal LoanCosts,
+    decimal OtherFees,
+    decimal DailyInterest,
+    int PrepaidInterestDays,
+    decimal PrepaidInterest,
+    decimal HomeownersInsurance,
+    decimal MonthlyEscrow,
+    int EscrowMonths,
+    decimal EscrowDeposit,
+    decimal BuydownCost,
+    decimal ClosingCosts,
+    decimal Credits,
+    decimal UnusedCredits,
+    decimal Total);
 
 /// <summary>A temporary buydown: each bought-down year's rate and payment, and what the subsidy costs.</summary>
 /// <param name="NoteRate">The loan's actual rate, paid from the year after the buydown.</param>

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,370 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,410 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -13,13 +13,13 @@
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 440 | NUnit | < 1 s |
-| Application | 210 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 454 | NUnit | < 1 s |
+| Application | 223 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
-| API integration | 81 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 82 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 526 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 91 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 534 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 92 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 

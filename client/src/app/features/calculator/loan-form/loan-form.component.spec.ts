@@ -47,7 +47,7 @@ describe('LoanFormComponent', () => {
 
       expect(details.querySelector('h3')?.textContent).toBe('More details');
       expect([...details.querySelectorAll('details.section')].map((d) => d.getAttribute('data-testid')))
-        .toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-growth', 'section-options']);
+        .toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
     });
 
     it('says the numbers are an example until the first edit, and never for a restored loan', () => {
@@ -72,6 +72,7 @@ describe('LoanFormComponent', () => {
         recast: null,
         extraPayments: { monthlyAmount: 200, monthlyStartingPaymentNumber: 1, annual: null, lumpSums: [] },
         housingCosts: { isHomestead: true, schoolHomesteadExemption: 140_000, over65OrDisabled: null, pid: null },
+        closingCosts: { loanCosts: 4_000, otherFees: 1_000, prepaidInterestDays: 15, escrowMonths: 3, credits: 0 },
       });
     });
 
@@ -89,7 +90,7 @@ describe('LoanFormComponent', () => {
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();
       }
-      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-growth', 'section-options']);
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
       expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
       expect(sections.every((s) => !s.open)).toBe(true);
     });
@@ -103,6 +104,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
+      expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 3 mo escrow');
       expect(text('growth-summary')).toBe('Home +4.3% · Insurance +4.8% · HOA +4%');
       expect(component.optionsSummary()).toBe('Pay off sooner');
     });
@@ -119,9 +121,12 @@ describe('LoanFormComponent', () => {
       controls().strategy.setValue('Recast');
       component.addLumpSum();
       controls().firstPaymentDate.setValue('2027-03-01');
+      controls().escrowMonths.setValue(2);
+      controls().closingCredits.setValue(3_000);
       fixture.detectChanges();
 
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
+      expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 2 mo escrow · Credits $3,000');
       expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo');
       expect(text('growth-summary')).toBe('Home -2% · Insurance +4.8% · HOA +4%');
       expect(text('options-summary')).toBe('$2,000 yearly · 1 lump sum · Recast (min $10,000)');
@@ -130,7 +135,8 @@ describe('LoanFormComponent', () => {
     it('says when a section has nothing in it', () => {
       controls().taxMode.setValue('separate'); // the separate (Texas) taxes
       fixture.detectChanges();
-      for (const name of ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate'] as const) {
+      for (const name of ['schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'annualInsurance', 'monthlyHoa', 'pmiRate',
+        'loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths'] as const) {
         controls()[name].setValue(0);
       }
       controls().isHomestead.setValue(false);
@@ -141,6 +147,7 @@ describe('LoanFormComponent', () => {
 
       expect(text('taxes-summary')).toBe('No property taxes');
       expect(text('costs-summary')).toBe('None');
+      expect(text('closing-summary')).toBe('No fees');
       expect(component.optionsSummary()).toBe('2 lump sums · Pay off sooner');
     });
 
@@ -152,9 +159,10 @@ describe('LoanFormComponent', () => {
       controls().hoaIncreaseRate.setValue(99);
       controls().strategy.setValue('Recast');
       controls().recastMinimum.setValue(10);
+      controls().escrowMonths.setValue(15);
       fixture.detectChanges();
 
-      for (const id of ['taxes-summary', 'costs-summary', 'growth-summary', 'options-summary']) {
+      for (const id of ['taxes-summary', 'costs-summary', 'closing-summary', 'growth-summary', 'options-summary']) {
         expect(text(id)).toBe('Check the values in this section');
       }
     });
@@ -290,7 +298,8 @@ describe('LoanFormComponent', () => {
       const optional = [
         'monthlyExtra', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption',
         'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'homeValueGrowthRate', 'insuranceIncreaseRate',
-        'hoaIncreaseRate', 'annualInsurance', 'monthlyHoa', 'pmiRate',
+        'hoaIncreaseRate', 'annualInsurance', 'monthlyHoa', 'pmiRate', 'loanCosts', 'otherFees', 'prepaidInterestDays',
+        'escrowMonths', 'closingCredits',
       ] as const;
       optional.forEach((name) => controls()[name].setValue(null as never));
       controls().isOver65.setValue(true);
@@ -305,6 +314,7 @@ describe('LoanFormComponent', () => {
       expect(request.extraPayments?.monthlyAmount).toBe(0);
       expect(request.housingCosts).toMatchObject({ schoolTaxRate: 0, localTaxRate: 0, pmiRate: 0, monthlyHoaDues: 0 });
       expect(request.housingCosts?.over65OrDisabled).toEqual({ qualifiesInYear: 1, schoolExemption: 0, localExemption: 0, localTaxCeiling: false });
+      expect(request.closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 0, escrowMonths: 0, credits: 0 });
     });
   });
 
@@ -336,6 +346,11 @@ describe('LoanFormComponent', () => {
       controls().recastFee.setValue(300);
       controls().rate.controls.rateType.setValue('buydown');
       controls().buydownPaidBy.setValue('Borrower');
+      controls().loanCosts.setValue(6_250);
+      controls().otherFees.setValue(1_480);
+      controls().prepaidInterestDays.setValue(22);
+      controls().escrowMonths.setValue(8);
+      controls().closingCredits.setValue(2_000);
       const original = last();
 
       const { sent } = restore(original);
@@ -360,6 +375,14 @@ describe('LoanFormComponent', () => {
       expect(form.form.controls.schoolTaxRate.value).toBe(0);
       expect(form.form.controls.firstPaymentDate.value).toBe('');
       expect(sent[0].housingCosts!.pmiRate).toBe(0);
+    });
+
+    it('opens a calculation saved before closing costs with no fees, and the usual prepaid interest and escrow', () => {
+      const { closingCosts: _, ...saved } = last();
+
+      const { sent } = restore(saved);
+
+      expect(sent[0].closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 15, escrowMonths: 3, credits: 0 });
     });
   });
 

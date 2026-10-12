@@ -21,7 +21,7 @@ test.describe('Mortgage calculator', () => {
   });
 
   test('keeps advanced options collapsed, each summarized in one line', async ({ calculator }) => {
-    for (const id of ['section-taxes', 'section-costs', 'section-growth', 'section-options']) {
+    for (const id of ['section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']) {
       await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
     }
     await expect(calculator.sectionSummary('taxes-summary'), 'a closed section summarizes its values')
@@ -60,7 +60,7 @@ test.describe('Mortgage calculator', () => {
     };
 
     // A window tall enough for the whole Overview: level as soon as it opens.
-    await page.setViewportSize({ width: 1440, height: 1100 });
+    await page.setViewportSize({ width: 1440, height: 1500 });
     const [form, results] = await bottoms();
     expect(form, 'the cards end level when the results fit the window').toBe(results);
 
@@ -85,6 +85,30 @@ test.describe('Mortgage calculator', () => {
     ]);
     await expect(page.getByTestId('buydown-cost'), 'what the subsidy costs').toContainText('$7,899');
     await expect(page.getByTestId('buydown-first-year'), 'the payment tile shows year 1').toBeVisible();
+  });
+
+  test('cash to close: the down payment, the fees, prepaid interest and escrow from the loan, credits, and a buydown you pay for', async ({ calculator, page }) => {
+    // The example's $4,000 + $1,000 of fees, 15 days of interest and 3 months of escrow, on the reference buydown loan:
+    // 356,250 × 5.99% ÷ 365 is $58.46 a day; (7,150 of tax + 2,400 of insurance) ÷ 12 is $795.83 a month.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    const lines = page.getByTestId('cash-to-close');
+    const total = page.getByTestId('cash-to-close-total');
+
+    await expect(lines.locator('tbody th'), 'each line, with how prepaid interest and escrow are worked out').toHaveText([
+      'Down payment', 'Loan costs', 'Other fees', /Prepaid interest\s*15 days at \$58\.46/, /Homeowners insurance\s*the first year/,
+      /Escrow deposit\s*3 months at \$795\.83/,
+    ]);
+    await expect(total, '18,750 + 5,000 + 876.90 + 2,400 + 2,387.49').toHaveText('$29,414.39');
+
+    await calculator.set('closing-credits', 3_000);
+    await calculator.calculate();
+    await expect(total, 'credits come off').toHaveText('$26,414.39');
+
+    await calculator.chooseRateType('buydown');
+    await page.getByTestId('buydown-paid-by-you').check();
+    await calculator.calculate();
+    await expect(total, 'a 2-1 buydown you pay for is paid at closing: $7,898.76 more').toHaveText('$34,313.15');
   });
 
   test('each buydown saves a different amount of interest when the seller pays, and none when you do', async ({ calculator, page }) => {

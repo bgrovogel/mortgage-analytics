@@ -10,7 +10,7 @@
 **On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) ·
 [Net savings](#net-savings) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
 [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) ·
-[Temporary buydowns](#temporary-buydowns) · [Refinancing](#refinancing) ·
+[Temporary buydowns](#temporary-buydowns) · [Cash to close](#cash-to-close) · [Refinancing](#refinancing) ·
 [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) ·
 [Why independent models](#why-independent-models)
 
@@ -173,6 +173,41 @@ reference loan), and the principal paid each month does not change, so the subsi
 buydown years needs less subsidy), and every schedule in the response carries `buydownSubsidy` and `interestYouPay`.
 The headline and the rate plan say which case applies. (A **permanent** buydown, discount points, is different: it
 lowers the note rate for the whole loan, so enter the lower rate.)
+
+---
+
+## Cash to close
+
+What the buyer brings to closing, as a Loan Estimate works it out. Each daily or monthly amount is rounded to the
+cent **before** it is multiplied, because that is the number the Loan Estimate prints ("$63.44 per day for 15 days"):
+
+```text
+daily interest  = round(loan × rate ÷ 365)                 $356,250 at 6.5%  → $63.44
+monthly escrow  = round((year-1 taxes + year-1 insurance) ÷ 12)   (7,150 + 2,400) ÷ 12 → $795.83
+
+closing costs   = loan costs + other fees + daily interest × days + year-1 insurance
+                  + monthly escrow × months + (a buydown the buyer pays for)
+credits used    = min(credits, closing costs)
+cash to close   = down payment + closing costs − credits used
+```
+
+| Reference purchase | |
+|---|---|
+| Fees | $4,000 + $1,000 |
+| Prepaid interest | 15 days × $63.44 = $951.60 |
+| Insurance, first year | $2,400.00 |
+| Escrow | 3 months × $795.83 = $2,387.49 |
+| **Closing costs** | **$10,739.09** |
+| Cash to close, with $3,000 of credits | $18,750 + $10,739.09 − $3,000 = **$26,489.09** |
+
+- **Interest is at the note rate**, even with a buydown: the subsidy pays monthly payments, not interest before the
+  first one. An adjustable rate uses its starting rate.
+- **365 days**, the common US convention for prepaid interest (some lenders use 360; the difference on this loan is
+  $0.88 a day).
+- **Credits never pay the down payment.** Seller and lender credits may pay closing costs and prepaids, not the
+  buyer's own down payment, so any beyond the costs are reported as unused rather than taken off.
+- The domain is `ClosingCosts` and `CashToClose` (`Domain/Closing`); the Python model in `tools/calculator-check`
+  prices the same lines independently, and 300 random purchases match it to the cent.
 
 ---
 

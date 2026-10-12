@@ -843,6 +843,9 @@
           },
           "adjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateRequest"
+          },
+          "closingCosts": {
+            "$ref": "#/components/schemas/ClosingCostsRequest"
           }
         },
         "additionalProperties": false
@@ -874,6 +877,9 @@
           },
           "adjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateResponse"
+          },
+          "cashToClose": {
+            "$ref": "#/components/schemas/CashToCloseResponse"
           }
         },
         "additionalProperties": false
@@ -935,6 +941,98 @@
             "format": "double"
           },
           "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CashToCloseResponse": {
+        "type": "object",
+        "properties": {
+          "downPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "loanCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "otherFees": {
+            "type": "number",
+            "format": "double"
+          },
+          "dailyInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "prepaidInterestDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prepaidInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "homeownersInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyEscrow": {
+            "type": "number",
+            "format": "double"
+          },
+          "escrowMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "escrowDeposit": {
+            "type": "number",
+            "format": "double"
+          },
+          "buydownCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "closingCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "credits": {
+            "type": "number",
+            "format": "double"
+          },
+          "unusedCredits": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClosingCostsRequest": {
+        "type": "object",
+        "properties": {
+          "loanCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "otherFees": {
+            "type": "number",
+            "format": "double"
+          },
+          "prepaidInterestDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "escrowMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "credits": {
             "type": "number",
             "format": "double"
           }

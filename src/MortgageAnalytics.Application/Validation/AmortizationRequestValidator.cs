@@ -1,5 +1,6 @@
 using FluentValidation;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Application.Validation;
@@ -77,6 +78,10 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .SetValidator(r => new ExtraPaymentsValidator(r.HomePrice - r.DownPayment, r.TermInMonths))
             .When(r => r.ExtraPayments is not null);
 
+        RuleFor(r => r.ClosingCosts!)
+            .SetValidator(new ClosingCostsValidator())
+            .When(r => r.ClosingCosts is not null);
+
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
             .When(r => r.HousingCosts is not null);
@@ -134,6 +139,21 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 lumpSum.RuleFor(l => l.Amount).ExtraAmount(loanAmount, allowZero: false).WithName("Lump sum");
                 lumpSum.RuleFor(l => l.PaymentNumber).PaymentNumberWithin(termInMonths).WithName("Lump sum payment number");
             });
+        }
+    }
+
+    private sealed class ClosingCostsValidator : AbstractValidator<ClosingCostsRequest>
+    {
+        /// <summary>The most any one closing-cost amount may be.</summary>
+        private const decimal MaxAmount = 1_000_000m;
+
+        public ClosingCostsValidator()
+        {
+            RuleFor(c => c.LoanCosts).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Loan costs");
+            RuleFor(c => c.OtherFees).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Other fees");
+            RuleFor(c => c.PrepaidInterestDays).InclusiveBetween(0, ClosingCosts.MaxPrepaidInterestDays).WithName("Days of prepaid interest");
+            RuleFor(c => c.EscrowMonths).InclusiveBetween(0, ClosingCosts.MaxEscrowMonths).WithName("Months of escrow");
+            RuleFor(c => c.Credits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Credits");
         }
     }
 

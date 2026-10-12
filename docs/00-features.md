@@ -75,12 +75,29 @@ What a purchase costs month by month and year by year, and what extra payments d
 | **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **automatically at 78%** of the original value, measured on the original schedule (extra payments do not move it), or **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings). |
 | **Future increases** | Home value growth drives each year's tax (within the cap); insurance and dues rise at their own rates. The defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), insurance +4.8% (GAO-26-107867: $2,235 in 2019 to $2,829 in 2024), HOA dues +4%. |
 
+### Cash to close
+
+What you bring to closing besides the monthly payment, laid out as page 2 of a Loan Estimate lays it out
+(**Closing costs**, under More details):
+
+| Line | How it works |
+|---|---|
+| **Loan costs** and **other fees** | Typed in from the Loan Estimate: its total D (origination, appraisal, title), then sections E and H (recording fees, transfer taxes, an owner's title policy). |
+| **Prepaid interest** | A day's interest at the note rate (loan × rate ÷ 365, to the cent), for the days from closing to the end of that month: $356,250 at 6.5% is $63.44 a day, so 15 days is $951.60. |
+| **Homeowners insurance** | The first year's premium, always paid at closing. |
+| **Escrow deposit** | Months of the first year's property taxes and insurance, a month being a twelfth of the year to the cent: (7,150 + 2,400) ÷ 12 = $795.83, so 3 months is $2,387.49. PID, HOA dues and PMI are not escrowed here. |
+| **A buydown you pay for** | Its whole subsidy is paid at closing; a seller's buydown is not your money, so it is not in the total. |
+| **Credits** | From the seller or lender, they pay closing costs and never the down payment: credits beyond the costs are shown as unused. |
+
+The Overview lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
+interest and 3 months of escrow on the $375,000 home come to **$10,739.09** on top of the $18,750 down payment.
+
 ### The results
 
 - **Overview:** one headline number. With extra payments it is the net savings, with the new total interest against
   the original; without them, the total interest over the loan (never a $0 saving). Then the monthly payment, when
   the loan is paid off and how much sooner, and when PMI ends; the payment breakdown; and the balance over time,
-  with the gap between the two payoffs shaded.
+  with the gap between the two payoffs shaded; and the cash to close.
 - **Projection:** the **quick numbers** for any year (each cost that year, through that year, and over the whole
   loan), then the yearly costs as stacked areas, and the home's market value against what each tax is charged on.
   The year starts where the loan is now; pick another, or click the chart.

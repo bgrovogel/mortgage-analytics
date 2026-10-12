@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Validation;
+using MortgageAnalytics.Testing.Builders;
 
 namespace MortgageAnalytics.Application.Tests.Validation;
 
@@ -31,7 +32,8 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
                 .WithOver65(qualifiesInYear: 5, localExemption: 5_000m, localTaxCeiling: true)
                 .WithHomeValueGrowth(3m).WithInsurance(2_400m, 5m).WithHoa(75m, 3m)
                 .WithPid(1_200m, 20)
-                .WithPmi(0.5m, PmiCancellation.BorrowerRequested));
+                .WithPmi(0.5m, PmiCancellation.BorrowerRequested))
+            .WithClosingCosts(credits: 3_000m);
 
         AssertValid(request, "every optional section filled with sensible values must pass");
     }
@@ -248,6 +250,43 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         yield return Case("Over65OrDisabled.QualifiesInYear", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { QualifiesInYear = 0 } });
         yield return Case("Over65OrDisabled.SchoolExemption", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { SchoolExemption = -1m } });
         yield return Case("Over65OrDisabled.LocalExemption", c => c with { Over65OrDisabled = new Over65OrDisabledRequest { LocalExemption = -1m } });
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Closing costs.
+    // ---------------------------------------------------------------------------------------
+
+    private static IEnumerable<TestCaseData> InvalidClosingCosts()
+    {
+        TestCaseData Case(string path, AmortizationRequestBuilder request) =>
+            new TestCaseData(request.Build(), $"ClosingCosts.{path}").SetName($"Closing {path} out of range");
+
+        yield return Case("LoanCosts", A.Request.WithClosingCosts(loanCosts: -1m));
+        yield return Case("LoanCosts", A.Request.WithClosingCosts(loanCosts: 4_000.001m));
+        yield return Case("OtherFees", A.Request.WithClosingCosts(otherFees: 1_000_000.01m));
+        yield return Case("PrepaidInterestDays", A.Request.WithClosingCosts(prepaidInterestDays: 32));
+        yield return Case("EscrowMonths", A.Request.WithClosingCosts(escrowMonths: -1));
+        yield return Case("Credits", A.Request.WithClosingCosts(credits: -0.01m));
+    }
+
+    [TestCaseSource(nameof(InvalidClosingCosts))]
+    public void ClosingCost_OutOfRange_IsRejected(AmortizationRequest request, string path)
+    {
+        AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
+    }
+
+    [Test]
+    public void ClosingCosts_AtTheirLimits_AreValid()
+    {
+        AssertValid(A.Request.WithClosingCosts(0m, 1_000_000m, prepaidInterestDays: 31, escrowMonths: 14, credits: 1_000_000m),
+            "a month of interest, 14 months of escrow and large fees and credits are all possible");
+    }
+
+    [Test]
+    public void ClosingCostMessages_NameTheFields()
+    {
+        AssertErrorMessage(A.Request.WithClosingCosts(escrowMonths: 15), "ClosingCosts.EscrowMonths",
+            "'Months of escrow' must be between 0 and 14. You entered 15.", "the message names the field as the form does");
     }
 
     [TestCase(180, 16, false, TestName = "Year 16 of a 15-year loan is rejected")]

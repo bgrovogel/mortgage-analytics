@@ -15,7 +15,7 @@ import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import { LumpSumForm, downPaymentAmountOf, loanForm, lumpSumGroup, restoreLoanForm, syncTaxMode, toLoanRequest } from './loan-form.model';
-import { costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
+import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
 const rules = LOAN_RULES;
 
@@ -34,6 +34,7 @@ const SECTION_CONTROLS = {
   taxes: ['propertyTaxRate', 'propertyTaxHomesteadExemption', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
     'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
+  closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
   rate: ['rate'],
@@ -145,6 +146,9 @@ export class LoanFormComponent implements OnInit {
   /** One-line summary of the insurance, HOA and PMI section. */
   readonly costsSummary = computed(() =>
     this.sectionInvalid('costs') ? CHECK_SECTION : costsSummary(this.values(), { pmiApplies: this.pmiApplies() }));
+
+  /** One-line summary of the closing-costs section. */
+  readonly closingSummary = computed(() => (this.sectionInvalid('closing') ? CHECK_SECTION : closingSummary(this.values())));
 
   /** One-line summary of the yearly-increase assumptions. */
   readonly growthSummary = computed(() => (this.sectionInvalid('growth') ? CHECK_SECTION : growthSummary(this.values())));

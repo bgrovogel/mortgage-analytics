@@ -102,6 +102,17 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Adds closing costs: by default $4,000 of loan costs, $1,000 of other fees, 15 days of interest and 3 months of escrow.</summary>
+    public AmortizationRequestBuilder WithClosingCosts(
+        decimal loanCosts = 4_000m, decimal otherFees = 1_000m, int prepaidInterestDays = 15, int escrowMonths = 3, decimal credits = 0m) =>
+        With(r => r with
+        {
+            ClosingCosts = new ClosingCostsRequest
+            {
+                LoanCosts = loanCosts, OtherFees = otherFees, PrepaidInterestDays = prepaidInterestDays, EscrowMonths = escrowMonths, Credits = credits,
+            },
+        });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 

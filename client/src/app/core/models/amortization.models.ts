@@ -100,6 +100,51 @@ export interface AmortizationRequest {
   /** Who pays for the buydown's subsidy; the seller or builder unless said. */
   buydownPaidBy?: BuydownFunding;
   adjustableRate?: AdjustableRateInput | null;
+  /** What is paid at closing besides the down payment; leave out for no cash-to-close estimate. */
+  closingCosts?: ClosingCostsInput | null;
+}
+
+/**
+ * Closing costs as a Loan Estimate shows them: the fees as totals, and the prepaids and escrow as counts that the API
+ * turns into dollars from the loan. The first year of insurance is always prepaid.
+ */
+export interface ClosingCostsInput {
+  /** The lender's and its services' charges (Loan Estimate section D). */
+  loanCosts: number;
+  /** Recording fees, transfer taxes, an owner's title policy (sections E and H). */
+  otherFees: number;
+  /** Days of interest from closing to the end of that month. */
+  prepaidInterestDays: number;
+  /** Months of taxes and insurance that start the escrow account. */
+  escrowMonths: number;
+  /** What the seller and lender pay toward closing costs. */
+  credits: number;
+}
+
+/** The cash the buyer brings to closing, line by line, as the API works it out. */
+export interface CashToClose {
+  downPayment: number;
+  loanCosts: number;
+  otherFees: number;
+  /** A day's interest at the note rate, to the cent. */
+  dailyInterest: number;
+  prepaidInterestDays: number;
+  prepaidInterest: number;
+  /** The first year's premium. */
+  homeownersInsurance: number;
+  /** A month of the first year's taxes and insurance, to the cent. */
+  monthlyEscrow: number;
+  escrowMonths: number;
+  escrowDeposit: number;
+  /** A buydown the buyer pays for; zero otherwise. */
+  buydownCost: number;
+  /** Everything besides the down payment, before credits. */
+  closingCosts: number;
+  /** The credits used: never more than the closing costs. */
+  credits: number;
+  /** Credits beyond the closing costs, which cannot pay the down payment. */
+  unusedCredits: number;
+  total: number;
 }
 
 /**
@@ -219,6 +264,8 @@ export interface AmortizationResponse {
   projection: YearProjection[];
   buydown: BuydownSummary | null;
   adjustableRate: AdjustableRateSummary | null;
+  /** Null when the request had no closing costs. */
+  cashToClose?: CashToClose | null;
 }
 
 export interface BuydownSummary {
