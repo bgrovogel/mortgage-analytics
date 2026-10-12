@@ -68,6 +68,11 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}/resetPassword`, { email, resetCode, newPassword }).pipe(map(() => undefined));
   }
 
+  /** Changes the password with the current one. The API keeps this session signed in and ends every other. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.post(`${this.baseUrl}/password`, { currentPassword, newPassword }).pipe(map(() => undefined));
+  }
+
   /**
    * Deletes the account and everything saved in it, once the API has checked the password; the API also ends the
    * session. A refused password leaves the user signed in.

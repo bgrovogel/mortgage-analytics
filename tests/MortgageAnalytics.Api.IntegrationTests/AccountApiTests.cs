@@ -132,6 +132,7 @@ public class AccountApiTests : ApiTestBase
 
     [TestCase("refresh", TestName = "Refreshing a bearer token")]
     [TestCase("manage/2fa", TestName = "Setting up two-factor sign-in")]
+    [TestCase("manage/info", TestName = "Changing the password or email without the lockout check")]
     public async Task IdentityEndpointsTheAppDoesNotUse_AreNotServed(string path)
     {
         using var signedIn = await SignUpAsync();

@@ -231,7 +231,8 @@ The flows are designed around the people using it:
 - **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
   scroll-driven effect that follows the form's own scroll and is gone at the end.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.
-- **Leaving:** the email in the header (a person icon on a phone) opens **Your account**. Deleting it takes two
+- **Your account:** the email in the header (a person icon on a phone) opens it. Changing the password asks for the
+  current one and clears both boxes once done. Deleting the account takes two
   deliberate steps, "Delete my account…" and then the password, and the button that deletes is red. A
   wrong password shows the server's own message; success unlinks the pages from the saves that went with it.
 - **The form card:** the main group's heading is a real heading, tagged "Shared across pages" (the long "Filled in

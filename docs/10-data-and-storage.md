@@ -174,6 +174,7 @@ What Identity stores and enforces, as configured in `AccountEndpoints.AddAccount
 | **Lockout** | Identity's defaults: after **5** wrong passwords in a row the account is locked for **5 minutes**, and even the right password is refused (`LockedOut`). A successful sign-in resets the count. `AccountApiTests` pin the limit from both sides |
 | **Emailed codes** | Confirmation and reset codes are signed with the Data Protection keys, single-purpose, and expire after Identity's default of a day |
 | **Session** | A cookie named `mortgage-analytics.session`: HttpOnly, SameSite=Strict, valid 14 days and renewed while in use (sliding). Every request rechecks it against the user, so a deleted account or a reset password ends the other sessions at once |
+| **Changing the password** | `POST /api/v1/account/password` with the current and new passwords. A wrong current one changes nothing and counts toward lockout. The new password changes the security stamp, so the account's other sessions end at once, and this one is signed in again |
 | **Deleting the account** | `DELETE /api/v1/account` with the password in the body. A wrong password deletes nothing and counts toward lockout, so a stolen session cannot guess it here. Identity deletes the user, the database cascades to their saves, and the session ends. In the app: **Your account** (`/account`) |
 | **Attempt limit** | Account POSTs are limited per client address (`RateLimiting:AccountPermitsPerMinute`: 10 in production, 1,000 in Development so the browser tests can sign up many users) |
 

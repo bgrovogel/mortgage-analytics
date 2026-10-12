@@ -10,7 +10,8 @@ namespace MortgageAnalytics.Api.Endpoints;
 
 /// <summary>
 /// User accounts, with ASP.NET Core Identity: its built-in endpoints (register, confirm email, login,
-/// forgot and reset password, account info) under <c>/api/v1/account</c>, plus sign-out and deleting the account. The browser signs in with <c>login?useCookies=true</c> and
+/// forgot and reset password, account info) under <c>/api/v1/account</c>, plus sign-out, changing the password and
+/// deleting the account. The browser signs in with <c>login?useCookies=true</c> and
 /// then carries an HttpOnly, SameSite=Strict session cookie, which scripts cannot read and other sites
 /// cannot send.
 /// </summary>
@@ -113,6 +114,12 @@ public static class AccountEndpoints
             .WithName("SignOut")
             .WithSummary("Sign out, ending the session cookie.");
 
+        group.MapPost("/password", ChangePassword)
+            .RequireAuthorization()
+            .WithName("ChangePassword")
+            .WithSummary("Change your password. Needs the current one; keeps this session and ends every other.")
+            .ProducesValidationProblem();
+
         group.MapDelete("/", DeleteAccount)
             .RequireAuthorization()
             .WithName("DeleteAccount")
@@ -123,16 +130,19 @@ public static class AccountEndpoints
     }
 
     /// <summary>
-    /// Narrows Identity's built-in endpoints to the ones this app uses. Bearer-token refresh and two-factor setup answer
-    /// 404 and leave the API document; signing in is with a session cookie only, so the login endpoint refuses to hand
-    /// out a bearer token, which a script could read and keep.
+    /// Narrows Identity's built-in endpoints to the ones this app uses. Bearer-token refresh, two-factor setup and
+    /// changing the account through <c>POST manage/info</c> (which skips the lockout check; <c>POST password</c> is the
+    /// way to change a password) answer 404 and leave the API document. Signing in is with a session cookie only, so
+    /// the login endpoint refuses to hand out a bearer token, which a script could read and keep.
     /// </summary>
     private static void ServeOnlyWhatTheAppUses(EndpointBuilder endpoint)
     {
         if (endpoint is not RouteEndpointBuilder route) return;
         var path = route.RoutePattern.RawText ?? "";
+        var isPost = route.Metadata.OfType<HttpMethodMetadata>().Any(m => m.HttpMethods.Contains(HttpMethods.Post));
 
-        if (path.EndsWith("/refresh", StringComparison.Ordinal) || path.EndsWith("/manage/2fa", StringComparison.Ordinal))
+        if (path.EndsWith("/refresh", StringComparison.Ordinal) || path.EndsWith("/manage/2fa", StringComparison.Ordinal)
+            || (path.EndsWith("/manage/info", StringComparison.Ordinal) && isPost))
         {
             // Replacing the handler before the endpoint is built keeps Identity's own from ever running.
             route.RequestDelegate = context =>
@@ -167,6 +177,36 @@ public static class AccountEndpoints
     }
 
     /// <summary>
+    /// Changes the signed-in user's password, once the current one is confirmed. A wrong current password counts toward
+    /// lockout, as on the delete endpoint. Changing the password changes the security stamp, which ends the account's
+    /// other sessions; this one is signed in again with the new stamp, so it carries on.
+    /// </summary>
+    private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> ChangePassword(
+        [FromBody] ChangePasswordRequest request, ClaimsPrincipal principal, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn)
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null)
+            return TypedResults.Unauthorized();
+
+        var check = await signIn.CheckPasswordSignInAsync(user, request.CurrentPassword ?? "", lockoutOnFailure: true);
+        if (!check.Succeeded)
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["currentPassword"] = [check.IsLockedOut ? "Too many wrong passwords. Wait a few minutes, then try again." : "The password is not correct."],
+            });
+
+        var changed = await users.ChangePasswordAsync(user, request.CurrentPassword!, request.NewPassword ?? "");
+        if (!changed.Succeeded)
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["newPassword"] = [.. changed.Errors.Select(e => e.Description)],
+            });
+
+        await signIn.RefreshSignInAsync(user);
+        return TypedResults.NoContent();
+    }
+
+    /// <summary>
     /// Deletes the signed-in user, once their password is confirmed. Their saved calculations go with them (the
     /// database cascades the delete), and the session ends. A wrong password counts toward lockout like a failed
     /// sign-in, so a stolen session cannot be used to guess the password here.
@@ -193,6 +233,11 @@ public static class AccountEndpoints
         return TypedResults.NoContent();
     }
 }
+
+/// <summary>What changing the password needs: the current one, so an open session alone cannot change it.</summary>
+/// <param name="CurrentPassword">The account's current password.</param>
+/// <param name="NewPassword">The new password: 8 or more characters with a digit.</param>
+public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
 
 /// <summary>What deleting an account needs: the account's password, so an open session alone cannot delete it.</summary>
 /// <param name="Password">The account's current password.</param>

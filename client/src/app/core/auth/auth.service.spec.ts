@@ -126,4 +126,16 @@ describe('AuthService', () => {
 
     expect(auth.user()).toEqual({ email: 'alice@example.com' });
   });
+
+  it('changes the password with the current one, and stays signed in', () => {
+    auth.load().subscribe();
+    answerWhoAmI('alice@example.com');
+
+    auth.changePassword('correct-horse-1', 'brand-new-password-2').subscribe();
+    const call = http.expectOne((r) => r.url === '/api/v1/account/password' && r.method === 'POST');
+    expect(call.request.body).toEqual({ currentPassword: 'correct-horse-1', newPassword: 'brand-new-password-2' });
+    call.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(auth.user()).toEqual({ email: 'alice@example.com' });
+  });
 });

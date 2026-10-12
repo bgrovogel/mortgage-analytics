@@ -99,6 +99,24 @@ test.describe('Accounts', () => {
     await expect(page.getByTestId('account-error'), 'no hint about which part was wrong').toHaveText('That email and password do not match.');
   });
 
+  test('changes the password from the account page, staying signed in', async ({ account, page }) => {
+    const newPassword = 'brand-new-password-2';
+    await page.goto('/account');
+
+    await page.getByTestId('current-password').fill(account.password);
+    await page.getByTestId('new-password').fill(newPassword);
+    await page.getByTestId('password-submit').click();
+    await expect(page.getByTestId('password-changed'), 'the change is confirmed').toContainText('Your password is changed');
+
+    await page.reload();
+    await expect(page.getByTestId('account-page-email'), 'this session carries on').toContainText(account.email);
+    await page.request.post('/api/v1/account/logout');
+    const withOld = await page.request.post('/api/v1/account/login?useCookies=true', { data: account });
+    const withNew = await page.request.post('/api/v1/account/login?useCookies=true', { data: { email: account.email, password: newPassword } });
+    expect(withOld.status(), 'the old password no longer signs in').toBe(401);
+    expect(withNew.status(), 'the new one does').toBe(200);
+  });
+
   test('deletes the account, with everything saved in it, once the password is typed', async ({ signedIn, page, account }) => {
     await signedIn.saveAs('Oak St');
 

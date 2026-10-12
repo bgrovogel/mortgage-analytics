@@ -2,7 +2,9 @@
 
 @include page.styles;
 
-// Deleting the account: set apart under a rule, and drawn in the critical colour, so it is never clicked in passing.
+// Each part of the page (the password, then deleting the account) starts below a rule. Deleting is also drawn in the
+// critical colour, so it is never clicked in passing.
+.part,
 .danger {
   display: flex;
   flex-direction: column;
@@ -30,6 +32,10 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+.part .secondary {
+  margin-top: 0.25rem;
 }
 
 .secondary.destructive {
