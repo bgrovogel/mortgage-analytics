@@ -68,8 +68,8 @@ public class DatabaseBackupTests
 
         await BackUpIfDueAsync();
 
-        await using var copy = new CalculationsDbContext(
-            new DbContextOptionsBuilder<CalculationsDbContext>().UseSqlite($"Data Source={Path.Combine(BackupFolder, Backups().Single())}").Options);
+        await using var copy = new SqliteCalculationsDbContext(
+            new DbContextOptionsBuilder<SqliteCalculationsDbContext>().UseSqlite($"Data Source={Path.Combine(BackupFolder, Backups().Single())}").Options);
         Assert.Multiple(async () =>
         {
             Assert.That(Backups(), Is.EqualTo(new[] { "calculations-20261009T153000Z.db" }), "one copy, named for when it was taken (UTC)");

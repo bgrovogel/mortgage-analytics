@@ -17,15 +17,18 @@ public sealed class SavedCalculationRepository(CalculationsDbContext db) : ISave
         if (!string.IsNullOrWhiteSpace(search))
         {
             var pattern = ContainsPattern(search);
-            query = query.Where(c => EF.Functions.Like(c.Name, pattern, LikeEscape));
+            // SQLite's LIKE ignores case; PostgreSQL's does not, and its ILIKE is the same match ignoring case.
+            query = db.Database.IsNpgsql()
+                ? query.Where(c => EF.Functions.ILike(c.Name, pattern, LikeEscape))
+                : query.Where(c => EF.Functions.Like(c.Name, pattern, LikeEscape));
         }
 
         return await query.OrderByDescending(c => c.UpdatedAt).ToListAsync(cancellationToken);
     }
 
     /// <summary>
-    /// A LIKE pattern matching names that contain <paramref name="search"/>. SQLite's LIKE ignores case;
-    /// escaping its wildcards makes a "%" or "_" in the search match only itself.
+    /// A LIKE pattern matching names that contain <paramref name="search"/>. Escaping its wildcards makes a "%" or "_"
+    /// in the search match only itself.
     /// </summary>
     private static string ContainsPattern(string search)
     {

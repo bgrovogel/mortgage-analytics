@@ -25,15 +25,25 @@ public static class AccountEndpoints
 
     /// <summary>Registers Identity, its password rules, the session cookie and the keys that sign them.</summary>
     /// <param name="services">The container to add to.</param>
-    /// <param name="configuration">The app's configuration (<c>DataProtection:KeysDirectory</c>).</param>
+    /// <param name="configuration">The app's configuration (<c>DataProtection:Store</c> and <c>DataProtection:KeysDirectory</c>).</param>
     /// <param name="environment">Supplies the content root for a relative keys directory.</param>
     /// <returns>The same container, for chaining.</returns>
     public static IServiceCollection AddAccounts(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         // Session cookies and the codes in confirmation and reset emails are signed with these keys. Kept on
         // disk (a volume in Docker), they survive restarts, so nobody is signed out and no emailed link breaks.
-        var keys = Path.GetFullPath(configuration["DataProtection:KeysDirectory"] ?? "App_Data/keys", environment.ContentRootPath);
-        services.AddDataProtection().SetApplicationName("MortgageAnalytics").PersistKeysToFileSystem(new DirectoryInfo(keys));
+        // With more than one instance of the app, each would have keys of its own and read none of the others'
+        // cookies, so they keep them in the database they share instead (DataProtection:Store = Database).
+        var protection = services.AddDataProtection().SetApplicationName("MortgageAnalytics");
+        if (configuration.GetValue("DataProtection:Store", KeyStore.FileSystem) == KeyStore.Database)
+        {
+            protection.PersistKeysToDbContext<CalculationsDbContext>();
+        }
+        else
+        {
+            var keys = Path.GetFullPath(configuration["DataProtection:KeysDirectory"] ?? "App_Data/keys", environment.ContentRootPath);
+            protection.PersistKeysToFileSystem(new DirectoryInfo(keys));
+        }
 
         services.AddAuthorization();
         services
@@ -242,3 +252,13 @@ public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewP
 /// <summary>What deleting an account needs: the account's password, so an open session alone cannot delete it.</summary>
 /// <param name="Password">The account's current password.</param>
 public sealed record DeleteAccountRequest(string? Password);
+
+/// <summary>Where the keys that sign sessions and emailed links are kept.</summary>
+public enum KeyStore
+{
+    /// <summary>A directory on the instance's disk: one instance of the app. The default.</summary>
+    FileSystem,
+
+    /// <summary>The app's database, shared by every instance behind a load balancer.</summary>
+    Database,
+}

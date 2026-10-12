@@ -1,0 +1,8 @@
+# The load balancer for `docker compose --profile cluster up`: each request goes to the next instance in turn, so a
+# session started on one is checked by the other, and the response says which (X-Served-By).
+:8090 {
+	reverse_proxy app-1:8080 app-2:8080 {
+		lb_policy round_robin
+		header_down X-Served-By {http.reverse_proxy.upstream.host}
+	}
+}

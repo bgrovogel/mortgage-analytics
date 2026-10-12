@@ -37,7 +37,7 @@ public abstract class RepositoryTestBase
 
     /// <summary>A new context on the test's database.</summary>
     protected CalculationsDbContext NewContext() =>
-        new(new DbContextOptionsBuilder<CalculationsDbContext>().UseSqlite(_connection).Options);
+        new SqliteCalculationsDbContext(new DbContextOptionsBuilder<SqliteCalculationsDbContext>().UseSqlite(_connection).Options);
 
     /// <summary>A repository on a new context, the way each HTTP request gets one.</summary>
     protected SavedCalculationRepository NewRepository() => new(NewContext());

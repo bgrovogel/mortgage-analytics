@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,14 +11,22 @@ using MortgageAnalytics.Application.Validation;
 
 namespace MortgageAnalytics.Infrastructure;
 
-/// <summary>The app's database: user accounts (ASP.NET Core Identity's tables) and their saved calculations.</summary>
-/// <param name="options">Provider and connection, set by <see cref="DependencyInjection.AddInfrastructure"/> or a test.</param>
-public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext> options) : IdentityDbContext<IdentityUser>(options)
+/// <summary>
+/// The app's database: user accounts (ASP.NET Core Identity's tables), their saved calculations, and the keys that sign
+/// sessions and emailed links (when they are kept here, so every instance of the app shares them). The model is here;
+/// each provider has a context of its own, <see cref="SqliteCalculationsDbContext"/> and
+/// <see cref="PostgresCalculationsDbContext"/>, because a migration is written for one provider.
+/// </summary>
+/// <param name="options">The provider and connection, from the derived context.</param>
+public abstract class CalculationsDbContext(DbContextOptions options) : IdentityDbContext<IdentityUser>(options), IDataProtectionKeyContext
 {
     private static readonly JsonSerializerOptions Json = StoredJson.Options;
 
     /// <summary>Every saved calculation.</summary>
     public DbSet<SavedCalculation> SavedCalculations => Set<SavedCalculation>();
+
+    /// <summary>The keys that sign session cookies and emailed codes, when <c>DataProtection:Store</c> is <c>Database</c>.</summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder builder)

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,650 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,660 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -15,8 +15,8 @@
 |---|---|---|---|
 | Domain | 517 | NUnit | < 1 s |
 | Application | 306 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
-| API integration | 104 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
+| API integration | 106 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 591 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 98 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -69,6 +69,11 @@ Take the ARM margin floor as an example of the order of work:
   made-up three-version format), an unversioned one is version 1, a newer one is refused, a missing step is caught.
 - **Automatic backups:** a whole copy that opens on its own, one a day at most, only the newest kept, and the
   settings; an API test sees the first copy taken at startup.
+- **The database provider:** SQLite by default, PostgreSQL by configuration with its own context and migrations
+  (which match the model too), the signing-keys table, and no app backups on PostgreSQL.
+- **On a real PostgreSQL** (`[Category("Postgres")]`, Testcontainers): the migrations, a round trip, owners,
+  the cascade and a case-insensitive search. They need Docker, so they run locally, not in CI:
+  `dotnet test --filter TestCategory=Postgres`.
 
 **API integration**
 - The real pipeline in Production mode, on a temporary SQLite file, with one shared host (`[SetUpFixture]`).
@@ -79,6 +84,8 @@ Take the ARM margin floor as an example of the order of work:
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.
+- Several instances: two hosts on one database share a session when the keys are kept in it, and lose it when each
+  keeps its own (`SharedKeysTests`).
 - Behind a proxy: a trusted proxy's HTTPS makes the cookie `Secure` and sends HSTS, and the limit counts each client
   behind it; an untrusted caller's `X-Forwarded-*` headers change nothing.
 - Request logging: every response has an `X-Request-ID` (a safe caller id is reused), every error body names it,

@@ -14,9 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 var database = builder.Configuration.GetConnectionString("Calculations")
-    ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string.");
-builder.Services.AddInfrastructure(database);
-builder.Services.AddDatabaseBackups(builder.Configuration, database);
+    ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to the database's connection string.");
+var provider = builder.Configuration.GetValue("Database:Provider", DatabaseProvider.Sqlite);
+builder.Services.AddInfrastructure(database, provider);
+builder.Services.AddDatabaseBackups(builder.Configuration, database, provider);
 builder.Services.AddAccounts(builder.Configuration, builder.Environment);
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddProxyHeaders(builder.Configuration);

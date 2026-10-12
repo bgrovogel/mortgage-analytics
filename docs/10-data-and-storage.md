@@ -1,16 +1,18 @@
 # 10. Data and storage
 
 > **Everything the app keeps, where it keeps it, and how.** One SQLite database holds the accounts and the saved
-> calculations; two folders beside it hold the keys that sign sessions and, locally, the emails. This page covers
-> the schema, a stored row, every query the app makes, the migrations, how to inspect, back up and reset the data,
-> and what is not there yet.
+> calculations; two folders beside it hold the keys that sign sessions and, locally, the emails. The same model runs
+> on PostgreSQL, with the keys in the database, for several instances of the app. This page covers the schema, a
+> stored row, every query the app makes, the migrations, PostgreSQL, how to inspect, back up and reset the data, and
+> what is not there yet.
 
 **Read time:** 12 min · **Best for:** "what happens to my data?" questions · **Code:** `src/MortgageAnalytics.Infrastructure/`,
 `src/MortgageAnalytics.Application/SavedCalculations/`
 
 **On this page:** [What is stored](#what-is-stored) · [Where it lives](#where-it-lives) · [The schema](#the-schema) ·
 [A saved calculation, as stored](#a-saved-calculation-as-stored) · [Every query the app makes](#every-query-the-app-makes) ·
-[Accounts](#accounts) · [Migrations](#migrations) · [How it is tested](#how-it-is-tested) ·
+[Accounts](#accounts) · [Migrations](#migrations) · [PostgreSQL and several instances](#postgresql-and-several-instances) ·
+[How it is tested](#how-it-is-tested) ·
 [Inspect, back up, reset](#inspect-back-up-reset) · [What is not there yet](#what-is-not-there-yet)
 
 ---
@@ -22,7 +24,7 @@
 | **Accounts:** email, password hash, whether the email is confirmed, lockout state | `AspNetUsers` table | Sign-up, email confirmation, sign-in (failed attempts), password reset; deleted with the account |
 | **Saved calculations:** a name and the **inputs** of a calculation, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
-| **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files | First startup, then when a key nears expiry |
+| **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files; or the `DataProtectionKeys` table, when several instances share them | First startup, then when a key nears expiry |
 | **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email | Sign-up, resend, forgot password |
 | **Backups** of the database | `backups/` folder beside it, `calculations-<UTC time>.db` | At startup and then daily; the newest 7 are kept |
 
@@ -187,7 +189,8 @@ What Identity stores and enforces, as configured in `AccountEndpoints.AddAccount
 | **Attempt limit** | Account POSTs are limited per client address (`RateLimiting:AccountPermitsPerMinute`: 10 in production, 1,000 in Development so the browser tests can sign up many users) |
 
 **The signing keys matter as much as the database.** They live on disk (`DataProtection:KeysDirectory`), and in Docker
-on the same volume as the database. Lose them and every session ends and every emailed link stops working; the
+on the same volume as the database; or, with `DataProtection:Store = Database`, in the database itself
+([PostgreSQL and several instances](#postgresql-and-several-instances)). Lose them and every session ends and every emailed link stops working; the
 accounts themselves are unaffected.
 
 Security as a whole (headers, the CSP, open redirects): [Backend, "Security"](04-backend.md#security).
@@ -196,7 +199,8 @@ Security as a whole (headers, the CSP, open redirects): [Backend, "Security"](04
 
 ## Migrations
 
-The schema is versioned by EF Core migrations in `src/MortgageAnalytics.Infrastructure/Migrations/`, and the API
+The schema is versioned by EF Core migrations in `src/MortgageAnalytics.Infrastructure/Migrations/` (SQLite's; PostgreSQL's
+are in `Migrations/Postgres/`), and the API
 **applies any it has not had at startup** (`MigrateDatabaseAsync`, called in `Program.cs` before it takes requests).
 There is no manual `database update` step, locally or in Docker. While it migrates, EF Core holds
 `__EFMigrationsLock`, so two instances starting together cannot both apply the same migration.
@@ -207,14 +211,55 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddRefinanceComparisons` | `Inputs` became nullable; added `Refinance` |
 | `AddUserAccounts` | Identity's tables; `OwnerId` with its foreign key and cascade; the index became (OwnerId, UpdatedAt). **It deletes every existing save first** (`DELETE FROM SavedCalculations`): saves made before accounts had no owner, and could not be given one |
 | `AddStrategyComparisons` | Added `Strategy` |
+| `AddDataProtectionKeys` | `DataProtectionKeys`, for signing keys kept in the database |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:
 `TheMigrations_MatchTheModel` fails if the model has changes no migration covers, and every repository test runs on a
 database built by the real migrations, not by `EnsureCreated`.
 
-**Moving off SQLite** (to PostgreSQL or SQL Server) means a new EF Core provider in `AddInfrastructure`, a fresh set of
-migrations for that provider, and a data copy. Nothing outside Infrastructure knows the database is SQLite. The JSON
-columns would become `jsonb` or `nvarchar(max)` with no code change.
+---
+
+## PostgreSQL and several instances
+
+SQLite is one file and one writer at a time, which is right for the demo and wrong for an app that runs as several
+instances behind a load balancer. Two settings change both:
+
+| Setting | Default | Other value |
+|---|---|---|
+| `Database:Provider` | `Sqlite` | `Postgres`, with `ConnectionStrings:Calculations` as `Host=...;Database=...;Username=...;Password=...` |
+| `DataProtection:Store` | `FileSystem` (`DataProtection:KeysDirectory`) | `Database`: the keys go in the `DataProtectionKeys` table, which every instance reads |
+
+**One model, two contexts.** `CalculationsDbContext` holds the model and is what the rest of the app asks for.
+`SqliteCalculationsDbContext` and `PostgresCalculationsDbContext` derive from it, one per provider, because a migration
+is written for one provider: SQLite's column types and `Autoincrement` are not PostgreSQL's. `AddInfrastructure`
+registers whichever the setting names. Nothing outside Infrastructure changes: the repository, Identity's stores and
+the health check all ask for `CalculationsDbContext`. Each column keeps its type's meaning: the JSON columns are `text`
+on both (the app never queries inside them, so `jsonb` would buy nothing), and the times stay 64-bit numbers.
+
+**Search** uses `ILIKE` on PostgreSQL, because its `LIKE` compares case, where SQLite's does not. A test proves it.
+
+**Why the keys move too.** Each instance signs session cookies and emailed links with its Data Protection keys. With
+the keys on each instance's own disk, a session started on one instance is unreadable on the next one the load
+balancer picks, so the user is signed out at random. In the shared database every instance has every key. An API test
+runs two instances on one database and proves both sides: shared keys keep the session; each instance's own folder
+loses it.
+
+**Try it:** `docker compose --profile cluster up --build`, then http://localhost:8090. That starts PostgreSQL 17, two
+instances of the app (`app-1`, `app-2`) and Caddy taking turns between them (`caddy/Cluster.Caddyfile`); each
+response names its instance in `X-Served-By`. Sign up, confirm from Mailpit and sign in: the requests alternate
+between the two, and the session holds on both. Both instances migrate the database at startup, and EF Core's
+migration lock lets only one apply them.
+
+**Expected in the logs** of a brand-new PostgreSQL database: one `Failed executing DbCommand` error, EF Core reading a
+migrations history table that does not exist yet, before it creates it; and a warning that the keys are stored
+unencrypted, as they are on disk. A production deployment would encrypt them at rest
+(`ProtectKeysWithCertificate`, or a cloud key vault).
+
+**Backups** are PostgreSQL's own (`pg_dump`, or the host's snapshots): the app's daily copy is of a SQLite file, so
+`AddDatabaseBackups` turns itself off on PostgreSQL.
+
+**Adding a migration** now means one per provider: [Commands, "Change the database"](02-commands.md#change-the-database).
+`ThePostgresMigrations_MatchTheModel` fails, like SQLite's test, when PostgreSQL's are behind the model.
 
 ---
 
@@ -224,6 +269,8 @@ columns would become `jsonb` or `nvarchar(max)` with no code change.
 |---|---|
 | `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; deleting a user deletes their saves and no one else's; the migrations match the model |
 | `StoredFormatTests` | A save of each kind in today's JSON still loads, with every value |
+| `DatabaseProviderTests` | SQLite is the default; `Postgres` picks the PostgreSQL context and its migrations, which match the model; the keys table works; backups are off on PostgreSQL |
+| `PostgresTests` | On a real PostgreSQL 17 in a container (Testcontainers): the migrations build the schema, a save round-trips, each owner sees only their own, deleting a user cascades, and search ignores case. Run locally, as they need Docker: `dotnet test --filter TestCategory=Postgres` |
 | `DatabaseHealthCheckTests` | `/health` is Healthy for the database the app created, and Unhealthy when the database is missing (a broken Docker volume shows up there) |
 | API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, lockout at its limit (four wrong passwords still sign in with the right one; five lock the account), and deleting an account: it needs the password, takes the saves, frees the email and ends every session |
 | Playwright History tests | Saving each kind, finding it by name, reopening it with every value, renaming and deleting, in a real browser |
@@ -299,11 +346,13 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 Found while writing this page; each is a known gap, not a hidden one. (Seven more were found here too and are
 closed: an untested cascade, an untested lockout, no way to delete an account, then no screen for it, a session
-cookie that was never `Secure` behind an HTTPS proxy, no automatic backups, and saved JSON with no version.)
+cookie that was never `Secure` behind an HTTPS proxy, no automatic backups, saved JSON with no version, and one
+writer at a time, now PostgreSQL.)
 
 | Gap | Today | What would close it |
 |---|---|---|
-| **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
+| **Keys stored unencrypted** | On disk or in the database, readable by anyone who can read either | `ProtectKeysWithCertificate`, or a cloud key vault |
+| **No data copy from SQLite to PostgreSQL** | A new PostgreSQL database starts empty | A one-off copy, table by table, in foreign-key order |
 
 ---
 

@@ -30,8 +30,9 @@ jobs:
         run: |
           dotnet list MortgageAnalytics.sln package --vulnerable --include-transitive | tee vulnerable.txt
           ! grep -q "has the following vulnerable packages" vulnerable.txt
-      # Includes the convention tests, so a missing assertion message or Assert.Multiple fails the build.
-      - run: dotnet test MortgageAnalytics.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+      # Includes the convention tests, so a missing assertion message or Assert.Multiple fails the build. The
+      # PostgreSQL tests start a database container, so they run locally (docs/07-testing.md), not on CI's minutes.
+      - run: dotnet test MortgageAnalytics.sln -c Release --no-build --filter "TestCategory!=Postgres" --collect:"XPlat Code Coverage" --results-directory ./coverage
       - name: Coverage report
         run: >
           dotnet reportgenerator

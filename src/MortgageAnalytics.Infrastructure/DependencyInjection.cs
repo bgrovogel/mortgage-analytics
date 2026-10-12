@@ -7,6 +7,16 @@ using MortgageAnalytics.Infrastructure.Backups;
 
 namespace MortgageAnalytics.Infrastructure;
 
+/// <summary>Which database the app keeps its data in.</summary>
+public enum DatabaseProvider
+{
+    /// <summary>A SQLite file: no server, one writer at a time. The default, and the demo's.</summary>
+    Sqlite,
+
+    /// <summary>A PostgreSQL server: many writers, and several instances of the app.</summary>
+    Postgres,
+}
+
 /// <summary>Registers this layer's storage with the dependency-injection container.</summary>
 public static class DependencyInjection
 {
@@ -15,11 +25,17 @@ public static class DependencyInjection
     /// database answers (so <c>/health</c> reports a missing or broken database volume).
     /// </summary>
     /// <param name="services">The container to add to.</param>
-    /// <param name="connectionString">A SQLite connection string, e.g. <c>Data Source=calculations.db</c>.</param>
+    /// <param name="connectionString">The database's connection string: <c>Data Source=calculations.db</c> for SQLite,
+    /// <c>Host=...;Database=...;Username=...;Password=...</c> for PostgreSQL.</param>
+    /// <param name="provider">SQLite (the default) or PostgreSQL, whose context has its own migrations.</param>
     /// <returns>The same container, for chaining.</returns>
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services, string connectionString, DatabaseProvider provider = DatabaseProvider.Sqlite)
     {
-        services.AddDbContext<CalculationsDbContext>(options => options.UseSqlite(connectionString));
+        if (provider == DatabaseProvider.Postgres)
+            services.AddDbContext<CalculationsDbContext, PostgresCalculationsDbContext>(options => options.UseNpgsql(connectionString));
+        else
+            services.AddDbContext<CalculationsDbContext, SqliteCalculationsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ISavedCalculationRepository, SavedCalculationRepository>();
         services.AddHealthChecks().AddDbContextCheck<CalculationsDbContext>("database");
         return services;
@@ -33,9 +49,17 @@ public static class DependencyInjection
     /// <param name="services">The container to add to.</param>
     /// <param name="configuration">The app's configuration.</param>
     /// <param name="connectionString">The database's connection string, which says where the database file is.</param>
+    /// <param name="provider">The database. The app backs up only SQLite's file; PostgreSQL has <c>pg_dump</c> and its host's snapshots.</param>
     /// <returns>The same container, for chaining.</returns>
-    public static IServiceCollection AddDatabaseBackups(this IServiceCollection services, IConfiguration configuration, string connectionString)
+    public static IServiceCollection AddDatabaseBackups(
+        this IServiceCollection services, IConfiguration configuration, string connectionString, DatabaseProvider provider = DatabaseProvider.Sqlite)
     {
+        if (provider != DatabaseProvider.Sqlite)
+        {
+            services.AddSingleton(new BackupOptions(Enabled: false, Directory: "", Interval: TimeSpan.Zero, Keep: 0));
+            return services;
+        }
+
         var section = configuration.GetSection("Backups");
         var database = Path.GetFullPath(new SqliteConnectionStringBuilder(connectionString).DataSource);
         var options = new BackupOptions(

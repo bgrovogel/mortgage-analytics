@@ -35,7 +35,7 @@ must meet.
 
 Why it matters, in practice:
 - **The math can be tested in isolation.** Domain tests are instant and need no setup.
-- **The storage can change** (SQLite to PostgreSQL) without touching a use case.
+- **The storage can change** without touching a use case: adding PostgreSQL beside SQLite changed only Infrastructure.
 - **The public API can't drift by accident.** Contracts are their own types, so renaming a domain class can't
   change the JSON. An architecture test fails if a contract ever exposes a domain type.
 

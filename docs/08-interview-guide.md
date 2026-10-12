@@ -139,8 +139,16 @@ for charts: the Chart.js constructor is injected, so tests use a fake (jsdom has
 
 **Why SQLite? Would it scale?**
 It's one file with no server, which suits a demo and makes tests real (in-memory SQLite, built by the real
-migrations). Its limit is a single writer. For production I'd switch the EF Core provider to PostgreSQL or SQL
-Server, which is a one-line change plus new migrations, because nothing outside Infrastructure knows about SQLite.
+migrations). Its limit is a single writer, so the app also runs on PostgreSQL: `Database:Provider = Postgres`. The
+model is one `CalculationsDbContext`, with a derived context per provider, because migrations are provider-specific.
+Nothing outside Infrastructure changed. The one behaviour difference was search: PostgreSQL's `LIKE` is
+case-sensitive, so it uses `ILIKE`, and a test against a real PostgreSQL in a container (Testcontainers) proves it.
+
+**Could it run as several instances?**
+Yes: `docker compose --profile cluster up` runs two behind a load balancer on one PostgreSQL. The catch was the
+signing keys: each instance signed session cookies with its own keys, so the next request, sent to the other
+instance, was signed out. With `DataProtection:Store = Database` the keys live in the shared database. An API test runs
+two hosts on one database and proves both sides.
 
 **Why store the inputs as JSON?**
 A saved calculation is always read and written whole, never queried by field, so normalising forty-odd fields into
@@ -311,12 +319,12 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 
 | Area | Today | Next |
 |---|---|---|
-| Database | SQLite, single writer | PostgreSQL via the EF provider; the abstractions are already there |
+| Database | SQLite by default; PostgreSQL by configuration, tested against a real one locally | Run the PostgreSQL tests in CI, once its minutes allow |
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
 | Test strength | Coverage gate, independent models, 98% mutation scores on the domain (CI) and the Application layer (local) | StrykerJS on the Angular code, run locally like the Application layer |
 | History | Loads all of a user's saves | Pagination, once lists get long |
-| Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
+| Scaling out | Several instances on PostgreSQL, sharing their signing keys in it | Encrypt the keys at rest (a certificate or key vault) |
 
 ---
 
@@ -385,7 +393,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 964 .NET · 591 Jest · 98 Playwright (15 axe scans); 85% coverage gate |
+| Tests | 974 .NET · 591 Jest · 98 Playwright (15 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

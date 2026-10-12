@@ -47,12 +47,17 @@ docker compose logs -f app       # follow the app's logs (JSON, one line per API
 docker compose down              # stop (data is kept on the volume)
 docker compose down -v           # stop AND delete the data volume (accounts, saved calculations)
 docker compose --profile https up --build   # also Caddy on https://localhost:8443, as a deployment behind HTTPS
+docker compose --profile cluster up --build # also two instances on PostgreSQL behind a load balancer, http://localhost:8090
 ```
 
 The `https` profile puts [Caddy](https://caddyserver.com/) in front of the app (`caddy/Caddyfile`), with a certificate
 from Caddy's own local authority, so the browser warns once. The app believes Caddy's `X-Forwarded-*` headers, and only
 Caddy's (its fixed address is `ForwardedHeaders__KnownProxies__0`), so over HTTPS the session cookie is `Secure`. Emailed
 links still point at http://localhost:8080.
+
+The `cluster` profile runs the app as it would scale out: PostgreSQL 17, two instances sharing it and the keys that
+sign sessions, and Caddy taking turns between them (`caddy/Cluster.Caddyfile`). Each response names its instance in
+`X-Served-By`. [Data and storage](10-data-and-storage.md#postgresql-and-several-instances) has the details.
 
 | URL | What |
 |---|---|
@@ -87,8 +92,10 @@ startup projects, and press F5.
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `ConnectionStrings:Calculations` | `Data Source=calculations.db` | The SQLite file |
+| `ConnectionStrings:Calculations` | `Data Source=calculations.db` | The SQLite file, or a PostgreSQL connection string |
+| `Database:Provider` | `Sqlite` | `Postgres` for PostgreSQL |
 | `DataProtection:KeysDirectory` | `App_Data/keys` | Keys that sign sessions and emailed links |
+| `DataProtection:Store` | `FileSystem` | `Database` keeps those keys in the database, for several instances |
 | `Email:Smtp:Host`, `Port`, `Username`, `Password` | none (file outbox) | Send real email |
 | `Email:From`, `Email:PublicUrl` | `no-reply@mortgage-analytics.local`, `http://localhost:4200` | Sender address; the site address used in email links |
 | `Email:OutboxDirectory` | `App_Data/outbox` | Where emails go when no SMTP host is set |
@@ -170,17 +177,26 @@ cd client && npm run build               # production build into client/dist/cli
 
 ## Change the database
 
-Saved calculations and accounts are stored with EF Core. After changing an entity or `CalculationsDbContext`:
+Saved calculations and accounts are stored with EF Core. After changing an entity or `CalculationsDbContext`, add a
+migration for each provider, SQLite's and PostgreSQL's:
 
 ```bash
 dotnet tool restore                      # installs dotnet-ef (pinned in .config/dotnet-tools.json)
-dotnet ef migrations add <Name> --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
-dotnet ef migrations list   --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
+dotnet ef migrations add <Name> --context SqliteCalculationsDbContext --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
+dotnet ef migrations add <Name> --context PostgresCalculationsDbContext --output-dir Migrations/Postgres --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
+dotnet ef migrations list --context SqliteCalculationsDbContext --project src/MortgageAnalytics.Infrastructure --startup-project src/MortgageAnalytics.Api
 ```
 
 You don't run `database update` by hand: the API applies pending migrations at startup (`MigrateDatabaseAsync`
-in `Program.cs`). A test (`SavedCalculationRepositoryTests`) fails if the model has changes that no migration
-covers.
+in `Program.cs`). Two tests fail if the model has changes that no migration covers, one per provider
+(`SavedCalculationRepositoryTests`, `DatabaseProviderTests`).
+
+**The PostgreSQL tests** start a real database in a container, so Docker must be running. CI leaves them out to save
+its minutes; run them before pushing a storage change:
+
+```bash
+dotnet test tests/MortgageAnalytics.Infrastructure.Tests --filter TestCategory=Postgres
+```
 
 **Start from an empty database locally:** stop the API and delete `src/MortgageAnalytics.Api/calculations.db`.
 In Docker: `docker compose down -v`.

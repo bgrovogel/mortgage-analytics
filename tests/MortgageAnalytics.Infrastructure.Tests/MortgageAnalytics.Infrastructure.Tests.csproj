@@ -5,6 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Saved calculations as stored today: StoredFormatTests checks they keep loading. -->
     <None Include="StoredFormats\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
