@@ -2,6 +2,8 @@
 
 Four projects under `src/`, read from the inside out: the domain first, because everything else serves it.
 
+**On this page:** [Domain](#domain-srcmortgageanalyticsdomain) · [Application](#application-srcmortgageanalyticsapplication) · [Infrastructure](#infrastructure-srcmortgageanalyticsinfrastructure) · [API](#api-srcmortgageanalyticsapi) · [Security](#security)
+
 ## Domain (`src/MortgageAnalytics.Domain`)
 
 Pure C#: no NuGet packages, no ASP.NET, no I/O. Every type is immutable or stateless, so one instance can be
@@ -140,3 +142,105 @@ private static Ok<AmortizationResponse> Calculate(
 ```
 
 The endpoint does HTTP only. Validation is in the filter, and the work is in the service.
+
+### API design decisions
+
+- **Minimal APIs with `TypedResults`,** so the OpenAPI response types are inferred from the code.
+- **A versioned route** (`/api/v1/...`).
+- **ProblemDetails for every error:** validation (400, field names keyed by JSON path), unreadable bodies (their own
+  status: 400, 413...), an unknown API route (404), and server-side failures (500 with a generic title, logged). A
+  broken domain rule is a 500 too: input is validated first, so it means a bug, and its message is never shown.
+- **Contracts own their types.** Requests and responses never expose Domain types (an architecture test enforces it),
+  so renaming something in the domain cannot silently change the public API. A snapshot test pins the whole contract.
+- **Response size is the client's choice.** `?includePayments=false` drops the up to 1,200 monthly rows and keeps every
+  summary and the yearly projection.
+- **Source-generated logging** (`[LoggerMessage]`), and the recommended .NET analyzers.
+- **One container.** The API serves the compiled Angular app from `wwwroot`: one port, one deployment, no CORS.
+
+### Calling the API
+
+`POST /api/v1/amortization/calculate`, with every option set:
+
+```json
+{
+  "homePrice": 375000,
+  "downPayment": 18750,
+  "annualInterestRate": 6.5,
+  "termInMonths": 360,
+  "firstPaymentDate": "2026-11-01",
+  "strategy": "Recast",
+  "recast": { "minimumLumpSum": 10000, "fee": 250 },
+  "extraPayments": {
+    "monthlyAmount": 200,
+    "annual": { "amount": 2000, "firstPaymentNumber": 12 },
+    "lumpSums": [{ "paymentNumber": 12, "amount": 25000 }]
+  },
+  "housingCosts": {
+    "schoolTaxRate": 1.0,
+    "localTaxRate": 1.1,
+    "mudTaxRate": 0.85,
+    "isHomestead": true,
+    "schoolHomesteadExemption": 140000,
+    "localHomesteadExemptionPercent": 0,
+    "homesteadAssessmentCap": 10,
+    "over65OrDisabled": { "qualifiesInYear": 6, "schoolExemption": 60000, "localExemption": 0, "localTaxCeiling": false },
+    "homeValueGrowthRate": 4,
+    "insuranceIncreaseRate": 5,
+    "hoaIncreaseRate": 3,
+    "pid": { "annualAssessment": 1200, "remainingYears": 20 },
+    "annualHomeownersInsurance": 2400,
+    "monthlyHoaDues": 50,
+    "pmiRate": 0.5,
+    "pmiCancellation": "Automatic"
+  }
+}
+```
+
+The response holds:
+
+| Field | What it is |
+|---|---|
+| `purchase` | The loan amount, down-payment percentage, loan-to-value, and whether PMI is required |
+| `baseline`, `accelerated` | The schedule without and with the extra payments: the monthly payment (with a housing-cost breakdown and the all-in total), lifetime totals, the interest you pay after any buydown subsidy, the PMI end date, any recasts and rate resets, and every monthly row |
+| `savings` | Interest saved, PMI saved, recast fees, net savings, payments saved, and both payoff dates |
+| `projection` | One row per loan year: market value, what each tax is charged on, and every cost |
+| `buydown`, `adjustableRate` | The buydown's years, cost and who pays it; an ARM's worst case. Null when not used |
+
+Invalid input is a `400` with field-level errors keyed by JSON path:
+
+```json
+{
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "downPayment": ["Down payment must be less than the home price."],
+    "housingCosts.pid.remainingYears": ["'PID remaining years' must be between 1 and 50. You entered 99."]
+  }
+}
+```
+
+The full contract, with descriptions and example values, is in Swagger UI at `/swagger`.
+
+## Security
+
+Input is validated **twice, for different reasons**: FluentValidation (Application) gives people friendly,
+field-level messages, and guard clauses (Domain) make invalid objects impossible to construct from *any* caller. If a
+guard ever fires, it is a bug, and the exception handler logs it as one. The Angular form mirrors the main limits to
+save a round trip; the server never trusts it.
+
+Accounts follow the same habit of not trusting the client:
+
+| Measure | What it does |
+|---|---|
+| **Session cookie** | HttpOnly and SameSite=Strict: scripts cannot read it and other sites cannot send it. No token in `localStorage`. Passwords are hashed by Identity, and repeated failures lock the account. |
+| **Only the endpoints the app uses** | Identity's built-in set also issues bearer tokens (sign-in without `useCookies=true`, `/refresh`) and offers two-factor setup the app has no screen for. Sign-in without a cookie is a 400, and `/refresh` and `/manage/2fa` are 404s, gone from the API document (`ServeOnlyWhatTheAppUses`). |
+| **Ownership in the query** | The repository filters by `OwnerId` in SQL rather than checking afterwards, and another user's item is a 404, never a 403. Deleting an account deletes its calculations (cascade). |
+| **A real inbox** | Sign-in waits for the emailed confirmation. "Forgot password" and "resend" answer the same whether or not an account exists, so they cannot reveal who is registered. Emailed codes are single-purpose, expire, and are signed with keys kept on disk, so links and sessions survive a restart. |
+| **No open redirect** | Sign-in returns only to paths on this site (`/history`, never `//evil.example`). |
+| **Attempt limit** | 10 sign-in, sign-up, resend and reset attempts a minute from one address (`RateLimiting:AccountPermitsPerMinute`), then a 429 that says when to try again. Reads and the calculators are not limited. |
+| **Security headers** | A Content-Security-Policy that allows scripts only from the app's own files and forbids framing, plus `nosniff` and `Referrer-Policy: no-referrer` (emailed links carry codes in the URL). Every browser test runs under it. |
+| **Known vulnerabilities** | CI fails on any vulnerable NuGet package (transitive ones too) and on `npm audit` of the browser's dependencies. |
+
+---
+
+← Previous: [3. Architecture](03-architecture.md) · [Guide contents](README.md) · Next: [5. Frontend](05-frontend.md) →

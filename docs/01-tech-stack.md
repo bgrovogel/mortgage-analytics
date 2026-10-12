@@ -3,6 +3,8 @@
 Everything the app is built with, where each piece is used, and why it was chosen. Versions are the ones pinned
 in the repository today (`Directory.Packages.props`, `client/package.json`, `.config/dotnet-tools.json`).
 
+**On this page:** [At a glance](#at-a-glance) · [Backend (.NET 10, C# latest)](#backend-net-10-c-latest) · [Frontend (Angular 22)](#frontend-angular-22) · [Testing](#testing) · [Delivery](#delivery) · [Deliberately not used](#deliberately-not-used)
+
 ## At a glance
 
 ```
@@ -98,3 +100,7 @@ appears.
 | A UI component library | The forms need custom number boxes and layouts; plain HTML and SCSS keep the bundle small and accessible. |
 | A separate database server | SQLite in one file is enough for a demo; EF Core keeps the door open. |
 | CORS configuration | The API serves the Angular build itself, so the browser only ever talks to one origin. |
+
+---
+
+← Previous: [0. What it does](00-features.md) · [Guide contents](README.md) · Next: [2. Commands](02-commands.md) →

@@ -4,6 +4,8 @@ The domain, in plain terms, with the worked numbers the tests pin. Every number 
 independent Python `Decimal` model and is asserted to the cent in the test suite. The **reference loan** used
 throughout is **$200,000 at 6% over 30 years** (a $250,000 home with $50,000 down).
 
+**On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) · [Net savings](#net-savings) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) · [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) · [Temporary buydowns](#temporary-buydowns) · [Refinancing](#refinancing) · [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) · [Why independent models](#why-independent-models)
+
 ## Amortization
 
 A fixed-rate mortgage has one level monthly payment that pays off the loan exactly over its term:
@@ -193,6 +195,42 @@ with what it earns invested, after tax. Stock that arrives anyway (RSUs kept as 
 market share, so someone already heavy in company stock leans toward the mortgage. An **ARM** uses its average
 rate over the payments left; a **buydown's** subsidy frees cash in every strategy.
 
+## Modelling decisions
+
+The choices behind the numbers, each pinned by a test:
+
+**Getting the money right**
+- **`decimal` everywhere, never `double`.** `Math.Pow` works in `double`, so the annuity formula raises to a power by
+  squaring in `decimal` instead (`DecimalMath.Pow`).
+- **One rounding rule, in one place.** `Money.Round` rounds to cents, half away from zero.
+- **Every schedule ends at exactly $0.00.** The final payment absorbs the rounding drift, asserted across a range of
+  loan shapes.
+- **Yearly bills add up exactly.** A $5,000 tax bill is eleven installments of $416.67 and a twelfth of $416.63, never
+  $5,000.04: the same rule as the final payment, in one shared `Installments` helper.
+
+**Following the real rules**
+- **The down payment is an input; the loan is derived.** A loan amount and a home value typed separately could
+  disagree. `PropertyPurchase` derives the loan, the LTV and whether PMI applies, so the 20% rule is written once.
+- **Recasts follow lender rules.** The calculator compares the period's *largest single* prepayment with the minimum,
+  not the month's total, so $200 a month plus a $9,900 lump sum does not recast. The tests pin the boundary: $9,999.99
+  does not, $10,000 does. A zero minimum is rejected, or every routine extra payment would trigger a recast and its fee.
+- **PMI removal follows the law.** Automatic removal at 78% is measured on the original schedule, so extra payments do
+  not move it; a request at 80% may use the actual balance, so they do, and only that saving counts. Each cost period
+  therefore carries both balances: the actual one and the original schedule's.
+- **Homestead rules are per taxing unit.** The Texas $140,000 exemption applies only to school tax, so school tax is
+  its own unit with its own `TaxExemption`. Applying it to the whole bill would understate taxes by thousands a year.
+- **The over-65 ceiling is set in the qualifying year,** not at purchase: a 60-year-old buyer sees normal growth for
+  five years, then a freeze. The bill is the lower of this year's tax and the qualifying year's, so it can still fall.
+- **Market value and taxable value are tracked separately.** When the market outruns the cap, the owner is taxed on
+  the lower figure, and the home value chart shows the gap.
+
+**Comparing honestly**
+- **Projections follow the full term,** on the standard schedule, because taxes, insurance and dues continue whether
+  or not the loan is paid off early.
+- **Savings leave out costs that do not go away.** A shorter loan collects taxes and insurance through escrow for
+  fewer months, but the owner keeps paying them. `LoanComparison.NetSavings` counts only interest and PMI, less recast
+  fees, and a test locks that in.
+
 ## Why independent models
 
 The expected numbers in the tests don't come from this code. They come from Python `Decimal` models written from
@@ -206,3 +244,7 @@ the rules:
 
 This has caught real bugs: a half-cent interest rounding difference (7% ÷ 12 repeats forever, so interest is now
 balance × rate ÷ 1,200), and a 100% employer match the validator wrongly rejected.
+
+---
+
+← Previous: [5. Frontend](05-frontend.md) · [Guide contents](README.md) · Next: [7. Testing and quality](07-testing.md) →

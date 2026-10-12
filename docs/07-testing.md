@@ -2,6 +2,8 @@
 
 About 1,350 automated tests in seven suites, written test-first, with the standards enforced by the build.
 
+**On this page:** [How a feature gets built (TDD)](#how-a-feature-gets-built-tdd) · [What each layer proves](#what-each-layer-proves) · [Test standards, enforced by the build](#test-standards-enforced-by-the-build) · [Dependency audit](#dependency-audit) · [Independent models](#independent-models) · [Coverage](#coverage) · [Mutation testing](#mutation-testing) · [The CI pipeline](#the-ci-pipeline-githubworkflowsciyml) · [Code-quality settings that act like tests](#code-quality-settings-that-act-like-tests)
+
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 440 | NUnit | < 1 s |
@@ -57,6 +59,9 @@ Take the ARM margin floor as an example of the order of work:
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.
+- Brotli and gzip responses, the security headers on every response, and the account attempt limit (a 429 with
+  `Retry-After`; reads and calculations are never limited).
+- Only the account endpoints the app uses: no bearer token is ever issued, and `/refresh` and `/manage/2fa` are 404s.
 - **The contract itself:** `ContractSnapshotTests` compares the OpenAPI document (its shape, without the prose)
   with `Snapshots/openapi.v1.approved.json`. Any change of a path, property, type or enum value fails in seconds and
   writes `openapi.v1.received.json` beside it: diff the two, update the TypeScript models, then copy received over
@@ -82,7 +87,10 @@ Take the ARM margin floor as an example of the order of work:
   the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
 - Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History.
-- A consistency suite checks every number on the Pay off or invest page against the API response it came from.
+- A consistency suite checks every number on the Pay off or invest page (banner, cards, milestones in each scenario
+  and in today's dollars, crossover notes, the fact sheet) against the API response it came from, for three very
+  different households, and that the form and the API agree on every field's limits. Other specs cover a bad decade,
+  stock-heavy households and the risk profiles, all against the reference numbers.
 
 ## Test standards, enforced by the build
 
@@ -194,7 +202,13 @@ Coverage reports and, on failure, the Playwright report (with traces and screens
 ## Code-quality settings that act like tests
 
 - **Warnings are errors**, with the recommended .NET analyzers on (`AnalysisLevel latest-recommended`).
-- **Missing XML docs are errors** on production code (CS1591), so every public member is documented.
+- **Missing XML docs are errors** on production code (CS1591), so every public member is documented. Interface
+  implementations use `<inheritdoc />`, so each contract is described once, and the same comments feed Swagger and
+  IntelliSense. Angular components and services carry JSDoc on their public members.
 - **Nullable reference types** everywhere.
 - **NUnit.Analyzers** and **NSubstitute.Analyzers** catch test-code mistakes at compile time.
 - **TypeScript strict mode** in the Angular app.
+
+---
+
+← Previous: [6. The mortgage math](06-mortgage-math.md) · [Guide contents](README.md) · Next: [8. Interview guide](08-interview-guide.md) →

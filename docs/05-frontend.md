@@ -96,7 +96,8 @@ Three details matter:
 - **`switchMap`, not `mergeMap`**, so an old response can never overwrite a newer one.
 - **`catchError` inside** the `switchMap`: if it were outside, the first error would end the stream and the page
   would stop updating.
-- **Numbered requests:** `busy` clears only when the answer to the *latest* request arrives, not an older one.
+- **Numbered requests:** `busy` clears only when the answer to the *latest* request arrives, not an older one; the
+  results region is `aria-busy` meanwhile, and fades slightly so stale numbers are not mistaken for fresh ones.
 
 ### One loan, typed once: `SharedLoanStore`
 
@@ -178,6 +179,17 @@ component. Charts are created through an injected `ChartFactory`, so Jest tests 
 fake and assert on the configuration. Every chart has a written takeaway and a data table, and colors come from a
 palette checked for colorblind safety in light and dark mode.
 
+- **Readable axes.** X-axis labels are chosen in code (`tickIndices`), so the last point is always labelled, on whole
+  years for monthly data, and only as many as fit the width.
+- **Lines that stay visible.** The gap between the two payoffs on the balance chart is shaded, so the time and
+  interest saved show as an area; taxable value is dashed, so it shows where it overlaps market value; later series
+  draw on top.
+- **Tabs that follow WAI-ARIA.** Where charts share a card, the tabs take arrow keys and Home/End, with one tab in the
+  tab order.
+- **Clickable when it helps.** `buildLineChart`'s optional `onPick` reports the point clicked (the projection uses it
+  to choose a year), with a pointer over the plot.
+- **The app's typeface,** read from the `--font-sans` token like the colours.
+
 ### Visual design
 
 A calm fintech look, built from shared parts so every page stays consistent:
@@ -246,3 +258,7 @@ the numbers the pages show.
   the confirmation email from the dev mailbox).
 
 See [Testing and quality](07-testing.md) for the whole picture.
+
+---
+
+← Previous: [4. Backend](04-backend.md) · [Guide contents](README.md) · Next: [6. The mortgage math](06-mortgage-math.md) →

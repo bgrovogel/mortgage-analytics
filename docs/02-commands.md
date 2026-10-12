@@ -3,12 +3,14 @@
 Every command you need, run from the repository root unless a line says `cd client`. The shell examples are
 bash; they work the same in PowerShell except where noted.
 
+**On this page:** [Prerequisites](#prerequisites) · [Run it](#run-it) · [Test it](#test-it) · [Change the database](#change-the-database) · [Check the math against the independent models](#check-the-math-against-the-independent-models) · [Check the docs' test counts](#check-the-docs-test-counts) · [Ship it](#ship-it) · [Troubleshooting](#troubleshooting)
+
 ## Prerequisites
 
 | Tool | Version | Check |
 |---|---|---|
-| .NET SDK | 9.0.x | `dotnet --version` |
-| Node.js | 22 | `node --version` |
+| .NET SDK | 10.0.x | `dotnet --version` |
+| Node.js | 22.22+ (or 24+) | `node --version` |
 | Docker Desktop | any recent | `docker --version` (only for the container) |
 | Python | 3.10+ | `python --version` (only for the independent model checks) |
 
@@ -188,3 +190,7 @@ docker build -t mortgage-analytics .      # the image CI builds
 | `dotnet ef` not found | `dotnet tool restore`. |
 | `NU1004: The packages lock file is inconsistent` | A package changed in `Directory.Packages.props` (or a project) but its `packages.lock.json` didn't. Run `dotnet restore --force-evaluate` and commit the lock files with the change. |
 | `A compatible .NET SDK was not found` (requires 10.0.100) | `global.json` asks for the .NET 10 SDK. Install it (`winget install Microsoft.DotNet.SDK.10`). |
+
+---
+
+← Previous: [1. Tech stack](01-tech-stack.md) · [Guide contents](README.md) · Next: [3. Architecture](03-architecture.md) →

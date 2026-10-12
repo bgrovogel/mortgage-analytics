@@ -47,13 +47,9 @@ RULES: list[Rule] = [
     Rule("README.md", r"# ([\d,]+) Jest unit tests", "jest"),
     Rule("README.md", r"# ([\d,]+) Playwright tests", "e2e"),
     Rule("README.md", r"\(([\d,]+) are axe accessibility scans\)", "axe"),
-    Rule("README.md", r"Domain\.Tests/\s+([\d,]+) tests", "domain"),
-    Rule("README.md", r"Application\.Tests/\s+([\d,]+) tests", "application"),
-    Rule("README.md", r"Infrastructure\.Tests/\s+([\d,]+) tests", "infrastructure"),
-    Rule("README.md", r"Api\.IntegrationTests/\s+([\d,]+) tests", "api"),
-    *_table("README.md", r"\| {name} \({n}\)"),
-    Rule("README.md", r"\| Angular \(([\d,]+)\)", "jest"),
-    Rule("README.md", r"\| End-to-end \(([\d,]+)\)", "e2e"),
+    Rule("README.md", r"([\d,]+) \.NET, [\d,]+ Jest and [\d,]+ Playwright tests", "dotnet"),
+    Rule("README.md", r"[\d,]+ \.NET, ([\d,]+) Jest and [\d,]+ Playwright tests", "jest"),
+    Rule("README.md", r"[\d,]+ \.NET, [\d,]+ Jest and ([\d,]+) Playwright tests", "e2e"),
     # docs/07-testing.md
     Rule("docs/07-testing.md", r"About ([\d,]+) automated tests", "total", "about"),
     *_table("docs/07-testing.md", r"\| {name} \| {n} \|"),
@@ -67,7 +63,7 @@ RULES: list[Rule] = [
     Rule("docs/08-interview-guide.md", r"· ([\d,]+) Playwright \(", "e2e"),
     Rule("docs/08-interview-guide.md", r"\(([\d,]+) axe scans\)", "axe"),
     # docs/README.md
-    Rule("docs/README.md", r"More\s+than ([\d,]+) tests", "total", "over"),
+    Rule("docs/README.md", r"More\s+than\s+([\d,]+) tests", "total", "over"),
 ]
 
 # A number followed, within three words, by "test" or "tests": the shape of a test count anywhere in prose.

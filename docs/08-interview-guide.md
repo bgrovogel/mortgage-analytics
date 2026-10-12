@@ -3,6 +3,8 @@
 How to present this project, and answers to the questions you are likely to get. Every answer points to real
 code, so you can open the file and show it. Practise saying them out loud; don't memorise them word for word.
 
+**On this page:** [The pitch](#the-pitch) · [Walk me through the architecture](#walk-me-through-the-architecture) · [Likely questions](#likely-questions) · [Trade-offs and what you'd change](#trade-offs-and-what-youd-change) · [Stories for "tell me about a hard bug](#stories-for-tell-me-about-a-hard-bug) · [If you're asked how you built it](#if-youre-asked-how-you-built-it) · [Numbers worth remembering](#numbers-worth-remembering)
+
 ## The pitch
 
 **In 30 seconds:**
@@ -357,3 +359,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
 | Tests | 748 .NET · 513 Jest · 88 Playwright (13 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
+
+---
+
+← Previous: [7. Testing and quality](07-testing.md) · [Guide contents](README.md)

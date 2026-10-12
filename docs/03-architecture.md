@@ -1,5 +1,10 @@
 # 3. Architecture
 
+How the pieces fit: the layers and the rule that keeps them apart, one request traced from a keystroke to the
+database and back, how saving and signing in work, and where a new feature belongs.
+
+**On this page:** [The shape of the system](#the-shape-of-the-system) · [One request, end to end](#one-request-end-to-end) · [Saving a calculation](#saving-a-calculation) · [Signing in](#signing-in) · [Design principles](#design-principles) · [Where to put a new feature](#where-to-put-a-new-feature)
+
 ## The shape of the system
 
 ```
@@ -189,6 +194,20 @@ ones the app uses (`ServeOnlyWhatTheAppUses`): sign-in is with a session cookie 
 The cookie and the emailed codes are signed with Data Protection keys kept on disk (a Docker volume in
 production), so a restart doesn't sign anyone out or break a link.
 
+## Design principles
+
+Where SOLID, KISS and DRY actually show up in the code, so the claim can be checked:
+
+| Principle | Where |
+|---|---|
+| **Single responsibility** | `PaymentFormula` does the math, `AmortizationCalculator` builds schedules, `HousingCostPlan` applies costs, `LoanComparer` compares, the validator validates, and endpoints handle HTTP and nothing else. |
+| **Open/closed** | A new prepayment kind is a new `IExtraPaymentRule`; a new ownership cost (flood insurance, a special assessment) is a new `IHousingCost`. Neither touches the calculator. Adding the school tax unit and yearly growth needed no change to the amortization engine. |
+| **Liskov substitution** | Every rule and every cost can stand in for another behind its interface, and the composites (`ExtraPaymentPlan`, `HousingCostPlan`) sum whatever they hold. |
+| **Interface segregation** | Small interfaces of one or two members: `IExtraPaymentRule`, `IHousingCost`, `IAmortizationCalculator`, `ILoanComparer`, `IAmortizationService`. |
+| **Dependency inversion** | Services depend on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. Application owns `ISavedCalculationRepository`; Infrastructure implements it. |
+| **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and colour everywhere. |
+| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole; that JSON has no version yet, and a test loads today's format so a rename or removal fails CI instead of quietly dropping values. |
+
 ## Where to put a new feature
 
 | You want to add | Touch |
@@ -198,3 +217,7 @@ production), so a restart doesn't sign anyone out or break a link.
 | A new field on a form | The contract (C#) and the model (TS), the validator and the rules table (with the same limits), the form model's `toLoanRequest`/`restoreLoanForm`, the template. Then tests at each layer. |
 | A new calculator page | A domain analyzer, a contract, validator, mapper and service, an endpoint; on the client a store extending `CalculationStore`, registered in `CalculationStores`, and a page using `app-calculation-page`. |
 | A new column in the database | Change the entity, then `dotnet ef migrations add`. |
+
+---
+
+← Previous: [2. Commands](02-commands.md) · [Guide contents](README.md) · Next: [4. Backend](04-backend.md) →
