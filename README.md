@@ -64,7 +64,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 docker compose up --build
 ```
 
-| | |
+| What | Where |
 |---|---|
 | The app | http://localhost:8080 |
 | API docs (Swagger UI) | http://localhost:8080/swagger |
@@ -136,14 +136,7 @@ response: [Calling the API](docs/04-backend.md#calling-the-api). The full contra
 
 ## Architecture
 
-```text
-Angular app ──HTTP──► Api ──────────► Application ──────────► Domain
-(pages, stores,       endpoints,       contracts, validators,     loans, amortization, taxes,
- forms, charts)       filters, errors  mapping, services, ports   refinancing, strategies
-                                             ▲                    (no dependencies at all)
-                      Infrastructure ────────┘
-                      EF Core + SQLite: the saved-calculations repository, migrations
-```
+![The shape of the system: the Angular app calls Api, which calls Application, which calls Domain; Infrastructure implements Application's port and stores data in SQLite](docs/images/architecture.svg)
 
 Dependencies point inward only: **Api → Application → Domain**, and **Infrastructure → Application**. Application owns
 the repository interface and Infrastructure implements it, so neither the domain nor the use cases know a database
@@ -173,7 +166,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 
 ## Tech stack
 
-| | |
+| Layer | Built with |
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Inter |

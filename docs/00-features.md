@@ -21,6 +21,8 @@
 
 What a purchase costs month by month and year by year, and what extra payments do to it.
 
+![The calculator's Overview: a $375,000 home with 5% down and $200 a month extra, with the net savings, the monthly payment broken down, and the balance over time](images/calculator.png)
+
 ### The loan
 
 - **Home price and down payment in, loan out.** The loan amount, down-payment percentage and loan-to-value are
@@ -85,11 +87,18 @@ What a purchase costs month by month and year by year, and what extra payments d
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.
 
+<p>
+  <img src="images/projection.png" alt="The Projection tab: each cost in year 1, through year 1 and over all 30 years, above the yearly costs as stacked areas" width="49%" />
+  <img src="images/schedule.png" alt="The Schedule tab: lifetime totals for every cost, then one row per payment with principal, interest, extra, housing costs and balance" width="49%" />
+</p>
+
 ---
 
 ## Refinance
 
 The rest of the current loan against a new one, with closing costs paid at closing or added to the loan.
+
+![Refinance: refinancing to 6% costs $17,415 more over the life of the loan](images/refinance.png)
 
 - **The verdict over the life of the loan,** closing costs included, in green when refinancing saves and amber when
   it costs more. It catches the trap most calculators hide: a lower payment can cost more overall, because a new
@@ -109,6 +118,8 @@ The rest of the current loan against a new one, with closing costs paid at closi
 ## Pay off or invest
 
 Three ways to use the same spare cash, played out month by month for 30 years.
+
+![Pay off or invest, in dark mode: invest the difference, with a bad-decade warning](images/pay-off-or-invest-dark.png)
 
 - **The strategies.** **Debt free ASAP** (every extra dollar to the mortgage, then everything invested), **Invest the
   difference**, and a **Hybrid** that splits the cash. All three take the free money first (the full 401(k) match at
@@ -132,6 +143,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 
 ## Across the pages
 
+<img src="images/phone.png" alt="The calculator on a phone: the answer first, with Edit your numbers to jump to the form" width="220" align="right" />
+
 - **One loan, typed once.** The balance, rate, years left, home value and rate type are shared by every page. Change
   them on one page and the next page opened starts from them, saying where they came from; each page keeps its own
   other inputs. On the calculator the shared loan becomes a purchase (the price is the home's value, the term the
@@ -145,6 +158,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Bookmarkable.** The calculator's Overview, Projection and Schedule tabs have their own URLs, and the back button
   works.
 - **Light and dark mode,** following the system.
+
+<br clear="right" />
 
 ---
 

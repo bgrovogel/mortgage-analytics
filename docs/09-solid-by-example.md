@@ -17,24 +17,7 @@
 
 ## The section in one picture
 
-```text
-AmortizationService            maps a request to domain objects, and the result back to a response
-  │  depends on ILoanComparer and TimeProvider
-  ▼
-LoanComparer                   runs the loan with and without extras, and pairs up the costs
-  │  depends on IAmortizationCalculator         │  applies
-  ▼                                             ▼
-AmortizationCalculator                        HousingCostPlan
-  │  asks "how much extra this month?"          │  sums any number of
-  ▼                                             ▼
-ExtraPaymentPlan                              «IHousingCost»
-  │  sums any number of                         ├── ValueBasedTax       property, school, local and MUD taxes
-  ▼                                             ├── AnnualFixedCost     homeowners insurance, PID assessment
-«IExtraPaymentRule»                             ├── MonthlyFixedCost    HOA dues
-  ├── MonthlyExtraPayment                       └── MortgageInsurance   PMI
-  ├── AnnualExtraPayment
-  └── LumpSumExtraPayment
-```
+![The amortization engine: AmortizationService depends on ILoanComparer and TimeProvider; LoanComparer implements ILoanComparer, depends on IAmortizationCalculator and applies a HousingCostPlan; the calculator asks an ExtraPaymentPlan, which sums any number of IExtraPaymentRule; HousingCostPlan sums any number of IHousingCost](images/amortization-engine.svg)
 
 Read it top to bottom: the **service** asks a **comparer** to run a loan twice (with and without extra payments). The
 comparer asks a **calculator** for each schedule. The calculator asks a **plan** for each month's extra payment, and

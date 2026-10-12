@@ -222,6 +222,8 @@ A calm fintech look, built from shared parts so every page stays consistent:
 
 The flows are designed around the people using it:
 
+<img src="images/phone.png" alt="The calculator on a phone: the headline answer first, a sticky bar with the payment, and Edit your numbers" width="220" align="right" />
+
 - **A first visit:** each form opens on a worked example and says so ("These are example numbers"), until the first
   edit (`exampleUntilEdited`). A form restored from a saved item, or filled in from another page, never says it.
 - **A phone:** results come first, so `app-calculation-page` offers "Edit your numbers", which scrolls to the form
@@ -239,6 +241,8 @@ The flows are designed around the people using it:
   (`cost-totals.ts`, pure functions). It starts at the year the loan is in now, so "through" is what has been paid; the
   picker or a click on the chart (`buildLineChart`'s `onPick`, with a pointer over the plot) chooses another. On a phone
   the cost names stay pinned while the amounts scroll sideways.
+
+<br clear="right" />
 
 ### Routing and auth
 

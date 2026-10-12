@@ -54,6 +54,8 @@ shared across requests.
 
 ### The engine in one loop
 
+![The amortization engine: AmortizationService depends on ILoanComparer; LoanComparer runs AmortizationCalculator and applies a HousingCostPlan; the calculator asks an ExtraPaymentPlan, which sums any number of extra-payment rules](images/amortization-engine.svg)
+
 `AmortizationCalculator.Generate(loan, extraPayments, recastPolicy)`, for each period:
 
 1. If the rate changed this period (an ARM reset), re-amortize: new payment = formula(balance, new rate, payments
@@ -173,7 +175,14 @@ The endpoint does HTTP only. Validation is in the filter, and the work is in the
 
 ### Calling the API
 
-`POST /api/v1/amortization/calculate`, with every option set:
+`POST /api/v1/amortization/calculate`. The smallest request is a price, a down payment, a rate and a term:
+
+```json
+{ "homePrice": 375000, "downPayment": 18750, "annualInterestRate": 6.5, "termInMonths": 360 }
+```
+
+<details>
+<summary><b>The same request with every option set</b> (extra payments, a recast, Texas taxes, PMI)</summary>
 
 ```json
 {
@@ -209,6 +218,8 @@ The endpoint does HTTP only. Validation is in the filter, and the work is in the
   }
 }
 ```
+
+</details>
 
 The response holds:
 

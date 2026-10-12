@@ -9,6 +9,8 @@
 
 ## The app in one paragraph
 
+![The shape of the system: the Angular app calls Api, which calls Application, which calls Domain; Infrastructure implements Application's port and stores data in SQLite](images/architecture.svg)
+
 A .NET 10 API and an Angular 22 single-page app, shipped as one Docker container. Three calculators (a home purchase
 with every ownership cost, refinancing, and paying the mortgage off versus investing) share one loan, typed once.
 Accounts let people save calculations and reopen them. The money math lives in a domain project with no
@@ -20,18 +22,18 @@ mutation-score floor on the domain.
 
 ## The pages
 
-| # | Page | Read it to know |
-|---|---|---|
-| 0 | [What it does](00-features.md) | Every feature and rule, page by page, in plain language |
-| 1 | [Tech stack](01-tech-stack.md) | Every tool and library, its version, where it is used, and why it was picked |
-| 2 | [Commands](02-commands.md) | How to run, test, debug, migrate and ship it: every command, in one place |
-| 3 | [Architecture](03-architecture.md) | The layers, the dependency rule, one request traced from a keystroke to the database and back, and the design principles |
-| 4 | [Backend](04-backend.md) | Domain, Application, Infrastructure and API: the classes that matter, calling the API, and security |
-| 5 | [Frontend](05-frontend.md) | The Angular app: stores, signals, forms, the shared loan, charts, routing and the visual design |
-| 6 | [The mortgage math](06-mortgage-math.md) | The domain itself, with worked numbers: amortization, recasts, PMI, taxes, ARMs, buydowns, refinancing, pay off or invest |
-| 7 | [Testing and quality](07-testing.md) | TDD, the test layers, the rules the build enforces, independent models, coverage, mutation testing, CI |
-| 8 | [Interview guide](08-interview-guide.md) | The pitch, the questions you are likely to get, trade-offs and stories, with answers grounded in this code |
-| 9 | [SOLID by example](09-solid-by-example.md) | All five SOLID principles in one section of the code, the amortization engine, with the real code for each |
+| # | Page | Read it to know | Time |
+|---|---|---|---|
+| 0 | [**What it does**](00-features.md) | Every feature and rule, page by page, in plain language | 10 min |
+| 1 | [**Tech stack**](01-tech-stack.md) | Every tool and library, its version, where it is used, and why it was picked | 7 min |
+| 2 | [**Commands**](02-commands.md) | How to run, test, debug, migrate and ship it: every command, in one place | 7 min |
+| 3 | [**Architecture**](03-architecture.md) | The layers, the dependency rule, one request traced from a keystroke to the database and back, and the design principles | 12 min |
+| 4 | [**Backend**](04-backend.md) | Domain, Application, Infrastructure and API: the classes that matter, calling the API, and security | 12 min |
+| 5 | [**Frontend**](05-frontend.md) | The Angular app: stores, signals, forms, the shared loan, charts, routing and the visual design | 13 min |
+| 6 | [**The mortgage math**](06-mortgage-math.md) | The domain itself, with worked numbers: amortization, recasts, PMI, taxes, ARMs, buydowns, refinancing, pay off or invest | 14 min |
+| 7 | [**Testing and quality**](07-testing.md) | TDD, the test layers, the rules the build enforces, independent models, coverage, mutation testing, CI | 12 min |
+| 8 | [**Interview guide**](08-interview-guide.md) | The pitch, the questions you are likely to get, trade-offs and stories, with answers grounded in this code | 20 min |
+| 9 | [**SOLID by example**](09-solid-by-example.md) | All five SOLID principles in one section of the code, the amortization engine, with the real code for each | 15 min |
 
 ---
 
@@ -49,4 +51,5 @@ Every class and public member has a doc comment (the build fails without one), s
 know where to look.
 
 The independent models and the checks that keep these pages honest are in [`tools/`](../tools): each folder has its
-own README.
+own README. The diagrams and charts in these pages are drawn by [`tools/diagrams`](../tools/diagrams/README.md), which
+computes every chart from the reference loans and fails if a number disagrees with the text.

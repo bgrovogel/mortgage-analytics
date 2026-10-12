@@ -38,6 +38,8 @@
 
 Draw four boxes: Api → Application → Domain, and Infrastructure → Application. Then:
 
+![The shape of the system: the Angular app calls Api, which calls Application, which calls Domain; Infrastructure implements Application's port and stores data in SQLite](images/architecture.svg)
+
 > "Dependencies only point inward. The **domain** is pure C#: loans, amortization, taxes, refinancing, strategies.
 > It references no packages. The **application** layer holds the use cases: request and response contracts,
 > FluentValidation validators, explicit mapping, and services. It also owns the repository *interface*.
@@ -372,7 +374,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 
 ## Numbers worth remembering
 
-| | |
+| Fact | The number |
 |---|---|
 | Reference loan | $200,000 at 6%, 30 years → **$1,199.10** a month, **$231,677.04** total interest |
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |

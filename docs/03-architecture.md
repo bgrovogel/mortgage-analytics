@@ -14,25 +14,7 @@
 
 ## The shape of the system
 
-```text
-┌──────────────────────── Browser ────────────────────────┐
-│  Angular SPA                                            │
-│   pages ─► form components ─► stores (signals) ─► API services ──┐
-└─────────────────────────────────────────────────────────┘        │ HTTP/JSON  /api/v1/...
-                                                                   ▼
-┌──────────────────── One ASP.NET Core process ───────────────────────────────┐
-│  Api            endpoints · ValidationFilter<T> · exception handler ·        │
-│                 Identity (accounts) · email · Swagger · serves the SPA        │
-│     │ calls                                                                   │
-│     ▼                                                                         │
-│  Application    contracts (request/response DTOs) · validators · mappers ·    │
-│                 services (use cases) · ISavedCalculationRepository (a port)   │
-│     │ calls                          ▲ implements                             │
-│     ▼                                │                                        │
-│  Domain         the money math      Infrastructure   EF Core · SQLite ·       │
-│                 (no dependencies)                    migrations · repository  │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+![The Angular app calls one ASP.NET Core process. Inside it Api calls Application, which calls Domain; Infrastructure implements Application's repository port and stores data in SQLite. Domain has no dependencies.](images/architecture.svg)
 
 This is a **Clean Architecture** (also called onion or ports-and-adapters) layout in four .NET projects:
 
@@ -77,6 +59,8 @@ no CORS. Unknown `/api/...` routes return a JSON 404 instead of falling through 
 ## One request, end to end
 
 Follow a user changing the interest rate on the calculator from 6.5 to 7. Every step names the file to open.
+
+![Seven steps: the form checks the rate, the page hands it to the store, the store waits for a pause and posts it; the API validates it, the use case maps it, the domain computes; the response updates every view through the result signal](images/request-flow.svg)
 
 ### 1. The form notices the change (Angular)
 

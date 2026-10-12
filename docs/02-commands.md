@@ -12,6 +12,19 @@
 
 ---
 
+## The short version
+
+| I want to... | Run |
+|---|---|
+| **See the whole app** | `docker compose up --build`, then open http://localhost:8080 |
+| **Work on it, with live reload** | `dotnet run --project src/MortgageAnalytics.Api` and, in a second terminal, `cd client && npm start` (http://localhost:4200) |
+| **Run every test** | `dotnet test`, then in `client/`: `npm test` and `npm run e2e` |
+| **Check it as CI will** | the above, plus `npm run lint`, `npm run typecheck` and `python tools/doc-check/doc_counts.py` |
+
+Everything else is below, grouped by job.
+
+---
+
 ## Prerequisites
 
 | Tool | Version | Check |
@@ -184,6 +197,7 @@ python tools/calculator-check/compare_with_api.py  # 300 purchases + 300 refinan
 
 ```bash
 python tools/doc-check/doc_counts.py               # counts the tests, names every count in the docs that is out of date
+python tools/diagrams/make_diagrams.py             # redraws the docs' diagrams and charts (checks the chart numbers first)
 ```
 
 Run it after adding or removing tests (CI does too). Stop the dev API first: it builds the test projects.

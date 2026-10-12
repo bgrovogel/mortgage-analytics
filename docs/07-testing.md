@@ -139,6 +139,9 @@ inside `Assert.Multiple`.
 CI fails on any known vulnerability in what ships: `dotnet list package --vulnerable --include-transitive` for
 every NuGet package, and `npm audit --omit=dev` for the browser's dependencies. Both are clean.
 
+<details>
+<summary><b>The one advisory accepted, and why</b> (a dev-only <code>sprintf-js</code> report)</summary>
+
 The full `npm audit` reports one moderate advisory, 21 times over: `sprintf-js` (GHSA-hp3w-g68c-fv3c, a denial of
 service through huge precision specifiers), reached through Jest's coverage instrumentation (`babel-plugin-istanbul`
 → `js-yaml` 3 → `argparse` 1). It is accepted, for three reasons: no fixed `sprintf-js` exists (1.1.3 is the latest,
@@ -146,6 +149,8 @@ and affected); `js-yaml` 3 loads `argparse` only in its command-line tool, never
 the code never runs here; and it is a test tool that never ships. Forcing `argparse` 2 in with an `overrides` entry
 would silence the report by breaking `js-yaml`'s command-line tool, which is a worse trade. Look again when Istanbul
 moves to `js-yaml` 4.
+
+</details>
 
 ---
 
@@ -165,7 +170,7 @@ the same misunderstanding, they would agree and prove nothing.
 
 ## Coverage
 
-| | Lines | Branches | Gate |
+| Code | Lines | Branches | Gate |
 |---|---|---|---|
 | Backend | ~99% | ~97% | CI fails below 85% (ReportGenerator summary + `jq`) |
 | Angular | ~99% | ~91% | `npm test` fails below 85% (`jest.config.js` `coverageThreshold`) |
@@ -183,7 +188,9 @@ statement) and runs the tests against each. A mutant no test notices *survives*,
 missing. **The score is 97.4%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
 uploads the HTML report.
 
-The first run scored 87%, with 118 survivors. They sorted into:
+<details>
+<summary><b>What the first run found</b>: 87%, with 118 survivors, sorted into four kinds</summary>
+
 
 - **Untested guard limits.** `if (interval is < 1 or > 120)` survived becoming `>= 120`; seven of `Household`'s guards
   could be deleted outright; many guard messages were never read. `GuardLimitTests` now has one row per limit: the
@@ -198,22 +205,15 @@ The first run scored 87%, with 118 survivors. They sorted into:
   number, `First()` and `FirstOrDefault()` on a list that always has three entries, a `>=` that only differs on an
   exact-to-the-cent tie. The 23 survivors are all of this kind.
 
+</details>
+
 ---
 
 ## The CI pipeline (`.github/workflows/ci.yml`)
 
 On every push to `main` and every pull request:
 
-```text
-backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → no vulnerable packages → test with coverage → report → 85% gate
-           ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
-frontend  ─┘           npm ci → npm audit (shipped deps) → lint → typecheck → Jest with coverage; e2e runs only if backend and frontend pass
-           └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
-                       and the calculator answers (runs if backend passes)
-
-docs      counts the tests (dotnet --list-tests, playwright --list, Jest) → every count in README and docs/ matches
-mutation  Stryker.NET on the domain → fails below a 95% mutation score, uploads the report
-```
+![The CI pipeline: a push starts backend, frontend, docs and mutation at once; docker runs once backend passes, and e2e once backend and frontend pass](images/ci-pipeline.svg)
 
 The test counts in these pages are checked, not trusted: `tools/doc-check/doc_counts.py` holds one rule for each
 place a count appears and fails CI naming the file and line of any that is stale. A "N ... tests" phrase that no rule

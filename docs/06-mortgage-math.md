@@ -34,6 +34,8 @@ Each month:
 - Rounding to cents leaves a few cents of drift, so the **final payment** takes the exact remaining balance:
   **$1,200.14**. Total interest: **$231,677.04**.
 
+![Where each payment goes: $1,000 of the first $1,199.10 is interest; principal overtakes interest from payment 223, in year 19](images/chart-payment-split.svg)
+
 ---
 
 ## Extra payments
@@ -45,6 +47,8 @@ Money paid on top of the payment goes straight to principal, so every later mont
 - Kinds: monthly, annual (from a given payment number), and one-time lump sums, in any combination.
 - An extra payment bigger than the balance is capped, so the loan is never overpaid.
 - On a loan already being paid, extra payments can only start with the next payment.
+
+![$200 a month extra: the balance reaches zero at payment 252 instead of 360, and the gap between the two curves is $79,800.86 of interest never charged](images/chart-extra-payments.svg)
 
 ---
 
@@ -131,6 +135,8 @@ Worked examples on the reference loan as a 7/1:
 | Expected 2%, caps 2/2/5, **no margin** | 4% at payment 85 ($994.55), then 2% at payment 97 ($817.23). |
 | Expected 2%, caps 2/2/5, **2.75% margin** | 4% at payment 85, then it **stops at 2.75%** ($881.34). Total interest $145,332.19. |
 
+![A 7/1 ARM's three paths: 6% for 84 payments, then 7.5% as expected, 11% in the worst case, or down to 4% and then the 2.75% margin floor](images/chart-arm-paths.svg)
+
 In code: `AdjustableRate.RatePath()` produces the list of rate changes, and the ordinary amortization loop
 re-amortizes whenever `loan.AnnualRateFor(period)` changes.
 
@@ -153,6 +159,8 @@ For the reference loan with a 2-1:
 
 The subsidy is the sum of the differences: **$4,436.76**. Options: 1-0, 2-1, 3-2-1, 1-1.
 
+![A 2-1 buydown: $954.83 in year 1 and $1,073.64 in year 2, then $1,199.10; the subsidy of $4,436.76 covers the difference](images/chart-buydown.svg)
+
 **Who pays for it decides what it saves.** The loan charges its note-rate interest either way ($231,677.04 on the
 reference loan), and the principal paid each month does not change, so the subsidy pays interest:
 
@@ -173,7 +181,9 @@ lowers the note rate for the whole loan, so enter the lower rate.)
 Compare the rest of the current loan with a new one. Reference: **$300,000 left at 7%, 25 years to go**
 ($2,120.34 a month), refinanced to **6% for a new 30 years** with $6,000 closing costs.
 
-| | |
+![The refinance trap: the new loan's balance stays higher and ends 60 payments later, so a payment $321.69 lower still costs $17,415.28 more](images/chart-refinance.svg)
+
+| Result | Value |
 |---|---|
 | New payment | **$1,798.65**, $321.69 a month lower |
 | Lifetime savings | **−$17,415.28**: the refinance costs *more* overall |
