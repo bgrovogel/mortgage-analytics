@@ -78,6 +78,22 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .SetValidator(r => new ExtraPaymentsValidator(r.HomePrice - r.DownPayment, r.TermInMonths))
             .When(r => r.ExtraPayments is not null);
 
+        RuleFor(r => r.DiscountPoints!.Points)
+            .GreaterThan(0).LessThanOrEqualTo(DiscountPoints.MaxPoints)
+            .Must(points => decimal.Round(points, 3) == points).WithMessage("'Points' can have at most 3 decimal places.")
+            .OverridePropertyName("DiscountPoints.Points").WithName("Points")
+            .When(r => r.DiscountPoints is not null);
+
+        RuleFor(r => r.DiscountPoints!.RateWithoutPoints)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
+            .GreaterThan(r => r.AnnualInterestRate).WithMessage("The rate without points must be higher than the rate with them.")
+            .OverridePropertyName("DiscountPoints.RateWithoutPoints").WithName("Rate without points")
+            .When(r => r.DiscountPoints is not null);
+
+        RuleFor(r => r.DiscountPoints)
+            .Null().WithMessage("Discount points are compared on a fixed rate; an adjustable rate's resets would differ.")
+            .When(r => r.AdjustableRate is not null);
+
         RuleFor(r => r.ClosingCosts!)
             .SetValidator(new ClosingCostsValidator())
             .When(r => r.ClosingCosts is not null);

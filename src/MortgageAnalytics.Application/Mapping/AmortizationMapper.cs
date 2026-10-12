@@ -33,6 +33,10 @@ internal static class AmortizationMapper
     /// <summary>The temporary buydown, or null for none.</summary>
     public static TemporaryBuydown? ToBuydown(this AmortizationRequest request) => request.Buydown.ToDomain();
 
+    /// <summary>The discount points, or null for none.</summary>
+    public static DiscountPoints? ToDiscountPoints(this AmortizationRequest request) =>
+        request.DiscountPoints is { } p ? new DiscountPoints(p.Points, p.RateWithoutPoints) : null;
+
     /// <summary>The closing costs, or null when the request asks for no cash-to-close estimate.</summary>
     public static ClosingCosts? ToClosingCosts(this AmortizationRequest request) =>
         request.ClosingCosts is { } c ? new ClosingCosts(c.LoanCosts, c.OtherFees, c.PrepaidInterestDays, c.EscrowMonths, c.Credits) : null;
@@ -171,11 +175,29 @@ internal static class AmortizationMapper
             ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, purchase, valuation, plan),
             rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
             rates.WorstCase is { } worst ? ToResponse(worst) : null,
-            closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)));
+            closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)),
+            rates is { Points: { } points, WithoutPoints: { } without } ? ToResponse(points, purchase, comparison.Baseline, without) : null);
+
+    /// <summary>The points against the rate without them, each on its standard schedule.</summary>
+    private static DiscountPointsResponse ToResponse(DiscountPoints points, PropertyPurchase purchase, AmortizationSchedule withPoints, AmortizationSchedule without)
+    {
+        var comparison = points.Compare(purchase.LoanAmount, withPoints, without);
+        return new DiscountPointsResponse(
+            points.Points,
+            comparison.Cost,
+            points.RateWithoutPoints,
+            without.InitialMonthlyPayment,
+            comparison.MonthlySaving,
+            comparison.InterestSaved,
+            comparison.NetSaving,
+            comparison.BreakEvenPayment,
+            comparison.BreakEvenPayment is { } number ? DueDateOf(withPoints, number) : null);
+    }
 
     /// <summary>
     /// Prices the closing costs from the loan: interest at the note rate, and the first loan year's property taxes and
-    /// insurance (the escrowed costs; PID, HOA dues and PMI are left out). A buydown the buyer pays for is paid at closing.
+    /// insurance (the escrowed costs; PID, HOA dues and PMI are left out). A buydown the buyer pays for, and discount
+    /// points, are paid at closing.
     /// </summary>
     private static CashToClose CashToCloseFor(ClosingCosts closing, PropertyPurchase purchase, LoanComparison comparison, LoanRates rates)
     {
@@ -186,7 +208,8 @@ internal static class AmortizationMapper
             ? buydown.TotalSubsidy(rates.Loan, comparison.Baseline)
             : 0m;
 
-        return closing.CashToClose(purchase, rates.Loan.AnnualInterestRate, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buydownCost);
+        return closing.CashToClose(purchase, rates.Loan.AnnualInterestRate, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buydownCost,
+            rates.Points?.CostFor(purchase.LoanAmount) ?? 0m);
     }
 
     private static CashToCloseResponse ToResponse(CashToClose cash) =>
@@ -202,6 +225,7 @@ internal static class AmortizationMapper
             cash.EscrowMonths,
             cash.EscrowDeposit,
             cash.BuydownCost,
+            cash.DiscountPoints,
             cash.ClosingCosts,
             cash.Credits,
             cash.UnusedCredits,

@@ -48,13 +48,20 @@ describe('result tabs', () => {
 
       response = aResponse({ cashToClose: {
         downPayment: 18_750, loanCosts: 4_000, otherFees: 1_000, dailyInterest: 63.44, prepaidInterestDays: 15, prepaidInterest: 951.6,
-        homeownersInsurance: 2_400, monthlyEscrow: 795.83, escrowMonths: 3, escrowDeposit: 2_387.49, buydownCost: 0,
+        homeownersInsurance: 2_400, monthlyEscrow: 795.83, escrowMonths: 3, escrowDeposit: 2_387.49, buydownCost: 0, discountPoints: 0,
         closingCosts: 10_739.09, credits: 0, unusedCredits: 0, total: 29_489.09,
       } });
       store.send({ homePrice: 1 } as AmortizationRequest);
       jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
       expect(render(OverviewTabComponent).nativeElement.querySelector('[data-testid="cash-to-close-total"]')?.textContent).toBe('$29,489.09');
+    });
+
+    it('has a place for discount points, which says nothing without them', () => {
+      const root = render(OverviewTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('app-points-summary')).not.toBeNull();
+      expect(root.querySelector('[data-testid="points-summary"]')).toBeNull();
     });
 
     it('tells the store while the headline is on screen, and that it is gone once the tab closes', () => {

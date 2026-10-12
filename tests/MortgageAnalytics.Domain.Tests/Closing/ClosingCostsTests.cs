@@ -14,8 +14,8 @@ public class ClosingCostsTests
     private static readonly PropertyPurchase Purchase = new(375_000m, 18_750m);
     private static readonly ClosingCosts Typical = new(loanCosts: 4_000m, otherFees: 1_000m, prepaidInterestDays: 15, escrowMonths: 3, credits: 3_000m);
 
-    private static CashToClose CashFor(ClosingCosts costs, decimal buydownCost = 0m) =>
-        costs.CashToClose(Purchase, annualInterestRate: 6.5m, yearOneTaxes: 7_150m, yearOneInsurance: 2_400m, buydownCost);
+    private static CashToClose CashFor(ClosingCosts costs, decimal buydownCost = 0m, decimal discountPoints = 0m) =>
+        costs.CashToClose(Purchase, annualInterestRate: 6.5m, yearOneTaxes: 7_150m, yearOneInsurance: 2_400m, buydownCost, discountPoints);
 
     [Test]
     public void PrepaidInterest_IsTheDailyInterest_RoundedToCents_TimesTheDays()
@@ -65,6 +65,18 @@ public class ClosingCostsTests
         {
             Assert.That(cash.BuydownCost, Is.EqualTo(5_123.45m), "the subsidy is deposited at closing");
             Assert.That(cash.ClosingCosts, Is.EqualTo(15_862.54m), "so it is a closing cost");
+        });
+    }
+
+    [Test]
+    public void DiscountPoints_ArePaidAtClosing()
+    {
+        var cash = CashFor(Typical, discountPoints: 3_562.50m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.DiscountPoints, Is.EqualTo(3_562.50m), "one point on the $356,250 loan");
+            Assert.That(cash.ClosingCosts, Is.EqualTo(14_301.59m), "on top of the other closing costs");
         });
     }
 

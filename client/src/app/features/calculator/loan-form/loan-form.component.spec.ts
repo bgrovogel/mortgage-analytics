@@ -351,6 +351,9 @@ describe('LoanFormComponent', () => {
       controls().prepaidInterestDays.setValue(22);
       controls().escrowMonths.setValue(8);
       controls().closingCredits.setValue(2_000);
+      controls().rate.controls.rateType.setValue('fixed');
+      controls().usePoints.setValue(true);
+      controls().points.setValue(1.375);
       const original = last();
 
       const { sent } = restore(original);
@@ -658,6 +661,64 @@ describe('LoanFormComponent', () => {
 
       expect(sent[sent.length - 1]).toEqual(saved);
       expect(restored.componentInstance.form.controls.rate.controls.rateType.value).toBe('arm');
+    });
+  });
+
+  describe('discount points', () => {
+    const turnOn = () => {
+      controls().usePoints.setValue(true);
+      fixture.detectChanges();
+    };
+
+    it('are off until chosen, and then sent with the rate the lender quotes without them', () => {
+      expect(last().discountPoints).toBeNull();
+      expect(el('points')).toBeNull();
+
+      turnOn();
+
+      expect(last().discountPoints).toEqual({ points: 1, rateWithoutPoints: 6.75 });
+      expect(el('points')).not.toBeNull();
+      expect(text('rate-summary')).toBe('Fixed for the whole loan · 1 point');
+    });
+
+    it('start the rate without points above the loan rate, whatever the rate', () => {
+      controls().annualInterestRate.setValue(7.25);
+
+      turnOn();
+
+      expect(last().discountPoints).toEqual({ points: 1, rateWithoutPoints: 7.5 });
+    });
+
+    it('need the rate without points to be higher, or nothing is sent', () => {
+      turnOn();
+      const sent = emitted.length;
+      const reports: string[][] = [];
+      component.problems.subscribe((p) => reports.push(p));
+
+      controls().rateWithoutPoints.setValue(6.5);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('points-rate-error')).toBe('The rate without points must be higher than the rate with them.');
+      expect(reports.at(-1)).toContain('The rate without points must be higher than the rate with them.');
+    });
+
+    it('are not offered on an adjustable rate, where the two rates would reset differently', () => {
+      turnOn();
+
+      controls().rate.controls.rateType.setValue('arm');
+      fixture.detectChanges();
+
+      expect(el('use-points')).toBeNull();
+      expect(last().discountPoints).toBeNull();
+    });
+
+    it('say "points" for more than one', () => {
+      turnOn();
+      controls().points.setValue(2);
+      fixture.detectChanges();
+
+      expect(text('rate-summary')).toBe('Fixed for the whole loan · 2 points');
     });
   });
 

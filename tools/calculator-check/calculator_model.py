@@ -315,9 +315,12 @@ def analyze(request, today):
             years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
         out['buydown'] = {'noteRate': rate, 'years': years,
                           'totalSubsidy': base['buydownSubsidy'], 'paidBy': paid_by}
+    points = request.get('discountPoints')
+    out['discountPoints'] = discount_points(points, loan, term, first, baseline) if points else None
     closing = request.get('closingCosts')
     out['cashToClose'] = cash_to_close(closing, down, loan, rate, projection[0]['costs'],
-                                       base['buydownSubsidy'] if paid_by == 'Borrower' else D(0)) if closing else None
+                                       base['buydownSubsidy'] if paid_by == 'Borrower' else D(0),
+                                       out['discountPoints']['cost'] if points else D(0)) if closing else None
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
@@ -334,7 +337,31 @@ def analyze(request, today):
 
 # ---------------------------------------------------------------------------------------------- cash to close
 
-def cash_to_close(closing, down, loan, rate, year_one, buydown_cost):
+def discount_points(points, loan, term, first, with_points):
+    """
+    Points against the rate without them, each on its standard schedule: the cost (a percentage of the loan, to the
+    cent), the lower payment, the interest saved, and the first payment by which the interest saved covers the cost.
+    """
+    count, par_rate = D(str(points['points'])), D(str(points['rateWithoutPoints']))
+    without = amortize(loan, par_rate, term)
+    cost = money(loan * count / 100)
+    interest = lambda s: sum((r['interest'] for r in s['rows']), D(0))  # noqa: E731
+    saved, break_even = D(0), None
+    for n in range(1, len(with_points['rows']) + 1):
+        saved += (without['rows'][n - 1]['interest'] if n <= len(without['rows']) else D(0)) - with_points['rows'][n - 1]['interest']
+        if saved >= cost:
+            break_even = n
+            break
+    interest_saved = interest(without) - interest(with_points)
+    return {
+        'points': count, 'cost': cost, 'rateWithoutPoints': par_rate, 'paymentWithoutPoints': without['initial'],
+        'monthlySaving': without['initial'] - with_points['initial'], 'interestSaved': interest_saved,
+        'netSaving': interest_saved - cost, 'breakEvenPayment': break_even,
+        'breakEvenDate': add_months(first, break_even - 1).isoformat() if break_even else None,
+    }
+
+
+def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost):
     """
     The Loan Estimate's way: fees as entered; prepaid interest at a day's interest (a 365-day year, to the cent) for the
     days given; the first year's insurance premium; and months of the first year's taxes and insurance into escrow, a
@@ -347,14 +374,14 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost):
     insurance = year_one['homeownersInsurance']
     monthly = money((taxes + insurance) / 12)
     loan_costs, other = D(str(closing.get('loanCosts', 0))), D(str(closing.get('otherFees', 0)))
-    costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost
+    costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost + points_cost
     offered = D(str(closing.get('credits', 0)))
     credits = min(offered, costs)
     return {
         'downPayment': down, 'loanCosts': loan_costs, 'otherFees': other,
         'dailyInterest': daily, 'prepaidInterestDays': days, 'prepaidInterest': daily * days,
         'homeownersInsurance': insurance, 'monthlyEscrow': monthly, 'escrowMonths': months, 'escrowDeposit': monthly * months,
-        'buydownCost': buydown_cost, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
+        'buydownCost': buydown_cost, 'discountPoints': points_cost, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
         'total': down + costs - credits,
     }
 

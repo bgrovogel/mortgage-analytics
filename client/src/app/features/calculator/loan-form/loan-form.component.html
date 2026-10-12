@@ -85,6 +85,25 @@
         </div>
         <p class="hint">Paid by the seller or builder, it saves you its cost in interest. Paid by you, it only lowers your early payments.</p>
       }
+      @if (pointsOffered()) {
+        <label class="checkbox">
+          <input type="checkbox" formControlName="usePoints" data-testid="use-points" />
+          <span><strong>Discount points</strong>: a fee at closing for a lower rate for the whole loan</span>
+        </label>
+        @if (values().usePoints) {
+          <div class="row">
+            <app-number-field [control]="form.controls.points" [rule]="rules.points" testId="points" />
+            <app-number-field [control]="form.controls.rateWithoutPoints" [rule]="rules.rateWithoutPoints" testId="rate-without-points" />
+          </div>
+          @if (pointsRateTooLow()) {
+            <small class="error" data-testid="points-rate-error">{{ pointsRateMessage }}</small>
+          }
+          <p class="hint">
+            A point is 1% of the loan. The interest rate above is the rate with the points; enter the rate the same lender
+            quotes without them. The results say when the points pay for themselves.
+          </p>
+        }
+      }
     </div>
   </details>
 

@@ -89,6 +89,10 @@ export function loanForm(fb: NonNullableFormBuilder) {
     rate: rateOptionsForm(fb, 7.5),
     // Who pays for a buydown: the seller or builder (a concession), unless the buyer says they do, at closing.
     buydownPaidBy: fb.control<BuydownFunding>('Seller'),
+    // Discount points: off unless chosen; one point, against a quarter point more without it.
+    usePoints: [false],
+    points: [1, validatorsFor(rules.points)],
+    rateWithoutPoints: [6.75, validatorsFor(rules.rateWithoutPoints)],
     recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
     recastFee: [250, validatorsFor(rules.recastFee)],
   });
@@ -108,6 +112,30 @@ export function lumpSumGroup(fb: NonNullableFormBuilder, paymentNumber: number, 
 export function downPaymentAmountOf(v: { homePrice?: number; downPayment?: number; downPaymentMode?: DownPaymentMode }): number {
   const entered = v.downPayment ?? 0;
   return v.downPaymentMode === 'percent' ? toCents(((v.homePrice ?? 0) * entered) / 100) : entered;
+}
+
+/** True when discount points are chosen, on a rate they can be compared on (not an adjustable one). */
+export function pointsApply(v: { usePoints?: boolean; rate?: { rateType?: string } }): boolean {
+  return !!v.usePoints && v.rate?.rateType !== 'arm';
+}
+
+/** The problem with discount points' rates, if any: the rate without them must be the higher one. */
+export const POINTS_RATE_TOO_LOW = 'The rate without points must be higher than the rate with them.';
+
+/**
+ * Checks the points' fields only while points apply, and starts the rate without them a quarter point above the
+ * loan's rate when it is not already higher.
+ */
+export function syncPoints(form: LoanForm): void {
+  const v = form.getRawValue();
+  const apply = pointsApply(v);
+  for (const name of ['points', 'rateWithoutPoints'] as const) {
+    if (apply) form.controls[name].enable({ emitEvent: false });
+    else form.controls[name].disable({ emitEvent: false });
+  }
+  if (apply && v.rateWithoutPoints <= v.annualInterestRate && !form.controls.rateWithoutPoints.dirty) {
+    form.controls.rateWithoutPoints.setValue(Math.round((v.annualInterestRate + 0.25) * 10_000) / 10_000, { emitEvent: false });
+  }
 }
 
 /** Enables the controls of the chosen way of entering taxes, and disables the other's. */
@@ -171,6 +199,7 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
     },
     ...rateOptionsRequest(form.controls.rate, 'type'),
     buydownPaidBy: v.buydownPaidBy,
+    discountPoints: pointsApply(v) ? { points: v.points, rateWithoutPoints: v.rateWithoutPoints } : null,
     closingCosts: {
       loanCosts: v.loanCosts || 0,
       otherFees: v.otherFees || 0,
@@ -239,6 +268,8 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     pmiRate: costs?.pmiRate ?? 0,
     ...(costs && { pmiCancellation: costs.pmiCancellation }),
     buydownPaidBy: r.buydownPaidBy ?? 'Seller',
+    usePoints: !!r.discountPoints,
+    ...(r.discountPoints && { points: r.discountPoints.points, rateWithoutPoints: r.discountPoints.rateWithoutPoints }),
     loanCosts: closing?.loanCosts ?? 0,
     otherFees: closing?.otherFees ?? 0,
     ...(closing && { prepaidInterestDays: closing.prepaidInterestDays, escrowMonths: closing.escrowMonths }),
@@ -246,4 +277,5 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
   });
   setRateOptions(form.controls.rate, r.buydown, r.adjustableRate);
   syncTaxMode(form);
+  syncPoints(form);
 }

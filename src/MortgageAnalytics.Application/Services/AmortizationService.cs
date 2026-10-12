@@ -3,6 +3,7 @@ using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.HousingCosts;
+using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Application.Services;
 
@@ -40,7 +41,15 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
                 ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline
             : null;
 
-        return comparison.ToResponse(
-            purchase, valuation, plan, new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain()), request.ToClosingCosts());
+        // Discount points are weighed against the same loan at the rate offered without them, on its standard schedule.
+        var points = request.ToDiscountPoints();
+        var withoutPoints = points is null
+            ? null
+            : comparer.Compare(
+                new LoanTerms(loan.Principal, points.RateWithoutPoints, loan.TermInMonths, loan.FirstPaymentDate),
+                ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None).Baseline;
+
+        var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints);
+        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts());
     }
 }

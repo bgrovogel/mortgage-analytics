@@ -52,8 +52,26 @@ public sealed record AmortizationRequest
     /// <summary>An adjustable rate (ARM): the rate resets after a fixed period. Omit for a fixed rate.</summary>
     public AdjustableRateRequest? AdjustableRate { get; init; }
 
+    /// <summary>
+    /// Discount points paid for <see cref="AnnualInterestRate"/>, compared with the rate offered without them. Omit for
+    /// none. Not with an <see cref="AdjustableRate"/>.
+    /// </summary>
+    public DiscountPointsRequest? DiscountPoints { get; init; }
+
     /// <summary>What is paid at closing besides the down payment, for the cash to close. Omit for no estimate.</summary>
     public ClosingCostsRequest? ClosingCosts { get; init; }
+}
+
+/// <summary>Discount points: a fee at closing, a percentage of the loan, for a lower rate for the whole loan.</summary>
+public sealed record DiscountPointsRequest
+{
+    /// <summary>The points paid, as a percentage of the loan: 1 is one point, 1% of the loan.</summary>
+    /// <example>1</example>
+    public decimal Points { get; init; }
+
+    /// <summary>The rate the lender offers without points, as a percentage; higher than the loan's rate.</summary>
+    /// <example>6.75</example>
+    public decimal RateWithoutPoints { get; init; }
 }
 
 /// <summary>

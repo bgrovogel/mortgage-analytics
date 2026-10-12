@@ -2,19 +2,23 @@ import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { merge } from 'rxjs';
 import { problemsIn, problemsOf } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
+import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
-import { LumpSumForm, downPaymentAmountOf, loanForm, lumpSumGroup, restoreLoanForm, syncTaxMode, toLoanRequest } from './loan-form.model';
+import {
+  LumpSumForm, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+} from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
 const rules = LOAN_RULES;
@@ -37,7 +41,7 @@ const SECTION_CONTROLS = {
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
-  rate: ['rate'],
+  rate: ['rate', 'points', 'rateWithoutPoints'],
 } as const;
 
 /**
@@ -102,6 +106,7 @@ export class LoanFormComponent implements OnInit {
   protected readonly lumpSumRules = LUMP_SUM_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
+  protected readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
 
   readonly form = loanForm(this.fb);
 
@@ -178,9 +183,19 @@ export class LoanFormComponent implements OnInit {
     const v = this.values();
     if (this.sectionInvalid('rate')) return CHECK_SECTION;
     const summary = rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
-    if (v.rate?.rateType !== 'buydown') return summary;
-    return `${summary} · ${v.buydownPaidBy === 'Borrower' ? 'you pay for it' : 'the seller pays for it'}`;
+    const paidBy = v.rate?.rateType === 'buydown' ? ` · ${v.buydownPaidBy === 'Borrower' ? 'you pay for it' : 'the seller pays for it'}` : '';
+    const points = pointsApply(v) ? ` · ${decimal(v.points ?? 0, 3)} point${v.points === 1 ? '' : 's'}` : '';
+    return summary + paidBy + points;
   });
+
+  /** True when points are chosen but their rate without them is not the higher one. */
+  readonly pointsRateTooLow = computed(() => {
+    const v = this.values();
+    return pointsApply(v) && (v.rateWithoutPoints ?? 0) <= (v.annualInterestRate ?? 0);
+  });
+
+  /** True while discount points can be chosen: not on an adjustable rate. */
+  readonly pointsOffered = computed(() => this.values().rate?.rateType !== 'arm');
 
   /** One-line summary of the extra payments beyond monthly, and what they are applied to. */
   readonly optionsSummary = computed(() => (this.sectionInvalid('options') ? CHECK_SECTION : optionsSummary(this.values())));
@@ -192,6 +207,12 @@ export class LoanFormComponent implements OnInit {
 
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
     keepArmFieldsInStep(this.form.controls.rate);
+
+    // The points' fields are only checked (and sent) while points apply.
+    syncPoints(this.form);
+    merge(this.form.controls.usePoints.valueChanges, this.form.controls.rate.controls.rateType.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => syncPoints(this.form));
 
     // Switching between $ and % converts the value, so the down payment itself stays the same.
     this.form.controls.downPaymentMode.valueChanges.pipe(takeUntilDestroyed()).subscribe((mode) => {
@@ -306,6 +327,8 @@ export class LoanFormComponent implements OnInit {
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
       ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
+      ...(pointsApply(v) && this.form.controls.rateWithoutPoints.valid && this.form.controls.annualInterestRate.valid
+        && v.rateWithoutPoints <= v.annualInterestRate ? [POINTS_RATE_TOO_LOW] : []),
       ...(existing && !existing.paidOff
         ? v.lumpSums.filter((l) => l.paymentNumber < existing.next).map((l) => lumpSumInThePast(l.paymentNumber, existing.next))
         : []),

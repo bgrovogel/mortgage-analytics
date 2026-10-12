@@ -118,10 +118,14 @@ def random_purchase(rng):
         request['strategy'] = 'Recast'
         request['recast'] = {'minimumLumpSum': money(rng, 5_000, 20_000, 500), 'fee': money(rng, 0, 500, 50)}
     kind = rng.random()
+    # Points on a fixed rate (with or without a buydown): sometimes a good deal, sometimes one that never pays back.
+    if kind < 0.45 and rng.random() < 0.4:
+        request['discountPoints'] = {'points': rng.choice([0.5, 1, 1.375, 2, 3]),
+                                     'rateWithoutPoints': float(rate + D(rng.choice([1, 12, 25, 50, 75])) / 100)}
     if kind < 0.2 and rate > 3:
         request['buydown'] = {'yearlyReductions': rng.choice([[1], [2, 1], [3, 2, 1], [1, 1]])}
         request['buydownPaidBy'] = rng.choice(['Seller', 'Borrower'])
-    elif kind < 0.45:
+    elif kind < 0.45 and 'discountPoints' not in request:
         fixed = rng.choice([60, 84, 120])
         if fixed < term:
             caps = rng.choice([(2, 1, 5), (5, 2, 5), (2, 2, 5), (5, 1, 5)])

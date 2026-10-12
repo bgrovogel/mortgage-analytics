@@ -74,6 +74,7 @@ export class CashToCloseComponent {
       { label: 'Homeowners insurance', detail: 'the first year', amount: c.homeownersInsurance },
       { label: 'Escrow deposit', detail: `${c.escrowMonths} months at ${usdCents(c.monthlyEscrow)}`, amount: c.escrowDeposit },
       { label: 'Temporary buydown', detail: 'you pay for it', amount: c.buydownCost },
+      { label: 'Discount points', detail: '', amount: c.discountPoints },
       { label: 'Credits', detail: 'seller and lender', amount: c.credits, credit: true },
     ];
     return [{ label: 'Down payment', detail: '', amount: c.downPayment }, ...all.filter((line) => line.amount > 0)];

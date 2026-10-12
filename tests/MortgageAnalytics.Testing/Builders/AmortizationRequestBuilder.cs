@@ -102,6 +102,10 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Pays <paramref name="points"/> discount points for the request's rate, against <paramref name="rateWithoutPoints"/> without them.</summary>
+    public AmortizationRequestBuilder WithDiscountPoints(decimal points, decimal rateWithoutPoints) =>
+        With(r => r with { DiscountPoints = new DiscountPointsRequest { Points = points, RateWithoutPoints = rateWithoutPoints } });
+
     /// <summary>Adds closing costs: by default $4,000 of loan costs, $1,000 of other fees, 15 days of interest and 3 months of escrow.</summary>
     public AmortizationRequestBuilder WithClosingCosts(
         decimal loanCosts = 4_000m, decimal otherFees = 1_000m, int prepaidInterestDays = 15, int escrowMonths = 3, decimal credits = 0m) =>

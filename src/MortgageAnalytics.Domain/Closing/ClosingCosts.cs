@@ -75,8 +75,10 @@ public sealed record ClosingCosts
     /// <param name="yearOneTaxes">The property taxes billed for the first loan year.</param>
     /// <param name="yearOneInsurance">The first year's homeowners insurance premium.</param>
     /// <param name="buydownCost">A temporary buydown's subsidy, when the buyer pays for it; otherwise zero.</param>
+    /// <param name="discountPoints">What discount points cost; otherwise zero.</param>
     public CashToClose CashToClose(
-        PropertyPurchase purchase, decimal annualInterestRate, decimal yearOneTaxes, decimal yearOneInsurance, decimal buydownCost)
+        PropertyPurchase purchase, decimal annualInterestRate, decimal yearOneTaxes, decimal yearOneInsurance, decimal buydownCost,
+        decimal discountPoints = 0m)
     {
         var dailyInterest = Money.Round(purchase.LoanAmount * annualInterestRate / 100m / DaysInYear);
         var monthlyEscrow = Money.Round((yearOneTaxes + yearOneInsurance) / 12m);
@@ -91,6 +93,7 @@ public sealed record ClosingCosts
             monthlyEscrow,
             EscrowMonths,
             buydownCost,
+            discountPoints,
             Credits);
     }
 }

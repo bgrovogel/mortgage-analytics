@@ -8,4 +8,8 @@ namespace MortgageAnalytics.Application.Mapping;
 /// <param name="Buydown">The temporary buydown, or null.</param>
 /// <param name="WorstCase">The standard schedule if rates rise as far as an adjustable rate's caps allow, or null for a fixed rate.</param>
 /// <param name="BuydownPaidBy">Who pays for the buydown: the seller or builder unless the request says the borrower.</param>
-internal sealed record LoanRates(LoanTerms Loan, TemporaryBuydown? Buydown, AmortizationSchedule? WorstCase, BuydownPayer BuydownPaidBy = BuydownPayer.Seller);
+/// <param name="Points">Discount points, or null.</param>
+/// <param name="WithoutPoints">The standard schedule at the rate without points, or null without them.</param>
+internal sealed record LoanRates(
+    LoanTerms Loan, TemporaryBuydown? Buydown, AmortizationSchedule? WorstCase, BuydownPayer BuydownPaidBy = BuydownPayer.Seller,
+    DiscountPoints? Points = null, AmortizationSchedule? WithoutPoints = null);

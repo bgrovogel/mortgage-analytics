@@ -111,6 +111,21 @@ test.describe('Mortgage calculator', () => {
     await expect(total, 'a 2-1 buydown you pay for is paid at closing: $7,898.76 more').toHaveText('$34,313.15');
   });
 
+  test('discount points: what they cost, when they pay for themselves, and their line in the cash to close', async ({ calculator, page }) => {
+    // The reference loan, $200,000 at 6%, bought down with one point from 6.25% (tools/calculator-check).
+    await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.setChecked('use-points', true);
+    await calculator.set('points', 1);
+    await calculator.set('rate-without-points', 6.25);
+    await calculator.calculate();
+
+    await expect(page.getByTestId('points-summary').locator('li'), 'the payment without the point, then with it')
+      .toHaveText([/Without points\s*6\.25%\s*\$1,231\.43\/mo/, /With 1 point\s*\$1,199\.10\/mo/]);
+    await expect(page.getByTestId('points-verdict'), 'it pays for itself by payment 48')
+      .toContainText('1 point costs $2,000 at closing and lowers the payment $32.33 a month. The interest it saves covers that by payment 48 (Dec 2039)');
+    await expect(page.getByTestId('cash-to-close'), 'and is paid at closing').toContainText('Discount points$2,000.00');
+  });
+
   test('each buydown saves a different amount of interest when the seller pays, and none when you do', async ({ calculator, page }) => {
     // The same loan, with its $200 a month extra: the loan's interest is $316,575 whatever the buydown
     // (tools/calculator-check/calculator_model.py).

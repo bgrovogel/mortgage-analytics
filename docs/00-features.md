@@ -44,6 +44,12 @@ What a purchase costs month by month and year by year, and what extra payments d
   - **Who pays decides what it saves.** Paid by the seller or builder, the subsidy pays part of your early interest,
     so you pay that much less ($403,950 of that loan's $411,848, and a 3-2-1 saves more). Paid by you at closing, it
     only moves your money earlier. The headline and the rate plan say which.
+- **Discount points** (a permanent buydown): a fee at closing, a percentage of the loan, for a lower rate for the
+  whole loan. Give the points and the rate the lender quotes without them (the loan's rate is the one with them); the
+  Overview sets the two payments side by side and says what the points cost, the payment by which the interest they
+  save covers that, and what they save over the loan, or that they never pay for themselves. One point on $200,000,
+  6% instead of 6.25%, costs $2,000, saves $32.33 a month, and pays for itself by payment 48. The cost is a line in
+  the cash to close. Not with an adjustable rate, whose two versions would reset differently.
 - **Adjustable rates** (5/1, 7/1, 10/1, 5/6, 7/6, 10/6). The starting rate holds for the fixed period; each reset
   re-amortizes the balance over the payments left and moves toward the rate you expect, as far as the caps allow
   (first reset / later resets / lifetime, such as 5/2/5), and never below the **margin**, the rate's floor.

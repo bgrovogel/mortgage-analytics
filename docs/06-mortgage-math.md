@@ -10,7 +10,7 @@
 **On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) ·
 [Net savings](#net-savings) · [Equity](#equity) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
 [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) ·
-[Temporary buydowns](#temporary-buydowns) · [Cash to close](#cash-to-close) · [Refinancing](#refinancing) ·
+[Temporary buydowns](#temporary-buydowns) · [Discount points](#discount-points) · [Cash to close](#cash-to-close) · [Refinancing](#refinancing) ·
 [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) ·
 [Why independent models](#why-independent-models)
 
@@ -180,8 +180,29 @@ reference loan), and the principal paid each month does not change, so the subsi
 
 `TemporaryBuydown.InterestYouPay` applies this to each schedule (with extra payments too: a loan paid off during the
 buydown years needs less subsidy), and every schedule in the response carries `buydownSubsidy` and `interestYouPay`.
-The headline and the rate plan say which case applies. (A **permanent** buydown, discount points, is different: it
-lowers the note rate for the whole loan, so enter the lower rate.)
+The headline and the rate plan say which case applies. (A **permanent** buydown is different: it lowers the note
+rate for the whole loan. See [Discount points](#discount-points).)
+
+---
+
+## Discount points
+
+A **permanent** buydown: a fee at closing, `points × loan ÷ 100` to the cent, for a lower note rate for the whole
+loan. Whether it pays is a comparison with the same loan at the rate the lender quotes without points, each on its
+standard schedule (extra payments left out, so the answer is about the points alone):
+
+| One point on the reference loan | |
+|---|---|
+| Cost | 1% of $200,000 = **$2,000** |
+| Payment | $1,231.43 at 6.25% → $1,199.10 at 6%: **$32.33** a month less |
+| Interest over the loan | $243,319.13 → $231,677.04: **$11,642.09** saved, **$9,642.09** after the cost |
+| Break-even | Payment **48**, when the interest saved ($2,004.68) first covers the cost |
+
+- **The break-even counts interest, not payments,** the same rule as the refinance break-even (one shared domain
+  method, `InterestBreakEven`): principal repaid is not a cost.
+- Sell or refinance before the break-even and the points cost more than they saved; the results say so.
+- **Not with an adjustable rate:** the two versions of the loan would reset differently, so there is no fair
+  comparison. The validator refuses the combination.
 
 ---
 
@@ -195,7 +216,7 @@ daily interest  = round(loan × rate ÷ 365)                 $356,250 at 6.5%  �
 monthly escrow  = round((year-1 taxes + year-1 insurance) ÷ 12)   (7,150 + 2,400) ÷ 12 → $795.83
 
 closing costs   = loan costs + other fees + daily interest × days + year-1 insurance
-                  + monthly escrow × months + (a buydown the buyer pays for)
+                  + monthly escrow × months + (a buydown the buyer pays for) + (discount points)
 credits used    = min(credits, closing costs)
 cash to close   = down payment + closing costs − credits used
 ```

@@ -33,7 +33,8 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
                 .WithHomeValueGrowth(3m).WithInsurance(2_400m, 5m).WithHoa(75m, 3m)
                 .WithPid(1_200m, 20)
                 .WithPmi(0.5m, PmiCancellation.BorrowerRequested))
-            .WithClosingCosts(credits: 3_000m);
+            .WithClosingCosts(credits: 3_000m)
+            .WithDiscountPoints(1.375m, 6.875m);
 
         AssertValid(request, "every optional section filled with sensible values must pass");
     }
@@ -273,6 +274,23 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     public void ClosingCost_OutOfRange_IsRejected(AmortizationRequest request, string path)
     {
         AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
+    }
+
+    [TestCase(0, 7, "DiscountPoints.Points", TestName = "No points")]
+    [TestCase(5.01, 7, "DiscountPoints.Points", TestName = "More than five points")]
+    [TestCase(1.0001, 7, "DiscountPoints.Points", TestName = "Points to more than three decimals")]
+    [TestCase(1, 6.5, "DiscountPoints.RateWithoutPoints", TestName = "A rate without points no higher than with them")]
+    [TestCase(1, 30.01, "DiscountPoints.RateWithoutPoints", TestName = "A rate without points over 30%")]
+    public void DiscountPoints_OutOfRange_AreRejected(decimal points, decimal rateWithoutPoints, string path)
+    {
+        AssertInvalid(A.Request.WithRate(6.5m).WithDiscountPoints(points, rateWithoutPoints), path, "points buy a lower rate, within what lenders sell");
+    }
+
+    [Test]
+    public void DiscountPoints_OnAnAdjustableRate_AreRejected()
+    {
+        AssertErrorMessage(A.Request.WithRate(6.5m).WithAdjustableRate(7.5m).WithDiscountPoints(1m, 6.75m), "DiscountPoints",
+            "Discount points are compared on a fixed rate; an adjustable rate's resets would differ.", "the two rates would reset differently, so there is no fair comparison");
     }
 
     [Test]

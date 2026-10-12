@@ -9,6 +9,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Buydown">A temporary buydown: its yearly rates and payments, and its cost. Null without one.</param>
 /// <param name="AdjustableRate">An adjustable rate's worst case. Null for a fixed rate.</param>
 /// <param name="CashToClose">What the buyer brings to closing, line by line. Null when the request has no closing costs.</param>
+/// <param name="DiscountPoints">What discount points are worth against the rate without them. Null without points.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -17,7 +18,29 @@ public sealed record AmortizationResponse(
     IReadOnlyList<YearProjectionResponse> Projection,
     BuydownResponse? Buydown = null,
     AdjustableRateResponse? AdjustableRate = null,
-    CashToCloseResponse? CashToClose = null);
+    CashToCloseResponse? CashToClose = null,
+    DiscountPointsResponse? DiscountPoints = null);
+
+/// <summary>Discount points against the rate without them, each loan on its standard schedule.</summary>
+/// <param name="Points">The points paid, as a percentage of the loan.</param>
+/// <param name="Cost">What they cost at closing.</param>
+/// <param name="RateWithoutPoints">The rate the lender offers without them.</param>
+/// <param name="PaymentWithoutPoints">The monthly principal and interest at that rate.</param>
+/// <param name="MonthlySaving">How much lower the payment is with the points.</param>
+/// <param name="InterestSaved">The interest saved over the whole loan.</param>
+/// <param name="NetSaving">The interest saved less the cost; negative when the points lose money.</param>
+/// <param name="BreakEvenPayment">The payment by which the interest saved covers the cost, or null when it never does.</param>
+/// <param name="BreakEvenDate">That payment's due date, or null.</param>
+public sealed record DiscountPointsResponse(
+    decimal Points,
+    decimal Cost,
+    decimal RateWithoutPoints,
+    decimal PaymentWithoutPoints,
+    decimal MonthlySaving,
+    decimal InterestSaved,
+    decimal NetSaving,
+    int? BreakEvenPayment,
+    DateOnly? BreakEvenDate);
 
 /// <summary>The cash the buyer brings to closing, laid out as a Loan Estimate lays it out.</summary>
 /// <param name="DownPayment">Cash paid toward the price.</param>
@@ -31,6 +54,7 @@ public sealed record AmortizationResponse(
 /// <param name="EscrowMonths">Months of it paid into escrow.</param>
 /// <param name="EscrowDeposit">The deposit that starts the escrow account.</param>
 /// <param name="BuydownCost">A temporary buydown's subsidy when the buyer pays for it; zero otherwise.</param>
+/// <param name="DiscountPoints">What discount points cost; zero without them.</param>
 /// <param name="ClosingCosts">Everything paid at closing besides the down payment, before credits.</param>
 /// <param name="Credits">The seller's and lender's credits used: never more than the closing costs.</param>
 /// <param name="UnusedCredits">Credits beyond the closing costs, which cannot pay the down payment.</param>
@@ -47,6 +71,7 @@ public sealed record CashToCloseResponse(
     int EscrowMonths,
     decimal EscrowDeposit,
     decimal BuydownCost,
+    decimal DiscountPoints,
     decimal ClosingCosts,
     decimal Credits,
     decimal UnusedCredits,

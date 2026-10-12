@@ -4,16 +4,18 @@ import { BalanceChartComponent } from '../balance-chart/balance-chart.component'
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { CalculatorStore } from '../calculator.store';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
+import { PointsSummaryComponent } from '../points-summary/points-summary.component';
 import { RatePlanComponent } from '../rate-plan/rate-plan.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
 
 /** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, and the cash to close. */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, RatePlanComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-rate-plan [result]="result()" />
+    <app-points-summary [result]="result()" />
     <div class="charts">
       <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,460 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,490 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -13,13 +13,13 @@
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 454 | NUnit | < 1 s |
-| Application | 225 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 465 | NUnit | < 1 s |
+| Application | 234 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
 | API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 548 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 94 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 559 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 95 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -114,6 +114,7 @@ Take the ARM margin floor as an example of the order of work:
   dev server sends no CSP, so tests run against it would never notice. `security.spec.ts` checks the page carries
   the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
+- Discount points: both payments, the break-even payment and date, and the line in the cash to close.
 - The equity chart: the down payment at the start, and the year the loan is paid off.
 - Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History,
   and deleting the account from its page (a wrong password first, then the right one).

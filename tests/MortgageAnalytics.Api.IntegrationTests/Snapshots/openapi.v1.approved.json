@@ -838,6 +838,9 @@
           "adjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateRequest"
           },
+          "discountPoints": {
+            "$ref": "#/components/schemas/DiscountPointsRequest"
+          },
           "closingCosts": {
             "$ref": "#/components/schemas/ClosingCostsRequest"
           }
@@ -874,6 +877,9 @@
           },
           "cashToClose": {
             "$ref": "#/components/schemas/CashToCloseResponse"
+          },
+          "discountPoints": {
+            "$ref": "#/components/schemas/DiscountPointsResponse"
           }
         },
         "additionalProperties": false
@@ -988,6 +994,10 @@
             "type": "number",
             "format": "double"
           },
+          "discountPoints": {
+            "type": "number",
+            "format": "double"
+          },
           "closingCosts": {
             "type": "number",
             "format": "double"
@@ -1052,6 +1062,64 @@
         "properties": {
           "password": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DiscountPointsRequest": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateWithoutPoints": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DiscountPointsResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateWithoutPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentWithoutPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlySaving": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "netSaving": {
+            "type": "number",
+            "format": "double"
+          },
+          "breakEvenPayment": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "breakEvenDate": {
+            "type": "string",
+            "format": "date",
             "nullable": true
           }
         },

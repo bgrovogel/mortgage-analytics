@@ -57,28 +57,11 @@ public sealed record RefinanceAnalysis(
     /// when it never does. This counts interest only, because principal repaid is not a cost. A simple
     /// "closing costs ÷ monthly savings" would overstate the benefit when costs are financed or the term is longer.
     /// </summary>
-    public int? BreakEvenPaymentNumber { get; } = FindBreakEven(Offer.ClosingCosts, Current, Refinanced);
+    public int? BreakEvenPaymentNumber { get; } = InterestBreakEven.PaymentNumber(Offer.ClosingCosts, Current, Refinanced);
 
     /// <summary>The due date of <see cref="BreakEvenPaymentNumber"/>, or null when there is none.</summary>
     public DateOnly? BreakEvenDate => BreakEvenPaymentNumber is { } number ? Refinanced.Payments[number - 1].DueDate : null;
 
     private decimal LifetimeSavingsOf(AmortizationSchedule refinanced) =>
         Current.TotalPaid - (refinanced.TotalPaid + Offer.UpfrontCosts);
-
-    private static int? FindBreakEven(decimal closingCosts, AmortizationSchedule current, AmortizationSchedule refinanced)
-    {
-        // Once a loan is paid off it charges no more interest, so walk the longer of the two schedules.
-        var interestSaved = 0m;
-        for (var number = 1; number <= refinanced.NumberOfPayments; number++)
-        {
-            interestSaved += InterestOf(current, number) - InterestOf(refinanced, number);
-            if (interestSaved >= closingCosts)
-                return number;
-        }
-
-        return null;
-    }
-
-    private static decimal InterestOf(AmortizationSchedule schedule, int paymentNumber) =>
-        paymentNumber <= schedule.NumberOfPayments ? schedule.Payments[paymentNumber - 1].Interest : 0m;
 }

@@ -102,6 +102,32 @@ export interface AmortizationRequest {
   adjustableRate?: AdjustableRateInput | null;
   /** What is paid at closing besides the down payment; leave out for no cash-to-close estimate. */
   closingCosts?: ClosingCostsInput | null;
+  /** Discount points paid for the rate, against the rate without them; not with an adjustable rate. */
+  discountPoints?: DiscountPointsInput | null;
+}
+
+/** Discount points: a fee at closing, a percentage of the loan, for a lower rate for the whole loan. */
+export interface DiscountPointsInput {
+  /** As a percentage of the loan: 1 is one point. */
+  points: number;
+  /** The rate the lender quotes without them; higher than the loan's rate. */
+  rateWithoutPoints: number;
+}
+
+/** Discount points against the rate without them, as the API works it out. */
+export interface DiscountPointsSummary {
+  points: number;
+  cost: number;
+  rateWithoutPoints: number;
+  paymentWithoutPoints: number;
+  monthlySaving: number;
+  /** Over the whole loan, on the standard schedule. */
+  interestSaved: number;
+  /** The interest saved less the cost; negative when they lose money. */
+  netSaving: number;
+  /** The payment by which the interest saved covers the cost; null when it never does. */
+  breakEvenPayment: number | null;
+  breakEvenDate: string | null;
 }
 
 /**
@@ -138,6 +164,8 @@ export interface CashToClose {
   escrowDeposit: number;
   /** A buydown the buyer pays for; zero otherwise. */
   buydownCost: number;
+  /** Discount points; zero without them. */
+  discountPoints: number;
   /** Everything besides the down payment, before credits. */
   closingCosts: number;
   /** The credits used: never more than the closing costs. */
@@ -270,6 +298,8 @@ export interface AmortizationResponse {
   adjustableRate: AdjustableRateSummary | null;
   /** Null when the request had no closing costs. */
   cashToClose?: CashToClose | null;
+  /** Null without discount points. */
+  discountPoints?: DiscountPointsSummary | null;
 }
 
 export interface BuydownSummary {
