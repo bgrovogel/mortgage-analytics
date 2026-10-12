@@ -203,13 +203,13 @@ export class CalculatorPage {
   }
 
   /** Makes the next calculation fail as if the network were down; later ones go through normally. */
-  failNextCalculation(): Promise<void> {
-    return this.page.route('**/api/v1/amortization/calculate', (route) => route.abort(), { times: 1 });
+  async failNextCalculation(): Promise<void> {
+    await this.page.route('**/api/v1/amortization/calculate', (route) => route.abort(), { times: 1 });
   }
 
   /** Makes every calculation return `problem` as a 400 response. */
-  rejectCalculationsWith(problem: object): Promise<void> {
-    return this.page.route('**/api/v1/amortization/calculate', (route) =>
+  async rejectCalculationsWith(problem: object): Promise<void> {
+    await this.page.route('**/api/v1/amortization/calculate', (route) =>
       route.fulfill({ status: 400, contentType: 'application/problem+json', body: JSON.stringify(problem) }),
     );
   }

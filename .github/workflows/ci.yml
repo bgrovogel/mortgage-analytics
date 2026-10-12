@@ -70,6 +70,8 @@ jobs:
       - run: npm audit --omit=dev
       # angular-eslint: TypeScript and template rules, including the template accessibility checks.
       - run: npm run lint
+      # Jest and Playwright only strip the types, so the specs, page objects and test builders are type-checked here.
+      - run: npm run typecheck
       # jest.config.js sets an 85% threshold on statements, branches, functions and lines.
       - run: npm test -- --ci
       - uses: actions/upload-artifact@v7

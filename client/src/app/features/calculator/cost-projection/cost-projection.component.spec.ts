@@ -28,8 +28,8 @@ describe('CostProjectionComponent', () => {
 
   const rising = aResponse({
     projection: [
-      aProjectionYear(1, { costs: aHousingCosts({ schoolTax: 2_000, hoaDues: 600 }), marketValue: 300_000, taxableValue: 300_000 }),
-      aProjectionYear(2, { costs: aHousingCosts({ schoolTax: 2_200, hoaDues: 618 }), marketValue: 345_000, taxableValue: 330_000 }),
+      aProjectionYear(1, { costs: aHousingCosts({ schoolTax: 2_000, hoaDues: 600 }), marketValue: 300_000, assessedValue: 300_000 }),
+      aProjectionYear(2, { costs: aHousingCosts({ schoolTax: 2_200, hoaDues: 618 }), marketValue: 345_000, assessedValue: 330_000 }),
     ],
   });
 

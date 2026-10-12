@@ -1,3 +1,4 @@
+import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { aResponse } from '../../../../testing/builders';
 import { fakeCharts } from '../../../../testing/fake-charts';
@@ -22,7 +23,7 @@ describe('result tabs', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  const render = <T>(component: new (...args: never[]) => T) => {
+  const render = <T>(component: Type<T>) => {
     const fixture = TestBed.createComponent(component);
     fixture.detectChanges();
     return fixture;

@@ -10,7 +10,8 @@
     "e2e:install": "playwright install --with-deps chromium",
     "test": "jest",
     "test:watch": "jest --watch --coverage=false",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "typecheck": "tsc -p tsconfig.spec.json --noEmit && tsc -p e2e/tsconfig.json"
   },
   "private": true,
   "dependencies": {

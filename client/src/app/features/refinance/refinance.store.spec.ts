@@ -35,7 +35,7 @@ describe('RefinanceStore', () => {
     store.open({ ...base, kind: 'Purchase', inputs: {} as never, refinance: null, strategy: null });
     expect(store.saved()).toBeNull();
 
-    store.open({ ...base, kind: 'Refinance', inputs: null, refinance });
+    store.open({ ...base, kind: 'Refinance', inputs: null, refinance, strategy: null });
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
     expect(store.saved()).toEqual({ id: 'r1', name: 'Refi' });
