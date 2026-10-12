@@ -1,8 +1,15 @@
 # 7. Testing and quality
 
-About 1,350 automated tests in seven suites, written test-first, with the standards enforced by the build.
+> **About 1,350 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
-**On this page:** [How a feature gets built (TDD)](#how-a-feature-gets-built-tdd) · [What each layer proves](#what-each-layer-proves) · [Test standards, enforced by the build](#test-standards-enforced-by-the-build) · [Dependency audit](#dependency-audit) · [Independent models](#independent-models) · [Coverage](#coverage) · [Mutation testing](#mutation-testing) · [The CI pipeline](#the-ci-pipeline-githubworkflowsciyml) · [Code-quality settings that act like tests](#code-quality-settings-that-act-like-tests)
+**Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
+
+**On this page:** [How a feature gets built (TDD)](#how-a-feature-gets-built-tdd) ·
+[What each layer proves](#what-each-layer-proves) ·
+[Test standards, enforced by the build](#test-standards-enforced-by-the-build) ·
+[Dependency audit](#dependency-audit) · [Independent models](#independent-models) · [Coverage](#coverage) ·
+[Mutation testing](#mutation-testing) · [The CI pipeline](#the-ci-pipeline-githubworkflowsciyml) ·
+[Code-quality settings that act like tests](#code-quality-settings-that-act-like-tests)
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
@@ -13,6 +20,8 @@ About 1,350 automated tests in seven suites, written test-first, with the standa
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 513 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 88 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+
+---
 
 ## How a feature gets built (TDD)
 
@@ -27,6 +36,8 @@ Take the ARM margin floor as an example of the order of work:
    the margin and reads the schedule.
 5. **Refactor with the tests green**, e.g. moving the ARM mapping into one shared `RateOptionMapper`.
 6. **Run everything**, including the 300-household comparison against the model.
+
+---
 
 ## What each layer proves
 
@@ -92,6 +103,8 @@ Take the ARM margin floor as an example of the order of work:
   different households, and that the form and the API agree on every field's limits. Other specs cover a bad decade,
   stock-heavy households and the risk profiles, all against the reference numbers.
 
+---
+
 ## Test standards, enforced by the build
 
 `MortgageAnalytics.Conventions.Tests` parses every C# test file with **Roslyn**, and every Playwright spec with a
@@ -119,6 +132,8 @@ inside `Assert.Multiple`.
 - **NSubstitute for every double**, `FakeTimeProvider` for the clock: no hand-written fakes.
 - **No retries in Playwright:** a flaky test should fail loudly and be fixed, not be hidden by a second attempt.
 
+---
+
 ## Dependency audit
 
 CI fails on any known vulnerability in what ships: `dotnet list package --vulnerable --include-transitive` for
@@ -132,6 +147,8 @@ the code never runs here; and it is a test tool that never ships. Forcing `argpa
 would silence the report by breaking `js-yaml`'s command-line tool, which is a worse trade. Look again when Istanbul
 moves to `js-yaml` 4.
 
+---
+
 ## Independent models
 
 | Model | Checks | Run |
@@ -144,6 +161,8 @@ moves to `js-yaml` 4.
 They are written from the rules, not translated from the C#. If the code and the model were both translated from
 the same misunderstanding, they would agree and prove nothing.
 
+---
+
 ## Coverage
 
 | | Lines | Branches | Gate |
@@ -153,6 +172,8 @@ the same misunderstanding, they would agree and prove nothing.
 
 Coverage is a floor, not a goal: it tells you what is *unchecked*, not that what's checked is right. The
 independent models do that job.
+
+---
 
 ## Mutation testing
 
@@ -177,20 +198,29 @@ The first run scored 87%, with 118 survivors. They sorted into:
   number, `First()` and `FirstOrDefault()` on a list that always has three entries, a `>=` that only differs on an
   exact-to-the-cent tie. The 23 survivors are all of this kind.
 
+---
+
 ## The CI pipeline (`.github/workflows/ci.yml`)
 
 On every push to `main` and every pull request:
 
+```mermaid
+flowchart LR
+    push(["Push to main,<br/>or a pull request"])
+    backend["<b>backend</b><br/>restore (locked) → build (Release, warnings as errors)<br/>→ no vulnerable packages → test with coverage<br/>→ report → 85% gate"]
+    frontend["<b>frontend</b><br/>npm ci → npm audit (shipped deps)<br/>→ lint → typecheck → Jest with coverage"]
+    e2e["<b>e2e</b><br/>install Chromium → Playwright<br/>on the production build, served from the API"]
+    docker["<b>docker</b><br/>build the image → run it → /health is Healthy<br/>→ served with its CSP → the calculator answers"]
+    docs["<b>docs</b><br/>count the tests → every count<br/>in README and docs/ matches"]
+    mutation["<b>mutation</b><br/>Stryker.NET on the domain<br/>→ fails below a 95% score"]
+    push --> backend & frontend & docs & mutation
+    backend --> e2e
+    frontend --> e2e
+    backend --> docker
 ```
-backend   ─┐  dotnet restore (locked) → build (Release, warnings as errors) → no vulnerable packages → test with coverage → report → 85% gate
-           ├─► e2e     npm ci → install Chromium → Playwright (builds the app, serves it from the API, as in production)
-frontend  ─┘           npm ci → npm audit (shipped deps) → lint → typecheck → Jest with coverage; e2e runs only if backend and frontend pass
-           └─► docker  docker build → run the image → /health is Healthy, the app is served with its CSP,
-                       and the calculator answers (runs if backend passes)
 
-docs      counts the tests (dotnet --list-tests, playwright --list, Jest) → every count in README and docs/ matches
-mutation  Stryker.NET on the domain → fails below a 95% mutation score, uploads the report
-```
+**e2e** runs only when backend and frontend pass; **docker** runs when backend passes. **docs** and **mutation** run
+on their own.
 
 The test counts in these pages are checked, not trusted: `tools/doc-check/doc_counts.py` holds one rule for each
 place a count appears and fails CI naming the file and line of any that is stale. A "N ... tests" phrase that no rule
@@ -198,6 +228,8 @@ covers fails too, so a new count cannot slip past it.
 
 NuGet packages are cached on the `packages.lock.json` files, and npm packages on `package-lock.json`.
 Coverage reports and, on failure, the Playwright report (with traces and screenshots) are uploaded as artifacts.
+
+---
 
 ## Code-quality settings that act like tests
 

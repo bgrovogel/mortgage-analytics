@@ -1,18 +1,30 @@
 # 6. The mortgage math
 
-The domain, in plain terms, with the worked numbers the tests pin. Every number here was computed by an
-independent Python `Decimal` model and is asserted to the cent in the test suite. The **reference loan** used
-throughout is **$200,000 at 6% over 30 years** (a $250,000 home with $50,000 down).
+> **The domain in plain terms, with the worked numbers the tests pin.** Every number here was computed by an
+> independent Python `Decimal` model and is asserted to the cent in the test suite.
+>
+> The **reference loan** used throughout is **$200,000 at 6% over 30 years** (a $250,000 home with $50,000 down).
 
-**On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) · [Net savings](#net-savings) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) · [Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) · [Temporary buydowns](#temporary-buydowns) · [Refinancing](#refinancing) · [Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) · [Why independent models](#why-independent-models)
+**Read time:** 14 min · **Best for:** checking the numbers · **Code:** `src/MortgageAnalytics.Domain/`, `tools/`
+
+**On this page:** [Amortization](#amortization) · [Extra payments](#extra-payments) · [Recasting](#recasting) ·
+[Net savings](#net-savings) · [PMI (private mortgage insurance)](#pmi-private-mortgage-insurance) ·
+[Property taxes](#property-taxes) · [Adjustable-rate mortgages (ARMs)](#adjustable-rate-mortgages-arms) ·
+[Temporary buydowns](#temporary-buydowns) · [Refinancing](#refinancing) ·
+[Pay off early or invest?](#pay-off-early-or-invest) · [Modelling decisions](#modelling-decisions) ·
+[Why independent models](#why-independent-models)
+
+---
 
 ## Amortization
 
 A fixed-rate mortgage has one level monthly payment that pays off the loan exactly over its term:
 
+```math
+M = P \cdot \frac{r\,(1 + r)^n}{(1 + r)^n - 1}
 ```
-M = P × r × (1 + r)ⁿ / ((1 + r)ⁿ − 1)        P = principal, r = annual rate ÷ 12, n = number of payments
-```
+
+where **P** is the principal, **r** the annual rate ÷ 12, and **n** the number of payments.
 
 `PaymentFormula.MonthlyPayment` computes it in `decimal`. For the reference loan, **M = $1,199.10**.
 
@@ -24,6 +36,8 @@ Each month:
 - Rounding to cents leaves a few cents of drift, so the **final payment** takes the exact remaining balance:
   **$1,200.14**. Total interest: **$231,677.04**.
 
+---
+
 ## Extra payments
 
 Money paid on top of the payment goes straight to principal, so every later month charges less interest.
@@ -33,6 +47,8 @@ Money paid on top of the payment goes straight to principal, so every later mont
 - Kinds: monthly, annual (from a given payment number), and one-time lump sums, in any combination.
 - An extra payment bigger than the balance is capped, so the loan is never overpaid.
 - On a loan already being paid, extra payments can only start with the next payment.
+
+---
 
 ## Recasting
 
@@ -45,11 +61,15 @@ and **lowers the payment** instead: the lender re-amortizes the smaller balance 
 - Reference: a **$50,000 lump sum with payment 12**, then a recast: the payment drops to **$895.60**, and total
   interest is $176,056.85.
 
+---
+
 ## Net savings
 
 **Net savings = interest saved + PMI saved − recast fees.** Taxes, insurance and HOA dues are left out on
 purpose: they don't stop when the loan is paid off, so counting the months of escrow you "skip" would overstate
 the benefit. A test locks this in.
+
+---
 
 ## PMI (private mortgage insurance)
 
@@ -61,6 +81,8 @@ the benefit. A test locks this in.
   - **On request at 80%**, which may use the **actual** balance, so extra payments bring it forward, and that
     saving counts in net savings.
 - Each month therefore carries two balances: the actual one and the original schedule's.
+
+---
 
 ## Property taxes
 
@@ -87,6 +109,8 @@ And for both ways:
   Insurance (+4.8%) and HOA dues (+4%) grow by their own rates.
 - **Installments add up exactly:** a $5,000 yearly bill is 11 × $416.67 + $416.63, never $5,000.04.
 
+---
+
 ## Adjustable-rate mortgages (ARMs)
 
 An ARM's rate is fixed for a first period, then **resets** at a regular interval. A **7/1** is fixed for 7
@@ -111,6 +135,8 @@ Worked examples on the reference loan as a 7/1:
 
 In code: `AdjustableRate.RatePath()` produces the list of rate changes, and the ordinary amortization loop
 re-amortizes whenever `loan.AnnualRateFor(period)` changes.
+
+---
 
 ## Temporary buydowns
 
@@ -142,6 +168,8 @@ buydown years needs less subsidy), and every schedule in the response carries `b
 The headline and the rate plan say which case applies. (A **permanent** buydown, discount points, is different: it
 lowers the note rate for the whole loan, so enter the lower rate.)
 
+---
+
 ## Refinancing
 
 Compare the rest of the current loan with a new one. Reference: **$300,000 left at 7%, 25 years to go**
@@ -163,6 +191,8 @@ Key ideas:
 - The loan today can be entered as **what's owed now**, or as **the original loan** (amount, term, first
   payment), from which the server works out the balance on that loan's own schedule.
 - A buydown on the new loan is paid at closing, so it changes **when** you pay, not how much.
+
+---
 
 ## Pay off early or invest?
 
@@ -194,6 +224,8 @@ differently, so all three spend the same each month.
 with what it earns invested, after tax. Stock that arrives anyway (RSUs kept as shares, ESOP) counts toward the
 market share, so someone already heavy in company stock leans toward the mortgage. An **ARM** uses its average
 rate over the payments left; a **buydown's** subsidy frees cash in every strategy.
+
+---
 
 ## Modelling decisions
 
@@ -230,6 +262,8 @@ The choices behind the numbers, each pinned by a test:
 - **Savings leave out costs that do not go away.** A shorter loan collects taxes and insurance through escrow for
   fewer months, but the owner keeps paying them. `LoanComparison.NetSavings` counts only interest and PMI, less recast
   fees, and a test locks that in.
+
+---
 
 ## Why independent models
 

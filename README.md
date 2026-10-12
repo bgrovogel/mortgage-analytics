@@ -137,13 +137,15 @@ response: [Calling the API](docs/04-backend.md#calling-the-api). The full contra
 
 ## Architecture
 
-```
-Angular app ──HTTP──► Api ──────────► Application ──────────► Domain
-(pages, stores,       endpoints,       contracts, validators,     loans, amortization, taxes,
- forms, charts)       filters, errors  mapping, services, ports   refinancing, strategies
-                                             ▲                    (no dependencies at all)
-                      Infrastructure ────────┘
-                      EF Core + SQLite: the saved-calculations repository, migrations
+```mermaid
+flowchart LR
+    ui["<b>Angular app</b><br/>pages · stores · forms · charts"]
+    api["<b>Api</b><br/>endpoints · filters · errors"]
+    app["<b>Application</b><br/>contracts · validators · mapping<br/>services · ports"]
+    dom["<b>Domain</b><br/>loans · amortization · taxes<br/>refinancing · strategies<br/><i>no dependencies at all</i>"]
+    infra["<b>Infrastructure</b><br/>EF Core + SQLite<br/>saved-calculations repository · migrations"]
+    ui -- "HTTP / JSON" --> api --> app --> dom
+    infra -. implements the ports .-> app
 ```
 
 Dependencies point inward only: **Api → Application → Domain**, and **Infrastructure → Application**. Application owns
@@ -168,6 +170,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 | 6 | [The mortgage math](docs/06-mortgage-math.md) | Every rule with worked numbers, and the modelling decisions |
 | 7 | [Testing and quality](docs/07-testing.md) | TDD, the test layers, the enforced standards, independent models, CI |
 | 8 | [Interview guide](docs/08-interview-guide.md) | The pitch, likely questions, trade-offs and stories, grounded in the code |
+| 9 | [SOLID by example](docs/09-solid-by-example.md) | SOLID in one section of the code, the amortization engine, with real snippets |
 
 ---
 

@@ -1,11 +1,18 @@
 # 5. Frontend
 
-An Angular 22 single-page app in `client/`. Standalone components, signals for state, RxJS for timing, typed
-reactive forms, and `OnPush` everywhere.
+> **An Angular 22 single-page app in `client/`.** Standalone components, signals for state, RxJS for timing, typed
+> reactive forms, and `OnPush` everywhere.
+
+**Read time:** 13 min · **Best for:** stores, forms, the shared loan and charts · **Code:** `client/src/app/`
+
+**On this page:** [Folder map](#folder-map) · [The patterns, one by one](#the-patterns-one-by-one) ·
+[Testing the frontend](#testing-the-frontend)
+
+---
 
 ## Folder map
 
-```
+```text
 client/src/app/
   app.routes.ts, app.config.ts, app.component.*      routes, providers, the shell (header, page tabs)
   core/                     used by every feature; knows nothing about any one page
@@ -31,6 +38,8 @@ client/src/app/
     calculation-stores.ts   every page's store, for History and sign-out
 client/e2e/                 Playwright specs, page objects and fixtures
 ```
+
+---
 
 ## The patterns, one by one
 
@@ -247,6 +256,8 @@ Models in `core/models/` mirror the C# contracts by hand. A contract snapshot te
 on any change to the API's shape (a path, schema, property, type or enum value) and leaves a `.received.json` file
 to diff against the approved one, so the change to follow here is spelled out; the e2e consistency suite then checks
 the numbers the pages show.
+
+---
 
 ## Testing the frontend
 

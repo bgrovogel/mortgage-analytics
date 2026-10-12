@@ -1,27 +1,38 @@
 # 1. Tech stack
 
-Everything the app is built with, where each piece is used, and why it was chosen. Versions are the ones pinned
-in the repository today (`Directory.Packages.props`, `client/package.json`, `.config/dotnet-tools.json`).
+> **Everything the app is built with, where each piece is used, and why it was chosen.** Versions are the ones
+> pinned in the repository today (`Directory.Packages.props`, `client/package.json`, `.config/dotnet-tools.json`).
 
-**On this page:** [At a glance](#at-a-glance) · [Backend (.NET 10, C# latest)](#backend-net-10-c-latest) · [Frontend (Angular 22)](#frontend-angular-22) · [Testing](#testing) · [Delivery](#delivery) · [Deliberately not used](#deliberately-not-used)
+**Read time:** 7 min · **Best for:** "why this library?" questions · **Pinned in:** `Directory.Packages.props`, `client/package.json`
+
+**On this page:** [At a glance](#at-a-glance) · [Backend (.NET 10, C# latest)](#backend-net-10-c-latest) ·
+[Frontend (Angular 22)](#frontend-angular-22) · [Testing](#testing) · [Delivery](#delivery) ·
+[Deliberately not used](#deliberately-not-used)
+
+---
 
 ## At a glance
 
+```mermaid
+flowchart TB
+    browser["<b>Browser</b><br/>Angular 22 SPA · TypeScript 6.0 · RxJS 7.8 · signals · Chart.js 4.5"]
+    api["<b>ASP.NET Core 10 minimal API</b><br/>FluentValidation 12 · ProblemDetails · Swagger (Swashbuckle 10)<br/>ASP.NET Core Identity (accounts) · MailKit (email)"]
+    app["<b>Application</b><br/>use cases"]
+    dom["<b>Domain</b><br/>pure C#, no packages"]
+    infra["<b>Infrastructure</b><br/>EF Core 10"]
+    db[("<b>SQLite</b><br/>one file")]
+    browser -- "HTTP + JSON, cookie session" --> api
+    api --> app --> dom
+    infra -. implements .-> app
+    infra --> db
 ```
-Browser ── Angular 22 SPA (TypeScript 6.0, RxJS 7.8, signals, Chart.js 4.5)
-   │  HTTP + JSON, cookie session
-   ▼
-ASP.NET Core 10 minimal API ── FluentValidation 12 ── ProblemDetails ── Swagger (Swashbuckle 10)
-   │                             ASP.NET Core Identity (accounts) ── MailKit (email)
-   ▼
-Application layer (use cases) ──► Domain (pure C#, no packages)
-   │
-   ▼
-Infrastructure ── EF Core 10 ── SQLite (one file)
 
-Tests: NUnit 5 · NSubstitute 6 · WebApplicationFactory · Jest 30 · Playwright 1.64 · axe-core · Roslyn · Python Decimal
-Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions
-```
+| | |
+|---|---|
+| **Tests** | NUnit 5 · NSubstitute 6 · WebApplicationFactory · Jest 30 · Playwright 1.64 · axe-core · Roslyn · Python `Decimal` |
+| **Delivery** | Docker multi-stage build (one container) · docker compose (+ Mailpit) · GitHub Actions |
+
+---
 
 ## Backend (.NET 10, C# latest)
 
@@ -47,6 +58,8 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 - **Central package management** (`Directory.Packages.props`): each NuGet version is written once for the whole
   solution.
 
+---
+
 ## Frontend (Angular 22)
 
 | Technology | Where | Why |
@@ -61,6 +74,8 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **Inter (`@fontsource-variable/inter` 5.2)** | `styles.scss`, via `angular.json` | The typeface, self-hosted because the CSP allows fonts only from the app; tabular figures keep amounts aligned. |
 | **Chart.js 4.5** | `core/charts/` | Line and stacked charts. Wrapped once (`buildLineChart`, `hostChart`) and injected through a factory, so tests use a fake. |
 | **SCSS** | `*.component.scss`, `core/forms/_*.scss` | Shared partials for form fields, segmented controls and scroll hints; CSS grid for the two-column layout; light and dark themes. |
+
+---
 
 ## Testing
 
@@ -78,6 +93,8 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **axe-core** (`@axe-core/playwright`) | End-to-end | Scans every page for WCAG 2.2 A/AA problems (contrast, names, roles, structure) in light and dark mode and on a phone. |
 | **Python `Decimal`** | `tools/rate-check`, `tools/calculator-check`, `tools/strategy-check` | Independent models, written from the rules, that produce the expected numbers. `tools/doc-check` (standard library only) checks the docs' test counts in CI. |
 
+---
+
 ## Delivery
 
 | Technology | Where | Why |
@@ -86,6 +103,8 @@ Delivery: Docker multi-stage build (one container) · docker compose (+ Mailpit)
 | **docker compose** | `docker-compose.yml` | The app on :8080 plus **Mailpit** (a local mail catcher, :8025) so sign-up emails can be read. |
 | **GitHub Actions** | `.github/workflows/ci.yml` | Four jobs on every push and pull request: .NET build + tests + coverage, Angular tests + coverage, Angular build + Playwright, Docker image build. |
 | **dotnet local tools** | `.config/dotnet-tools.json` | `dotnet-ef` 10.0 (migrations), ReportGenerator 5.5 (coverage reports) and Stryker.NET 5.0 (mutation testing), restored with `dotnet tool restore`. |
+
+---
 
 ## Deliberately not used
 

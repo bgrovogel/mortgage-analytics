@@ -1,18 +1,19 @@
 # 0. What it does
 
-Mortgage Analytics answers three questions a home owner actually has, with the real rules behind each answer:
+> **Three questions a home owner actually has, answered with the real rules behind each.**
+>
+> 1. **What will this home really cost me?** [The calculator](#the-calculator)
+> 2. **Should I refinance?** [Refinance](#refinance)
+> 3. **Should spare cash pay down the mortgage, or be invested?** [Pay off or invest](#pay-off-or-invest)
+>
+> A loan typed on one page is carried to the others, and an [account](#accounts-and-history) saves any result to
+> reopen later. The calculators themselves need no account.
 
-1. **What will this home really cost me?** The [Calculator](#the-calculator)
-2. **Should I refinance?** [Refinance](#refinance)
-3. **Should spare cash pay down the mortgage, or be invested?** [Pay off or invest](#pay-off-or-invest)
+**Read time:** 10 min · **Best for:** what the app does, before how · **The formulas:** [6. The mortgage math](06-mortgage-math.md)
 
-A loan typed on one page is carried to the others, and an [account](#accounts-and-history) saves any result to
-reopen later. The calculators themselves need no account.
-
-This page describes the behaviour. For the formulas and worked numbers, see [The mortgage math](06-mortgage-math.md).
-
-**On this page:** [The calculator](#the-calculator) · [Refinance](#refinance) · [Pay off or invest](#pay-off-or-invest) ·
-[Across the pages](#across-the-pages) · [Accounts and History](#accounts-and-history)
+**On this page:** [The calculator](#the-calculator) · [Refinance](#refinance) ·
+[Pay off or invest](#pay-off-or-invest) · [Across the pages](#across-the-pages) ·
+[Accounts and History](#accounts-and-history)
 
 ---
 

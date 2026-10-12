@@ -1,30 +1,34 @@
 # 3. Architecture
 
-How the pieces fit: the layers and the rule that keeps them apart, one request traced from a keystroke to the
-database and back, how saving and signing in work, and where a new feature belongs.
+> **How the pieces fit.** The layers and the rule that keeps them apart, one request traced from a keystroke to the
+> database and back, how saving and signing in work, and where a new feature belongs.
 
-**On this page:** [The shape of the system](#the-shape-of-the-system) · [One request, end to end](#one-request-end-to-end) · [Saving a calculation](#saving-a-calculation) · [Signing in](#signing-in) · [Design principles](#design-principles) · [Where to put a new feature](#where-to-put-a-new-feature)
+**Read time:** 12 min · **Best for:** finding your way around the code · **Start at:** `src/MortgageAnalytics.Api/Program.cs`
+
+**On this page:** [The shape of the system](#the-shape-of-the-system) ·
+[One request, end to end](#one-request-end-to-end) · [Saving a calculation](#saving-a-calculation) ·
+[Signing in](#signing-in) · [Design principles](#design-principles) ·
+[Where to put a new feature](#where-to-put-a-new-feature)
+
+---
 
 ## The shape of the system
 
-```
-┌──────────────────────── Browser ────────────────────────┐
-│  Angular SPA                                            │
-│   pages ─► form components ─► stores (signals) ─► API services ──┐
-└─────────────────────────────────────────────────────────┘        │ HTTP/JSON  /api/v1/...
-                                                                   ▼
-┌──────────────────── One ASP.NET Core process ───────────────────────────────┐
-│  Api            endpoints · ValidationFilter<T> · exception handler ·        │
-│                 Identity (accounts) · email · Swagger · serves the SPA        │
-│     │ calls                                                                   │
-│     ▼                                                                         │
-│  Application    contracts (request/response DTOs) · validators · mappers ·    │
-│                 services (use cases) · ISavedCalculationRepository (a port)   │
-│     │ calls                          ▲ implements                             │
-│     ▼                                │                                        │
-│  Domain         the money math      Infrastructure   EF Core · SQLite ·       │
-│                 (no dependencies)                    migrations · repository  │
-└───────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph browser["Browser: the Angular SPA"]
+        direction LR
+        pages[pages] --> forms[form components] --> stores["stores (signals)"] --> services[API services]
+    end
+    subgraph process["One ASP.NET Core process"]
+        api["<b>Api</b><br/>endpoints · ValidationFilter#lt;T#gt; · exception handler<br/>Identity (accounts) · email · Swagger · serves the SPA"]
+        app["<b>Application</b><br/>contracts (request/response DTOs) · validators · mappers<br/>services (use cases) · ISavedCalculationRepository (a port)"]
+        dom["<b>Domain</b><br/>the money math<br/><i>no dependencies</i>"]
+        infra["<b>Infrastructure</b><br/>EF Core · SQLite · migrations · repository"]
+        api -- calls --> app -- calls --> dom
+        infra -. implements .-> app
+    end
+    services -- "HTTP / JSON, /api/v1/..." --> api
 ```
 
 This is a **Clean Architecture** (also called onion or ports-and-adapters) layout in four .NET projects:
@@ -64,6 +68,8 @@ In production the Angular build is copied into the API's `wwwroot`, and `Program
 (`UseDefaultFiles`, `UseStaticFiles`, `MapFallbackToFile("index.html")`). So there is one process, one port, and
 no CORS. Unknown `/api/...` routes return a JSON 404 instead of falling through to `index.html`. In development,
 `ng serve` proxies `/api` to the API instead (`client/proxy.conf.json`), which gives the same single origin.
+
+---
 
 ## One request, end to end
 
@@ -161,6 +167,8 @@ validator). "Today" comes from the injected `TimeProvider`.
 | A domain guard fires (a bug: input was validated first) | `DomainValidationException` → `GlobalExceptionHandler` → logged, and a generic 500 with no internal details |
 | The API is down | The request's own `catchError` shows the error; the next change tries again |
 
+---
+
 ## Saving a calculation
 
 `shared/save-calculation/` → `SavedCalculationsApiService` → `POST /api/v1/calculations` → `SavedCalculationEndpoints`
@@ -174,6 +182,8 @@ validator). "Today" comes from the injected `TimeProvider`.
   read and written whole. A test makes sure saves in today's format keep loading (see [Testing](07-testing.md)).
 - Opening a saved calculation from History calls `CalculationStores.of(kind).open(saved)`: the right page's store
   loads it and the form restores itself from the request.
+
+---
 
 ## Signing in
 
@@ -194,9 +204,12 @@ ones the app uses (`ServeOnlyWhatTheAppUses`): sign-in is with a session cookie 
 The cookie and the emailed codes are signed with Data Protection keys kept on disk (a Docker volume in
 production), so a restart doesn't sign anyone out or break a link.
 
+---
+
 ## Design principles
 
-Where SOLID, KISS and DRY actually show up in the code, so the claim can be checked:
+Where SOLID, KISS and DRY actually show up in the code, so the claim can be checked. For all five SOLID principles
+worked through one section, with the code for each, see [SOLID by example](09-solid-by-example.md).
 
 | Principle | Where |
 |---|---|
@@ -207,6 +220,8 @@ Where SOLID, KISS and DRY actually show up in the code, so the claim can be chec
 | **Dependency inversion** | Services depend on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. Application owns `ISavedCalculationRepository`; Infrastructure implements it. |
 | **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and colour everywhere. |
 | **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole; that JSON has no version yet, and a test loads today's format so a rename or removal fails CI instead of quietly dropping values. |
+
+---
 
 ## Where to put a new feature
 

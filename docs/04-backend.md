@@ -1,8 +1,16 @@
 # 4. Backend
 
-Four projects under `src/`, read from the inside out: the domain first, because everything else serves it.
+> **Four projects under `src/`, read from the inside out:** the domain first, because everything else serves it.
+> Then the use cases, storage, and the HTTP API with its security.
 
-**On this page:** [Domain](#domain-srcmortgageanalyticsdomain) · [Application](#application-srcmortgageanalyticsapplication) · [Infrastructure](#infrastructure-srcmortgageanalyticsinfrastructure) · [API](#api-srcmortgageanalyticsapi) · [Security](#security)
+**Read time:** 12 min · **Best for:** the classes that matter, and calling the API · **Code:** `src/`
+
+**On this page:** [Domain](#domain-srcmortgageanalyticsdomain) ·
+[Application](#application-srcmortgageanalyticsapplication) ·
+[Infrastructure](#infrastructure-srcmortgageanalyticsinfrastructure) · [API](#api-srcmortgageanalyticsapi) ·
+[Security](#security)
+
+---
 
 ## Domain (`src/MortgageAnalytics.Domain`)
 
@@ -61,6 +69,8 @@ ARMs don't change this loop: `loan.WithAdjustableRate(arm)` asks the ARM for its
 Every caller (the calculator, both refinance loans, the strategy mortgage, the ARM worst case) goes through that one
 method.
 
+---
+
 ## Application (`src/MortgageAnalytics.Application`)
 
 The use cases: what the API offers, and the translation between the outside world and the domain.
@@ -82,6 +92,8 @@ production, input got past the validator, which is a bug, so it is logged and re
 `RecastPolicy.OnLumpSum(min, fee)`, a zero amount means "none", PMI applies only below 20% down). Writing them as
 code puts those decisions where they can be read and unit-tested one by one, which a mapping library would hide.
 
+---
+
 ## Infrastructure (`src/MortgageAnalytics.Infrastructure`)
 
 | File | Purpose |
@@ -100,6 +112,8 @@ Details worth knowing:
 - **An index on (OwnerId, UpdatedAt)** matches the one query every list makes.
 - **Cascade delete:** deleting a user deletes their calculations (a foreign key to Identity's users table).
 - **`ExecuteDeleteAsync`** deletes in one SQL statement, without loading the row first.
+
+---
 
 ## API (`src/MortgageAnalytics.Api`)
 
@@ -220,6 +234,8 @@ Invalid input is a `400` with field-level errors keyed by JSON path:
 ```
 
 The full contract, with descriptions and example values, is in Swagger UI at `/swagger`.
+
+---
 
 ## Security
 

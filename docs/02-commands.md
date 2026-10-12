@@ -1,9 +1,16 @@
 # 2. Commands
 
-Every command you need, run from the repository root unless a line says `cd client`. The shell examples are
-bash; they work the same in PowerShell except where noted.
+> **Every command you need, in one place.** Run them from the repository root unless a line says `cd client`. The
+> shell examples are bash; they work the same in PowerShell except where noted.
 
-**On this page:** [Prerequisites](#prerequisites) · [Run it](#run-it) · [Test it](#test-it) · [Change the database](#change-the-database) · [Check the math against the independent models](#check-the-math-against-the-independent-models) · [Check the docs' test counts](#check-the-docs-test-counts) · [Ship it](#ship-it) · [Troubleshooting](#troubleshooting)
+**Read time:** 7 min · **Best for:** running, testing and shipping it · **Needs:** .NET 10 SDK, Node 22.22+, Python 3.10+
+
+**On this page:** [Prerequisites](#prerequisites) · [Run it](#run-it) · [Test it](#test-it) ·
+[Change the database](#change-the-database) ·
+[Check the math against the independent models](#check-the-math-against-the-independent-models) ·
+[Check the docs' test counts](#check-the-docs-test-counts) · [Ship it](#ship-it) · [Troubleshooting](#troubleshooting)
+
+---
 
 ## Prerequisites
 
@@ -13,6 +20,8 @@ bash; they work the same in PowerShell except where noted.
 | Node.js | 22.22+ (or 24+) | `node --version` |
 | Docker Desktop | any recent | `docker --version` (only for the container) |
 | Python | 3.10+ | `python --version` (only for the independent model checks) |
+
+---
 
 ## Run it
 
@@ -69,7 +78,13 @@ startup projects, and press F5.
 Set them in `appsettings.Development.json`, with user secrets (`dotnet user-secrets set "Email:Smtp:Host" "smtp.example.com" --project src/MortgageAnalytics.Api`),
 or as environment variables with `__` for `:` (e.g. `Email__Smtp__Host`).
 
+---
+
 ## Test it
+
+> [!IMPORTANT]
+> **Stop the dev API before you build or test.** A running API locks its DLLs, and the build fails with
+> `MSB3026: Could not copy ... being used by another process`.
 
 ```bash
 dotnet test                              # every .NET test: Domain, Application, Infrastructure, API, Conventions
@@ -133,6 +148,8 @@ cd client && npx tsc -p tsconfig.app.json --noEmit    # type-check the Angular a
 cd client && npm run build               # production build into client/dist/client/browser
 ```
 
+---
+
 ## Change the database
 
 Saved calculations and accounts are stored with EF Core. After changing an entity or `CalculationsDbContext`:
@@ -150,6 +167,8 @@ covers.
 **Start from an empty database locally:** stop the API and delete `src/MortgageAnalytics.Api/calculations.db`.
 In Docker: `docker compose down -v`.
 
+---
+
 ## Check the math against the independent models
 
 ```bash
@@ -160,6 +179,8 @@ python tools/strategy-check/compare_with_api.py    # 300 random households, ever
 python tools/calculator-check/compare_with_api.py  # 300 purchases + 300 refinances, every field: expect all identical
 ```
 
+---
+
 ## Check the docs' test counts
 
 ```bash
@@ -167,6 +188,8 @@ python tools/doc-check/doc_counts.py               # counts the tests, names eve
 ```
 
 Run it after adding or removing tests (CI does too). Stop the dev API first: it builds the test projects.
+
+---
 
 ## Ship it
 
@@ -176,6 +199,8 @@ gh run list --limit 3                     # recent CI runs (GitHub CLI)
 gh run watch                              # follow the current run
 docker build -t mortgage-analytics .      # the image CI builds
 ```
+
+---
 
 ## Troubleshooting
 

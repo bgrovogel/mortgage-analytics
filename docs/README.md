@@ -1,8 +1,11 @@
 # Mortgage Analytics: developer guide
 
-The [main README](../README.md) is the front page: what the app does, how to run it, and where to look. These pages
-are the guide behind it: how the code is built, why, and how to run and change it. Read them in order to be able to
-explain, or extend, any part of the app.
+> **How the code is built, why, and how to run and change it.** The [main README](../README.md) is the front page;
+> these ten pages are the guide behind it. Read them in order to be able to explain, or extend, any part of the app.
+
+**Total read time:** about 2 hours · **Shortest route to presenting it:** [1 hour](#where-to-start)
+
+---
 
 ## The app in one paragraph
 
@@ -12,6 +15,8 @@ Accounts let people save calculations and reopen them. The money math lives in a
 dependencies, uses `decimal` throughout, and is checked against independent Python models to the cent. More than
 1,300 tests across five layers run in CI, which also enforces the test standards, an 85% coverage floor and a
 mutation-score floor on the domain.
+
+---
 
 ## The pages
 
@@ -26,6 +31,9 @@ mutation-score floor on the domain.
 | 6 | [The mortgage math](06-mortgage-math.md) | The domain itself, with worked numbers: amortization, recasts, PMI, taxes, ARMs, buydowns, refinancing, pay off or invest |
 | 7 | [Testing and quality](07-testing.md) | TDD, the test layers, the rules the build enforces, independent models, coverage, mutation testing, CI |
 | 8 | [Interview guide](08-interview-guide.md) | The pitch, the questions you are likely to get, trade-offs and stories, with answers grounded in this code |
+| 9 | [SOLID by example](09-solid-by-example.md) | All five SOLID principles in one section of the code, the amortization engine, with the real code for each |
+
+---
 
 ## Where to start
 
@@ -35,7 +43,7 @@ mutation-score floor on the domain.
 | **Run it and its tests** (10 min) | [2. Commands](02-commands.md) |
 | **Find your way around the code** (30 min) | [3. Architecture](03-architecture.md), then [4. Backend](04-backend.md) or [5. Frontend](05-frontend.md) |
 | **Check the numbers** | [6. The mortgage math](06-mortgage-math.md) and [7. Testing and quality](07-testing.md) |
-| **Prepare to present it** (1 hour) | [3. Architecture, "One request, end to end"](03-architecture.md#one-request-end-to-end) (15 min), [6. The mortgage math](06-mortgage-math.md) (15 min), [8. Interview guide](08-interview-guide.md) (20 min, out loud), then run it once with [2. Commands](02-commands.md) (10 min) |
+| **Prepare to present it** (1 hour) | [3. Architecture, "One request, end to end"](03-architecture.md#one-request-end-to-end) (15 min), [6. The mortgage math](06-mortgage-math.md) (15 min), [8. Interview guide](08-interview-guide.md) (20 min, out loud), [9. SOLID by example](09-solid-by-example.md) (15 min), then run it once with [2. Commands](02-commands.md) (10 min) |
 
 Every class and public member has a doc comment (the build fails without one), so the code explains itself once you
 know where to look.

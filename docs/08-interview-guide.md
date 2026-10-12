@@ -1,9 +1,20 @@
 # 8. Interview guide
 
-How to present this project, and answers to the questions you are likely to get. Every answer points to real
-code, so you can open the file and show it. Practise saying them out loud; don't memorise them word for word.
+> **How to present this project, and answers to the questions you are likely to get.** Every answer points to
+> real code, so you can open the file and show it.
 
-**On this page:** [The pitch](#the-pitch) · [Walk me through the architecture](#walk-me-through-the-architecture) · [Likely questions](#likely-questions) · [Trade-offs and what you'd change](#trade-offs-and-what-youd-change) · [Stories for "tell me about a hard bug](#stories-for-tell-me-about-a-hard-bug) · [If you're asked how you built it](#if-youre-asked-how-you-built-it) · [Numbers worth remembering](#numbers-worth-remembering)
+> [!TIP]
+> Practise the answers out loud; don't memorise them word for word.
+
+**Read time:** 20 min, out loud · **Best for:** the pitch, likely questions, trade-offs and stories
+
+**On this page:** [The pitch](#the-pitch) · [Walk me through the architecture](#walk-me-through-the-architecture) ·
+[Likely questions](#likely-questions) · [Trade-offs and what you'd change](#trade-offs-and-what-youd-change) ·
+[Stories for "tell me about a hard bug"](#stories-for-tell-me-about-a-hard-bug) ·
+[If you're asked how you built it](#if-youre-asked-how-you-built-it) ·
+[Numbers worth remembering](#numbers-worth-remembering)
+
+---
 
 ## The pitch
 
@@ -24,6 +35,8 @@ code, so you can open the file and show it. Practise saying them out loud; don't
 4. **Quality:** TDD, an 85% coverage gate, and conventions tests that use Roslyn to fail the build when a test
    breaks the team's assertion standards.
 
+---
+
 ## "Walk me through the architecture"
 
 Draw four boxes: Api → Application → Domain, and Infrastructure → Application. Then:
@@ -38,6 +51,8 @@ Draw four boxes: Api → Application → Domain, and Infrastructure → Applicat
 
 Then trace one request: [Architecture → One request, end to end](03-architecture.md#one-request-end-to-end).
 
+---
+
 ## Likely questions
 
 ### Design and architecture
@@ -48,7 +63,8 @@ ASP.NET and EF Core means its 440 tests run in under a second with no setup, and
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
-**Where do you apply SOLID?** (Have one example ready for each.)
+**Where do you apply SOLID?** (Have one example ready for each. All five, in one section with the real code:
+[SOLID by example](09-solid-by-example.md).)
 - **S:** `PaymentFormula` does the math, `AmortizationCalculator` builds schedules, `LoanComparer` compares, and the
   endpoints only do HTTP.
 - **O:** a new housing cost is a new `IHousingCost`; adding the school tax and growth needed no change to the
@@ -281,6 +297,8 @@ Compose adds Mailpit to catch emails locally.
 
 Coverage and failure reports are uploaded as artifacts.
 
+---
+
 ## Trade-offs and what you'd change
 
 Interviewers like a candidate who knows a design's weaknesses. Be ready with these:
@@ -295,6 +313,8 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
 | Saved JSON | No version; a test guards the format | `schemaVersion` + upgrade on load, at the first breaking change |
+
+---
 
 ## Stories for "tell me about a hard bug"
 
@@ -343,11 +363,15 @@ stories. Tell one as situation → what you did → result → how you made sure
    - **Result:** 97.4%; CI fails below 95%. The 23 survivors left behave identically to the original code.
    - **Lesson:** coverage says a line ran. Mutation testing says a test would notice if it were wrong.
 
+---
+
 ## If you're asked how you built it
 
 Be straightforward about your process and tools, including any AI assistance. What interviewers want to know is
 whether you understand and can own the code. These docs, the tests and the reference models are how you show
 that: pick any feature, explain the rule, open the test that pins it, and change it live.
+
+---
 
 ## Numbers worth remembering
 
@@ -362,4 +386,4 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 
 ---
 
-← Previous: [7. Testing and quality](07-testing.md) · [Guide contents](README.md)
+← Previous: [7. Testing and quality](07-testing.md) · [Guide contents](README.md) · Next: [9. SOLID by example](09-solid-by-example.md) →
