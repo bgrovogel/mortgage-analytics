@@ -46,7 +46,13 @@ docker compose up -d --build     # the same, in the background
 docker compose logs -f app       # follow the app's logs (JSON, one line per API request, each with its request id)
 docker compose down              # stop (data is kept on the volume)
 docker compose down -v           # stop AND delete the data volume (accounts, saved calculations)
+docker compose --profile https up --build   # also Caddy on https://localhost:8443, as a deployment behind HTTPS
 ```
+
+The `https` profile puts [Caddy](https://caddyserver.com/) in front of the app (`caddy/Caddyfile`), with a certificate
+from Caddy's own local authority, so the browser warns once. The app believes Caddy's `X-Forwarded-*` headers, and only
+Caddy's (its fixed address is `ForwardedHeaders__KnownProxies__0`), so over HTTPS the session cookie is `Secure`. Emailed
+links still point at http://localhost:8080.
 
 | URL | What |
 |---|---|

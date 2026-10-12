@@ -277,6 +277,7 @@ Accounts follow the same habit of not trusting the client:
 | **No open redirect** | Sign-in returns only to paths on this site (`/history`, never `//evil.example`). |
 | **Attempt limit** | 10 sign-in, sign-up, resend and reset attempts a minute from one address (`RateLimiting:AccountPermitsPerMinute`), then a 429 that says when to try again. Reads and the calculators are not limited. |
 | **Security headers** | A Content-Security-Policy that allows scripts only from the app's own files and forbids framing, plus `nosniff` and `Referrer-Policy: no-referrer` (emailed links carry codes in the URL). Every browser test runs under it. |
+| **Behind an HTTPS proxy** | `X-Forwarded-For` and `X-Forwarded-Proto` are believed only from the proxies configured in `ForwardedHeaders:KnownProxies` or `KnownNetworks` (`Security/ProxyHeaders.cs`). Then a request that reached the proxy over HTTPS is HTTPS here: the session cookie (`SameAsRequest`) is marked `Secure`, HSTS is sent for a year, and the attempt limit counts each client, not the proxy. From anyone else the headers are ignored, so they cannot fake HTTPS or dodge the limit. `docker compose --profile https up` shows it with Caddy. |
 | **Known vulnerabilities** | CI fails on any vulnerable NuGet package (transitive ones too) and on `npm audit` of the browser's dependencies. |
 
 ---

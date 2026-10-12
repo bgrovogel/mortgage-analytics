@@ -1,0 +1,7 @@
+# HTTPS in front of the app, for `docker compose --profile https up`. Caddy ends TLS with a certificate from its own
+# local authority (the browser warns once, as for any self-signed site) and passes requests on to the app with
+# X-Forwarded-For and X-Forwarded-Proto, which the app believes only from this container's address.
+https://localhost:8443 {
+	tls internal
+	reverse_proxy app:8080
+}

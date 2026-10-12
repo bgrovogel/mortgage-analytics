@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -31,6 +33,12 @@ public sealed class MortgageApiFactory(
     /// <summary>Every email the API has sent, in order.</summary>
     public ConcurrentQueue<EmailMessage> SentMail { get; } = new();
 
+    /// <summary>
+    /// A test-only header naming the caller's IP address. An in-memory request has none, so tests of what the API does
+    /// with a client's or proxy's address set it here.
+    /// </summary>
+    public const string RemoteAddressHeader = "X-Test-Remote-Address";
+
     /// <summary>Everything the API has logged, with its scopes.</summary>
     public CapturedLogs Logs { get; } = new();
 
@@ -51,6 +59,7 @@ public sealed class MortgageApiFactory(
             builder.UseSetting(key, value);
         builder.ConfigureTestServices(services =>
         {
+            services.AddTransient<IStartupFilter, RemoteAddressFromHeader>();
             services.AddSingleton<TimeProvider>(Clock);
 
             if (captureMail)
@@ -76,4 +85,19 @@ public sealed class MortgageApiFactory(
         if (Directory.Exists(_appDataPath))
             Directory.Delete(_appDataPath, recursive: true);
     }
+}
+
+/// <summary>Sets the connection's remote address from <see cref="MortgageApiFactory.RemoteAddressHeader"/>, before anything else runs.</summary>
+internal sealed class RemoteAddressFromHeader : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+    {
+        app.Use((context, nextMiddleware) =>
+        {
+            if (IPAddress.TryParse(context.Request.Headers[MortgageApiFactory.RemoteAddressHeader], out var address))
+                context.Connection.RemoteIpAddress = address;
+            return nextMiddleware(context);
+        });
+        next(app);
+    };
 }

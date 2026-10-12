@@ -188,8 +188,10 @@ ASP.NET Core Identity (`MapIdentityApi`) handles it:
   `Referrer-Policy: no-referrer`, because reset links carry their code in the URL. Every Playwright test runs on the
   production build under this policy and fails if the browser blocks anything, so a change that needs an inline
   script cannot slip through (the Angular dev server sends no CSP, which is why the tests don't use it).
-- **Behind a reverse proxy** the limiter would see the proxy's address, so a deployment would add forwarded
-  headers first.
+- **Behind a reverse proxy,** the app believes `X-Forwarded-For` and `-Proto` only from the proxies it is told about,
+  so the limiter counts each client, the session cookie is `Secure` over HTTPS, and HSTS is sent. From anyone else
+  the headers are ignored: they can't fake HTTPS or dodge the limit. `docker compose --profile https up` puts Caddy in
+  front to show it.
 
 ### Angular
 
@@ -309,7 +311,6 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 |---|---|---|
 | Database | SQLite, single writer | PostgreSQL via the EF provider; the abstractions are already there |
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
-| Security | Identity, lockout, SameSite cookies, attempt limits, CSP | Forwarded headers behind a proxy, so the limit sees each client |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
 | Test strength | Coverage gate, independent models, 97% mutation score on the domain | Mutation testing on the Application layer's mapping and validators |
 | History | Loads all of a user's saves | Pagination, once lists get long |
@@ -383,7 +384,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 800 .NET · 541 Jest · 93 Playwright (15 axe scans); 85% coverage gate |
+| Tests | 804 .NET · 541 Jest · 93 Playwright (15 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

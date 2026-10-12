@@ -258,14 +258,14 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one. (Four more were found here too and are
-closed: an untested cascade, an untested lockout, no way to delete an account, and then no screen for it.)
+Found while writing this page; each is a known gap, not a hidden one. (Five more were found here too and are
+closed: an untested cascade, an untested lockout, no way to delete an account, then no screen for it, and a
+session cookie that was never `Secure` behind an HTTPS proxy.)
 
 | Gap | Today | What would close it |
 |---|---|---|
 | **No automatic backups** | Manual, as above | A scheduled copy of the volume, or a managed database |
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
-| **The cookie is `Secure` only over HTTPS** | `SecurePolicy = SameAsRequest`, so the plain-HTTP demo still works | Serve over HTTPS (behind a proxy), and the cookie is marked `Secure` automatically |
 | **Saved JSON has no version** | `StoredFormatTests` guard it | `schemaVersion` and an upgrade on load, at the first breaking change |
 
 ---

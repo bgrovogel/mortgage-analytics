@@ -17,6 +17,7 @@ builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Ca
     ?? throw new InvalidOperationException("Set ConnectionStrings:Calculations to a SQLite connection string."));
 builder.Services.AddAccounts(builder.Configuration, builder.Environment);
 builder.Services.AddEmail(builder.Configuration);
+builder.Services.AddProxyHeaders(builder.Configuration);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -56,7 +57,9 @@ var app = builder.Build();
 // Create the saved-calculations database, or apply new migrations, before taking requests.
 await app.Services.MigrateDatabaseAsync();
 
-// First, so the request id is on every log line and response, and the request's line has its final status.
+// Before anything reads the client's address or scheme: a trusted proxy's X-Forwarded-* headers, then HSTS.
+app.UseProxyHeaders();
+// Next, so the request id is on every log line and response, and the request's line has its final status.
 app.UseRequestLogging();
 app.UseSecurityHeaders();
 app.UseResponseCompression();

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,430 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,440 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -16,7 +16,7 @@
 | Domain | 454 | NUnit | < 1 s |
 | Application | 223 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
-| API integration | 97 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 101 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 541 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 93 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -75,6 +75,8 @@ Take the ARM margin floor as an example of the order of work:
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.
+- Behind a proxy: a trusted proxy's HTTPS makes the cookie `Secure` and sends HSTS, and the limit counts each client
+  behind it; an untrusted caller's `X-Forwarded-*` headers change nothing.
 - Request logging: every response has an `X-Request-ID` (a safe caller id is reused), every error body names it,
   each API request is one log line without its query string, and JSON logs in Production. A test logger
   (`CapturedLogs`) keeps each entry with its scopes.
