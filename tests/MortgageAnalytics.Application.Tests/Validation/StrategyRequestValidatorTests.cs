@@ -132,4 +132,24 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
             AssertInvalid(TypicalRequest with { AdjustableRate = arm, Buydown = buydown }, "AdjustableRate", "one or the other");
         });
     }
+
+    private static IEnumerable<TestCaseData> MoreLimits()
+    {
+        TestCaseData Case(string name, string path, StrategyRequest request) => new TestCaseData(request, path).SetName(name);
+
+        yield return Case("InterestRate_Above30", "AnnualInterestRate", TypicalRequest with { AnnualInterestRate = 30.01m });
+        yield return Case("HomeValue_Negative", "HomeValue", TypicalRequest with { HomeValue = -1m });
+        yield return Case("MatchedShareOfPay_Above100", "MatchUpToPercentOfPay", TypicalRequest with { MatchUpToPercentOfPay = 100.01m });
+        yield return Case("RetirementSavings_Negative", "CurrentRetirementSavings", TypicalRequest with { CurrentRetirementSavings = -1m });
+        yield return Case("CurrentInvestments_Negative", "CurrentInvestments", TypicalRequest with { CurrentInvestments = -1m });
+        yield return Case("ExpectedReturn_BelowMinus10", "ExpectedAnnualReturn", TypicalRequest with { ExpectedAnnualReturn = -10.01m });
+    }
+
+    [TestCaseSource(nameof(MoreLimits))]
+    public void EachLimit_IsChecked(StrategyRequest request, string path) =>
+        AssertInvalid(request, path, "every field has its range");
+
+    [Test]
+    public void AReturnOfMinus10_IsTheWorstAccepted() =>
+        AssertNoErrorFor(TypicalRequest with { ExpectedAnnualReturn = -10m }, "ExpectedAnnualReturn", "a lost decade is a scenario, not an error");
 }

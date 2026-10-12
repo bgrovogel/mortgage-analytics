@@ -140,4 +140,12 @@ public class StrategyServiceTests
             Assert.That(buydown.Rates.AverageMortgageRate, Is.EqualTo(6.5m), "at the note rate");
         });
     }
+
+    [Test]
+    public void AMatchOnNoShareOfPay_IsNoMatch()
+    {
+        var response = _service.Compare(ReferenceStrategies.TypicalRequest with { EmployerMatchPercent = 50m, MatchUpToPercentOfPay = 0m });
+
+        Assert.That(response.Rates.EmployerMatchPercent, Is.Zero, "50% of nothing is nothing, so the comparison shows no match");
+    }
 }

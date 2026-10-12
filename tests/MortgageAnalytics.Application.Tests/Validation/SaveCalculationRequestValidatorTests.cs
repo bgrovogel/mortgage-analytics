@@ -19,6 +19,11 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
         AssertErrorMessage(Named(name), "Name", "Give the calculation a name.", "a blank name could not be found again");
 
     [Test]
+    public void ANameLeftOut_IsRejected() =>
+        AssertErrorMessage(new SaveCalculationRequest { Inputs = A.Request.Build() }, "Name", "Give the calculation a name.",
+            "a request with no name at all starts blank, and a blank name is refused");
+
+    [Test]
     public void ANullName_IsRejectedRatherThanThrowing() =>
         AssertErrorMessage(Named(null!), "Name", "Give the calculation a name.", "JSON can send null for a string");
 

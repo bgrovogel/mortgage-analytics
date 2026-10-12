@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,590 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,620 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -14,7 +14,7 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 511 | NUnit | < 1 s |
-| Application | 259 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Application | 295 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
 | API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
@@ -204,10 +204,10 @@ independent models do that job.
 
 ## Mutation testing
 
-**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 890 small changes
+**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,050 small changes
 (mutants) to `MortgageAnalytics.Domain` (`<` to `<=`, `+` to `-`, `Sum` to `Max`, an emptied message, a deleted
 statement) and runs the tests against each. A mutant no test notices *survives*, and points at an assertion that is
-missing. **The score is 97.4%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
+missing. **The score is 98.1%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
 uploads the HTML report.
 
 <details>
@@ -225,9 +225,18 @@ uploads the HTML report.
   interest, and optional `null`s nobody passed.
 - **Equivalent mutants**, which no test can kill because they behave identically: `>>=` and `>>>=` on a non-negative
   number, `First()` and `FirstOrDefault()` on a list that always has three entries, a `>=` that only differs on an
-  exact-to-the-cent tie. The 23 survivors are all of this kind.
+  exact-to-the-cent tie. The 20 survivors are all of this kind.
 
 </details>
+
+**The Application layer** (mapping and validators) is mutation-tested too, locally rather than in CI, to keep CI
+minutes for the gates (`tests/MortgageAnalytics.Application.Tests/stryker-config.json`; run `dotnet stryker` there).
+Its first run scored 88.7%: rules no test reached (a VA funding-fee type, a yearly extra's floor, FHA's 3.5% exactly,
+each tax's rate-change message), refinance boundaries (a loan whose last payment is today), mapped fields nobody
+asserted (an FHA response's loan type, a rate reset's date), and code that could not matter, now removed (a first
+payment date resolved twice, a cap of 50 rate changes that one-a-year in a 50-year loan never reaches). It now scores
+**98.3%**; the 10 survivors are equivalent: messages on unreachable `switch` arms, "empty list → None" shortcuts, and
+`Append` against `Prepend` before a `Max`.
 
 ---
 

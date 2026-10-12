@@ -191,9 +191,6 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
         }
     }
 
-    /// <summary>The most tax rate changes one request may contain: one a year over a long loan.</summary>
-    public const int MaxRateChanges = 50;
-
     /// <summary>One tax rate change: a later year within the loan, changing at least one rate, each for a tax that is charged.</summary>
     private sealed class TaxRateChangeValidator : AbstractValidator<TaxRateChangeRequest>
     {
@@ -279,8 +276,6 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 .OverridePropertyName("Over65OrDisabled.TransferredCeilingPercent").WithName("Share of school tax paid before")
                 .When(h => h.Over65OrDisabled?.TransferredCeilingPercent is not null);
 
-            RuleFor(h => h.RateChanges).Must(changes => changes.Count <= MaxRateChanges)
-                .WithMessage($"At most {MaxRateChanges} tax rate changes.");
             RuleFor(h => h.RateChanges)
                 .Must(changes => changes.Select(c => c.FromYear).Distinct().Count() == changes.Count)
                 .WithMessage("Each year can have one tax rate change; put the rates that change that year together.");

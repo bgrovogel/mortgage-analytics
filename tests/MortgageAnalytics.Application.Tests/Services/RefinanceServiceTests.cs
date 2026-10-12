@@ -137,6 +137,7 @@ public class RefinanceServiceTests
         {
             Assert.That((reset.PaymentNumber, reset.PreviousRate, reset.NewRate, reset.PreviousPayment, reset.NewPayment),
                 Is.EqualTo((25, 7m, 9m, 2_120.34m, 2_496.08m)), "today's 7% resets to 9% after two years");
+            Assert.That(reset.EffectiveDate, Is.EqualTo(ReferenceLoans.FirstPaymentDate.AddMonths(24)), "with the 25th payment from the next one");
             Assert.That(response.MonthlySavings, Is.EqualTo(ToSixPercentFor30Years.MonthlySavings), "today's payment is still today's");
             Assert.That(response.LifetimeSavings, Is.EqualTo(86_292.68m), "the reset turns a $17,415 loss into a saving");
             Assert.That(response.WorstCaseLifetimeSavings, Is.EqualTo(239_046.91m), "and if rates rise as far as the caps allow (9%, 11%, 12%), much more");
@@ -195,5 +196,13 @@ public class RefinanceServiceTests
             Assert.That(response.Current.LoanAmount, Is.EqualTo(197_963.60m), "what is owed today, as before");
             Assert.That((reset.PaymentNumber, reset.NewRate), Is.EqualTo((3, 8m)), "the reset two payments from now");
         });
+    }
+
+    [Test]
+    public void ARefinanceToAHigherPayment_HasNoKeepTodaysPaymentOption()
+    {
+        var response = _service.Analyze(Request() with { NewAnnualInterestRate = 9m });
+
+        Assert.That(response.KeepingCurrentPayment, Is.Null, "paying today's payment on a dearer loan would not pay it off");
     }
 }

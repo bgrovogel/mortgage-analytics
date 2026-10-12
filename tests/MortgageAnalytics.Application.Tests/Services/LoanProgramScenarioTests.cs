@@ -26,7 +26,8 @@ public class LoanProgramScenarioTests : SociableAnalysisTestBase
 
         Assert.Multiple(() =>
         {
-            Assert.That(response.Program!.UpfrontFee, Is.EqualTo(5_066.25m), "1.75% of the $289,500 base loan");
+            Assert.That(response.Program!.Type, Is.EqualTo(LoanProgramType.Fha), "an FHA loan");
+            Assert.That(response.Program.UpfrontFee, Is.EqualTo(5_066.25m), "1.75% of the $289,500 base loan");
             Assert.That(response.Program.LoanAmount, Is.EqualTo(294_566.25m), "added to the loan");
             Assert.That(response.Program.AnnualMipPercent, Is.EqualTo(0.55m), "96.5% LTV, 30 years");
             Assert.That(response.Purchase.LoanAmount, Is.EqualTo(289_500m), "the purchase's own loan is the base loan");
@@ -66,7 +67,8 @@ public class LoanProgramScenarioTests : SociableAnalysisTestBase
 
         Assert.Multiple(() =>
         {
-            Assert.That(response.Program!.UpfrontFee, Is.EqualTo(8_600m), "2.15% for a first use with nothing down");
+            Assert.That(response.Program!.Type, Is.EqualTo(LoanProgramType.Va), "a VA loan");
+            Assert.That(response.Program.UpfrontFee, Is.EqualTo(8_600m), "2.15% for a first use with nothing down");
             Assert.That(response.Program.LoanAmount, Is.EqualTo(408_600m), "added to the loan");
             Assert.That(response.Baseline.MonthlyPayment, Is.EqualTo(2_582.63m), "on the whole $408,600");
             Assert.That(response.Baseline.TotalHousingCosts.MortgageInsurance, Is.Zero, "no PMI and no MIP, even with nothing down");
@@ -84,5 +86,23 @@ public class LoanProgramScenarioTests : SociableAnalysisTestBase
     public void AConventionalLoan_HasNoProgramSummary()
     {
         Assert.That(Service.Analyze(A.Request).Program, Is.Null, "nothing to say beyond the loan itself");
+    }
+
+    [Test]
+    public void TheUpfrontFee_IsFinancedUnlessSaidOtherwise()
+    {
+        var request = A.Request.WithHomePrice(300_000m).WithDownPayment(10_500m).Build() with { Program = new LoanProgramRequest { Type = LoanProgramType.Fha } };
+
+        Assert.That(Service.Analyze(request).Program!.LoanAmount, Is.EqualTo(294_566.25m), "most borrowers add it to the loan, so that is the default");
+    }
+
+    [Test]
+    public void FhasLoanSizeLimit_IsTheOneForTheYearTheLoanCloses()
+    {
+        // First payment January 2026, so the loan closes in December 2025, under 2025's $806,500 limit.
+        var request = A.Request.WithHomePrice(900_000m).WithDownPayment(90_000m).WithFirstPaymentDate(new DateOnly(2026, 1, 1))
+            .WithProgram(LoanProgramType.Fha);
+
+        Assert.That(Service.Analyze(request).Program!.AnnualMipPercent, Is.EqualTo(0.70m), "$810,000 is above 2025's limit, though within 2026's");
     }
 }

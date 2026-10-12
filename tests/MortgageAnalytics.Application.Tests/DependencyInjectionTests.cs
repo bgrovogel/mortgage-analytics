@@ -28,6 +28,8 @@ public class DependencyInjectionTests
             Assert.That(() => provider.GetRequiredService<IAmortizationService>(), Throws.Nothing, "the purchase analysis resolves with its dependencies");
             Assert.That(() => provider.GetRequiredService<IRefinanceService>(), Throws.Nothing, "and so does the refinance comparison");
             Assert.That(() => provider.GetRequiredService<IStrategyService>(), Throws.Nothing, "and the pay-off-or-invest comparison");
+            Assert.That(provider.GetService<FluentValidation.IValidator<MortgageAnalytics.Application.Contracts.AmortizationRequest>>(), Is.Not.Null,
+                "and the validators the endpoints run");
         });
     }
 

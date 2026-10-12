@@ -465,4 +465,99 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             AssertInvalid(arm(-1m), "AdjustableRate.Margin", "negative");
         });
     }
+
+    // ---------------------------------------------------------------------------------------
+    // Limits at their edges, and rules no other test reached.
+    // ---------------------------------------------------------------------------------------
+
+    [Test]
+    public void ALargeDownPayment_DoesNotCountTowardTheLoanLimit()
+    {
+        AssertNoErrorFor(A.Request.WithHomePrice(90_000_000m).WithDownPayment(20_000_000m), "DownPayment",
+            "the loan is the price less the down payment: $70 million is within the limit");
+    }
+
+    [Test]
+    public void AnFhaLoan_WithExactly3Point5PercentDown_IsValid()
+    {
+        AssertNoErrorFor(A.Request.WithHomePrice(300_000m).WithDownPayment(10_500m).WithProgram(LoanProgramType.Fha), "DownPayment",
+            "the minimum itself is enough");
+    }
+
+    [Test]
+    public void AnUnknownVaFundingFeeUse_IsRejected()
+    {
+        AssertInvalid(A.Request.WithProgram(LoanProgramType.Va, (VaFundingFeeType)9), "Program.VaUse", "only first use, later use or exempt");
+    }
+
+    [Test]
+    public void AMonthlyExtraStartingAfterTheLoan_IsRejected()
+    {
+        AssertInvalid(A.Request.WithMonthlyExtra(100m, startingPaymentNumber: 361), "ExtraPayments.MonthlyStartingPaymentNumber",
+            "a monthly extra must start within the loan");
+    }
+
+    [Test]
+    public void AYearlyExtra_CanBeZero_ButNotNegative()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertNoErrorFor(A.Request.WithAnnualExtra(0m), "ExtraPayments.Annual.Amount", "a zero yearly extra is no yearly extra");
+            AssertErrorMessage(A.Request.WithAnnualExtra(-1m), "ExtraPayments.Annual.Amount",
+                "'Annual extra payment' must be greater than or equal to '0'.", "named the way the form names it");
+        });
+    }
+
+    [Test]
+    public void TheMostLumpSumsAllowed_AreValid()
+    {
+        var lumpSums = Enumerable.Range(1, AmortizationRequestValidator.MaxLumpSums).Select(n => new LumpSumPaymentRequest(n, 100m)).ToList();
+
+        AssertNoErrorFor(A.Request.WithLumpSums(lumpSums), "ExtraPayments.LumpSums", "the limit itself is allowed");
+    }
+
+    [TestCase(0, TestName = "RateChange_ToZero")]
+    [TestCase(15, TestName = "RateChange_ToTheMostAllowed")]
+    public void ARateChange_AtItsLimits_IsValid(decimal rate)
+    {
+        AssertValid(A.Request.WithHousingCosts(c => c.WithPropertyTax(2m).WithRateChange(3, propertyTaxRate: rate)), "a rate can change to 0 or to its limit");
+    }
+
+    private static IEnumerable<TestCaseData> RateChangeMessages()
+    {
+        TestCaseData Case(string name, string path, string message, Func<HousingCostsRequestBuilder, HousingCostsRequestBuilder> costs) =>
+            new TestCaseData(A.Request.WithHousingCosts(costs).Build(), $"HousingCosts.RateChanges[0].{path}", message).SetName(name);
+
+        yield return Case("PropertyRateChangeMessage", "PropertyTaxRate", "'Property tax rate' must be between 0 and 15, with at most 4 decimal places.",
+            c => c.WithPropertyTax(2m).WithRateChange(3, propertyTaxRate: 16m));
+        yield return Case("SchoolRateChangeMessage", "SchoolTaxRate", "'School tax rate' must be between 0 and 10, with at most 4 decimal places.",
+            c => c.WithSchoolTax(1m).WithRateChange(3, schoolTaxRate: 11m));
+        yield return Case("LocalRateChangeMessage", "LocalTaxRate", "'County/city tax rate' must be between 0 and 10, with at most 4 decimal places.",
+            c => c.WithLocalTax(1m).WithRateChange(3, localTaxRate: 11m));
+        yield return Case("MudRateChangeMessage", "MudTaxRate", "'MUD tax rate' must be between 0 and 5, with at most 4 decimal places.",
+            c => c.WithMudTax(1m).WithRateChange(3, mudTaxRate: 6m));
+    }
+
+    [TestCaseSource(nameof(RateChangeMessages))]
+    public void ARateChangeOutOfRange_SaysWhichTax(AmortizationRequest request, string path, string message)
+    {
+        AssertErrorMessage(request, path, message, "each tax's change is checked against that tax's own limit");
+    }
+
+    [Test]
+    public void AmountsAndRatesWithTrailingZeros_AreValid()
+    {
+        AssertValid(A.Request.WithHomePrice(375_000.000m).WithRate(6.50000m), "375,000.000 is whole cents and 6.50000 is two decimals");
+    }
+
+    [TestCase("PropertyTaxHomesteadExemption", TestName = "HomesteadExemption_Negative")]
+    [TestCase("MudHomesteadExemptionPercent", TestName = "MudExemption_Above100")]
+    public void MoreHousingCostLimits_AreChecked(string field)
+    {
+        var request = A.Request.WithHousingCosts(c => c.With(h => field == "MudHomesteadExemptionPercent"
+            ? h with { MudHomesteadExemptionPercent = 100.01m }
+            : h with { PropertyTaxHomesteadExemption = -1m }));
+
+        AssertInvalid(request, $"HousingCosts.{field}", "each exemption has its range");
+    }
 }

@@ -113,4 +113,80 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
             AssertInvalid(Valid with { NewAdjustableRate = arm, NewBuydown = buydown }, "NewAdjustableRate", "the new loan is one or the other");
         });
     }
+
+    /// <summary>The validator on the test clock: today is 9 October 2026.</summary>
+    private static RefinanceRequestValidator OnTestClock() => new(TestClock.Create());
+
+    [Test]
+    public void AnOriginalLoanWhoseLastPaymentIsToday_StillHasOneLeft()
+    {
+        var request = Valid with { OriginalLoan = Original with { TermInMonths = 1, FirstPaymentDate = new DateOnly(2026, 10, 9) } };
+
+        Assert.That(OnTestClock().Validate(request).Errors, Is.Empty, "a payment due today has not been made yet");
+    }
+
+    [Test]
+    public void AnOriginalLoanWhoseLastPaymentWasLastMonth_IsPaidOff()
+    {
+        var request = Valid with { OriginalLoan = Original with { TermInMonths = 1, FirstPaymentDate = new DateOnly(2026, 9, 9) } };
+
+        Assert.That(OnTestClock().Validate(request).Errors.Select(e => e.PropertyName), Has.Member("OriginalLoan.FirstPaymentDate"),
+            "its only payment was due a month ago");
+    }
+
+    [TestCase(600, TestName = "LongestTerm_PaidOff")]
+    [TestCase(1, TestName = "ShortestTerm_PaidOff")]
+    public void AnOriginalLoanPaidOffLongAgo_IsRejected_WhateverItsTerm(int term)
+    {
+        AssertInvalid(Valid with { OriginalLoan = Original with { TermInMonths = term, FirstPaymentDate = new DateOnly(1900, 1, 1) } },
+            "OriginalLoan.FirstPaymentDate", "every payment, even of the longest loan, is behind today");
+    }
+
+    [Test]
+    public void AnOriginalLoanWithAnImpossibleTerm_IsRejected_RatherThanThrowing()
+    {
+        AssertInvalid(Valid with { OriginalLoan = Original with { TermInMonths = int.MaxValue } }, "OriginalLoan.TermInMonths",
+            "the paid-off check is skipped for a term that is already wrong");
+    }
+
+    [Test]
+    public void ACurrentArm_IsCheckedAgainstTheOriginalLoansTerm_WhenThereIsOne()
+    {
+        var arm = new AdjustableRateRequest { InitialFixedMonths = 84, ExpectedRate = 7.5m };
+
+        AssertValid(Valid with { CurrentBalance = 0, RemainingTermInMonths = 0, OriginalLoan = Original, CurrentAdjustableRate = arm },
+            "with an original loan, the fixed period is measured against its 360 payments");
+    }
+
+    [Test]
+    public void ANewBuydown_IsChecked()
+    {
+        AssertInvalid(Valid with { NewBuydown = new TemporaryBuydownRequest { YearlyReductions = [] } }, "NewBuydown.YearlyReductions",
+            "a buydown needs at least one year");
+    }
+
+    [Test]
+    public void FinancedClosingCosts_OnAnOriginalLoan_CountTheOriginalAmount()
+    {
+        var request = Valid with
+        {
+            CurrentBalance = 0, RemainingTermInMonths = 0, ClosingCosts = 1m, FinanceClosingCosts = true,
+            OriginalLoan = Original with { Amount = 100_000_000m },
+        };
+
+        AssertInvalid(request, "ClosingCosts", "what was first borrowed bounds what is owed, so $100 million plus $1 is over the limit");
+    }
+
+    [Test]
+    public void ArmCapsAndABuydownOfOneYear_AreChecked()
+    {
+        var arm = new AdjustableRateRequest { InitialFixedMonths = 60, ExpectedRate = 7m };
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(Valid with { NewAdjustableRate = arm with { InitialCap = -1m } }, "NewAdjustableRate.InitialCap", "the first reset's cap");
+            AssertInvalid(Valid with { NewAdjustableRate = arm with { PeriodicCap = -1m } }, "NewAdjustableRate.PeriodicCap", "the later resets' cap");
+            AssertValid(Valid with { NewBuydown = new TemporaryBuydownRequest { YearlyReductions = [1.00000m] } },
+                "a one-year buydown, its reduction written with trailing zeros");
+        });
+    }
 }

@@ -1,0 +1,8 @@
+{
+  "stryker-config": {
+    "project": "MortgageAnalytics.Application.csproj",
+    "target-framework": "net10.0",
+    "reporters": ["progress", "html", "json"],
+    "thresholds": { "high": 95, "low": 90, "break": 0 }
+  }
+}

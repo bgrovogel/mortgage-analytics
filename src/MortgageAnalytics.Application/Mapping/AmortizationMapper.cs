@@ -39,12 +39,12 @@ internal static class AmortizationMapper
 
     /// <summary>
     /// Builds the loan terms for <paramref name="principal"/> (the purchase's loan, plus a financed FHA or VA fee),
-    /// using <paramref name="defaultFirstPaymentDate"/> when the request has none. An adjustable rate becomes its
-    /// expected resets.
+    /// first due on <paramref name="firstPaymentDate"/> (the request's, or the default the service chose). An adjustable
+    /// rate becomes its expected resets.
     /// </summary>
-    public static LoanTerms ToLoanTerms(this AmortizationRequest request, decimal principal, DateOnly defaultFirstPaymentDate)
+    public static LoanTerms ToLoanTerms(this AmortizationRequest request, decimal principal, DateOnly firstPaymentDate)
     {
-        var loan = new LoanTerms(principal, request.AnnualInterestRate, request.TermInMonths, request.FirstPaymentDate ?? defaultFirstPaymentDate);
+        var loan = new LoanTerms(principal, request.AnnualInterestRate, request.TermInMonths, firstPaymentDate);
         return loan.WithAdjustableRate(request.ToAdjustableRate());
     }
 
@@ -313,11 +313,10 @@ internal static class AmortizationMapper
         AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, decimal principal,
         PropertyValuation valuation, HousingCostPlan plan)
     {
-        // Owed at the start of a year: the loan before the first payment, then the balance after the year before's last.
+        // Owed at the start of a year: the loan before the first payment, then the balance after the year before's last
+        // payment, and nothing once the loan is paid off.
         decimal BalanceAtStartOf(int index) =>
-            index == 0 ? principal
-            : index * 12 <= accelerated.Payments.Count ? accelerated.Payments[(index * 12) - 1].RemainingBalance
-            : 0m;
+            index == 0 ? principal : accelerated.Payments.ElementAtOrDefault((index * 12) - 1)?.RemainingBalance ?? 0m;
 
         var taxes = plan.Taxes.ToDictionary(t => t.Category);
         decimal? TaxableValue(HousingCostCategory category, int year) =>
