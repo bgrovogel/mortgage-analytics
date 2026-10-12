@@ -38,26 +38,27 @@ public abstract class ApiTestBase
     /// <summary>
     /// Registers a new user, confirms the email from the message the API sent, and signs in with a session
     /// cookie, the way a person does in the browser. The returned client keeps the cookie, so every request
-    /// it makes is that user's.
+    /// it makes is that user's. Uses the shared host unless a test brings its own.
     /// </summary>
-    protected static async Task<HttpClient> SignUpAsync(string? email = null)
+    protected static async Task<HttpClient> SignUpAsync(string? email = null, MortgageApiFactory? host = null)
     {
         email ??= UniqueEmail();
-        var client = ApiFixture.Factory.CreateClient(); // handles cookies by default
+        host ??= ApiFixture.Factory;
+        var client = host.CreateClient(); // handles cookies by default
         await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/register", new { email, password = GoodPassword }), "registering");
-        await EnsureSucceededAsync(await ConfirmEmailAsync(client, email), "confirming the email");
+        await EnsureSucceededAsync(await ConfirmEmailAsync(client, email, host), "confirming the email");
         await EnsureSucceededAsync(await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword }), "signing in");
         return client;
     }
 
     /// <summary>The most recent email the API sent to <paramref name="address"/>, or null when there is none.</summary>
-    protected static EmailMessage? LastEmailTo(string address) =>
-        ApiFixture.Factory.SentMail.LastOrDefault(m => m.To == address);
+    protected static EmailMessage? LastEmailTo(string address, MortgageApiFactory? host = null) =>
+        (host ?? ApiFixture.Factory).SentMail.LastOrDefault(m => m.To == address);
 
     /// <summary>Follows the confirmation link in the last email to <paramref name="address"/>, as the confirm page does.</summary>
-    protected static Task<HttpResponseMessage> ConfirmEmailAsync(HttpClient client, string address)
+    protected static Task<HttpResponseMessage> ConfirmEmailAsync(HttpClient client, string address, MortgageApiFactory? host = null)
     {
-        var link = LastEmailTo(address)?.ActionUrl ?? throw new InvalidOperationException($"No email was sent to {address}.");
+        var link = LastEmailTo(address, host)?.ActionUrl ?? throw new InvalidOperationException($"No email was sent to {address}.");
         return client.GetAsync($"{AccountUrl}/confirmEmail{new Uri(link).Query}");
     }
 

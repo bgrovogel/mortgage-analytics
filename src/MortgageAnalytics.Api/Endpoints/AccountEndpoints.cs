@@ -3,13 +3,14 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using MortgageAnalytics.Infrastructure;
 
 namespace MortgageAnalytics.Api.Endpoints;
 
 /// <summary>
 /// User accounts, with ASP.NET Core Identity: its built-in endpoints (register, confirm email, login,
-/// forgot and reset password, account info) under <c>/api/v1/account</c>, plus sign-out. The browser signs in with <c>login?useCookies=true</c> and
+/// forgot and reset password, account info) under <c>/api/v1/account</c>, plus sign-out and deleting the account. The browser signs in with <c>login?useCookies=true</c> and
 /// then carries an HttpOnly, SameSite=Strict session cookie, which scripts cannot read and other sites
 /// cannot send.
 /// </summary>
@@ -57,6 +58,10 @@ public static class AccountEndpoints
             options.ExpireTimeSpan = TimeSpan.FromDays(14);
             options.SlidingExpiration = true;
         });
+
+        // Check every session against its user on each request (one lookup by id), not every 30 minutes as Identity
+        // would: a deleted account, or a password reset, then ends the account's other sessions at once.
+        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
         services.AddAttemptLimit(configuration.GetValue("RateLimiting:AccountPermitsPerMinute", DefaultAttemptsPerMinute));
 
@@ -108,6 +113,12 @@ public static class AccountEndpoints
             .WithName("SignOut")
             .WithSummary("Sign out, ending the session cookie.");
 
+        group.MapDelete("/", DeleteAccount)
+            .RequireAuthorization()
+            .WithName("DeleteAccount")
+            .WithSummary("Delete your account and everything saved in it, then sign out. Needs your password.")
+            .ProducesValidationProblem();
+
         return routes;
     }
 
@@ -154,4 +165,35 @@ public static class AccountEndpoints
         await signInManager.SignOutAsync();
         return TypedResults.NoContent();
     }
+
+    /// <summary>
+    /// Deletes the signed-in user, once their password is confirmed. Their saved calculations go with them (the
+    /// database cascades the delete), and the session ends. A wrong password counts toward lockout like a failed
+    /// sign-in, so a stolen session cannot be used to guess the password here.
+    /// </summary>
+    private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> DeleteAccount(
+        [FromBody] DeleteAccountRequest request, ClaimsPrincipal principal, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn)
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null)
+            return TypedResults.Unauthorized();
+
+        var check = await signIn.CheckPasswordSignInAsync(user, request.Password ?? "", lockoutOnFailure: true);
+        if (!check.Succeeded)
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["password"] = [check.IsLockedOut ? "Too many wrong passwords. Wait a few minutes, then try again." : "The password is not correct."],
+            });
+
+        var deleted = await users.DeleteAsync(user);
+        if (!deleted.Succeeded)
+            throw new InvalidOperationException($"Deleting the account failed: {string.Join("; ", deleted.Errors.Select(e => e.Description))}");
+
+        await signIn.SignOutAsync();
+        return TypedResults.NoContent();
+    }
 }
+
+/// <summary>What deleting an account needs: the account's password, so an open session alone cannot delete it.</summary>
+/// <param name="Password">The account's current password.</param>
+public sealed record DeleteAccountRequest(string? Password);

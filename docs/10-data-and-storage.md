@@ -19,7 +19,7 @@
 
 | What | Where | Written when |
 |---|---|---|
-| **Accounts:** email, password hash, whether the email is confirmed, lockout state | `AspNetUsers` table | Sign-up, email confirmation, sign-in (failed attempts), password reset |
+| **Accounts:** email, password hash, whether the email is confirmed, lockout state | `AspNetUsers` table | Sign-up, email confirmation, sign-in (failed attempts), password reset; deleted with the account |
 | **Saved calculations:** a name and the **inputs** of a calculation, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
 | **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files | First startup, then when a key nears expiry |
@@ -158,7 +158,8 @@ does not come back. Adding a field passes; renaming one fails. That is the signa
 - **One `DbContext` per HTTP request** (scoped), as EF Core intends: it is not thread-safe, and its change tracking
   is what lets `PUT` write only what changed.
 
-Identity runs its own queries against `AspNetUsers` (find by normalized email, update the lockout count, and so on).
+Identity runs its own queries against `AspNetUsers` (find by normalized email, update the lockout count, delete the
+user, and so on), and now one per signed-in request: the session check looks the user up by id.
 
 ---
 
@@ -172,7 +173,8 @@ What Identity stores and enforces, as configured in `AccountEndpoints.AddAccount
 | **Email confirmation** | Required before the first sign-in (`RequireConfirmedEmail`) |
 | **Lockout** | Identity's defaults: after **5** wrong passwords in a row the account is locked for **5 minutes**, and even the right password is refused (`LockedOut`). A successful sign-in resets the count. `AccountApiTests` pin the limit from both sides |
 | **Emailed codes** | Confirmation and reset codes are signed with the Data Protection keys, single-purpose, and expire after Identity's default of a day |
-| **Session** | A cookie named `mortgage-analytics.session`: HttpOnly, SameSite=Strict, valid 14 days and renewed while in use (sliding) |
+| **Session** | A cookie named `mortgage-analytics.session`: HttpOnly, SameSite=Strict, valid 14 days and renewed while in use (sliding). Every request rechecks it against the user, so a deleted account or a reset password ends the other sessions at once |
+| **Deleting the account** | `DELETE /api/v1/account` with the password in the body. A wrong password deletes nothing and counts toward lockout, so a stolen session cannot guess it here. Identity deletes the user, the database cascades to their saves, and the session ends |
 | **Attempt limit** | Account POSTs are limited per client address (`RateLimiting:AccountPermitsPerMinute`: 10 in production, 1,000 in Development so the browser tests can sign up many users) |
 
 **The signing keys matter as much as the database.** They live on disk (`DataProtection:KeysDirectory`), and in Docker
@@ -214,7 +216,7 @@ columns would become `jsonb` or `nvarchar(max)` with no code change.
 | `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; deleting a user deletes their saves and no one else's; the migrations match the model |
 | `StoredFormatTests` | A save of each kind in today's JSON still loads, with every value |
 | `DatabaseHealthCheckTests` | `/health` is Healthy for the database the app created, and Unhealthy when the database is missing (a broken Docker volume shows up there) |
-| API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, and lockout at its limit (four wrong passwords still sign in with the right one; five lock the account) |
+| API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, lockout at its limit (four wrong passwords still sign in with the right one; five lock the account), and deleting an account: it needs the password, takes the saves, frees the email and ends every session |
 | Playwright History tests | Saving each kind, finding it by name, reopening it with every value, renaming and deleting, in a real browser |
 
 ---
@@ -254,12 +256,12 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one. (Two more, an untested cascade and an untested
-lockout, were found here too and now have tests.)
+Found while writing this page; each is a known gap, not a hidden one. (Three more were found here too and are
+closed: an untested cascade, an untested lockout, and no way at all to delete an account.)
 
 | Gap | Today | What would close it |
 |---|---|---|
-| **No way to delete an account** | The database is ready (deleting a user cascades to their saves), but no endpoint or screen deletes a user, so someone can delete every save but not their account or email address | A signed-in `DELETE /api/v1/account` that removes the user (and so their saves) and signs them out, with a confirm step in the UI |
+| **No screen to delete an account** | `DELETE /api/v1/account` works (with the password), but nothing in the app calls it yet | A "Delete my account" screen with a confirm step |
 | **No automatic backups** | Manual, as above | A scheduled copy of the volume, or a managed database |
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
 | **The cookie is `Secure` only over HTTPS** | `SecurePolicy = SameAsRequest`, so the plain-HTTP demo still works | Serve over HTTPS (behind a proxy), and the cookie is marked `Secure` automatically |

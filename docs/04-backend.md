@@ -259,9 +259,9 @@ Accounts follow the same habit of not trusting the client:
 
 | Measure | What it does |
 |---|---|
-| **Session cookie** | HttpOnly and SameSite=Strict: scripts cannot read it and other sites cannot send it. No token in `localStorage`. Passwords are hashed by Identity, and repeated failures lock the account. |
+| **Session cookie** | HttpOnly and SameSite=Strict: scripts cannot read it and other sites cannot send it. No token in `localStorage`. Passwords are hashed by Identity, and five wrong passwords lock the account for five minutes. Every request rechecks the session against its user (not every 30 minutes, Identity's default), so a deleted account or a password reset ends the other sessions at once. |
 | **Only the endpoints the app uses** | Identity's built-in set also issues bearer tokens (sign-in without `useCookies=true`, `/refresh`) and offers two-factor setup the app has no screen for. Sign-in without a cookie is a 400, and `/refresh` and `/manage/2fa` are 404s, gone from the API document (`ServeOnlyWhatTheAppUses`). |
-| **Ownership in the query** | The repository filters by `OwnerId` in SQL rather than checking afterwards, and another user's item is a 404, never a 403. The schema deletes a user's calculations with the user (cascade), though the app has no way to delete an account yet ([the known gaps](10-data-and-storage.md#what-is-not-there-yet)). |
+| **Ownership in the query** | The repository filters by `OwnerId` in SQL rather than checking afterwards, and another user's item is a 404, never a 403. Deleting an account (`DELETE /api/v1/account`, which needs the password) deletes its calculations with it (cascade). |
 | **A real inbox** | Sign-in waits for the emailed confirmation. "Forgot password" and "resend" answer the same whether or not an account exists, so they cannot reveal who is registered. Emailed codes are single-purpose, expire, and are signed with keys kept on disk, so links and sessions survive a restart. |
 | **No open redirect** | Sign-in returns only to paths on this site (`/history`, never `//evil.example`). |
 | **Attempt limit** | 10 sign-in, sign-up, resend and reset attempts a minute from one address (`RateLimiting:AccountPermitsPerMinute`), then a 429 that says when to try again. Reads and the calculators are not limited. |

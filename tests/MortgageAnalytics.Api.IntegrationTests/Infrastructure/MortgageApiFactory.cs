@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 using MortgageAnalytics.Api.Email;
 
 namespace MortgageAnalytics.Api.IntegrationTests.Infrastructure;
@@ -29,6 +30,9 @@ public sealed class MortgageApiFactory(
     /// <summary>Every email the API has sent, in order.</summary>
     public ConcurrentQueue<EmailMessage> SentMail { get; } = new();
 
+    /// <summary>The app's clock, frozen at <see cref="TestClock.Now"/>; a test that needs time to pass advances it.</summary>
+    public FakeTimeProvider Clock { get; } = TestClock.Create();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(environment);
@@ -41,7 +45,7 @@ public sealed class MortgageApiFactory(
             builder.UseSetting(key, value);
         builder.ConfigureTestServices(services =>
         {
-            services.AddSingleton<TimeProvider>(TestClock.Create());
+            services.AddSingleton<TimeProvider>(Clock);
 
             if (captureMail)
             {
