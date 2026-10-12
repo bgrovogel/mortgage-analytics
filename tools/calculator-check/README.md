@@ -36,6 +36,7 @@ path, the expected and actual values, and the request that produced it.
 - **PMI:** both removal rules: automatic at 78% on the original schedule, or on request at 80% on the actual balance.
 - **Property taxes:** one combined rate, or school, county/city and MUD with their own exemptions (percentage
   exemptions at least $5,000), the appraisal cap, and over-65 relief with its ceiling.
+- **Tax rate changes** from given years, and an over-65 ceiling transferred from a former home as a share.
 - **Other costs:** PID, insurance and HOA, with yearly growth, each yearly bill in twelve exact installments.
 - **FHA and VA:** the upfront fee (financed or paid at closing), FHA's annual MIP by HUD's table on each year's
   average scheduled balance, and VA's funding fee by down payment and use.

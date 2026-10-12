@@ -15,6 +15,27 @@
   }
 }
 
+// A tax rate change: its year with the remove button beside the box, then a new rate for each tax charged, under a
+// rule so each change reads as one.
+.rate-change {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.rate-change-year {
+  grid-template-columns: minmax(0, 8rem) auto;
+  justify-content: space-between;
+
+  > .icon-button {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+}
+
 .lump-sums {
   display: flex;
   flex-direction: column;

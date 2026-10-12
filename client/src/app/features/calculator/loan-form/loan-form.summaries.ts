@@ -19,7 +19,7 @@ const signedPercent = (value: number) => signedPct(value, 4);
 const joined = (parts: string[]) => parts.filter(Boolean).join(' · ');
 
 /** The property-tax section: each rate (or the one combined rate), PID, and the homestead and over-65 relief. */
-export function taxesSummary(v: LoanFormValues, relief: { homestead: boolean; over65: boolean }): string {
+export function taxesSummary(v: LoanFormValues, relief: { homestead: boolean; over65: boolean; rateChanges?: number }): string {
   const single = v.taxMode === 'single';
   const taxes = joined([
     ...(single
@@ -37,6 +37,7 @@ export function taxesSummary(v: LoanFormValues, relief: { homestead: boolean; ov
     taxes,
     relief.homestead ? (single && v.propertyTaxHomesteadExemption ? `Homestead ${usd(v.propertyTaxHomesteadExemption)} off` : 'Homestead') : '',
     relief.over65 ? 'Over 65' : '',
+    relief.rateChanges ? `${relief.rateChanges} rate change${relief.rateChanges === 1 ? '' : 's'}` : '',
   ]);
 }
 

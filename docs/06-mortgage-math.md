@@ -152,10 +152,17 @@ Two ways to enter them:
    - Each exemption lowers **only its own tax**. Applying the $140,000 school exemption to the whole bill would
      understate taxes by thousands a year.
    - **Over 65 or disabled:** an extra school exemption ($60,000 in Texas) and a **school tax ceiling**: from
-     the qualifying year, school tax can fall but never rise. It is set in the year the owner qualifies, not at
-     purchase.
+     the qualifying year, school tax can fall but never rise. It is set in the year the owner qualifies (at that
+     year's rate), not at purchase.
+   - **A ceiling brought from a former home** ([Texas Tax Code §11.26(g)](https://texas.public.law/statutes/tex._tax_code_section_11.26)):
+     the new home's ceiling is its first year's school tax times the share paid at the old one (the tax under the
+     old ceiling over the tax without it). Paying 40% there, a new home owing $500 is capped at $200. A county or
+     city ceiling moves only within the same county or city, which is not modelled; nor is the yearly lowering of
+     school ceilings when the state compresses school rates (§11.26(a-10)).
 
 And for both ways:
+- **Rates can change** from a given loan year until the next change (each tax on its own): $250,000 at 2% is
+  $5,000 a year, and $3,750 from the year it drops to 1.5%.
 - **Texas rates are quoted per $100 of value**, so "$0.85 per $100" is entered as 0.85%.
 - **Appraisal cap:** a homestead's *taxable* value can rise at most 10% a year in Texas, even when the market
   rises faster. `PropertyValuation` tracks market value and taxable value separately; the gap shows on the Home

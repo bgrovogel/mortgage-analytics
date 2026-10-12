@@ -144,18 +144,26 @@ class Costs:
 
         senior = c.get('over65OrDisabled') if homestead else None
         z = D(0)
+        changes = sorted(c.get('rateChanges') or [], key=lambda ch: ch['fromYear'])
+
+        def schedule(key, first):
+            """The rate by 0-based year: `first`, then each change to `key` from its year until the next."""
+            steps = [(0, first)] + [(ch['fromYear'] - 1, D(str(ch[key]))) for ch in changes if ch.get(key) is not None]
+            return lambda year: [rate for start, rate in steps if start <= year][-1]
+        # A school ceiling brought from a former home keeps the share of tax paid there (Texas Tax Code 11.26(g)).
+        share = D(str(senior['transferredCeilingPercent'])) / 100 if senior and senior.get('transferredCeilingPercent') else D(1)
         # Each tax: rate, its exemption (amount, percent), and over-65 relief (start year, extra, ceiling).
         self.taxes = {}
         if num('propertyTaxRate') > 0:
-            self.taxes['propertyTax'] = (num('propertyTaxRate'), (num('propertyTaxHomesteadExemption') if homestead else z, z), None)
+            self.taxes['propertyTax'] = (schedule('propertyTaxRate', num('propertyTaxRate')), (num('propertyTaxHomesteadExemption') if homestead else z, z), None)
         if num('schoolTaxRate') > 0:
-            self.taxes['schoolTax'] = (num('schoolTaxRate'), (num('schoolHomesteadExemption') if homestead else z, z),
-                                       (senior['qualifiesInYear'] - 1, D(str(senior['schoolExemption'])), True) if senior else None)
+            self.taxes['schoolTax'] = (schedule('schoolTaxRate', num('schoolTaxRate')), (num('schoolHomesteadExemption') if homestead else z, z),
+                                       (senior['qualifiesInYear'] - 1, D(str(senior['schoolExemption'])), True, share) if senior else None)
         if num('localTaxRate') > 0:
-            self.taxes['localTax'] = (num('localTaxRate'), (z, num('localHomesteadExemptionPercent') if homestead else z),
-                                      (senior['qualifiesInYear'] - 1, D(str(senior['localExemption'])), senior['localTaxCeiling']) if senior else None)
+            self.taxes['localTax'] = (schedule('localTaxRate', num('localTaxRate')), (z, num('localHomesteadExemptionPercent') if homestead else z),
+                                      (senior['qualifiesInYear'] - 1, D(str(senior['localExemption'])), senior['localTaxCeiling'], D(1)) if senior else None)
         if num('mudTaxRate') > 0:
-            self.taxes['mudTax'] = (num('mudTaxRate'), (z, num('mudHomesteadExemptionPercent') if homestead else z), None)
+            self.taxes['mudTax'] = (schedule('mudTaxRate', num('mudTaxRate')), (z, num('mudHomesteadExemptionPercent') if homestead else z), None)
 
         pid = c.get('pid')
         self.pid = (D(str(pid['annualAssessment'])), pid.get('remainingYears')) if pid and pid['annualAssessment'] > 0 else None
@@ -175,11 +183,13 @@ class Costs:
 
     def tax(self, category, year):
         rate, (amount, percent), senior = self.taxes[category]
-        bill = lambda y, extra: money(taxable(self.assessed[y], amount + extra, percent) * rate / 100)  # noqa: E731
+        # Each year's bill at that year's rate; a ceiling is the qualifying year's bill at its own rate (times the share
+        # of a transferred ceiling).
+        bill = lambda y, extra: money(taxable(self.assessed[y], amount + extra, percent) * rate(y) / 100)  # noqa: E731
         if not senior or year < senior[0]:
             return bill(year, D(0))
-        start, extra, ceiling = senior
-        return min(bill(year, extra), bill(start, extra)) if ceiling else bill(year, extra)
+        start, extra, ceiling, share = senior
+        return min(bill(year, extra), money(bill(start, extra) * share)) if ceiling else bill(year, extra)
 
     def for_payment(self, p, opening, scheduled_opening):
         """Each category's charge with payment `p`, given the actual and the original schedule's opening balance."""

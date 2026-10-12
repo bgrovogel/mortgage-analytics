@@ -126,6 +126,20 @@ def random_purchase(rng):
             request['downPayment'] = minimum if rng.random() < 0.5 else max(request['downPayment'], minimum)
         elif rng.random() < 0.4:
             request['downPayment'] = 0
+    # Tax rates that change: a few later years, each changing one or more of the taxes charged.
+    costs = request['housingCosts']
+    charged = [k for k in ('propertyTaxRate', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate') if costs[k]]
+    if charged and rng.random() < 0.4:
+        years = sorted(rng.sample(range(2, term // 12 + 1), rng.randint(1, 3)))
+        costs['rateChanges'] = [dict({'fromYear': y}, **{k: float(D(costs[k]) * D(rng.randrange(80, 121)) / 100)
+                                                          for k in rng.sample(charged, rng.randint(1, len(charged)))})
+                                for y in years]
+        for change in costs['rateChanges']:
+            for k in charged:
+                if k in change:
+                    change[k] = float(D(str(change[k])).quantize(D('0.0001')))
+    if costs['over65OrDisabled'] and rng.random() < 0.4:
+        costs['over65OrDisabled']['transferredCeilingPercent'] = rng.choice([25, 40, 62.5, 100])
     if rng.random() < 0.3:
         request['strategy'] = 'Recast'
         request['recast'] = {'minimumLumpSum': money(rng, 5_000, 20_000, 500), 'fee': money(rng, 0, 500, 50)}

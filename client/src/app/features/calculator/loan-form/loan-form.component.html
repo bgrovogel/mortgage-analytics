@@ -245,12 +245,43 @@
             <input type="checkbox" formControlName="over65LocalCeiling" data-testid="over-65-local-ceiling" />
             <span>County/city has also adopted a tax ceiling</span>
           </label>
+          <app-number-field [control]="form.controls.transferredCeilingPercent" [rule]="rules.transferredCeilingPercent" testId="transferred-ceiling"
+                            label="Moved with a ceiling? Share of school tax paid there" placeholder="Not moving" />
+          <p class="hint">
+            Texas lets the school tax ceiling move with you: the new home's ceiling is the same share of its school tax as
+            you paid at the old one (its ceiling over the tax without it). Leave blank for a ceiling set at this home.
+          </p>
           <p class="hint">
             From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise.
             Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies.
           </p>
         }
       }
+
+      <div formArrayName="rateChanges" class="lump-sums" data-testid="rate-changes">
+        @for (change of rateChanges.controls; track change; let i = $index) {
+          <div class="rate-change" [formGroupName]="i" data-testid="rate-change">
+            <div class="row rate-change-year">
+              <app-number-field [control]="change.controls.fromYear" [rule]="rateChangeRules.fromYear" testId="rate-change-year" label="From year" />
+              <button type="button" class="icon-button" (click)="removeRateChange(i)" [attr.aria-label]="'Remove rate change ' + (i + 1)">✕</button>
+            </div>
+            <div class="row" [class.three]="chargedTaxes().length > 1">
+            @for (tax of chargedTaxes(); track tax) {
+              @switch (tax) {
+                @case ('propertyTaxRate') { <app-number-field [control]="change.controls.propertyTaxRate" [rule]="rateChangeRules.propertyTaxRate" testId="rate-change-property" label="New rate" placeholder="Same" /> }
+                @case ('schoolTaxRate') { <app-number-field [control]="change.controls.schoolTaxRate" [rule]="rateChangeRules.schoolTaxRate" testId="rate-change-school" label="School" placeholder="Same" /> }
+                @case ('localTaxRate') { <app-number-field [control]="change.controls.localTaxRate" [rule]="rateChangeRules.localTaxRate" testId="rate-change-local" label="County/city" placeholder="Same" /> }
+                @case ('mudTaxRate') { <app-number-field [control]="change.controls.mudTaxRate" [rule]="rateChangeRules.mudTaxRate" testId="rate-change-mud" label="MUD" placeholder="Same" /> }
+              }
+            }
+            </div>
+          </div>
+        }
+        @if (chargedTaxes().length > 0) {
+          <button type="button" class="link-button" (click)="addRateChange()" data-testid="add-rate-change">+ Add a tax rate change</button>
+          <p class="hint">Each taxing unit adopts a rate every year. A change applies from its year until the next; a blank rate stays as it was.</p>
+        }
+      </div>
     </div>
   </details>
 

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,560 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,590 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -13,13 +13,13 @@
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 500 | NUnit | < 1 s |
-| Application | 246 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 511 | NUnit | < 1 s |
+| Application | 259 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
 | API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 576 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 97 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 581 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 98 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -115,6 +115,7 @@ Take the ARM margin floor as an example of the order of work:
   the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
 - FHA and VA: the payment on the loan with its upfront fee, the MIP named as such, and the VA's funding fee.
+- A tax rate change: the quick numbers before and after its year.
 - Discount points: both payments, the break-even payment and date, and the line in the cash to close.
 - The equity chart: the down payment at the start, and the year the loan is paid off.
 - Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History,

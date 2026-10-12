@@ -191,6 +191,41 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
         }
     }
 
+    /// <summary>The most tax rate changes one request may contain: one a year over a long loan.</summary>
+    public const int MaxRateChanges = 50;
+
+    /// <summary>One tax rate change: a later year within the loan, changing at least one rate, each for a tax that is charged.</summary>
+    private sealed class TaxRateChangeValidator : AbstractValidator<TaxRateChangeRequest>
+    {
+        public TaxRateChangeValidator(HousingCostsRequest costs, int loanYears)
+        {
+            RuleFor(c => c.FromYear)
+                .InclusiveBetween(2, loanYears)
+                .WithMessage($"'Rate change year' must be a later year of the loan: between 2 and {loanYears}.")
+                .WithName("Rate change year");
+            RuleFor(c => c)
+                .Must(c => c.PropertyTaxRate is not null || c.SchoolTaxRate is not null || c.LocalTaxRate is not null || c.MudTaxRate is not null)
+                .WithMessage("A rate change must change at least one rate.")
+                .OverridePropertyName(string.Empty);
+
+            Rate(c => c.PropertyTaxRate, costs.PropertyTaxRate, 15, "Property tax rate");
+            Rate(c => c.SchoolTaxRate, costs.SchoolTaxRate, 10, "School tax rate");
+            Rate(c => c.LocalTaxRate, costs.LocalTaxRate, 10, "County/city tax rate");
+            Rate(c => c.MudTaxRate, costs.MudTaxRate, 5, "MUD tax rate");
+        }
+
+        /// <summary>A new rate: within the tax's own limits, and only for a tax that is charged (its first rate above 0).</summary>
+        private void Rate(System.Linq.Expressions.Expression<Func<TaxRateChangeRequest, decimal?>> rate, decimal firstRate, decimal max, string name)
+        {
+            RuleFor(rate)
+                .Must(value => value is null || (value >= 0 && value <= max && decimal.Round(value.Value, 4) == value))
+                .WithMessage($"'{name}' must be between 0 and {max}, with at most 4 decimal places.");
+            RuleFor(rate)
+                .Null().WithMessage($"'{name}' can only change for a tax that is charged; it is not.")
+                .When(_ => firstRate == 0);
+        }
+    }
+
     private sealed class HousingCostsValidator : AbstractValidator<HousingCostsRequest>
     {
         public HousingCostsValidator(int termInMonths)
@@ -238,6 +273,18 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 .InclusiveBetween(0, 10_000_000).WholeCents()
                 .OverridePropertyName("Over65OrDisabled.LocalExemption").WithName("Over-65 county/city exemption")
                 .When(h => h.Over65OrDisabled is not null);
+
+            RuleFor(h => h.Over65OrDisabled!.TransferredCeilingPercent)
+                .GreaterThan(0).LessThanOrEqualTo(100)
+                .OverridePropertyName("Over65OrDisabled.TransferredCeilingPercent").WithName("Share of school tax paid before")
+                .When(h => h.Over65OrDisabled?.TransferredCeilingPercent is not null);
+
+            RuleFor(h => h.RateChanges).Must(changes => changes.Count <= MaxRateChanges)
+                .WithMessage($"At most {MaxRateChanges} tax rate changes.");
+            RuleFor(h => h.RateChanges)
+                .Must(changes => changes.Select(c => c.FromYear).Distinct().Count() == changes.Count)
+                .WithMessage("Each year can have one tax rate change; put the rates that change that year together.");
+            RuleForEach(h => h.RateChanges).SetValidator(h => new TaxRateChangeValidator(h, loanYears));
 
             RuleFor(h => h.Pid!.AnnualAssessment)
                 .InclusiveBetween(0, 1_000_000).WholeCents()

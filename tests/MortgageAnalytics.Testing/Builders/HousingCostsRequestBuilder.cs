@@ -35,7 +35,8 @@ public sealed class HousingCostsRequestBuilder
 
     /// <summary>Adds over-65 / disabled relief, with Texas defaults unless overridden.</summary>
     public HousingCostsRequestBuilder WithOver65(
-        int qualifiesInYear = 1, decimal schoolExemption = 60_000m, decimal localExemption = 0m, bool localTaxCeiling = false) =>
+        int qualifiesInYear = 1, decimal schoolExemption = 60_000m, decimal localExemption = 0m, bool localTaxCeiling = false,
+        decimal? transferredCeilingPercent = null) =>
         With(c => c with
         {
             Over65OrDisabled = new Over65OrDisabledRequest
@@ -44,6 +45,7 @@ public sealed class HousingCostsRequestBuilder
                 SchoolExemption = schoolExemption,
                 LocalExemption = localExemption,
                 LocalTaxCeiling = localTaxCeiling,
+                TransferredCeilingPercent = transferredCeilingPercent,
             },
         });
 
@@ -72,6 +74,17 @@ public sealed class HousingCostsRequestBuilder
         _costs = change(_costs);
         return this;
     }
+
+    /// <summary>Adds a change to the tax rates from loan year <paramref name="fromYear"/> (1-based), naming only the rates that change.</summary>
+    public HousingCostsRequestBuilder WithRateChange(
+        int fromYear, decimal? propertyTaxRate = null, decimal? schoolTaxRate = null, decimal? localTaxRate = null, decimal? mudTaxRate = null) =>
+        With(c => c with
+        {
+            RateChanges = [.. c.RateChanges, new TaxRateChangeRequest
+            {
+                FromYear = fromYear, PropertyTaxRate = propertyTaxRate, SchoolTaxRate = schoolTaxRate, LocalTaxRate = localTaxRate, MudTaxRate = mudTaxRate,
+            }],
+        });
 
     /// <summary>Builds the request section.</summary>
     public HousingCostsRequest Build() => _costs;

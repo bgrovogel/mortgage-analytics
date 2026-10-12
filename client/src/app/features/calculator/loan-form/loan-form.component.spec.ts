@@ -285,6 +285,7 @@ describe('LoanFormComponent', () => {
         schoolExemption: 60_000,
         localExemption: 0,
         localTaxCeiling: false,
+        transferredCeilingPercent: null,
       });
 
       controls().isHomestead.setValue(false);
@@ -313,7 +314,7 @@ describe('LoanFormComponent', () => {
       expect(request.firstPaymentDate).toBeNull();
       expect(request.extraPayments?.monthlyAmount).toBe(0);
       expect(request.housingCosts).toMatchObject({ schoolTaxRate: 0, localTaxRate: 0, pmiRate: 0, monthlyHoaDues: 0 });
-      expect(request.housingCosts?.over65OrDisabled).toEqual({ qualifiesInYear: 1, schoolExemption: 0, localExemption: 0, localTaxCeiling: false });
+      expect(request.housingCosts?.over65OrDisabled).toEqual({ qualifiesInYear: 1, schoolExemption: 0, localExemption: 0, localTaxCeiling: false, transferredCeilingPercent: null });
       expect(request.closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 0, escrowMonths: 0, credits: 0 });
     });
   });
@@ -661,6 +662,72 @@ describe('LoanFormComponent', () => {
 
       expect(sent[sent.length - 1]).toEqual(saved);
       expect(restored.componentInstance.form.controls.rate.controls.rateType.value).toBe('arm');
+    });
+  });
+
+  describe('tax rate changes', () => {
+    it('are added one at a time, and sent once they change a rate', () => {
+      component.addRateChange();
+      fixture.detectChanges();
+      expect(last().housingCosts?.rateChanges).toEqual([]); // a blank change changes nothing, so it is not sent
+
+      component.rateChanges.at(0).controls.propertyTaxRate.setValue(2.4);
+      fixture.detectChanges();
+
+      expect(last().housingCosts?.rateChanges).toEqual([{ fromYear: 2, propertyTaxRate: 2.4, schoolTaxRate: null, localTaxRate: null, mudTaxRate: null }]);
+      expect(text('taxes-summary')).toBe('Tax 2.2% · Homestead $50,000 off · 1 rate change');
+    });
+
+    it('offer a field for each tax that is charged, and send only those', () => {
+      controls().taxMode.setValue('separate');
+      controls().mudTaxRate.setValue(0);
+      component.addRateChange();
+      fixture.detectChanges();
+      const row = component.rateChanges.at(0).controls;
+
+      row.fromYear.setValue(4);
+      row.schoolTaxRate.setValue(0.9);
+      row.mudTaxRate.setValue(0.5); // no MUD tax is charged, so this is not sent
+      fixture.detectChanges();
+
+      expect(el('rate-change-school')).not.toBeNull();
+      expect(el('rate-change-mud')).toBeNull();
+      expect(el('rate-change-property')).toBeNull();
+      expect(last().housingCosts?.rateChanges).toEqual([{ fromYear: 4, propertyTaxRate: null, schoolTaxRate: 0.9, localTaxRate: null, mudTaxRate: null }]);
+    });
+
+    it('can be removed', () => {
+      component.addRateChange();
+      component.rateChanges.at(0).controls.propertyTaxRate.setValue(2.4);
+
+      component.removeRateChange(0);
+
+      expect(last().housingCosts?.rateChanges).toEqual([]);
+    });
+
+    it('send a ceiling brought from a former home with the over-65 relief', () => {
+      controls().taxMode.setValue('separate');
+      controls().isOver65.setValue(true);
+      fixture.detectChanges();
+
+      controls().transferredCeilingPercent.setValue(40);
+
+      expect(last().housingCosts?.over65OrDisabled?.transferredCeilingPercent).toBe(40);
+    });
+
+    it('come back as they were saved', () => {
+      component.addRateChange();
+      component.rateChanges.at(0).controls.fromYear.setValue(6);
+      component.rateChanges.at(0).controls.propertyTaxRate.setValue(2.4);
+      const original = last();
+
+      const restored = TestBed.createComponent(LoanFormComponent);
+      const sent: AmortizationRequest[] = [];
+      restored.componentInstance.calculate.subscribe((r) => sent.push(r));
+      restored.componentRef.setInput('initial', original);
+      restored.detectChanges();
+
+      expect(sent[0].housingCosts?.rateChanges).toEqual(original.housingCosts?.rateChanges);
     });
   });
 

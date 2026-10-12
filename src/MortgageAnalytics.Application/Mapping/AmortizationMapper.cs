@@ -117,27 +117,34 @@ internal static class AmortizationMapper
         var mudExemption = costs.IsHomestead ? new TaxExemption(percent: costs.MudHomesteadExemptionPercent) : TaxExemption.None;
         var senior = costs.IsHomestead ? costs.Over65OrDisabled : null;
 
-        // By law the school ceiling always applies to qualifying owners; the county/city ceiling is a local option.
-        var schoolRelief = senior is null ? null : new SeniorTaxRelief(senior.QualifiesInYear - 1, senior.SchoolExemption, hasTaxCeiling: true);
+        // By law the school ceiling always applies to qualifying owners, and can be brought from a former home (as a
+        // share of the tax); the county/city ceiling is a local option.
+        var schoolRelief = senior is null
+            ? null
+            : new SeniorTaxRelief(senior.QualifiesInYear - 1, senior.SchoolExemption, hasTaxCeiling: true, senior.TransferredCeilingPercent / 100m);
         var localRelief = senior is null ? null : new SeniorTaxRelief(senior.QualifiesInYear - 1, senior.LocalExemption, senior.LocalTaxCeiling);
 
         var items = new List<IHousingCost>();
+
+        // Each tax's new rates, by the 0-based year they start in.
+        Dictionary<int, decimal> ChangesTo(Func<TaxRateChangeRequest, decimal?> rate) =>
+            costs.RateChanges.Where(c => rate(c) is not null).ToDictionary(c => c.FromYear - 1, c => rate(c)!.Value);
 
         // One combined rate, when that is what is known: the homestead exemption comes off the value it is charged on.
         if (costs.PropertyTaxRate > 0)
         {
             var exemption = costs.IsHomestead ? new TaxExemption(amount: costs.PropertyTaxHomesteadExemption) : TaxExemption.None;
-            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, exemption));
+            items.Add(new ValueBasedTax(HousingCostCategory.PropertyTax, valuation, costs.PropertyTaxRate, exemption, rateChanges: ChangesTo(c => c.PropertyTaxRate)));
         }
 
         if (costs.SchoolTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption, schoolRelief));
+            items.Add(new ValueBasedTax(HousingCostCategory.SchoolTax, valuation, costs.SchoolTaxRate, schoolExemption, schoolRelief, ChangesTo(c => c.SchoolTaxRate)));
 
         if (costs.LocalTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.LocalTax, valuation, costs.LocalTaxRate, localExemption, localRelief));
+            items.Add(new ValueBasedTax(HousingCostCategory.LocalTax, valuation, costs.LocalTaxRate, localExemption, localRelief, ChangesTo(c => c.LocalTaxRate)));
 
         if (costs.MudTaxRate > 0)
-            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate, mudExemption));
+            items.Add(new ValueBasedTax(HousingCostCategory.MudTax, valuation, costs.MudTaxRate, mudExemption, rateChanges: ChangesTo(c => c.MudTaxRate)));
 
         if (costs.Pid is { AnnualAssessment: > 0 } pid)
             items.Add(new AnnualFixedCost(HousingCostCategory.PidAssessment, pid.AnnualAssessment, pid.RemainingYears));

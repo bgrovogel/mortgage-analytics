@@ -54,6 +54,58 @@ public class SeniorTaxReliefTests
     }
 
     [Test]
+    public void Ceiling_IsTheQualifyingYearsBill_AtThatYearsRate()
+    {
+        // $100,000 taxable after $200,000 of exemptions. The rate is 1.2% when the owner qualifies (year 3), then 1.5%,
+        // then 0.5%: the bill is capped at $1,200 while the rate is higher, and falls with it when it is lower.
+        var tax = new ValueBasedTax(
+            HousingCostCategory.SchoolTax, Flat(300_000m), 1m, TexasSchoolHomestead, new SeniorTaxRelief(2, 60_000m, hasTaxCeiling: true),
+            new Dictionary<int, decimal> { [2] = 1.2m, [4] = 1.5m, [6] = 0.5m });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tax.AnnualAmountInYear(2), Is.EqualTo(1_200m), "the qualifying year's bill, at its own 1.2%");
+            Assert.That(tax.AnnualAmountInYear(4), Is.EqualTo(1_200m), "a higher rate later cannot raise it above the ceiling");
+            Assert.That(tax.AnnualAmountInYear(6), Is.EqualTo(500m), "a lower rate brings it below");
+        });
+    }
+
+    [Test]
+    public void ATransferredCeiling_KeepsTheShareOfTaxPaidAtTheFormerHome()
+    {
+        // Paying 25% of the school tax at the former home: the new home's ceiling is 25% of its first year's bill.
+        var tax = SchoolTax(new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true, transferredCeilingFraction: 0.25m), growthPercent: 10m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tax.AnnualAmountInYear(0), Is.EqualTo(250m), "25% of the $1,000 the new home would owe");
+            Assert.That(tax.AnnualAmountInYear(10), Is.EqualTo(250m), "and frozen there as values rise");
+        });
+    }
+
+    [TestCase(0, TestName = "A transferred share of nothing")]
+    [TestCase(1.01, TestName = "A transferred share above the whole tax")]
+    public void RejectsATransferredShareOutsideZeroToOne(decimal fraction)
+    {
+        DomainAssert.Rejects(() => new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true, transferredCeilingFraction: fraction), "share",
+            "the share of tax paid under a ceiling is more than none and at most all of it");
+    }
+
+    [Test]
+    public void AcceptsATransferredShareOfTheWholeTax()
+    {
+        DomainAssert.Accepts(() => new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: true, transferredCeilingFraction: 1m),
+            "an owner whose old ceiling had not yet held the tax down paid all of it");
+    }
+
+    [Test]
+    public void RejectsATransferredShareWithoutACeiling()
+    {
+        DomainAssert.Rejects(() => new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: false, transferredCeilingFraction: 0.5m), "ceiling",
+            "only a ceiling can be transferred");
+    }
+
+    [Test]
     public void WithoutACeiling_TheTaxStillRisesWithValue()
     {
         var tax = SchoolTax(new SeniorTaxRelief(0, 60_000m, hasTaxCeiling: false), growthPercent: 10m);

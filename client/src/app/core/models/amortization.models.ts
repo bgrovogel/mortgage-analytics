@@ -42,6 +42,17 @@ export interface Over65OrDisabled {
   schoolExemption: number;
   localExemption: number;
   localTaxCeiling: boolean;
+  /** A school tax ceiling brought from a former home: the share of school tax paid there, as a percentage. */
+  transferredCeilingPercent?: number | null;
+}
+
+/** Tax rates that change from a loan year (1-based, from 2) on; a rate left null keeps its value. */
+export interface TaxRateChange {
+  fromYear: number;
+  propertyTaxRate: number | null;
+  schoolTaxRate: number | null;
+  localTaxRate: number | null;
+  mudTaxRate: number | null;
 }
 
 export interface HousingCostsInput {
@@ -66,6 +77,8 @@ export interface HousingCostsInput {
   monthlyHoaDues: number;
   pmiRate: number;
   pmiCancellation: MortgageInsuranceCancellation;
+  /** New tax rates from given loan years; each lasts until a later change. Only for taxes that are charged. */
+  rateChanges?: TaxRateChange[];
 }
 
 /** A temporary buydown: how many points below the note rate each year is paid at, year 1 first ([2, 1] is a 2-1). */

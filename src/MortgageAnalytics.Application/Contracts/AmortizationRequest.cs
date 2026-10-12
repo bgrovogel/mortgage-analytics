@@ -348,6 +348,33 @@ public sealed record HousingCostsRequest
     /// <summary>Whether PMI comes off automatically at 78% loan-to-value or on request at 80%.</summary>
     /// <example>Automatic</example>
     public PmiCancellation PmiCancellation { get; init; } = PmiCancellation.Automatic;
+
+    /// <summary>
+    /// New tax rates from given loan years, as taxing units adopt them: each change sets the rates it names from its
+    /// year until a later change. Only for taxes that are charged. Omit for rates that never change.
+    /// </summary>
+    public IReadOnlyList<TaxRateChangeRequest> RateChanges { get; init; } = [];
+}
+
+/// <summary>Tax rates that change from a loan year on. A rate left out keeps its value.</summary>
+public sealed record TaxRateChangeRequest
+{
+    /// <summary>The loan year (1-based, from 2) the new rates start in.</summary>
+    /// <example>3</example>
+    public int FromYear { get; init; }
+
+    /// <summary>The new combined property tax rate, with one rate.</summary>
+    /// <example>2.1</example>
+    public decimal? PropertyTaxRate { get; init; }
+
+    /// <summary>The new school tax rate, with separate taxes.</summary>
+    public decimal? SchoolTaxRate { get; init; }
+
+    /// <summary>The new county/city tax rate, with separate taxes.</summary>
+    public decimal? LocalTaxRate { get; init; }
+
+    /// <summary>The new MUD tax rate, with separate taxes.</summary>
+    public decimal? MudTaxRate { get; init; }
 }
 
 /// <summary>Homestead relief for an owner who is 65 or older, or disabled.</summary>
@@ -373,6 +400,14 @@ public sealed record Over65OrDisabledRequest
     /// <summary>True if the county/city has adopted a tax ceiling for these owners. The school ceiling always applies.</summary>
     /// <example>false</example>
     public bool LocalTaxCeiling { get; init; }
+
+    /// <summary>
+    /// For an owner who brings a school tax ceiling from a former Texas home (Tax Code §11.26(g)): the share of school
+    /// tax paid there under its ceiling, as a percentage of the tax without it. The new home's ceiling is that share of
+    /// its own first-year school tax. Omit when the ceiling is set at this home.
+    /// </summary>
+    /// <example>40</example>
+    public decimal? TransferredCeilingPercent { get; init; }
 }
 
 /// <summary>How PMI comes off the loan, under the Homeowners Protection Act.</summary>

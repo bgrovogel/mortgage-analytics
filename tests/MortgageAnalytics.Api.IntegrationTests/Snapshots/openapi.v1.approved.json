@@ -1253,6 +1253,13 @@
           },
           "pmiCancellation": {
             "$ref": "#/components/schemas/PmiCancellation"
+          },
+          "rateChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRateChangeRequest"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1585,6 +1592,11 @@
           },
           "localTaxCeiling": {
             "type": "boolean"
+          },
+          "transferredCeilingPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2508,6 +2520,36 @@
           "HeadOfHousehold"
         ],
         "type": "string"
+      },
+      "TaxRateChangeRequest": {
+        "type": "object",
+        "properties": {
+          "fromYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "propertyTaxRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "schoolTaxRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "localTaxRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mudTaxRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "TemporaryBuydownRequest": {
         "type": "object",

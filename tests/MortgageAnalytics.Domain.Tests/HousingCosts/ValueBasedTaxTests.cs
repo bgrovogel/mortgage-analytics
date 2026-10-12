@@ -23,6 +23,43 @@ public class ValueBasedTaxTests
     }
 
     [Test]
+    public void ARateChange_AppliesFromItsYear_UntilTheNext()
+    {
+        // $250,000 at 2.2%, cut to 2% from year 3 and raised to 2.1% from year 6 (0-based years 2 and 5).
+        var tax = new ValueBasedTax(HousingCostCategory.LocalTax, Flat(250_000m), 2.2m,
+            rateChanges: new Dictionary<int, decimal> { [5] = 2.1m, [2] = 2m });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(5_500m), "the first rate until the first change");
+            Assert.That(tax.AnnualAmountInYear(2), Is.EqualTo(5_000m), "the new rate from its year");
+            Assert.That(tax.AnnualAmountInYear(4), Is.EqualTo(5_000m), "and until the next change");
+            Assert.That(tax.AnnualAmountInYear(5), Is.EqualTo(5_250m), "then that one");
+            Assert.That(tax.AnnualAmountInYear(29), Is.EqualTo(5_250m), "for the rest of the loan");
+            Assert.That(tax.RateInYear(3), Is.EqualTo(2m), "and the rate in force is reported");
+            Assert.That(tax.AmountFor(Period(25)), Is.EqualTo(416.67m), "the installments follow: year 3 is $5,000 ÷ 12");
+        });
+    }
+
+    [Test]
+    public void AcceptsARateChangeInTheSecondYear()
+    {
+        var tax = new ValueBasedTax(HousingCostCategory.LocalTax, Flat(250_000m), 2.2m, rateChanges: new Dictionary<int, decimal> { [1] = 2m });
+
+        Assert.That(tax.AnnualAmountInYear(1), Is.EqualTo(5_000m), "the earliest a change can start is the second year");
+    }
+
+    [TestCase(-1, 2, "year", TestName = "A rate change before the loan")]
+    [TestCase(0, 2, "year", TestName = "A rate change in the first year, which is the rate itself")]
+    [TestCase(3, -0.01, "rate", TestName = "A negative rate change")]
+    public void RejectsARateChangeThatCannotBe(int year, decimal rate, string guard)
+    {
+        DomainAssert.Rejects(
+            () => new ValueBasedTax(HousingCostCategory.LocalTax, Flat(250_000m), 2.2m, rateChanges: new Dictionary<int, decimal> { [year] = rate }),
+            guard, "a change starts in a later year, at a rate of zero or more");
+    }
+
+    [Test]
     public void TwelveInstallmentsAddUpToTheAnnualBillExactly()
     {
         // $5,000 / 12 = $416.666...: eleven installments of $416.67 and a twelfth of $416.63.

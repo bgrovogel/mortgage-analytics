@@ -343,6 +343,43 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             "'Months of escrow' must be between 0 and 14. You entered 15.", "the message names the field as the form does");
     }
 
+    // ---------------------------------------------------------------------------------------
+    // Tax rate changes and a transferred ceiling.
+    // ---------------------------------------------------------------------------------------
+
+    private static IEnumerable<TestCaseData> InvalidRateChanges()
+    {
+        TestCaseData Case(string name, string path, Func<HousingCostsRequestBuilder, HousingCostsRequestBuilder> costs) =>
+            new TestCaseData(A.Request.WithHousingCosts(costs).Build(), $"HousingCosts.{path}").SetName(name);
+
+        yield return Case("RateChange_InTheFirstYear", "RateChanges[0].FromYear", c => c.WithPropertyTax(2m).WithRateChange(1, propertyTaxRate: 1.5m));
+        yield return Case("RateChange_AfterTheLoan", "RateChanges[0].FromYear", c => c.WithPropertyTax(2m).WithRateChange(31, propertyTaxRate: 1.5m));
+        yield return Case("RateChange_TwiceInOneYear", "RateChanges", c => c.WithPropertyTax(2m).WithRateChange(3, propertyTaxRate: 1.5m).WithRateChange(3, propertyTaxRate: 1.6m));
+        yield return Case("RateChange_ChangingNothing", "RateChanges[0]", c => c.WithPropertyTax(2m).WithRateChange(3));
+        yield return Case("RateChange_ForATaxNotCharged", "RateChanges[0].MudTaxRate", c => c.WithSchoolTax(1m).WithRateChange(3, mudTaxRate: 0.5m));
+        yield return Case("RateChange_ForTheSeparateTaxes_WithOneRate", "RateChanges[0].SchoolTaxRate", c => c.WithPropertyTax(2m).WithRateChange(3, schoolTaxRate: 1m));
+        yield return Case("RateChange_TooHigh", "RateChanges[0].PropertyTaxRate", c => c.WithPropertyTax(2m).WithRateChange(3, propertyTaxRate: 15.01m));
+        yield return Case("TransferredCeiling_OfNothing", "Over65OrDisabled.TransferredCeilingPercent",
+            c => c.WithSchoolTax(1m).AsHomestead().WithOver65(transferredCeilingPercent: 0m));
+        yield return Case("TransferredCeiling_AboveTheWholeTax", "Over65OrDisabled.TransferredCeilingPercent",
+            c => c.WithSchoolTax(1m).AsHomestead().WithOver65(transferredCeilingPercent: 100.01m));
+    }
+
+    [TestCaseSource(nameof(InvalidRateChanges))]
+    public void RateChangesAndTransfers_ThatCannotBe_AreRejected(AmortizationRequest request, string path)
+    {
+        AssertInvalid(request, path, "each change is a later year within the loan, for a tax that is charged, within its limits");
+    }
+
+    [Test]
+    public void RateChangesAndATransferredCeiling_CanBeSent()
+    {
+        AssertValid(A.Request.WithHousingCosts(c => c.WithSchoolTax(1m).WithLocalTax(1.1m).AsHomestead()
+                .WithOver65(transferredCeilingPercent: 40m)
+                .WithRateChange(3, schoolTaxRate: 0.9m).WithRateChange(6, schoolTaxRate: 0.85m, localTaxRate: 1.2m)),
+            "a few years of new rates, and a ceiling brought from a former home");
+    }
+
     [TestCase(180, 16, false, TestName = "Year 16 of a 15-year loan is rejected")]
     [TestCase(180, 15, true, TestName = "Year 15 of a 15-year loan is accepted")]
     [TestCase(185, 16, true, TestName = "A 15-year-5-month loan has a 16th year")]

@@ -386,6 +386,27 @@ test.describe('Mortgage calculator', () => {
       .toContainText(/^Your equity grows from \$50,000 \(the down payment\) to \$[\d,]+ by year 30\. The loan is paid off by year 22,/);
   });
 
+  test('a tax rate change applies from its year: the quick numbers show the new tax', async ({ calculator, page }) => {
+    // $250,000, not a homestead, no growth: 2% is $5,000 a year, cut to 1.5% ($3,750) from year 3.
+    await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.clearHousingCosts();
+    await calculator.set('property-tax-rate', 2);
+    await calculator.setChecked('is-homestead', false);
+    await calculator.set('home-value-growth', 0);
+    await page.getByTestId('add-rate-change').click();
+    await calculator.set('rate-change-year', 3);
+    await calculator.set('rate-change-property', 1.5);
+    await calculator.calculate();
+    await expect(calculator.sectionSummary('taxes-summary'), 'the section counts it').toHaveText('Tax 2% · 1 rate change');
+
+    await calculator.showResults('projection');
+    const propertyTax = page.getByTestId('cost-totals').locator('tbody tr').filter({ hasText: 'Property tax' }).locator('td').first();
+    await page.getByTestId('cost-totals-year').selectOption('2');
+    await expect(propertyTax, 'year 2 at 2%').toHaveText('$5,000');
+    await page.getByTestId('cost-totals-year').selectOption('3');
+    await expect(propertyTax, 'year 3 at the new 1.5%').toHaveText('$3,750');
+  });
+
   test('gives the quick numbers for any year, from the same figures as the chart', async ({ calculator, page }) => {
     // A fresh calculation, so the test has the very response the page shows.
     const answer = page.waitForResponse((r) => r.url().includes('/api/v1/amortization/calculate') && r.ok());

@@ -9,6 +9,9 @@ namespace MortgageAnalytics.Domain.HousingCosts;
 /// and a ceiling that freezes the school tax at the amount owed in the first year the owner qualifies.
 /// The tax can still fall below the ceiling, for example when values drop, but it can never rise above it.
 /// Counties and cities may choose to offer their own extra exemption and ceiling.
+/// <para>An owner who moves keeps the share of school tax they paid under the old ceiling (Texas Tax Code §11.26(g)):
+/// the new home's ceiling is its first year's school tax times the old home's tax over what it would have been without
+/// the ceiling.</para>
 /// </remarks>
 public sealed record SeniorTaxRelief
 {
@@ -16,17 +19,29 @@ public sealed record SeniorTaxRelief
     /// <param name="startsInYear">The first loan year (0-based) the owner qualifies. 0 means they qualify at purchase.</param>
     /// <param name="additionalExemption">Dollars of value exempted on top of the regular homestead exemption.</param>
     /// <param name="hasTaxCeiling">True to freeze the tax at the qualifying year's amount.</param>
-    /// <exception cref="DomainValidationException">The start year or the exemption is negative.</exception>
-    public SeniorTaxRelief(int startsInYear, decimal additionalExemption, bool hasTaxCeiling)
+    /// <param name="transferredCeilingFraction">
+    /// For a ceiling brought from a former home: the share of school tax paid there (its tax over the tax without the
+    /// ceiling), more than 0 and at most 1. Null for a ceiling set here.
+    /// </param>
+    /// <exception cref="DomainValidationException">The start year or the exemption is negative, or the transferred share is not usable.</exception>
+    public SeniorTaxRelief(int startsInYear, decimal additionalExemption, bool hasTaxCeiling, decimal? transferredCeilingFraction = null)
     {
         if (startsInYear < 0)
             throw new DomainValidationException("The qualifying year cannot be negative.");
         if (additionalExemption < 0)
             throw new DomainValidationException("An additional exemption cannot be negative.");
+        if (transferredCeilingFraction is { } share)
+        {
+            if (!hasTaxCeiling)
+                throw new DomainValidationException("Only a tax ceiling can be transferred.");
+            if (share is <= 0 or > 1)
+                throw new DomainValidationException("The share of tax paid under a transferred ceiling must be more than 0 and at most 1.");
+        }
 
         StartsInYear = startsInYear;
         AdditionalExemption = additionalExemption;
         HasTaxCeiling = hasTaxCeiling;
+        CeilingShare = transferredCeilingFraction ?? 1m;
     }
 
     /// <summary>The first loan year (0-based) the owner qualifies.</summary>
@@ -37,6 +52,9 @@ public sealed record SeniorTaxRelief
 
     /// <summary>True when the tax is frozen at the qualifying year's amount.</summary>
     public bool HasTaxCeiling { get; }
+
+    /// <summary>The share of the qualifying year's tax the ceiling is set at: 1, or less for a ceiling transferred from a former home.</summary>
+    public decimal CeilingShare { get; }
 
     /// <summary>Returns true when the relief applies in loan year <paramref name="year"/> (0-based).</summary>
     public bool AppliesIn(int year) => year >= StartsInYear;

@@ -13,11 +13,11 @@ import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
-import { LOAN_RULES, LUMP_SUM_RULES, wholeYearsOf } from './loan-fields';
+import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
-  FHA_DOWN_TOO_LOW, LumpSumForm, belowFhaMinimum, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+  FHA_DOWN_TOO_LOW, LumpSumForm, RateChangeForm, belowFhaMinimum, chargedTaxes, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
@@ -36,7 +36,8 @@ const CHECK_SECTION = 'Check the values in this section';
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
   taxes: ['propertyTaxRate', 'propertyTaxHomesteadExemption', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'pidAnnual', 'pidYears', 'schoolHomesteadExemption',
-    'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption'],
+    'localHomesteadExemptionPercent', 'mudHomesteadExemptionPercent', 'homesteadAssessmentCap', 'over65Year', 'over65SchoolExemption', 'over65LocalExemption',
+    'transferredCeilingPercent', 'rateChanges'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   program: [],
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits'],
@@ -105,6 +106,7 @@ export class LoanFormComponent implements OnInit {
 
   protected readonly rules = rules;
   protected readonly lumpSumRules = LUMP_SUM_RULES;
+  protected readonly rateChangeRules = RATE_CHANGE_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
   protected readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
@@ -165,7 +167,12 @@ export class LoanFormComponent implements OnInit {
 
   /** One-line summary of the property-tax section. */
   readonly taxesSummary = computed(() =>
-    this.sectionInvalid('taxes') ? CHECK_SECTION : taxesSummary(this.values(), { homestead: this.isHomestead(), over65: this.isOver65() }));
+    this.sectionInvalid('taxes')
+      ? CHECK_SECTION
+      : taxesSummary(this.values(), { homestead: this.isHomestead(), over65: this.isOver65(), rateChanges: rateChangesOf(this.values()).length }));
+
+  /** The taxes charged, whose rates a rate change can change. */
+  readonly chargedTaxes = computed(() => chargedTaxes(this.values()));
 
   /** One-line summary of the insurance, HOA and PMI section. */
   readonly costsSummary = computed(() =>
@@ -303,6 +310,22 @@ export class LoanFormComponent implements OnInit {
     }
   }
 
+  /** The tax-rate-change rows, typed for the template. */
+  get rateChanges(): FormArray<RateChangeForm> {
+    return this.form.controls.rateChanges;
+  }
+
+  /** Adds a tax rate change, from year 2 or the year after the last one, with its rates blank. */
+  addRateChange(): void {
+    const last = this.rateChanges.controls.at(-1)?.controls.fromYear.value ?? 1;
+    this.rateChanges.push(rateChangeGroup(this.fb, last + 1));
+  }
+
+  /** Removes the tax rate change at `index`. */
+  removeRateChange(index: number): void {
+    this.rateChanges.removeAt(index);
+  }
+
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
   addLumpSum(): void {
     this.lumpSums.push(lumpSumGroup(this.fb, 12, 10_000));
@@ -343,6 +366,8 @@ export class LoanFormComponent implements OnInit {
       ...problemsIn(rules, this.form.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.rate.controls),
       ...this.lumpSums.controls.flatMap((row) => problemsIn(LUMP_SUM_RULES, row.controls)),
+      ...this.rateChanges.controls.flatMap((row) => problemsIn(RATE_CHANGE_RULES, row.controls)),
+      ...(v.rateChanges.some((c) => c.fromYear > v.termYears) ? [`A tax rate change must start within the loan's ${v.termYears} years.`] : []),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
       ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),

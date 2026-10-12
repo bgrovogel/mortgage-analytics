@@ -2,10 +2,10 @@ import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { validatorsFor } from '../../../core/forms/field-rules';
 import { firstOfMonthFromNext, toCents } from '../../../core/loans/loan-progress';
 import {
-  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, VaFundingFeeType,
+  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, TaxRateChange, VaFundingFeeType,
 } from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
-import { LOAN_RULES as rules, LUMP_SUM_RULES } from './loan-fields';
+import { LOAN_RULES as rules, LUMP_SUM_RULES, RATE_CHANGE_RULES } from './loan-fields';
 
 /**
  * The calculator's form as data: its controls and defaults, and the conversions between its values and the API's
@@ -19,6 +19,15 @@ export type DownPaymentMode = 'amount' | 'percent';
 export type TaxMode = 'single' | 'separate';
 
 export type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
+
+/** A tax rate change: the year it starts, and a new rate for each tax (null keeps it). */
+export type RateChangeForm = FormGroup<{
+  fromYear: FormControl<number>;
+  propertyTaxRate: FormControl<number | null>;
+  schoolTaxRate: FormControl<number | null>;
+  localTaxRate: FormControl<number | null>;
+  mudTaxRate: FormControl<number | null>;
+}>;
 
 /** The controls each way of entering taxes uses; the other way's are disabled, so they are neither checked nor sent. */
 const TAX_MODE_CONTROLS = {
@@ -63,6 +72,9 @@ export function loanForm(fb: NonNullableFormBuilder) {
     over65SchoolExemption: [60_000, validatorsFor(rules.over65SchoolExemption)],
     over65LocalExemption: [0, validatorsFor(rules.over65LocalExemption)],
     over65LocalCeiling: [false],
+    // A school ceiling brought from a former home: blank unless the owner moved with one.
+    transferredCeilingPercent: [null as number | null, validatorsFor(rules.transferredCeilingPercent)],
+    rateChanges: fb.array<RateChangeForm>([]),
     // Long-run US averages (sources are shown under the fields):
     // home values +4.3% a year (FHFA House Price Index, 1975-2025); home insurance +4.8% a year
     // (GAO-26-107867: average premium $2,235 in 2019 to $2,829 in 2024); HOA dues +4% (typically 3-5%).
@@ -112,6 +124,43 @@ export function lumpSumGroup(fb: NonNullableFormBuilder, paymentNumber: number, 
     paymentNumber: [paymentNumber, validatorsFor(LUMP_SUM_RULES.paymentNumber)],
     amount: [amount, validatorsFor(LUMP_SUM_RULES.amount)],
   });
+}
+
+/** One tax-rate-change row, from `fromYear` (1-based), with the given new rates (blank by default). */
+export function rateChangeGroup(fb: NonNullableFormBuilder, fromYear: number, rates: Partial<Record<TaxRateKey, number | null>> = {}): RateChangeForm {
+  return fb.group({
+    fromYear: [fromYear, validatorsFor(RATE_CHANGE_RULES.fromYear)],
+    propertyTaxRate: [rates.propertyTaxRate ?? null, validatorsFor(RATE_CHANGE_RULES.propertyTaxRate)],
+    schoolTaxRate: [rates.schoolTaxRate ?? null, validatorsFor(RATE_CHANGE_RULES.schoolTaxRate)],
+    localTaxRate: [rates.localTaxRate ?? null, validatorsFor(RATE_CHANGE_RULES.localTaxRate)],
+    mudTaxRate: [rates.mudTaxRate ?? null, validatorsFor(RATE_CHANGE_RULES.mudTaxRate)],
+  });
+}
+
+/** The tax rates a change can name. */
+export type TaxRateKey = 'propertyTaxRate' | 'schoolTaxRate' | 'localTaxRate' | 'mudTaxRate';
+
+/** The taxes charged, whose rates can change: the one combined rate, or each separate tax with a rate above 0. */
+export function chargedTaxes(v: LoanForm['value']): TaxRateKey[] {
+  return v.taxMode === 'single'
+    ? ((v.propertyTaxRate ?? 0) > 0 ? ['propertyTaxRate'] : [])
+    : (['schoolTaxRate', 'localTaxRate', 'mudTaxRate'] as const).filter((k) => (v[k] ?? 0) > 0);
+}
+
+/** The rate changes to send: each with only the charged taxes' new rates, and none that changes nothing. */
+export function rateChangesOf(v: LoanForm['value']): TaxRateChange[] {
+  const charged = chargedTaxes(v);
+  const rate = (change: Partial<Record<TaxRateKey, number | null>>, key: TaxRateKey) =>
+    charged.includes(key) && change[key] !== null && change[key] !== undefined ? change[key]! : null;
+  return (v.rateChanges ?? [])
+    .map((c) => ({
+      fromYear: c.fromYear ?? 0,
+      propertyTaxRate: rate(c, 'propertyTaxRate'),
+      schoolTaxRate: rate(c, 'schoolTaxRate'),
+      localTaxRate: rate(c, 'localTaxRate'),
+      mudTaxRate: rate(c, 'mudTaxRate'),
+    }))
+    .filter((c) => c.propertyTaxRate !== null || c.schoolTaxRate !== null || c.localTaxRate !== null || c.mudTaxRate !== null);
 }
 
 /** The down payment in dollars: as entered, or the entered percentage of the price, rounded to cents. */
@@ -201,8 +250,10 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
             schoolExemption: v.over65SchoolExemption || 0,
             localExemption: v.over65LocalExemption || 0,
             localTaxCeiling: v.over65LocalCeiling,
+            transferredCeilingPercent: v.transferredCeilingPercent || null,
           }
         : null,
+      rateChanges: rateChangesOf(v),
       homeValueGrowthRate: v.homeValueGrowthRate || 0,
       insuranceIncreaseRate: v.insuranceIncreaseRate || 0,
       hoaIncreaseRate: v.hoaIncreaseRate || 0,
@@ -244,6 +295,10 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
   const quietly = { emitEvent: false };
   form.controls.downPaymentMode.setValue('amount', quietly);
   form.controls.lumpSums.clear(quietly);
+  form.controls.rateChanges.clear(quietly);
+  for (const change of costs?.rateChanges ?? []) {
+    form.controls.rateChanges.push(rateChangeGroup(fb, change.fromYear, change), quietly);
+  }
   for (const lump of extras?.lumpSums ?? []) {
     form.controls.lumpSums.push(lumpSumGroup(fb, lump.paymentNumber, lump.amount), quietly);
   }
@@ -276,6 +331,7 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
       over65SchoolExemption: senior.schoolExemption,
       over65LocalExemption: senior.localExemption,
       over65LocalCeiling: senior.localTaxCeiling,
+      transferredCeilingPercent: senior.transferredCeilingPercent ?? null,
     }),
     homeValueGrowthRate: costs?.homeValueGrowthRate ?? 0,
     insuranceIncreaseRate: costs?.insuranceIncreaseRate ?? 0,

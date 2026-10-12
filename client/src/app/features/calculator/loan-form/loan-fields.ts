@@ -31,6 +31,7 @@ export const LOAN_RULES = {
   homesteadAssessmentCap: { label: 'Appraisal cap', unit: '%', min: 0, max: 100, decimals: 4, optional: true },
   over65Year: { label: 'Qualifying year', unit: 'number', min: 1, max: MAX_YEARS, whole: true, optional: true },
   over65SchoolExemption: { label: 'Extra school exemption', unit: '$', min: 0, max: 10_000_000, optional: true },
+  transferredCeilingPercent: { label: 'Share paid before', unit: '%', min: 0.01, max: 100, decimals: 4, optional: true },
   over65LocalExemption: { label: 'Extra county/city exemption', unit: '$', min: 0, max: 10_000_000, optional: true },
 
   annualInsurance: { label: 'Home insurance', unit: '$', min: 0, max: 1_000_000, optional: true },
@@ -54,6 +55,15 @@ export const LOAN_RULES = {
   annualFirstPayment: { label: 'First yearly payment', unit: 'number', min: 1, max: MAX_YEARS * 12, whole: true, optional: true },
   recastMinimum: { label: 'Recast minimum', unit: '$', min: 1_000, max: MAX_AMOUNT, optional: true },
   recastFee: { label: 'Recast fee', unit: '$', min: 0, max: 10_000, optional: true },
+} as const satisfies FieldRules;
+
+/** The numbers in each tax-rate-change row: the year, and a new rate for each tax (blank keeps it). */
+export const RATE_CHANGE_RULES = {
+  fromYear: { label: 'Rate change year', unit: 'number', min: 2, max: MAX_YEARS, whole: true },
+  propertyTaxRate: { label: 'New property tax rate', unit: '%', min: 0, max: 15, decimals: 4, optional: true },
+  schoolTaxRate: { label: 'New school tax rate', unit: '%', min: 0, max: 10, decimals: 4, optional: true },
+  localTaxRate: { label: 'New county/city tax rate', unit: '%', min: 0, max: 10, decimals: 4, optional: true },
+  mudTaxRate: { label: 'New MUD tax rate', unit: '%', min: 0, max: 5, decimals: 4, optional: true },
 } as const satisfies FieldRules;
 
 /** The two numbers in each lump-sum row. */
