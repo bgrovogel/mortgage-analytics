@@ -214,7 +214,7 @@ worked through one section, with the code for each, see [SOLID by example](09-so
 | **Interface segregation** | Small interfaces of one or two members: `IExtraPaymentRule`, `IHousingCost`, `IAmortizationCalculator`, `ILoanComparer`, `IAmortizationService`. |
 | **Dependency inversion** | Services depend on `ILoanComparer` and `TimeProvider`, not on concrete classes or `DateTime.Now`, so tests inject a fixed clock. Application owns `ISavedCalculationRepository`; Infrastructure implements it. |
 | **DRY** | Validation limits come from domain constants. The PMI rule lives only on `PropertyPurchase`. Compounding (`Growth`) and installments (`Installments`) are written once. One generic `ValidationFilter<T>` serves every endpoint. On the client, one `buildLineChart` and one `hostChart` serve every chart, and one `COST_CATEGORIES` list gives each category the same label and colour everywhere. |
-| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole; that JSON has no version yet, and a test loads today's format so a rename or removal fails CI instead of quietly dropping values. |
+| **KISS / YAGNI** | No MediatR or AutoMapper: nothing here needs them. The Infrastructure project arrived only with the first real need, saved calculations. Inputs are stored as one JSON column, because they are only ever read and written whole; that JSON carries a format version, with an upgrade step for each breaking change (none needed yet), and a test loads today's format so a rename or removal fails CI instead of quietly dropping values. |
 
 ---
 

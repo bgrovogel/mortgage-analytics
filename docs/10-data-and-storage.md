@@ -123,7 +123,8 @@ A real row's `Inputs` (a purchase with $200 a month extra and separate Texas tax
     "monthlyHoaDues": 50,
     "pmiRate": 0.5,
     "pmiCancellation": "Automatic"
-  }
+  },
+  "formatVersion": 1
 }
 ```
 
@@ -132,11 +133,16 @@ columns (or tables for lump sums) would add joins and migrations for nothing. Ne
 change. EF Core converts with `System.Text.Json` through a `ValueConverter`, and a `ValueComparer` compares the JSON,
 so replacing the inputs with an equal copy is not seen as a change.
 
-**The catch, and its guard:** the JSON has no version number. An old save loads into today's contract, so a *renamed*
-or *removed* field would silently lose its value. `StoredFormatTests` load a save of each kind in today's format, with
-every option set (`tests/MortgageAnalytics.Infrastructure.Tests/StoredFormats/*.json`), and fail naming any value that
-does not come back. Adding a field passes; renaming one fails. That is the signal to keep the old name, or to add a
-`schemaVersion` and upgrade old saves on load.
+**The catch, and its guards:** an old save loads into today's contract, so a *renamed* or *removed* field would
+silently lose its value. Two things stop that:
+
+- **A format version** (`StoredJson`): every save is written with `formatVersion` (today `1`; saves from before it
+  existed have none and count as 1). A breaking change raises `StoredJson.CurrentVersion` and adds one upgrade, a
+  small edit to the JSON, from the previous version; each save is upgraded step by step as it loads. A missing step
+  stops the app at startup, and a save from a *newer* version is refused rather than read with values missing.
+- **`StoredFormatTests`** load a save of each kind in today's format, with every option set
+  (`tests/MortgageAnalytics.Infrastructure.Tests/StoredFormats/*.json`), and fail naming any value that does not come
+  back. Adding a field passes; renaming one fails, which is the signal to keep the old name or add an upgrade.
 
 ---
 
@@ -291,14 +297,13 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one. (Six more were found here too and are
+Found while writing this page; each is a known gap, not a hidden one. (Seven more were found here too and are
 closed: an untested cascade, an untested lockout, no way to delete an account, then no screen for it, a session
-cookie that was never `Secure` behind an HTTPS proxy, and no automatic backups.)
+cookie that was never `Secure` behind an HTTPS proxy, no automatic backups, and saved JSON with no version.)
 
 | Gap | Today | What would close it |
 |---|---|---|
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
-| **Saved JSON has no version** | `StoredFormatTests` guard it | `schemaVersion` and an upgrade on load, at the first breaking change |
 
 ---
 

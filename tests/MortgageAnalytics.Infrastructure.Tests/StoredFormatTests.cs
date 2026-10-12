@@ -8,8 +8,8 @@ namespace MortgageAnalytics.Infrastructure.Tests;
 /// Saved calculations are stored as their request's JSON, so a renamed or removed field would quietly drop that value
 /// from everyone's saves. StoredFormats/ holds one save of each kind, every option set, exactly as stored today; each
 /// must still load with every value intact. New fields are fine (old saves load them as their defaults). If one of
-/// these fails, the change is breaking for saved data: keep the old name, or version the stored JSON and upgrade it
-/// on load.
+/// these fails, the change is breaking for saved data: keep the old name, or raise StoredJson.CurrentVersion and add
+/// an upgrade from the old format.
 /// </summary>
 [TestFixture]
 public class StoredFormatTests : RepositoryTestBase

@@ -147,11 +147,12 @@ A saved calculation is always read and written whole, never queried by field, so
 tables would add joins and migrations for no benefit. The contracts can grow without a schema change.
 
 **What about versioning that JSON?**
-Every change so far has only *added* fields, which old saves load as defaults, so there is no version number yet.
-Instead `StoredFormatTests` loads a save of each kind in today's format, with every option set, and checks that
-every value comes back. A rename or removal fails CI and names the field. The day a breaking change is really
-needed, I'd add a `schemaVersion` to the stored JSON and upgrade old saves when they load. The URLs are
-already versioned (`/api/v1`).
+Every save carries a `formatVersion`. A breaking change raises the version and adds one upgrade step, a small edit
+to the JSON, and old saves are upgraded step by step as they load; a missing step stops the app at startup, and a
+save from a newer version is refused rather than half read. No step has been needed yet, since every change so far
+only *added* fields, which old saves load as defaults. `StoredFormatTests` loads a save of each kind in today's
+format, with every option set, and checks every value comes back, so a rename fails CI and names the field. The
+URLs are versioned too (`/api/v1`).
 
 **How is one user kept from seeing another's data?**
 - The owner id comes from the session's claims, never from the request.
@@ -315,7 +316,6 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Test strength | Coverage gate, independent models, 97% mutation score on the domain | Mutation testing on the Application layer's mapping and validators |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
-| Saved JSON | No version; a test guards the format | `schemaVersion` + upgrade on load, at the first breaking change |
 
 ---
 
@@ -384,7 +384,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 810 .NET · 541 Jest · 93 Playwright (15 axe scans); 85% coverage gate |
+| Tests | 816 .NET · 541 Jest · 93 Playwright (15 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

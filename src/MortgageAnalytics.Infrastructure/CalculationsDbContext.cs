@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,8 +14,7 @@ namespace MortgageAnalytics.Infrastructure;
 /// <param name="options">Provider and connection, set by <see cref="DependencyInjection.AddInfrastructure"/> or a test.</param>
 public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext> options) : IdentityDbContext<IdentityUser>(options)
 {
-    // The same JSON shape the API uses, so a stored row reads like the request that created it.
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    private static readonly JsonSerializerOptions Json = StoredJson.Options;
 
     /// <summary>Every saved calculation.</summary>
     public DbSet<SavedCalculation> SavedCalculations => Set<SavedCalculation>();
@@ -33,6 +31,7 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
 
         // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
         // field, and the contracts can grow without a schema change. A row holds one kind; the others are null.
+        // Each is stamped with its format version and upgraded as it loads (StoredJson).
         calculation.Property(c => c.Inputs).HasConversion(JsonConverter<AmortizationRequest>(), JsonComparer<AmortizationRequest>());
         calculation.Property(c => c.Refinance).HasConversion(JsonConverter<RefinanceRequest>(), JsonComparer<RefinanceRequest>());
         calculation.Property(c => c.Strategy).HasConversion(JsonConverter<StrategyRequest>(), JsonComparer<StrategyRequest>());
@@ -47,9 +46,11 @@ public sealed class CalculationsDbContext(DbContextOptions<CalculationsDbContext
         calculation.HasOne<IdentityUser>().WithMany().HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Cascade);
     }
 
-    private static ValueConverter<T?, string?> JsonConverter<T>() where T : class =>
-        new(value => value == null ? null : JsonSerializer.Serialize(value, Json),
-            json => json == null ? null : JsonSerializer.Deserialize<T>(json, Json));
+    private static ValueConverter<T?, string?> JsonConverter<T>() where T : class
+    {
+        var format = new StoredJson<T>();
+        return new(value => value == null ? null : format.Write(value), json => json == null ? null : format.Read(json));
+    }
 
     // Compares the JSON, so replacing the inputs with an equal copy is not seen as a change.
     private static ValueComparer<T?> JsonComparer<T>() where T : class =>

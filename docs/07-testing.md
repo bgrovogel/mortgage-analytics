@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,440 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,450 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -15,7 +15,7 @@
 |---|---|---|---|
 | Domain | 454 | NUnit | < 1 s |
 | Application | 223 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 24 | NUnit, SQLite in memory | ~1 s |
+| Infrastructure | 30 | NUnit, SQLite in memory | ~1 s |
 | API integration | 102 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 541 | Jest, jest-preset-angular | ~10 s |
@@ -64,7 +64,9 @@ Take the ARM margin floor as an example of the order of work:
   loads the calculations it expects to disappear.
 - **Stored format** (`StoredFormatTests`): a save of each kind, in today's JSON (`StoredFormats/*.json`, every
   option set), must still load with every value. Adding a field passes; renaming or removing one fails and names
-  it. That is the signal to keep the old name, or to add a version to the stored JSON and upgrade it on load.
+  it. That is the signal to keep the old name, or to raise the format version and add an upgrade.
+- **Format versions** (`StoredJsonTests`): saves are stamped, an old save is upgraded step by step (tested with a
+  made-up three-version format), an unversioned one is version 1, a newer one is refused, a missing step is caught.
 - **Automatic backups:** a whole copy that opens on its own, one a day at most, only the newest kept, and the
   settings; an API test sees the first copy taken at startup.
 
