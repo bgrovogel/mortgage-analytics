@@ -307,6 +307,11 @@ main {
   }
 }
 
+// Every calculator form's card: its heading, the loan summary, help toggles, and the sections under More details.
+form {
+  @include fields.form-card;
+}
+
 // Every input box in the app looks and sizes alike: number boxes, dates, drop-downs, email and password.
 input[appNumber],
 input[type='date'],

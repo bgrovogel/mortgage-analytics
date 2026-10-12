@@ -29,6 +29,27 @@ describe('LoanFormComponent', () => {
       expect(emitted).toHaveLength(1);
     });
 
+    it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
+      expect(text('shared-tag')).toBe('Shared across pages');
+      expect(el('loan-shared')).toBeNull();
+    });
+
+    it('keeps how to enter a loan you already have one tap away, rather than always on', () => {
+      const help = el('first-payment-help') as HTMLDetailsElement;
+
+      expect(help.tagName).toBe('DETAILS');
+      expect(help.open).toBe(false);
+      expect(help.textContent).toContain('its real first payment');
+    });
+
+    it('puts every optional section under More details, apart from the five main numbers', () => {
+      const details = el('more-details')!;
+
+      expect(details.querySelector('h3')?.textContent).toBe('More details');
+      expect([...details.querySelectorAll('details.section')].map((d) => d.getAttribute('data-testid')))
+        .toEqual(['section-rate', 'section-taxes', 'section-costs', 'section-growth', 'section-options']);
+    });
+
     it('says the numbers are an example until the first edit, and never for a restored loan', () => {
       expect(text('example-note')).toContain('example numbers');
 
@@ -63,7 +84,7 @@ describe('LoanFormComponent', () => {
 
   describe('layout', () => {
     it('shows only the five main fields; everything else is in sections that start closed', () => {
-      const sections = [...fixture.nativeElement.querySelectorAll('details')] as HTMLDetailsElement[];
+      const sections = [...fixture.nativeElement.querySelectorAll('details.section')] as HTMLDetailsElement[];
 
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();

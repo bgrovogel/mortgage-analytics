@@ -194,72 +194,141 @@
     color: var(--text-muted);
   }
 
-  // Collapsible sections: closed by default, summarized in one line.
+}
+
+// The structure of a calculator form's card, applied once, globally (styles.scss), under `form`: every form shares it,
+// so a copy per component would only add weight. The heading of the main group, the loan summary chip, the help
+// toggle, and the collapsible sections, grouped under "More details" as one list.
+@mixin form-card {
+  // The main group's heading, with what it shares with the other pages.
+  legend.title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--text-primary);
+  }
+
+  // Each top-level group after the first starts below a rule, so "The new loan" reads as its own part.
+  > fieldset + fieldset {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .shared-tag {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--accent-soft-border);
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  // What the numbers above add up to (the loan, the down payment): a result, not a hint.
+  .summary-chip {
+    margin: -0.25rem 0 0;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  // Help that only some people need, one tap away instead of always taking two lines.
+  details.help {
+    margin-top: -0.35rem;
+    font-size: 0.84rem;
+
+    summary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 28px;
+      list-style: none;
+      cursor: pointer;
+      color: var(--accent-text);
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &::before {
+        content: '?';
+        display: inline-grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid currentColor;
+        border-radius: 50%;
+        font-size: 0.68rem;
+        font-weight: 700;
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+      }
+    }
+
+    p {
+      margin: 0.3rem 0 0;
+      color: var(--text-muted);
+    }
+  }
+
+  // Collapsible sections: closed by default, each summarized in one line; the whole row is the toggle.
   .section {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface-1);
-    transition: border-color 0.15s ease;
-
-    &:hover {
-      border-color: var(--border-strong);
-    }
-
-    &[open] {
-      border-color: var(--accent-soft-border);
-    }
 
     summary {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 0.15rem;
-      min-height: 44px;
+      min-height: 48px;
       justify-content: center;
-      padding: 0.6rem 2.75rem 0.6rem 0.9rem;
+      padding: 0.6rem 2.5rem 0.6rem 0.9rem;
       position: relative;
       cursor: pointer;
-      border-radius: var(--radius-md);
+      border-radius: inherit;
+      transition: background-color 0.15s ease;
 
       &::-webkit-details-marker {
         display: none;
       }
 
-      // A round 28px target behind the chevron, so the toggle is easy to see and hit.
-      &::before {
-        content: '';
-        position: absolute;
-        right: 0.55rem;
-        top: 50%;
-        width: 28px;
-        height: 28px;
-        margin-top: -14px;
-        border-radius: 50%;
+      &:hover {
         background: var(--surface-2);
-        border: 1px solid var(--border);
-      }
-
-      &:hover::before {
-        border-color: var(--accent-soft-border);
-        background: var(--accent-soft);
       }
 
       &::after {
         content: '';
         position: absolute;
-        right: 1.12rem;
+        right: 1rem;
         top: 50%;
         width: 7px;
         height: 7px;
-        border-right: 2px solid var(--text-secondary);
-        border-bottom: 2px solid var(--text-secondary);
+        border-right: 2px solid var(--text-muted);
+        border-bottom: 2px solid var(--text-muted);
         transform: translateY(-70%) rotate(45deg);
         transition: transform 0.15s ease;
       }
 
       &:focus-visible {
         outline: none;
-        box-shadow: var(--focus-ring);
+        box-shadow: inset var(--focus-ring);
       }
     }
 
@@ -286,10 +355,40 @@
     padding: 0.25rem 0.9rem 1rem;
   }
 
-  .auto-note {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-align: center;
+  // The optional sections, apart from the main numbers: one list, divided by rules, rather than a stack of cards.
+  .more-details {
+    display: flex;
+    flex-direction: column;
+
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    > .section {
+      border-radius: 0;
+    }
+
+    > .section + .section {
+      border-top: 0;
+    }
+
+    > .section:first-of-type {
+      border-top-left-radius: var(--radius-md);
+      border-top-right-radius: var(--radius-md);
+    }
+
+    > .section:last-of-type {
+      border-bottom-left-radius: var(--radius-md);
+      border-bottom-right-radius: var(--radius-md);
+    }
+
+    > .section[open] {
+      background: var(--surface-2);
+    }
   }
 }

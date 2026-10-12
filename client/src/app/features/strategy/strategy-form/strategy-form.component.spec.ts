@@ -18,6 +18,14 @@ describe('StrategyFormComponent', () => {
   const text = (root: HTMLElement, id: string) => root.querySelector(`[data-testid="${id}"]`)!.textContent!.replace(/\s+/g, ' ').trim();
   const controls = () => fixture.componentInstance.form.controls;
 
+  it('marks the mortgage as shared in its heading, and groups the household details under More details', () => {
+    const root = render();
+
+    expect(text(root, 'shared-tag')).toBe('Shared across pages');
+    expect([...root.querySelectorAll('[data-testid="more-details"] details.section')].map((d) => d.getAttribute('data-testid')))
+      .toEqual(['section-taxes', 'section-savings', 'section-stock', 'section-market']);
+  });
+
   it('says the numbers are an example until the first edit, and never for a restored comparison', () => {
     const root = render();
     expect(text(root, 'example-note')).toContain('example numbers');
@@ -75,7 +83,7 @@ describe('StrategyFormComponent', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(emitted[0].homeValue).toBe(400_000);
-    expect(text(root, 'loan-shared')).not.toContain('Filled in');
+    expect(root.querySelector('[data-testid="loan-shared"]')).toBeNull();
   });
 
   it('takes the shared rate type: an ARM by its next reset, or a buydown', () => {

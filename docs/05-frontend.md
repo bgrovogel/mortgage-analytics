@@ -208,6 +208,11 @@ The flows are designed around the people using it:
 - **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
   scroll-driven effect that follows the form's own scroll and is gone at the end.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.
+- **The form card:** the main group's heading is a real heading, tagged "Shared across pages" (the long "Filled in
+  from your loan on the Refinance page" line only appears when it happened). What the numbers add up to is a summary
+  chip; help only some need is a `details.help` toggle; the optional sections are one divided list under **More
+  details**; each top-level group after the first starts below a rule. These styles are one global `form-card` mixin
+  (`core/forms/_form-fields.scss`), so every form shares them and no component carries its own copy.
 - **"What will I have paid by year 10?"** The Projection tab opens on the quick numbers (`CostTotalsComponent`): for a
   chosen year, each cost that year, through it, and over the whole loan, from the same projection as the chart
   (`cost-totals.ts`, pure functions). It starts at the year the loan is in now, so "through" is what has been paid; the

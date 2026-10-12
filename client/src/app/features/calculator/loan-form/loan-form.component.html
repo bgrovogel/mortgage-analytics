@@ -1,16 +1,16 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="loan-form">
-  <!-- The five main inputs are always visible; everything else is in a collapsible section below. -->
+  <!-- The five main inputs are always visible; everything else is under More details below. -->
   <fieldset class="primary-fields">
-    <legend>Your loan</legend>
+    <legend class="title">Your loan <span class="shared-tag" data-testid="shared-tag">Shared across pages</span></legend>
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
     }
-    <p class="hint" data-testid="loan-shared">
-      @if (sharedFrom(); as shared) {
+    @if (sharedFrom(); as shared) {
+      <p class="hint" data-testid="loan-shared">
         Filled in from your loan on the {{ shared.from }} page@if (shared.rounded; as rounded) {, with {{ rounded.from }} left rounded to {{ rounded.to }}}.
-      }
-      Shared with the other pages: change it here and they follow.
-    </p>
+        Change it here and the other pages follow.
+      </p>
+    }
 
     <div class="row">
       <app-number-field [control]="form.controls.homePrice" [rule]="rules.homePrice" testId="home-price" />
@@ -29,7 +29,7 @@
       </div>
     </div>
     @if (loanAmount() > 0) {
-      <p class="hint" data-testid="loan-summary">
+      <p class="summary-chip" data-testid="loan-summary">
         {{ downPaymentAmount() | currency: 'USD' : 'symbol' : '1.0-0' }} down ({{ downPaymentPercent() | number: '1.0-2' }}%)
         · Loan {{ loanAmount() | currency: 'USD' : 'symbol' : '1.0-0' }}
       </p>
@@ -58,10 +58,15 @@
         <small class="error" data-testid="existing-loan">{{ paidOffAlready }}</small>
       }
     } @else {
-      <p class="hint">For a loan you already have, enter its real first payment: the schedule, PMI and dates follow it.</p>
+      <details class="help" data-testid="first-payment-help">
+        <summary>A loan you already have?</summary>
+        <p>Enter its real first payment: the schedule, PMI and dates follow it.</p>
+      </details>
     }
   </fieldset>
 
+  <section class="more-details" aria-labelledby="loan-more-details" data-testid="more-details">
+  <h3 id="loan-more-details">More details</h3>
   <details class="section" data-testid="section-rate">
     <summary>
       <span class="section-title">Rate type</span>
@@ -283,5 +288,5 @@
     </div>
   </details>
 
-  <p class="auto-note">Results update as you type.</p>
+  </section>
 </form>

@@ -19,6 +19,13 @@ describe('RefinanceFormComponent', () => {
   const controls = () => component.form.controls;
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
 
+  it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
+    create();
+
+    expect(el('shared-tag')?.textContent).toBe('Shared across pages');
+    expect(el('loan-shared')).toBeNull();
+  });
+
   it('says the numbers are an example until the first edit, and never for a restored comparison', () => {
     create();
     expect(el('example-note')?.textContent).toContain('example numbers');

@@ -1,15 +1,12 @@
 <form [formGroup]="form" novalidate data-testid="refinance-form">
   <fieldset>
-    <legend>Your loan today</legend>
+    <legend class="title">Your loan today <span class="shared-tag" data-testid="shared-tag">Shared across pages</span></legend>
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
     }
-    <p class="hint" data-testid="loan-shared">
-      @if (sharedFrom(); as from) {
-        Filled in from your loan on the {{ from }} page.
-      }
-      Shared with the other pages: change it here and they follow.
-    </p>
+    @if (sharedFrom(); as from) {
+      <p class="hint" data-testid="loan-shared">Filled in from your loan on the {{ from }} page. Change it here and the other pages follow.</p>
+    }
 
     <div class="segmented" role="radiogroup" aria-label="Describe your loan by" data-testid="loan-entry">
       <label><input type="radio" formControlName="loanEntry" value="today" data-testid="loan-entry-today" /> What I owe now</label>
@@ -60,7 +57,7 @@
   </fieldset>
 
   <fieldset>
-    <legend>The new loan</legend>
+    <legend class="title">The new loan</legend>
 
     <div class="row">
       <app-number-field [control]="form.controls.newAnnualInterestRate" [rule]="rules.newAnnualInterestRate" testId="new-rate" label="Interest rate" />
@@ -95,5 +92,4 @@
     </label>
   </fieldset>
 
-  <p class="auto-note">Results update as you type.</p>
 </form>
