@@ -4,6 +4,7 @@ using Microsoft.OpenApi;
 using MortgageAnalytics.Api.Email;
 using MortgageAnalytics.Api.Endpoints;
 using MortgageAnalytics.Api.Errors;
+using MortgageAnalytics.Api.Observability;
 using MortgageAnalytics.Api.Security;
 using MortgageAnalytics.Application;
 using MortgageAnalytics.Application.Contracts;
@@ -25,7 +26,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // header, never in one).
 builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 
-builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = RequestLogging.AddRequestIdToProblems);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 
@@ -55,6 +56,8 @@ var app = builder.Build();
 // Create the saved-calculations database, or apply new migrations, before taking requests.
 await app.Services.MigrateDatabaseAsync();
 
+// First, so the request id is on every log line and response, and the request's line has its final status.
+app.UseRequestLogging();
 app.UseSecurityHeaders();
 app.UseResponseCompression();
 app.UseExceptionHandler();

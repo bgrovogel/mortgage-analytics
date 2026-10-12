@@ -5,6 +5,8 @@ interface ProblemDetails {
   title?: string;
   detail?: string;
   errors?: Record<string, string[]>;
+  /** The request's id, also in its X-Request-ID header and on every log line it wrote. */
+  requestId?: string;
 }
 
 /** Flattens any HTTP failure into messages a person can act on. */
@@ -27,5 +29,7 @@ export function toErrorMessages(error: unknown): string[] {
     return fieldErrors;
   }
 
-  return [problem.detail ?? problem.title ?? `Request failed (${error.status}).`];
+  const message = problem.detail ?? problem.title ?? `Request failed (${error.status}).`;
+  // A server error is ours to fix: its id finds it in the logs, so the user can quote it.
+  return [error.status >= 500 && problem.requestId ? `${message} Reference: ${problem.requestId}.` : message];
 }

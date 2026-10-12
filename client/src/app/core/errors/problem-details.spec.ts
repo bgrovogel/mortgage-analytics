@@ -23,6 +23,15 @@ describe('toErrorMessages', () => {
     expect(toErrorMessages(httpError(500, { title: 'An unexpected error occurred.' }))).toEqual(['An unexpected error occurred.']);
   });
 
+  it("quotes a server error's request id, so it can be found in the logs", () => {
+    expect(toErrorMessages(httpError(500, { title: 'An unexpected error occurred.', requestId: '7f3a9c' })))
+      .toEqual(['An unexpected error occurred. Reference: 7f3a9c.']);
+  });
+
+  it("leaves the request id out of a problem the user can fix", () => {
+    expect(toErrorMessages(httpError(400, { errors: { downPayment: ['Too big.'] }, requestId: '7f3a9c' }))).toEqual(['Too big.']);
+  });
+
   it('falls back to the status code when the body is not a problem', () => {
     expect(toErrorMessages(httpError(503, null))).toEqual(['Request failed (503).']);
   });

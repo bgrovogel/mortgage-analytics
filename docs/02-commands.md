@@ -43,7 +43,7 @@ Everything else is below, grouped by job.
 ```bash
 docker compose up --build        # build the image and start the app + Mailpit
 docker compose up -d --build     # the same, in the background
-docker compose logs -f app       # follow the app's logs
+docker compose logs -f app       # follow the app's logs (JSON, one line per API request, each with its request id)
 docker compose down              # stop (data is kept on the volume)
 docker compose down -v           # stop AND delete the data volume (accounts, saved calculations)
 ```

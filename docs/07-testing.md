@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,420 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,430 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -16,9 +16,9 @@
 | Domain | 454 | NUnit | < 1 s |
 | Application | 223 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
-| API integration | 89 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 97 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 539 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 541 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 93 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
@@ -75,6 +75,9 @@ Take the ARM margin floor as an example of the order of work:
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.
+- Request logging: every response has an `X-Request-ID` (a safe caller id is reused), every error body names it,
+  each API request is one log line without its query string, and JSON logs in Production. A test logger
+  (`CapturedLogs`) keeps each entry with its scopes.
 - Brotli and gzip responses, the security headers on every response, and the account attempt limit (a 429 with
   `Retry-After`; reads and calculations are never limited).
 - Changing the password: it needs the current one (a wrong one changes nothing and counts toward lockout), keeps

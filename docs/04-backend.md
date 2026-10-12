@@ -130,14 +130,16 @@ Details worth knowing (the whole picture, with the schema: [Data and storage](10
 
 ### The pipeline (in `Program.cs` order)
 
-1. `UseSecurityHeaders()`: first, so even errors and static files carry the CSP and the other headers.
-2. `UseResponseCompression()`: Brotli or gzip for the JSON and the app's own files.
-3. `UseExceptionHandler()` + `UseStatusCodePages()`: every error becomes ProblemDetails.
-4. Swagger and Swagger UI (in every environment: the docs are part of the showcase).
-5. `UseDefaultFiles()` + `UseStaticFiles()`: the Angular app from `wwwroot`.
-6. `UseAuthentication()` + `UseAuthorization()`, then `UseRateLimiter()` (the account attempt limit).
-7. Endpoints: `/health`, the API groups, the dev outbox (Development only).
-8. A JSON 404 for unknown `/api/...` routes, then `MapFallbackToFile("index.html")` so Angular's router handles
+1. `UseRequestLogging()`: first, so every request gets its id before anything else runs, and its log line has the
+   final status, errors included.
+2. `UseSecurityHeaders()`: so even errors and static files carry the CSP and the other headers.
+3. `UseResponseCompression()`: Brotli or gzip for the JSON and the app's own files.
+4. `UseExceptionHandler()` + `UseStatusCodePages()`: every error becomes ProblemDetails.
+5. Swagger and Swagger UI (in every environment: the docs are part of the showcase).
+6. `UseDefaultFiles()` + `UseStaticFiles()`: the Angular app from `wwwroot`.
+7. `UseAuthentication()` + `UseAuthorization()`, then `UseRateLimiter()` (the account attempt limit).
+8. Endpoints: `/health`, the API groups, the dev outbox (Development only).
+9. A JSON 404 for unknown `/api/...` routes, then `MapFallbackToFile("index.html")` so Angular's router handles
    every other URL.
 
 ### An endpoint, annotated
@@ -171,6 +173,15 @@ The endpoint does HTTP only. Validation is in the filter, and the work is in the
 - **Response size is the client's choice.** `?includePayments=false` drops the up to 1,200 monthly rows and keeps every
   summary and the yearly projection.
 - **Source-generated logging** (`[LoggerMessage]`), and the recommended .NET analyzers.
+- **Every request has an id** (`Observability/RequestLogging.cs`): the caller's `X-Request-ID` when it is short and
+  plain (so a proxy's logs line up with ours), otherwise a new one. It is sent back in `X-Request-ID`, put in every
+  ProblemDetails body as `requestId` (the app shows it as "Reference: …" on a server error), and is a scope on every
+  log line the request writes.
+- **One log line per request:** `GET /api/v1/calculations responded 401 in 2.1 ms (request 7f3a…)`, with method, path,
+  status and time as fields. API requests are logged at Information; health checks and static files only at Debug.
+  The query string is never logged, because emailed links carry their codes in it.
+- **JSON logs in Production** (`appsettings.json`: the console's `json` formatter, with scopes and UTC timestamps), so
+  a log store can search by field; plain lines in Development, for a person reading the terminal.
 - **One container.** The API serves the compiled Angular app from `wwwroot`: one port, one deployment, no CORS.
 
 ### Calling the API

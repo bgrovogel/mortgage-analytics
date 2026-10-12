@@ -29,7 +29,8 @@
 API again. So a reopened save always shows numbers from today's engine: if a rule is fixed, old saves show the fixed
 numbers.
 
-Nothing else is kept on the server: no analytics and no request logs in the database. The calculators store nothing
+Nothing else is kept on the server: no analytics, and request logs go to the console (one JSON line per API request,
+without its query string), never to the database. The calculators store nothing
 for a visitor who is not signed in: a page keeps its inputs in memory until the tab closes. The one thing the browser
 keeps is which columns the schedule shows (`localStorage`, key `schedule-columns`).
 

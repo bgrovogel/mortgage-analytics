@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using MortgageAnalytics.Api.Email;
 
@@ -30,12 +31,17 @@ public sealed class MortgageApiFactory(
     /// <summary>Every email the API has sent, in order.</summary>
     public ConcurrentQueue<EmailMessage> SentMail { get; } = new();
 
+    /// <summary>Everything the API has logged, with its scopes.</summary>
+    public CapturedLogs Logs { get; } = new();
+
     /// <summary>The app's clock, frozen at <see cref="TestClock.Now"/>; a test that needs time to pass advances it.</summary>
     public FakeTimeProvider Clock { get; } = TestClock.Create();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(environment);
+        // Everything, Debug included, so tests can read what each level would show (the console keeps its own levels).
+        builder.ConfigureLogging(logging => logging.AddProvider(Logs).AddFilter<CapturedLogs>(null, LogLevel.Debug));
         builder.UseSetting("ConnectionStrings:Calculations", $"Data Source={_databasePath}");
         builder.UseSetting("DataProtection:KeysDirectory", Path.Combine(_appDataPath, "keys"));
         builder.UseSetting("Email:OutboxDirectory", Path.Combine(_appDataPath, "outbox"));
