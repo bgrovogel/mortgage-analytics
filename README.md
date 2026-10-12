@@ -43,7 +43,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 - **Money math you can trust.** `decimal` throughout, every schedule ends at exactly $0.00, and the expected values
   in the tests come from independent Python models, not from this code. Scripts compare 300 random purchases, 300
   refinances and 300 households with the live API, field by field. They have caught real bugs.
-- **Tested from the domain to the browser.** 748 .NET, 513 Jest and 88 Playwright tests, written test-first. An 85%
+- **Tested from the domain to the browser.** 751 .NET, 513 Jest and 88 Playwright tests, written test-first. An 85%
   coverage gate, a mutation-score gate on the domain (Stryker.NET), a snapshot of the whole API contract, and
   assertion standards enforced at build time with Roslyn.
 - **Built like it will be attacked.** Cookie-only sessions, account attempt limits, a Content-Security-Policy that
@@ -97,7 +97,7 @@ Every command is in the [commands guide](docs/02-commands.md).
 ### Running the tests
 
 ```bash
-dotnet test                       # 748 NUnit tests, including the convention tests
+dotnet test                       # 751 NUnit tests, including the convention tests
 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
@@ -172,7 +172,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Inter |
-| **Tests** | NUnit + NSubstitute: 748 backend tests · Jest: 513 Angular unit tests · Playwright: 88 E2E tests, including axe accessibility scans · Stryker.NET · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 751 backend tests · Jest: 513 Angular unit tests · Playwright: 88 E2E tests, including axe accessibility scans · Stryker.NET · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 
 Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).

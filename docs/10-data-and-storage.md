@@ -170,7 +170,7 @@ What Identity stores and enforces, as configured in `AccountEndpoints.AddAccount
 |---|---|
 | **Password** | At least 8 characters; no required mix of cases, digits or symbols (length matters more than mix). Stored only as Identity's salted hash (PBKDF2) |
 | **Email confirmation** | Required before the first sign-in (`RequireConfirmedEmail`) |
-| **Lockout** | Identity's defaults: after **5** wrong passwords in a row the account is locked for **5 minutes**, and even the right password is refused (`LockedOut`). A successful sign-in resets the count |
+| **Lockout** | Identity's defaults: after **5** wrong passwords in a row the account is locked for **5 minutes**, and even the right password is refused (`LockedOut`). A successful sign-in resets the count. `AccountApiTests` pin the limit from both sides |
 | **Emailed codes** | Confirmation and reset codes are signed with the Data Protection keys, single-purpose, and expire after Identity's default of a day |
 | **Session** | A cookie named `mortgage-analytics.session`: HttpOnly, SameSite=Strict, valid 14 days and renewed while in use (sliding) |
 | **Attempt limit** | Account POSTs are limited per client address (`RateLimiting:AccountPermitsPerMinute`: 10 in production, 1,000 in Development so the browser tests can sign up many users) |
@@ -211,10 +211,10 @@ columns would become `jsonb` or `nvarchar(max)` with no code change.
 
 | Test | Proves |
 |---|---|
-| `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; the migrations match the model |
+| `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; deleting a user deletes their saves and no one else's; the migrations match the model |
 | `StoredFormatTests` | A save of each kind in today's JSON still loads, with every value |
 | `DatabaseHealthCheckTests` | `/health` is Healthy for the database the app created, and Unhealthy when the database is missing (a broken Docker volume shows up there) |
-| API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails |
+| API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, and lockout at its limit (four wrong passwords still sign in with the right one; five lock the account) |
 | Playwright History tests | Saving each kind, finding it by name, reopening it with every value, renaming and deleting, in a real browser |
 
 ---
@@ -254,13 +254,12 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one.
+Found while writing this page; each is a known gap, not a hidden one. (Two more, an untested cascade and an untested
+lockout, were found here too and now have tests.)
 
 | Gap | Today | What would close it |
 |---|---|---|
 | **No way to delete an account** | The database is ready (deleting a user cascades to their saves), but no endpoint or screen deletes a user, so someone can delete every save but not their account or email address | A signed-in `DELETE /api/v1/account` that removes the user (and so their saves) and signs them out, with a confirm step in the UI |
-| **Cascade delete is untested** | Declared in the model and the `AddUserAccounts` migration; no test deletes a user | A repository test: delete a user, and their saves are gone while others' remain |
-| **Lockout is untested** | Works by Identity's defaults (5 failures, 5 minutes), checked by hand; nothing in the code sets it, so nothing would notice if it changed | An API test: five wrong passwords, then the right one is refused as `LockedOut` |
 | **No automatic backups** | Manual, as above | A scheduled copy of the volume, or a managed database |
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
 | **The cookie is `Secure` only over HTTPS** | `SecurePolicy = SameAsRequest`, so the plain-HTTP demo still works | Serve over HTTPS (behind a proxy), and the cookie is marked `Secure` automatically |

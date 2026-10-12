@@ -55,6 +55,43 @@ public class AccountApiTests : ApiTestBase
         Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), "a wrong password does not sign in");
     }
 
+    [Test]
+    public async Task FourWrongPasswords_StillLetTheRightOneIn()
+    {
+        var email = UniqueEmail();
+        using var _ = await SignUpAsync(email);
+        using var client = ApiFixture.Factory.CreateClient();
+
+        await TryWrongPasswordsAsync(client, email, times: 4);
+        var login = await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword });
+
+        Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the account locks on the fifth failure, not before");
+    }
+
+    [Test]
+    public async Task FiveWrongPasswords_LockTheAccount_SoEvenTheRightOneIsRefused()
+    {
+        var email = UniqueEmail();
+        using var _ = await SignUpAsync(email);
+        using var client = ApiFixture.Factory.CreateClient();
+
+        await TryWrongPasswordsAsync(client, email, times: 5);
+        var login = await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = GoodPassword });
+        var problem = await ReadJsonAsync(login);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(login.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), "a locked account does not sign in, even with the right password");
+            Assert.That(problem.GetProperty("detail").GetString(), Is.EqualTo("LockedOut"), "and the refusal says the account is locked");
+        });
+    }
+
+    private static async Task TryWrongPasswordsAsync(HttpClient client, string email, int times)
+    {
+        for (var attempt = 1; attempt <= times; attempt++)
+            await client.PostAsJsonAsync($"{AccountUrl}/login?useCookies=true", new { email, password = $"wrong-password-{attempt}" });
+    }
+
     [TestCase("short1", "PasswordTooShort", TestName = "a password under 8 characters")]
     [TestCase("no-digits-here", "PasswordRequiresDigit", TestName = "a password without a digit")]
     public async Task AWeakPassword_IsRejected_WithTheRuleItBreaks(string password, string rule)

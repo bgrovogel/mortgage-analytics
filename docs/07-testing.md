@@ -15,8 +15,8 @@
 |---|---|---|---|
 | Domain | 440 | NUnit | < 1 s |
 | Application | 210 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 18 | NUnit, SQLite in memory | ~1 s |
-| API integration | 73 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
+| API integration | 75 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 513 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 88 | Playwright (Chromium), axe-core | ~30 s, with the production build |
@@ -60,6 +60,8 @@ Take the ARM margin floor as an example of the order of work:
 - The repository on a real SQLite database built by the real migrations: each owner sees only their own
   calculations, every input survives the round trip, newest first, and search is case-insensitive and literal.
 - **The migrations match the model** (`HasPendingModelChanges`): forget `dotnet ef migrations add` and this fails.
+- **Deleting a user deletes their calculations**, and no one else's: the database's own cascade, since the test never
+  loads the calculations it expects to disappear.
 - **Stored format** (`StoredFormatTests`): a save of each kind, in today's JSON (`StoredFormats/*.json`, every
   option set), must still load with every value. Adding a field passes; renaming or removing one fails and names
   it. That is the signal to keep the old name, or to add a version to the stored JSON and upgrade it on load.
@@ -67,6 +69,7 @@ Take the ARM margin floor as an example of the order of work:
 **API integration**
 - The real pipeline in Production mode, on a temporary SQLite file, with one shared host (`[SetUpFixture]`).
 - Accounts end to end: sign-up, cookie flags, confirmation and reset through the captured emails, sign-out.
+- Lockout at its limit: four wrong passwords still let the right one in; five lock the account (`LockedOut`).
 - Saved-calculation CRUD: 201 + Location, 401 when signed out, another user's item is a 404.
 - Errors: JSON paths in 400s, malformed bodies, and a substitute service that throws to prove a 500 leaks nothing.
 - Swagger, health, the JSON 404 for unknown API routes.

@@ -171,4 +171,22 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
             Assert.That(await NewRepository().FindAsync(Bob, theirs.Id, CancellationToken.None), Is.Not.Null, "it is still there for its owner");
         });
     }
+
+    [Test]
+    public async Task DeletingAUser_DeletesTheirCalculations_AndNoOneElses()
+    {
+        await SeedAsync(ACalculation("Alice's first"), ACalculation("Alice's second", minutesLater: 1), ACalculation("Bob's", owner: Bob));
+
+        // The calculations are not loaded, so only the database's own cascade can remove them.
+        await using (var context = NewContext())
+        {
+            context.Users.Remove(await context.Users.SingleAsync(u => u.Id == Alice));
+            await context.SaveChangesAsync();
+        }
+
+        await using var check = NewContext();
+        var left = await check.SavedCalculations.Select(c => c.Name).ToListAsync();
+
+        Assert.That(left, Is.EqualTo(new[] { "Bob's" }), "a deleted user's calculations go with them, and everyone else's stay");
+    }
 }
