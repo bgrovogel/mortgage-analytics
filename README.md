@@ -27,7 +27,7 @@ rich enough to show real engineering judgment, and the code is small enough to r
 | **Calculator** | *What will this home cost me, month by month and year by year?* Principal and interest; property taxes (one rate, or Texas school, county/city and MUD taxes with homestead exemptions, the over-65 ceiling and the appraisal cap); insurance, HOA dues, PID and PMI; extra payments and lender recasts; buydowns and ARMs; and a projection of every cost over the loan. |
 | **Refinance** | *Should I refinance?* The rest of today's loan against the new one, closing costs included, with the break-even. It catches the trap most calculators hide: a lower payment can cost more overall, because a new 30-year loan restarts the clock. |
 | **Pay off or invest** | *Should spare cash pay down the mortgage, or be invested?* Three strategies played out month by month for 30 years, with the 401(k) match, IRA, RSUs, ESOP, ESPP, the standard deduction and taxes, in three markets, ranked on a risk-adjusted return. |
-| **History** | Save any result under a name with a free account, and reopen it exactly as it was. The calculators need no account. |
+| **History** | Save any result under a name with a free account, and reopen it exactly as it was. The calculators need no account, and you can delete yours, with everything in it, from **Your account**. |
 
 A loan typed on one page is carried to the others. **Every rule, in detail: [What it does](docs/00-features.md).**
 
@@ -43,7 +43,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 - **Money math you can trust.** `decimal` throughout, every schedule ends at exactly $0.00, and the expected values
   in the tests come from independent Python models, not from this code. Scripts compare 300 random purchases, 300
   refinances and 300 households with the live API, field by field. They have caught real bugs.
-- **Tested from the domain to the browser.** 757 .NET, 513 Jest and 88 Playwright tests, written test-first. An 85%
+- **Tested from the domain to the browser.** 757 .NET, 526 Jest and 91 Playwright tests, written test-first. An 85%
   coverage gate, a mutation-score gate on the domain (Stryker.NET), a snapshot of the whole API contract, and
   assertion standards enforced at build time with Roslyn.
 - **Built like it will be attacked.** Cookie-only sessions, account attempt limits, a Content-Security-Policy that
@@ -102,9 +102,9 @@ dotnet test                       # 757 NUnit tests, including the convention te
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
 npm run typecheck                 # tsc over the test code, which Jest and Playwright run without checking types
-npm test                          # 513 Jest unit tests; fails below 85% coverage
+npm test                          # 526 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 88 Playwright tests (13 are axe accessibility scans); builds the app and serves it from the API, as in production
+npm run e2e                       # 91 Playwright tests (15 are axe accessibility scans); builds the app and serves it from the API, as in production
 ```
 
 How each layer is tested, the standards the build enforces, coverage and mutation testing:
@@ -173,7 +173,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Inter |
-| **Tests** | NUnit + NSubstitute: 757 backend tests · Jest: 513 Angular unit tests · Playwright: 88 E2E tests, including axe accessibility scans · Stryker.NET · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 757 backend tests · Jest: 526 Angular unit tests · Playwright: 91 E2E tests, including axe accessibility scans · Stryker.NET · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 
 Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).
@@ -188,7 +188,5 @@ Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).
 - **FHA and VA loans:** up-front and annual MIP and the VA funding fee, as new `IHousingCost` implementations.
 - **Discount points** (a permanent buydown): points paid at closing for a lower note rate, with the break-even.
 - **Mutation testing beyond the domain:** the Application layer's mapping and validators.
-- **A "Delete my account" screen:** the endpoint exists (`DELETE /api/v1/account`, with the password); it needs a
-  confirm step in the app.
 
 The design's known limits, and what would change them: [Trade-offs](docs/08-interview-guide.md#trade-offs-and-what-youd-change).

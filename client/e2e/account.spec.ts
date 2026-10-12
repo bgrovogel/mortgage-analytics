@@ -98,4 +98,25 @@ test.describe('Accounts', () => {
 
     await expect(page.getByTestId('account-error'), 'no hint about which part was wrong').toHaveText('That email and password do not match.');
   });
+
+  test('deletes the account, with everything saved in it, once the password is typed', async ({ signedIn, page, account }) => {
+    await signedIn.saveAs('Oak St');
+
+    await page.getByTestId('account-link').click();
+    await expect(page, 'the email in the header opens the account page').toHaveURL(/\/account$/);
+    await page.getByTestId('delete-start').click();
+    await page.getByTestId('delete-password').fill('wrong-password-1');
+    await page.getByTestId('delete-submit').click();
+    await expect(page.getByTestId('delete-error'), 'a wrong password deletes nothing').toHaveText('The password is not correct.');
+
+    await page.getByTestId('delete-password').fill(account.password);
+    await page.getByTestId('delete-submit').click();
+    await expect(page.getByTestId('delete-done'), 'the right one deletes the account').toContainText('Your account is deleted');
+
+    await page.getByRole('link', { name: 'Carry on without an account' }).click();
+    await expect(page.getByTestId('sign-in-link'), 'and signs out').toBeVisible();
+    const signIn = await page.request.post('/api/v1/account/login?useCookies=true', { data: account });
+    expect(signIn.status(), 'the account can no longer sign in').toBe(401);
+  });
 });
+

@@ -74,6 +74,16 @@ for (const scheme of ['light', 'dark'] as const) {
       }
     });
 
+    test('the account page, with the delete step open', async ({ account, page }) => {
+      expect(account.email, 'signed in').toBeTruthy();
+      await page.goto('/account');
+      await page.getByTestId('delete-start').click();
+      await page.getByTestId('delete-submit').click();
+      await expect(page.getByTestId('delete-form').locator('.error'), 'the empty password is flagged').toBeVisible();
+
+      expect(await violations(page), 'the account page breaks no accessibility rule').toEqual([]);
+    });
+
     test('history, signed in, with a saved calculation', async ({ signedIn, page }) => {
       await signedIn.saveAs('Oak St');
       await page.goto('/history');

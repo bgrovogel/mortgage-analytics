@@ -157,7 +157,7 @@ already versioned (`/api/v1`).
 - The owner id comes from the session's claims, never from the request.
 - The repository filters **in the query** (`WHERE OwnerId = @user`), not after loading.
 - Another user's item returns **404, not 403**, so its existence isn't revealed.
-- Deleting an account (`DELETE /api/v1/account`, with the password) cascades to their calculations, and every
+- Deleting an account (from **Your account**, with the password) cascades to their calculations, and every
   request rechecks its session, so the account's other sessions end at once.
 
 ### Security
@@ -313,7 +313,6 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | One container; signing keys on disk | Shared key storage (e.g. a database or blob) before running several instances |
 | Saved JSON | No version; a test guards the format | `schemaVersion` + upgrade on load, at the first breaking change |
-| Accounts | Accounts can be deleted through the API, with the password | A "Delete my account" screen with a confirm step |
 
 ---
 
@@ -382,7 +381,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 757 .NET · 513 Jest · 88 Playwright (13 axe scans); 85% coverage gate |
+| Tests | 757 .NET · 526 Jest · 91 Playwright (15 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

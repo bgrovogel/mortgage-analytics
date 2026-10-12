@@ -231,6 +231,9 @@ The flows are designed around the people using it:
 - **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
   scroll-driven effect that follows the form's own scroll and is gone at the end.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.
+- **Leaving:** the email in the header (a person icon on a phone) opens **Your account**. Deleting it takes two
+  deliberate steps, "Delete my account…" and then the password, and the button that deletes is red. A
+  wrong password shows the server's own message; success unlinks the pages from the saves that went with it.
 - **The form card:** the main group's heading is a real heading, tagged "Shared across pages" (the long "Filled in
   from your loan on the Refinance page" line only appears when it happened). What the numbers add up to is a summary
   chip; help only some need is a `details.help` toggle; the optional sections are one divided list under **More
@@ -247,8 +250,8 @@ The flows are designed around the people using it:
 ### Routing and auth
 
 `app.routes.ts`: `/calculator` (with child routes `overview`, `projection`, `schedule`), `/refinance`,
-`/strategy`, `/history` (behind `signedInGuard`), and the account pages (a focused layout without page tabs).
-An app initializer asks the API who is signed in before the first navigation, so the guard already knows. The
+`/strategy`, `/history` and `/account` (both behind `signedInGuard`), and the account pages (a focused layout
+without page tabs, which `/account` uses too). An app initializer asks the API who is signed in before the first navigation, so the guard already knows. The
 guard redirects to `/sign-in?returnUrl=…`, and only same-site paths are accepted as return URLs (no open
 redirect).
 

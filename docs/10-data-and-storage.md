@@ -174,7 +174,7 @@ What Identity stores and enforces, as configured in `AccountEndpoints.AddAccount
 | **Lockout** | Identity's defaults: after **5** wrong passwords in a row the account is locked for **5 minutes**, and even the right password is refused (`LockedOut`). A successful sign-in resets the count. `AccountApiTests` pin the limit from both sides |
 | **Emailed codes** | Confirmation and reset codes are signed with the Data Protection keys, single-purpose, and expire after Identity's default of a day |
 | **Session** | A cookie named `mortgage-analytics.session`: HttpOnly, SameSite=Strict, valid 14 days and renewed while in use (sliding). Every request rechecks it against the user, so a deleted account or a reset password ends the other sessions at once |
-| **Deleting the account** | `DELETE /api/v1/account` with the password in the body. A wrong password deletes nothing and counts toward lockout, so a stolen session cannot guess it here. Identity deletes the user, the database cascades to their saves, and the session ends |
+| **Deleting the account** | `DELETE /api/v1/account` with the password in the body. A wrong password deletes nothing and counts toward lockout, so a stolen session cannot guess it here. Identity deletes the user, the database cascades to their saves, and the session ends. In the app: **Your account** (`/account`) |
 | **Attempt limit** | Account POSTs are limited per client address (`RateLimiting:AccountPermitsPerMinute`: 10 in production, 1,000 in Development so the browser tests can sign up many users) |
 
 **The signing keys matter as much as the database.** They live on disk (`DataProtection:KeysDirectory`), and in Docker
@@ -256,12 +256,11 @@ The dev database collects the accounts that test runs sign up, so an occasional 
 
 ## What is not there yet
 
-Found while writing this page; each is a known gap, not a hidden one. (Three more were found here too and are
-closed: an untested cascade, an untested lockout, and no way at all to delete an account.)
+Found while writing this page; each is a known gap, not a hidden one. (Four more were found here too and are
+closed: an untested cascade, an untested lockout, no way to delete an account, and then no screen for it.)
 
 | Gap | Today | What would close it |
 |---|---|---|
-| **No screen to delete an account** | `DELETE /api/v1/account` works (with the password), but nothing in the app calls it yet | A "Delete my account" screen with a confirm step |
 | **No automatic backups** | Manual, as above | A scheduled copy of the volume, or a managed database |
 | **One writer at a time** | SQLite serialises writes, plenty for a demo | PostgreSQL, see [Migrations](#migrations) |
 | **The cookie is `Secure` only over HTTPS** | `SecurePolicy = SameAsRequest`, so the plain-HTTP demo still works | Serve over HTTPS (behind a proxy), and the cookie is marked `Secure` automatically |

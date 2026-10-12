@@ -189,7 +189,8 @@ ones the app uses (`ServeOnlyWhatTheAppUses`): sign-in is with a session cookie 
 4. On startup, `AuthService.load()` (an app initializer) asks `/manage/info` who is signed in, so the header and
    the History guard know at once.
 5. **Forgot password** answers the same whether or not the address exists, so it can't be used to find accounts.
-6. **Delete the account** (`DELETE /api/v1/account`, with the password): Identity deletes the user, the database
+6. **Delete the account** from **Your account** (`/account`, opened from the email in the header), where a second
+   step asks for the password, then `DELETE /api/v1/account`: Identity deletes the user, the database
    cascades to their saves, and the session ends. Every request rechecks its session against the user, so the
    account's other sessions end at once too.
 

@@ -117,6 +117,27 @@ describe('AppComponent', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="history-search"]')).not.toBeNull();
   });
 
+  it('links the signed-in email to the account page', () => {
+    user.set({ email: 'alice@example.com' });
+    const { root } = render();
+
+    expect(root.querySelector('[data-testid="account-link"]')?.getAttribute('href')).toBe('/account');
+  });
+
+  it('asks for an account before showing the account page', async () => {
+    await RouterTestingHarness.create('/account');
+
+    expect(TestBed.inject(Router).url).toBe('/sign-in?returnUrl=%2Faccount');
+  });
+
+  it('shows the account page to a signed-in user', async () => {
+    user.set({ email: 'alice@example.com' });
+
+    const harness = await RouterTestingHarness.create('/account');
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="delete-start"]')).not.toBeNull();
+  });
+
   it.each([
     ['/confirm-email', 'confirm-email'],
     ['/forgot-password', 'forgot-form'],
@@ -136,7 +157,7 @@ describe('AppComponent', () => {
     return fixture.nativeElement as HTMLElement;
   };
 
-  it.each(['/sign-in', '/forgot-password', '/reset-password?email=a%40example.com&code=c', '/confirm-email', '/dev/mailbox'])(
+  it.each(['/sign-in', '/account', '/forgot-password', '/reset-password?email=a%40example.com&code=c', '/confirm-email', '/dev/mailbox'])(
     'keeps %s focused: no page tabs or account controls, just a way back', async (url) => {
       const shell = await shellAt(url);
 

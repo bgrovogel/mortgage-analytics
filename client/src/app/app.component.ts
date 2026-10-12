@@ -41,7 +41,15 @@ const PAGES = [
           </nav>
           <div class="account">
             @if (auth.user(); as user) {
-              <span class="who" data-testid="signed-in-as">{{ user.email }}</span>
+              <!-- The email on a wide screen; on a phone, where the email would not fit, a person icon named "Account". -->
+              <a class="who" routerLink="/account" data-testid="account-link" [attr.title]="'Your account: ' + user.email">
+                <span class="email" data-testid="signed-in-as">{{ user.email }}</span>
+                <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                  <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2" />
+                  <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="short">Account</span>
+              </a>
               <button type="button" class="link" (click)="signOut()" data-testid="sign-out" [attr.title]="'Signed in as ' + user.email">Sign out</button>
             } @else {
               <a routerLink="/sign-in" data-testid="sign-in-link">Sign in</a>

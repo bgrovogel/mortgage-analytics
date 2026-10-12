@@ -103,4 +103,27 @@ describe('AuthService', () => {
 
     expect(auth.user()).toBeNull();
   });
+
+  it('deletes the account with its password, and is signed out', () => {
+    auth.load().subscribe();
+    answerWhoAmI('alice@example.com');
+
+    auth.deleteAccount('correct-horse-1').subscribe();
+    const call = http.expectOne((r) => r.url === '/api/v1/account' && r.method === 'DELETE');
+    expect(call.request.body).toEqual({ password: 'correct-horse-1' });
+    call.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(auth.user()).toBeNull();
+  });
+
+  it('stays signed in when the delete is refused', () => {
+    auth.load().subscribe();
+    answerWhoAmI('alice@example.com');
+
+    auth.deleteAccount('wrong-password-1').subscribe({ error: () => undefined });
+    http.expectOne((r) => r.url === '/api/v1/account' && r.method === 'DELETE')
+      .flush({ errors: { password: ['The password is not correct.'] } }, { status: 400, statusText: 'Bad Request' });
+
+    expect(auth.user()).toEqual({ email: 'alice@example.com' });
+  });
 });

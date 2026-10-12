@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,360 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,370 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -18,8 +18,8 @@
 | Infrastructure | 19 | NUnit, SQLite in memory | ~1 s |
 | API integration | 81 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 513 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 88 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 526 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 91 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -102,7 +102,8 @@ Take the ARM margin floor as an example of the order of work:
   dev server sends no CSP, so tests run against it would never notice. `security.spec.ts` checks the page carries
   the policy.
 - The calculator, the shared loan between pages, ARMs and buydowns, refinance, pay off or invest.
-- Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History.
+- Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History,
+  and deleting the account from its page (a wrong password first, then the right one).
 - A consistency suite checks every number on the Pay off or invest page (banner, cards, milestones in each scenario
   and in today's dollars, crossover notes, the fact sheet) against the API response it came from, for three very
   different households, and that the form and the API agree on every field's limits. Other specs cover a bad decade,

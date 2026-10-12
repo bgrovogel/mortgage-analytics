@@ -1,0 +1,113 @@
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
+import { toErrorMessages } from '../../core/errors/problem-details';
+import { CalculationStores } from '../calculation-stores';
+
+/**
+ * The signed-in account, and the way to delete it. Deleting takes two deliberate steps: open the delete section,
+ * then type the password. The API checks the password, deletes the account with everything saved in it, and ends
+ * every session, here and on other devices.
+ */
+@Component({
+  selector: 'app-account-page',
+  imports: [ReactiveFormsModule, RouterLink],
+  template: `
+    <section class="card" aria-labelledby="account-page-title" aria-live="polite">
+      <h2 id="account-page-title">Your account</h2>
+      @if (status() === 'done') {
+        <p class="note" role="status" data-testid="delete-done">
+          Your account is deleted, with every calculation saved in it. The calculators still work without one.
+        </p>
+        <a class="primary" routerLink="/calculator" data-testid="delete-done-continue">Carry on without an account</a>
+      } @else {
+        <p class="intro" data-testid="account-page-email">Signed in as <strong>{{ email }}</strong>.</p>
+
+        <div class="danger" role="group" aria-labelledby="delete-title">
+          <h3 id="delete-title">Delete your account</h3>
+          <p>
+            This deletes your account and every calculation saved in it, and signs you out on every device.
+            It cannot be undone.
+          </p>
+          @if (status() === 'idle') {
+            <button type="button" class="secondary destructive" (click)="start()" data-testid="delete-start">Delete my account…</button>
+          } @else {
+            <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="delete-form">
+              <label class="field">
+                <span>Your password, to confirm</span>
+                <input type="password" formControlName="password" autocomplete="current-password" data-testid="delete-password"
+                       [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched" />
+                @if (form.controls.password.invalid && form.controls.password.touched) {
+                  <small class="error">Enter your password.</small>
+                }
+              </label>
+              @if (error(); as message) {
+                <p class="alert" role="alert" data-testid="delete-error">{{ message }}</p>
+              }
+              <div class="actions">
+                <button type="submit" class="primary destructive" [disabled]="status() === 'working'" data-testid="delete-submit">
+                  Delete my account forever
+                </button>
+                <button type="button" class="secondary" [disabled]="status() === 'working'" (click)="cancel()" data-testid="delete-cancel">
+                  Keep my account
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      }
+    </section>
+  `,
+  styleUrl: './account-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AccountPageComponent {
+  private readonly auth = inject(AuthService);
+  private readonly stores = inject(CalculationStores);
+
+  /** The account's email; the route is guarded, so someone is signed in. */
+  protected readonly email = this.auth.user()?.email ?? '';
+
+  /** Where deleting stands: not started, asking for the password, on its way, or done. */
+  readonly status = signal<'idle' | 'confirming' | 'working' | 'done'>('idle');
+
+  /** Why the last attempt was refused (a wrong password, or too many of them). */
+  readonly error = signal<string | null>(null);
+
+  readonly form = inject(NonNullableFormBuilder).group({
+    password: ['', Validators.required],
+  });
+
+  /** Opens the delete step, which asks for the password. */
+  start(): void {
+    this.status.set('confirming');
+  }
+
+  /** Closes the delete step, forgetting the password typed. */
+  cancel(): void {
+    this.form.reset();
+    this.error.set(null);
+    this.status.set('idle');
+  }
+
+  /** Deletes the account. The pages stop pointing at saved items, which went with it. */
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.status.set('working');
+    this.error.set(null);
+    this.auth.deleteAccount(this.form.getRawValue().password).subscribe({
+      next: () => {
+        this.stores.unlinkAll();
+        this.status.set('done');
+      },
+      error: (error: unknown) => {
+        this.error.set(toErrorMessages(error).join(' '));
+        this.status.set('confirming');
+      },
+    });
+  }
+}

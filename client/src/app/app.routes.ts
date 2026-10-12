@@ -29,6 +29,7 @@ export const routes: Routes = [
   { path: 'history', loadComponent: () => import('./features/history/history-page.component').then((m) => m.HistoryPageComponent), canActivate: [signedInGuard], title: title('History') },
   // The account pages use a focused layout: no page tabs or account controls, just a way back.
   { path: 'sign-in', loadComponent: () => import('./features/account/sign-in-page.component').then((m) => m.SignInPageComponent), title: title('Sign in'), data: FOCUSED },
+  { path: 'account', loadComponent: () => import('./features/account/account-page.component').then((m) => m.AccountPageComponent), canActivate: [signedInGuard], title: title('Your account'), data: FOCUSED },
   // Where the links in account emails land.
   { path: 'confirm-email', loadComponent: () => import('./features/account/confirm-email-page.component').then((m) => m.ConfirmEmailPageComponent), title: title('Confirm email'), data: FOCUSED },
   { path: 'forgot-password', loadComponent: () => import('./features/account/forgot-password-page.component').then((m) => m.ForgotPasswordPageComponent), title: title('Forgot password'), data: FOCUSED },
