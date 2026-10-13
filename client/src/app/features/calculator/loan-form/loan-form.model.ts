@@ -54,7 +54,8 @@ export function loanForm(fb: NonNullableFormBuilder) {
     downPaymentMode: fb.control<DownPaymentMode>('amount'),
     // Dollars or a percentage of the price, depending on downPaymentMode.
     downPayment: [37_350, validatorsFor(rules.downPayment)],
-    annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
+    // About the average 30-year fixed rate today.
+    annualInterestRate: [6.25, validatorsFor(rules.annualInterestRate)],
     termYears: [30, validatorsFor(rules.termYears)],
     // Optional: a blank date lets the API default to the first of next month.
     firstPaymentDate: [firstOfMonthFromNext(0)],
@@ -108,13 +109,13 @@ export function loanForm(fb: NonNullableFormBuilder) {
     strategy: fb.control<ExtraPaymentStrategy>('ShortenTerm'),
 
     // Fixed, a buydown, or a 7/1 ARM with the usual 5/2/5 caps, expected to reset a point higher.
-    rate: rateOptionsForm(fb, 7.5),
+    rate: rateOptionsForm(fb, 7.25),
     // Who pays for a buydown: the seller or builder (a concession), unless the buyer says they do, at closing.
     buydownPaidBy: fb.control<BuydownFunding>('Seller'),
     // Discount points: off unless chosen; one point, against a quarter point more without it.
     usePoints: [false],
     points: [1, validatorsFor(rules.points)],
-    rateWithoutPoints: [6.75, validatorsFor(rules.rateWithoutPoints)],
+    rateWithoutPoints: [6.5, validatorsFor(rules.rateWithoutPoints)],
     recastMinimum: [10_000, validatorsFor(rules.recastMinimum)],
     recastFee: [250, validatorsFor(rules.recastFee)],
   });

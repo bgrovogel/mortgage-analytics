@@ -256,7 +256,7 @@ gaps. The rules for when a page shares its loan with the others (the fix for the
 Playwright, so a wrong `<` passed every unit test; they now have their own, case by case. And the loan form's defaults,
 its blank-to-zero mapping and its restore were checked only through the whole component, so a lost default or a value
 dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks them directly, with a round trip through
-every unusual value. It now scores **98.0%**; the 42 survivors are almost all equivalent: caches that only save work,
+every unusual value. It now scores **97.8%**; the 45 survivors are almost all equivalent: caches that only save work,
 `emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
 the last payment is 0 either way).
 

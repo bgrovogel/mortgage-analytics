@@ -14,9 +14,9 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdown, 'the breakdown starts with principal and interest').toContainText('Principal & interest');
     await expect(calculator.breakdown, 'the default example includes property tax, as one rate').toContainText('Property tax');
     await expect(calculator.breakdown, 'the default example has 9% down, so PMI').toContainText('PMI');
-    // An average US purchase: $415,000 with 9% down at 6.5%, 0.9% property tax, $3,100 of insurance, $50 of HOA dues.
-    // $377,650 borrowed: $2,387.00 of principal and interest, plus $311.25 + $258.33 + $157.35 + $50 = $3,163.93.
-    await expect(calculator.totalMonthlyPayment, 'every cost of the average example, each month').toHaveText('$3,163.93');
+    // An average US purchase: $415,000 with 9% down at 6.25%, 0.9% property tax, $3,100 of insurance, $50 of HOA dues.
+    // $377,650 borrowed: $2,325.26 of principal and interest, plus $311.25 + $258.33 + $157.35 + $50 = $3,102.19.
+    await expect(calculator.totalMonthlyPayment, 'every cost of the average example, each month').toHaveText('$3,102.19');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
     await expect(calculator.chart, 'the balance chart renders').toBeVisible();
     await calculator.showResults('schedule');

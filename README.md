@@ -32,7 +32,7 @@ rich enough to show real engineering judgment, and the code is small enough to r
 A loan typed on one page is carried to the others. **Every rule, in detail: [What it does](docs/00-features.md).**
 
 <p>
-  <img src="docs/images/refinance.png" alt="Refinance: a 2024 loan at 7% refinanced to 6% saves $31,527 over the life of the loan" width="49%" />
+  <img src="docs/images/refinance.png" alt="Refinance: a 2024 loan at 7% refinanced at today's 6.25% saves $14,067 over the life of the loan" width="49%" />
   <img src="docs/images/pay-off-or-invest-dark.png" alt="Pay off or invest, in dark mode: invest the difference, with a bad-decade warning" width="49%" />
 </p>
 

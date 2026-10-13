@@ -8,8 +8,11 @@ import { expect, test } from './fixtures';
  */
 test.describe('Refinance', () => {
   const verdict = (page: Page) => page.getByTestId('refi-verdict');
-  /** The reference refinance has 25 years left; the page's example (a 2024 loan) has 28. */
-  const reference = async (page: Page) => page.getByTestId('years-left').fill('25');
+  /** The reference refinance: 25 years left, into 6%. The page's example is a 2024 loan (28 years left) into today's 6.25%. */
+  const reference = async (page: Page) => {
+    await page.getByTestId('years-left').fill('25');
+    await page.getByTestId('new-rate').fill('6');
+  };
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -18,9 +21,9 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');
   });
 
-  test('the example: a 2024 loan at 7% into 6% saves money, though restarting the clock costs part of it', async ({ page }) => {
-    await expect(verdict(page), '28 years left: two years added, outweighed by the lower rate').toContainText('Refinancing saves $31,527');
-    await expect(page.getByTestId('refi-payment'), 'the payment drops').toContainText('$240.18 less than now');
+  test('the example: a 2024 loan at 7% into 6.25% saves money, though restarting the clock costs part of it', async ({ page }) => {
+    await expect(verdict(page), '28 years left: two years added, outweighed by the lower rate').toContainText('Refinancing saves $14,067');
+    await expect(page.getByTestId('refi-payment'), 'the payment drops').toContainText('$191.68 less than now');
     await expect(page.getByTestId('refi-restart'), 'and the restart is why it saves less').toContainText('saves less than the lower rate alone would');
   });
 

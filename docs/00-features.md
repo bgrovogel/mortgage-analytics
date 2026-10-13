@@ -99,7 +99,7 @@ MIP, and the first year's MIP is $134.33 a month.
 | **Appraisal cap** | A homestead's *taxable* value rises at most a set percentage a year (10% in Texas), even when the market rises faster. |
 | **PID assessment** | A fixed yearly amount, optionally ending after the district's remaining years. |
 | **Insurance and HOA** | A yearly premium and monthly dues. |
-| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings), which is the default, since a borrower paying extra asks as soon as they can. Or it comes off **automatically at 78%** of the original value, measured on the original schedule, which extra payments do not move. Either way it ends at the loan's **midpoint** whatever the balance, as the law says. The PMI tile says what the other way would do: on the example, if you don't ask, your servicer only has to remove it in May 2036 instead of Aug 2032, costing $7,081 more. Some servicers drop it once the actual balance passes 78%, but the law doesn't require it, so the app doesn't count on it. |
+| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings), which is the default, since a borrower paying extra asks as soon as they can. Or it comes off **automatically at 78%** of the original value, measured on the original schedule, which extra payments do not move. Either way it ends at the loan's **midpoint** whatever the balance, as the law says. The PMI tile says what the other way would do: on the example, if you don't ask, your servicer only has to remove it in Feb 2036 instead of Jul 2032, costing $6,766 more. Some servicers drop it once the actual balance passes 78%, but the law doesn't require it, so the app doesn't count on it. |
 | **Future increases** | Home value growth drives each year's tax (within the cap); insurance and dues rise at their own rates. The defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), insurance +4.8% (GAO-26-107867: $2,235 in 2019 to $2,829 in 2024), HOA dues +4%. |
 
 ### Cash to close
@@ -110,14 +110,14 @@ What you bring to closing besides the monthly payment, laid out as page 2 of a L
 | Line | How it works |
 |---|---|
 | **Loan costs** and **other fees** | Typed in from the Loan Estimate: its total D (origination, appraisal, title), then sections E and H (recording fees, transfer taxes, an owner's title policy). |
-| **Prepaid interest** | A day's interest at the note rate (loan × rate ÷ 365, to the cent), for the days from closing to the end of that month: $377,650 at 6.5% is $67.25 a day, so 15 days is $1,008.75. |
+| **Prepaid interest** | A day's interest at the note rate (loan × rate ÷ 365, to the cent), for the days from closing to the end of that month: $377,650 at 6.25% is $64.67 a day, so 15 days is $970.05. |
 | **Homeowners insurance** | The first year's premium, always paid at closing. |
 | **Escrow deposit** | Months of the first year's property taxes and insurance, a month being a twelfth of the year to the cent: (3,735 + 3,100) ÷ 12 = $569.58, so 3 months is $1,708.74. PID, HOA dues and PMI are not escrowed here. |
 | **A buydown you pay for** | Its whole subsidy is paid at closing; a seller's buydown is not your money, so it is not in the total. |
 | **Credits** | From the seller or lender, they pay closing costs and never the down payment: credits beyond the costs are shown as unused. |
 
 The Overview lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
-interest and 3 months of escrow on the $415,000 home come to **$10,817.49** on top of the $37,350 down payment.
+interest and 3 months of escrow on the $415,000 home come to **$10,778.79** on top of the $37,350 down payment.
 
 ### The results
 
@@ -144,7 +144,7 @@ interest and 3 months of escrow on the $415,000 home come to **$10,817.49** on t
 
 The rest of the current loan against a new one, with closing costs paid at closing or added to the loan.
 
-![Refinance: a 2024 loan at 7% refinanced to 6% saves $31,527, though restarting the clock costs part of it](images/refinance.png)
+![Refinance: a 2024 loan at 7% refinanced at today's 6.25% saves $14,067, though restarting the clock costs part of it](images/refinance.png)
 
 - **The verdict over the life of the loan,** closing costs included, in green when refinancing saves and amber when
   it costs more. It catches the trap most calculators hide: a lower payment can cost more overall, because a new

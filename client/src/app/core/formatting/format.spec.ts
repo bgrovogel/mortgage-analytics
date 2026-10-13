@@ -6,6 +6,7 @@ describe('format', () => {
     expect(usdCents(1234.5)).toBe('$1,234.50');
     expect(money(1500)).toBe('$1,500');
     expect(money(1798.65)).toBe('$1,798.65');
+    expect(money(1562.5)).toBe('$1,562.50'); // cents always two digits
     expect(compactUsd(1_250_000)).toBe('$1.3M');
   });
 

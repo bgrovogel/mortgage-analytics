@@ -81,7 +81,8 @@ export class RefinanceFormComponent implements OnInit {
     originalAmount: [{ value: 0, disabled: true }, validatorsFor(rules.originalAmount)],
     originalTermYears: [{ value: 30, disabled: true }, validatorsFor(rules.originalTermYears)],
     firstPaymentDate: [{ value: '', disabled: true }, Validators.required],
-    newAnnualInterestRate: [6, validatorsFor(rules.newAnnualInterestRate)],
+    // About the average 30-year fixed rate today.
+    newAnnualInterestRate: [6.25, validatorsFor(rules.newAnnualInterestRate)],
     newTerm: this.fb.control<NewTerm>('30'),
     closingCosts: [6_000, validatorsFor(rules.closingCosts)],
     financeClosingCosts: [false],
@@ -92,7 +93,7 @@ export class RefinanceFormComponent implements OnInit {
     // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
     // the new one may adjust (a 7/1 by default) or be bought down.
     currentRate: rateOptionsForm(this.fb, 9, 24),
-    newRate: rateOptionsForm(this.fb, 7.5),
+    newRate: rateOptionsForm(this.fb, 7.25),
   });
 
   private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });

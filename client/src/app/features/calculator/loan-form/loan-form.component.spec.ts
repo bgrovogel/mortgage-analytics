@@ -639,7 +639,7 @@ describe('LoanFormComponent', () => {
       expect(last().adjustableRate).toEqual({
         initialFixedMonths: 60, adjustmentIntervalMonths: 6, expectedRate: 7.5, initialCap: 5, periodicCap: 2, lifetimeCap: 5, margin: 2.75,
       });
-      expect(text('rate-summary')).toBe('5/6 ARM: 6.5% for 5 yr, then toward 7.5% (caps 5/2/5, floor 2.75%)');
+      expect(text('rate-summary')).toBe('5/6 ARM: 6.25% for 5 yr, then toward 7.5% (caps 5/2/5, floor 2.75%)');
     });
 
     it("sends the ARM's margin as its floor, and a blank margin as none", () => {
@@ -649,7 +649,7 @@ describe('LoanFormComponent', () => {
       controls().rate.controls.armMargin.setValue(null);
       fixture.detectChanges();
       expect(last().adjustableRate?.margin).toBeNull();
-      expect(text('rate-summary')).toBe('7/1 ARM: 6.5% for 7 yr, then toward 7.5% (caps 5/2/5)');
+      expect(text('rate-summary')).toBe('7/1 ARM: 6.25% for 7 yr, then toward 7.25% (caps 5/2/5)');
     });
 
     it('reopens a saved buydown or adjustable rate as it was', () => {
@@ -855,7 +855,7 @@ describe('LoanFormComponent', () => {
 
       turnOn();
 
-      expect(last().discountPoints).toEqual({ points: 1, rateWithoutPoints: 6.75 });
+      expect(last().discountPoints).toEqual({ points: 1, rateWithoutPoints: 6.5 });
       expect(el('points')).not.toBeNull();
       expect(text('rate-summary')).toBe('Fixed for the whole loan · 1 point');
     });
@@ -874,7 +874,7 @@ describe('LoanFormComponent', () => {
       const reports: string[][] = [];
       component.problems.subscribe((p) => reports.push(p));
 
-      controls().rateWithoutPoints.setValue(6.5);
+      controls().rateWithoutPoints.setValue(6.25); // the same as the rate with them
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(sent);

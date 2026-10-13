@@ -46,7 +46,7 @@ describe('RefinanceFormComponent', () => {
       currentAnnualInterestRate: 7,
       remainingTermInMonths: 336,
       nextPaymentDate: null,
-      newAnnualInterestRate: 6,
+      newAnnualInterestRate: 6.25,
       newTermInMonths: 360,
       closingCosts: 6_000,
       financeClosingCosts: false,
@@ -110,7 +110,7 @@ describe('RefinanceFormComponent', () => {
     fixture.detectChanges();
 
     expect(emitted[0]).toEqual(expect.objectContaining({
-      currentBalance: 250_000, currentAnnualInterestRate: 7.25, remainingTermInMonths: 270, newAnnualInterestRate: 6, closingCosts: 6_000,
+      currentBalance: 250_000, currentAnnualInterestRate: 7.25, remainingTermInMonths: 270, newAnnualInterestRate: 6.25, closingCosts: 6_000,
     }));
     expect(el('loan-shared')!.textContent).toContain('Filled in from your loan on the Pay off or invest page.');
   });

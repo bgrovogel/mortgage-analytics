@@ -29,7 +29,7 @@ test.describe('One loan across the pages', () => {
     await box(page, 'balance').fill('240000');
     await go(page, 'Refinance');
     await expect(box(page, 'current-balance'), 'a change made here goes back too').toHaveValue('240,000');
-    await expect(box(page, 'new-rate'), 'while the offer stays as it was').toHaveValue('6');
+    await expect(box(page, 'new-rate'), 'while the offer stays as it was').toHaveValue('6.25');
   });
 
   test('the loan on the Calculator is where the other pages start', async ({ page }) => {

@@ -13,8 +13,8 @@ export const usd = (value: number) => dollars.format(value);
 /** "$1,234.56": dollars and cents. */
 export const usdCents = (value: number) => cents.format(value);
 
-/** "$1,500" for whole dollars, "$1,798.65" otherwise. */
-export const money = (value: number) => dollarsOrCents.format(value);
+/** "$1,500" for whole dollars, "$1,798.65" or "$1,562.50" otherwise: cents, when there are any, always two digits. */
+export const money = (value: number) => (Number.isInteger(Math.round(value * 100) / 100) ? dollarsOrCents.format(value) : cents.format(value));
 
 /** "$1.2M": for chart axes. */
 export const compactUsd = (value: number) => compactDollars.format(value);

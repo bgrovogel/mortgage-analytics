@@ -97,6 +97,6 @@ describe('RefinancePageComponent', () => {
     (page.querySelector('[data-testid="save-open"]') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect((page.querySelector('[data-testid="save-name"]') as HTMLInputElement).value).toBe('Refinance 7% → 6%, 30 yr');
+    expect((page.querySelector('[data-testid="save-name"]') as HTMLInputElement).value).toBe('Refinance 7% → 6.25%, 30 yr');
   });
 });

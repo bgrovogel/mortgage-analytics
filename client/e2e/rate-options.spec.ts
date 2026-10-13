@@ -16,7 +16,9 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
   test('refinancing a 7% ARM about to reset to 9% saves money, and more in the worst case', async ({ page }) => {
     await page.goto('/refinance');
     await arrived(page, 'the worked example');
-    await page.getByTestId('years-left').fill('25'); // the reference refinance in tools/rate-check/rate_model.py
+    // The reference refinance in tools/rate-check/rate_model.py: 25 years left, into 6%.
+    await page.getByTestId('years-left').fill('25');
+    await page.getByTestId('new-rate').fill('6');
     await open(page, 'section-current-rate');
     await page.getByTestId('current-rate-type-arm').check();
     await page.getByTestId('current-arm-fixed-months').fill('24');
@@ -34,7 +36,8 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
   test('a 2-1 buydown on the new loan is paid at closing and changes nothing overall', async ({ page }) => {
     await page.goto('/refinance');
     await arrived(page, 'the worked example');
-    await page.getByTestId('years-left').fill('25'); // the reference refinance
+    await page.getByTestId('years-left').fill('25'); // the reference refinance: 25 years left, into 6%
+    await page.getByTestId('new-rate').fill('6');
     await open(page, 'section-new-rate');
     await page.getByTestId('new-rate-type-buydown').check();
     await arrived(page, 'the comparison');

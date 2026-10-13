@@ -65,10 +65,10 @@ on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the por
 
 | # | Do this | Say, and point at |
 |---|---|---|
-| 1 | **Calculator**, with the example numbers: an average US purchase, a $415,000 home, 9% down, 6.5%, 30 years, 0.9% property tax, $3,100 of insurance, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. $115,164 net savings ($110,287 less interest plus $4,878 of PMI), paid off 5 years 10 months sooner. PMI ends in August 2032, 2 years 7 months sooner, because asking at 80% is the default; the tile says that without asking, the servicer only has to remove it in May 2036, costing $7,081 more. The required payment is $3,163.93. Dates follow the first-payment date, so they move if the default has. |
+| 1 | **Calculator**, with the example numbers: an average US purchase, a $415,000 home, 9% down, today's average 6.25%, 30 years, 0.9% property tax, $3,100 of insurance, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. $108,039 net savings ($103,476 less interest plus $4,563 of PMI), paid off 5 years 9 months sooner. PMI ends in July 2032, 2 years 5 months sooner, because asking at 80% is the default; the tile says that without asking, the servicer only has to remove it in February 2036, costing $6,766 more. The required payment is $3,102.19. Dates follow the first-payment date, so they move if the default has. |
 | 2 | Switch the loan type to **FHA**, pick a county, then raise the price past its limit. | The limit is HUD's, by county; over it the app warns. The county list comes from `GET /api/v1/fha/loan-limits`. |
 | 3 | The **Projection** tab, then the equity chart. | Every cost of owning it over the life of the loan, not just principal and interest. |
-| 4 | **Refinance**: a 2024 loan, $300,000 at 7% with 28 years left, into 6% for 30 years, with $6,000 of closing costs. Then change the years left to 25. | The payment drops $240.18 a month and refinancing saves **$31,527**, less than the rate alone would because the clock restarts two years; break-even is November 2028, and "keep paying $2,038.83 a month" saves $135,060. With 25 years left, the same refinance costs **$17,415 more**: a lower payment that loses money. |
+| 4 | **Refinance**: a 2024 loan, $300,000 at 7% with 28 years left, into today's 6.25% for 30 years, with $6,000 of closing costs. Then change the years left to 25 and the new rate to 6%. | The payment drops $191.68 a month and refinancing saves **$14,067**, less than the rate alone would because the clock restarts two years; break-even is July 2029, and "keep paying $2,038.83 a month" saves $108,377. With 25 years left into 6%, it costs **$17,415 more**: a lower payment that loses money. |
 | 5 | **Pay off or invest**: $300,000 at 6.5%, 28 years left, $1,000 a month. Switch to **Bad decade first**. | "Invest the difference" is recommended, $16,791 ahead of the hybrid, but not guaranteed: after a lost decade, paying the mortgage off first wins by $20,915. The household's 17% tax rate is the 12% federal bracket plus a 5% state, as the hint under it shows. |
 | 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **History** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
 | 7 | Open **/swagger** and try `POST /api/v1/amortization/calculate`. | The same API the calculator uses, documented from the code's own comments. |
@@ -329,7 +329,7 @@ Coverage only shows what *isn't* executed. It can't show that the assertions are
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
 domain code about 1,150 ways and checks a test fails each time. It scores 98.3%, and CI fails below 95%; the
-Application layer scores 97.8% and the Angular logic 98.0% (StrykerJS), both run locally. The domain's first run
+Application layer and the Angular logic (StrykerJS) both score 97.8%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
 **Unit vs. integration?**
@@ -382,7 +382,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Database | SQLite by default; PostgreSQL by configuration, tested against a real one locally | Run the PostgreSQL tests in CI, once its minutes allow |
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
-| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI) and the Angular logic, and 97.8% on the Application layer (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
+| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI), and 97.8% on the Application layer and the Angular logic (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | Several instances on PostgreSQL, sharing their signing keys in it | Encrypt the keys at rest (a certificate or key vault) |
 

@@ -24,7 +24,7 @@ describe('loan form model', () => {
         localHomesteadExemptionPercent: 0, mudHomesteadExemptionPercent: 0, homesteadAssessmentCap: 10,
         isOver65: false, over65Year: 1, over65LocalExemption: 0, transferredCeilingPercent: null,
         pidAnnual: 0, pidYears: null, pmiCancellation: 'BorrowerRequested', closingCredits: 0,
-        annualExtra: 0, annualFirstPayment: 12, usePoints: false, rateWithoutPoints: 6.75, buydownPaidBy: 'Seller',
+        annualExtra: 0, annualFirstPayment: 12, usePoints: false, rateWithoutPoints: 6.5, buydownPaidBy: 'Seller',
       }));
     });
 
