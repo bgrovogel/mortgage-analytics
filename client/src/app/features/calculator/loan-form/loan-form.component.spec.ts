@@ -67,10 +67,10 @@ describe('LoanFormComponent', () => {
       expect(restored.nativeElement.querySelector('[data-testid="example-note"]')).toBeNull();
     });
 
-    it('maps years to months and sends a complete Texas homestead example', () => {
+    it('maps years to months and sends a complete example of an average purchase', () => {
       expect(emitted[0]).toMatchObject({
-        homePrice: 375_000,
-        downPayment: 18_750,
+        homePrice: 415_000,
+        downPayment: 37_350,
         termInMonths: 360,
         strategy: 'ShortenTerm',
         recast: null,
@@ -81,8 +81,8 @@ describe('LoanFormComponent', () => {
     });
 
     it('derives the loan amount, down-payment percentage and PMI flag', () => {
-      expect(component.loanAmount()).toBe(356_250);
-      expect(component.downPaymentPercent()).toBeCloseTo(5);
+      expect(component.loanAmount()).toBe(377_650);
+      expect(component.downPaymentPercent()).toBeCloseTo(9);
       expect(component.pmiApplies()).toBe(true);
     });
   });
@@ -107,7 +107,7 @@ describe('LoanFormComponent', () => {
       controls().taxMode.setValue('separate'); // the separate (Texas) taxes
       fixture.detectChanges();
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · MUD 0.85% · Homestead');
-      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo · PMI 0.5%');
+      expect(text('costs-summary')).toBe('Insurance $3,100/yr · HOA $50/mo · PMI 0.5%');
       expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 3 mo escrow');
       expect(text('growth-summary')).toBe('Home +4.3% · Insurance +4.8% · HOA +4%');
       expect(component.optionsSummary()).toBe('Pay off sooner');
@@ -119,7 +119,7 @@ describe('LoanFormComponent', () => {
       controls().isOver65.setValue(true);
       controls().mudTaxRate.setValue(0);
       controls().pidAnnual.setValue(1_200);
-      controls().downPayment.setValue(75_000);
+      controls().downPayment.setValue(83_000);
       controls().homeValueGrowthRate.setValue(-2);
       controls().annualExtra.setValue(2_000);
       controls().strategy.setValue('Recast');
@@ -131,7 +131,7 @@ describe('LoanFormComponent', () => {
 
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
       expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 2 mo escrow · Credits $3,000');
-      expect(text('costs-summary')).toBe('Insurance $2,400/yr · HOA $50/mo');
+      expect(text('costs-summary')).toBe('Insurance $3,100/yr · HOA $50/mo');
       expect(text('growth-summary')).toBe('Home -2% · Insurance +4.8% · HOA +4%');
       expect(text('options-summary')).toBe('$2,000 yearly · 1 lump sum · Recast (min $10,000)');
     });
@@ -175,24 +175,24 @@ describe('LoanFormComponent', () => {
   describe('down payment in dollars or percent', () => {
     it('starts in dollars', () => {
       expect(controls().downPaymentMode.value).toBe('amount');
-      expect(last().downPayment).toBe(18_750);
+      expect(last().downPayment).toBe(37_350);
     });
 
     it('converts the value when switching to percent, and back', () => {
       controls().downPaymentMode.setValue('percent');
-      expect(controls().downPayment.value).toBe(5);
-      expect(last().downPayment).toBe(18_750);
+      expect(controls().downPayment.value).toBe(9);
+      expect(last().downPayment).toBe(37_350);
 
       controls().downPaymentMode.setValue('amount');
-      expect(controls().downPayment.value).toBe(18_750);
+      expect(controls().downPayment.value).toBe(37_350);
     });
 
     it('sends the dollar amount for a percentage, rounded to cents', () => {
       controls().downPaymentMode.setValue('percent');
       controls().downPayment.setValue(12.5);
 
-      expect(last().downPayment).toBe(46_875);
-      expect(component.loanAmount()).toBe(328_125);
+      expect(last().downPayment).toBe(51_875);
+      expect(component.loanAmount()).toBe(363_125);
       expect(component.downPaymentPercent()).toBeCloseTo(12.5);
     });
 
@@ -200,7 +200,7 @@ describe('LoanFormComponent', () => {
       controls().downPaymentMode.setValue('percent');
       fixture.detectChanges();
 
-      expect(text('loan-summary')).toBe('$18,750 down (5%) · Loan $356,250');
+      expect(text('loan-summary')).toBe('$37,350 down (9%) · Loan $377,650');
     });
 
     it('rejects 100% or more, which leaves nothing to borrow', () => {
@@ -233,7 +233,7 @@ describe('LoanFormComponent', () => {
 
   describe('derived values', () => {
     it('drops PMI at 20% down', () => {
-      controls().downPayment.setValue(75_000);
+      controls().downPayment.setValue(83_000);
 
       expect(component.pmiApplies()).toBe(false);
     });
@@ -373,7 +373,7 @@ describe('LoanFormComponent', () => {
       const { form } = restore(last());
 
       expect(form.form.controls.downPaymentMode.value).toBe('amount');
-      expect(form.form.controls.downPayment.value).toBe(37_500);
+      expect(form.form.controls.downPayment.value).toBe(41_500);
     });
 
     it('treats missing extras and costs as zero', () => {
@@ -469,7 +469,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
 
       expect(emitted[0]).toEqual(expect.objectContaining({
-        homePrice: 375_000, downPayment: 175_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: '2021-11-01',
+        homePrice: 415_000, downPayment: 215_000, annualInterestRate: 6, termInMonths: 360, firstPaymentDate: '2021-11-01',
       }));
       expect(text('existing-loan')).toContain('payment 61 of 360 is next');
     });
@@ -507,9 +507,9 @@ describe('LoanFormComponent', () => {
   describe('one property tax rate (the default)', () => {
     it('sends one combined rate and its homestead exemption, and none of the separate taxes', () => {
       expect(last().housingCosts).toEqual(expect.objectContaining({
-        propertyTaxRate: 2.2, propertyTaxHomesteadExemption: 50_000, schoolTaxRate: 0, localTaxRate: 0, mudTaxRate: 0, over65OrDisabled: null,
+        propertyTaxRate: 0.9, propertyTaxHomesteadExemption: 0, schoolTaxRate: 0, localTaxRate: 0, mudTaxRate: 0, over65OrDisabled: null,
       }));
-      expect(text('taxes-summary')).toBe('Tax 2.2% · Homestead $50,000 off');
+      expect(text('taxes-summary')).toBe('Tax 0.9% · Homestead');
     });
 
     it('sends the separate taxes instead once they are chosen, and checks only the fields in use', () => {
@@ -524,13 +524,13 @@ describe('LoanFormComponent', () => {
 
     it('says what the exemption saves in year 1', () => {
       fixture.componentRef.setInput('firstYear', {
-        year: 1, startDate: '2026-11-01', marketValue: 375_000, assessedValue: 375_000,
-        schoolTaxableValue: null, localTaxableValue: null, mudTaxableValue: null, propertyTaxableValue: 325_000,
+        year: 1, startDate: '2026-11-01', marketValue: 415_000, assessedValue: 415_000,
+        schoolTaxableValue: null, localTaxableValue: null, mudTaxableValue: null, propertyTaxableValue: 365_000,
         costs: { propertyTax: 0, schoolTax: 0, localTax: 0, mudTax: 0, pidAssessment: 0, homeownersInsurance: 0, mortgageInsurance: 0, hoaDues: 0, total: 0 },
       });
       fixture.detectChanges();
 
-      expect(text('homestead-savings')).toBe('In year 1 the exemption saves $1,100 in tax.'); // 2.2% of the $50,000 exempt
+      expect(text('homestead-savings')).toBe('In year 1 the exemption saves $450 in tax.'); // 0.9% of the $50,000 exempt
     });
 
     it('reopens a calculation saved with separate taxes as separate taxes', () => {
@@ -679,7 +679,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
 
       expect(last().housingCosts?.rateChanges).toEqual([{ fromYear: 2, propertyTaxRate: 2.4, schoolTaxRate: null, localTaxRate: null, mudTaxRate: null }]);
-      expect(text('taxes-summary')).toBe('Tax 2.2% · Homestead $50,000 off · 1 rate change');
+      expect(text('taxes-summary')).toBe('Tax 0.9% · Homestead · 1 rate change');
     });
 
     it('offer a field for each tax that is charged, and send only those', () => {
@@ -763,7 +763,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('send an FHA loan, its upfront MIP financed, and no PMI', () => {
-      controls().downPayment.setValue(13_125); // 3.5% of $375,000
+      controls().downPayment.setValue(14_525); // 3.5% of $415,000
       choose('Fha');
 
       expect(last().program).toEqual({ type: 'Fha', vaUse: null, financeUpfrontFee: true, creditScore: null, countyFips: null });
@@ -784,7 +784,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('send an FHA loan with its credit score and county', () => {
-      controls().downPayment.setValue(13_125);
+      controls().downPayment.setValue(14_525);
       choose('Fha');
       controls().creditScore.setValue(640);
       controls().countyFips.setValue('48029');
@@ -793,7 +793,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('need 10% down for FHA with a credit score below 580', () => {
-      controls().downPayment.setValue(13_125);
+      controls().downPayment.setValue(14_525);
       choose('Fha');
       const sent = emitted.length;
 
@@ -805,7 +805,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('refuse FHA below a credit score of 500', () => {
-      controls().downPayment.setValue(75_000);
+      controls().downPayment.setValue(83_000);
       choose('Fha');
       const sent = emitted.length;
 
@@ -929,7 +929,7 @@ describe('LoanFormComponent', () => {
 
     it('keeps its own price when the loan has no home value, and never goes below a $0 down payment', () => {
       expect(startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: null }))
-        .toEqual(expect.objectContaining({ homePrice: 375_000, downPayment: 75_000 }));
+        .toEqual(expect.objectContaining({ homePrice: 415_000, downPayment: 115_000 }));
       expect(startFrom({ balance: 420_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: 400_000 }))
         .toEqual(expect.objectContaining({ homePrice: 420_000, downPayment: 0 }));
     });
@@ -957,7 +957,7 @@ describe('LoanFormComponent', () => {
       component.lumpSums.at(0).controls.amount.setValue(0);
       controls().schoolTaxRate.setValue(1);
       component.lumpSums.at(0).controls.amount.setValue(5_000);
-      controls().downPayment.setValue(375_000);
+      controls().downPayment.setValue(415_000);
 
       expect(reports).toEqual([
         [],
@@ -970,7 +970,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('explains when the down payment leaves nothing to borrow', () => {
-      controls().downPayment.setValue(375_000);
+      controls().downPayment.setValue(415_000);
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(1);
@@ -1024,7 +1024,7 @@ describe('LoanFormComponent', () => {
       expect(el('pmi-hint')?.textContent).toContain('Ask your lender to remove it at 80% of the price, and extra payments bring that sooner');
       expect((el('pmi-cancellation') as HTMLSelectElement).value).toBe('BorrowerRequested');
 
-      controls().downPayment.setValue(75_000);
+      controls().downPayment.setValue(83_000);
       fixture.detectChanges();
 
       expect(el('pmi-hint')?.textContent).toContain('No PMI');
@@ -1034,7 +1034,7 @@ describe('LoanFormComponent', () => {
       const price = el('home-price') as HTMLInputElement;
 
       expect(price.type).toBe('text');
-      expect(price.value).toBe('375,000');
+      expect(price.value).toBe('415,000');
       expect((price.closest('.affix') as HTMLElement).dataset['prefix']).toBe('$');
       expect((el('interest-rate')!.closest('.affix') as HTMLElement).dataset['suffix']).toBe('%');
     });

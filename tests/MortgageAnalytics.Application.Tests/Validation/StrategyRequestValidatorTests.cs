@@ -127,7 +127,7 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
         {
             AssertValid(TypicalRequest with { AdjustableRate = arm }, "a reset five years out");
             AssertValid(TypicalRequest with { Buydown = buydown }, "a 2-1 buydown");
-            AssertInvalid(TypicalRequest with { AdjustableRate = arm with { InitialFixedMonths = 300 } }, "AdjustableRate.InitialFixedMonths", "the reset must come before the loan ends");
+            AssertInvalid(TypicalRequest with { AdjustableRate = arm with { InitialFixedMonths = TypicalRequest.RemainingTermInMonths } }, "AdjustableRate.InitialFixedMonths", "the reset must come before the loan ends");
             AssertInvalid(TypicalRequest with { Buydown = new TemporaryBuydownRequest { YearlyReductions = [4m] } }, "Buydown.YearlyReductions[0]", "at most 3 points off");
             AssertInvalid(TypicalRequest with { AdjustableRate = arm, Buydown = buydown }, "AdjustableRate", "one or the other");
         });

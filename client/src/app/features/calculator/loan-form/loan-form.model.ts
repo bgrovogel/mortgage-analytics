@@ -37,12 +37,13 @@ const TAX_MODE_CONTROLS = {
 } as const;
 
 /**
- * The form, with defaults that describe a typical Texas homestead purchase with 5% down, so PMI, the homestead
- * exemption and yearly increases are all visible on load.
+ * The form, with defaults that describe an average US purchase: about the median home ($415,000), the typical
+ * first-time buyer's 9% down (so PMI shows), the national average property tax (about 0.9% of value, exemptions
+ * already netted out) and home insurance (GAO's $2,829 for 2024, grown 4.8% a year to 2026), and yearly increases.
  */
 export function loanForm(fb: NonNullableFormBuilder) {
   return fb.group({
-    homePrice: [375_000, validatorsFor(rules.homePrice)],
+    homePrice: [415_000, validatorsFor(rules.homePrice)],
     // Conventional unless chosen. FHA and VA have their own fees and no PMI.
     loanProgram: fb.control<LoanProgramType>('Conventional'),
     vaUse: fb.control<VaFundingFeeType>('FirstUse'),
@@ -52,7 +53,7 @@ export function loanForm(fb: NonNullableFormBuilder) {
     countyFips: [''],
     downPaymentMode: fb.control<DownPaymentMode>('amount'),
     // Dollars or a percentage of the price, depending on downPaymentMode.
-    downPayment: [18_750, validatorsFor(rules.downPayment)],
+    downPayment: [37_350, validatorsFor(rules.downPayment)],
     annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
     termYears: [30, validatorsFor(rules.termYears)],
     // Optional: a blank date lets the API default to the first of next month.
@@ -60,8 +61,8 @@ export function loanForm(fb: NonNullableFormBuilder) {
 
     // One combined rate and one homestead exemption, the way most places quote them; or the separate Texas taxes.
     taxMode: fb.control<TaxMode>('single'),
-    propertyTaxRate: [2.2, validatorsFor(rules.propertyTaxRate)],
-    propertyTaxHomesteadExemption: [50_000, validatorsFor(rules.propertyTaxHomesteadExemption)],
+    propertyTaxRate: [0.9, validatorsFor(rules.propertyTaxRate)],
+    propertyTaxHomesteadExemption: [0, validatorsFor(rules.propertyTaxHomesteadExemption)],
     schoolTaxRate: [1.0, validatorsFor(rules.schoolTaxRate)],
     localTaxRate: [1.1, validatorsFor(rules.localTaxRate)],
     mudTaxRate: [0.85, validatorsFor(rules.mudTaxRate)],
@@ -86,7 +87,7 @@ export function loanForm(fb: NonNullableFormBuilder) {
     hoaIncreaseRate: [4, validatorsFor(rules.hoaIncreaseRate)],
     pidAnnual: [0, validatorsFor(rules.pidAnnual)],
     pidYears: [null as number | null, validatorsFor(rules.pidYears)],
-    annualInsurance: [2_400, validatorsFor(rules.annualInsurance)],
+    annualInsurance: [3_100, validatorsFor(rules.annualInsurance)],
     monthlyHoa: [50, validatorsFor(rules.monthlyHoa)],
     pmiRate: [0.5, validatorsFor(rules.pmiRate)],
     pmiCancellation: fb.control<MortgageInsuranceCancellation>('BorrowerRequested'),

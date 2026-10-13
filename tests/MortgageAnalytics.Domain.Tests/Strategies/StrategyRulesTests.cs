@@ -189,10 +189,10 @@ public class StrategyRulesTests
         {
             Assert.That(fits.IraShelteredPercent, Is.EqualTo(100m), "$6,024 a year fits in the $7,500 IRA");
             Assert.That(fits.AfterTaxRiskAdjustedReturn, Is.EqualTo(8m), "so it keeps the whole 8%");
-            Assert.That(fits.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "a taxable account would keep 7.19%: tax is paid once, on selling");
+            Assert.That(fits.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "a taxable account would keep 7.25%: tax is paid once, on selling");
             Assert.That(overflows.IraShelteredPercent, Is.EqualTo(25m), "$7,500 of $30,024 a year fits in the IRA (24.98%)");
-            // 25% at 8% and 75% at 7.19% = 7.3925, rounded.
-            Assert.That(overflows.AfterTaxRiskAdjustedReturn, Is.EqualTo(7.39m), "a blend of the two");
+            // 25% at 8% and 75% at 7.25% = 7.4375, rounded.
+            Assert.That(overflows.AfterTaxRiskAdjustedReturn, Is.EqualTo(7.44m), "a blend of the two");
         });
     }
 
@@ -224,7 +224,7 @@ public class StrategyRulesTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(barely.FirstYearTaxSaved, Is.EqualTo(Typical.FirstYearTaxSaved), "itemizing beats the standard deduction by only $1,154");
+            Assert.That(barely.FirstYearTaxSaved, Is.EqualTo(Typical.FirstYearTaxSaved), "itemizing beats the standard deduction by only $1,185");
             Assert.That(barely.AfterTaxMortgageRate, Is.EqualTo(Typical.AfterTaxMortgageRate),
                 "so 1% of the interest comes back, not 17% of it: 6.43%, not 6.5% × 83% = 5.40%");
             Assert.That(fully.AfterTaxMortgageRate, Is.EqualTo(Itemizer.AfterTaxMortgageRate), "every dollar deducted: 7% × (1 − 29%)");
@@ -234,8 +234,8 @@ public class StrategyRulesTests
     [Test]
     public void DeductionsExactlyAtTheStandardDeduction_AreNotItemized()
     {
-        // $12,845.85 + $19,354.15 of interest is exactly the $32,200 joint standard deduction: nothing to gain by itemizing.
-        var inputs = TypicalInputs(otherDeductions: 12_845.85m);
+        // $12,815.04 + $19,384.96 of interest is exactly the $32,200 joint standard deduction: nothing to gain by itemizing.
+        var inputs = TypicalInputs(otherDeductions: 12_815.04m);
         var rates = StrategyRates.For(inputs, MonthlyCashPlan.For(inputs));
 
         Assert.Multiple(() =>

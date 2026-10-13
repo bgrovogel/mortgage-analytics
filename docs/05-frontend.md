@@ -150,11 +150,11 @@ box's `$` or `%`. The limits mirror the API's validator by hand; on Pay off or i
 field at the edge of its range and checks that the form and the API agree.
 
 **`app-number-field` + `appNumber`.** Every number box is one component. The `appNumber` directive is a
-`ControlValueAccessor`: it shows "375,000" with the `$` inside the box, switches to "375000" while you edit,
+`ControlValueAccessor`: it shows "415,000" with the `$` inside the box, switches to "415000" while you edit,
 selects the text on focus, and marks unreadable text invalid instead of reading it as 0.
 
 **Collapsible sections with summaries.** Each `<details>` section shows a one-line summary when closed
-("Tax 2.2% · Homestead $50,000 off"), and says "Check the values in this section" if a closed section holds an
+("Tax 0.9% · Homestead", or "Tax 2.2% · Homestead $50,000 off" with an exemption), and says "Check the values in this section" if a closed section holds an
 invalid value, so a problem is never hidden.
 
 **Only the active options are validated.** Switching "One tax rate" / "Separate taxes", or fixed / ARM, enables

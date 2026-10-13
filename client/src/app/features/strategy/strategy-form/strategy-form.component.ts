@@ -67,7 +67,7 @@ export class StrategyFormComponent implements OnInit {
     currentBalance: [300_000, validatorsFor(rules.currentBalance)],
     annualInterestRate: [6.5, validatorsFor(rules.annualInterestRate)],
     // Years, so people can answer from memory; sent as months.
-    yearsLeft: [25, validatorsFor(rules.yearsLeft)],
+    yearsLeft: [28, validatorsFor(rules.yearsLeft)],
     homeValue: [400_000, validatorsFor(rules.homeValue)],
     monthlyPmi: [0, validatorsFor(rules.monthlyPmi)],
     monthlyCashToPutToWork: [1_000, validatorsFor(rules.monthlyCashToPutToWork)],

@@ -212,7 +212,7 @@ def household(**kw):
     h.update(kw); return h
 
 def inputs(**kw):
-    i = dict(balance=D(300000), rate=D('6.5'), term=300, changes=[], buydown=[], first=datetime.date(2026, 1, 1), home=D(400000),
+    i = dict(balance=D(300000), rate=D('6.5'), term=336, changes=[], buydown=[], first=datetime.date(2026, 1, 1), home=D(400000),
              growth=D('4.3'), h=household(), match=D(50), upto=D(6), espp_pct=D(0), espp_disc=D(15),
              espp_period=6, ira=D(7500), ret=D(10), infl=D(3), risk='balanced', pmi=D(0))
     h = kw.pop('h', {}); arm = kw.pop('arm', None); i.update(kw); i['h'] = household(**h)
@@ -229,7 +229,7 @@ SCENARIOS = {
     'Conservative': inputs(risk='conservative'),
     'EsppEvery5': inputs(espp_pct=D(10), espp_period=5, h=dict(cash=D(2000))),
     # A 7/1 ARM with 5 years still fixed, expected to reset to 8.5% (caps 2/1/5), and a 2-1 buydown on a new loan.
-    'Arm': inputs(arm=(60, 12, '8.5', '2', '1', '5')),
+    'Arm': inputs(term=300, arm=(60, 12, '8.5', '2', '1', '5')),
     'Buydown': inputs(term=360, buydown=[D(2), D(1)]),
 }
 

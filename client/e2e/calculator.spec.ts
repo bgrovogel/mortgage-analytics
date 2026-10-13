@@ -13,7 +13,10 @@ test.describe('Mortgage calculator', () => {
   test('shows a worked example with taxes, insurance and PMI on first load', async ({ calculator }) => {
     await expect(calculator.breakdown, 'the breakdown starts with principal and interest').toContainText('Principal & interest');
     await expect(calculator.breakdown, 'the default example includes property tax, as one rate').toContainText('Property tax');
-    await expect(calculator.breakdown, 'the default example has 5% down, so PMI').toContainText('PMI');
+    await expect(calculator.breakdown, 'the default example has 9% down, so PMI').toContainText('PMI');
+    // An average US purchase: $415,000 with 9% down at 6.5%, 0.9% property tax, $3,100 of insurance, $50 of HOA dues.
+    // $377,650 borrowed: $2,387.00 of principal and interest, plus $311.25 + $258.33 + $157.35 + $50 = $3,163.93.
+    await expect(calculator.totalMonthlyPayment, 'every cost of the average example, each month').toHaveText('$3,163.93');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
     await expect(calculator.chart, 'the balance chart renders').toBeVisible();
     await calculator.showResults('schedule');
@@ -25,7 +28,7 @@ test.describe('Mortgage calculator', () => {
       await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
     }
     await expect(calculator.sectionSummary('taxes-summary'), 'a closed section summarizes its values')
-      .toHaveText('Tax 2.2% · Homestead $50,000 off');
+      .toHaveText('Tax 0.9% · Homestead');
     await expect(calculator.field('property-tax-rate'), 'fields inside a closed section are hidden').toBeHidden();
 
     await calculator.openSection('section-taxes');
@@ -67,9 +70,13 @@ test.describe('Mortgage calculator', () => {
   });
 
   test('cash to close: the down payment, the fees, prepaid interest and escrow from the loan, credits, and a buydown you pay for', async ({ calculator, page }) => {
-    // The example's $4,000 + $1,000 of fees, 15 days of interest and 3 months of escrow, on the reference buydown loan:
+    // The example's $4,000 + $1,000 of fees, 15 days of interest and 3 months of escrow, on the reference buydown loan
+    // with a 2.2% tax, a $50,000 homestead exemption and $2,400 of insurance:
     // 356,250 × 5.99% ÷ 365 is $58.46 a day; (7,150 of tax + 2,400 of insurance) ÷ 12 is $795.83 a month.
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
     await calculator.calculate();
     const lines = page.getByTestId('cash-to-close');
     const total = page.getByTestId('cash-to-close-total');
@@ -553,7 +560,7 @@ test.describe('Mortgage calculator', () => {
     const apiWasCalled = calculator.watchApiCalls();
 
     await calculator.set('interest-rate', 45);
-    await calculator.set('down-payment', 400_000);
+    await calculator.set('down-payment', 500_000); // more than the $415,000 price
 
     await expect(calculator.formPanel.getByText('Interest rate must be between 0% and 30%.'), 'the rate error is shown on the field').toBeVisible();
     await expect(calculator.formPanel.getByText('The down payment must be less than the home price.'), 'the down payment error is shown').toBeVisible();

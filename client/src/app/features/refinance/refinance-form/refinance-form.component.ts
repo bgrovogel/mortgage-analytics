@@ -76,8 +76,8 @@ export class RefinanceFormComponent implements OnInit {
     loanEntry: this.fb.control<LoanEntry>('today'),
     currentBalance: [300_000, validatorsFor(rules.currentBalance)],
     currentAnnualInterestRate: [7, validatorsFor(rules.currentAnnualInterestRate)],
-    // Years, so people can answer from memory ("about 25 years left"); sent as months.
-    yearsLeft: [25, validatorsFor(rules.yearsLeft)],
+    // Years, so people can answer from memory ("about 28 years left"); sent as months.
+    yearsLeft: [28, validatorsFor(rules.yearsLeft)],
     originalAmount: [{ value: 0, disabled: true }, validatorsFor(rules.originalAmount)],
     originalTermYears: [{ value: 30, disabled: true }, validatorsFor(rules.originalTermYears)],
     firstPaymentDate: [{ value: '', disabled: true }, Validators.required],

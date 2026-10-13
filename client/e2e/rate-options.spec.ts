@@ -16,6 +16,7 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
   test('refinancing a 7% ARM about to reset to 9% saves money, and more in the worst case', async ({ page }) => {
     await page.goto('/refinance');
     await arrived(page, 'the worked example');
+    await page.getByTestId('years-left').fill('25'); // the reference refinance in tools/rate-check/rate_model.py
     await open(page, 'section-current-rate');
     await page.getByTestId('current-rate-type-arm').check();
     await page.getByTestId('current-arm-fixed-months').fill('24');
@@ -33,6 +34,7 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
   test('a 2-1 buydown on the new loan is paid at closing and changes nothing overall', async ({ page }) => {
     await page.goto('/refinance');
     await arrived(page, 'the worked example');
+    await page.getByTestId('years-left').fill('25'); // the reference refinance
     await open(page, 'section-new-rate');
     await page.getByTestId('new-rate-type-buydown').check();
     await arrived(page, 'the comparison');
@@ -45,6 +47,7 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
   test('pay off or invest on an ARM resetting to 8.5%: nearly even with the market, and the fact sheet says why', async ({ page }) => {
     await page.goto('/strategy');
     await arrived(page, 'the typical household');
+    await page.getByTestId('years-left').fill('25'); // the reference ARM household
     await open(page, 'section-rate');
     await page.getByTestId('rate-type-arm').check();
     await page.getByTestId('arm-fixed-months').fill('60');

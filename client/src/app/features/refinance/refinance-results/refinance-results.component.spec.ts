@@ -81,6 +81,14 @@ describe('RefinanceResultsComponent', () => {
 
       expect(text('refi-restart')).toContain('The clock restarts');
       expect(text('refi-restart')).toContain('$1,500 of the first $1,798.65 payment is interest');
+      expect(text('refi-restart')).toContain('That is how a lower rate and a lower payment can still cost more in the end.');
+    });
+
+    it('says what the restart costs when the refinance still saves', () => {
+      render(aRefinanceResponse({ lifetimeSavings: 31_527, monthsAdded: 24 }));
+
+      expect(text('refi-restart')).toContain('It is why the refinance saves less than the lower rate alone would.');
+      expect(text('refi-restart')).not.toContain('still cost more');
     });
 
     it('is not shown when the new loan ends no later than the current one', () => {

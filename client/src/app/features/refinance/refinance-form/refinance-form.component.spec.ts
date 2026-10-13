@@ -44,7 +44,7 @@ describe('RefinanceFormComponent', () => {
     expect(emitted).toEqual([{
       currentBalance: 300_000,
       currentAnnualInterestRate: 7,
-      remainingTermInMonths: 300,
+      remainingTermInMonths: 336,
       nextPaymentDate: null,
       newAnnualInterestRate: 6,
       newTermInMonths: 360,
@@ -76,7 +76,7 @@ describe('RefinanceFormComponent', () => {
     create();
     const options = [...fixture.nativeElement.querySelectorAll('[data-testid="new-term"] option')].map((o) => (o as HTMLOptionElement).textContent!.trim());
 
-    expect(options).toEqual(['30 years', '25 years', '20 years', '15 years', '10 years', 'Keep my payoff date (25 years)']);
+    expect(options).toEqual(['30 years', '25 years', '20 years', '15 years', '10 years', 'Keep my payoff date (28 years)']);
   });
 
   it('can add the closing costs to the loan', () => {
@@ -129,16 +129,16 @@ describe('RefinanceFormComponent', () => {
 
       pick('original');
 
-      // $300,000 owed at 7% with 25 years left: a 30-year loan of $318,702.79, first paid five years ago.
-      expect(controls().originalAmount.value).toBe(318_702.79);
+      // $300,000 owed at 7% with 28 years left: a 30-year loan of $306,450.95, first paid two years ago.
+      expect(controls().originalAmount.value).toBe(306_450.95);
       expect(controls().originalTermYears.value).toBe(30);
-      expect(controls().firstPaymentDate.value).toBe('2021-11-01');
+      expect(controls().firstPaymentDate.value).toBe('2024-11-01');
       expect(last()).toEqual(expect.objectContaining({
         currentBalance: 300_000,
-        remainingTermInMonths: 300,
-        originalLoan: { amount: 318_702.79, termInMonths: 360, firstPaymentDate: '2021-11-01' },
+        remainingTermInMonths: 336,
+        originalLoan: { amount: 306_450.95, termInMonths: 360, firstPaymentDate: '2024-11-01' },
       }));
-      expect(el('original-loan-today')!.textContent).toContain('Payment 61 of 360 is next, with about $300,000 owed.');
+      expect(el('original-loan-today')!.textContent).toContain('Payment 25 of 360 is next, with about $300,000 owed.');
     });
 
     it('works out what is owed and the payments left from the original loan, and turns back into them', () => {
@@ -149,13 +149,13 @@ describe('RefinanceFormComponent', () => {
       controls().currentAnnualInterestRate.setValue(6);
       fixture.detectChanges();
 
-      expect(last()).toEqual(expect.objectContaining({ currentBalance: 186_108.71, remainingTermInMonths: 300 }));
-      expect(el('new-term')!.textContent).toContain('Keep my payoff date (25 years)');
+      expect(last()).toEqual(expect.objectContaining({ currentBalance: 194_936.47, remainingTermInMonths: 336 }));
+      expect(el('new-term')!.textContent).toContain('Keep my payoff date (28 years)');
 
       pick('today');
 
-      expect(controls().currentBalance.value).toBe(186_108.71);
-      expect(controls().yearsLeft.value).toBe(25);
+      expect(controls().currentBalance.value).toBe(194_936.47);
+      expect(controls().yearsLeft.value).toBe(28);
       expect(last().originalLoan).toBeNull();
     });
 

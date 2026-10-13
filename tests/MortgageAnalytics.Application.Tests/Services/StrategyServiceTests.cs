@@ -122,8 +122,10 @@ public class StrategyServiceTests
     [Test]
     public void AnAdjustableRateOrABuydown_ReachTheEngine_AndTheirRatesComeBack()
     {
+        // The ARM reference household has 25 years left; the buydown's is a new 30-year loan.
         var arm = _service.Compare(TypicalRequest with
         {
+            RemainingTermInMonths = 300,
             AdjustableRate = new AdjustableRateRequest { InitialFixedMonths = 60, AdjustmentIntervalMonths = 12, ExpectedRate = 8.5m, InitialCap = 2m, PeriodicCap = 1m, LifetimeCap = 5m },
         });
         var buydown = _service.Compare(TypicalRequest with

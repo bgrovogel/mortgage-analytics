@@ -8,6 +8,8 @@ import { expect, test } from './fixtures';
  */
 test.describe('Refinance', () => {
   const verdict = (page: Page) => page.getByTestId('refi-verdict');
+  /** The reference refinance has 25 years left; the page's example (a 2024 loan) has 28. */
+  const reference = async (page: Page) => page.getByTestId('years-left').fill('25');
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -16,7 +18,14 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');
   });
 
+  test('the example: a 2024 loan at 7% into 6% saves money, though restarting the clock costs part of it', async ({ page }) => {
+    await expect(verdict(page), '28 years left: two years added, outweighed by the lower rate').toContainText('Refinancing saves $31,527');
+    await expect(page.getByTestId('refi-payment'), 'the payment drops').toContainText('$240.18 less than now');
+    await expect(page.getByTestId('refi-restart'), 'and the restart is why it saves less').toContainText('saves less than the lower rate alone would');
+  });
+
   test('shows that a lower payment can still cost more, and the way around it', async ({ page }) => {
+    await reference(page);
     await expect(verdict(page), 'the restarted 30 years outweigh the lower rate').toContainText('Refinancing costs $17,415 more');
     await expect(page.getByTestId('refi-payment'), 'even though the payment drops').toContainText('$321.69 less than now');
     await expect(page.getByTestId('refi-payoff'), 'because the loan runs five years longer').toContainText('5 yr later than now');
@@ -26,6 +35,7 @@ test.describe('Refinance', () => {
   });
 
   test('keeping the payoff date stops the clock restarting', async ({ page }) => {
+    await reference(page);
     await page.getByTestId('new-term').selectOption('keep');
 
     await expect(verdict(page), 'the same rate cut now saves money').toContainText('Refinancing saves');
@@ -34,6 +44,7 @@ test.describe('Refinance', () => {
   });
 
   test('rolling the closing costs into the loan still counts them', async ({ page }) => {
+    await reference(page);
     await page.getByTestId('finance-closing-costs').check();
 
     await expect(verdict(page), 'borrowed costs are repaid with interest').toContainText('Refinancing costs $24,367 more');
@@ -41,6 +52,7 @@ test.describe('Refinance', () => {
   });
 
   test('PMI on both loans counts in the payment, the totals and the break-even', async ({ page }) => {
+    await reference(page);
     await page.getByTestId('home-value').fill('360000');
     await page.getByTestId('current-pmi').fill('120');
 

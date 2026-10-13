@@ -45,7 +45,7 @@ describe('StrategyFormComponent', () => {
     expect(emitted[0]).toEqual(expect.objectContaining({
       currentBalance: 300_000,
       annualInterestRate: 6.5,
-      remainingTermInMonths: 300,
+      remainingTermInMonths: 336,
       nextPaymentDate: null,
       filingStatus: 'MarriedFilingJointly',
       riskProfile: 'Balanced',
@@ -77,7 +77,7 @@ describe('StrategyFormComponent', () => {
     emitted = [];
     fixture.componentInstance.compare.subscribe((r) => emitted.push(r));
     fixture.componentRef.setInput('loan', {
-      loan: { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 300, homeValue: null }, from: 'Refinance', version: 1,
+      loan: { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 336, homeValue: null }, from: 'Refinance', version: 1,
     });
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;

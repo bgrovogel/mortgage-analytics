@@ -55,9 +55,9 @@ public class StrategyInvariantTests
 
         var payOff = Outcome(Optimizer.Compare(inputs), StrategyKind.PayOffFirst).Expected;
 
-        // The payment is rounded to cents, so with no extra NPER lands a hair over the term (300.0000x); the
-        // last scheduled payment absorbs that fraction of a cent, as on any real loan.
-        Assert.That(payOff.PayoffMonth, Is.EqualTo(Math.Min((int)Math.Ceiling(nper), 300)),
+        // The payment is rounded to cents, so with no extra NPER lands a hair over the term; the last scheduled
+        // payment absorbs that fraction of a cent, as on any real loan.
+        Assert.That(payOff.PayoffMonth, Is.EqualTo(Math.Min((int)Math.Ceiling(nper), inputs.Mortgage.TermInMonths)),
             $"n = −ln(1 − rB/P) ÷ ln(1 + r) = {nper:F4} months, rounded up, and never past the term");
     }
 

@@ -22,7 +22,7 @@ test.describe('History', () => {
 
     // Start from a clean slate, so reopening has to restore the values.
     await page.goto('/');
-    await expect(calculator.field('home-price'), 'a fresh visit starts from the example').toHaveValue('375,000');
+    await expect(calculator.field('home-price'), 'a fresh visit starts from the example').toHaveValue('415,000');
 
     const history = new HistoryPage(page);
     await history.openFromNav();
