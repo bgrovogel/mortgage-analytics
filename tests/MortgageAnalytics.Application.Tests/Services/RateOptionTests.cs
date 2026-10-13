@@ -22,10 +22,10 @@ public class RateOptionTests : SociableAnalysisTestBase
         Assert.Multiple(() =>
         {
             Assert.That(buydown.NoteRate, Is.EqualTo(6m), "the loan's own rate");
-            Assert.That(buydown.Years.Select(y => (y.Year, y.AnnualInterestRate, y.MonthlyPayment)), Is.EqualTo(new[]
+            Assert.That(buydown.Years.Select(y => (y.Year, y.AnnualInterestRate, y.MonthlyPayment, y.Subsidy)), Is.EqualTo(new[]
             {
-                (1, 4m, 954.83m), (2, 5m, 1_073.64m), (3, 6m, Standard.MonthlyPayment),
-            }), "paid as if at 4%, then 5%, then the note rate");
+                (1, 4m, 954.83m, 2_931.24m), (2, 5m, 1_073.64m, 1_505.52m), (3, 6m, Standard.MonthlyPayment, 0m),
+            }), "paid as if at 4%, then 5%, then the note rate; the subsidy covers 12 gaps of $244.27, then of $125.46");
             Assert.That(buydown.TotalSubsidy, Is.EqualTo(4_436.76m), "the buydown's cost");
             Assert.That(response.Baseline.Payments[0].BuydownSubsidy, Is.EqualTo(Standard.MonthlyPayment - 954.83m), "the subsidy in year 1");
             Assert.That(response.Baseline.Payments[0].TotalOutlay, Is.EqualTo(954.83m), "so the borrower pays the reduced payment");

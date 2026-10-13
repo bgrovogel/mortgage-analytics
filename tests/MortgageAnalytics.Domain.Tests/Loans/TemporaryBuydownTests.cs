@@ -62,6 +62,27 @@ public class TemporaryBuydownTests
     }
 
     [Test]
+    public void TheSubsidyEachYear_AddsUpToTheWhole()
+    {
+        var schedule = new AmortizationCalculator().Generate(Loan, ExtraPaymentPlan.None, RecastPolicy.Never);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(TwoOne.SubsidyForYear(Loan, schedule, 1), Is.EqualTo(5_218.44m), "12 × $434.87 in year 1");
+            Assert.That(TwoOne.SubsidyForYear(Loan, schedule, 2), Is.EqualTo(2_680.32m), "12 × $223.36 in year 2");
+            Assert.That(TwoOne.SubsidyForYear(Loan, schedule, 3), Is.Zero, "nothing once the loan is at its note rate");
+        });
+    }
+
+    [Test]
+    public void TheSubsidyEachYear_StopsWithALoanPaidOffDuringIt()
+    {
+        var schedule = new AmortizationCalculator().Generate(Loan, new ExtraPaymentPlan([new LumpSumExtraPayment(1_000_000m, 13)]), RecastPolicy.Never);
+
+        Assert.That(TwoOne.SubsidyForYear(Loan, schedule, 2), Is.EqualTo(223.36m), "one year-2 payment, then nothing is owed");
+    }
+
+    [Test]
     public void TheInterestYouPay_IsLessTheSubsidy_WhenTheSellerPaysForIt_AndAllOfIt_WhenYouDo()
     {
         var schedule = new AmortizationCalculator().Generate(Loan, ExtraPaymentPlan.None, RecastPolicy.Never);

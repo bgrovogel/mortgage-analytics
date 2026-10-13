@@ -79,12 +79,15 @@ test.describe('Mortgage calculator', () => {
     await calculator.chooseRateType('buydown');
     await calculator.calculate();
 
-    const plan = page.getByTestId('rate-plan');
-    await expect(plan.locator('li'), 'each year, then the note rate').toHaveText([
-      /Year 1\s*3\.99%\s*\$1,698\.74\/mo/, /Year 2\s*4\.99%\s*\$1,910\.25\/mo/, /From year 3\s*5\.99%\s*\$2,133\.61\/mo/,
+    const years = page.getByTestId('buydown-years').locator('tbody tr');
+    await expect(years, 'every year: its rate, its principal and interest, and what the buydown pays that year').toHaveText([
+      /Year 1\s*3\.99%.*\$1,698\.74 P&I\s*\$5,218\s*\$434\.87\/mo/,
+      /Year 2\s*4\.99%.*\$1,910\.25 P&I\s*\$2,680\s*\$223\.36\/mo/,
+      /From year 3\s*5\.99%.*\$2,133\.61 P&I\s*Nothing/,
     ]);
+    await expect(page.getByTestId('buydown-years').locator('tfoot'), 'and the whole cost').toContainText('$7,899');
     await expect(page.getByTestId('buydown-cost'), 'what the subsidy costs').toContainText('$7,899');
-    await expect(page.getByTestId('buydown-first-year'), 'the payment tile shows year 1').toBeVisible();
+    await expect(page.getByTestId('buydown-first-year'), 'the payment tile shows year 1, and where it ends up').toContainText(/In year 1, with the buydown; \$[\d,.]+ from year 3/);
   });
 
   test('cash to close: the down payment, the fees, prepaid interest and escrow from the loan, credits, and a buydown you pay for', async ({ calculator, page }) => {

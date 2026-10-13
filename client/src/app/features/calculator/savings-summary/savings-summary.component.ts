@@ -1,9 +1,10 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
-import { usd } from '../../../core/formatting/format';
+import { usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
+import { buydownYears } from '../rate-plan/buydown-years';
 
 /** Each tax, as the payment tile names it when it is the only one. */
 const TAXES: readonly [keyof HousingCosts, string][] = [
@@ -55,7 +56,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           }
         </dd>
         @if (r.buydown) {
-          <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown</dd>
+          <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</dd>
         }
         @if (withExtra(); as extra) {
           <dd class="note with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</dd>
@@ -125,6 +126,15 @@ export class SavingsSummaryComponent {
     return first
       ? { loan: first.monthlyPayment, total: first.monthlyPayment + r.baseline.monthlyHousingCosts.total }
       : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment };
+  });
+
+  /**
+   * Where a buydown's payment ends up, in the same terms as the tile (with that year's housing costs): "$3,160.61
+   * from year 3". Every year in between is in the rate plan's table below. Empty without a buydown.
+   */
+  readonly fromNoteRate = computed(() => {
+    const last = buydownYears(this.result())?.at(-1);
+    return last ? `${usdCents(last.monthlyTotal)} ${last.label.toLowerCase()}` : '';
   });
 
   /** What the loan's mortgage insurance is called: MIP on an FHA loan, PMI otherwise. */

@@ -283,7 +283,8 @@ internal static class AmortizationMapper
         new(
             loan.AnnualInterestRate,
             [.. Enumerable.Range(1, buydown.YearlyReductions.Count + 1)
-                .Select(year => new BuydownYearResponse(year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year)))],
+                .Select(year => new BuydownYearResponse(
+                    year, buydown.RateForYear(loan, year), buydown.PaymentForYear(loan, year), buydown.SubsidyForYear(loan, schedule, year)))],
             buydown.TotalSubsidy(loan, schedule),
             paidBy.ToResponse());
 

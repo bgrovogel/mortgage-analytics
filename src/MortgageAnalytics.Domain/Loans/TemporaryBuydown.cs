@@ -73,6 +73,18 @@ public sealed record TemporaryBuydown
         schedule.Payments.Sum(p => SubsidyFor(loan, p.PaymentNumber, p.ScheduledAmount));
 
     /// <summary>
+    /// What the subsidy covers in year <paramref name="year"/> of <paramref name="schedule"/>: that year's payments'
+    /// gaps, so the years add up to <see cref="TotalSubsidy"/>. 0 for a year at the note rate.
+    /// </summary>
+    /// <param name="loan">The loan, at its note rate.</param>
+    /// <param name="schedule">The loan's schedule, with or without extra payments.</param>
+    /// <param name="year">A 1-based year of the loan.</param>
+    public decimal SubsidyForYear(LoanTerms loan, AmortizationSchedule schedule, int year) =>
+        schedule.Payments
+            .Where(p => (p.PaymentNumber - 1) / 12 + 1 == year)
+            .Sum(p => SubsidyFor(loan, p.PaymentNumber, p.ScheduledAmount));
+
+    /// <summary>
     /// The interest the borrower pays. The loan charges its note-rate interest either way, and the principal paid does
     /// not change, so a subsidy from the seller or builder pays interest: the borrower pays that much less. A subsidy
     /// the borrower paid for at closing is their own money, so they pay all of the interest.

@@ -82,9 +82,9 @@ describe('SavingsSummaryComponent', () => {
     const twoOne = (paidBy: 'Seller' | 'Borrower') => ({
       noteRate: 6.5,
       years: [
-        { year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07 },
-        { year: 2, annualInterestRate: 5.5, monthlyPayment: 2_022.75 },
-        { year: 3, annualInterestRate: 6.5, monthlyPayment: 2_251.74 },
+        { year: 1, annualInterestRate: 4.5, monthlyPayment: 1_805.07, subsidy: 5_564.04 },
+        { year: 2, annualInterestRate: 5.5, monthlyPayment: 2_022.75, subsidy: 2_747.88 },
+        { year: 3, annualInterestRate: 6.5, monthlyPayment: 2_251.74, subsidy: 0 },
       ],
       totalSubsidy: 8_107.92,
       paidBy,
@@ -140,14 +140,21 @@ describe('SavingsSummaryComponent', () => {
     expect(component.withExtra()).toEqual({ amount: 200, total: 1_399.1 });
   });
 
-  it('with a buydown, shows the reduced payment due in year 1', () => {
+  it('with a buydown, shows the reduced payment due in year 1, and what it comes to at the note rate', () => {
     render(aResponse({
-      buydown: { noteRate: 6, years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 954.83 }, { year: 2, annualInterestRate: 6, monthlyPayment: 1_199.1 }], totalSubsidy: 2_930.04, paidBy: 'Seller' },
+      buydown: {
+        noteRate: 6, totalSubsidy: 4_436.76, paidBy: 'Seller',
+        years: [
+          { year: 1, annualInterestRate: 4, monthlyPayment: 954.83, subsidy: 2_931.24 },
+          { year: 2, annualInterestRate: 5, monthlyPayment: 1_073.64, subsidy: 1_505.52 },
+          { year: 3, annualInterestRate: 6, monthlyPayment: 1_199.1, subsidy: 0 },
+        ],
+      },
     }));
 
     expect(text('total-monthly-payment')).toBe('$954.83');
     expect(text('monthly-payment')).toBe('$954.83');
-    expect(text('buydown-first-year')).toBe('In year 1, with the buydown');
+    expect(text('buydown-first-year')).toBe('In year 1, with the buydown; $1,199.10 from year 3');
   });
 
   it('omits the taxes line when there are no housing costs', () => {

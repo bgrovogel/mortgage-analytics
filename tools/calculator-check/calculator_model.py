@@ -413,7 +413,9 @@ def analyze(request, today):
         years = []
         for year in range(1, len(reductions) + 2):
             r = max(D(0), rate - reductions[year - 1]) if year <= len(reductions) else rate
-            years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term)})
+            # What the subsidy pays that year: the gaps of that year's payments on the standard schedule.
+            subsidy = sum((p['buydownSubsidy'] for p in base['payments'] if (p['paymentNumber'] - 1) // 12 + 1 == year), D(0))
+            years.append({'year': year, 'annualInterestRate': r, 'monthlyPayment': payment(loan, r, term), 'subsidy': subsidy})
         out['buydown'] = {'noteRate': rate, 'years': years,
                           'totalSubsidy': base['buydownSubsidy'], 'paidBy': paid_by}
     out['program'] = program

@@ -968,6 +968,10 @@
           "monthlyPayment": {
             "type": "number",
             "format": "double"
+          },
+          "subsidy": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

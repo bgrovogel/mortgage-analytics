@@ -381,9 +381,18 @@ export interface AmortizationResponse {
 export interface BuydownSummary {
   noteRate: number;
   /** Each bought-down year, then the first year at the note rate. */
-  years: { year: number; annualInterestRate: number; monthlyPayment: number }[];
+  years: BuydownYear[];
   totalSubsidy: number;
   paidBy: BuydownFunding;
+}
+
+/** One year of a buydown: its rate, the principal and interest paid each month, and what the buydown pays that year. */
+export interface BuydownYear {
+  year: number;
+  annualInterestRate: number;
+  monthlyPayment: number;
+  /** What the buydown pays that year, on the standard schedule; 0 once the loan is at its note rate. */
+  subsidy: number;
 }
 
 /** An adjustable rate's worst case: rates rising as far and as fast as the caps allow. */

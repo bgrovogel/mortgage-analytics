@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { buydownYears } from './buydown-years';
 
 /** One line of the payment timeline: when, at what rate, and what principal and interest come to. */
 interface Step {
@@ -10,7 +11,8 @@ interface Step {
 }
 
 /**
- * How the payment changes over the loan, when it does: a temporary buydown's years (and what the buydown costs), or
+ * How the payment changes over the loan, when it does: a temporary buydown year by year (what you pay each month,
+ * and what the buydown pays, then its whole cost), or
  * an adjustable rate's resets on the path you expect (and the worst case the caps allow). Shows nothing for a
  * fixed rate.
  */
@@ -20,11 +22,36 @@ interface Step {
     @if (buydown(); as b) {
       <section class="panel" data-testid="rate-plan">
         <h3>{{ b.title }}</h3>
-        <ol class="steps">
-          @for (step of b.steps; track step.when) {
-            <li><span class="when">{{ step.when }}</span><span class="rate">{{ step.rate }}</span><strong>{{ step.payment }}</strong></li>
-          }
-        </ol>
+        <!-- Every year of it: what you pay each month (with that year's taxes and insurance), and what the buydown pays. -->
+        <table class="years" data-testid="buydown-years">
+          <thead>
+            <tr><th scope="col">Year</th><th scope="col">Rate</th><th scope="col" class="num">Each month</th><th scope="col" class="num">Buydown pays</th></tr>
+          </thead>
+          <tbody>
+            @for (y of b.rows; track y.label) {
+              <tr>
+                <th scope="row">{{ y.label }}</th>
+                <td class="rate">{{ pct(y.rate) }}</td>
+                <td class="num">
+                  <strong>{{ usdCents(y.monthlyTotal) }}</strong>
+                  @if (y.monthlyTotal !== y.loanPayment) {
+                    &ngsp;<small>{{ usdCents(y.loanPayment) }} <abbr title="principal and interest">P&amp;I</abbr></small>
+                  }
+                </td>
+                <td class="num">
+                  @if (y.subsidy > 0) {
+                    <strong>{{ usd(y.subsidy) }}</strong>&ngsp;<small>{{ usdCents(y.monthlySubsidy) }}/mo</small>
+                  } @else {
+                    <span class="none">Nothing</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">In all</th><td></td><td></td><td class="num"><strong>{{ b.cost }}</strong></td></tr>
+          </tfoot>
+        </table>
         <p class="note" data-testid="buydown-cost">
           @if (b.sellerPays) {
             The seller or builder pays {{ b.cost }} up front to make up the difference. That money pays part of your early
@@ -53,6 +80,10 @@ interface Step {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RatePlanComponent {
+  protected readonly pct = pct;
+  protected readonly usd = usd;
+  protected readonly usdCents = usdCents;
+
   /** The analysis to describe. */
   readonly result = input.required<AmortizationResponse>();
 
@@ -63,11 +94,7 @@ export class RatePlanComponent {
     const last = b.years.length;
     return {
       title: `${b.years.slice(0, -1).map((y) => decimalPoints(b.noteRate - y.annualInterestRate)).join('-')} buydown`,
-      steps: b.years.map((y): Step => ({
-        when: y.year === last ? `From year ${y.year}` : `Year ${y.year}`,
-        rate: pct(y.annualInterestRate),
-        payment: `${usdCents(y.monthlyPayment)}/mo`,
-      })),
+      rows: buydownYears(this.result())!,
       cost: usd(b.totalSubsidy),
       noteRate: pct(b.noteRate),
       sellerPays: b.paidBy === 'Seller',

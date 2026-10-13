@@ -52,6 +52,65 @@ h3 {
   }
 }
 
+// A buydown year by year. Four short columns, so it stays one line per year on a phone; the second line in a cell
+// (the principal and interest, or the buydown's monthly share) is small and muted.
+.years {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.45rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    font-weight: 400;
+  }
+
+  thead th {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  tbody th,
+  .rate {
+    color: var(--text-secondary);
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  strong {
+    display: block;
+    color: var(--text-primary);
+  }
+
+  small {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  abbr {
+    text-decoration: none;
+  }
+
+  .none {
+    color: var(--text-muted);
+  }
+
+  tfoot th,
+  tfoot td {
+    border-bottom: 0;
+    font-weight: 600;
+  }
+}
+
 .note {
   margin: 0.75rem 0 0;
   font-size: 0.86rem;

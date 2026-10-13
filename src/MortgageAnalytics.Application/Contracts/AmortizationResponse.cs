@@ -138,7 +138,9 @@ public sealed record BuydownResponse(decimal NoteRate, IReadOnlyList<BuydownYear
 /// <param name="Year">The 1-based year of the loan.</param>
 /// <param name="AnnualInterestRate">The rate the payment is figured at.</param>
 /// <param name="MonthlyPayment">The principal and interest the borrower pays each month that year.</param>
-public sealed record BuydownYearResponse(int Year, decimal AnnualInterestRate, decimal MonthlyPayment);
+/// <param name="Subsidy">What the buydown pays that year, on the standard schedule; 0 once the loan is at its note rate.
+/// The years add up to the buydown's cost.</param>
+public sealed record BuydownYearResponse(int Year, decimal AnnualInterestRate, decimal MonthlyPayment, decimal Subsidy);
 
 /// <summary>An adjustable rate's worst case: rates rising as far and as fast as the caps allow.</summary>
 /// <param name="WorstCaseRateChanges">The resets in that case, with the payment before and after each.</param>

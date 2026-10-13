@@ -168,10 +168,10 @@ public class RefinanceServiceTests
         {
             Assert.That(response.BuydownCost, Is.EqualTo(6_655.08m), "the 2-1 buydown's cost");
             Assert.That(response.UpfrontCosts, Is.EqualTo(ToSixPercentFor30Years.ClosingCosts + 6_655.08m), "due at closing, with the closing costs");
-            Assert.That(response.NewBuydown!.Years.Select(y => (y.AnnualInterestRate, y.MonthlyPayment)), Is.EqualTo(new[]
+            Assert.That(response.NewBuydown!.Years.Select(y => (y.AnnualInterestRate, y.MonthlyPayment, y.Subsidy)), Is.EqualTo(new[]
             {
-                (4m, 1_432.25m), (5m, 1_610.46m), (6m, ToSixPercentFor30Years.MonthlyPayment),
-            }), "paid back as lower payments for two years");
+                (4m, 1_432.25m, 4_396.80m), (5m, 1_610.46m, 2_258.28m), (6m, ToSixPercentFor30Years.MonthlyPayment, 0m),
+            }), "paid back as lower payments for two years: 12 gaps of $366.40, then 12 of $188.19");
             Assert.That(response.LifetimeSavings, Is.EqualTo(ToSixPercentFor30Years.LifetimeSavings), "so it changes nothing over the life of the loan");
             Assert.That(response.BreakEvenPaymentNumber, Is.EqualTo(ToSixPercentFor30Years.BreakEvenPaymentNumber), "nor the break-even");
             Assert.That(response.WorstCaseLifetimeSavings, Is.Null, "neither loan adjusts");

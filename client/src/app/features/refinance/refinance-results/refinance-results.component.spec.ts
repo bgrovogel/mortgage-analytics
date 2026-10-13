@@ -146,7 +146,10 @@ describe('RefinanceResultsComponent', () => {
       buydownCost: 6_655.08,
       newBuydown: {
         noteRate: 6, totalSubsidy: 6_655.08, paidBy: 'Borrower',
-        years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 1_432.25 }, { year: 2, annualInterestRate: 5, monthlyPayment: 1_610.46 }, { year: 3, annualInterestRate: 6, monthlyPayment: 1_798.65 }],
+        years: [
+          { year: 1, annualInterestRate: 4, monthlyPayment: 1_432.25, subsidy: 4_396.8 }, { year: 2, annualInterestRate: 5, monthlyPayment: 1_610.46, subsidy: 2_258.28 },
+          { year: 3, annualInterestRate: 6, monthlyPayment: 1_798.65, subsidy: 0 },
+        ],
       },
     }));
     const root = fixture.nativeElement as HTMLElement;

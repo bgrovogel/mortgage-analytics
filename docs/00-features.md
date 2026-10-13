@@ -55,6 +55,10 @@ MIP, and the first year's MIP is $134.33 a month.
   over the full term, at the reduced rate; a subsidy covers the rest. The loan itself stays at its note rate, so its
   interest and payoff do not change. A 2-1 on $356,250 at 5.99% is paid at $1,698.74, then $1,910.25, then $2,133.61,
   for a $7,899 subsidy.
+  - **Every year, not just the first.** The results show a table with a row for each year of the buydown, then the
+    note rate: what you pay each month (with that year's taxes, insurance and PMI, which rise each year, and the
+    principal and interest under it), and what the buydown pays that year and each month ($5,218 then $2,680 on
+    that loan), then its whole cost. The payment tile shows year 1 and where the payment ends up.
   - **Who pays decides what it saves.** Paid by the seller or builder, the subsidy pays part of your early interest,
     so you pay that much less ($403,950 of that loan's $411,848, and a 3-2-1 saves more). Paid by you at closing, it
     only moves your money earlier. The headline and the rate plan say which.
