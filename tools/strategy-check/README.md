@@ -25,6 +25,7 @@ Every field of every response from `POST /api/v1/strategies/compare`:
 
 - each year of each strategy in each market scenario;
 - the monthly cash plan (free money first: the 401(k) match and any ESPP discount);
+- PMI, paid until the balance is 80% of the home's value, and deducted below the income limit;
 - every rate (after-tax mortgage and market rates, the hybrid split);
 - the recommendation and the bad-decade winner.
 

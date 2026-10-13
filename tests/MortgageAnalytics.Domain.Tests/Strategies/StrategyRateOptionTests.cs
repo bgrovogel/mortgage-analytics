@@ -26,14 +26,14 @@ public class StrategyRateOptionTests
         {
             Assert.That(comparison.Rates.MortgageRate, Is.EqualTo(6.5m), "today's rate");
             Assert.That(comparison.Rates.AverageMortgageRate, Is.EqualTo(Arm.AverageMortgageRate), "5 years at 6.5%, then 8.5%");
-            Assert.That(comparison.Rates.AfterTaxMortgageRate, Is.EqualTo(Arm.AverageMortgageRate), "not deducted: paying down earns the average");
+            Assert.That(comparison.Rates.AfterTaxMortgageRate, Is.EqualTo(8.02m), "the average, less the 1% of the interest the deduction gives back");
             Assert.That(comparison.Rates.FirstYearInterest, Is.EqualTo(Arm.FirstYearInterest), "the first year is all at 6.5%");
             Assert.That(comparison.Rates.HybridInvestPercent, Is.EqualTo(Arm.HybridInvestPercent), "the higher rate tilts the hybrid to the mortgage");
             Assert.That(payOff.RiskAdjusted.FinalNetWorth, Is.EqualTo(Arm.PayOffFirstRiskAdjustedNetWorthAtYear30), "paying off first");
             Assert.That(payOff.RiskAdjusted.PayoffMonth, Is.EqualTo(Arm.PayOffFirstPayoffMonth), "and when it is paid off");
             Assert.That(invest.RiskAdjusted.FinalNetWorth, Is.EqualTo(Arm.InvestRiskAdjustedNetWorthAtYear30), "investing");
             Assert.That(invest.RiskAdjusted.TotalInterest, Is.EqualTo(Arm.InvestTotalInterest), "interest at 8.5% after the reset");
-            Assert.That(comparison.Recommended.Kind, Is.EqualTo(StrategyKind.PayOffFirst), "an 8.1% guaranteed return beats 8% counted on");
+            Assert.That(comparison.Recommended.Kind, Is.EqualTo(StrategyKind.Hybrid), "8.02% guaranteed against 8% counted on: almost even, so the even split");
         });
     }
 

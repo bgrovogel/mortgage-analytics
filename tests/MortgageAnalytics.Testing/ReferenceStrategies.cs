@@ -15,10 +15,11 @@ public static class ReferenceStrategies
     public static readonly DateOnly NextPaymentDate = new(2026, 1, 1);
 
     /// <summary>
-    /// A typical household: $300,000 left at 6.5% over 25 years on a $400,000 home; $120,000 income, a 24% tax
-    /// rate, married filing jointly with $10,000 of other deductions (so the standard deduction wins); $1,000 a
-    /// month to put to work; a 50% match on up to 6% of pay; $50,000 in a 401(k) and $20,000 invested; a $7,500
-    /// IRA each year; a 10% expected return, 3% inflation, and a balanced risk profile.
+    /// A typical household: $300,000 left at 6.5% over 25 years on a $400,000 home; $120,000 income, married filing
+    /// jointly: the 12% federal bracket plus 5% state, so a 17% tax rate, and 20% on capital gains (15% plus the state's
+    /// 5%); $14,000 of other deductions (state income tax, property tax and charity), so itemizing beats the standard
+    /// deduction by a little; $1,000 a month to put to work; a 50% match on up to 6% of pay; $50,000 in a 401(k) and
+    /// $20,000 invested; a $7,500 IRA each year; a 10% expected return, 3% inflation, and a balanced risk profile.
     /// </summary>
     public static StrategyInputs TypicalInputs(
         RiskProfile riskProfile = RiskProfile.Balanced,
@@ -29,12 +30,13 @@ public static class ReferenceStrategies
         StockPurchasePlan? stockPurchasePlan = null,
         LoanTerms? mortgage = null,
         EmployerMatch? match = null,
-        MarketAssumptions? market = null) =>
+        MarketAssumptions? market = null,
+        decimal otherDeductions = 14_000m) =>
         new(
             mortgage ?? new LoanTerms(300_000m, 6.5m, 300, NextPaymentDate),
             homeValue: 400_000m,
             homeGrowthRate: 4.3m,
-            new Household(120_000m, 24m, 15m, FilingStatus.MarriedFilingJointly, 10_000m, monthlyCash,
+            new Household(120_000m, 17m, 20m, FilingStatus.MarriedFilingJointly, otherDeductions, monthlyCash,
                 annualRsuVesting: annualRsuVesting, sellRsusAtVest: sellRsusAtVest, annualEsopContribution: annualEsopContribution,
                 currentRetirementSavings: 50_000m, currentInvestments: 20_000m),
             match ?? new EmployerMatch(50m, 6m),
@@ -52,10 +54,10 @@ public static class ReferenceStrategies
         HomeValue = 400_000m,
         HomeGrowthRate = 4.3m,
         GrossAnnualIncome = 120_000m,
-        MarginalTaxRate = 24m,
-        CapitalGainsTaxRate = 15m,
+        MarginalTaxRate = 17m,
+        CapitalGainsTaxRate = 20m,
         FilingStatus = TaxFilingStatus.MarriedFilingJointly,
-        OtherItemizedDeductions = 10_000m,
+        OtherItemizedDeductions = 14_000m,
         MonthlyCashToPutToWork = 1_000m,
         EmployerMatchPercent = 50m,
         MatchUpToPercentOfPay = 6m,
@@ -81,59 +83,68 @@ public static class ReferenceStrategies
         /// <summary>Half of it.</summary>
         public const decimal EmployerMatch = 300m;
 
-        /// <summary>What the pre-tax contribution costs in take-home pay at 24%.</summary>
-        public const decimal RetirementContributionCost = 456m;
+        /// <summary>What the pre-tax contribution costs in take-home pay at 17%.</summary>
+        public const decimal RetirementContributionCost = 498m;
 
         /// <summary>What is left for a strategy to direct.</summary>
-        public const decimal ExtraCash = 544m;
+        public const decimal ExtraCash = 502m;
 
         /// <summary>Interest in the first year.</summary>
         public const decimal FirstYearInterest = 19_354.15m;
 
-        /// <summary>The risk-adjusted return (10% − 2), untaxed: the $544 a month fits in the $7,500 IRA.</summary>
+        /// <summary>The risk-adjusted return (10% − 2), untaxed: the $502 a month fits in the $7,500 IRA.</summary>
         public const decimal AfterTaxRiskAdjustedReturn = 8m;
 
-        /// <summary>8% for 25 years in a taxable account, taxed 15% on selling: about 7.41% a year (not 8 × 0.85 = 6.8).</summary>
-        public const decimal TaxableAfterTaxReturn = 7.41m;
+        /// <summary>8% for 25 years in a taxable account, taxed 20% on selling: about 7.19% a year (not 8 × 0.8 = 6.4).</summary>
+        public const decimal TaxableAfterTaxReturn = 7.19m;
 
-        /// <summary>50 + 25 × (8 − 6.5) = 87.5, rounded.</summary>
-        public const decimal HybridInvestPercent = 88m;
+        /// <summary>
+        /// Itemizing beats the $32,200 standard deduction by only $1,154, so the $19,354.15 of interest saves just $196.21:
+        /// paying down earns 6.5% less the 1% of the interest that gives back, 6.43%.
+        /// </summary>
+        public const decimal AfterTaxMortgageRate = 6.43m;
 
-        /// <summary>Pay off first: paid off in month 186.</summary>
+        /// <summary>The tax the first year's interest saves: (14,000 + 19,354.15 − 32,200) × 17%.</summary>
+        public const decimal FirstYearTaxSaved = 196.21m;
+
+        /// <summary>50 + 25 × (8 − 6.43) = 89.25, rounded.</summary>
+        public const decimal HybridInvestPercent = 89m;
+
+        /// <summary>Pay off first: paid off in month 191.</summary>
         public static class PayOffFirst
         {
             /// <summary>The month the mortgage is gone.</summary>
-            public const int PayoffMonth = 186;
+            public const int PayoffMonth = 191;
 
             /// <summary>Its due date.</summary>
-            public static readonly DateOnly PayoffDate = new(2041, 6, 1);
+            public static readonly DateOnly PayoffDate = new(2041, 11, 1);
 
             /// <summary>Interest paid.</summary>
-            public const decimal TotalInterest = 176_023.74m;
+            public const decimal TotalInterest = 181_544.07m;
 
             /// <summary>Owed after 10 years.</summary>
-            public const decimal BalanceAtYear10 = 140_922.96m;
+            public const decimal BalanceAtYear10 = 147_699.96m;
 
             /// <summary>Net worth after 5 years at the risk-adjusted return.</summary>
-            public const decimal RiskAdjustedNetWorthAtYear5 = 394_188.07m;
+            public const decimal RiskAdjustedNetWorthAtYear5 = 400_702.63m;
 
             /// <summary>Net worth after 30 years at the risk-adjusted return.</summary>
-            public const decimal RiskAdjustedNetWorthAtYear30 = 3_719_026.59m;
+            public const decimal RiskAdjustedNetWorthAtYear30 = 3_772_280.47m;
 
             /// <summary>The same in today's dollars (3% inflation).</summary>
-            public const decimal RiskAdjustedNetWorthAtYear30InTodaysDollars = 1_532_189.71m;
+            public const decimal RiskAdjustedNetWorthAtYear30InTodaysDollars = 1_554_129.61m;
 
             /// <summary>Net worth after 30 years with a bad decade first.</summary>
-            public const decimal BadDecadeNetWorthAtYear30 = 3_187_295.65m;
+            public const decimal BadDecadeNetWorthAtYear30 = 3_206_577.38m;
 
             /// <summary>Net worth after 30 years at the expected return.</summary>
-            public const decimal ExpectedNetWorthAtYear30 = 4_700_702.70m;
+            public const decimal ExpectedNetWorthAtYear30 = 4_796_443.23m;
 
             /// <summary>The month investments (after tax) first cover the balance, at the risk-adjusted return.</summary>
-            public const int RiskAdjustedCrossoverMonth = 93;
+            public const int RiskAdjustedCrossoverMonth = 90;
 
             /// <summary>Its due date.</summary>
-            public static readonly DateOnly RiskAdjustedCrossoverDate = new(2033, 9, 1);
+            public static readonly DateOnly RiskAdjustedCrossoverDate = new(2033, 6, 1);
         }
 
         /// <summary>Invest the difference: the mortgage runs its full 25 years.</summary>
@@ -146,29 +157,29 @@ public static class ReferenceStrategies
             public const decimal TotalInterest = 307_687.31m;
 
             /// <summary>Net worth after 30 years at the risk-adjusted return: the highest.</summary>
-            public const decimal RiskAdjustedNetWorthAtYear30 = 3_844_781.09m;
+            public const decimal RiskAdjustedNetWorthAtYear30 = 3_901_666.35m;
 
             /// <summary>Net worth after 30 years with a bad decade first: below paying off first.</summary>
-            public const decimal BadDecadeNetWorthAtYear30 = 3_145_932.42m;
+            public const decimal BadDecadeNetWorthAtYear30 = 3_180_552.05m;
 
             /// <summary>Investments after 30 years at the risk-adjusted return, after tax.</summary>
-            public const decimal RiskAdjustedInvestmentsAtYear30 = 2_430_325.74m;
+            public const decimal RiskAdjustedInvestmentsAtYear30 = 2_487_211.00m;
         }
 
-        /// <summary>The hybrid: 88% invested, 12% to principal.</summary>
+        /// <summary>The hybrid: 89% invested, 11% to principal.</summary>
         public static class Hybrid
         {
             /// <summary>The month the mortgage is gone.</summary>
-            public const int PayoffMonth = 278;
+            public const int PayoffMonth = 282;
 
             /// <summary>Net worth after 30 years at the risk-adjusted return.</summary>
-            public const decimal RiskAdjustedNetWorthAtYear30 = 3_826_630.91m;
+            public const decimal RiskAdjustedNetWorthAtYear30 = 3_885_229.82m;
         }
     }
 
     /// <summary>
     /// <see cref="TypicalInputs"/> plus $50,000 of RSUs kept as shares and a $5,000 ESOP contribution each year:
-    /// more stock than the hybrid's 88% target of all new savings, so it puts all extra cash on the mortgage.
+    /// more stock than the hybrid's 89% target of all new savings, so it puts all extra cash on the mortgage.
     /// </summary>
     public static class StockHeavy
     {
@@ -176,15 +187,16 @@ public static class ReferenceStrategies
         public const decimal HybridInvestPercent = 0m;
 
         /// <summary>Pay off first (and so the hybrid): net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 9_189_039.47m;
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 9_073_734.57m;
 
         /// <summary>Investments after 30 years, after tax, at the risk-adjusted return, paying off first.</summary>
-        public const decimal PayOffFirstRiskAdjustedInvestmentsAtYear30 = 7_774_584.12m;
+        public const decimal PayOffFirstRiskAdjustedInvestmentsAtYear30 = 7_659_279.22m;
     }
 
     /// <summary>
     /// The typical household on a 7/1 ARM with 60 payments still fixed at 6.5%, expected to reset to 8.5% within
-    /// 2/1/5 caps (8.5% at the first reset, held there). The rate it pays averages 8.10%, so paying down wins.
+    /// 2/1/5 caps (8.5% at the first reset, held there). The rate it pays averages 8.10%, 8.02% after the little tax its
+    /// interest saves: almost even with the market's risk-adjusted 8%, so the hybrid's even split ends highest.
     /// </summary>
     public static StrategyInputs ArmInputs()
     {
@@ -199,22 +211,22 @@ public static class ReferenceStrategies
         public const decimal AverageMortgageRate = 8.10m;
 
         /// <summary>The hybrid's share invested.</summary>
-        public const decimal HybridInvestPercent = 48m;
+        public const decimal HybridInvestPercent = 50m;
 
         /// <summary>First-year interest, all at the starting rate.</summary>
         public const decimal FirstYearInterest = 19_354.15m;
 
         /// <summary>Pay off first: net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_577_419.84m;
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_628_144.96m;
 
         /// <summary>Invest: net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_567_099.07m;
+        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_626_586.08m;
 
         /// <summary>Invest: total interest, the reset included.</summary>
         public const decimal InvestTotalInterest = 387_399.16m;
 
         /// <summary>Pay off first: when the mortgage is gone.</summary>
-        public const int PayOffFirstPayoffMonth = 206;
+        public const int PayOffFirstPayoffMonth = 214;
     }
 
     /// <summary>
@@ -231,25 +243,27 @@ public static class ReferenceStrategies
         public const decimal Subsidy = 6_827.64m;
 
         /// <summary>Invest: net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_235_044.66m;
+        public const decimal InvestRiskAdjustedNetWorthAtYear30 = 3_293_315.15m;
 
         /// <summary>Pay off first: net worth after 30 years at the risk-adjusted return.</summary>
-        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_170_861.22m;
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 3_237_223.15m;
 
         /// <summary>Pay off first: when the mortgage is gone.</summary>
-        public const int PayOffFirstPayoffMonth = 273;
+        public const int PayOffFirstPayoffMonth = 286;
     }
 
     /// <summary>
-    /// A $700,000 loan at 7% over 30 years on a $900,000 home; a single filer earning $250,000 at a 35% rate with
-    /// $15,000 of other deductions and $3,000 a month to put to work. Itemizing wins, so the interest is deducted.
+    /// A $700,000 loan at 7% over 30 years on a $900,000 home; a single filer earning $250,000: the 24% federal bracket
+    /// plus 5% state, so 29%, and 23.8% on capital gains (15%, the 3.8% net investment income tax, and the state's 5%);
+    /// $28,000 of other deductions (state and property taxes, charity) and $3,000 a month to put to work. Itemizing
+    /// wins by more than the interest, so every dollar of it is deducted.
     /// </summary>
     public static StrategyInputs ItemizerInputs() =>
         new(
             new LoanTerms(700_000m, 7m, 360, NextPaymentDate),
             homeValue: 900_000m,
             homeGrowthRate: 4.3m,
-            new Household(250_000m, 35m, 15m, FilingStatus.SingleFiler, 15_000m, 3_000m,
+            new Household(250_000m, 29m, 23.8m, FilingStatus.SingleFiler, 28_000m, 3_000m,
                 currentRetirementSavings: 50_000m, currentInvestments: 20_000m),
             new EmployerMatch(50m, 6m),
             StockPurchasePlan.None,
@@ -262,17 +276,17 @@ public static class ReferenceStrategies
         /// <summary>Interest in the first year.</summary>
         public const decimal FirstYearInterest = 48_774.74m;
 
-        /// <summary>(15,000 + 48,774.74 − 16,100) × 35%.</summary>
-        public const decimal FirstYearTaxSaved = 16_686.16m;
+        /// <summary>All of the interest, at 29%: 28,000 + 48,774.74 is more than 48,774.74 above the 16,100 standard deduction.</summary>
+        public const decimal FirstYearTaxSaved = 14_144.67m;
 
-        /// <summary>7% × (1 − 35%).</summary>
-        public const decimal AfterTaxMortgageRate = 4.55m;
+        /// <summary>7% × (1 − 29%).</summary>
+        public const decimal AfterTaxMortgageRate = 4.97m;
 
         /// <summary>Tax saved over 30 years, investing the difference (the standard deduction rising 3% a year).</summary>
-        public const decimal InvestTheDifferenceTotalTaxSaved = 323_665.07m;
+        public const decimal InvestTheDifferenceTotalTaxSaved = 283_202.53m;
 
         /// <summary>Tax saved over 30 years, paying off first: less interest, so less to deduct.</summary>
-        public const decimal PayOffFirstTotalTaxSaved = 98_256.31m;
+        public const decimal PayOffFirstTotalTaxSaved = 89_326.27m;
     }
 
     /// <summary><see cref="TypicalInputs"/> with $2,000 a month and 10% of pay in a 15%-discount ESPP that buys every 6 months.</summary>
@@ -284,10 +298,10 @@ public static class ReferenceStrategies
         /// <summary>10% of $120,000 a month.</summary>
         public const decimal MonthlyContribution = 1_000m;
 
-        /// <summary>Pay off first, with the ESPP gains going to principal: paid off in month 108.</summary>
-        public const int PayOffFirstPayoffMonth = 108;
+        /// <summary>Pay off first, with the ESPP gains going to principal: paid off in month 109.</summary>
+        public const int PayOffFirstPayoffMonth = 109;
 
         /// <summary>Net worth after 30 years at the risk-adjusted return, paying off first.</summary>
-        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 5_084_252.95m;
+        public const decimal PayOffFirstRiskAdjustedNetWorthAtYear30 = 5_107_098.60m;
     }
 }

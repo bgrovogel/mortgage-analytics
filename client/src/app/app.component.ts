@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -24,7 +24,7 @@ const PAGES = [
       <header class="app-header focused">
         <div class="app-bar">
           <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
-          <a class="back" routerLink="/calculator" data-testid="back-to-app">← Back to the calculator</a>
+          <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
         </div>
       </header>
     } @else {
@@ -40,7 +40,7 @@ const PAGES = [
           <div class="account">
             @if (auth.user(); as user) {
               <!-- The email on a wide screen; on a phone, where the email would not fit, a person icon named "Account". -->
-              <a class="who" routerLink="/account" data-testid="account-link" [attr.title]="'Your account: ' + user.email">
+              <a class="who" routerLink="/account" [queryParams]="{ returnUrl: url() }" data-testid="account-link" [attr.title]="'Your account: ' + user.email">
                 <span class="email" data-testid="signed-in-as">{{ user.email }}</span>
                 <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
                   <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2" />
@@ -50,7 +50,8 @@ const PAGES = [
               </a>
               <button type="button" class="link" (click)="signOut()" data-testid="sign-out" [attr.title]="'Signed in as ' + user.email">Sign out</button>
             } @else {
-              <a routerLink="/sign-in" data-testid="sign-in-link">Sign in</a>
+              <!-- Signing in comes back to this page, and the sign-in page's way back names it. -->
+              <a routerLink="/sign-in" [queryParams]="{ returnUrl: url() }" data-testid="sign-in-link">Sign in</a>
             }
           </div>
         </div>
@@ -74,6 +75,24 @@ export class AppComponent {
   private readonly router = inject(Router);
   protected readonly pages = PAGES;
   protected readonly auth = inject(AuthService);
+
+  /** The URL of the page shown. */
+  protected readonly url = toSignal(
+    this.router.events.pipe(filter((event) => event instanceof NavigationEnd), map(() => this.router.url)),
+    { initialValue: this.router.url },
+  );
+
+  /**
+   * Where an account page's way back leads: the page the visitor came from (`?returnUrl=`), by name. History is left
+   * out while signed out, as going back there would only lead to signing in again; anything not a page here, or no
+   * page at all, leads to the calculator.
+   */
+  protected readonly back = computed(() => {
+    const returnUrl = this.router.parseUrl(this.url()).queryParams['returnUrl'];
+    const path = typeof returnUrl === 'string' ? returnUrl.split(/[?#]/)[0] : '';
+    const page = PAGES.find((p) => (path === p.path || path.startsWith(`${p.path}/`)) && (p.path !== '/history' || this.auth.user()));
+    return page && page.path !== '/calculator' ? { path, name: page.label } : { path: page ? path : '/calculator', name: 'the calculator' };
+  });
 
   /** True on pages whose route asks for the focused layout (sign-in and the other account pages). */
   protected readonly focused = toSignal(

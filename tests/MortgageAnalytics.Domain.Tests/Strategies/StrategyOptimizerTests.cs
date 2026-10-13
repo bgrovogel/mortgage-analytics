@@ -71,7 +71,7 @@ public class StrategyOptimizerTests
             Assert.That(comparison.Recommended.Kind, Is.EqualTo(StrategyKind.InvestTheDifference), "at a risk-adjusted 8%, investing ends highest");
             Assert.That(comparison.RunnerUp.Kind, Is.EqualTo(StrategyKind.Hybrid), "the hybrid is next");
             Assert.That(comparison.Lead, Is.EqualTo(Typical.InvestTheDifference.RiskAdjustedNetWorthAtYear30 - Typical.Hybrid.RiskAdjustedNetWorthAtYear30), "by this much");
-            Assert.That(comparison.LeadPercent, Is.EqualTo(0.5m), "a small edge, as a percentage of the runner-up");
+            Assert.That(comparison.LeadPercent, Is.EqualTo(0.4m), "a small edge, as a percentage of the runner-up");
             Assert.That(comparison.WinnerIn(MarketScenarioKind.BadDecade).Kind, Is.EqualTo(StrategyKind.PayOffFirst),
                 "a lost decade first, and the guaranteed return of paying off wins");
             Assert.That(Outcome(comparison, StrategyKind.PayOffFirst).BadDecade.FinalNetWorth, Is.EqualTo(Typical.PayOffFirst.BadDecadeNetWorthAtYear30), "pay off first, bad decade");
@@ -158,7 +158,7 @@ public class StrategyOptimizerTests
     [Test]
     public void TheStandardDeduction_MeansInterestSavesNoTax()
     {
-        var rates = Optimizer.Compare(TypicalInputs()).Rates;
+        var rates = Optimizer.Compare(TypicalInputs(otherDeductions: 10_000m)).Rates;
 
         Assert.Multiple(() =>
         {
@@ -185,8 +185,9 @@ public class StrategyOptimizerTests
     [Test]
     public void ATie_GoesToPayingOffFirst_TheLessRiskyChoice()
     {
-        // With no cash to put to work there is nothing to choose: every strategy ends the same.
-        var comparison = Optimizer.Compare(TypicalInputs(monthlyCash: 0m));
+        // With no cash to put to work, and no tax saved by the interest to come back as cash, there is nothing to
+        // choose: every strategy ends the same.
+        var comparison = Optimizer.Compare(TypicalInputs(monthlyCash: 0m, otherDeductions: 10_000m));
 
         Assert.Multiple(() =>
         {

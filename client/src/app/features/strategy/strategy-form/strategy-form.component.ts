@@ -8,7 +8,8 @@ import { setChanged } from '../../../core/forms/set-changed';
 import { decimal, usd } from '../../../core/formatting/format';
 import { InvestorRiskProfile, StrategyRequest, TaxFilingStatus } from '../../../core/models/strategy.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
+import { EMPLOYEE_DEFERRAL_LIMIT, IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
+import { TaxSituation, federalBracket, longTermGainsRate } from './tax-brackets';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
@@ -72,11 +73,13 @@ export class StrategyFormComponent implements OnInit {
     monthlyCashToPutToWork: [1_000, validatorsFor(rules.monthlyCashToPutToWork)],
     riskProfile: this.fb.control<InvestorRiskProfile>('Balanced'),
 
+    // $120,000 jointly is the 12% federal bracket for 2026; with a 5% state, 17%. Gains: 15% federal, 20% with the
+    // state. Other deductions: about $5,600 of state income tax, $6,400 of property tax and $2,000 to charity.
     grossAnnualIncome: [120_000, validatorsFor(rules.grossAnnualIncome)],
-    marginalTaxRate: [24, validatorsFor(rules.marginalTaxRate)],
+    marginalTaxRate: [17, validatorsFor(rules.marginalTaxRate)],
     filingStatus: this.fb.control<TaxFilingStatus>('MarriedFilingJointly'),
-    otherItemizedDeductions: [10_000, validatorsFor(rules.otherItemizedDeductions)],
-    capitalGainsTaxRate: [15, validatorsFor(rules.capitalGainsTaxRate)],
+    otherItemizedDeductions: [14_000, validatorsFor(rules.otherItemizedDeductions)],
+    capitalGainsTaxRate: [20, validatorsFor(rules.capitalGainsTaxRate)],
 
     employerMatchPercent: [50, validatorsFor(rules.employerMatchPercent)],
     matchUpToPercentOfPay: [6, validatorsFor(rules.matchUpToPercentOfPay)],
@@ -119,6 +122,31 @@ export class StrategyFormComponent implements OnInit {
     const v = this.values();
     const margin = RISK_PROFILES.find((p) => p.value === v.riskProfile)?.margin ?? 0;
     return `${decimal((v.expectedAnnualReturn ?? 0) - margin)}%`;
+  });
+
+  /**
+   * The 2026 federal bracket and long-term gains rate for the income, filing status and deductions entered, so the
+   * tax rates typed beside them can be checked: the form adds the state's rate to them.
+   */
+  readonly federalRates = computed(() => {
+    const v = this.values();
+    const income = v.grossAnnualIncome ?? 0;
+    const situation: TaxSituation = {
+      income,
+      status: v.filingStatus ?? 'MarriedFilingJointly',
+      // The 401(k) contribution that earns the whole match, as the comparison makes it, comes off before tax.
+      pretaxSavings: (v.employerMatchPercent ?? 0) > 0 ? Math.min((income * (v.matchUpToPercentOfPay ?? 0)) / 100, EMPLOYEE_DEFERRAL_LIMIT) : 0,
+      otherDeductions: v.otherItemizedDeductions ?? 0,
+      yearOneInterest: ((v.currentBalance ?? 0) * (v.annualInterestRate ?? 0)) / 100,
+    };
+    const bracket = federalBracket(situation);
+    const gains = longTermGainsRate(situation);
+    return {
+      bracket: bracket.rate, taxable: usd(bracket.taxableIncome), gains: decimal(gains), withNiit: gains % 5 !== 0,
+      // Rates that can't be right: below the federal rate alone, before any state tax.
+      taxTooLow: (v.marginalTaxRate ?? 0) < bracket.rate ? decimal(v.marginalTaxRate ?? 0) : null,
+      gainsTooLow: (v.capitalGainsTaxRate ?? 0) < gains ? decimal(v.capitalGainsTaxRate ?? 0) : null,
+    };
   });
 
   readonly taxesSummary = computed(() => {

@@ -178,7 +178,9 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Taxes as they really work.** Mortgage interest saves tax only on itemized deductions above the **standard
   deduction** (2026 amounts, rising with inflation; $750,000 debt limit), year by year, so paying down early also
   shrinks the deduction. Net worth counts every account **after the tax still owed** (a 401(k) at the income tax rate,
-  capital gains on taxable growth, a Roth tax-free).
+  capital gains on taxable growth, a Roth tax-free). Under the tax rates, the **2026 federal bracket** and long-term
+  gains rate for the income entered: the example's $120,000 jointly is the 12% bracket, so its 17% is that plus a 5%
+  state; at $500,000 the hint says 32%.
 - **The hybrid split** follows the after-tax rate difference, and counts **stock that arrives anyway** (RSUs kept, an
   ESOP) toward its market share, so someone already heavy in company stock leans to the mortgage.
 - **Rate types.** An ARM (paying down earns the rate's average over the loan, and a reset that raises the payment

@@ -30,6 +30,7 @@
     "src/app/features/calculator/cost-projection/equity-lines.ts",
     "src/app/features/calculator/cost-projection/value-lines.ts",
     "src/app/features/strategy/strategy-text.ts",
+    "src/app/features/strategy/strategy-form/tax-brackets.ts",
     "src/app/shared/rate-options/rate-options.ts",
     "!src/**/*.spec.ts"
   ],

@@ -6,3 +6,11 @@
 .segmented {
   @include segmented.styles(3);
 }
+
+// A tax rate that cannot be right for the income: below the federal rate alone.
+.mismatch {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--warning-text);
+  font-weight: 600;
+}

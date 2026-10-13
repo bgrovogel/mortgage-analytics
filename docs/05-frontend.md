@@ -257,7 +257,9 @@ The flows are designed around the people using it:
 `/strategy`, `/history` and `/account` (both behind `signedInGuard`), and the account pages (a focused layout
 without page tabs, which `/account` uses too). An app initializer asks the API who is signed in before the first navigation, so the guard already knows. The
 guard redirects to `/sign-in?returnUrl=…`, and only same-site paths are accepted as return URLs (no open
-redirect).
+redirect). The header's Sign in and account links carry the page they were clicked on the same way, so signing in
+comes back to it, and the account pages' way back names it ("← Back to Refinance"); History is left out of that while
+signed out, as going back to it would only lead to signing in again.
 
 ### Talking to the API
 

@@ -21,6 +21,7 @@ def household(rng):
         espp_pct=D(random.choice([0, 0, 5, 10, 15])), espp_disc=D(random.choice([0, 5, 10, 15])), espp_period=random.choice([1, 3, 5, 6, 7, 12, 27]),
         ira=money(0, 7_500, 500), ret=D(random.randrange(-50, 151)) / 10, infl=D(random.randrange(-10, 61)) / 10,
         risk=random.choice(list(RISK)),
+        pmi=random.choice([D(0), D(0), D('85.5'), D(150), D(240)]),
         h=dict(income=money(0, 600_000, 1000), tax=D(random.randrange(0, 51)), cg=D(random.choice([0, 15, 20, 24])),
                status=random.choice(list(STATUS)), other=money(0, 60_000, 500), cash=money(0, 8_000, 50),
                rsu=money(0, 80_000, 1000) if random.random() < .4 else D(0), sell_rsu=random.random() < .5,
@@ -39,7 +40,7 @@ def request(i):
                 esppDiscountPercent=float(i['espp_disc']), esppPurchasePeriodMonths=i['espp_period'], annualIraContribution=float(i['ira']),
                 annualRsuVesting=float(h['rsu']), sellRsusAtVest=h['sell_rsu'], annualEsopContribution=float(h['esop']),
                 currentRetirementSavings=float(h['retire']), currentInvestments=float(h['invest']), expectedAnnualReturn=float(i['ret']),
-                inflationRate=float(i['infl']), riskProfile=RISK[i['risk']])
+                inflationRate=float(i['infl']), riskProfile=RISK[i['risk']], monthlyPmi=float(i['pmi']))
 
 
 def call(body):
@@ -72,6 +73,9 @@ def check(i, api, problems):
             same(f'{tag}.totalTaxSaved', m['total_tax_saved'], p['totalTaxSaved'])
             same(f'{tag}.payoffMonth', m['payoff'], p['payoffMonth'])
             same(f'{tag}.crossoverMonth', m['cross'], p['crossoverMonth'])
+            same(f'{tag}.totalMortgageInsurance', m['total_pmi'], p['totalMortgageInsurance'])
+            if (m['pmi_end'].isoformat() if m['pmi_end'] else None) != p['mortgageInsuranceEndDate']:
+                problems.append(f'{tag}.mortgageInsuranceEndDate')
             if (m['payoff_date'].isoformat() if m['payoff_date'] else None) != p['payoffDate']:
                 problems.append(f'{tag}.payoffDate')
             for y, ay in zip(m['years'], p['years']):

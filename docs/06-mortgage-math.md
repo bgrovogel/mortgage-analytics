@@ -360,13 +360,18 @@ differently, so all three spend the same each month.
 **Taxes, realistically:**
 - Mortgage interest only saves tax on itemized deductions **above the standard deduction**, year by year. Paying
   down early shrinks the deduction too. The $750,000 debt limit applies.
+- **The tax rates are the household's own,** federal plus state. The form shows the 2026 federal bracket and the
+  long-term gains rate for the income, filing status and deductions entered, so a rate that doesn't fit the income
+  stands out: $120,000 jointly is the 12% bracket; $500,000 is 32%, with 3.8% more on investment income.
 - **PMI** is paid from the same budget until the balance is 80% of the home's value, so paying down ends it sooner: a
   return investing does not earn. From 2026 it is deductible like interest, phasing out by 10% for each $1,000 of
   income over $100,000 (pay less the 401(k) contribution), so none from $110,000.
 - Net worth counts every account **after the tax still owed**: a 401(k) at the income tax rate, capital gains on
   taxable growth, a Roth tax-free.
 
-**The hybrid's split** compares what a dollar earns on the mortgage, after tax (the rate, less any tax it saves),
+**The hybrid's split** compares what a dollar earns on the mortgage, after tax (the rate, less the share of the
+interest the deduction actually gives back: all of the tax rate only when every dollar is deducted, about 1% of it for
+a household that itemizes by a little),
 with what it earns invested, after tax. Stock that arrives anyway (RSUs kept as shares, ESOP) counts toward the
 market share, so someone already heavy in company stock leans toward the mortgage. An **ARM** uses its average
 rate over the payments left; a **buydown's** subsidy frees cash in every strategy.

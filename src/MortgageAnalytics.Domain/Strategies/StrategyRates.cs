@@ -71,7 +71,10 @@ public sealed record StrategyRates(
         var deductible = TaxDeductions.DeductibleInterest(firstYearInterest, loan.Principal);
         var standard = TaxDeductions.StandardDeduction(household.FilingStatus);
         var deducted = household.OtherItemizedDeductions + deductible > standard;
-        var afterTaxMortgage = deducted ? Percent(averageRate * household.AfterTaxShare) : averageRate;
+        // Paying down earns the rate, less the share of the interest the deduction actually gives back: the whole tax
+        // rate only when every dollar is deducted, little when itemizing barely beats the standard deduction.
+        var taxSaved = TaxDeductions.TaxSavedByInterest(household, deductible);
+        var afterTaxMortgage = firstYearInterest > 0 ? Percent(averageRate * (1m - taxSaved / firstYearInterest)) : averageRate;
 
         var automatic = household.AnnualAutomaticStock;
         var discretionary = 12m * (plan.ExtraCash + plan.EsppContribution) + (household.SellRsusAtVest ? household.AnnualRsuVesting : 0m);
@@ -89,7 +92,7 @@ public sealed record StrategyRates(
         return new StrategyRates(
             loan.AnnualInterestRate,
             firstYearInterest,
-            TaxDeductions.TaxSavedByInterest(household, deductible),
+            taxSaved,
             standard,
             deducted,
             afterTaxMortgage,

@@ -19,23 +19,25 @@ test.describe('Pay off or invest', () => {
   test('recommends on the risk-adjusted return, and says a lost decade would reverse it', async ({ page }) => {
     await expect(page.getByTestId('recommended'), 'investing ends highest at a risk-adjusted 8%').toHaveText('Invest the difference');
     await expect(page.getByTestId('recommended-detail'), 'the ranking rests on the risk-adjusted return').toContainText('counting on 8% a year');
-    await expect(page.getByTestId('downside'), 'but market returns are not guaranteed').toContainText('Debt free ASAP would win by $41,363');
-    await expect(page.getByTestId('card-PayOffFirst'), 'the reference net worth, to the dollar').toContainText('$3,719,027');
-    await expect(page.getByTestId('card-InvestTheDifference'), 'and investing').toContainText('$3,844,781');
-    await expect(page.getByTestId('card-PayOffFirst'), 'each card leads with how far it is behind').toContainText('$125,755 behind Invest');
+    await expect(page.getByTestId('downside'), 'but market returns are not guaranteed').toContainText('Debt free ASAP would win by $26,025');
+    await expect(page.getByTestId('card-PayOffFirst'), 'the reference net worth, to the dollar').toContainText('$3,772,280');
+    await expect(page.getByTestId('card-InvestTheDifference'), 'and investing').toContainText('$3,901,666');
+    await expect(page.getByTestId('card-PayOffFirst'), 'each card leads with how far it is behind').toContainText('$129,386 behind Invest');
     await page.getByTestId('tab-milestones').click();
-    await expect(page.getByTestId('closeness'), 'and the page says why the totals are close').toContainText('All three end within $125,755 (3.3%)');
+    await expect(page.getByTestId('closeness'), 'and the page says why the totals are close').toContainText('All three end within $129,386 (3.3%)');
     await page.getByTestId('tab-why').click();
-    await expect(page.getByTestId('fact-sheet'), 'the standard deduction beats itemizing here').toContainText('saves no tax');
+    await expect(page.getByTestId('fact-sheet'), 'itemizing beats the standard deduction, but only just')
+      .toContainText('Itemizing beats your $32,200 standard deduction, so year-1 interest of $19,354 saves $196 in tax');
+    await expect(page.getByTestId('fact-sheet'), 'so paying down earns nearly the full rate').toContainText('earns 6.43% for certain after tax');
     await expect(page.getByTestId('fact-sheet'), 'and the extra cash grows tax-free in the IRA').toContainText('grows tax-free: the full 8%');
   });
 
   test('a bad decade changes every number on the page', async ({ page }) => {
     await page.getByTestId('scenario-badDecade').check();
 
-    await expect(page.getByTestId('card-PayOffFirst'), 'paying off first, after a lost decade').toContainText('$3,187,296');
+    await expect(page.getByTestId('card-PayOffFirst'), 'paying off first, after a lost decade').toContainText('$3,206,577');
     await page.getByTestId('tab-milestones').click();
-    await expect(page.getByTestId('milestones'), 'the table follows the scenario').toContainText('$3,145,932');
+    await expect(page.getByTestId('milestones'), 'the table follows the scenario').toContainText('$3,180,552');
   });
 
   test('stock that arrives anyway sends the hybrid\'s extra cash to the mortgage', async ({ page }) => {
@@ -52,7 +54,7 @@ test.describe('Pay off or invest', () => {
     await page.getByTestId('risk-Conservative').check();
 
     await expect(page.getByTestId('counting-on'), 'four points off the expected return').toContainText('counting on 6% a year');
-    await expect(page.getByTestId('card-Hybrid'), 'so the hybrid leans to the mortgage').toContainText('38% invested, 62% to the mortgage');
+    await expect(page.getByTestId('card-Hybrid'), 'so the hybrid leans to the mortgage').toContainText('39% invested, 61% to the mortgage');
   });
 
   test('PMI on the loan: paying down ends it sooner, and the comparison counts that', async ({ page }) => {

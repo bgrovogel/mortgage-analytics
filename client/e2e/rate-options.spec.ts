@@ -42,7 +42,7 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
     await expect(page.getByTestId('refi-verdict'), 'the lifetime result does not change').toContainText('Refinancing costs $17,415 more');
   });
 
-  test('pay off or invest on an ARM resetting to 8.5%: paying down wins, and the fact sheet says why', async ({ page }) => {
+  test('pay off or invest on an ARM resetting to 8.5%: nearly even with the market, and the fact sheet says why', async ({ page }) => {
     await page.goto('/strategy');
     await arrived(page, 'the typical household');
     await open(page, 'section-rate');
@@ -53,7 +53,7 @@ test.describe('Adjustable rates and buydowns beyond the calculator', () => {
     await page.getByTestId('arm-periodic-cap').fill('1');
     await arrived(page, 'the comparison');
 
-    await expect(page.getByTestId('recommended'), 'an 8.1% average rate beats the 8% counted on').toHaveText('Debt free ASAP');
+    await expect(page.getByTestId('recommended'), '8.02% after tax against the 8% counted on: the even split ends highest').toHaveText('Hybrid');
     await page.getByTestId('tab-why').click();
     await expect(page.getByTestId('fact-sheet'), 'the fact sheet explains the adjusting rate')
       .toContainText('Your rate adjusts: 6.5% now, 8.1% on average over the loan on the path you expect');

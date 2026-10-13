@@ -80,12 +80,18 @@ public sealed record StrategyRequest
     /// <example>120000</example>
     public decimal GrossAnnualIncome { get; init; }
 
-    /// <summary>Federal plus state tax on the next dollar earned, as a percentage.</summary>
-    /// <example>24</example>
+    /// <summary>
+    /// Federal plus state tax on the next dollar earned, as a percentage: e.g. 17 for $120,000 married filing jointly
+    /// (the 12% federal bracket after the standard deduction and 401(k) contributions) in a state taxing 5%.
+    /// </summary>
+    /// <example>17</example>
     public decimal MarginalTaxRate { get; init; }
 
-    /// <summary>Tax on long-term gains in a taxable account, as a percentage.</summary>
-    /// <example>15</example>
+    /// <summary>
+    /// Federal plus state tax on long-term gains in a taxable account, as a percentage: federally 0%, 15% or 20% by
+    /// income, plus 3.8% above $200,000 ($250,000 jointly).
+    /// </summary>
+    /// <example>20</example>
     public decimal CapitalGainsTaxRate { get; init; }
 
     /// <summary>How the household files, which sets the standard deduction.</summary>
@@ -93,7 +99,7 @@ public sealed record StrategyRequest
     public TaxFilingStatus FilingStatus { get; init; }
 
     /// <summary>Itemized deductions other than mortgage interest, per year: state and local taxes (up to the cap), charity.</summary>
-    /// <example>10000</example>
+    /// <example>14000</example>
     public decimal OtherItemizedDeductions { get; init; }
 
     /// <summary>Take-home cash left each month after the mortgage payment and living costs.</summary>

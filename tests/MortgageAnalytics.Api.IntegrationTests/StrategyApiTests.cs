@@ -24,7 +24,7 @@ public class StrategyApiTests : ApiTestBase
             Assert.That(body.GetProperty("recommended").GetString(), Is.EqualTo("InvestTheDifference"), "enums are names, not numbers");
             Assert.That(body.GetProperty("badDecadeWinner").GetString(), Is.EqualTo("PayOffFirst"), "the downside winner is reported too");
             Assert.That(payOff.GetProperty("strategy").GetString(), Is.EqualTo("PayOffFirst"), "strategies in a fixed order");
-            Assert.That(payOff.GetProperty("riskAdjusted").GetProperty("payoffDate").GetString(), Is.EqualTo("2041-06-01"), "dates are ISO strings");
+            Assert.That(payOff.GetProperty("riskAdjusted").GetProperty("payoffDate").GetString(), Is.EqualTo("2041-11-01"), "dates are ISO strings");
             Assert.That(payOff.GetProperty("riskAdjusted").GetProperty("years")[30].GetProperty("netWorth").GetDecimal(),
                 Is.EqualTo(Typical.PayOffFirst.RiskAdjustedNetWorthAtYear30), "the reference net worth, to the cent");
         });

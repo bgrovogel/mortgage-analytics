@@ -139,9 +139,10 @@ test.describe('Pay off or invest: every number on the page matches the API', () 
     await page.getByTestId('monthly-cash').fill('3000');
     await page.getByTestId('section-taxes').locator('summary').click();
     await page.getByTestId('income').fill('250000');
-    await page.getByTestId('tax-rate').fill('35');
+    await page.getByTestId('tax-rate').fill('29');
     await page.getByTestId('filing-status').selectOption('Single');
-    await page.getByTestId('other-deductions').fill('15000');
+    await page.getByTestId('other-deductions').fill('28000');
+    await page.getByTestId('capital-gains-rate').fill('23.8');
     await page.getByTestId('section-stock').locator('summary').click();
     await page.getByTestId('rsu').fill('40000');
     await page.getByTestId('sell-rsus').check();

@@ -69,7 +69,7 @@ on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the por
 | 2 | Switch the loan type to **FHA**, pick a county, then raise the price past its limit. | The limit is HUD's, by county; over it the app warns. The county list comes from `GET /api/v1/fha/loan-limits`. |
 | 3 | The **Projection** tab, then the equity chart. | Every cost of owning it over the life of the loan, not just principal and interest. |
 | 4 | **Refinance**: $300,000 at 7% with 25 years left, into 6% for 30 years, with $6,000 of closing costs. | The payment drops $321.69 a month, yet refinancing costs **$17,415 more**, because the clock restarts. Break-even is November 2028. "Keep paying $2,120.34 a month" saves $107,590 instead. |
-| 5 | **Pay off or invest**: $300,000 at 6.5%, 25 years left, $1,000 a month. Switch to **Bad decade first**. | "Invest the difference" is recommended, $18,150 ahead of the hybrid, but not guaranteed: after a lost decade, paying the mortgage off first wins by $41,363. |
+| 5 | **Pay off or invest**: $300,000 at 6.5%, 25 years left, $1,000 a month. Switch to **Bad decade first**. | "Invest the difference" is recommended, $16,437 ahead of the hybrid, but not guaranteed: after a lost decade, paying the mortgage off first wins by $26,025. The household's 17% tax rate is the 12% federal bracket plus a 5% state, as the hint under it shows. |
 | 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **History** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
 | 7 | Open **/swagger** and try `POST /api/v1/amortization/calculate`. | The same API the calculator uses, documented from the code's own comments. |
 
@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 552 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 555 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -453,7 +453,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 1,030 .NET · 719 Jest · 103 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,033 .NET · 734 Jest · 104 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

@@ -25,13 +25,27 @@ test.describe('Accounts', () => {
     await page.getByTestId('account-email').fill(email);
     await page.getByTestId('account-password').fill(PASSWORD);
     await page.getByTestId('account-submit').click();
-    await expect(page, 'signed in, on History').toHaveURL(/\/history$/);
+    await expect(page, 'signed in from the confirmation page, on History').toHaveURL(/\/history$/);
     await expect(page.getByTestId('signed-in-as'), 'the header says who is signed in').toHaveText(email);
 
     await page.getByTestId('sign-out').click();
     await expect(page.getByTestId('sign-in-link'), 'signed out').toBeVisible();
     await page.goto('/history');
     await expect(page, 'History needs an account').toHaveURL(/\/sign-in\?returnUrl=%2Fhistory$/);
+  });
+
+  test('signing in from a page leads back to it, and so does the way back', async ({ account, page }) => {
+    await page.request.post('/api/v1/account/logout');
+    await page.goto('/refinance');
+    await expect(page.getByTestId('results'), 'the Refinance page has its result').toHaveAttribute('aria-busy', 'false');
+
+    await page.getByTestId('sign-in-link').click();
+    await expect(page.getByTestId('back-to-app'), 'the way back names the page').toHaveText('← Back to Refinance');
+    await page.getByTestId('account-email').fill(account.email);
+    await page.getByTestId('account-password').fill(PASSWORD);
+    await page.getByTestId('account-submit').click();
+
+    await expect(page, 'signed in, back on Refinance').toHaveURL(/\/refinance$/);
   });
 
   test('an unconfirmed email cannot sign in, and can ask for the link again', async ({ page }) => {
@@ -121,7 +135,8 @@ test.describe('Accounts', () => {
     await signedIn.saveAs('Oak St');
 
     await page.getByTestId('account-link').click();
-    await expect(page, 'the email in the header opens the account page').toHaveURL(/\/account$/);
+    await expect(page, 'the email in the header opens the account page').toHaveURL(/\/account\?returnUrl=%2Fcalculator%2Foverview$/);
+    await expect(page.getByTestId('back-to-app'), 'whose way back is the page it was opened from').toHaveText('← Back to the calculator');
     await page.getByTestId('delete-start').click();
     await page.getByTestId('delete-password').fill('wrong-password-1');
     await page.getByTestId('delete-submit').click();

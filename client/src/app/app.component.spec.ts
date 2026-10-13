@@ -71,7 +71,7 @@ describe('AppComponent', () => {
   it('offers to sign in when nobody is signed in', () => {
     const { root } = render();
 
-    expect(root.querySelector('[data-testid="sign-in-link"]')?.getAttribute('href')).toBe('/sign-in');
+    expect(root.querySelector('[data-testid="sign-in-link"]')?.getAttribute('href')).toMatch(/^\/sign-in(\?returnUrl=|$)/);
     expect(root.querySelector('[data-testid="signed-in-as"]')).toBeNull();
   });
 
@@ -125,7 +125,7 @@ describe('AppComponent', () => {
     user.set({ email: 'alice@example.com' });
     const { root } = render();
 
-    expect(root.querySelector('[data-testid="account-link"]')?.getAttribute('href')).toBe('/account');
+    expect(root.querySelector('[data-testid="account-link"]')?.getAttribute('href')).toMatch(/^\/account(\?returnUrl=|$)/);
   });
 
   it('asks for an account before showing the account page', async () => {
@@ -169,6 +169,29 @@ describe('AppComponent', () => {
       expect(shell.querySelector('[data-testid="sign-in-link"]')).toBeNull();
       expect(shell.querySelector('[data-testid="back-to-app"]')!.getAttribute('href')).toBe('/calculator');
     });
+
+  it('signs in from the page you are on, and the account pages lead back to it, by name', async () => {
+    const onRefinance = await shellAt('/refinance');
+    const signIn = onRefinance.querySelector('[data-testid="sign-in-link"]')!.getAttribute('href');
+    const back = (await shellAt('/sign-in?returnUrl=%2Frefinance')).querySelector('[data-testid="back-to-app"]')!;
+    const fromStrategy = (await shellAt('/sign-in?returnUrl=%2Fstrategy')).querySelector('[data-testid="back-to-app"]')!;
+
+    expect(signIn).toBe('/sign-in?returnUrl=%2Frefinance');
+    expect(back.getAttribute('href')).toBe('/refinance');
+    expect(back.textContent?.trim()).toBe('← Back to Refinance');
+    expect(fromStrategy.textContent?.trim()).toBe('← Back to Pay off or invest');
+  });
+
+  it.each([
+    ['/sign-in?returnUrl=%2Fhistory', 'History needs an account, so going back would only return here'],
+    ['/sign-in?returnUrl=https%3A%2F%2Fevil.example', 'only pages on this site'],
+    ['/sign-in', 'nowhere to go back to'],
+  ])('leads %s back to the calculator: %s', async (url) => {
+    const back = (await shellAt(url)).querySelector('[data-testid="back-to-app"]')!;
+
+    expect(back.getAttribute('href')).toBe('/calculator');
+    expect(back.textContent?.trim()).toBe('← Back to the calculator');
+  });
 
   it('shows the page tabs everywhere else', async () => {
     const shell = await shellAt('/refinance');

@@ -2,7 +2,7 @@
 An independent model of the Pay off or invest comparison, in Python Decimal, written from the rules rather
 than translated from the C# engine. See README.md in this folder.
 """
-from decimal import Decimal as D, ROUND_HALF_UP
+from decimal import Decimal as D, ROUND_HALF_UP, ROUND_CEILING
 import math, datetime, json, sys
 
 C = D('0.01')
@@ -28,6 +28,11 @@ def add_months(d, m):
 
 def deductible(interest, balance):
     return interest if balance <= 750000 else r2(interest * 750000 / balance)
+
+def deductible_pmi(pmi, agi):
+    # From 2026 PMI is deductible as mortgage interest: 10% less for each $1,000 (or part) of AGI above $100,000.
+    steps = (max(D(0), agi - 100000) / 1000).to_integral_value(rounding=ROUND_CEILING)
+    return r2(pmi * max(D(0), 1 - steps / 10))
 
 def tax_saved(h, ded, price=D(1)):
     # standard deduction and other deductions rise with prices; interest does not
@@ -98,7 +103,10 @@ def rates(i, plan):
     std = STANDARD[h['status']]
     deducted = h['other'] + ded > std
     avg = average_rate(i)
-    atm = r2(avg * after) if deducted else avg
+    # Paying down earns the rate, less the share of the interest the deduction actually gives back: all of it at the
+    # full tax rate only when every dollar is deducted; a little when itemizing barely beats the standard deduction.
+    ts = tax_saved(h, ded)
+    atm = r2(avg * (1 - ts / fy)) if fy > 0 else avg
     ra = i['ret'] - MARGIN[i['risk']]
     disc = 12 * (plan['extra'] + plan['espp']) + (h['rsu'] if h['sell_rsu'] else D(0))
     sheltered = D(100) if disc == 0 else (min(D(1), i['ira'] / disc) * 100).quantize(D(1), rounding=ROUND_HALF_UP)
@@ -136,6 +144,12 @@ def simulate(i, invest, scenario):
     # The monthly budget is what the household pays on the mortgage now (less any buydown subsidy) plus the extra
     # cash: a reset that raises the payment leaves less to put to work, a lower one more.
     budget = plan['pay'] - subsidy(i, 1, plan['pay'])
+    # PMI on the statement, until the balance is 80% of today's home value; paid from the same budget.
+    removal = i['home'] * D('0.8')
+    pmi_of = lambda b: i['pmi'] if i['pmi'] > 0 and b > removal else D(0)  # noqa: E731
+    budget += pmi_of(bal)
+    agi = h['income'] - plan['contrib'] * 12
+    tot_pmi = D(0); pmi_year = D(0); last_pmi = None
     def year_end(y):
         home = i['home'] if (i['growth'] == 0 or y == 0) else r2(i['home'] * (1 + i['growth'] / 100) ** y)
         inv = at_value() + saved; nw = home - bal + inv
@@ -149,9 +163,12 @@ def simulate(i, invest, scenario):
         retire = r2(retire * g); roth = r2(roth * g); taxable = r2(taxable * g)
         cash = plan['extra']
         if bal > 0:
+            pmi = pmi_of(bal)
             it, pr, sub = mortgage.pay_month(m, bal)
             bal -= pr; tot_i += it; i_year += it
-            cash += budget - (it + pr - sub)
+            tot_pmi += pmi; pmi_year += pmi
+            if pmi > 0: last_pmi = m
+            cash += budget - (it + pr - sub) - pmi
         else:
             cash += budget
         retire += plan['contrib'] + plan['match']
@@ -162,7 +179,8 @@ def simulate(i, invest, scenario):
                 cash += proceeds - r2((proceeds - saved) * h['tax'] / 100)
                 saved = D(0)
         if m % 12 == 0:
-            ts = tax_saved(h, deductible(i_year, bal_ys), (1 + i['infl'] / 100) ** (y - 1)); tot_t += ts; cash += ts; i_year = D(0)
+            ded = deductible(i_year, bal_ys) + deductible_pmi(pmi_year, agi)
+            ts = tax_saved(h, ded, (1 + i['infl'] / 100) ** (y - 1)); tot_t += ts; cash += ts; i_year = D(0); pmi_year = D(0)
             retire += h['esop']
             if h['sell_rsu']: cash += h['rsu']
             else: taxable += h['rsu']; basis += h['rsu']
@@ -176,7 +194,8 @@ def simulate(i, invest, scenario):
             years.append(year_end(y)); bal_ys = bal
     return dict(years=years, total_interest=tot_i, total_tax_saved=tot_t, payoff=payoff,
                 payoff_date=add_months(i['first'], payoff - 1) if payoff else None,
-                cross=cross, cross_date=add_months(i['first'], cross - 1) if cross else None)
+                cross=cross, cross_date=add_months(i['first'], cross - 1) if cross else None,
+                total_pmi=tot_pmi, pmi_end=add_months(i['first'], last_pmi - 1) if last_pmi else None)
 
 def compare(i):
     plan = cash_plan(i); rt = rates(i, plan)
@@ -188,14 +207,14 @@ def compare(i):
     return plan, rt, out
 
 def household(**kw):
-    h = dict(income=D(120000), tax=D(24), cg=D(15), status='mfj', other=D(10000), cash=D(1000),
+    h = dict(income=D(120000), tax=D(17), cg=D(20), status='mfj', other=D(14000), cash=D(1000),
              rsu=D(0), sell_rsu=False, esop=D(0), retire=D(50000), invest=D(20000))
     h.update(kw); return h
 
 def inputs(**kw):
     i = dict(balance=D(300000), rate=D('6.5'), term=300, changes=[], buydown=[], first=datetime.date(2026, 1, 1), home=D(400000),
              growth=D('4.3'), h=household(), match=D(50), upto=D(6), espp_pct=D(0), espp_disc=D(15),
-             espp_period=6, ira=D(7500), ret=D(10), infl=D(3), risk='balanced')
+             espp_period=6, ira=D(7500), ret=D(10), infl=D(3), risk='balanced', pmi=D(0))
     h = kw.pop('h', {}); arm = kw.pop('arm', None); i.update(kw); i['h'] = household(**h)
     if arm:  # (fixed months, interval, expected, initial cap, periodic cap, lifetime cap)
         f, n, e, c1, c2, c3 = arm
@@ -205,7 +224,7 @@ def inputs(**kw):
 SCENARIOS = {
     'Typical': inputs(),
     'StockHeavy': inputs(h=dict(rsu=D(30000), esop=D(5000))),
-    'Itemizer': inputs(balance=D(700000), rate=D(7), term=360, home=D(900000), h=dict(status='single', other=D(15000), income=D(250000), tax=D(35), cash=D(3000))),
+    'Itemizer': inputs(balance=D(700000), rate=D(7), term=360, home=D(900000), h=dict(status='single', other=D(28000), income=D(250000), tax=D(29), cg=D('23.8'), cash=D(3000))),
     'WithEspp': inputs(espp_pct=D(10), h=dict(cash=D(2000))),
     'Conservative': inputs(risk='conservative'),
     'EsppEvery5': inputs(espp_pct=D(10), espp_period=5, h=dict(cash=D(2000))),

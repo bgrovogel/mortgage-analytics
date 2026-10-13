@@ -3,6 +3,9 @@ import { FieldRules, MAX_AMOUNT } from '../../../core/forms/field-rules';
 /** The 2026 IRA contribution limit. */
 export const IRA_LIMIT = 7_500;
 
+/** The most an employee can defer into a 401(k) in 2026, before catch-up contributions (the server's TaxLimits). */
+export const EMPLOYEE_DEFERRAL_LIMIT = 24_500;
+
 /** Every number on the strategy form: its label, and the limits the API enforces (StrategyRequestValidator). */
 export const STRATEGY_RULES = {
   currentBalance: { label: 'Balance you owe', unit: '$', min: 0.01, max: MAX_AMOUNT },
@@ -14,7 +17,7 @@ export const STRATEGY_RULES = {
   grossAnnualIncome: { label: 'Gross income', unit: '$', min: 0, max: MAX_AMOUNT },
   marginalTaxRate: { label: 'Tax rate', unit: '%', min: 0, max: 60 },
   otherItemizedDeductions: { label: 'Other deductions', unit: '$', min: 0, max: MAX_AMOUNT },
-  capitalGainsTaxRate: { label: 'Capital gains tax rate', unit: '%', min: 0, max: 60 },
+  capitalGainsTaxRate: { label: 'Capital gains (federal + state)', unit: '%', min: 0, max: 60 },
   employerMatchPercent: { label: 'Employer match', unit: '%', min: 0, max: 200 },
   matchUpToPercentOfPay: { label: 'Matched share of pay', unit: '%', min: 0, max: 100 },
   annualIraContribution: { label: 'IRA contributions', unit: '$', min: 0, max: IRA_LIMIT },

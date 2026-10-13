@@ -64,12 +64,12 @@ public class StrategyRulesTests
     [Test]
     public void FreeMoney_NeverTakesMoreThanTheCashAvailable()
     {
-        var plan = MonthlyCashPlan.For(TypicalInputs(monthlyCash: 228m, stockPurchasePlan: WithEspp.Plan));
+        var plan = MonthlyCashPlan.For(TypicalInputs(monthlyCash: 249m, stockPurchasePlan: WithEspp.Plan));
 
         Assert.Multiple(() =>
         {
-            Assert.That(plan.RetirementContribution, Is.EqualTo(300m), "$228 of take-home pay covers a $300 pre-tax contribution");
-            Assert.That(plan.RetirementContributionCost, Is.EqualTo(228m), "all of it");
+            Assert.That(plan.RetirementContribution, Is.EqualTo(300m), "$249 of take-home pay covers a $300 pre-tax contribution at 17%");
+            Assert.That(plan.RetirementContributionCost, Is.EqualTo(249m), "all of it");
             Assert.That(plan.EsppContribution, Is.Zero, "nothing left for the ESPP");
             Assert.That(plan.ExtraCash, Is.Zero, "or anything else");
         });
@@ -144,9 +144,9 @@ public class StrategyRulesTests
 
     // ---- The hybrid's split ----
 
-    [TestCase(RiskProfile.Aggressive, 100, TestName = "Aggressive: 10% tax-free in the IRA beats 6.5% by 3.5 points, all invested")]
-    [TestCase(RiskProfile.Balanced, 88, TestName = "Balanced: 8% against 6.5%, mostly invested")]
-    [TestCase(RiskProfile.Conservative, 38, TestName = "Conservative: 6% against 6.5%, mostly to the mortgage")]
+    [TestCase(RiskProfile.Aggressive, 100, TestName = "Aggressive: 10% tax-free in the IRA beats 6.43% by 3.57 points, all invested")]
+    [TestCase(RiskProfile.Balanced, 89, TestName = "Balanced: 8% against 6.43%, mostly invested")]
+    [TestCase(RiskProfile.Conservative, 39, TestName = "Conservative: 6% against 6.43%, mostly to the mortgage")]
     public void TheHybrid_LeansTowardWhicheverEarnsMore(RiskProfile profile, decimal expectedInvestPercent)
     {
         var inputs = TypicalInputs(riskProfile: profile);
@@ -161,8 +161,8 @@ public class StrategyRulesTests
         var inputs = TypicalInputs(annualEsopContribution: 2_000m);
         var rates = StrategyRates.For(inputs, MonthlyCashPlan.For(inputs));
 
-        // Target 88% of $8,528 of new savings is $7,505; the ESOP brings $2,000, so $5,505 of the $6,528 extra.
-        Assert.That(rates.HybridInvestPercent, Is.EqualTo(84m), "the ESOP counts toward the market's share");
+        // Target 89% of $8,024 of new savings is $7,141; the ESOP brings $2,000, so $5,141 of the $6,024 extra.
+        Assert.That(rates.HybridInvestPercent, Is.EqualTo(85m), "the ESOP counts toward the market's share");
     }
 
     [Test]
@@ -187,12 +187,12 @@ public class StrategyRulesTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(fits.IraShelteredPercent, Is.EqualTo(100m), "$6,528 a year fits in the $7,500 IRA");
+            Assert.That(fits.IraShelteredPercent, Is.EqualTo(100m), "$6,024 a year fits in the $7,500 IRA");
             Assert.That(fits.AfterTaxRiskAdjustedReturn, Is.EqualTo(8m), "so it keeps the whole 8%");
-            Assert.That(fits.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "a taxable account would keep 7.41%: tax is paid once, on selling");
-            Assert.That(overflows.IraShelteredPercent, Is.EqualTo(25m), "$7,500 of $30,528 a year fits in the IRA (24.6%)");
-            // 25% at 8% and 75% at 7.41% = 7.5575, rounded.
-            Assert.That(overflows.AfterTaxRiskAdjustedReturn, Is.EqualTo(7.56m), "a blend of the two");
+            Assert.That(fits.TaxableAfterTaxReturn, Is.EqualTo(Typical.TaxableAfterTaxReturn), "a taxable account would keep 7.19%: tax is paid once, on selling");
+            Assert.That(overflows.IraShelteredPercent, Is.EqualTo(25m), "$7,500 of $30,024 a year fits in the IRA (24.98%)");
+            // 25% at 8% and 75% at 7.19% = 7.3925, rounded.
+            Assert.That(overflows.AfterTaxRiskAdjustedReturn, Is.EqualTo(7.39m), "a blend of the two");
         });
     }
 
@@ -214,6 +214,44 @@ public class StrategyRulesTests
             // Ten years of 3%: the standard deduction is $43,274.11 and the other deductions $13,439.16.
             Assert.That(TaxDeductions.TaxSavedByInterest(household, 30_000m, 1.343916379m), Is.EqualTo(39.61m), "later: only $165.05 above it, at 24%");
         });
+    }
+
+    [Test]
+    public void PayingDownEarnsTheRate_LessOnlyTheTaxItsInterestActuallySaves()
+    {
+        var barely = StrategyRates.For(TypicalInputs(), MonthlyCashPlan.For(TypicalInputs()));
+        var fully = StrategyRates.For(ItemizerInputs(), MonthlyCashPlan.For(ItemizerInputs()));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(barely.FirstYearTaxSaved, Is.EqualTo(Typical.FirstYearTaxSaved), "itemizing beats the standard deduction by only $1,154");
+            Assert.That(barely.AfterTaxMortgageRate, Is.EqualTo(Typical.AfterTaxMortgageRate),
+                "so 1% of the interest comes back, not 17% of it: 6.43%, not 6.5% × 83% = 5.40%");
+            Assert.That(fully.AfterTaxMortgageRate, Is.EqualTo(Itemizer.AfterTaxMortgageRate), "every dollar deducted: 7% × (1 − 29%)");
+        });
+    }
+
+    [Test]
+    public void DeductionsExactlyAtTheStandardDeduction_AreNotItemized()
+    {
+        // $12,845.85 + $19,354.15 of interest is exactly the $32,200 joint standard deduction: nothing to gain by itemizing.
+        var inputs = TypicalInputs(otherDeductions: 12_845.85m);
+        var rates = StrategyRates.For(inputs, MonthlyCashPlan.For(inputs));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rates.InterestIsDeducted, Is.False, "itemizing must beat the standard deduction, not tie it");
+            Assert.That(rates.AfterTaxMortgageRate, Is.EqualTo(6.5m), "so paying down earns the full rate");
+        });
+    }
+
+    [Test]
+    public void AZeroRateLoan_EarnsNothingToPayDown_AndSavesNoTax()
+    {
+        var inputs = TypicalInputs(mortgage: new LoanTerms(300_000m, 0m, 300, NextPaymentDate));
+        var rates = StrategyRates.For(inputs, MonthlyCashPlan.For(inputs));
+
+        Assert.That(rates.AfterTaxMortgageRate, Is.Zero, "no interest, so nothing for the deduction to give back");
     }
 
     [Test]
@@ -327,8 +365,8 @@ public class StrategyRulesTests
 
     [Test]
     public void RateEdge_IsHowFarTheAfterTaxMarketBeatsTheAfterTaxMortgage() =>
-        Assert.That(StrategyRates.For(TypicalInputs(), MonthlyCashPlan.For(TypicalInputs())).RateEdge, Is.EqualTo(1.5m),
-            "8% risk-adjusted (untaxed in the IRA) against 6.5% (undeducted: the standard deduction is larger)");
+        Assert.That(StrategyRates.For(TypicalInputs(), MonthlyCashPlan.For(TypicalInputs())).RateEdge, Is.EqualTo(1.57m),
+            "8% risk-adjusted (untaxed in the IRA) against 6.43% (the deduction gives back only 1% of the interest)");
 
     [Test]
     public void EsppMoney_CountsAsCashToInvest_WhenSizingTheIrasShare()

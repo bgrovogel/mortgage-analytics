@@ -213,7 +213,7 @@ describe('StrategyFormComponent', () => {
 
   it('summarizes each collapsed section in one line', () => {
     const root = render();
-    expect(text(root, 'taxes-summary')).toBe('$120,000 · 24% · Married filing jointly');
+    expect(text(root, 'taxes-summary')).toBe('$120,000 · 17% · Married filing jointly');
     expect(text(root, 'savings-summary')).toBe('50% match on 6% of pay · IRA $7,500/yr');
     expect(text(root, 'stock-summary')).toBe('None');
     expect(text(root, 'market-summary')).toBe('Stocks 10% · Inflation 3% · Home 4.3%');
@@ -239,5 +239,25 @@ describe('StrategyFormComponent', () => {
     shared.detectChanges();
 
     expect(sent[0]).toEqual(expect.objectContaining({ monthlyPmi: 148.44, homeValue: 375_000 }));
+  });
+
+  it("shows the 2026 federal bracket and gains rate for the income entered, so the tax rates beside them can be checked", () => {
+    const root = render();
+    const before = [text(root, 'tax-bracket-hint'), text(root, 'gains-hint')];
+
+    controls().grossAnnualIncome.setValue(500_000);
+    fixture.detectChanges();
+
+    // $120,000 − $7,200 to the 401(k) − $33,500 itemized ($14,000 + a year of 6.5% on $300,000) = $79,300.
+    expect(before[0]).toContain('the 12% federal bracket for 2026, on about $79,300 taxable');
+    expect(before[1]).toBe("Long-term gains at this income: 15% federal. Add your state's rate.");
+    // $500,000 − $24,500 (the 401(k) limit) − $33,500 = $442,000: the joint 32% bracket.
+    expect(text(root, 'tax-bracket-hint')).toContain('the 32% federal bracket');
+    expect(text(root, 'tax-bracket-hint')).toContain('The 17% entered is less than that alone.');
+    expect(text(root, 'gains-hint')).toContain('18.8% federal, with the 3.8% net investment income tax');
+    controls().capitalGainsTaxRate.setValue(15);
+    fixture.detectChanges();
+    expect(text(root, 'gains-hint')).toContain('The 15% entered is less than that alone.');
+    expect(before.join(' ')).not.toContain('entered is less');
   });
 });

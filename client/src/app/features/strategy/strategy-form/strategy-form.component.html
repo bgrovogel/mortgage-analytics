@@ -75,6 +75,14 @@
           }
         </select>
       </label>
+      @let rates = federalRates();
+      <p class="hint" data-testid="tax-bracket-hint">
+        At this income: the {{ rates.bracket }}% federal bracket for 2026, on about {{ rates.taxable }} taxable after
+        deductions and the 401(k). Add your state's rate (0% to about 13%).
+        @if (rates.taxTooLow; as entered) {
+          <strong class="mismatch">The {{ entered }}% entered is less than that alone.</strong>
+        }
+      </p>
       <div class="row">
         <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" label="Other deductions / year" />
         <app-number-field [control]="form.controls.capitalGainsTaxRate" [rule]="rules.capitalGainsTaxRate" testId="capital-gains-rate" />
@@ -82,6 +90,13 @@
       <p class="hint">
         Other deductions: state and local taxes (up to the cap) and charity. Mortgage interest only saves tax on the
         part of your deductions above the standard deduction, so this decides whether it saves anything at all.
+      </p>
+      <p class="hint" data-testid="gains-hint">
+        Long-term gains at this income: {{ rates.gains }}% federal{{ rates.withNiit ? ', with the 3.8% net investment income tax' : '' }}.
+        Add your state's rate.
+        @if (rates.gainsTooLow; as entered) {
+          <strong class="mismatch">The {{ entered }}% entered is less than that alone.</strong>
+        }
       </p>
     </div>
   </details>
