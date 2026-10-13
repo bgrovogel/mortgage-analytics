@@ -9,7 +9,9 @@ import { RefinanceStore } from './refinance.store';
   selector: 'app-refinance-page',
   imports: [CalculationPageComponent, RefinanceFormComponent, RefinanceResultsComponent],
   template: `
-    <app-calculation-page [store]="store" heading="Should you refinance?" label="Refinance comparison" [problems]="problems()"
+    <app-calculation-page [store]="store" heading="Should you refinance?" label="Refinance comparison"
+                          intro="Your loan today against a new one: the payment, the break-even, and the cost over both loans."
+                          [problems]="problems()"
                           placeholder="Comparing your loans…" errorTitle="We could not compare those loans.">
       <app-refinance-form form [initial]="startFrom" [loan]="loan" (analyze)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {

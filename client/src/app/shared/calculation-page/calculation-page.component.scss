@@ -1,5 +1,22 @@
 @use '../../core/layout/surfaces';
 
+// The page's question and how it answers it, above the form and the results.
+.page-intro {
+  margin: 0.25rem 0 1.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  p {
+    margin: 0.3rem 0 0;
+    color: var(--text-secondary);
+  }
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
@@ -10,57 +27,6 @@
 
 .form-panel {
   grid-area: form;
-}
-
-// A sticky form is exactly as tall as the results, so the two cards end level: `contain: size` keeps the form's
-// own height out of the row's, so the results alone set it, and the form stretches to it, scrolling on its own when
-// it holds more. Beside long results it is capped to the window, so every section stays reachable: at first to the
-// window less the page header (measured, since its links can wrap; see HeaderHeightDirective), then, as the header
-// scrolls away, to the whole window less 1rem above and the page's 3rem below. It sticks while the results scroll
-// and, scrolled to the end, ends level with them.
-.form-panel.sticky {
-  align-self: stretch;
-  contain: size;
-  position: sticky;
-  top: 1rem;
-  // When the results are short or missing (a placeholder, an error), the form still gets a usable height.
-  min-height: min(32rem, calc(100vh - var(--app-header-height, 4rem) - 4rem));
-  max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
-
-  // Two scroll-linked effects: the form grows to the window as the header scrolls away, and its bottom edge fades
-  // while there is more of it below, so a cut-off section reads as "scroll for more" rather than broken. The fade
-  // follows the form's own scroll and is gone at the end.
-  @supports (animation-timeline: scroll()) {
-    animation:
-      form-grows-to-window linear both,
-      form-more-below linear both;
-    animation-timeline: scroll(root block), scroll(self block);
-    animation-range: 0 var(--app-header-height, 4rem), normal;
-  }
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
-@keyframes form-more-below {
-  0%,
-  95% {
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
-  }
-
-  100% {
-    mask-image: none;
-  }
-}
-
-@keyframes form-grows-to-window {
-  from {
-    max-height: calc(100vh - var(--app-header-height, 4rem) - 4rem);
-  }
-
-  to {
-    max-height: calc(100vh - 4rem);
-  }
 }
 
 .results {
@@ -77,20 +43,28 @@
   transition: opacity 0.2s ease 0.15s;
 }
 
-// The title (or tabs) on the left, Save on the right, over one shared rule.
+// The page's own results, spaced like the rest of the column. Faded, like an update in progress, while they are
+// for the last valid inputs: the notice above them stays at full strength.
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &.stale {
+    opacity: 0.55;
+  }
+}
+
+// The tabs (if any) on the left, Save on the right, over one shared rule.
 .results-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  // Save on the right, with or without tabs on the left (a page's tabs take the room before it).
+  justify-content: flex-end;
   gap: 0.5rem 1rem;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
-
-  h2 {
-    margin: 0;
-    padding: 0.5rem 0;
-    font-size: 1.1rem;
-  }
+  min-height: 2.75rem;
 }
 
 .panel {
@@ -182,13 +156,5 @@
     grid-template-areas:
       'results'
       'form';
-  }
-
-  .form-panel.sticky {
-    position: static;
-    contain: none;
-    animation: none;
-    max-height: none;
-    overflow: visible;
   }
 }

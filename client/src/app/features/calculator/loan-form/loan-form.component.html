@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="loan-form">
   <!-- The five main inputs are always visible; everything else is under More details below. -->
   <fieldset class="primary-fields">
-    <legend class="title">Your loan <span class="shared-tag" data-testid="shared-tag">Shared across pages</span></legend>
+    <legend class="title">Your loan <span class="shared-tag" data-testid="shared-tag">Used on all three pages</span></legend>
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
     }
@@ -83,10 +83,15 @@
       </div>
       @switch (loanProgram()) {
         @case ('Fha') {
-          <p class="hint">
-            At least 3.5% down. A 1.75% upfront MIP, and an annual MIP from HUD's table (0.55% of the balance for most
-            30-year loans with less than 5% down), for 11 years with 10% or more down, otherwise for the whole loan.
-          </p>
+          <p class="hint" data-testid="program-hint">At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.</p>
+          <details class="help" data-testid="program-more">
+            <summary>More about FHA's MIP</summary>
+            <p class="hint">
+              The 1.75% upfront MIP is added to the loan unless you pay it at closing. The annual MIP comes from HUD's
+              table (0.55% of the balance for most 30-year loans with less than 5% down), for 11 years with 10% or more
+              down, otherwise for the whole loan.
+            </p>
+          </details>
           <app-number-field [control]="form.controls.creditScore" [rule]="rules.creditScore" testId="credit-score" placeholder="580 or more" />
           <p class="hint">With a score from 500 to 579, FHA needs 10% down; below 500, it does not insure the loan.</p>
           <app-fha-county [county]="form.controls.countyFips" [loanAmount]="loanAmount()" />
@@ -100,10 +105,14 @@
               <label><input type="radio" formControlName="vaUse" value="Exempt" data-testid="va-use-exempt" /> Exempt</label>
             </div>
           </div>
-          <p class="hint">
-            No down payment needed and no mortgage insurance. The funding fee is 2.15% (3.3% if used before) with less than
-            5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated for a service-connected disability are exempt.
-          </p>
+          <p class="hint" data-testid="program-hint">No down payment needed and no mortgage insurance, but a one-time funding fee.</p>
+          <details class="help" data-testid="program-more">
+            <summary>More about the funding fee</summary>
+            <p class="hint">
+              It is 2.15% (3.3% if used before) with less than 5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated
+              for a service-connected disability are exempt.
+            </p>
+          </details>
         }
         @default {
           <p class="hint">PMI, below 20% down, is set under Insurance, HOA &amp; PMI.</p>

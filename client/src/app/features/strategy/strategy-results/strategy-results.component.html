@@ -1,11 +1,12 @@
 @let r = result();
 @let rec = recommendation();
 
-<section class="hero" [class.warning]="rec.reversible" data-testid="strategy-verdict">
+<section class="hero" data-testid="strategy-verdict">
   <p class="eyebrow">Recommended path</p>
   <p class="headline" data-testid="recommended">{{ rec.headline }}</p>
   <p class="detail" data-testid="recommended-detail">{{ rec.detail }}</p>
-  <p class="downside" data-testid="downside">{{ rec.downside }}</p>
+  <!-- The one caution: amber on this line, not on the recommendation itself. -->
+  <p class="downside" [class.warning]="rec.reversible" data-testid="downside">{{ rec.downside }}</p>
 </section>
 
 <!-- How every number below is shown: in which market, and in today's or future dollars. -->

@@ -107,11 +107,6 @@ export class CalculatorPage {
     }
   }
 
-  /** How far the window itself has scrolled, in pixels. */
-  windowScrollY(): Promise<number> {
-    return this.page.evaluate(() => window.scrollY);
-  }
-
   /** Opens a collapsed section by clicking its header, as a user would. */
   openSection(testId: string): Promise<void> {
     return this.section(testId).locator('summary').click();

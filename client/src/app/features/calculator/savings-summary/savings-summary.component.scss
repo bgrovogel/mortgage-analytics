@@ -68,6 +68,17 @@
   }
 }
 
+// On a phone the payment tile takes the whole row: beside another tile its breakdown wrapped to six lines.
+@media (max-width: 600px) {
+  .tile.payment {
+    flex-basis: 100%;
+  }
+}
+
+.tile abbr {
+  text-decoration: none;
+}
+
 .recasts {
   margin: 0.75rem 0 0;
   padding: 0.75rem 1rem;

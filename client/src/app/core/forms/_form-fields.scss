@@ -292,7 +292,8 @@
     border-radius: var(--radius-md);
     background: var(--surface-1);
 
-    summary {
+    // The section's own toggle, not a help disclosure inside it (details.help, above).
+    > summary {
       list-style: none;
       display: flex;
       flex-direction: column;

@@ -46,13 +46,17 @@ describe('AppComponent', () => {
     return { fixture, root: fixture.nativeElement as HTMLElement };
   };
 
-  it('renders the title, the page navigation and a link to the API docs', () => {
+  it('renders the title and the page navigation, and the API docs in the footer, apart from the pages', () => {
     const { root } = render();
 
     expect(root.querySelector('h1')?.textContent).toBe('Mortgage Analytics');
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
-      .toEqual(['Calculator', 'Refinance', 'Pay off or invest', 'History', 'API docs ↗']);
-    expect(root.querySelector('a[href="/swagger"]')).not.toBeNull();
+      .toEqual(['Calculator', 'Refinance', 'Pay off or invest', 'History']);
+    expect(root.querySelector('footer a[href="/swagger"]')?.textContent?.trim()).toBe('API docs ↗');
+  });
+
+  it('leaves what each page answers to the page, rather than one line repeated on every page', () => {
+    expect(render().root.querySelector('.tagline')).toBeNull();
   });
 
   it('links the brand home, named by the title alone: the mark beside it is decorative', () => {

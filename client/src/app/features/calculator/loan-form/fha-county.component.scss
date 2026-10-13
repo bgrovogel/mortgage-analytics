@@ -1,0 +1,15 @@
+@use '../../../core/forms/form-fields' as fields;
+
+// The same labels, boxes, hints and errors as the form it sits in: a component's own template gets none of the
+// form's styles otherwise.
+@include fields.styles;
+
+:host {
+  display: grid;
+  gap: 0.75rem;
+}
+
+// One above the other: county names run long ("Fairfield County, Connecticut"), too long for half the form's width.
+.row {
+  grid-template-columns: minmax(0, 1fr);
+}

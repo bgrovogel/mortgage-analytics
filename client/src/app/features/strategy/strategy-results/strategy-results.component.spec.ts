@@ -23,12 +23,13 @@ describe('StrategyResultsComponent', () => {
     fixture.detectChanges();
   };
 
-  it('leads with the recommended path, and warns when a bad decade would reverse it', () => {
+  it('leads with the recommended path, and warns, on that line alone, when a bad decade would reverse it', () => {
     const root = render();
 
     expect(text(root, 'recommended')).toBe('Invest the difference');
     expect(text(root, 'downside')).toContain('Debt free ASAP would win by $41,363');
-    expect(find(root, 'strategy-verdict')!.classList).toContain('warning');
+    expect(find(root, 'strategy-verdict')!.classList).not.toContain('warning');
+    expect(find(root, 'downside')!.classList).toContain('warning');
   });
 
   it('leads each card with how far it ends behind the leader, then its net worth and payoff', () => {

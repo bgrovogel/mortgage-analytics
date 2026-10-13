@@ -33,45 +33,21 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.field('property-tax-rate'), 'opening the section reveals its fields').toBeVisible();
   });
 
-  // At 1100px the page links wrap onto a second line, making the header taller: the form must still fit.
+  // At 1100px the page links wrap onto a second line, making the header taller.
   for (const width of [1280, 1100]) {
-    test(`the form scrolls on its own, so every section stays reachable beside long results (${width}px)`, async ({ calculator, page }) => {
+    test(`the whole form is part of the page: no section hides in a box that scrolls on its own (${width}px)`, async ({ calculator, page }) => {
       await page.setViewportSize({ width, height: 800 });
       await calculator.openAllSections();
 
-      const panel = await calculator.formPanel.boundingBox();
-      expect(panel!.height, 'the open form must fit in the window instead of running off the bottom').toBeLessThanOrEqual(800);
+      const inner = await calculator.formPanel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(inner, 'the open form shows all of itself, rather than scrolling inside the page').toBeLessThanOrEqual(1);
 
-      await calculator.section('section-options').locator('summary').click();
-      await expect(calculator.section('section-options'), 'the last section can be reached and toggled').not.toHaveAttribute('open');
-
-      const after = await calculator.formPanel.boundingBox();
-      expect(after!.y + after!.height, 'the bottom of the form is inside the window').toBeLessThanOrEqual(800);
-      // At most the page header scrolls away (the panel then sticks); the long results are never scrolled through.
-      expect(await calculator.windowScrollY(), 'reaching it scrolls the form, not the results').toBeLessThan(150);
+      const last = calculator.section('section-options').locator('summary');
+      await last.scrollIntoViewIfNeeded();
+      await last.click();
+      await expect(calculator.section('section-options'), 'the last section is reached by scrolling the page, and toggles').not.toHaveAttribute('open');
     });
   }
-
-  test('the form card ends level with the results', async ({ calculator, page }) => {
-    const bottoms = async () => {
-      const form = (await calculator.formPanel.boundingBox())!;
-      const results = (await calculator.results.boundingBox())!;
-      return [Math.round(form.y + form.height), Math.round(results.y + results.height)];
-    };
-
-    // A window tall enough for the whole Overview: level as soon as it opens.
-    await page.setViewportSize({ width: 1440, height: 1500 });
-    const [form, results] = await bottoms();
-    expect(form, 'the cards end level when the results fit the window').toBe(results);
-
-    // A shorter window: the form fits the window first, and ends level with the results once scrolled to the end.
-    await page.setViewportSize({ width: 1440, height: 800 });
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect.poll(async () => {
-      const [formAtEnd, resultsAtEnd] = await bottoms();
-      return formAtEnd - resultsAtEnd;
-    }, { message: 'the cards end level at the end of the page' }).toBe(0);
-  });
 
   test('a 2-1 buydown: lower payments for two years, its cost, and the same loan underneath', async ({ calculator, page }) => {
     // $375,000 with 5% down at 5.99%: the reference buydown in tools/rate-check/rate_model.py.
@@ -629,14 +605,15 @@ test.describe('On a phone', () => {
     await expect(calculator.formPanel, 'and focus goes with it, for keyboard and screen-reader users').toBeFocused();
   });
 
-  test('keeps the header to two short rows, with the page links on one line', async ({ calculator, page }) => {
+  test('shows every page link, wrapping onto a second row rather than hiding past the edge', async ({ calculator, page }) => {
     await expect(calculator.headline, 'the page has loaded').toBeVisible();
+    const links = page.getByRole('navigation', { name: 'Pages' }).getByRole('link');
     const header = await page.locator('.app-header').boundingBox();
-    const links = page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: /Calculator|Refinance|History/ });
-    const tops = await links.evaluateAll((all) => all.map((a) => Math.round(a.getBoundingClientRect().top)));
 
-    expect(header!.height, 'the name and Sign in, then the page links: not four rows').toBeLessThan(110);
-    expect(new Set(tops).size, 'the page links share one line, which scrolls sideways').toBe(1);
+    for (const link of await links.all()) {
+      await expect(link, `${await link.textContent()} is on screen, not scrolled out of sight`).toBeInViewport({ ratio: 1 });
+    }
+    expect(header!.height, 'the name and Sign in, then the page links on at most two rows').toBeLessThan(150);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), 'the page itself never scrolls sideways').toBeLessThanOrEqual(390);
   });
 

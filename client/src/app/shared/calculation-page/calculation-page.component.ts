@@ -3,13 +3,14 @@ import { CalculationStore } from '../../core/state/calculation-store';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 
 /**
- * The layout every calculator page shares: the form on the left and the results on the right (results first on a
- * phone), a header with the page's title (or tabs) and Save, then what is wrong, then the results themselves.
+ * The layout every calculator page shares: the question the page answers and one line on how, then the form on the
+ * left and the results on the right (results first on a phone), with the page's tabs (if any) and Save above them,
+ * then what is wrong, then the results themselves.
  * Errors from the API, a notice when the form holds values that cannot be sent, and the placeholder before the
  * first result are all handled here, the same way on every page.
  *
  * Usage:
- *   <app-calculation-page [store]="store" heading="Should you refinance?" [problems]="problems()" …>
+ *   <app-calculation-page [store]="store" heading="Should you refinance?" intro="…" [problems]="problems()" …>
  *     <app-refinance-form form … />
  *     @if (store.result(); as result) { <app-refinance-results [result]="result" /> }
  *   </app-calculation-page>
@@ -26,8 +27,11 @@ export class CalculationPageComponent {
   /** The page's state. */
   readonly store = input.required<CalculationStore<unknown, unknown>>();
 
-  /** The question the page answers, shown above the results. Leave empty when the page projects tabs instead. */
-  readonly heading = input('');
+  /** The question the page answers, its heading. */
+  readonly heading = input.required<string>();
+
+  /** One line under the heading on how the page answers it. */
+  readonly intro = input.required<string>();
 
   /** What the results region is called, for screen readers. */
   readonly label = input('Results');
@@ -43,12 +47,6 @@ export class CalculationPageComponent {
 
   /** True to announce new results to screen readers as they arrive. Off for long, tabbed results. */
   readonly announce = input(true);
-
-  /**
-   * True to keep the form in view while the results scroll; it then scrolls on its own if it is taller than
-   * the window. Off for a long form, which reads better scrolling with the page.
-   */
-  readonly stickyForm = input(true);
 
   /**
    * Brings the form into view and puts focus on it, so keyboard and screen-reader users land there too. Scrolls

@@ -23,12 +23,24 @@ describe('SavingsSummaryComponent', () => {
     expect(text('housing-costs-label')).toBe('county/city tax');
   });
 
-  it('names exactly the housing costs the payment includes', () => {
+  it('names one or two housing costs, and calls more of them housing costs, which the breakdown below lists', () => {
+    render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83, homeownersInsurance: 200 }) }) }));
+    expect(text('housing-costs-label')).toBe('property tax & insurance');
+
     render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83, homeownersInsurance: 200, mortgageInsurance: 148.44, hoaDues: 50 }) }) }));
-    expect(text('housing-costs-label')).toBe('property tax, insurance, PMI & HOA');
+    expect(text('housing-costs-label')).toBe('housing costs');
 
     render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ schoolTax: 100, localTax: 90, mudTax: 80, pidAssessment: 100, homeownersInsurance: 200 }) }) }));
-    expect(text('housing-costs-label')).toBe('property taxes, PID & insurance');
+    expect(text('housing-costs-label')).toBe('housing costs');
+  });
+
+  it('says P&I, spelled out for screen readers and on hover, so the line fits the tile', () => {
+    render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83 }) }) }));
+
+    const abbr = fixture.nativeElement.querySelector('[data-testid="total-monthly-payment"] ~ .note abbr') as HTMLElement;
+    expect(abbr.textContent).toBe('P&I');
+    expect(abbr.title).toBe('principal and interest');
+    expect(abbr.parentElement!.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^\$[\d,.]+ P&I \+ \$595\.83 property tax$/);
   });
 
   it('labels the payment as the required payment', () => {

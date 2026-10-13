@@ -45,6 +45,7 @@ import { FhaLimitsService } from '../../../core/services/fha-limits.service';
       }
     }
   `,
+  styleUrl: './fha-county.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FhaCountyComponent {

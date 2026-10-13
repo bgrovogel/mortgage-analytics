@@ -16,7 +16,9 @@
   </div>
 }
 
-<app-calculation-page [store]="store" [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
+<app-calculation-page [store]="store" heading="What will this home really cost?"
+                      intro="Every cost of owning it, month by month and year by year, and what extra payments save."
+                      [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null" (calculate)="store.send($event)" (problems)="problems.set($event)" />
 

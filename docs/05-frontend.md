@@ -176,9 +176,11 @@ Fixed, temporary buydown (1-0, 2-1, 3-2-1, 1-1), or ARM (5/1, 7/1, 10/1, 5/6, 7/
 ### The shared page layout (`shared/calculation-page/`)
 
 `<app-calculation-page>` gives every calculator page the same structure through **content projection**: the
-form goes in the `form` slot, results in the default slot. It handles the header and Save, API errors, the
-"results are for your last valid inputs" notice, and the placeholder before the first result. The form card is
-capped to the window and scrolls on its own.
+form goes in the `form` slot, results in the default slot. It opens with the page's question and one line on how it
+answers it (`heading`, `intro`), then handles Save, API errors, the "results are for your last valid inputs" notice
+(the results fade beneath it, so old numbers aren't read as current), and the placeholder before the first result.
+The form is part of the page and scrolls with it: an earlier version kept it in view in a box that scrolled on its
+own, which hid its last sections.
 
 ### Charts
 
@@ -229,14 +231,14 @@ The flows are designed around the people using it:
 - **A phone:** results come first, so `app-calculation-page` offers "Edit your numbers", which scrolls to the form
   (instantly for anyone who prefers reduced motion) and moves focus there. Once the headline scrolls away, a bar
   keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after.
-- **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
-  scroll-driven effect that follows the form's own scroll and is gone at the end.
+- **Help a few people need:** each loan program says what it asks for in one line, with the details under "More
+  about…", a `details.help` toggle, so the form stays short.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.
 - **Your account:** the email in the header (a person icon on a phone) opens it. Changing the password asks for the
   current one and clears both boxes once done. Deleting the account takes two
   deliberate steps, "Delete my account…" and then the password, and the button that deletes is red. A
   wrong password shows the server's own message; success unlinks the pages from the saves that went with it.
-- **The form card:** the main group's heading is a real heading, tagged "Shared across pages" (the long "Filled in
+- **The form card:** the main group's heading is a real heading, tagged "Used on all three pages" (the long "Filled in
   from your loan on the Refinance page" line only appears when it happened). What the numbers add up to is a summary
   chip; help only some need is a `details.help` toggle; the optional sections are one divided list under **More
   details**; each top-level group after the first starts below a rule. These styles are one global `form-card` mixin

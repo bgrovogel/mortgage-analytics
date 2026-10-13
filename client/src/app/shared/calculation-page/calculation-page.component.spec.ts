@@ -28,7 +28,7 @@ class TestStore extends CalculationStore<number, string> {
 @Component({
   imports: [CalculationPageComponent],
   template: `
-    <app-calculation-page [store]="store" heading="A question?" [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
+    <app-calculation-page [store]="store" heading="A question?" intro="What the page answers." [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
       <p form data-testid="the-form">form</p>
       @if (store.result(); as result) {
         <p data-testid="the-result">{{ result }}</p>
@@ -58,13 +58,14 @@ describe('CalculationPageComponent', () => {
     return { fixture, host: fixture.componentInstance, text };
   };
 
-  it('puts the form beside the results, under the heading, with a placeholder until the first result', () => {
+  it('puts the form beside the results, under the page\'s heading and what it answers, with a placeholder until the first result', () => {
     const { host, fixture, text } = render();
     host.store.send(1);
     fixture.detectChanges();
 
+    expect(text('page-heading')).toBe('A question?');
+    expect(text('page-intro')).toBe('What the page answers.');
     expect(text('form-panel')).toBe('form');
-    expect(text('results')).toContain('A question?');
     expect(text('results')).toContain('Working…');
 
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -149,5 +150,21 @@ describe('CalculationPageComponent', () => {
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
     expect(sent.mock.calls.map(([n]) => n)).toEqual([7, 7]);
+  });
+
+  it('fades the results while they are for the last valid inputs, so they are not read as current', () => {
+    const { host, fixture, fixture: { nativeElement } } = render();
+    const content = () => (nativeElement as HTMLElement).querySelector('[data-testid="result-content"]')!;
+    host.store.send(1);
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+    host.store.responses.next('done');
+    fixture.detectChanges();
+    const whileValid = content().classList.contains('stale');
+
+    host.problems.set(['Rate must be between 0% and 30%.']);
+    fixture.detectChanges();
+
+    expect(whileValid).toBe(false);
+    expect(content().classList).toContain('stale');
   });
 });

@@ -1,16 +1,19 @@
 @let state = store();
 
+<!-- What the page answers, the same way on every page: a question, then one line on how. -->
+<header class="page-intro">
+  <h2 data-testid="page-heading">{{ heading() }}</h2>
+  <p data-testid="page-intro">{{ intro() }}</p>
+</header>
+
 <div class="layout">
-  <aside #formPanel class="panel form-panel" [class.sticky]="stickyForm()" tabindex="-1" aria-label="Your numbers" data-testid="form-panel">
+  <aside #formPanel class="panel form-panel" tabindex="-1" aria-label="Your numbers" data-testid="form-panel">
     <ng-content select="[form]" />
   </aside>
 
   <section class="results" [attr.aria-label]="label()" [attr.aria-live]="announce() ? 'polite' : null"
            [attr.aria-busy]="state.busy()" [class.updating]="state.busy()" data-testid="results">
     <div class="results-header">
-      @if (heading()) {
-        <h2>{{ heading() }}</h2>
-      }
       <ng-content select="[tabs]" />
       <!-- On a phone the form comes after the results: one tap to get back to it. -->
       <button type="button" class="edit-inputs" data-testid="edit-inputs" (click)="editInputs(formPanel)">Edit your numbers</button>
@@ -50,6 +53,9 @@
     @if (!state.result() && state.errors().length === 0 && problems().length === 0) {
       <div class="panel placeholder">{{ placeholder() }}</div>
     }
-    <ng-content />
+    <!-- Faded while the form has problems: these numbers are for the last valid inputs, not the ones on screen. -->
+    <div class="result-content" [class.stale]="problems().length > 0 && !!state.result()" data-testid="result-content">
+      <ng-content />
+    </div>
   </section>
 </div>

@@ -22,7 +22,7 @@ describe('RefinanceFormComponent', () => {
   it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
     create();
 
-    expect(el('shared-tag')?.textContent).toBe('Shared across pages');
+    expect(el('shared-tag')?.textContent).toBe('Used on all three pages');
     expect(el('loan-shared')).toBeNull();
   });
 

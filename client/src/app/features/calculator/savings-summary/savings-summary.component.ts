@@ -46,11 +46,11 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           }
         </div>
       }
-      <div class="tile">
+      <div class="tile payment">
         <dt>Required monthly payment</dt>
         <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
         <dd class="note">
-          <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span> principal &amp; interest
+          <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
           @if (r.baseline.monthlyHousingCosts.total > 0) {
             + {{ r.baseline.monthlyHousingCosts.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
           }
@@ -141,8 +141,9 @@ export class SavingsSummaryComponent {
   readonly insuranceName = computed(() => mortgageInsuranceName(this.result().program));
 
   /**
-   * What the first payment's housing costs are made of, in words: "property tax, insurance, PMI & HOA". Only the
-   * costs this loan has are named, so a loan with no PMI or HOA doesn't mention them.
+   * What the first payment's housing costs are, in words: one or two by name ("property tax & insurance", or "MIP"
+   * alone), and "housing costs" for more, so the line fits the tile; the breakdown below names every one. Only the
+   * costs this loan has are named.
    */
   readonly housingCostsLabel = computed(() => {
     const c = this.result().baseline.monthlyHousingCosts;
@@ -154,7 +155,7 @@ export class SavingsSummaryComponent {
       ...(c.mortgageInsurance > 0 ? [this.insuranceName()] : []),
       ...(c.hoaDues > 0 ? ['HOA'] : []),
     ];
-    return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}` : (parts[0] ?? '');
+    return parts.length > 2 ? 'housing costs' : parts.join(' & ');
   });
 
   /**

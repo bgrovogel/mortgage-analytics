@@ -8,6 +8,8 @@ router-outlet {
 .result-tabs {
   display: flex;
   gap: 0.25rem;
+  // The tabs take the room before Save, which the header puts on the right.
+  margin-right: auto;
   // Scrolls sideways on a narrow phone. The tabs overlap the rule below by 1px, so without
   // overflow-y: hidden the strip also gets a vertical scrollbar (tiny up/down arrows on Windows).
   overflow-x: auto;

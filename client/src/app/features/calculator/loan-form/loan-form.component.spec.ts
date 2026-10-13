@@ -34,7 +34,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
-      expect(text('shared-tag')).toBe('Shared across pages');
+      expect(text('shared-tag')).toBe('Used on all three pages');
       expect(el('loan-shared')).toBeNull();
     });
 
@@ -740,6 +740,21 @@ describe('LoanFormComponent', () => {
       controls().loanProgram.setValue(type);
       fixture.detectChanges();
     };
+
+    it('say what each program asks for in one line, with the details a click away', () => {
+      choose('Fha');
+      const fha = [text('program-hint'), el('program-more')?.textContent?.replace(/\s+/g, ' ').trim()];
+      choose('Va');
+      const va = [text('program-hint'), el('program-more')?.textContent?.replace(/\s+/g, ' ').trim()];
+
+      expect(fha[0]).toBe('At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.');
+      expect(fha[1]).toContain("More about FHA's MIP");
+      expect(fha[1]).toContain('for 11 years with 10% or more down');
+      expect(va[0]).toBe('No down payment needed and no mortgage insurance, but a one-time funding fee.');
+      expect(va[1]).toContain('More about the funding fee');
+      expect(va[1]).toContain('Veterans compensated for a service-connected disability are exempt.');
+      expect(el('program-more')?.tagName).toBe('DETAILS');
+    });
 
     it('are conventional unless chosen, with PMI', () => {
       expect(last().program).toBeNull();

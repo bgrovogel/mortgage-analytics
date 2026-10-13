@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { BrandMarkComponent } from './core/layout/brand-mark.component';
-import { HeaderHeightDirective } from './core/layout/header-height.directive';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 
@@ -15,10 +14,10 @@ const PAGES = [
   { path: '/history', label: 'History' },
 ] as const;
 
-/** The app shell: title, page navigation, the API docs, and who is signed in. Pages render in the outlet. */
+/** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderHeightDirective, BrandMarkComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, BrandMarkComponent],
   template: `
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
@@ -29,7 +28,7 @@ const PAGES = [
         </div>
       </header>
     } @else {
-      <header class="app-header" appHeaderHeight>
+      <header class="app-header">
         <div class="app-bar">
         <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
         <div class="header-actions">
@@ -37,7 +36,6 @@ const PAGES = [
             @for (page of pages; track page.path) {
               <a [routerLink]="page.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ page.label }}</a>
             }
-            <a class="external" href="/swagger" target="_blank" rel="noopener">API docs ↗</a>
           </nav>
           <div class="account">
             @if (auth.user(); as user) {
@@ -58,11 +56,17 @@ const PAGES = [
         </div>
         </div>
       </header>
-      <p class="tagline">See what a home really costs, how extra payments or a refinance change it, and whether to pay it off or invest.</p>
     }
     <main>
       <router-outlet />
     </main>
+    @if (!focused()) {
+      <!-- For developers, apart from the pages: the API every page is built on. -->
+      <footer class="app-footer">
+        <a href="/swagger" target="_blank" rel="noopener">API docs ↗</a>
+        <span>Mortgage Analytics: a .NET 10 API and an Angular 22 app</span>
+      </footer>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

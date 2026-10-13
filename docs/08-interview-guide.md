@@ -3,10 +3,10 @@
 > **How to present this project, and answers to the questions you are likely to get.** Every answer points to
 > real code, so you can open the file and show it. Practise them out loud; don't memorise them word for word.
 
-**Read time:** 20 min, out loud · **Best for:** the pitch, likely questions, trade-offs and stories
+**Read time:** 25 min, out loud · **Best for:** the pitch, likely questions, trade-offs and stories
 
 **On this page:** [The pitch](#the-pitch) · [Walk me through the architecture](#walk-me-through-the-architecture) ·
-[Likely questions](#likely-questions) · [Trade-offs and what you'd change](#trade-offs-and-what-youd-change) ·
+[Running the demo](#running-the-demo) · [Likely questions](#likely-questions) · [Trade-offs and what you'd change](#trade-offs-and-what-youd-change) ·
 [Stories for "tell me about a hard bug"](#stories-for-tell-me-about-a-hard-bug) ·
 [If you're asked how you built it](#if-youre-asked-how-you-built-it) ·
 [Numbers worth remembering](#numbers-worth-remembering)
@@ -52,6 +52,34 @@ Then trace one request: [Architecture → One request, end to end](03-architectu
 
 ---
 
+## Running the demo
+
+About eight minutes, then questions. Start it once beforehand and leave it running:
+
+```bash
+docker compose up --build
+```
+
+The app is on http://localhost:8080, the API docs on http://localhost:8080/swagger and the email inbox (Mailpit)
+on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the ports are free.
+
+| # | Do this | Say, and point at |
+|---|---|---|
+| 1 | **Calculator**, with the example numbers: a $375,000 home, 5% down, 6.5%, 30 years, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. $108,613 less interest, paid off 6 years 1 month sooner, PMI ends in January 2038 on the *original* schedule. The required payment is $3,246.01. Dates follow the first-payment date, so they move if the default has. |
+| 2 | Switch the loan type to **FHA**, pick a county, then raise the price past its limit. | The limit is HUD's, by county; over it the app warns. The county list comes from `GET /api/v1/fha/loan-limits`. |
+| 3 | The **Projection** tab, then the equity chart. | Every cost of owning it over the life of the loan, not just principal and interest. |
+| 4 | **Refinance**: $300,000 at 7% with 25 years left, into 6% for 30 years, with $6,000 of closing costs. | The payment drops $321.69 a month, yet refinancing costs **$17,415 more**, because the clock restarts. Break-even is November 2028. "Keep paying $2,120.34 a month" saves $107,590 instead. |
+| 5 | **Pay off or invest**: $300,000 at 6.5%, 25 years left, $1,000 a month. Switch to **Bad decade first**. | "Invest the difference" is recommended, $18,150 ahead of the hybrid, but not guaranteed: after a lost decade, paying the mortgage off first wins by $41,363. |
+| 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **History** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
+| 7 | Open **/swagger** and try `POST /api/v1/amortization/calculate`. | The same API the calculator uses, documented from the code's own comments. |
+
+Then, if there is time, the offer the deck closes on: *name a feature and I'll show the rule, the test that pins
+it, and a change with the test going red, then green.* Choose that change before you present, for example the ARM
+margin floor ($881.34 a month, [Testing → TDD](07-testing.md#how-a-feature-gets-built-tdd)), so you are not
+hunting for one in front of people.
+
+---
+
 ## Likely questions
 
 ### Design and architecture
@@ -61,6 +89,22 @@ The domain is the valuable part, and it changes for business reasons, not techni
 ASP.NET and EF Core means its 519 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
+
+**Why this stack, and what did you leave out?**
+Mainstream and supported on purpose; each piece was picked over a named alternative:
+- **.NET 10 and minimal APIs:** a long-term-support release (to November 2028) with `decimal` for exact money math.
+  Minimal APIs over controllers, because each endpoint just calls one service method.
+- **EF Core on SQLite, PostgreSQL by a setting:** one file for a demo, instead of a database server on day one.
+- **ASP.NET Core Identity:** reviewed password hashing, lockout and email confirmation, instead of hand-rolled
+  accounts. The cost is owning what its defaults turn on (the bearer-token story below).
+- **Angular 22, signals and RxJS:** a full framework for form-heavy screens; signals hold state and RxJS only
+  handles time. Not NgRx or another state library.
+- **NUnit, Jest, Playwright with axe:** fast unit tests at the base, and a real browser on the production build.
+- **Docker and GitHub Actions:** one image that runs the same everywhere, and CI that gates every push.
+
+Left out deliberately: MediatR, AutoMapper, NgRx, a UI component library, a separate database server, CORS
+configuration. Each is easy to add when a real need appears (KISS, YAGNI). The full table, with versions:
+[Tech stack](01-tech-stack.md).
 
 **Where do you apply SOLID?** (Have one example ready for each. All five, in one section with the real code:
 [SOLID by example](09-solid-by-example.md).)
@@ -118,6 +162,22 @@ ends at exactly $0.00.
 Minimal APIs: less ceremony, and endpoints that are plain functions. `TypedResults` lets OpenAPI infer the
 response types. Cross-cutting concerns live in an endpoint filter (`ValidationFilter<T>`, generic, one for every
 endpoint) and in an `IExceptionHandler`. Controllers would make sense if the team already standardised on them.
+
+**How is the API documented, and how do you stop the docs drifting?**
+The documentation is generated from the code, then tested:
+1. **Comments are the source.** Contracts and endpoints carry XML doc comments with `<example>` values. Warnings are
+   errors, so a public member without a comment is a build error (CS1591), and implementations use
+   `<inheritdoc />` so each contract is described once.
+2. **Swashbuckle builds the OpenAPI document** from those comments, plus `TypedResults` and
+   `ProducesProblem` / `ProducesValidationProblem` for the response shapes. Swagger UI is at `/swagger`, in every
+   environment, because the docs are part of the showcase.
+3. **A snapshot test pins it.** `ContractSnapshotTests` compares the document's shape with an approved copy; a
+   changed path, property, type or enum value fails in seconds and writes a diff to review.
+4. **It has paid off.** The first snapshot listed `/refresh` and `/manage/2fa`, which no screen uses, and led to
+   the bearer-token gap in the stories below.
+
+What it does not do yet: the TypeScript models are still mirrored by hand, guarded by that snapshot (see the
+[trade-offs](#trade-offs-and-what-youd-change)).
 
 **How do you handle errors?**
 Everything returns RFC 9457 ProblemDetails:
@@ -393,7 +453,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 977 .NET · 700 Jest · 101 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 977 .NET · 702 Jest · 100 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---
