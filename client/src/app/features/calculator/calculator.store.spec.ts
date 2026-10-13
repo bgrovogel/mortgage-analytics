@@ -169,7 +169,7 @@ describe('monthlyPmiOf', () => {
 
   it('is 0 with 20% down, or no PMI rate', () => {
     expect(monthlyPmiOf({ ...fivePercentDown, downPayment: 75_000 })).toBe(0);
-    expect(monthlyPmiOf({ ...fivePercentDown, housingCosts: undefined })).toBe(0);
+    expect(monthlyPmiOf({ ...fivePercentDown, housingCosts: null })).toBe(0);
     expect(monthlyPmiOf({ ...fivePercentDown, housingCosts: { ...fivePercentDown.housingCosts!, pmiRate: 0 } })).toBe(0);
   });
 
