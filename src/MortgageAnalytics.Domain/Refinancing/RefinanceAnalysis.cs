@@ -52,9 +52,6 @@ public sealed record RefinanceAnalysis(
     /// <summary>PMI on the new loan, paid as scheduled.</summary>
     public decimal RefinancedPmiTotal => NewPmi.TotalOn(Refinanced);
 
-    /// <summary>PMI on the new loan while today's payment is kept up, or null when that option does not apply.</summary>
-    public decimal? KeepingCurrentPaymentPmiTotal => KeepingCurrentPayment is null ? null : NewPmi.TotalOn(KeepingCurrentPayment);
-
     /// <summary>Cash due at closing: the closing costs unless they are financed, plus any buydown.</summary>
     public decimal CashAtClosing => Offer.UpfrontCosts + BuydownCost;
 

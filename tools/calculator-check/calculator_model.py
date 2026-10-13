@@ -383,7 +383,10 @@ def analyze(request, today, other_choice=True):
     for y in range(len(costs.market)):
         year_rows = base['payments'][y * 12:(y + 1) * 12]
         tv = lambda cat: costs.taxable_value(cat, y) if costs.c and cat in costs.taxes else None  # noqa: E731
-        totals = {k: sum((r['costs'][k] for r in year_rows), D(0)) for k in CATEGORIES + ['total']}
+        totals = {k: sum((r['costs'][k] for r in year_rows), D(0)) for k in CATEGORIES}
+        # Mortgage insurance stops with the loan actually paid: the plan with its extra payments.
+        totals['mortgageInsurance'] = sum((r['costs']['mortgageInsurance'] for r in acc['payments'][y * 12:(y + 1) * 12]), D(0))
+        totals['total'] = sum(totals.values(), D(0))
         projection.append({
             'year': y + 1, 'startDate': add_months(first, y * 12).isoformat(),
             'marketValue': costs.market[y], 'assessedValue': costs.assessed[y],

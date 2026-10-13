@@ -87,6 +87,9 @@ describe('strategy text', () => {
       expect(facts(result)).toContain("Your PMI ends once you owe 80% of the home's value: Feb 2030 if you pay down first, Feb 2035 if you invest. "
         + "Paying down saves $9,000 of it, a return investing doesn't earn.");
       expect(facts(base).some((line) => line.includes('PMI'))).toBe(false);
+
+      const atOnce = { ...result, strategies: [withPmi('PayOffFirst', 0, null as unknown as string), ...result.strategies.slice(1)] };
+      expect(facts(atOnce).find((line) => line.includes('PMI'))).toContain('at once if you pay down first, Feb 2035 if you invest');
     });
 
     it('blends the IRA with a taxable account, taxed only when sold', () => {

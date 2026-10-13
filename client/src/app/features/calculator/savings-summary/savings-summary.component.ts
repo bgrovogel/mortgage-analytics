@@ -77,7 +77,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dt>{{ insuranceName() }} ends</dt>
           <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
           @if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
-            <dd class="note">instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
+            <dd class="note gain" data-testid="pmi-sooner">{{ pmiSooner() }} sooner, instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
           } @else {
             <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
           }
@@ -87,7 +87,8 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
               @if (other.removal === 'BorrowerRequested') {
                 Ask your lender at 80%: ends {{ other.endDate | date: 'MMM yyyy' }}, saving {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }}
               } @else {
-                If you don't ask: ends {{ other.endDate | date: 'MMM yyyy' }}, costing {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }} more
+                <!-- Automatic removal is the latest the law requires; some servicers drop it sooner, but none has to. -->
+                If you don't ask, your servicer only has to remove it in {{ other.endDate | date: 'MMM yyyy' }}, costing {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }} more
               }
             </dd>
           }
@@ -189,6 +190,13 @@ export class SavingsSummaryComponent {
 
   /** Payments saved, formatted as years and months. */
   readonly timeSaved = computed(() => formatMonths(this.result().savings.paymentsSaved));
+
+  /** How much sooner extra payments end the mortgage insurance, e.g. "3 yr 2 mo", like the payoff tile's time saved. */
+  readonly pmiSooner = computed(() => {
+    const { baseline, accelerated } = this.result();
+    const months = (iso: string | null | undefined) => (iso ? Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) : 0);
+    return formatMonths(months(baseline.mortgageInsuranceEndDate) - months(accelerated.mortgageInsuranceEndDate));
+  });
 
   /**
    * Where the net savings come from, e.g. "$79,801 interest + $6,531 PMI − $250 fees", or null when it is all

@@ -225,7 +225,7 @@ describe('SavingsSummaryComponent', () => {
     }));
 
     expect(text('pmi-end')).toBe('Sep 2031');
-    expect(fixture.nativeElement.textContent).toContain('instead of Mar 2037');
+    expect(text('pmi-sooner')).toBe('5 yr 6 mo sooner, instead of Mar 2037'); // like the payoff tile beside it
   });
 
   it("names an FHA loan's mortgage insurance MIP", () => {
@@ -283,7 +283,7 @@ describe('SavingsSummaryComponent', () => {
     it('says what not asking would cost, since the results assume the borrower asks', () => {
       render(withPmi({ removal: 'Automatic', endDate: '2038-01-01', savedByAsking: 4_947.98 }));
 
-      expect(text('pmi-other-choice')).toBe("If you don't ask: ends Jan 2038, costing $4,948 more");
+      expect(text('pmi-other-choice')).toBe("If you don't ask, your servicer only has to remove it in Jan 2038, costing $4,948 more");
     });
 
     it('says nothing when both ways end it together', () => {

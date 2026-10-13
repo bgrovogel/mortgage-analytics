@@ -86,4 +86,18 @@ describe('RefinanceStore and the shared loan', () => {
 
     expect(analyze).not.toHaveBeenCalled();
   });
+
+  it("shares the home's value and today's PMI, and neither when no value is given", () => {
+    const { store, shared } = setUp();
+    store.send(loan()); // the page's example, which is not shared
+    store.send(loan({ homeValue: 360_000, currentMonthlyPmi: 120 }));
+    const withPmi = { ...shared.change()!.loan };
+    store.send(loan({ currentBalance: 290_000, homeValue: 360_000 }));
+    const noPmiGiven = shared.change()!.loan.monthlyPmi;
+    store.send(loan({ currentBalance: 280_000 }));
+
+    expect(withPmi).toEqual(expect.objectContaining({ homeValue: 360_000, monthlyPmi: 120 }));
+    expect(noPmiGiven).toBe(0);
+    expect(shared.change()!.loan).toEqual(expect.objectContaining({ balance: 280_000, homeValue: 360_000, monthlyPmi: 0 })); // kept
+  });
 });

@@ -205,9 +205,25 @@ button {
   padding: 0.9rem 1.1rem;
 }
 
-// One column on a phone: filters and search start at the left, under the title.
+// One column on a phone: filters and search start at the left, under the title, each the full width, with every
+// filter on one line.
 @media (max-width: 640px) {
   .filters {
     justify-content: flex-start;
+  }
+
+  .toggle {
+    display: flex;
+    width: 100%;
+
+    button {
+      flex: 1 1 auto;
+      padding-inline: 0.5rem;
+      white-space: nowrap;
+    }
+  }
+
+  .search {
+    width: 100%;
   }
 }

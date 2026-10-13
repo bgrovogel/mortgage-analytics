@@ -26,6 +26,12 @@ public sealed class HousingCostBreakdown
     public static HousingCostBreakdown For(IEnumerable<IHousingCost> costs, CostPeriod period) =>
         Combine(costs.Select(c => (c.Category, c.AmountFor(period))));
 
+    /// <summary>The same breakdown with <paramref name="category"/> set to <paramref name="amount"/>; this one is unchanged.</summary>
+    /// <param name="category">The category to replace.</param>
+    /// <param name="amount">Its new amount.</param>
+    public HousingCostBreakdown With(HousingCostCategory category, decimal amount) =>
+        new(new Dictionary<HousingCostCategory, decimal>(_amounts) { [category] = amount });
+
     /// <summary>Adds breakdowns together category by category, for example to total a whole schedule.</summary>
     public static HousingCostBreakdown Sum(IEnumerable<HousingCostBreakdown> breakdowns) =>
         Combine(breakdowns.SelectMany(b => b._amounts.Select(a => (a.Key, a.Value))));

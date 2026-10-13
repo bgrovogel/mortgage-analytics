@@ -221,6 +221,25 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void PmiOtherChoice_IsNotSaid_WhenTheMidpointEndsItEitherWay()
+    {
+        // 3% down at 12%, nothing extra: neither 80% nor 78% is reached by payment 180, so both ways end there.
+        var request = A.Request.WithHomePrice(400_000m).WithDownPayment(12_000m).WithRate(12m).WithTermInMonths(360)
+            .WithFirstPaymentDate(new DateOnly(2026, 12, 1)).WithHousingCosts(c => c.WithPmi(0.5m, PmiCancellation.BorrowerRequested));
+
+        Assert.That(Service.Analyze(request).PmiOtherChoice, Is.Null, "asking saves nothing, so there is nothing to say");
+    }
+
+    [Test]
+    public void PmiOtherChoice_IsNotSaid_ForAnFhaLoan()
+    {
+        var request = A.Request.FivePercentDown().WithMonthlyExtra(300m).WithProgram(LoanProgramType.Fha)
+            .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
+
+        Assert.That(Service.Analyze(request).PmiOtherChoice, Is.Null, "FHA's MIP is not PMI: it cannot be asked away at 80%");
+    }
+
+    [Test]
     public void PmiOtherChoice_IsNotSaid_WithoutPmi()
     {
         Assert.That(Service.Analyze(A.Request.WithMonthlyExtra(300m)).PmiOtherChoice, Is.Null, "20% down: there is no PMI to end");

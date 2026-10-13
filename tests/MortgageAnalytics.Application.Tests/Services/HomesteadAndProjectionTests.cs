@@ -1,3 +1,4 @@
+using MortgageAnalytics.Application.Contracts;
 using Extra200 = MortgageAnalytics.Testing.ReferenceLoans.StandardWithMonthlyExtra200;
 using Standard = MortgageAnalytics.Testing.ReferenceLoans.Standard;
 
@@ -290,6 +291,25 @@ public class HomesteadAndProjectionTests : SociableAnalysisTestBase
             Assert.That(projection[1].LoanBalance, Is.LessThan(197_543.99m), "less than without them");
             Assert.That(projection[paidOffInYear].LoanBalance, Is.Zero, $"nothing is owed once the loan is paid off in year {paidOffInYear}");
             Assert.That(projection[paidOffInYear].Equity, Is.EqualTo(projection[paidOffInYear].MarketValue), "so the whole home is equity");
+        });
+    }
+
+    [Test]
+    public void Projection_PmiStopsWhenThePlanWithExtraPaymentsReaches80Percent()
+    {
+        // Taxes, insurance and dues run the full term whatever is paid extra; PMI stops with the loan actually paid.
+        var request = A.Request.FivePercentDown().WithMonthlyExtra(300m)
+            .WithHousingCosts(c => c.WithPmi(0.5m, PmiCancellation.BorrowerRequested).WithHoa(50m));
+
+        var response = Service.Analyze(request);
+        var projected = response.Projection.Sum(y => y.Costs.MortgageInsurance);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(projected, Is.EqualTo(response.Accelerated.TotalHousingCosts.MortgageInsurance), "the PMI the plan pays, as the overview says");
+            Assert.That(projected, Is.LessThan(response.Baseline.TotalHousingCosts.MortgageInsurance), "not the standard schedule's");
+            Assert.That(response.Projection.Sum(y => y.Costs.HoaDues), Is.EqualTo(response.Projection.Count * 600m), "dues run every year");
+            Assert.That(response.Projection.All(y => y.Costs.Total == y.Costs.MortgageInsurance + y.Costs.HoaDues), Is.True, "each total follows");
         });
     }
 }

@@ -77,7 +77,7 @@ public sealed record LoanPmi
         schedule.Payments.Select(p => For(p.PaymentNumber, p.OpeningBalance));
 
     /// <summary>The PMI with the first payment of <paramref name="schedule"/>.</summary>
-    public decimal FirstOn(AmortizationSchedule schedule) => ChargesOn(schedule).FirstOrDefault();
+    public decimal FirstOn(AmortizationSchedule schedule) => For(1, schedule.Payments[0].OpeningBalance);
 
     /// <summary>All the PMI paid over <paramref name="schedule"/>.</summary>
     public decimal TotalOn(AmortizationSchedule schedule) => ChargesOn(schedule).Sum();

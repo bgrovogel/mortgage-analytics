@@ -61,4 +61,21 @@ public class HousingCostBreakdownTests
     {
         Assert.That(HousingCostBreakdown.Empty.Total, Is.Zero, "an empty breakdown totals zero");
     }
+
+    [Test]
+    public void With_ReplacesOneCategory_AndKeepsTheTotalInStep()
+    {
+        IHousingCost[] costs = [new MonthlyFixedCost(HousingCostCategory.HoaDues, 75m), new MonthlyFixedCost(HousingCostCategory.MortgageInsurance, 100m)];
+        var breakdown = HousingCostBreakdown.For(costs, Period(1));
+
+        var replaced = breakdown.With(HousingCostCategory.MortgageInsurance, 40m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(replaced[HousingCostCategory.MortgageInsurance], Is.EqualTo(40m), "the new amount");
+            Assert.That(replaced[HousingCostCategory.HoaDues], Is.EqualTo(75m), "the others as they were");
+            Assert.That(replaced.Total, Is.EqualTo(115m), "and the total follows");
+            Assert.That(breakdown.Total, Is.EqualTo(175m), "the original is unchanged");
+        });
+    }
 }

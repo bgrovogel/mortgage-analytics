@@ -32,6 +32,12 @@ public class LoanPmiTests
     }
 
     [Test]
+    public void ANewLoanAtAZeroRate_PaysNone_AndIsNotAnError()
+    {
+        Assert.That(LoanPmi.ForNewLoan(285_000m, 300_000m, 0m, 360), Is.EqualTo(LoanPmi.None), "0% is no PMI, not a mistake");
+    }
+
+    [Test]
     public void ANewLoanWithoutAHomeValue_PaysNone()
     {
         Assert.That(LoanPmi.ForNewLoan(285_000m, 0m, 0.5m, 360), Is.EqualTo(LoanPmi.None), "without a value there is no loan-to-value to require it");

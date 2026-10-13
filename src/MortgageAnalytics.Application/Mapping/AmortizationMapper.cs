@@ -203,7 +203,7 @@ internal static class AmortizationMapper
                 comparison.TotalExtraPrincipal,
                 comparison.Baseline.PayoffDate,
                 comparison.Accelerated.PayoffDate),
-            ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, rates.Loan.Principal, valuation, plan),
+            ToProjection(comparison.Baseline, comparison.BaselineCosts, comparison.Accelerated, comparison.AcceleratedCosts, rates.Loan.Principal, valuation, plan),
             rates.Buydown is { } buydown ? ToResponse(buydown, rates.Loan, comparison.Baseline, rates.BuydownPaidBy) : null,
             rates.WorstCase is { } worst ? ToResponse(worst) : null,
             closing is null ? null : ToResponse(CashToCloseFor(closing, purchase, comparison, rates)),
@@ -313,12 +313,13 @@ internal static class AmortizationMapper
 
     /// <summary>
     /// One row per year of the standard schedule. The standard schedule is used because it spans
-    /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early. The balance
-    /// and equity follow the <paramref name="accelerated"/> schedule instead: what will actually be owed on the plan.
+    /// the full term, and taxes, insurance and dues continue whether or not the loan is paid off early. Mortgage
+    /// insurance, the balance and equity follow the <paramref name="accelerated"/> schedule instead: PMI stops when the
+    /// loan actually paid reaches 80% (or is paid off), and the balance is what will actually be owed on the plan.
     /// </summary>
     private static List<YearProjectionResponse> ToProjection(
-        AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, decimal principal,
-        PropertyValuation valuation, HousingCostPlan plan)
+        AmortizationSchedule schedule, HousingCostSchedule costs, AmortizationSchedule accelerated, HousingCostSchedule acceleratedCosts,
+        decimal principal, PropertyValuation valuation, HousingCostPlan plan)
     {
         // Owed at the start of a year: the loan before the first payment, then the balance after the year before's last
         // payment, and nothing once the loan is paid off.
@@ -328,6 +329,10 @@ internal static class AmortizationMapper
         var taxes = plan.Taxes.ToDictionary(t => t.Category);
         decimal? TaxableValue(HousingCostCategory category, int year) =>
             taxes.TryGetValue(category, out var tax) ? tax.TaxableValueInYear(year) : null;
+
+        // The plan's mortgage insurance that year, and none once its loan is paid off.
+        decimal InsuranceIn(int index) =>
+            acceleratedCosts.ByYear.ElementAtOrDefault(index)?[HousingCostCategory.MortgageInsurance] ?? 0m;
 
         return costs.ByYear
             .Select((year, index) => new YearProjectionResponse(
@@ -339,7 +344,7 @@ internal static class AmortizationMapper
                 TaxableValue(HousingCostCategory.LocalTax, index),
                 TaxableValue(HousingCostCategory.MudTax, index),
                 TaxableValue(HousingCostCategory.PropertyTax, index),
-                ToResponse(year),
+                ToResponse(year.With(HousingCostCategory.MortgageInsurance, InsuranceIn(index))),
                 BalanceAtStartOf(index),
                 valuation.MarketValueInYear(index) - BalanceAtStartOf(index)))
             .ToList();

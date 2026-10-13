@@ -236,4 +236,19 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
             Assert.That(analysis.LifetimeSavings, Is.EqualTo(ToSixPercentFor30Years.LifetimeSavings), "so the comparison is as before");
         });
     }
+
+    [Test]
+    public void PmiOnlyOnTheCurrentLoan_IsSavedByRefinancing_SoItBreaksEvenSooner()
+    {
+        // A lender that charges no PMI on the new loan: only today's $120 counts, and every month of it is saved.
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(CurrentLoan, SixPercentUpfront, new RefinancePmi(360_000m, 120m, 0m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.NewPmi, Is.EqualTo(LoanPmi.None), "no PMI on the new loan");
+            Assert.That(analysis.MonthlySavings, Is.EqualTo(ToSixPercentFor30Years.MonthlySavings + 120m), "today's PMI stops");
+            Assert.That(analysis.BreakEvenPaymentNumber, Is.LessThan(ToSixPercentFor30Years.BreakEvenPaymentNumber),
+                "the PMI no longer paid helps cover the closing costs");
+        });
+    }
 }

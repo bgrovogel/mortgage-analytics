@@ -420,14 +420,14 @@ public class StrategyRulesTests
             "from 2026, PMI is mortgage interest for the deduction, less 10% for each $1,000 of AGI over $100,000 (IRC 163(h)(3)(E))");
 
     [Test]
-    public void Pmi_SavesTaxWhenItemizing_ForAHouseholdUnderTheIncomeLimit()
+    public void Pmi_SavesTaxWhenItemizing_ForAHouseholdUnderTheIncomeLimit_AfterThe401kContribution()
     {
-        // $90,000 of income less the 401(k) contribution is under $100,000, and $40,000 of other deductions means
-        // every dollar of interest and PMI is itemized.
+        // $105,000 of pay less the $6,300 401(k) contribution (6% for the match) is $98,700 of income, under $100,000;
+        // $40,000 of other deductions means every dollar of interest and PMI is itemized.
         var steady = MarketScenario.Steady(MarketScenarioKind.Expected, 10m);
         StrategyInputs Inputs(decimal pmi) => new StrategyInputs(
             new LoanTerms(370_000m, 6.5m, 360, NextPaymentDate), 400_000m, 4.3m,
-            new Household(90_000m, 22m, 15m, FilingStatus.MarriedFilingJointly, 40_000m, 1_000m),
+            new Household(105_000m, 22m, 15m, FilingStatus.MarriedFilingJointly, 40_000m, 1_000m),
             new EmployerMatch(50m, 6m), StockPurchasePlan.None, 7_500m, new MarketAssumptions(10m, 3m, RiskProfile.Balanced))
         {
             Pmi = LoanPmi.OnCurrentLoan(pmi, 400_000m),
@@ -437,6 +437,6 @@ public class StrategyRulesTests
         var without = new StrategySimulator().Simulate(Inputs(0m), 100m, steady);
 
         Assert.That(withPmi.TotalTaxSaved - without.TotalTaxSaved, Is.EqualTo(withPmi.TotalMortgageInsurance * 0.22m).Within(1m),
-            "each year's PMI saves tax at the 22% rate, like the interest");
+            "each year's PMI saves tax at the 22% rate, all of it: the contribution is not income for the limit");
     }
 }

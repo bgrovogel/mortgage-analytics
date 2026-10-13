@@ -265,10 +265,10 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
 
     await expect(calculator.pmiEnd, 'requested removal uses the actual balance: payment 62').toHaveText('Feb 2041');
-    await expect(calculator.message('instead of Apr 2046'), 'instead of payment 124').toBeVisible();
+    await expect(calculator.message('5 yr 2 mo sooner, instead of Apr 2046'), 'payment 62 instead of 124').toBeVisible();
     await expect(calculator.savingsDetail, 'the PMI saved is part of net savings').toContainText('+ $6,136 PMI');
     await expect(calculator.pmiOtherChoice, 'not asking would keep it to payment 135: $13,359.60 - $6,135.52 more')
-      .toHaveText("If you don't ask: ends Mar 2047, costing $7,224 more");
+      .toHaveText("If you don't ask, your servicer only has to remove it in Mar 2047, costing $7,224 more");
   });
 
   test('automatic PMI removal follows the original schedule, so extra payments do not move it', async ({ calculator }) => {

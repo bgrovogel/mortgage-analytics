@@ -237,4 +237,19 @@ public class RefinanceServiceTests
             Assert.That(response.Refinanced.PmiEndDate, Is.Null, "so no end date");
         });
     }
+
+    [Test]
+    public void Analyze_EndsEachLoansPmi_WithItsLastPaymentAbove80Percent()
+    {
+        var response = _service.Analyze(Request() with { HomeValue = 360_000m, CurrentMonthlyPmi = 120m });
+        var current = response.Current.Payments;
+        // Each payment opens at the balance the one before it left; the first at what is owed today.
+        var last = Enumerable.Range(0, current.Count).Last(i => (i == 0 ? Current.Balance : current[i - 1].RemainingBalance) > 288_000m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Current.PmiEndDate, Is.EqualTo(current[last].DueDate), "the last payment that opens above $288,000");
+            Assert.That(response.Current.TotalPmi, Is.EqualTo((last + 1) * 120m), "$120 with each payment until then");
+        });
+    }
 }

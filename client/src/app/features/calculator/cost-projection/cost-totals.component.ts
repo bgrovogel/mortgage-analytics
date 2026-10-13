@@ -63,7 +63,7 @@ import { costTotals, startingYear } from './cost-totals';
           </tfoot>
         </table>
       </div>
-      <p class="note">These continue after the loan is paid off, so they run the full term. Click a year on the chart to see it here.</p>
+      <p class="note">Taxes, insurance and dues continue after the loan is paid off, so they run the full term; mortgage insurance ends on your plan, with its extra payments. Click a year on the chart to see it here.</p>
     </section>
   `,
   styleUrl: './cost-totals.component.scss',

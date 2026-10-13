@@ -404,7 +404,8 @@ The choices behind the numbers, each pinned by a test:
 
 **Comparing honestly**
 - **Projections follow the full term,** on the standard schedule, because taxes, insurance and dues continue whether
-  or not the loan is paid off early.
+  or not the loan is paid off early. Mortgage insurance, the balance and equity follow the plan with its extra
+  payments instead: PMI stops when the loan actually paid reaches 80%, as the overview says.
 - **Savings leave out costs that do not go away.** A shorter loan collects taxes and insurance through escrow for
   fewer months, but the owner keeps paying them. `LoanComparison.NetSavings` counts only interest and PMI, less recast
   fees, and a test locks that in.

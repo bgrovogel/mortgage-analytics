@@ -83,6 +83,5 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
 export function monthlyPmiOf(request: AmortizationRequest): number | null {
   if (request.program && request.program.type !== 'Conventional') return null;
   const loan = request.homePrice - request.downPayment;
-  const rate = request.housingCosts?.pmiRate ?? 0;
-  return loan > request.homePrice * 0.8 && rate > 0 ? toCents((loan * rate) / 100 / 12) : 0;
+  return loan > request.homePrice * 0.8 ? toCents((loan * (request.housingCosts?.pmiRate ?? 0)) / 100 / 12) : 0;
 }

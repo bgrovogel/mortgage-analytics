@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,840 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,850 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -13,12 +13,12 @@
 
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
-| Domain | 549 | NUnit | < 1 s |
-| Application | 322 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Domain | 552 | NUnit | < 1 s |
+| Application | 326 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 107 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 717 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 719 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 103 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
@@ -213,10 +213,10 @@ independent models do that job.
 
 ## Mutation testing
 
-**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,050 small changes
+**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,150 small changes
 (mutants) to `MortgageAnalytics.Domain` (`<` to `<=`, `+` to `-`, `Sum` to `Max`, an emptied message, a deleted
 statement) and runs the tests against each. A mutant no test notices *survives*, and points at an assertion that is
-missing. **The score is 98.1%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
+missing. **The score is 98.3%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
 uploads the HTML report.
 
 <details>
@@ -244,8 +244,9 @@ Its first run scored 88.7%: rules no test reached (a VA funding-fee type, a year
 each tax's rate-change message), refinance boundaries (a loan whose last payment is today), mapped fields nobody
 asserted (an FHA response's loan type, a rate reset's date), and code that could not matter, now removed (a first
 payment date resolved twice, a cap of 50 rate changes that one-a-year in a 50-year loan never reaches). It now scores
-**98.3%**; the 10 survivors are equivalent: messages on unreachable `switch` arms, "empty list → None" shortcuts, and
-`Append` against `Prepend` before a `Max`.
+**97.8%**: of the 15 left, 8 are messages on `switch` arms that validation makes unreachable, and the rest are
+equivalent ("empty list → None" shortcuts, `Append` against `Prepend` before a `Max`) or boundaries another rule
+already covers.
 
 **The Angular logic** is mutation-tested with **StrykerJS**, locally too (`client/stryker.config.json`; `npm run
 mutation` in `client/`, about an hour for about 2,000 mutants, then minutes for a rerun, which reuses the last results).
@@ -255,7 +256,7 @@ gaps. The rules for when a page shares its loan with the others (the fix for the
 Playwright, so a wrong `<` passed every unit test; they now have their own, case by case. And the loan form's defaults,
 its blank-to-zero mapping and its restore were checked only through the whole component, so a lost default or a value
 dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks them directly, with a round trip through
-every unusual value. It now scores **97.9%**; the 43 survivors are almost all equivalent: caches that only save work,
+every unusual value. It now scores **98.0%**; the 42 survivors are almost all equivalent: caches that only save work,
 `emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
 the last payment is 0 either way).
 
