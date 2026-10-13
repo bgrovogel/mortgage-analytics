@@ -65,7 +65,7 @@ on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the por
 
 | # | Do this | Say, and point at |
 |---|---|---|
-| 1 | **Calculator**, with the example numbers: a $375,000 home, 5% down, 6.5%, 30 years, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. $108,613 less interest, paid off 6 years 1 month sooner, PMI ends in January 2038 on the *original* schedule. The required payment is $3,246.01. Dates follow the first-payment date, so they move if the default has. |
+| 1 | **Calculator**, with the example numbers: a $375,000 home, 5% down, 6.5%, 30 years, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. $114,254 net savings ($108,613 less interest plus $5,641 of PMI), paid off 6 years 1 month sooner. PMI ends in December 2033, because asking at 80% is the default; the tile says not asking would keep it until January 2038, costing $7,274 more. The required payment is $3,246.01. Dates follow the first-payment date, so they move if the default has. |
 | 2 | Switch the loan type to **FHA**, pick a county, then raise the price past its limit. | The limit is HUD's, by county; over it the app warns. The county list comes from `GET /api/v1/fha/loan-limits`. |
 | 3 | The **Projection** tab, then the equity chart. | Every cost of owning it over the life of the loan, not just principal and interest. |
 | 4 | **Refinance**: $300,000 at 7% with 25 years left, into 6% for 30 years, with $6,000 of closing costs. | The payment drops $321.69 a month, yet refinancing costs **$17,415 more**, because the clock restarts. Break-even is November 2028. "Keep paying $2,120.34 a month" saves $107,590 instead. |
