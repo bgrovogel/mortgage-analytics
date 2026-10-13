@@ -130,7 +130,16 @@
           "required": true
         },
         "responses": {
-          "200": {}
+          "200": {},
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
         }
       }
     },
