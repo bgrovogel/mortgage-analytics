@@ -27,7 +27,8 @@ services:
       - "8025:8025"
 
   # Optional HTTPS in front of the app: `docker compose --profile https up`, then https://localhost:8443. Over HTTPS the
-  # session cookie is marked Secure and HSTS is sent.
+  # session cookie is marked Secure. HSTS is sent too, under any real host name: ASP.NET Core leaves it off for
+  # localhost, so a browser is never held to HTTPS on a developer's machine.
   https:
     image: caddy:2.10.0
     profiles: [https]

@@ -8,7 +8,7 @@
           <Format>cobertura</Format>
           <Include>[MortgageAnalytics.Domain]*,[MortgageAnalytics.Application]*,[MortgageAnalytics.Api]*,[MortgageAnalytics.Infrastructure]*</Include>
           <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
-          <ExcludeByFile>**/*.g.cs,**/Migrations/*.cs</ExcludeByFile>
+          <ExcludeByFile>**/*.g.cs,**/Migrations/**/*.cs</ExcludeByFile>
           <SkipAutoProps>true</SkipAutoProps>
         </Configuration>
       </DataCollector>
