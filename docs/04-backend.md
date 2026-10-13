@@ -225,7 +225,7 @@ The endpoint does HTTP only. Validation is in the filter, and the work is in the
     "annualHomeownersInsurance": 2400,
     "monthlyHoaDues": 50,
     "pmiRate": 0.5,
-    "pmiCancellation": "Automatic"
+    "pmiCancellation": "BorrowerRequested"
   }
 }
 ```

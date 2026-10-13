@@ -174,7 +174,7 @@ class Costs:
         rate = num('pmiRate')
         self.pmi_required = loan > price * 80 / 100
         self.pmi_premium = money(loan * rate / 100 / 12) if self.pmi_required and rate > 0 else D(0)
-        self.pmi_by_request = c.get('pmiCancellation') == 'BorrowerRequested'
+        self.pmi_by_request = c.get('pmiCancellation', 'BorrowerRequested') == 'BorrowerRequested'
         self.pmi_threshold = price * (80 if self.pmi_by_request else 78) / 100
 
     def taxable_value(self, category, year):
@@ -299,7 +299,7 @@ def program_of(request, price, down, rate, term, first):
 
 # ---------------------------------------------------------------------------------------------- the whole analysis
 
-def analyze(request, today):
+def analyze(request, today, other_choice=True):
     price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
     rate, term = D(str(request['annualInterestRate'])), request['termInMonths']
     first = date.fromisoformat(request['firstPaymentDate']) if request.get('firstPaymentDate') else first_of_next_month(today)
@@ -437,19 +437,20 @@ def analyze(request, today):
             'worstCasePeakPayment': max([worst['initial']] + [c['newPayment'] for c in worst['rateChanges']]),
             'worstCaseTotalInterest': sum((r['interest'] for r in worst['rows']), D(0)),
         }
-    out['pmiOnRequest'] = pmi_on_request(request, today, acc) if program is None else None
+    out['pmiOtherChoice'] = pmi_other_choice(request, today, acc) if program is None and other_choice else None
     return out
 
 
-def pmi_on_request(request, today, acc):
-    """Automatic PMI removal keeps to the original schedule (78%); asking at 80% follows the actual balance. When asking
-    would end PMI sooner: the last payment it would be charged with, and the PMI saved, with the same extra payments."""
+def pmi_other_choice(request, today, acc):
+    """Automatic PMI removal keeps to the original schedule (78%); asking at 80% follows the actual balance. With the
+    same extra payments, the other way's last PMI payment and what asking saves; None when both end together."""
     costs = request.get('housingCosts')
-    if not costs or costs.get('pmiCancellation', 'Automatic') != 'Automatic':
+    if not costs:
         return None
-    asked = analyze(dict(request, housingCosts=dict(costs, pmiCancellation='BorrowerRequested')), today)['accelerated']
-    saved = acc['totalHousingCosts']['mortgageInsurance'] - asked['totalHousingCosts']['mortgageInsurance']
-    return {'endDate': asked['mortgageInsuranceEndDate'], 'saved': saved} if saved > 0 else None
+    removal = 'BorrowerRequested' if costs.get('pmiCancellation', 'BorrowerRequested') == 'Automatic' else 'Automatic'
+    other = analyze(dict(request, housingCosts=dict(costs, pmiCancellation=removal)), today, other_choice=False)['accelerated']
+    saved = abs(acc['totalHousingCosts']['mortgageInsurance'] - other['totalHousingCosts']['mortgageInsurance'])
+    return {'removal': removal, 'endDate': other['mortgageInsuranceEndDate'], 'savedByAsking': saved} if saved > 0 else None
 
 
 # ---------------------------------------------------------------------------------------------- cash to close

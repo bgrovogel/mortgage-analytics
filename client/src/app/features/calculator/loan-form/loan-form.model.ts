@@ -89,7 +89,7 @@ export function loanForm(fb: NonNullableFormBuilder) {
     annualInsurance: [2_400, validatorsFor(rules.annualInsurance)],
     monthlyHoa: [50, validatorsFor(rules.monthlyHoa)],
     pmiRate: [0.5, validatorsFor(rules.pmiRate)],
-    pmiCancellation: fb.control<MortgageInsuranceCancellation>('Automatic'),
+    pmiCancellation: fb.control<MortgageInsuranceCancellation>('BorrowerRequested'),
 
     // Closing costs, as an example to replace with the Loan Estimate's own: fees as totals, then half a month of
     // interest and three months of escrow, which the API prices from the loan.

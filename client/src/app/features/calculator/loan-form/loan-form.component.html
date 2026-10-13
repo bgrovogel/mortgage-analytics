@@ -314,8 +314,8 @@
           <label class="field">
             <span>PMI removal</span>
             <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
-              <option value="Automatic">Auto at 78%</option>
               <option value="BorrowerRequested">Ask at 80%</option>
+              <option value="Automatic">Auto at 78%</option>
             </select>
           </label>
         </div>
@@ -326,8 +326,8 @@
         } @else if (loanProgram() === 'Va') {
           No PMI: VA loans have no mortgage insurance.
         } @else if (pmiApplies()) {
-          PMI applies because less than 20% is down. It is removed automatically when the original schedule
-          reaches 78% of the price; extra payments only count if you ask at 80%.
+          PMI applies because less than 20% is down. Ask your lender to remove it at 80% of the price, and extra
+          payments bring that sooner; left alone, it comes off at 78% on the original schedule.
         } @else {
           No PMI: at least 20% is down.
         }

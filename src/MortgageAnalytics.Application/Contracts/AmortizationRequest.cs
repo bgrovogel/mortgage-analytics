@@ -359,9 +359,12 @@ public sealed record HousingCostsRequest
     /// <example>0.5</example>
     public decimal PmiRate { get; init; }
 
-    /// <summary>Whether PMI comes off automatically at 78% loan-to-value or on request at 80%.</summary>
-    /// <example>Automatic</example>
-    public PmiCancellation PmiCancellation { get; init; } = PmiCancellation.Automatic;
+    /// <summary>
+    /// Whether PMI comes off on request at 80% loan-to-value (the default: a borrower paying extra asks as soon as they
+    /// can) or automatically at 78% on the original schedule.
+    /// </summary>
+    /// <example>BorrowerRequested</example>
+    public PmiCancellation PmiCancellation { get; init; } = PmiCancellation.BorrowerRequested;
 
     /// <summary>
     /// New tax rates from given loan years, as taxing units adopt them: each change sets the rates it names from its

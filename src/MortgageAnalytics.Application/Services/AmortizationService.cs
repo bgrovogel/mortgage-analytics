@@ -65,28 +65,29 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program, county);
         return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts()) with
         {
-            PmiOnRequest = program is null ? PmiOnRequest(request, purchase, valuation, loan, comparison) : null,
+            PmiOtherChoice = program is null ? PmiOtherChoice(request, purchase, valuation, loan, comparison) : null,
         };
     }
 
     /// <summary>
     /// Automatic PMI removal follows the original schedule, so extra payments never bring it forward; a borrower's
-    /// request at 80% follows the actual balance. When that would end PMI sooner, the same extra payments are run
-    /// once more with the request, to say when and what it saves. Null otherwise.
+    /// request at 80% follows the actual balance. The same extra payments are run once more the other way, to say
+    /// when PMI would end that way and what asking saves. Null when both ways end it together.
     /// </summary>
-    private PmiOnRequestResponse? PmiOnRequest(
+    private PmiOtherChoiceResponse? PmiOtherChoice(
         AmortizationRequest request, PropertyPurchase purchase, PropertyValuation valuation, LoanTerms loan, LoanComparison comparison)
     {
-        if (request.HousingCosts is not { PmiCancellation: PmiCancellation.Automatic } costs || !purchase.RequiresMortgageInsurance)
+        if (request.HousingCosts is not { } costs || !purchase.RequiresMortgageInsurance)
             return null;
 
-        var requested = comparer.Compare(
+        var removal = costs.PmiCancellation == PmiCancellation.Automatic ? PmiCancellation.BorrowerRequested : PmiCancellation.Automatic;
+        var otherWay = comparer.Compare(
             loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(),
-            (costs with { PmiCancellation = PmiCancellation.BorrowerRequested }).ToHousingCostPlan(purchase, valuation));
-        var saved = comparison.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]
-            - requested.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance];
-        return saved > 0 && requested.AcceleratedCosts.MortgageInsuranceLastPayment is { } last
-            ? new PmiOnRequestResponse(requested.Accelerated.Payments[last - 1].DueDate, saved)
+            (costs with { PmiCancellation = removal }).ToHousingCostPlan(purchase, valuation));
+        var savedByAsking = Math.Abs(comparison.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]
+            - otherWay.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]);
+        return savedByAsking > 0 && otherWay.AcceleratedCosts.MortgageInsuranceLastPayment is { } last
+            ? new PmiOtherChoiceResponse(removal, otherWay.Accelerated.Payments[last - 1].DueDate, savedByAsking)
             : null;
     }
 }

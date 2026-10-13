@@ -124,7 +124,7 @@ A real row's `Inputs` (a purchase with $200 a month extra and separate Texas tax
     "annualHomeownersInsurance": 2400,
     "monthlyHoaDues": 50,
     "pmiRate": 0.5,
-    "pmiCancellation": "Automatic"
+    "pmiCancellation": "BorrowerRequested"
   },
   "formatVersion": 1
 }

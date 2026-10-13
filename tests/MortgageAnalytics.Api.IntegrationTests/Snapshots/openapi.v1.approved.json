@@ -906,8 +906,8 @@
           "program": {
             "$ref": "#/components/schemas/LoanProgramResponse"
           },
-          "pmiOnRequest": {
-            "$ref": "#/components/schemas/PmiOnRequestResponse"
+          "pmiOtherChoice": {
+            "$ref": "#/components/schemas/PmiOtherChoiceResponse"
           }
         },
         "additionalProperties": false
@@ -1791,14 +1791,17 @@
         ],
         "type": "string"
       },
-      "PmiOnRequestResponse": {
+      "PmiOtherChoiceResponse": {
         "type": "object",
         "properties": {
+          "removal": {
+            "$ref": "#/components/schemas/PmiCancellation"
+          },
           "endDate": {
             "type": "string",
             "format": "date"
           },
-          "saved": {
+          "savedByAsking": {
             "type": "number",
             "format": "double"
           }

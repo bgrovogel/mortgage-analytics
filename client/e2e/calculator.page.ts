@@ -29,8 +29,8 @@ export class CalculatorPage {
   readonly staleResults: Locator;
   readonly payoffDate: Locator;
   readonly pmiEnd: Locator;
-  /** What asking the lender to remove PMI at 80% would do, when removal is automatic. */
-  readonly pmiOnRequest: Locator;
+  /** What the other way of removing PMI would do: asking at 80%, or leaving it to automatic removal at 78%. */
+  readonly pmiOtherChoice: Locator;
   readonly recasts: Locator;
   readonly breakdown: Locator;
   readonly breakdownTotal: Locator;
@@ -64,7 +64,7 @@ export class CalculatorPage {
     this.staleResults = page.getByTestId('stale-results');
     this.payoffDate = page.getByTestId('payoff-date');
     this.pmiEnd = page.getByTestId('pmi-end');
-    this.pmiOnRequest = page.getByTestId('pmi-on-request');
+    this.pmiOtherChoice = page.getByTestId('pmi-other-choice');
     this.recasts = page.getByTestId('recasts');
     this.breakdown = page.getByTestId('payment-breakdown');
     this.breakdownTotal = page.getByTestId('breakdown-total');

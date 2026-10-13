@@ -343,7 +343,7 @@ describe('LoanFormComponent', () => {
       controls().isOver65.setValue(true);
       controls().over65Year.setValue(4);
       controls().over65LocalCeiling.setValue(true);
-      controls().pmiCancellation.setValue('BorrowerRequested');
+      controls().pmiCancellation.setValue('Automatic');
       controls().annualExtra.setValue(2_000);
       controls().annualFirstPayment.setValue(6);
       component.addLumpSum();
@@ -1021,7 +1021,8 @@ describe('LoanFormComponent', () => {
 
     it('explains why PMI does or does not apply', () => {
       expect(el('pmi-hint')?.textContent).toContain('PMI applies');
-      expect(el('pmi-hint')?.textContent).toContain('extra payments only count if you ask at 80%');
+      expect(el('pmi-hint')?.textContent).toContain('Ask your lender to remove it at 80% of the price, and extra payments bring that sooner');
+      expect((el('pmi-cancellation') as HTMLSelectElement).value).toBe('BorrowerRequested');
 
       controls().downPayment.setValue(75_000);
       fixture.detectChanges();

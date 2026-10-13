@@ -256,11 +256,10 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.netSavings, 'taxes and dues continue after payoff, so savings are interest only').toHaveText('$79,801');
   });
 
-  test('requested PMI removal: extra payments end PMI sooner and count as savings', async ({ calculator }) => {
+  test('PMI removal on request by default: extra payments end PMI sooner and count as savings', async ({ calculator }) => {
     await calculator.fillLoan(FIVE_PERCENT_DOWN);
     await calculator.clearHousingCosts();
     await calculator.set('pmi-rate', 0.5);
-    await calculator.choose('pmi-cancellation', 'BorrowerRequested');
     await calculator.setExtras(300);
 
     await calculator.calculate();
@@ -268,20 +267,22 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.pmiEnd, 'requested removal uses the actual balance: payment 62').toHaveText('Feb 2041');
     await expect(calculator.message('instead of Apr 2046'), 'instead of payment 124').toBeVisible();
     await expect(calculator.savingsDetail, 'the PMI saved is part of net savings').toContainText('+ $6,136 PMI');
-    await expect(calculator.pmiOnRequest, 'removal is already requested: nothing to suggest').toBeHidden();
+    await expect(calculator.pmiOtherChoice, 'not asking would keep it to payment 135: $13,359.60 - $6,135.52 more')
+      .toHaveText("If you don't ask: ends Mar 2047, costing $7,224 more");
   });
 
   test('automatic PMI removal follows the original schedule, so extra payments do not move it', async ({ calculator }) => {
     await calculator.fillLoan(FIVE_PERCENT_DOWN);
     await calculator.clearHousingCosts();
     await calculator.set('pmi-rate', 0.5);
+    await calculator.choose('pmi-cancellation', 'Automatic');
     await calculator.setExtras(300);
 
     await calculator.calculate();
 
     await expect(calculator.pmiEnd, 'automatic removal stays at payment 135').toHaveText('Mar 2047');
     await expect(calculator.savingsDetail, 'so no PMI is saved: the savings are all interest, which the headline already says').toBeHidden();
-    await expect(calculator.pmiOnRequest, 'but asking at 80% would end it at payment 62, saving $13,359.60 - $6,135.52')
+    await expect(calculator.pmiOtherChoice, 'but asking at 80% would end it at payment 62, saving $13,359.60 - $6,135.52')
       .toHaveText('Ask your lender at 80%: ends Feb 2041, saving $7,224');
   });
 

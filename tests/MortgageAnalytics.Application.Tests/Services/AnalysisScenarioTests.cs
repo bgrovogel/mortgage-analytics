@@ -160,12 +160,13 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     {
         var request = A.Request.FivePercentDown().WithMonthlyExtra(300m).WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
 
-        var onRequest = Service.Analyze(request).PmiOnRequest;
+        var onRequest = Service.Analyze(request).PmiOtherChoice;
 
         Assert.Multiple(() =>
         {
+            Assert.That(onRequest?.Removal, Is.EqualTo(PmiCancellation.BorrowerRequested), "the other way is to ask");
             Assert.That(onRequest?.EndDate, Is.EqualTo(new DateOnly(2031, 2, 1)), "payment 62: the actual balance reaches 80% years before the schedule's 78%");
-            Assert.That(onRequest?.Saved, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
+            Assert.That(onRequest?.SavedByAsking, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
                 "the PMI charged after that, which automatic removal keeps charging until March 2037");
         });
     }
@@ -175,28 +176,43 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     {
         var request = A.Request.FivePercentDown().WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
 
-        var onRequest = Service.Analyze(request).PmiOnRequest;
+        var onRequest = Service.Analyze(request).PmiOtherChoice;
 
         Assert.Multiple(() =>
         {
             Assert.That(onRequest?.EndDate, Is.EqualTo(new DateOnly(2036, 4, 1)), "payment 124, where the schedule reaches 80%, not 135 at 78%");
-            Assert.That(onRequest?.Saved, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotal), "eleven payments of PMI");
+            Assert.That(onRequest?.SavedByAsking, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotal), "eleven payments of PMI");
         });
     }
 
     [Test]
-    public void PmiOnRequest_IsNotSaid_WhenRemovalIsAlreadyRequested()
+    public void RequestedPmiRemoval_SaysWhenAutomaticRemovalWouldEndIt_AndWhatAskingSaves()
     {
         var request = A.Request.FivePercentDown().WithMonthlyExtra(300m)
             .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, PmiCancellation.BorrowerRequested));
 
-        Assert.That(Service.Analyze(request).PmiOnRequest, Is.Null, "the results already show it");
+        var automatic = Service.Analyze(request).PmiOtherChoice;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(automatic?.Removal, Is.EqualTo(PmiCancellation.Automatic), "the other way is to leave it to the servicer");
+            Assert.That(automatic?.EndDate, Is.EqualTo(new DateOnly(2037, 3, 1)), "payment 135 on the original schedule, whatever is paid extra");
+            Assert.That(automatic?.SavedByAsking, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
+                "what not asking would cost");
+        });
     }
 
     [Test]
-    public void PmiOnRequest_IsNotSaid_WithoutPmi()
+    public void PmiOtherChoice_IsNotSaid_WithoutPmi()
     {
-        Assert.That(Service.Analyze(A.Request.WithMonthlyExtra(300m)).PmiOnRequest, Is.Null, "20% down: there is no PMI to end");
+        Assert.That(Service.Analyze(A.Request.WithMonthlyExtra(300m)).PmiOtherChoice, Is.Null, "20% down: there is no PMI to end");
+    }
+
+    [Test]
+    public void PmiRemoval_IsOnRequestAt80Percent_UnlessSaidOtherwise()
+    {
+        Assert.That(new HousingCostsRequest().PmiCancellation, Is.EqualTo(PmiCancellation.BorrowerRequested),
+            "a borrower paying extra asks as soon as they can, so the numbers assume it");
     }
 
     [Test]

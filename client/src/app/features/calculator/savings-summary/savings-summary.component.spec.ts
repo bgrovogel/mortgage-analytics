@@ -267,23 +267,29 @@ describe('SavingsSummaryComponent', () => {
     expect(recasts?.match(/fee/g)).toHaveLength(1);
   });
 
-  describe('PMI removed on request', () => {
-    const withPmi = (pmiOnRequest: AmortizationResponse['pmiOnRequest']) => aResponse({
+  describe('the other way of removing PMI', () => {
+    const withPmi = (pmiOtherChoice: AmortizationResponse['pmiOtherChoice']) => aResponse({
       baseline: aSchedule({ mortgageInsuranceEndDate: '2038-01-01' }),
       accelerated: aSchedule({ mortgageInsuranceEndDate: '2038-01-01' }),
-      pmiOnRequest,
+      pmiOtherChoice,
     });
 
     it('says when asking the lender at 80% would end PMI, and what it saves, since extra payments do not move automatic removal', () => {
-      render(withPmi({ endDate: '2033-12-01', saved: 4_947.98 }));
+      render(withPmi({ removal: 'BorrowerRequested', endDate: '2033-12-01', savedByAsking: 4_947.98 }));
 
-      expect(text('pmi-on-request')).toBe('Ask your lender at 80%: ends Dec 2033, saving $4,948');
+      expect(text('pmi-other-choice')).toBe('Ask your lender at 80%: ends Dec 2033, saving $4,948');
     });
 
-    it('says nothing when asking would not end it sooner', () => {
+    it('says what not asking would cost, since the results assume the borrower asks', () => {
+      render(withPmi({ removal: 'Automatic', endDate: '2038-01-01', savedByAsking: 4_947.98 }));
+
+      expect(text('pmi-other-choice')).toBe("If you don't ask: ends Jan 2038, costing $4,948 more");
+    });
+
+    it('says nothing when both ways end it together', () => {
       render(withPmi(null));
 
-      expect(text('pmi-on-request')).toBeUndefined();
+      expect(text('pmi-other-choice')).toBeUndefined();
     });
   });
 });

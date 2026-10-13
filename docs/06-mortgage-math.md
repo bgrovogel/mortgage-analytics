@@ -91,7 +91,9 @@ reference loan with 3% growth, year 2 starts owing $197,543.99 of a home worth $
   - **Automatic at 78%** of the original value, measured on the **original schedule**, so extra payments don't
     move it.
   - **On request at 80%**, which may use the **actual** balance, so extra payments bring it forward, and that
-    saving counts in net savings.
+    saving counts in net savings. This is the default: a borrower paying extra asks as soon as they can. The PMI tile
+    says what the other way would do: when not asking would end it and what that costs, or, with automatic removal
+    chosen, what asking would save.
 - Each month therefore carries two balances: the actual one and the original schedule's.
 
 ---

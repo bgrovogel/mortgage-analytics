@@ -99,7 +99,7 @@ MIP, and the first year's MIP is $134.33 a month.
 | **Appraisal cap** | A homestead's *taxable* value rises at most a set percentage a year (10% in Texas), even when the market rises faster. |
 | **PID assessment** | A fixed yearly amount, optionally ending after the district's remaining years. |
 | **Insurance and HOA** | A yearly premium and monthly dues. |
-| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **automatically at 78%** of the original value, measured on the original schedule (extra payments do not move it), or **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings). With automatic removal, the PMI tile says what asking at 80% would do instead: on the example, it ends Dec 2033 rather than Jan 2038, saving $7,274. |
+| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings), which is the default, since a borrower paying extra asks as soon as they can. Or it comes off **automatically at 78%** of the original value, measured on the original schedule, which extra payments do not move. The PMI tile says what the other way would do: on the example, not asking keeps it until Jan 2038 instead of Dec 2033, costing $7,274 more. |
 | **Future increases** | Home value growth drives each year's tax (within the cap); insurance and dues rise at their own rates. The defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), insurance +4.8% (GAO-26-107867: $2,235 in 2019 to $2,829 in 2024), HOA dues +4%. |
 
 ### Cash to close
