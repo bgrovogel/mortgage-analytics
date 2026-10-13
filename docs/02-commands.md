@@ -161,6 +161,13 @@ dotnet stryker                           # about 2 minutes; fails below 95%
 # open StrykerOutput/<date>/reports/mutation-report.html: each surviving mutant, in its source line
 ```
 
+The Angular logic, with StrykerJS (local only; the first run takes about an hour, later runs reuse its results):
+
+```bash
+cd client
+npm run mutation                         # open reports/mutation/mutation.html
+```
+
 A survivor is either a missing assertion (write the test) or code that can never change a result (remove it). On
 Windows, the `target-framework` in `stryker-config.json` matters: without it, Stryker's project analysis falls back to
 Visual Studio's MSBuild, which is too old for the .NET 10 SDK.

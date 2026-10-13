@@ -29,3 +29,9 @@ describe('format', () => {
     expect(monthOf('2033-09-01')).toBe('Sep 2033');
   });
 });
+
+describe('signedUsd at the edges', () => {
+  it('rounds to whole dollars, signed either way, and calls less than half a dollar $0', () => {
+    expect([signedUsd(0.6), signedUsd(-0.6), signedUsd(0.4), signedUsd(-0.4)]).toEqual(['+$1', '−$1', '$0', '$0']);
+  });
+});

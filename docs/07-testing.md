@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,660 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,770 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -18,7 +18,7 @@
 | Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 106 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 591 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 695 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 98 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
@@ -245,6 +245,18 @@ asserted (an FHA response's loan type, a rate reset's date), and code that could
 payment date resolved twice, a cap of 50 rate changes that one-a-year in a 50-year loan never reaches). It now scores
 **98.3%**; the 10 survivors are equivalent: messages on unreachable `switch` arms, "empty list → None" shortcuts, and
 `Append` against `Prepend` before a `Max`.
+
+**The Angular logic** is mutation-tested with **StrykerJS**, locally too (`client/stryker.config.json`; `npm run
+mutation` in `client/`, about an hour for about 2,000 mutants, then minutes for a rerun, which reuses the last results).
+It mutates the code that decides things, not templates or HTTP wiring: the form models and their rules, the stores and
+the shared loan, the chart builders, the formatting and the summaries. Its first run scored 84.3%, and found two real
+gaps. The rules for when a page shares its loan with the others (the fix for the echoing-loan bug) were pinned only by
+Playwright, so a wrong `<` passed every unit test; they now have their own, case by case. And the loan form's defaults,
+its blank-to-zero mapping and its restore were checked only through the whole component, so a lost default or a value
+dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks them directly, with a round trip through
+every unusual value. It now scores **97.9%**; the 43 survivors are almost all equivalent: caches that only save work,
+`emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
+the last payment is 0 either way).
 
 ---
 

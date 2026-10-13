@@ -111,3 +111,11 @@ describe('latestRequest', () => {
     });
   });
 });
+
+describe('a new latest request', () => {
+  it('is not busy until something is sent', () => {
+    const latest = latestRequest(() => of('ok'), TestBed.inject(DestroyRef));
+
+    expect(latest.busy()).toBe(false);
+  });
+});

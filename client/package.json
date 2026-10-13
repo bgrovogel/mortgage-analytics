@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch --coverage=false",
     "lint": "ng lint",
-    "typecheck": "tsc -p tsconfig.spec.json --noEmit && tsc -p e2e/tsconfig.json"
+    "typecheck": "tsc -p tsconfig.spec.json --noEmit && tsc -p e2e/tsconfig.json",
+    "mutation": "stryker run"
   },
   "private": true,
   "dependencies": {
@@ -34,6 +35,8 @@
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/jest-runner": "^10.0.0",
     "@types/jest": "^30.0.0",
     "angular-eslint": "22.6.0",
     "eslint": "^10.3.0",

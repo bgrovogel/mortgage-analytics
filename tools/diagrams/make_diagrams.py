@@ -308,7 +308,7 @@ def usd_k(v) -> str:
 def architecture():
     s = Svg(960, 428, "Mortgage Analytics architecture",
             "The Angular app calls one ASP.NET Core process. Inside it, Api calls Application, which calls Domain; "
-            "Infrastructure implements Application's repository port and stores data in SQLite. "
+            "Infrastructure implements Application's repository port and stores data in SQLite, or PostgreSQL. "
             "Dependencies point inward, and Domain depends on nothing.")
     s.card("The shape of the system", "Clean Architecture in four .NET projects, plus the Angular app, shipped as one container")
 
@@ -331,7 +331,7 @@ def architecture():
     s.path(f"M {cx - w/2} {top} v {hgt} a {w/2} 9 0 0 0 {w} 0 v {-hgt}", stroke=BORDER_STRONG, fill=SURFACE, sw=1.2)
     s.path(f"M {cx - w/2} {top} a {w/2} 9 0 0 0 {w} 0 a {w/2} 9 0 0 0 {-w} 0", stroke=BORDER_STRONG, fill=SURFACE_2, sw=1.2)
     s.text(cx, top + 36, "SQLite", size=13.5, weight=650, anchor="middle")
-    s.text(cx, top + 54, "one file", size=11.5, fill=INK_2, anchor="middle")
+    s.text(cx, top + 54, "or PostgreSQL", size=11.5, fill=INK_2, anchor="middle")
 
     s.arrow([(224, 190), (274, 190)], color=ACCENT, sw=2)
     s.pill_label(249, 176, "HTTP")
@@ -427,7 +427,7 @@ def ci_pipeline():
 def tech_stack():
     s = Svg(960, 452, "The tech stack",
             "Frontend: Angular 22, TypeScript 6.0, signals, RxJS 7.8, Chart.js 4.5, Inter. Backend: ASP.NET Core 10 "
-            "minimal APIs, FluentValidation 12, Identity, MailKit 4, Swashbuckle 10. Data: EF Core 10 and SQLite. "
+            "minimal APIs, FluentValidation 12, Identity, MailKit 4, Swashbuckle 10. Data: EF Core 10 and SQLite or PostgreSQL. "
             "Quality: NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python "
             "Decimal models. Delivery: Docker, docker compose with Mailpit, GitHub Actions.")
     s.card("The tech stack", "What each layer is built with. Versions as pinned in the repository.")
@@ -435,7 +435,7 @@ def tech_stack():
         ("Frontend", "accent", ["Angular 22", "TypeScript 6.0", "Signals", "RxJS 7.8", "Chart.js 4.5", "Inter", "SCSS"]),
         ("Backend", "neutral", [".NET 10 / C#", "Minimal APIs", "FluentValidation 12", "Identity", "MailKit 4",
                                 "Swashbuckle 10"]),
-        ("Data", "neutral", ["EF Core 10", "SQLite", "JSON columns", "Migrations at startup"]),
+        ("Data", "neutral", ["EF Core 10", "SQLite or PostgreSQL", "JSON columns", "Migrations at startup"]),
         ("Quality", "positive", ["NUnit 5", "NSubstitute 6", "Jest 30", "Playwright 1.64", "axe-core", "Stryker.NET 5.0",
                                  "Python models"]),
         ("Delivery", "violet", ["Docker (3 stages)", "docker compose + Mailpit", "GitHub Actions", "dotnet-ef"]),

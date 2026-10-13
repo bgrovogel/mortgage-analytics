@@ -48,3 +48,11 @@ describe('toErrorMessages', () => {
     expect(toErrorMessages(new HttpErrorResponse({ status: 401 }))).toEqual(['Please sign in to continue.']);
   });
 });
+
+describe('a reference for the logs', () => {
+  it('is given only for a server error, which is ours to fix, not for a request the user can correct', () => {
+    const notFound = new HttpErrorResponse({ status: 404, error: { title: 'Not found', requestId: 'abc' } });
+
+    expect(toErrorMessages(notFound)).toEqual(['Not found']);
+  });
+});

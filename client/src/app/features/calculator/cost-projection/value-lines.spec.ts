@@ -30,6 +30,15 @@ describe('home value lines', () => {
       expect(mud.dotted).toBe(true);
     });
 
+    it('draws a tax charged only in later years, and none for a value the projection does not have', () => {
+      const [first, second] = typicalHomestead();
+      const missing = { localTaxableValue: undefined as never };
+      const labels = valueLines([{ ...first, ...missing, mudTaxableValue: null }, { ...second, ...missing }]).map((l) => l.label);
+
+      expect(labels).toContain('MUD taxable value');
+      expect(labels).not.toContain('County & city taxable value');
+    });
+
     it('leaves out a tax that is not charged', () => {
       const labels = valueLines(typicalHomestead({ mudTaxableValue: null })).map((l) => l.label);
 
@@ -87,6 +96,20 @@ describe('home value lines', () => {
       const note = valueNote([year(1, 260_000, 2_600), year(2, 200_000, 2_000), year(3, 210_000, 2_000), year(4, 220_000, 2_000)]);
 
       expect(note).toContain('From year 2, a tax ceiling holds school tax at $2,000 a year, even as its line keeps rising.');
+    });
+
+    it('warns of a ceiling that holds the bill from the first year', () => {
+      const year = (n: number) =>
+        aProjectionYear(n, { marketValue: 400_000 + n, assessedValue: 400_000 + n, schoolTaxableValue: 200_000 + n, costs: aHousingCosts({ schoolTax: 2_000 }) });
+
+      expect(valueNote([year(1), year(2), year(3)])).toContain('From year 1, a tax ceiling holds school tax');
+    });
+
+    it('does not call a steady bill on a steady value a ceiling', () => {
+      const year = (n: number) =>
+        aProjectionYear(n, { marketValue: 400_000, assessedValue: 400_000, schoolTaxableValue: 200_000, costs: aHousingCosts({ schoolTax: 2_000 }) });
+
+      expect(valueNote([year(1), year(2), year(3)])).not.toContain('ceiling');
     });
 
     it('lists several exempted taxes together', () => {

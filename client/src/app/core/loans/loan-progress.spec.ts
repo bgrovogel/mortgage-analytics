@@ -41,3 +41,11 @@ describe('existing loan', () => {
     expect(loanToday({ ...loan, firstPaymentDate: '2026-11-01' }, today)).toEqual({ made: 0, balance: 200_000, monthsLeft: 360, homeValue: 250_000 });
   });
 });
+
+describe('balanceAfter at the ends of the loan', () => {
+  it('is exactly the amount before the first payment, and exactly zero after the last', () => {
+    expect(balanceAfter(123_456.78, 6.5, 360, 0)).toBe(123_456.78);
+    expect(balanceAfter(123_456.78, 6.5, 360, 360)).toBe(0);
+    expect(balanceAfter(123_456.78, 6.5, 360, 400)).toBe(0);
+  });
+});

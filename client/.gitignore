@@ -40,3 +40,7 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# StrykerJS (npm run mutation)
+/reports
+/stryker-tmp

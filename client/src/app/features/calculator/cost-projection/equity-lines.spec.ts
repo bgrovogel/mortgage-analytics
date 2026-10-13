@@ -30,3 +30,13 @@ describe('equity lines', () => {
     expect(equityNote([])).toBe('');
   });
 });
+
+describe('equity chart details', () => {
+  it('colours what is owed and the equity apart', () => {
+    expect(equityLines([aProjectionYear(1)]).map((l) => l.color)).toEqual(['--series-2', '--series-3']);
+  });
+
+  it('says none of a home worth nothing is yours, rather than dividing by zero', () => {
+    expect(equityFooter(aProjectionYear(1, { marketValue: 0, equity: 0 }))).toContain('· 0% yours');
+  });
+});

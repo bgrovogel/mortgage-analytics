@@ -48,3 +48,16 @@ describe('loan form section summaries', () => {
     });
   });
 });
+
+describe('summaries, counted', () => {
+  it('say "Homestead" alone when its exemption is blank, and count rate changes', () => {
+    expect(taxesSummary({ taxMode: 'single', propertyTaxRate: 2 }, { homestead: true, over65: false, rateChanges: 1 }))
+      .toBe('Tax 2% · Homestead · 1 rate change');
+    expect(taxesSummary({ taxMode: 'single', propertyTaxRate: 2 }, { homestead: false, over65: false, rateChanges: 2 }))
+      .toBe('Tax 2% · 2 rate changes');
+  });
+
+  it('count no lump sums when there is no list yet', () => {
+    expect(() => optionsSummary({})).not.toThrow();
+  });
+});

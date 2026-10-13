@@ -1,0 +1,51 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation testing of the client's logic: run locally with `npm run mutation`, not in CI. The HTML report is reports/mutation/mutation.html.",
+  "testRunner": "jest",
+  "jest": {
+    "projectType": "custom",
+    "configFile": "jest.config.js",
+    "config": {
+      "collectCoverage": false,
+      "testEnvironment": "jsdom"
+    }
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/app/core/formatting/*.ts",
+    "src/app/core/forms/field-rules.ts",
+    "src/app/core/forms/set-changed.ts",
+    "src/app/core/forms/example-until-edited.ts",
+    "src/app/core/errors/problem-details.ts",
+    "src/app/core/loans/*.ts",
+    "src/app/core/models/*.ts",
+    "src/app/core/state/*.ts",
+    "src/app/core/charts/line-chart.ts",
+    "src/app/features/calculation-stores.ts",
+    "src/app/features/*/*.store.ts",
+    "src/app/features/*/*/*-fields.ts",
+    "src/app/features/calculator/loan-form/loan-form.model.ts",
+    "src/app/features/calculator/loan-form/loan-form.summaries.ts",
+    "src/app/features/calculator/cost-projection/cost-totals.ts",
+    "src/app/features/calculator/cost-projection/equity-lines.ts",
+    "src/app/features/calculator/cost-projection/value-lines.ts",
+    "src/app/features/strategy/strategy-text.ts",
+    "src/app/shared/rate-options/rate-options.ts",
+    "!src/**/*.spec.ts"
+  ],
+  "ignoreStatic": true,
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress"
+  ],
+  "thresholds": {
+    "high": 95,
+    "low": 90,
+    "break": null
+  },
+  "concurrency": 6,
+  "tempDirName": "stryker-tmp",
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json"
+}

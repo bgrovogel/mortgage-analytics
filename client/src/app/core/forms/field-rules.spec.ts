@@ -52,3 +52,28 @@ describe('field rules', () => {
     expect(await reports).toEqual([[], ['B must be between 0% and 10%.'], ['A must be between 0% and 10%.', 'B must be between 0% and 10%.'], ['B must be between 0% and 10%.'], []]);
   });
 });
+
+describe('field messages at their edges', () => {
+  const amount: FieldRule = { label: 'Credits', unit: '$', min: 0, max: 100 };
+
+  it('give a $0 floor as a range, and a $1 floor as itself', () => {
+    const control = new FormControl(-1, validatorsFor(amount));
+    const dollar = new FormControl(0, validatorsFor({ ...amount, min: 1 }));
+
+    expect(problemWith(amount, control)).toBe('Credits must be between $0 and $100.');
+    expect(problemWith({ ...amount, min: 1 }, dollar)).toBe('Credits must be between $1 and $100.');
+  });
+
+  it('ask for a number when the box holds something that is not one', () => {
+    const control = new FormControl(5, validatorsFor(amount));
+    control.setErrors({ number: true });
+
+    expect(problemWith(amount, control)).toBe('Credits: enter a number.');
+  });
+
+  it('say "1 month" for a twelfth of a year', () => {
+    const term: FieldRule = { label: 'Term', unit: 'years', min: 1 / 12, max: 1 };
+
+    expect(problemWith(term, new FormControl(0, validatorsFor(term)))).toBe('Term must be between 1 month and 1 year.');
+  });
+});

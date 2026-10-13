@@ -16,3 +16,11 @@ describe('cost categories', () => {
     expect(costCategoriesFor({ type: 'Fha' }).map((c) => [c.key, c.color])).toEqual(COST_CATEGORIES.map((c) => [c.key, c.color]));
   });
 });
+
+describe('FHA cost categories', () => {
+  it('rename only the mortgage insurance', () => {
+    const labels = costCategoriesFor({ type: 'Fha' }).map((c) => c.label);
+
+    expect(labels).toEqual(COST_CATEGORIES.map((c) => (c.key === 'mortgageInsurance' ? 'FHA MIP' : c.label)));
+  });
+});

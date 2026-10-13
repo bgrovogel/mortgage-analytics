@@ -155,6 +155,55 @@ describe('buildLineChart', () => {
     expect(config.options!.plugins!.tooltip!.callbacks!.footer).toBeUndefined();
   });
 
+  it("draws in the theme's colours, read from its tokens: lines, tinted areas, legend, grid and labels", () => {
+    const themed = document.createElement('div');
+    for (const [name, value] of Object.entries({
+      '--series-1': ' #112233 ', '--series-2': '#445566', '--surface-1': '#fafafa', '--grid': '#dddddd',
+      '--text-muted': '#777777', '--text-secondary': '#555555',
+    })) themed.style.setProperty(name, value);
+    document.body.appendChild(themed);
+
+    const plain = buildLineChart(spec, themed);
+    const shaded = buildLineChart({ ...spec, series: [spec.series[0], { ...spec.series[1], fillToPrevious: true }] }, themed);
+    const stacked = buildLineChart({ ...spec, stacked: true }, themed);
+    const x = plain.options!.scales!['x']! as unknown as { border: { color: string }; ticks: { color: string } };
+    const y = plain.options!.scales!['y']! as unknown as { grid: { color: string }; ticks: { color: string } };
+
+    expect(plain.data.datasets.map((d) => [d.borderColor, d.backgroundColor, d.pointHoverBorderColor]))
+      .toEqual([['#112233', '#112233', '#fafafa'], ['#445566', '#445566', '#fafafa']]);
+    expect(shaded.data.datasets[1].backgroundColor).toBe('rgba(68, 85, 102, 0.28)');
+    expect(stacked.data.datasets[0].backgroundColor).toBe('rgba(17, 34, 51, 0.55)');
+    expect(plain.options!.plugins!.legend!.labels!.color).toBe('#555555');
+    expect([x.border.color, y.grid.color, x.ticks.color, y.ticks.color]).toEqual(['#dddddd', '#dddddd', '#777777', '#777777']);
+    themed.remove();
+  });
+
+  it('fills its box at once, with a line legend at the top left, no vertical grid lines and its own x labels', () => {
+    const config = buildLineChart(spec, host);
+    const options = config.options!;
+    const legend = options.plugins!.legend!;
+    const x = options.scales!['x']! as unknown as { grid: { display: boolean }; ticks: { autoSkip: boolean } };
+    const y = options.scales!['y']! as unknown as { border: { display: boolean } };
+
+    expect(config.type).toBe('line');
+    expect([options.responsive, options.maintainAspectRatio, options.animation]).toEqual([true, false, false]);
+    expect([legend.position, legend.align, legend.labels!.usePointStyle, legend.labels!.pointStyle]).toEqual(['top', 'start', true, 'line']);
+    expect([x.grid.display, x.ticks.autoSkip, y.border.display]).toEqual([false, false, false]);
+  });
+
+  it('keeps the tooltip in the listed order both ways round', () => {
+    const tooltipSort = buildLineChart(spec, host).options!.plugins!.tooltip!.itemSort!;
+
+    expect(tooltipSort({ datasetIndex: 0 } as never, { datasetIndex: 1 } as never, {} as never)).toBeLessThan(0);
+  });
+
+  it('changes no cursor for a hover event that has no element under it', () => {
+    const onHover = buildLineChart({ ...spec, onPick: jest.fn() }, host).options!.onHover as unknown as (event: { native?: { target: unknown } }, elements: unknown[]) => void;
+
+    expect(() => onHover({}, [])).not.toThrow();
+    expect(() => onHover({ native: { target: {} } }, [{}])).not.toThrow();
+  });
+
   it('formats the y-axis in compact currency on a single axis from zero', () => {
     const y = buildLineChart(spec, host).options!.scales!['y']!;
     const tick = (y.ticks as unknown as { callback: (v: number) => string }).callback;
@@ -209,6 +258,11 @@ describe('tickIndices', () => {
     expect(tickIndices(8, 4)).toEqual([0, 3, 7]);
   });
 
+  it('keeps a lone first tick however near the last point it is, and one exactly half a step from it', () => {
+    expect(tickIndices(3, 8, 12)).toEqual([0, 2]);
+    expect(tickIndices(4, 3)).toEqual([0, 2, 3]);
+  });
+
   it('handles a single point and no points', () => {
     expect(tickIndices(1, 8)).toEqual([0]);
     expect(tickIndices(0, 8)).toEqual([]);
@@ -222,5 +276,7 @@ describe('withAlpha', () => {
 
   it('leaves anything that is not #rrggbb unchanged', () => {
     expect(withAlpha('', 0.5)).toBe('');
+    expect(withAlpha('x#2a78d6', 0.5)).toBe('x#2a78d6');
+    expect(withAlpha('#2a78d6ff', 0.5)).toBe('#2a78d6ff');
   });
 });

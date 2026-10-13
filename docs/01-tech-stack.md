@@ -73,6 +73,7 @@ How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-syste
 | **Roslyn** (`Microsoft.CodeAnalysis.CSharp`) | Conventions tests | Parses every C# test file to enforce the test standards. |
 | **coverlet + ReportGenerator** | CI | Backend coverage, gated at 85% lines and branches. |
 | **Stryker.NET 5.0** | CI, `tests/MortgageAnalytics.Domain.Tests` | Mutation testing of the domain: are the assertions strong enough to notice a wrong `<`? Gated at 95%. |
+| **StrykerJS 10** | Local, `client/stryker.config.json` | Mutation testing of the Angular logic (form models, stores, charts, formatting), with the Jest runner. |
 | **Jest 30 + jest-preset-angular** | Angular unit tests | Fast tests in jsdom with Angular's `TestBed`; 85% coverage gate in `jest.config.js`. |
 | **Playwright 1.64** | End-to-end | A real Chromium against the production build, served by the real API as in the container, through page objects. |
 | **axe-core** (`@axe-core/playwright`) | End-to-end | Scans every page for WCAG 2.2 A/AA problems (contrast, names, roles, structure) in light and dark mode and on a phone. |
