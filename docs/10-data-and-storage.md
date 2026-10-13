@@ -25,7 +25,7 @@
 | **Saved calculations:** a name and the **inputs** of a calculation, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
 | **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files; or the `DataProtectionKeys` table, when several instances share them | First startup, then when a key nears expiry |
-| **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email | Sign-up, resend, forgot password |
+| **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email; `/dev/mailbox` lists the newest 100 | Sign-up, resend, forgot password |
 | **Backups** of the database | `backups/` folder beside it, `calculations-<UTC time>.db` | At startup and then daily; the newest 7 are kept |
 
 **Results are never stored.** A saved calculation keeps only what was typed; opening it sends those inputs to the

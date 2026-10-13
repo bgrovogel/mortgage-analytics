@@ -222,12 +222,13 @@ A calm fintech look, built from shared parts so every page stays consistent:
 
 The flows are designed around the people using it:
 
-<img src="images/phone.png" alt="The calculator on a phone: the headline answer first, a sticky bar with the payment, and Edit your numbers" width="220" align="right" />
+<img src="images/phone.png" alt="The calculator on a phone: the headline answer first, with Edit your numbers to jump to the form" width="220" align="right" />
 
 - **A first visit:** each form opens on a worked example and says so ("These are example numbers"), until the first
   edit (`exampleUntilEdited`). A form restored from a saved item, or filled in from another page, never says it.
 - **A phone:** results come first, so `app-calculation-page` offers "Edit your numbers", which scrolls to the form
-  (instantly for anyone who prefers reduced motion) and moves focus there.
+  (instantly for anyone who prefers reduced motion) and moves focus there. Once the headline scrolls away, a bar
+  keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after.
 - **A long form beside short results:** the sticky form's bottom edge fades while there is more of it below, a
   scroll-driven effect that follows the form's own scroll and is gone at the end.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.

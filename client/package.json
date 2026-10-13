@@ -12,7 +12,8 @@
     "test:watch": "jest --watch --coverage=false",
     "lint": "ng lint",
     "typecheck": "tsc -p tsconfig.spec.json --noEmit && tsc -p e2e/tsconfig.json",
-    "mutation": "stryker run"
+    "mutation": "stryker run",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "private": true,
   "dependencies": {

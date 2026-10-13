@@ -121,6 +121,7 @@ npm test                                 # Jest unit tests + coverage; fails bel
 npm run test:watch                       # re-runs affected tests as you save (no coverage)
 npm run e2e:install                      # first time only: downloads Chromium for Playwright
 npm run e2e                              # Playwright: builds the app and serves it from the API on :5090, as in production
+                                         # (its own scratch database and outbox in the temp folder, never your local ones)
 ```
 
 ### Run a subset
@@ -181,6 +182,16 @@ cd client && npm run build               # production build into client/dist/cli
 ```
 
 ---
+
+### Retake the screenshots
+
+The pictures in `docs/images/` come from the running app, so they can follow the UI. With the dev servers up (the
+API on :5080, `npm start` on :4200):
+
+```bash
+cd client
+npm run screenshots                      # the calculator, its tabs, refinance, pay off or invest (dark), a phone, a buydown
+```
 
 ## Change the database
 

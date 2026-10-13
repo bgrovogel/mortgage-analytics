@@ -3,7 +3,8 @@
   <div class="summary-bar" [class.hidden]="store.headlineVisible()" data-testid="summary-bar" aria-hidden="true">
     <!-- The same figures the headline tiles lead with: the first payment due, and the net savings (or, without extra
          payments, the interest over the loan). -->
-    <span><strong>{{ firstMonthlyPayment(r) | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong></span>
+    <!-- A buydown's first payment rises after year 1: say so, as the tile does. -->
+    <span><strong>{{ firstMonthlyPayment(r) | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong>@if (r.buydown) {&ngsp;in year 1}</span>
     @if (r.savings.netSavings > 0) {
       <span>Net savings <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
     } @else {

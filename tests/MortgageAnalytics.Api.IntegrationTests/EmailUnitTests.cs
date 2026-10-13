@@ -89,12 +89,39 @@ public class EmailUnitTests
             await File.WriteAllTextAsync(Path.Combine(root, "mail", "9999-broken.json"), "{ not json");
 
             await outbox.SendAsync(new EmailMessage("a@example.com", "S", "T", "H", "https://x.example", TestClock.Now), CancellationToken.None);
-            var emails = await outbox.ReadAllAsync(CancellationToken.None);
+            var emails = await outbox.ReadRecentAsync(CancellationToken.None);
 
             Assert.Multiple(() =>
             {
                 Assert.That(emails.Select(e => e.To), Is.EqualTo(new[] { "a@example.com" }), "a broken file is skipped, not fatal");
                 Assert.That(Directory.GetFiles(Path.Combine(root, "mail"), "*.tmp"), Is.Empty, "the temporary file was renamed into place");
+            });
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task TheOutbox_ListsOnlyTheNewestEmails_SoAFullOneStaysQuickToRead()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"outbox-{Guid.NewGuid():N}");
+        try
+        {
+            var environment = Substitute.For<IHostEnvironment>();
+            environment.ContentRootPath.Returns(root);
+            var outbox = new FileOutbox(Options.Create(new EmailOptions { OutboxDirectory = "mail" }), environment);
+            for (var i = 0; i <= FileOutbox.MaxListed; i++)
+                await outbox.SendAsync(new EmailMessage($"user{i}@example.com", "S", "T", "H", "https://x.example", TestClock.Now.AddMinutes(i)), CancellationToken.None);
+
+            var emails = await outbox.ReadRecentAsync(CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(emails, Has.Count.EqualTo(FileOutbox.MaxListed), "one more than the limit was sent; the limit is listed");
+                Assert.That(emails[0].To, Is.EqualTo($"user{FileOutbox.MaxListed}@example.com"), "newest first");
+                Assert.That(emails.Select(e => e.To), Has.No.Member("user0@example.com"), "the oldest is left out");
             });
         }
         finally

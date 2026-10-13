@@ -105,6 +105,7 @@ describe('CalculatorPageComponent', () => {
 
       const bar = el('[data-testid="summary-bar"]')!.textContent!.replace(/\s+/g, ' ');
       expect(bar).toContain('$3,455/mo');
+      expect(bar).not.toContain('in year 1'); // the same payment every year
       expect(bar).toContain('Net savings $114,699');
     });
 
@@ -118,7 +119,7 @@ describe('CalculatorPageComponent', () => {
       await open('/calculator');
 
       const bar = el('[data-testid="summary-bar"]')!.textContent!.replace(/\s+/g, ' ');
-      expect(bar).toContain('$2,799/mo'); // $1,805.07 in year 1 + $994.27 of housing costs
+      expect(bar).toContain('$2,799/mo in year 1'); // $1,805.07 in year 1 + $994.27 of housing costs; it rises after
       expect(bar).toContain('Interest $454,379');
     });
 

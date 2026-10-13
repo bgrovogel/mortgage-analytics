@@ -57,5 +57,5 @@ public static class EmailSetup
     }
 
     private static async Task<Ok<IReadOnlyList<EmailMessage>>> ReadOutbox(FileOutbox outbox, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await outbox.ReadAllAsync(cancellationToken));
+        TypedResults.Ok(await outbox.ReadRecentAsync(cancellationToken));
 }

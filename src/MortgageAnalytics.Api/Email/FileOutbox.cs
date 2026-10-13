@@ -12,6 +12,9 @@ public sealed class FileOutbox : IMailTransport
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
+    /// <summary>The most emails the mailbox lists: the newest. Older ones stay on disk, unread, so a full outbox stays quick.</summary>
+    public const int MaxListed = 100;
+
     private readonly string _directory;
     private long _sequence;
 
@@ -39,16 +42,17 @@ public sealed class FileOutbox : IMailTransport
         File.Move(temporary, path);
     }
 
-    /// <summary>Every email in the outbox, newest first.</summary>
+    /// <summary>The newest emails in the outbox, newest first: at most <see cref="MaxListed"/>.</summary>
     /// <param name="cancellationToken">Cancels reading.</param>
     /// <returns>The emails.</returns>
-    public async Task<IReadOnlyList<EmailMessage>> ReadAllAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<EmailMessage>> ReadRecentAsync(CancellationToken cancellationToken)
     {
         if (!Directory.Exists(_directory))
             return [];
 
+        // File names start with the time sent, so the newest sort last: only those files are opened.
         var messages = new List<EmailMessage>();
-        foreach (var path in Directory.EnumerateFiles(_directory, "*.json").OrderDescending(StringComparer.Ordinal))
+        foreach (var path in Directory.EnumerateFiles(_directory, "*.json").OrderDescending(StringComparer.Ordinal).Take(MaxListed))
         {
             try
             {

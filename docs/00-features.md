@@ -59,6 +59,8 @@ MIP, and the first year's MIP is $134.33 a month.
     note rate: what you pay each month (with that year's taxes, insurance and PMI, which rise each year, and the
     principal and interest under it), and what the buydown pays that year and each month ($5,218 then $2,680 on
     that loan), then its whole cost. The payment tile shows year 1 and where the payment ends up.
+
+    ![A 2-1 buydown year by year: what you pay each month with that year's taxes and insurance, the principal and interest under it, and what the buydown pays that year and each month, then $8,108 in all](images/buydown.png)
   - **Who pays decides what it saves.** Paid by the seller or builder, the subsidy pays part of your early interest,
     so you pay that much less ($403,950 of that loan's $411,848, and a 3-2-1 saves more). Paid by you at closing, it
     only moves your money earlier. The headline and the rate plan say which.

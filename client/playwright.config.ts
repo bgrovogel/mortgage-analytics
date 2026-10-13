@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { APP_URL } from './e2e/env';
@@ -9,6 +10,13 @@ import { APP_URL } from './e2e/env';
  * which the Angular dev server never sends. Playwright builds the app and starts the API (or reuses one already
  * running on APP_URL locally).
  */
+/**
+ * The test server's own outbox, emptied at the start of each run. Never the development one: the tests would fill
+ * it, and the mailbox they poll would grow with every run.
+ */
+const OUTBOX = join(tmpdir(), 'mortgage-analytics-e2e-outbox');
+rmSync(OUTBOX, { recursive: true, force: true });
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -34,6 +42,7 @@ export default defineConfig({
         // Development, as for a local demo: emails land in the outbox, which the tests read through the
         // dev mailbox endpoint, exactly as a person does in the browser.
         ASPNETCORE_ENVIRONMENT: 'Development',
+        Email__OutboxDirectory: OUTBOX,
       },
       reuseExistingServer: !process.env['CI'],
       // A production build of the app, then a build of the API.

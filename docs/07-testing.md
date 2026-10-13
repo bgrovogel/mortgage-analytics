@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,770 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,780 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -16,10 +16,10 @@
 | Domain | 519 | NUnit | < 1 s |
 | Application | 306 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
-| API integration | 106 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| API integration | 107 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 700 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 98 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| End-to-end | 101 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -111,7 +111,8 @@ Take the ARM margin floor as an example of the order of work:
 
 **End-to-end (Playwright)**
 - **Accessibility** (`e2e/accessibility.spec.ts`): axe scans every page and results tab against WCAG 2.2 A and AA, in
-  light and dark mode, on desktop and a phone, signed in and out, with every form section open. A failure names
+  light and dark mode, on desktop and a phone, signed in and out, with every form section open, and with each rate plan (a buydown's year-by-year table, an
+  adjustable rate's resets). A failure names
   each rule broken and the elements that break it. Automated scans catch about a third of real problems (contrast,
   missing names and roles, invalid structure); keyboard paths are covered by the other specs, and a screen-reader
   pass still needs a person.

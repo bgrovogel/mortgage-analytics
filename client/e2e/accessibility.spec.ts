@@ -46,6 +46,21 @@ for (const scheme of ['light', 'dark'] as const) {
       }
     });
 
+    test('the calculator with a buydown, then an adjustable rate: each rate plan', async ({ page }) => {
+      await page.goto('/calculator/overview');
+      await settled(page);
+      await openSections(page);
+      await page.getByTestId('rate-type-buydown').check();
+      await expect(page.getByTestId('buydown-years'), 'the buydown table has arrived').toBeVisible();
+      await settled(page);
+      expect(await violations(page), 'the buydown, year by year, breaks no accessibility rule').toEqual([]);
+
+      await page.getByTestId('rate-type-arm').check();
+      await expect(page.getByTestId('arm-worst-case'), 'the adjustable rate plan has arrived').toBeVisible();
+      await settled(page);
+      expect(await violations(page), 'the adjustable rate plan breaks no accessibility rule').toEqual([]);
+    });
+
     test('refinance', async ({ page }) => {
       await page.goto('/refinance');
       await settled(page);
@@ -105,4 +120,15 @@ test.describe('Accessibility on a phone', () => {
       expect(await violations(page), `${path} breaks no accessibility rule on a phone`).toEqual([]);
     });
   }
+
+  test('the calculator with a buydown', async ({ page }) => {
+    await page.goto('/calculator/overview');
+    await settled(page);
+    await openSections(page);
+    await page.getByTestId('rate-type-buydown').check();
+    await expect(page.getByTestId('buydown-years'), 'the buydown table has arrived').toBeVisible();
+    await settled(page);
+
+    expect(await violations(page), 'the buydown table breaks no accessibility rule on a phone').toEqual([]);
+  });
 });
