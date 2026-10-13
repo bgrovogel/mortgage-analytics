@@ -24,7 +24,7 @@ describe('PointsSummaryComponent', () => {
   });
 
   it('sets the payment with the points beside the payment without them', () => {
-    expect(render(onePoint).rows()).toEqual(['Without points6.25%$1,231.43/mo', 'With 1 point$1,199.10/mo']);
+    expect(render(onePoint).rows()).toEqual(['Without points6.25%$1,231.43/mo', 'With 1 point6%$1,199.10/mo']); // each with its rate
   });
 
   it('says what they cost, when they pay for themselves, and what they save', () => {

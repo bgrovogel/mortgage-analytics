@@ -96,7 +96,7 @@ export class RefinanceFormComponent implements OnInit {
     newRate: rateOptionsForm(this.fb, 7.25),
   });
 
-  private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   /** Emits what is wrong whenever that changes: an empty list once every field is valid again. */
   readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
@@ -133,7 +133,7 @@ export class RefinanceFormComponent implements OnInit {
     return today ? today.termInMonths - today.made : Math.round((this.values().yearsLeft ?? 0) * 12);
   });
 
-  /** "25 years", or "22 yr 6 mo" for part years, for the keep-my-payoff-date option. */
+  /** "25 years", or "22 yr 6 mo" for part years, for the line under "My payoff date". */
   readonly remainingLabel = computed(() => {
     const months = this.remainingMonths();
     return months % 12 === 0 ? `${months / 12} years` : formatMonths(months);

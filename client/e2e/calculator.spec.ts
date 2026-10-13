@@ -141,7 +141,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
 
     await expect(page.getByTestId('points-summary').locator('li'), 'the payment without the point, then with it')
-      .toHaveText([/Without points\s*6\.25%\s*\$1,231\.43\/mo/, /With 1 point\s*\$1,199\.10\/mo/]);
+      .toHaveText([/Without points\s*6\.25%\s*\$1,231\.43\/mo/, /With 1 point\s*6%\s*\$1,199\.10\/mo/]);
     await expect(page.getByTestId('points-verdict'), 'it pays for itself by payment 48')
       .toContainText('1 point costs $2,000 at closing and lowers the payment $32.33 a month. The interest it saves covers that by payment 48 (Dec 2039)');
     await expect(page.getByTestId('cash-to-close'), 'and is paid at closing').toContainText('Discount points$2,000.00');

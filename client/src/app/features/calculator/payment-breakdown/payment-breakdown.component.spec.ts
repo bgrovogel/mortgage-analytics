@@ -84,4 +84,16 @@ describe('PaymentBreakdownComponent', () => {
     expect(fixture.componentInstance.slices()[0]).toEqual(expect.objectContaining({ label: 'Principal & interest', amount: 954.83, share: 1 }));
     expect(fixture.nativeElement.querySelector('[data-testid="breakdown-total"]').textContent).toBe('$954.83');
   });
+
+  it('on a loan already being paid, breaks down the payment due next', () => {
+    fixture = TestBed.createComponent(PaymentBreakdownComponent);
+    fixture.componentRef.setInput('schedule', schedule);
+    fixture.componentRef.setInput('current', {
+      scheduledPayment: 750, buydownSubsidy: 0, housingCosts: 200, costs: aHousingCosts({ schoolTax: 200, total: 200 }),
+    });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.total()).toBe(950);
+    expect(fixture.componentInstance.slices().map((s) => [s.label, s.amount])).toEqual([['Principal & interest', 750], ['School tax', 200]]);
+  });
 });

@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { aResponse } from '../../../../testing/builders';
+import { aPayment, aResponse, aSchedule } from '../../../../testing/builders';
 import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
@@ -55,6 +55,16 @@ describe('result tabs', () => {
       jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
       expect(render(OverviewTabComponent).nativeElement.querySelector('[data-testid="cash-to-close-total"]')?.textContent).toBe('$29,489.09');
+    });
+
+    it('leaves out the cash to close on a loan already being paid: it closed long ago', () => {
+      // A 30-year loan first paid in January 2021: well under way today.
+      const payments = Array.from({ length: 360 }, (_, i) => aPayment(i + 1, { dueDate: new Date(Date.UTC(2021, i, 1)).toISOString().slice(0, 10) }));
+      response = aResponse({ baseline: aSchedule({ payments }), cashToClose: { total: 29_489.09 } as AmortizationResponse['cashToClose'] });
+      store.send({ homePrice: 1 } as AmortizationRequest);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+      expect(render(OverviewTabComponent).nativeElement.querySelector('app-cash-to-close')).toBeNull();
     });
 
     it('has a place for the loan program, which says nothing for a conventional loan', () => {

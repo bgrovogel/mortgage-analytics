@@ -1,6 +1,6 @@
 import { CurrencyPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { LoanProgramType, Schedule } from '../../../core/models/amortization.models';
+import { LoanProgramType, Payment, Schedule } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
 
 /** One slice of the monthly payment. */
@@ -13,7 +13,8 @@ interface Slice {
 }
 
 /**
- * Where the first month's payment goes: principal and interest, then each housing cost.
+ * Where a month's payment goes (the first, or on a loan already being paid the next): principal and interest, then each
+ * housing cost.
  * Shown as a single stacked bar (part-to-whole) with a labelled legend, so no slice relies on color alone.
  */
 @Component({
@@ -58,18 +59,26 @@ export class PaymentBreakdownComponent {
   /** The principal and interest actually paid at first, when it is not the schedule's (year 1 of a buydown). */
   readonly principalAndInterest = input<number | null>(null);
 
-  /** The first month's payment: principal and interest as paid, plus housing costs. */
-  readonly total = computed(() => {
+  /** On a loan already being paid, the payment due next, which is broken down instead of the first. */
+  readonly current = input<Pick<Payment, 'scheduledPayment' | 'buydownSubsidy' | 'housingCosts' | 'costs'> | null>(null);
+
+  /** The payment broken down: principal and interest as paid, and its housing costs by category. */
+  private readonly payment = computed(() => {
+    const next = this.current();
     const s = this.schedule();
-    return (this.principalAndInterest() ?? s.monthlyPayment) + s.monthlyHousingCosts.total;
+    return next
+      ? { loan: next.scheduledPayment - next.buydownSubsidy, costs: next.costs }
+      : { loan: this.principalAndInterest() ?? s.monthlyPayment, costs: s.monthlyHousingCosts };
   });
+
+  /** The month's payment: principal and interest as paid, plus housing costs. */
+  readonly total = computed(() => this.payment().loan + this.payment().costs.total);
 
   /** Non-zero slices in a fixed category order. */
   readonly slices = computed<Slice[]>(() => {
-    const s = this.schedule();
-    const c = s.monthlyHousingCosts;
+    const { loan, costs: c } = this.payment();
     const all: Omit<Slice, 'share'>[] = [
-      { label: 'Principal & interest', amount: this.principalAndInterest() ?? s.monthlyPayment, color: '--series-1' },
+      { label: 'Principal & interest', amount: loan, color: '--series-1' },
       ...costCategoriesFor(this.program()).map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
     ];
     const total = this.total() || 1;

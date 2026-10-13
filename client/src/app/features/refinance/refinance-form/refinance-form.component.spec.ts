@@ -76,7 +76,11 @@ describe('RefinanceFormComponent', () => {
     create();
     const options = [...fixture.nativeElement.querySelectorAll('[data-testid="new-term"] option')].map((o) => (o as HTMLOptionElement).textContent!.trim());
 
-    expect(options).toEqual(['30 years', '25 years', '20 years', '15 years', '10 years', 'Keep my payoff date (28 years)']);
+    expect(options).toEqual(['30 years', '25 years', '20 years', '15 years', '10 years', 'My payoff date']); // short enough for the box
+
+    controls().newTerm.setValue('keep');
+    fixture.detectChanges();
+    expect(el('keep-term-hint')!.textContent!.trim()).toBe('Ends when your loan does: 28 years.');
   });
 
   it('can add the closing costs to the loan', () => {
@@ -150,7 +154,10 @@ describe('RefinanceFormComponent', () => {
       fixture.detectChanges();
 
       expect(last()).toEqual(expect.objectContaining({ currentBalance: 194_936.47, remainingTermInMonths: 336 }));
-      expect(el('new-term')!.textContent).toContain('Keep my payoff date (28 years)');
+      controls().newTerm.setValue('keep');
+      fixture.detectChanges();
+      expect(el('keep-term-hint')!.textContent).toContain('Ends when your loan does: 28 years.');
+      controls().newTerm.setValue('30');
 
       pick('today');
 

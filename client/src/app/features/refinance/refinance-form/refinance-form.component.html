@@ -73,10 +73,14 @@
           @for (years of terms; track years) {
             <option [value]="'' + years">{{ years }} years</option>
           }
-          <option value="keep">Keep my payoff date ({{ remainingLabel() }})</option>
+          <!-- Short, so the half-width box shows it whole; the line below says how long that is. -->
+          <option value="keep">My payoff date</option>
         </select>
       </label>
     </div>
+    @if (values().newTerm === 'keep') {
+      <p class="hint" data-testid="keep-term-hint">Ends when your loan does: {{ remainingLabel() }}.</p>
+    }
 
     <details class="section" data-testid="section-new-rate">
       <summary>

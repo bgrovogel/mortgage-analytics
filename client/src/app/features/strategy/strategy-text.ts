@@ -61,13 +61,16 @@ export function recommendation(result: StrategyComparison): Recommendation {
  * the savings it already has) is the same whichever strategy it picks; only the extra cash, and the payment once
  * the mortgage is gone, go somewhere different. Without saying so, near-identical totals look wrong.
  */
-export function closeness(result: StrategyComparison): string {
-  const finals = result.strategies.map((o) => finalNetWorth(o.riskAdjusted));
+export function closeness(result: StrategyComparison, scenario: MarketScenario = 'riskAdjusted', todaysDollars = false): string {
+  const last = (o: StrategyOutcome) => o[scenario].years[o[scenario].years.length - 1];
+  const finals = result.strategies.map((o) => (todaysDollars ? last(o).netWorthInTodaysDollars : last(o).netWorth));
   const best = Math.max(...finals);
   const spread = best - Math.min(...finals);
-  const years = result.strategies[0].riskAdjusted.years;
+  const year30 = last(result.strategies[0]);
+  // In today's dollars the home is shrunk by the same inflation as net worth (which, holding the paid-off home, is never 0).
+  const home = todaysDollars ?(year30.homeValue * year30.netWorthInTodaysDollars) / year30.netWorth : year30.homeValue;
   const { plan } = result;
-  const same = `Most of your net worth is the same whichever you choose: the home (${usd(years[years.length - 1].homeValue)} by year 30), `
+  const same = `Most of your net worth is the same whichever you choose: the home (${usd(home)}${todaysDollars ? " in today's dollars" : ''} by year 30), `
     + `${plan.employerMatch > 0 ? 'your 401(k) and match' : 'your retirement savings'}, and what you have already saved.`;
   const differs = `Only the ${usd(plan.extraCash + plan.esppContribution)} a month of extra cash, and the ${usd(plan.mortgagePayment)} `
     + 'payment once the mortgage is gone, go somewhere different.';
@@ -132,7 +135,7 @@ export function facts(result: StrategyComparison): string[] {
   }
 
   lines.push(rates.automaticAnnualStock > 0
-    ? `RSUs and ESOP already put ${usd(rates.automaticAnnualStock)} a year into stock, which counts toward the hybrid's `
+    ? `Stock you receive anyway (RSUs kept as shares, an ESOP) already puts ${usd(rates.automaticAnnualStock)} a year into stock, which counts toward the hybrid's `
       + `${pct(rates.targetInvestPercent)} market share. So it invests ${pct(rates.hybridInvestPercent)} of your extra cash`
       + (rates.hybridInvestPercent === 0 ? ' and puts the rest on the mortgage: the diversified choice.' : ', and puts the rest on the mortgage.')
     : `The hybrid invests ${pct(rates.hybridInvestPercent)} of your extra cash and puts ${pct(100 - rates.hybridInvestPercent)} on the mortgage.`);

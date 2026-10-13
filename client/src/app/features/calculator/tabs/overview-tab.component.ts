@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { InViewDirective } from '../../../core/layout/in-view.directive';
+import { paymentsMade } from '../../../core/loans/loan-progress';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { CalculatorStore } from '../calculator.store';
@@ -14,16 +15,17 @@ import { SavingsSummaryComponent } from '../savings-summary/savings-summary.comp
   selector: 'app-overview-tab',
   imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, InViewDirective],
   template: `
-    <app-savings-summary [result]="result()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
+    <app-savings-summary [result]="result()" [current]="nextPayment()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-program-summary [result]="result()" />
     <app-rate-plan [result]="result()" />
     <app-points-summary [result]="result()" />
     <div class="charts">
-      <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" [program]="result().program ?? null" /></div>
+      <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" [current]="nextPayment()" [program]="result().program ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>
     </div>
-    @if (result().cashToClose; as cash) {
-      <div class="panel"><app-cash-to-close [cash]="cash" [program]="result().program" /></div>
+    <!-- Cash to close is for a purchase still ahead; on a loan already being paid it closed long ago. -->
+    @if (result().cashToClose && !nextPayment()) {
+      <div class="panel"><app-cash-to-close [cash]="result().cashToClose!" [program]="result().program" /></div>
     }
   `,
   styleUrl: './result-tab.scss',
@@ -34,6 +36,16 @@ export class OverviewTabComponent {
 
   /** The page only shows the tabs once there is a result. */
   readonly result = computed(() => this.store.result()!);
+
+  /**
+   * On a loan already being paid (its first payment behind today), the payment due next, the one the form counts from;
+   * null for a new loan, or one already paid off.
+   */
+  readonly nextPayment = computed(() => {
+    const payments = this.result().baseline.payments;
+    const made = paymentsMade(payments[0]?.dueDate, new Date());
+    return made > 0 && made < payments.length ? payments[made] : null;
+  });
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.store.headlineVisible.set(false));

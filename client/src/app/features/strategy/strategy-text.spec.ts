@@ -48,6 +48,14 @@ describe('strategy text', () => {
         + 'Only the $544 a month of extra cash, and the $2,026 payment once the mortgage is gone, go somewhere different.');
     });
 
+    it('follows the market and the dollars the table under it shows', () => {
+      // A bad decade first: 3,187,295.65 − 3,145,932.42 = 41,363.23, 1.3% of the best; halved in today's dollars here.
+      expect(closeness(aStrategyComparison(), 'badDecade', true)).toBe(
+        'All three end within $20,682 (1.3%) of each other. Most of your net worth is the same whichever you choose: '
+        + "the home ($350,000 in today's dollars by year 30), your 401(k) and match, and what you have already saved. "
+        + 'Only the $544 a month of extra cash, and the $2,026 payment once the mortgage is gone, go somewhere different.');
+    });
+
     it('says when they end exactly the same, and leaves out a match there is none of', () => {
       const base = aStrategyComparison();
       const same = aStrategyComparison({
@@ -123,7 +131,7 @@ describe('strategy text', () => {
 
       expect(lines.some((l) => l.includes('401(k)'))).toBe(false);
       expect(lines).toContain('Every strategy takes the ESPP discount too: a 17.65% gain on each purchase, before tax.');
-      expect(lines).toContain('RSUs and ESOP already put $55,000 a year into stock, which counts toward the hybrid\'s 88% market share. '
+      expect(lines).toContain('Stock you receive anyway (RSUs kept as shares, an ESOP) already puts $55,000 a year into stock, which counts toward the hybrid\'s 88% market share. '
         + 'So it invests 0% of your extra cash and puts the rest on the mortgage: the diversified choice.');
     });
 
@@ -131,7 +139,7 @@ describe('strategy text', () => {
       const base = aStrategyComparison();
       const lines = facts(aStrategyComparison({ rates: { ...base.rates, automaticAnnualStock: 2_000, hybridInvestPercent: 84 } }));
 
-      expect(lines[lines.length - 1]).toBe('RSUs and ESOP already put $2,000 a year into stock, which counts toward the hybrid\'s 88% market share. '
+      expect(lines[lines.length - 1]).toBe('Stock you receive anyway (RSUs kept as shares, an ESOP) already puts $2,000 a year into stock, which counts toward the hybrid\'s 88% market share. '
         + 'So it invests 84% of your extra cash, and puts the rest on the mortgage.');
     });
   });

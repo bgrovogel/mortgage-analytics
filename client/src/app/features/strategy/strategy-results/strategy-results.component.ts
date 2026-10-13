@@ -66,7 +66,7 @@ export class StrategyResultsComponent {
 
   readonly recommendation = computed(() => recommendation(this.result()));
   readonly facts = computed(() => facts(this.result()));
-  readonly closeness = computed(() => closeness(this.result()));
+  readonly closeness = computed(() => closeness(this.result(), this.scenario(), this.todaysDollars()));
   readonly scenarioLabels = computed(() => SCENARIOS.map((s) => ({ value: s, label: scenarioLabel(this.result(), s) })));
 
   /** One card per strategy, in the chosen scenario and dollars, led by how far each ends behind the leader. */

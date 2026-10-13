@@ -292,5 +292,20 @@ describe('SavingsSummaryComponent', () => {
       expect(text('pmi-other-choice')).toBeUndefined();
     });
   });
-});
 
+  it('on a loan already being paid, shows the payment due next, with this year\'s costs rather than the first year\'s', () => {
+    fixture = TestBed.createComponent(SavingsSummaryComponent);
+    fixture.componentRef.setInput('result', aResponse({
+      baseline: aSchedule({ monthlyPayment: 2_325.26, totalMonthlyPayment: 3_102.19, monthlyHousingCosts: aHousingCosts({ propertyTax: 311.25, total: 776.93 }) }),
+    }));
+    fixture.componentRef.setInput('current', aPayment(61, {
+      scheduledPayment: 2_325.26, housingCosts: 928.94, costs: aHousingCosts({ propertyTax: 375.59, homeownersInsurance: 311.76, total: 928.94 }),
+    }));
+    fixture.detectChanges();
+
+    expect(text('total-monthly-payment')).toBe('$3,254.20');
+    expect(text('monthly-payment')).toBe('$2,325.26');
+    expect(fixture.nativeElement.textContent).toContain('+ $928.94');
+    expect(text('housing-costs-label')).toBe('property tax & insurance');
+  });
+});

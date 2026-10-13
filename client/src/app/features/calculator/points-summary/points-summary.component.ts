@@ -15,7 +15,7 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
         <h3>Discount points</h3>
         <ol class="steps">
           <li><span class="when">Without points</span><span class="rate">{{ s.rateWithout }}</span><strong>{{ s.paymentWithout }}/mo</strong></li>
-          <li><span class="when">With {{ s.count }}</span><span class="rate"></span><strong>{{ s.paymentWith }}/mo</strong></li>
+          <li><span class="when">With {{ s.count }}</span><span class="rate">{{ s.rateWith }}</span><strong>{{ s.paymentWith }}/mo</strong></li>
         </ol>
         <p class="note" data-testid="points-verdict">{{ s.verdict }}</p>
       </section>
@@ -48,6 +48,8 @@ export class PointsSummaryComponent {
     return {
       count,
       rateWithout: pct(p.rateWithoutPoints, 4),
+      // The loan's own rate, the one the points buy: its first payment's.
+      rateWith: pct(result.baseline.payments[0]?.annualInterestRate ?? 0, 4),
       paymentWithout: usdCents(p.paymentWithoutPoints),
       paymentWith: usdCents(p.paymentWithoutPoints - p.monthlySaving),
       verdict,

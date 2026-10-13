@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
 import { usd, usdCents } from '../../../core/formatting/format';
-import { AmortizationResponse, HousingCosts } from '../../../core/models/amortization.models';
+import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { buydownYears } from '../rate-plan/buydown-years';
 
@@ -51,8 +51,8 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
         <dd class="note">
           <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
-          @if (r.baseline.monthlyHousingCosts.total > 0) {
-            + {{ r.baseline.monthlyHousingCosts.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
+          @if (firstPayment().costs.total > 0) {
+            + {{ firstPayment().costs.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
           }
         </dd>
         @if (r.buydown) {
@@ -119,6 +119,12 @@ export class SavingsSummaryComponent {
   readonly result = input.required<AmortizationResponse>();
 
   /**
+   * On a loan already being paid, the payment due next: its housing costs have grown since the first payment, so the
+   * tile shows it rather than the first. Null for a new loan.
+   */
+  readonly current = input<Payment | null>(null);
+
+  /**
    * The extra principal in the first payment that has any (the next one, on a loan already being paid) and what that
    * payment comes to, or null when nothing extra is paid.
    */
@@ -133,10 +139,16 @@ export class SavingsSummaryComponent {
    */
   readonly firstPayment = computed(() => {
     const r = this.result();
+    const next = this.current();
+    if (next) {
+      const loan = next.scheduledPayment - next.buydownSubsidy;
+      return { loan, total: loan + next.housingCosts, costs: next.costs };
+    }
     const first = r.buydown?.years[0];
+    const costs = r.baseline.monthlyHousingCosts;
     return first
-      ? { loan: first.monthlyPayment, total: first.monthlyPayment + r.baseline.monthlyHousingCosts.total }
-      : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment };
+      ? { loan: first.monthlyPayment, total: first.monthlyPayment + costs.total, costs }
+      : { loan: r.baseline.monthlyPayment, total: r.baseline.totalMonthlyPayment, costs };
   });
 
   /**
@@ -157,7 +169,7 @@ export class SavingsSummaryComponent {
    * costs this loan has are named.
    */
   readonly housingCostsLabel = computed(() => {
-    const c = this.result().baseline.monthlyHousingCosts;
+    const c = this.firstPayment().costs;
     const taxes = TAXES.filter(([key]) => c[key] > 0).map(([, words]) => words);
     const parts = [
       ...(taxes.length > 1 ? ['property taxes'] : taxes),
