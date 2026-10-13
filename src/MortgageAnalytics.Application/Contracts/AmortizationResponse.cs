@@ -11,6 +11,10 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="CashToClose">What the buyer brings to closing, line by line. Null when the request has no closing costs.</param>
 /// <param name="DiscountPoints">What discount points are worth against the rate without them. Null without points.</param>
 /// <param name="Program">An FHA or VA loan's upfront fee and mortgage insurance. Null for a conventional loan.</param>
+/// <param name="PmiOnRequest">
+/// When PMI is removed automatically, extra payments don't bring it forward: what asking the lender to remove it at 80%
+/// would do instead. Null unless that would end PMI sooner.
+/// </param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -21,7 +25,13 @@ public sealed record AmortizationResponse(
     AdjustableRateResponse? AdjustableRate = null,
     CashToCloseResponse? CashToClose = null,
     DiscountPointsResponse? DiscountPoints = null,
-    LoanProgramResponse? Program = null);
+    LoanProgramResponse? Program = null,
+    PmiOnRequestResponse? PmiOnRequest = null);
+
+/// <summary>PMI removed on the borrower's request at 80% of the home's original value, with the extra payments.</summary>
+/// <param name="EndDate">Due date of the last payment that would include PMI.</param>
+/// <param name="Saved">The PMI that automatic removal would still charge after that.</param>
+public sealed record PmiOnRequestResponse(DateOnly EndDate, decimal Saved);
 
 /// <summary>An FHA or VA loan's upfront fee and mortgage insurance.</summary>
 /// <param name="Type">FHA or VA.</param>

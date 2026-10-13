@@ -376,6 +376,8 @@ export interface AmortizationResponse {
   discountPoints?: DiscountPointsSummary | null;
   /** Null for a conventional loan. */
   program?: LoanProgramSummary | null;
+  /** When PMI is removed automatically: when asking the lender at 80% would end it, and what that saves. Null unless sooner. */
+  pmiOnRequest?: { endDate: string; saved: number } | null;
 }
 
 export interface BuydownSummary {

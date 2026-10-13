@@ -35,6 +35,15 @@ describe('CostTotalsComponent', () => {
     ]);
   });
 
+  it('leaves out "through year 1" for year 1, where it would only repeat the year', () => {
+    expect(cells(render(1))).toEqual([
+      ['Cost', 'Year 1 (2026)', 'All 3 years'],
+      ['Property tax', '$6,000', '$18,900'],
+      ['Home insurance', '$2,400', '$7,500'],
+      ['Total', '$8,400 $700/mo', '$26,400'],
+    ]);
+  });
+
   it('starts at year 1 for a loan not started yet', () => {
     jest.useFakeTimers({ now: new Date('2025-06-01') });
 

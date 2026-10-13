@@ -63,6 +63,30 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
 
         var county = request.Program is { Type: LoanProgramType.Fha, CountyFips: { } fips } ? FhaLoanLimitData.Current.Find(fips) : null;
         var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program, county);
-        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts());
+        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts()) with
+        {
+            PmiOnRequest = program is null ? PmiOnRequest(request, purchase, valuation, loan, comparison) : null,
+        };
+    }
+
+    /// <summary>
+    /// Automatic PMI removal follows the original schedule, so extra payments never bring it forward; a borrower's
+    /// request at 80% follows the actual balance. When that would end PMI sooner, the same extra payments are run
+    /// once more with the request, to say when and what it saves. Null otherwise.
+    /// </summary>
+    private PmiOnRequestResponse? PmiOnRequest(
+        AmortizationRequest request, PropertyPurchase purchase, PropertyValuation valuation, LoanTerms loan, LoanComparison comparison)
+    {
+        if (request.HousingCosts is not { PmiCancellation: PmiCancellation.Automatic } costs || !purchase.RequiresMortgageInsurance)
+            return null;
+
+        var requested = comparer.Compare(
+            loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(),
+            (costs with { PmiCancellation = PmiCancellation.BorrowerRequested }).ToHousingCostPlan(purchase, valuation));
+        var saved = comparison.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]
+            - requested.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance];
+        return saved > 0 && requested.AcceleratedCosts.MortgageInsuranceLastPayment is { } last
+            ? new PmiOnRequestResponse(requested.Accelerated.Payments[last - 1].DueDate, saved)
+            : null;
     }
 }

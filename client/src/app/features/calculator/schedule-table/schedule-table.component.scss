@@ -142,8 +142,10 @@ h2 {
   }
 }
 
+// As tall as the window allows on a wide screen, so the schedule uses the room beside the long form (at least the
+// 420px it has on a phone, where a taller box would trap the page's own scrolling).
 .table-wrap {
-  max-height: 420px;
+  max-height: max(420px, calc(100vh - 14rem));
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -264,6 +266,10 @@ tbody tr:nth-child(even) .pinned {
 
 // On small screens, a fade at the right edge hints that the table scrolls sideways.
 @media (max-width: 860px) {
+  .table-wrap {
+    max-height: 420px;
+  }
+
   .table-frame::after {
     content: '';
     position: absolute;

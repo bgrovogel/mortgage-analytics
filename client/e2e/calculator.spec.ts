@@ -268,6 +268,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.pmiEnd, 'requested removal uses the actual balance: payment 62').toHaveText('Feb 2041');
     await expect(calculator.message('instead of Apr 2046'), 'instead of payment 124').toBeVisible();
     await expect(calculator.savingsDetail, 'the PMI saved is part of net savings').toContainText('+ $6,136 PMI');
+    await expect(calculator.pmiOnRequest, 'removal is already requested: nothing to suggest').toBeHidden();
   });
 
   test('automatic PMI removal follows the original schedule, so extra payments do not move it', async ({ calculator }) => {
@@ -280,6 +281,8 @@ test.describe('Mortgage calculator', () => {
 
     await expect(calculator.pmiEnd, 'automatic removal stays at payment 135').toHaveText('Mar 2047');
     await expect(calculator.savingsDetail, 'so no PMI is saved: the savings are all interest, which the headline already says').toBeHidden();
+    await expect(calculator.pmiOnRequest, 'but asking at 80% would end it at payment 62, saving $13,359.60 - $6,135.52')
+      .toHaveText('Ask your lender at 80%: ends Feb 2041, saving $7,224');
   });
 
   test('applies the Texas school homestead exemption only to a homestead', async ({ calculator }) => {

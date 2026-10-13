@@ -905,6 +905,9 @@
           },
           "program": {
             "$ref": "#/components/schemas/LoanProgramResponse"
+          },
+          "pmiOnRequest": {
+            "$ref": "#/components/schemas/PmiOnRequestResponse"
           }
         },
         "additionalProperties": false
@@ -1787,6 +1790,20 @@
           "BorrowerRequested"
         ],
         "type": "string"
+      },
+      "PmiOnRequestResponse": {
+        "type": "object",
+        "properties": {
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "saved": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "ProblemDetails": {
         "type": "object",

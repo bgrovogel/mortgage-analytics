@@ -32,7 +32,10 @@ import { costTotals, startingYear } from './cost-totals';
             <tr>
               <th scope="col">Cost</th>
               <th scope="col">Year {{ shown() }} ({{ calendarYear(projection()[shown() - 1]) }})</th>
-              <th scope="col">Through year {{ shown() }}</th>
+              <!-- Through year 1 is year 1 again: shown from year 2. -->
+              @if (shown() > 1) {
+                <th scope="col">Through year {{ shown() }}</th>
+              }
               <th scope="col">All {{ projection().length }} years</th>
             </tr>
           </thead>
@@ -41,7 +44,9 @@ import { costTotals, startingYear } from './cost-totals';
               <tr>
                 <th scope="row"><i [style.background]="'var(' + row.color + ')'"></i>{{ row.label }}</th>
                 <td>{{ money(row.thisYear) }}</td>
-                <td>{{ money(row.toDate) }}</td>
+                @if (shown() > 1) {
+                  <td>{{ money(row.toDate) }}</td>
+                }
                 <td>{{ money(row.wholeLoan) }}</td>
               </tr>
             }
@@ -50,7 +55,9 @@ import { costTotals, startingYear } from './cost-totals';
             <tr data-testid="cost-totals-total">
               <th scope="row">Total</th>
               <td>{{ money(t.total.thisYear) }} <small>{{ money(t.total.monthly) }}/mo</small></td>
-              <td>{{ money(t.total.toDate) }}</td>
+              @if (shown() > 1) {
+                <td>{{ money(t.total.toDate) }}</td>
+              }
               <td>{{ money(t.total.wholeLoan) }}</td>
             </tr>
           </tfoot>

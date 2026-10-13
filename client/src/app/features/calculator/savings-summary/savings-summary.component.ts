@@ -81,6 +81,10 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           } @else {
             <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
           }
+          <!-- Automatic removal keeps to the original schedule, whatever is paid extra; asking at 80% does not. -->
+          @if (r.pmiOnRequest; as asked) {
+            <dd class="note ask" data-testid="pmi-on-request">Ask your lender at 80%: ends {{ asked.endDate | date: 'MMM yyyy' }}, saving {{ asked.saved | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          }
         </div>
       }
     </dl>

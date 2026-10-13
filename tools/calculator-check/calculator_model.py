@@ -437,7 +437,19 @@ def analyze(request, today):
             'worstCasePeakPayment': max([worst['initial']] + [c['newPayment'] for c in worst['rateChanges']]),
             'worstCaseTotalInterest': sum((r['interest'] for r in worst['rows']), D(0)),
         }
+    out['pmiOnRequest'] = pmi_on_request(request, today, acc) if program is None else None
     return out
+
+
+def pmi_on_request(request, today, acc):
+    """Automatic PMI removal keeps to the original schedule (78%); asking at 80% follows the actual balance. When asking
+    would end PMI sooner: the last payment it would be charged with, and the PMI saved, with the same extra payments."""
+    costs = request.get('housingCosts')
+    if not costs or costs.get('pmiCancellation', 'Automatic') != 'Automatic':
+        return None
+    asked = analyze(dict(request, housingCosts=dict(costs, pmiCancellation='BorrowerRequested')), today)['accelerated']
+    saved = acc['totalHousingCosts']['mortgageInsurance'] - asked['totalHousingCosts']['mortgageInsurance']
+    return {'endDate': asked['mortgageInsuranceEndDate'], 'saved': saved} if saved > 0 else None
 
 
 # ---------------------------------------------------------------------------------------------- cash to close

@@ -61,6 +61,12 @@
     font-weight: 500;
   }
 
+  // A way to save more: said in the accent colour, like a link to an action.
+  dd.ask {
+    color: var(--accent-text);
+    font-weight: 500;
+  }
+
   // Time saved is good news, said in green, without lifting the whole tile above the headline.
   dd.gain {
     color: var(--positive);

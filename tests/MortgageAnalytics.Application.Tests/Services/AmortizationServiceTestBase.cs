@@ -48,10 +48,14 @@ public abstract class AmortizationServiceTestBase
     protected static LoanComparison CannedComparison { get; } =
         new LoanComparer(new AmortizationCalculator()).Compare(A.Loan(), ExtraPaymentPlan.None, RecastPolicy.Never, HousingCostPlan.None);
 
-    /// <summary>The arguments the service passed to <see cref="ILoanComparer.Compare"/> (exactly one call is expected).</summary>
+    /// <summary>
+    /// The arguments of the service's main comparison: its first call to <see cref="ILoanComparer.Compare"/>. A loan
+    /// with automatic PMI removal is then compared once more, with removal on request (an FHA loan's MIP comparison
+    /// comes first, so FHA tests do not use this).
+    /// </summary>
     protected (LoanTerms Loan, ExtraPaymentPlan Extras, RecastPolicy Recast, HousingCostPlan Costs) CompareArguments()
     {
-        var args = Comparer.ReceivedCalls().Single().GetArguments();
+        var args = Comparer.ReceivedCalls().First().GetArguments();
         return ((LoanTerms)args[0]!, (ExtraPaymentPlan)args[1]!, (RecastPolicy)args[2]!, (HousingCostPlan)args[3]!);
     }
 }

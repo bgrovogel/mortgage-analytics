@@ -266,4 +266,25 @@ describe('SavingsSummaryComponent', () => {
     expect(recasts).toContain('($250 fee)');
     expect(recasts?.match(/fee/g)).toHaveLength(1);
   });
+
+  describe('PMI removed on request', () => {
+    const withPmi = (pmiOnRequest: AmortizationResponse['pmiOnRequest']) => aResponse({
+      baseline: aSchedule({ mortgageInsuranceEndDate: '2038-01-01' }),
+      accelerated: aSchedule({ mortgageInsuranceEndDate: '2038-01-01' }),
+      pmiOnRequest,
+    });
+
+    it('says when asking the lender at 80% would end PMI, and what it saves, since extra payments do not move automatic removal', () => {
+      render(withPmi({ endDate: '2033-12-01', saved: 4_947.98 }));
+
+      expect(text('pmi-on-request')).toBe('Ask your lender at 80%: ends Dec 2033, saving $4,948');
+    });
+
+    it('says nothing when asking would not end it sooner', () => {
+      render(withPmi(null));
+
+      expect(text('pmi-on-request')).toBeUndefined();
+    });
+  });
 });
+

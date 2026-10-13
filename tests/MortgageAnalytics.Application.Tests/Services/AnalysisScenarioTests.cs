@@ -156,6 +156,50 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void AutomaticPmiRemoval_WithExtraPayments_SaysWhenAskingAt80PercentWouldEndIt_AndWhatThatSaves()
+    {
+        var request = A.Request.FivePercentDown().WithMonthlyExtra(300m).WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
+
+        var onRequest = Service.Analyze(request).PmiOnRequest;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(onRequest?.EndDate, Is.EqualTo(new DateOnly(2031, 2, 1)), "payment 62: the actual balance reaches 80% years before the schedule's 78%");
+            Assert.That(onRequest?.Saved, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotalWith300Extra),
+                "the PMI charged after that, which automatic removal keeps charging until March 2037");
+        });
+    }
+
+    [Test]
+    public void AutomaticPmiRemoval_WithoutExtraPayments_StillEndsSoonerOnRequest_At80PercentInsteadOf78()
+    {
+        var request = A.Request.FivePercentDown().WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate));
+
+        var onRequest = Service.Analyze(request).PmiOnRequest;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(onRequest?.EndDate, Is.EqualTo(new DateOnly(2036, 4, 1)), "payment 124, where the schedule reaches 80%, not 135 at 78%");
+            Assert.That(onRequest?.Saved, Is.EqualTo(FivePercentDown.PmiTotal - FivePercentDown.BorrowerRequestedPmiTotal), "eleven payments of PMI");
+        });
+    }
+
+    [Test]
+    public void PmiOnRequest_IsNotSaid_WhenRemovalIsAlreadyRequested()
+    {
+        var request = A.Request.FivePercentDown().WithMonthlyExtra(300m)
+            .WithHousingCosts(c => c.WithPmi(FivePercentDown.PmiRate, PmiCancellation.BorrowerRequested));
+
+        Assert.That(Service.Analyze(request).PmiOnRequest, Is.Null, "the results already show it");
+    }
+
+    [Test]
+    public void PmiOnRequest_IsNotSaid_WithoutPmi()
+    {
+        Assert.That(Service.Analyze(A.Request.WithMonthlyExtra(300m)).PmiOnRequest, Is.Null, "20% down: there is no PMI to end");
+    }
+
+    [Test]
     public void Pmi_RequestedRemovalEndsSoonerThanAutomatic()
     {
         DateOnly? EndDate(PmiCancellation cancellation) =>
