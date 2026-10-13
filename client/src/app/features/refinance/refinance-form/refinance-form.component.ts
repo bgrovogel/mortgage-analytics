@@ -85,6 +85,10 @@ export class RefinanceFormComponent implements OnInit {
     newTerm: this.fb.control<NewTerm>('30'),
     closingCosts: [6_000, validatorsFor(rules.closingCosts)],
     financeClosingCosts: [false],
+    // The home's value sets whether each loan carries PMI: while it is above 80% of it.
+    homeValue: [400_000, validatorsFor(rules.homeValue)],
+    currentMonthlyPmi: [0, validatorsFor(rules.currentMonthlyPmi)],
+    newPmiRate: [0.5, validatorsFor(rules.newPmiRate)],
     // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
     // the new one may adjust (a 7/1 by default) or be bought down.
     currentRate: rateOptionsForm(this.fb, 9, 24),
@@ -166,6 +170,9 @@ export class RefinanceFormComponent implements OnInit {
           newTerm: initial.newTermInMonths === initial.remainingTermInMonths ? 'keep' : (`${initial.newTermInMonths / 12}` as NewTerm),
           closingCosts: initial.closingCosts,
           financeClosingCosts: initial.financeClosingCosts,
+          ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
+          currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
+          newPmiRate: initial.newPmiRate ?? 0.5,
         },
         { emitEvent: false },
       );
@@ -183,14 +190,18 @@ export class RefinanceFormComponent implements OnInit {
   private startFromSharedLoan(): void {
     const shared = this.loan();
     if (!shared) return;
-    const { balance, annualInterestRate, remainingTermInMonths, start } = shared.loan;
+    const { balance, annualInterestRate, remainingTermInMonths, start, homeValue, monthlyPmi } = shared.loan;
     const entry: LoanEntry = start ? 'original' : 'today';
     const entryChanged = this.form.controls.loanEntry.value !== entry;
     this.enableFor(entry);
     this.form.controls.loanEntry.setValue(entry, { emitEvent: false });
-    const changed = setChanged(this.form, start
-      ? { currentAnnualInterestRate: annualInterestRate, originalAmount: start.amount, originalTermYears: start.termInMonths / 12, firstPaymentDate: start.firstPaymentDate }
-      : { currentBalance: balance, currentAnnualInterestRate: annualInterestRate, yearsLeft: remainingTermInMonths / 12 });
+    const changed = setChanged(this.form, {
+      ...(start
+        ? { currentAnnualInterestRate: annualInterestRate, originalAmount: start.amount, originalTermYears: start.termInMonths / 12, firstPaymentDate: start.firstPaymentDate }
+        : { currentBalance: balance, currentAnnualInterestRate: annualInterestRate, yearsLeft: remainingTermInMonths / 12 }),
+      ...(homeValue == null ? {} : { homeValue }),
+      ...(monthlyPmi == null ? {} : { currentMonthlyPmi: monthlyPmi }),
+    });
     // The rate type too: the current loan's ARM counts from its first payment when the original loan is known.
     const made = start ? paymentsMade(start.firstPaymentDate, new Date()) : 0;
     const rateChanged = applySharedRate(this.form.controls.currentRate, shared.loan.rate, made, false);
@@ -272,6 +283,9 @@ export class RefinanceFormComponent implements OnInit {
       currentAdjustableRate: rateOptionsRequest(this.form.controls.currentRate, 'reset').adjustableRate,
       newAdjustableRate: newRate.adjustableRate,
       newBuydown: newRate.buydown,
+      homeValue: v.homeValue,
+      currentMonthlyPmi: v.currentMonthlyPmi,
+      newPmiRate: v.newPmiRate,
     };
   }
 }

@@ -99,7 +99,7 @@ MIP, and the first year's MIP is $134.33 a month.
 | **Appraisal cap** | A homestead's *taxable* value rises at most a set percentage a year (10% in Texas), even when the market rises faster. |
 | **PID assessment** | A fixed yearly amount, optionally ending after the district's remaining years. |
 | **Insurance and HOA** | A yearly premium and monthly dues. |
-| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings), which is the default, since a borrower paying extra asks as soon as they can. Or it comes off **automatically at 78%** of the original value, measured on the original schedule, which extra payments do not move. The PMI tile says what the other way would do: on the example, not asking keeps it until Jan 2038 instead of Dec 2033, costing $7,274 more. |
+| **PMI** | Only below **20% down**, as a percentage of the *original* loan. It comes off **on request at 80%**, using the actual balance (extra payments bring it forward, and that saving counts in net savings), which is the default, since a borrower paying extra asks as soon as they can. Or it comes off **automatically at 78%** of the original value, measured on the original schedule, which extra payments do not move. Either way it ends at the loan's **midpoint** whatever the balance, as the law says. The PMI tile says what the other way would do: on the example, not asking keeps it until Jan 2038 instead of Dec 2033, costing $7,274 more. |
 | **Future increases** | Home value growth drives each year's tax (within the cap); insurance and dues rise at their own rates. The defaults are long-run US averages, cited in the form: home values +4.3% a year (FHFA House Price Index, 1975–2025), insurance +4.8% (GAO-26-107867: $2,235 in 2019 to $2,829 in 2024), HOA dues +4%. |
 
 ### Cash to close
@@ -151,6 +151,8 @@ The rest of the current loan against a new one, with closing costs paid at closi
   30-year loan restarts the amortization clock.
 - **The monthly change, the months added, and the break-even:** the payment by which the interest saved covers the
   closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings".
+- **PMI on either loan,** from the home's value: today's PMI until the loan is down to 80% of it, and PMI on the new
+  loan if it is above 80%. It counts in the payment, the totals and the break-even.
 - **Keep paying today's payment.** When the new payment is lower, the new loan is also shown paid at today's payment:
   how to refinance without restarting the clock.
 - **Your loan today, either way:** as what is owed now, or as the **original loan** (amount, term, first payment), from
@@ -181,6 +183,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   ESOP) toward its market share, so someone already heavy in company stock leans to the mortgage.
 - **Rate types.** An ARM (paying down earns the rate's average over the loan, and a reset that raises the payment
   leaves less to invest) or a buydown on a new loan (its subsidy frees cash in every strategy).
+- **PMI.** Paid until the balance is 80% of the home's value, so paying down ends it sooner; the Why tab says when
+  each way ends it and what paying down saves. It is deductible like interest below $110,000 of income.
 - **The results:** the recommendation, three cards (each led by how far it ends behind the leader), then the
   difference over time, net worth at years 5, 10, 15 and 30 (also in today's dollars), debt against investments, and
   why.
@@ -191,7 +195,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 
 <img src="images/phone.png" alt="The calculator on a phone: the answer first, with Edit your numbers to jump to the form" width="220" align="right" />
 
-- **One loan, typed once.** The balance, rate, years left, home value and rate type are shared by every page. Change
+- **One loan, typed once.** The balance, rate, years left, home value, rate type and PMI are shared by every page. Change
   them on one page and the next page opened starts from them, saying where they came from; each page keeps its own
   other inputs. On the calculator the shared loan becomes a purchase (the price is the home's value, the term the
   years left, rounded to whole years, and the rounding never flows back). Only a loan you type, or a saved one you

@@ -28,6 +28,8 @@ public enum MortgageInsuranceCancellation
 ///         The balance never rises, so PMI never comes back.</item>
 ///   <item>Which balance is tested depends on <see cref="MortgageInsuranceCancellation"/>: automatic removal
 ///         uses the original schedule's balance, a borrower's request uses the actual balance.</item>
+///   <item>Either way it ends at the loan's midpoint (payment 180 of 360) whatever the balance: the Act's final
+///         termination, which matters at high rates, where the balance falls slowly.</item>
 /// </list>
 /// So extra payments save PMI only when the borrower requests removal. That is where the comparison's
 /// PMI savings come from.
@@ -40,11 +42,13 @@ public sealed class MortgageInsurance : IHousingCost
     /// <param name="annualRatePercent">The annual premium as a percentage of the original loan (0.5 means 0.5%).</param>
     /// <param name="purchase">The purchase, which supplies the loan amount and the home's value.</param>
     /// <param name="cancellation">Whether PMI is removed automatically (78%) or on the borrower's request (80%).</param>
+    /// <param name="termInMonths">The loan's term, whose midpoint ends PMI at the latest; null not to apply it.</param>
     /// <exception cref="DomainValidationException">The rate is negative.</exception>
     public MortgageInsurance(
         decimal annualRatePercent,
         PropertyPurchase purchase,
-        MortgageInsuranceCancellation cancellation = MortgageInsuranceCancellation.Automatic)
+        MortgageInsuranceCancellation cancellation = MortgageInsuranceCancellation.Automatic,
+        int? termInMonths = null)
     {
         HousingCostGuard.AgainstNegative(annualRatePercent, nameof(annualRatePercent));
 
@@ -53,6 +57,7 @@ public sealed class MortgageInsurance : IHousingCost
         IsRequired = purchase.RequiresMortgageInsurance;
         MonthlyPremium = IsRequired ? Money.Round(purchase.LoanAmount * annualRatePercent / 100m / 12m) : 0m;
         _cancellationBalance = purchase.HomePrice * CancelAtLoanToValue / 100m;
+        LastPayment = termInMonths is { } term ? (term + 1) / 2 : int.MaxValue;
     }
 
     /// <inheritdoc />
@@ -70,6 +75,9 @@ public sealed class MortgageInsurance : IHousingCost
     /// <summary>The monthly charge while PMI is in force. Zero when it is not required.</summary>
     public decimal MonthlyPremium { get; }
 
+    /// <summary>The last payment PMI can be charged with: the loan's midpoint, rounded up for an odd term.</summary>
+    public int LastPayment { get; }
+
     /// <inheritdoc />
     public decimal AmountFor(CostPeriod period)
     {
@@ -77,6 +85,6 @@ public sealed class MortgageInsurance : IHousingCost
             ? period.ScheduledOpeningBalance
             : period.OpeningBalance;
 
-        return balance > _cancellationBalance ? MonthlyPremium : 0m;
+        return period.PaymentNumber <= LastPayment && balance > _cancellationBalance ? MonthlyPremium : 0m;
     }
 }

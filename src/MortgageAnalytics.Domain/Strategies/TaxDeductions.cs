@@ -42,6 +42,22 @@ public static class TaxDeductions
     public static decimal DeductibleInterest(decimal interest, decimal balance) =>
         balance <= DeductibleDebtLimit ? interest : Money.Round(interest * DeductibleDebtLimit / balance);
 
+    /// <summary>The adjusted gross income above which the PMI deduction starts to phase out.</summary>
+    public const decimal PmiPhaseOutStart = 100_000m;
+
+    /// <summary>
+    /// The PMI that can be deducted as mortgage interest (from 2026, IRC 163(h)(3)(E), made permanent by the One Big
+    /// Beautiful Bill Act): all of it up to $100,000 of adjusted gross income, then 10% less for each $1,000, or part
+    /// of $1,000, above that, so none from $110,000. The limit is not indexed to inflation.
+    /// </summary>
+    /// <param name="pmi">PMI paid in the year.</param>
+    /// <param name="adjustedGrossIncome">The household's adjusted gross income.</param>
+    public static decimal DeductiblePmi(decimal pmi, decimal adjustedGrossIncome)
+    {
+        var steps = Math.Ceiling(Math.Max(0m, adjustedGrossIncome - PmiPhaseOutStart) / 1_000m);
+        return Money.Round(pmi * Math.Max(0m, 1m - steps / 10m));
+    }
+
     /// <summary>
     /// The tax the mortgage interest saves in a year: the tax on the part of itemized deductions above the
     /// standard deduction, but never more than the tax on the interest itself.

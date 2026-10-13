@@ -1,3 +1,6 @@
+using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.ExtraPayments;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Strategies;
 using static MortgageAnalytics.Testing.ReferenceStrategies;
@@ -365,5 +368,75 @@ public class StrategyRulesTests
             Assert.That(comparison.RunnerUp.RiskAdjusted.FinalNetWorth, Is.Negative, "the runner-up still owes more than it has");
             Assert.That(comparison.LeadPercent, Is.Null, "so the lead is not given as a percentage of it");
         });
+    }
+
+    // ---- PMI: a cost that paying down ends sooner ----
+
+    /// <summary>$370,000 at 6.5% over 30 years on a $400,000 home, with $150 a month of PMI until it is down to $320,000.</summary>
+    private static StrategyInputs WithPmi(decimal monthlyPmi = 150m) =>
+        TypicalInputs(mortgage: new LoanTerms(370_000m, 6.5m, 360, NextPaymentDate)) with { Pmi = LoanPmi.OnCurrentLoan(monthlyPmi, 400_000m) };
+
+    [Test]
+    public void Pmi_IsPaidUntilTheBalanceReaches80PercentOfTheHomesValue_WhichPayingDownBringsSooner()
+    {
+        var steady = MarketScenario.Steady(MarketScenarioKind.Expected, 10m);
+        var scheduled = new AmortizationCalculator().Generate(WithPmi().Mortgage, ExtraPaymentPlan.None, RecastPolicy.Never);
+        var lastScheduled = LoanPmi.OnCurrentLoan(150m, 400_000m).LastPaymentOn(scheduled)!.Value;
+
+        var invested = new StrategySimulator().Simulate(WithPmi(), 100m, steady);
+        var paidDown = new StrategySimulator().Simulate(WithPmi(), 0m, steady);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(invested.MortgageInsuranceEndDate, Is.EqualTo(scheduled.Payments[lastScheduled - 1].DueDate),
+                "investing everything pays the loan as scheduled, so PMI runs its scheduled course");
+            Assert.That(invested.TotalMortgageInsurance, Is.EqualTo(lastScheduled * 150m), "$150 with every payment until then");
+            Assert.That(paidDown.MortgageInsuranceEndDate, Is.LessThan(invested.MortgageInsuranceEndDate!.Value), "paying down reaches 80% years sooner");
+            Assert.That(paidDown.TotalMortgageInsurance, Is.LessThan(invested.TotalMortgageInsurance / 2), "and pays less than half the PMI");
+            Assert.That(WithPmi(monthlyPmi: 0m).Pmi, Is.EqualTo(LoanPmi.None), "no premium, no PMI");
+        });
+    }
+
+    [Test]
+    public void Pmi_TipsTheBalanceTowardPayingDown()
+    {
+        var steady = MarketScenario.Steady(MarketScenarioKind.Expected, 10m);
+        var simulator = new StrategySimulator();
+        double Lead(StrategyInputs inputs) =>
+            (double)(simulator.Simulate(inputs, 0m, steady).FinalNetWorth - simulator.Simulate(inputs, 100m, steady).FinalNetWorth);
+
+        Assert.That(Lead(WithPmi()), Is.GreaterThan(Lead(WithPmi(monthlyPmi: 0m))),
+            "ending PMI sooner is a return only paying down earns, so it narrows investing's lead or widens paying down's");
+    }
+
+    [TestCase(90_000, 1_800, TestName = "AGI under $100,000: all of it")]
+    [TestCase(100_000, 1_800, TestName = "AGI of exactly $100,000: all of it")]
+    [TestCase(100_000.01, 1_620, TestName = "A cent over: 10% less, for each $1,000 or part of one")]
+    [TestCase(105_000, 900, TestName = "$5,000 over: half")]
+    [TestCase(105_000.01, 720, TestName = "Just over $5,000 over: 60% less")]
+    [TestCase(110_000, 0, TestName = "$10,000 over: none")]
+    public void Pmi_IsDeductibleLikeInterest_PhasingOutAbove100kOfIncome(decimal adjustedGrossIncome, decimal expected) =>
+        Assert.That(TaxDeductions.DeductiblePmi(1_800m, adjustedGrossIncome), Is.EqualTo(expected),
+            "from 2026, PMI is mortgage interest for the deduction, less 10% for each $1,000 of AGI over $100,000 (IRC 163(h)(3)(E))");
+
+    [Test]
+    public void Pmi_SavesTaxWhenItemizing_ForAHouseholdUnderTheIncomeLimit()
+    {
+        // $90,000 of income less the 401(k) contribution is under $100,000, and $40,000 of other deductions means
+        // every dollar of interest and PMI is itemized.
+        var steady = MarketScenario.Steady(MarketScenarioKind.Expected, 10m);
+        StrategyInputs Inputs(decimal pmi) => new StrategyInputs(
+            new LoanTerms(370_000m, 6.5m, 360, NextPaymentDate), 400_000m, 4.3m,
+            new Household(90_000m, 22m, 15m, FilingStatus.MarriedFilingJointly, 40_000m, 1_000m),
+            new EmployerMatch(50m, 6m), StockPurchasePlan.None, 7_500m, new MarketAssumptions(10m, 3m, RiskProfile.Balanced))
+        {
+            Pmi = LoanPmi.OnCurrentLoan(pmi, 400_000m),
+        };
+
+        var withPmi = new StrategySimulator().Simulate(Inputs(150m), 100m, steady);
+        var without = new StrategySimulator().Simulate(Inputs(0m), 100m, steady);
+
+        Assert.That(withPmi.TotalTaxSaved - without.TotalTaxSaved, Is.EqualTo(withPmi.TotalMortgageInsurance * 0.22m).Within(1m),
+            "each year's PMI saves tax at the 22% rate, like the interest");
     }
 }

@@ -107,7 +107,7 @@ describe('CalculationStores', () => {
       calculator().send({ ...purchase, annualInterestRate: 6 });
 
       expect(refinancePage().loanToApply()).toEqual({
-        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' } },
+        loan: { balance: 300_000, annualInterestRate: 6, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' }, monthlyPmi: 0 },
         from: 'Calculator',
         version: 1,
       });
@@ -159,7 +159,7 @@ describe('CalculationStores', () => {
 
       expect(refinancePage().loanToApply()!.loan).toEqual(
         { balance: 186_108.71, annualInterestRate: 6, remainingTermInMonths: 300, homeValue: 250_000, // no growth given
-          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' }, rate: { kind: 'fixed' } });
+          start: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' }, rate: { kind: 'fixed' }, monthlyPmi: 0 });
 
       refinancePage().send(refinance);
       refinancePage().send({ ...refinance, currentBalance: 186_000, currentAnnualInterestRate: 6, remainingTermInMonths: 300 });
@@ -214,7 +214,7 @@ describe('CalculationStores', () => {
       stores.of('Purchase').open(saved('Purchase', 'p'));
 
       expect(strategyPage().loanToApply()!.loan).toEqual(
-        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' } });
+        { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' }, monthlyPmi: 0 });
     });
   });
 

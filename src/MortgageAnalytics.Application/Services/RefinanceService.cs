@@ -27,11 +27,12 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
     /// <inheritdoc />
     public RefinanceResponse Analyze(RefinanceRequest request)
     {
-        var analysis = analyzer.Analyze(CurrentLoan(request, worstCase: false), request.ToOffer());
+        var pmi = request.ToPmi();
+        var analysis = analyzer.Analyze(CurrentLoan(request, worstCase: false), request.ToOffer(), pmi);
 
         // When either loan adjusts, the comparison also runs with rates rising as far as the caps allow.
         var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
-        var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true)).LifetimeSavings : (decimal?)null;
+        var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true), pmi).LifetimeSavings : (decimal?)null;
 
         return analysis.ToResponse(worst);
     }

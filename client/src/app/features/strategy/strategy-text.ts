@@ -110,6 +110,14 @@ export function facts(result: StrategyComparison): string[] {
     : `Your ${usd(rates.firstYearInterest)} of year-1 interest doesn't beat the ${usd(rates.standardDeduction)} standard deduction, `
       + `so it saves no tax: paying it down earns the full ${pct(rates.mortgageRate)}.`);
 
+  const payOff = outcomeOf(result, 'PayOffFirst').riskAdjusted;
+  const invest = outcomeOf(result, 'InvestTheDifference').riskAdjusted;
+  if (invest.totalMortgageInsurance > 0) {
+    const ends = (p: typeof payOff) => (p.mortgageInsuranceEndDate ? monthOf(p.mortgageInsuranceEndDate) : 'at once');
+    lines.push(`Your PMI ends once you owe 80% of the home's value: ${ends(payOff)} if you pay down first, ${ends(invest)} if you invest. `
+      + `Paying down saves ${usd(invest.totalMortgageInsurance - payOff.totalMortgageInsurance)} of it, a return investing doesn't earn.`);
+  }
+
   if (plan.employerMatch > 0) {
     lines.push(`Every strategy first collects the full 401(k) match: ${usd(plan.employerMatch)} a month free for ${usd(plan.retirementContributionCost)} `
       + `of take-home pay, an instant ${pct(rates.employerMatchPercent)} return no mortgage can beat.`);

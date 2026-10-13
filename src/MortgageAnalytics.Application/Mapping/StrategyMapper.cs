@@ -1,4 +1,5 @@
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Strategies;
 
@@ -33,6 +34,7 @@ public static class StrategyMapper
             new MarketAssumptions(request.ExpectedAnnualReturn, request.InflationRate, ToDomain(request.RiskProfile)))
         {
             Buydown = request.Buydown.ToDomain(),
+            Pmi = LoanPmi.OnCurrentLoan(request.MonthlyPmi, request.HomeValue),
         };
 
     /// <summary>The mortgage as it stands today, with an adjustable rate's expected resets.</summary>
@@ -93,6 +95,8 @@ public static class StrategyMapper
             projection.PayoffDate,
             projection.CrossoverMonth,
             projection.CrossoverDate,
+            projection.TotalMortgageInsurance,
+            projection.MortgageInsuranceEndDate,
             [.. projection.Years.Select(y => new NetWorthYearResponse(
                 y.Year, y.HomeValue, y.MortgageBalance, y.HomeEquity, y.Investments, y.NetWorth, y.NetWorthInTodaysDollars))]);
 

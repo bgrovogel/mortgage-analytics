@@ -31,6 +31,8 @@ public sealed record NetWorthYear(
 /// they already are, null when it never happens.
 /// </param>
 /// <param name="CrossoverDate">The due date of that month's payment, or null when it is today or never.</param>
+/// <param name="TotalMortgageInsurance">PMI paid over the horizon.</param>
+/// <param name="MortgageInsuranceEndDate">The due date of the last payment with PMI, or null when none had any.</param>
 public sealed record StrategyProjection(
     MarketScenario Scenario,
     IReadOnlyList<NetWorthYear> Years,
@@ -39,7 +41,9 @@ public sealed record StrategyProjection(
     int? PayoffMonth,
     DateOnly? PayoffDate,
     int? CrossoverMonth,
-    DateOnly? CrossoverDate)
+    DateOnly? CrossoverDate,
+    decimal TotalMortgageInsurance = 0m,
+    DateOnly? MortgageInsuranceEndDate = null)
 {
     /// <summary>Net worth at the end of the horizon.</summary>
     public decimal FinalNetWorth => Years[^1].NetWorth;

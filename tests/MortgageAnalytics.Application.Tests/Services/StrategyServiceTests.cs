@@ -148,4 +148,32 @@ public class StrategyServiceTests
 
         Assert.That(response.Rates.EmployerMatchPercent, Is.Zero, "50% of nothing is nothing, so the comparison shows no match");
     }
+
+    [Test]
+    public void Compare_WithPmi_SaysWhatEachStrategyPaysOfIt_AndWhenItEnds()
+    {
+        // $370,000 owed on a $400,000 home: PMI until the balance is $320,000.
+        var response = _service.Compare(ReferenceStrategies.TypicalRequest with { CurrentBalance = 370_000m, RemainingTermInMonths = 360, MonthlyPmi = 150m });
+        var payOff = Outcome(response, PayoffStrategy.PayOffFirst).RiskAdjusted;
+        var invest = Outcome(response, PayoffStrategy.InvestTheDifference).RiskAdjusted;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(invest.TotalMortgageInsurance, Is.Positive, "investing pays PMI on the scheduled balance");
+            Assert.That(payOff.TotalMortgageInsurance, Is.LessThan(invest.TotalMortgageInsurance), "paying down pays less of it");
+            Assert.That(payOff.MortgageInsuranceEndDate, Is.LessThan(invest.MortgageInsuranceEndDate!.Value), "and ends it sooner");
+        });
+    }
+
+    [Test]
+    public void Compare_WithoutPmi_PaysNone()
+    {
+        var invest = Outcome(_service.Compare(ReferenceStrategies.TypicalRequest), PayoffStrategy.InvestTheDifference).RiskAdjusted;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(invest.TotalMortgageInsurance, Is.Zero, "no PMI is entered");
+            Assert.That(invest.MortgageInsuranceEndDate, Is.Null, "so it never ends");
+        });
+    }
 }

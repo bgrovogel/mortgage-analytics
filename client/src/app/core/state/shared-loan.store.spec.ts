@@ -16,14 +16,14 @@ describe('SharedLoanStore', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan, balance: 250_000 }, 'Refinance');
 
-    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000, start: null, rate: null }, from: 'Refinance', version: 2 });
+    expect(store.change()).toEqual({ loan: { ...loan, balance: 250_000, start: null, rate: null, monthlyPmi: null }, from: 'Refinance', version: 2 });
   });
 
   it('does not count the same loan sent again as a change', () => {
     store.update(loan, 'Calculator');
     store.update({ ...loan }, 'Pay off or invest');
 
-    expect(store.change()).toEqual({ loan: { ...loan, start: null, rate: null }, from: 'Calculator', version: 1 });
+    expect(store.change()).toEqual({ loan: { ...loan, start: null, rate: null, monthlyPmi: null }, from: 'Calculator', version: 1 });
   });
 
   it('keeps how the loan started while the loan is unchanged, and drops it once a page without it changes the loan', () => {
@@ -35,6 +35,18 @@ describe('SharedLoanStore', () => {
 
     store.update({ ...loan, balance: 250_000 }, 'Pay off or invest');
     expect(store.change()!.loan.start).toBeNull();
+  });
+
+  it('keeps the PMI when a page that does not know it sends a loan, and counts a new PMI as a change', () => {
+    store.update({ ...loan, monthlyPmi: 148.44 }, 'Calculator');
+    store.update({ ...loan, balance: 250_000, monthlyPmi: null }, 'Somewhere');
+    const kept = store.change()!.loan.monthlyPmi;
+    const version = store.version();
+    store.update({ ...loan, balance: 250_000, monthlyPmi: 120 }, 'Refinance');
+
+    expect(kept).toBe(148.44);
+    expect(store.version()).toBe(version + 1);
+    expect(sameLoan({ ...loan, monthlyPmi: 0 }, { ...loan, monthlyPmi: 120 })).toBe(false);
   });
 
   it("keeps the home's value when a page that does not ask for it sends a loan", () => {

@@ -68,6 +68,7 @@ export class StrategyFormComponent implements OnInit {
     // Years, so people can answer from memory; sent as months.
     yearsLeft: [25, validatorsFor(rules.yearsLeft)],
     homeValue: [400_000, validatorsFor(rules.homeValue)],
+    monthlyPmi: [0, validatorsFor(rules.monthlyPmi)],
     monthlyCashToPutToWork: [1_000, validatorsFor(rules.monthlyCashToPutToWork)],
     riskProfile: this.fb.control<InvestorRiskProfile>('Balanced'),
 
@@ -166,12 +167,13 @@ export class StrategyFormComponent implements OnInit {
     }
     const shared = this.loan();
     if (shared) {
-      const { balance, annualInterestRate, remainingTermInMonths, homeValue } = shared.loan;
+      const { balance, annualInterestRate, remainingTermInMonths, homeValue, monthlyPmi } = shared.loan;
       const changed = setChanged(this.form, {
         currentBalance: balance,
         annualInterestRate,
         yearsLeft: remainingTermInMonths / 12,
         ...(homeValue === null ? {} : { homeValue }),
+        ...(monthlyPmi == null ? {} : { monthlyPmi }),
       });
       const rateChanged = applySharedRate(this.form.controls.rate, shared.loan.rate);
       if (changed || rateChanged) this.sharedFrom.set(shared.from);

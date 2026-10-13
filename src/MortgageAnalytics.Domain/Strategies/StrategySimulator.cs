@@ -22,12 +22,13 @@ public interface IStrategySimulator
 ///   <item>The required mortgage payment is made: interest at that month's rate, re-amortized at each rate change
 ///         (see <see cref="MortgagePayments"/>), less any buydown subsidy. The household's budget is what it pays on
 ///         the mortgage now plus the extra cash, so a reset that raises the payment leaves less cash, and a lower one
-///         more. Once the mortgage is gone, the whole budget becomes cash to put to work.</item>
+///         more. Once the mortgage is gone, the whole budget becomes cash to put to work. PMI, while the balance is
+///         above 80% of the home's value, is paid from the same budget, so when it ends that cash is put to work too.</item>
 ///   <item>The 401(k) contribution and the employer match go in; ESPP savings build up and, at the end of each
 ///         purchase period, come back with the discount (minus income tax on it).</item>
 ///   <item>At each year end: RSUs vest (kept as shares, or sold for cash), the ESOP contribution goes in, and the
-///         tax saved by deducting that year's mortgage interest (only the part of itemized deductions above the
-///         standard deduction, both rising with inflation) comes back as cash.</item>
+///         tax saved by deducting that year's mortgage interest and PMI (only the part of itemized deductions above
+///         the standard deduction, both rising with inflation) comes back as cash.</item>
 ///   <item>The cash is split: (100 − investPercent)% to extra principal while anything is owed, the rest
 ///         invested: an IRA up to the yearly amount first, then a taxable account.</item>
 /// </list>
@@ -50,12 +51,16 @@ public sealed class StrategySimulator : IStrategySimulator
         var plan = MonthlyCashPlan.For(inputs);
         var accounts = new InvestmentAccounts(household.CurrentRetirementSavings, household.CurrentInvestments);
         var mortgage = new MortgagePayments(loan, inputs.Buydown);
-        var budget = mortgage.HouseholdPaymentNow;
+        var budget = mortgage.HouseholdPaymentNow + inputs.Pmi.For(1, loan.Principal);
+
+        // PMI is deductible only below an income limit; adjusted gross income is pay less the pre-tax 401(k) contribution.
+        var adjustedGrossIncome = household.GrossAnnualIncome - plan.RetirementContribution * 12m;
 
         var balance = loan.Principal;
         var balanceAtYearStart = balance;
         decimal totalInterest = 0m, totalTaxSaved = 0m, interestThisYear = 0m, esppSaved = 0m, iraRoom = 0m;
-        int? payoffMonth = null;
+        decimal totalPmi = 0m, pmiThisYear = 0m;
+        int? payoffMonth = null, lastPmiMonth = null;
         int? crossoverMonth = accounts.AfterTaxValue(household) >= balance ? 0 : null;
         List<NetWorthYear> years = [YearEnd(inputs, 0, balance, accounts, 0m)];
 
@@ -72,11 +77,16 @@ public sealed class StrategySimulator : IStrategySimulator
             // The required payment. A smaller final payment, or none once the loan is gone, frees the rest.
             if (balance > 0)
             {
+                var pmi = inputs.Pmi.For(month, balance);
                 var (interest, principal, subsidy) = mortgage.Pay(month, balance);
                 balance -= principal;
                 totalInterest += interest;
                 interestThisYear += interest;
-                cash += budget - (interest + principal - subsidy);
+                totalPmi += pmi;
+                pmiThisYear += pmi;
+                if (pmi > 0)
+                    lastPmiMonth = month;
+                cash += budget - (interest + principal - subsidy) - pmi;
             }
             else
             {
@@ -99,7 +109,9 @@ public sealed class StrategySimulator : IStrategySimulator
             if (isYearEnd)
             {
                 var priceLevel = DecimalMath.Pow(1 + inputs.Market.InflationRate / 100m, year - 1);
-                var taxSaved = TaxDeductions.TaxSavedByInterest(household, TaxDeductions.DeductibleInterest(interestThisYear, balanceAtYearStart), priceLevel);
+                var deductible = TaxDeductions.DeductibleInterest(interestThisYear, balanceAtYearStart)
+                    + TaxDeductions.DeductiblePmi(pmiThisYear, adjustedGrossIncome);
+                var taxSaved = TaxDeductions.TaxSavedByInterest(household, deductible, priceLevel);
                 totalTaxSaved += taxSaved;
                 cash += taxSaved;
                 accounts.AddRetirement(household.AnnualEsopContribution);
@@ -108,6 +120,7 @@ public sealed class StrategySimulator : IStrategySimulator
                 else
                     accounts.AddTaxable(household.AnnualRsuVesting);
                 interestThisYear = 0m;
+                pmiThisYear = 0m;
             }
 
             // The strategy's choice: extra principal while anything is owed, the rest invested.
@@ -141,7 +154,9 @@ public sealed class StrategySimulator : IStrategySimulator
             payoffMonth,
             payoffMonth is { } paid ? loan.DueDateOf(paid) : null,
             crossoverMonth,
-            crossoverMonth is { } crossed and > 0 ? loan.DueDateOf(crossed) : null);
+            crossoverMonth is { } crossed and > 0 ? loan.DueDateOf(crossed) : null,
+            totalPmi,
+            lastPmiMonth is { } last ? loan.DueDateOf(last) : null);
     }
 
     // esppSaved: payroll savings waiting in the ESPP for the next purchase are still the household's money.

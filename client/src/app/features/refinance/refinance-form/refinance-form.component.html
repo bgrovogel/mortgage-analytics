@@ -44,6 +44,12 @@
       </div>
     }
 
+    <div class="row">
+      <app-number-field [control]="form.controls.homeValue" [rule]="rules.homeValue" testId="home-value" />
+      <app-number-field [control]="form.controls.currentMonthlyPmi" [rule]="rules.currentMonthlyPmi" testId="current-pmi" />
+    </div>
+    <p class="hint" data-testid="current-pmi-hint">PMI from your statement, if you pay any. It ends once you owe 80% of the home's value.</p>
+
     <details class="section" data-testid="section-current-rate">
       <summary>
         <span class="section-title">Rate type</span>
@@ -90,6 +96,9 @@
       <input type="checkbox" formControlName="financeClosingCosts" data-testid="finance-closing-costs" />
       <span><strong>Add them to the loan</strong> instead of paying at closing</span>
     </label>
+
+    <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
+    <p class="hint" data-testid="new-pmi-hint">A yearly share of the new loan, charged only while it is more than 80% of the home's value.</p>
   </fieldset>
 
 </form>

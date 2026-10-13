@@ -227,4 +227,17 @@ describe('StrategyFormComponent', () => {
     expect(text(root, 'savings-summary')).toBe('No match · IRA $7,500/yr');
     expect(text(root, 'stock-summary')).toBe('RSUs $30,000/yr · ESOP $5,000/yr · ESPP 10% of pay');
   });
+
+  it("sends the PMI paid now, and takes it from another page's loan", () => {
+    const shared = TestBed.createComponent(StrategyFormComponent);
+    const sent: StrategyRequest[] = [];
+    shared.componentInstance.compare.subscribe((r) => sent.push(r));
+    shared.componentRef.setInput('loan', {
+      loan: { balance: 356_250, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, monthlyPmi: 148.44 },
+      from: 'Calculator', version: 2,
+    });
+    shared.detectChanges();
+
+    expect(sent[0]).toEqual(expect.objectContaining({ monthlyPmi: 148.44, homeValue: 375_000 }));
+  });
 });

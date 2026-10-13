@@ -15,6 +15,9 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
     /// <summary>The longest remaining term accepted: the 30-year horizon.</summary>
     public const int MaxRemainingTermInMonths = StrategySimulator.HorizonInMonths;
 
+    /// <summary>The most PMI a month the comparison accepts.</summary>
+    public const decimal MaxMonthlyPmi = 10_000m;
+
     /// <summary>Defines every rule for a <see cref="StrategyRequest"/>.</summary>
     public StrategyRequestValidator()
     {
@@ -27,6 +30,8 @@ public sealed class StrategyRequestValidator : AbstractValidator<StrategyRequest
             .When(r => r.NextPaymentDate is not null);
         RuleFor(r => r.HomeValue).GreaterThanOrEqualTo(0).LessThanOrEqualTo(Household.MaxAmount).WholeCents().WithName("Home value");
         RuleFor(r => r.HomeGrowthRate).Rate(-20, 25).WithName("Home value growth");
+        RuleFor(r => r.MonthlyPmi).InclusiveBetween(0, MaxMonthlyPmi).WholeCents().WithName("PMI per month");
+        RuleFor(r => r.HomeValue).GreaterThan(0).WithMessage("Enter the home's value: PMI ends at 80% of it.").When(r => r.MonthlyPmi > 0);
 
         Amount(r => r.GrossAnnualIncome, "Gross income");
         Percent(r => r.MarginalTaxRate, Household.MaxTaxRate, "Tax rate");

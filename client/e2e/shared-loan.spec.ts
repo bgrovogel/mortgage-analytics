@@ -44,6 +44,21 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'home-value'), "the home's price").toHaveValue('500,000');
     await expect(box(page, 'rate'), 'the rate').toHaveValue('6.25');
     await expect(box(page, 'years-left'), 'the whole term is left').toHaveValue('30');
+    await expect(box(page, 'monthly-pmi'), 'no PMI with 20% down').toHaveValue('0');
+  });
+
+  test("the Calculator's PMI goes with the loan, with the home's value it ends against", async ({ page }) => {
+    await page.goto('/calculator/overview');
+    await expect(page.getByTestId('results'), 'the first calculation has arrived').toHaveAttribute('aria-busy', 'false');
+    await box(page, 'home-price').fill('400000');
+    await box(page, 'down-payment').fill('20000');
+
+    await go(page, 'Pay off or invest');
+    await expect(box(page, 'monthly-pmi'), "0.5% of $380,000 a year, a twelfth a month").toHaveValue('158.33');
+
+    await go(page, 'Refinance');
+    await expect(box(page, 'home-value'), "the home's price").toHaveValue('400,000');
+    await expect(box(page, 'current-pmi'), 'and the same PMI').toHaveValue('158.33');
   });
 
   test('the Calculator takes the loan too, rounding part years without changing them elsewhere', async ({ page }) => {

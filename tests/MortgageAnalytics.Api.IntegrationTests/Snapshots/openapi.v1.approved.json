@@ -1978,6 +1978,19 @@
               "$ref": "#/components/schemas/RateChangeResponse"
             },
             "nullable": true
+          },
+          "monthlyPmi": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPmi": {
+            "type": "number",
+            "format": "double"
+          },
+          "pmiEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2028,6 +2041,19 @@
           },
           "newBuydown": {
             "$ref": "#/components/schemas/TemporaryBuydownRequest"
+          },
+          "homeValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "currentMonthlyPmi": {
+            "type": "number",
+            "format": "double"
+          },
+          "newPmiRate": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -2420,6 +2446,15 @@
             "format": "date",
             "nullable": true
           },
+          "totalMortgageInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageInsuranceEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
           "years": {
             "type": "array",
             "items": {
@@ -2548,6 +2583,10 @@
             "format": "double"
           },
           "homeGrowthRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPmi": {
             "type": "number",
             "format": "double"
           },

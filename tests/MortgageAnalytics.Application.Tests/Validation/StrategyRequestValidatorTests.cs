@@ -139,6 +139,10 @@ public class StrategyRequestValidatorTests : ValidatorTestBase<StrategyRequest, 
 
         yield return Case("InterestRate_Above30", "AnnualInterestRate", TypicalRequest with { AnnualInterestRate = 30.01m });
         yield return Case("HomeValue_Negative", "HomeValue", TypicalRequest with { HomeValue = -1m });
+        yield return Case("MonthlyPmi_Negative", "MonthlyPmi", TypicalRequest with { MonthlyPmi = -0.01m });
+        yield return Case("MonthlyPmi_Above10000", "MonthlyPmi", TypicalRequest with { MonthlyPmi = 10_000.01m });
+        yield return Case("MonthlyPmi_PartCents", "MonthlyPmi", TypicalRequest with { MonthlyPmi = 150.005m });
+        yield return Case("MonthlyPmi_WithoutAHomeValue", "HomeValue", TypicalRequest with { MonthlyPmi = 150m, HomeValue = 0m });
         yield return Case("MatchedShareOfPay_Above100", "MatchUpToPercentOfPay", TypicalRequest with { MatchUpToPercentOfPay = 100.01m });
         yield return Case("RetirementSavings_Negative", "CurrentRetirementSavings", TypicalRequest with { CurrentRetirementSavings = -1m });
         yield return Case("CurrentInvestments_Negative", "CurrentInvestments", TypicalRequest with { CurrentInvestments = -1m });

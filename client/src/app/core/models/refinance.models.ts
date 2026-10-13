@@ -26,6 +26,12 @@ export interface RefinanceRequest {
   newAdjustableRate?: AdjustableRateInput | null;
   /** A temporary buydown on the new loan, paid for at closing. */
   newBuydown?: TemporaryBuydownInput | null;
+  /** What the home is worth today; with it, each loan carries PMI while above 80% of it. Null leaves PMI out. */
+  homeValue?: number | null;
+  /** The PMI on the current loan's statement each month; 0 for none. */
+  currentMonthlyPmi?: number;
+  /** The new loan's yearly PMI rate, should it be above 80% of the value. */
+  newPmiRate?: number;
 }
 
 /** One payment on a loan, without housing costs. */
@@ -49,6 +55,12 @@ export interface RefinanceOption {
   payoffDate: string;
   payments: LoanPayment[];
   rateChanges: RateChange[];
+  /** The PMI with the first payment; 0 without any. */
+  monthlyPmi: number;
+  /** All the PMI paid. */
+  totalPmi: number;
+  /** The last payment with PMI, or null without any. */
+  pmiEndDate: string | null;
 }
 
 export interface RefinanceResponse {

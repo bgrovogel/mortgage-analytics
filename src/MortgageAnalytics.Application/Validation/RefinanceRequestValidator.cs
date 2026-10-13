@@ -54,6 +54,14 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("Current interest rate");
 
+        // PMI on either loan is measured against the home's value, so it needs one.
+        RuleFor(r => r.HomeValue!.Value).GreaterThan(0).LessThanOrEqualTo(LoanTerms.MaxPrincipal).WholeCents().WithName("Home value")
+            .OverridePropertyName(nameof(RefinanceRequest.HomeValue))
+            .When(r => r.HomeValue is not null);
+        RuleFor(r => r.HomeValue).NotNull().WithMessage("Enter the home's value: PMI ends at 80% of it.").When(r => r.CurrentMonthlyPmi > 0);
+        RuleFor(r => r.CurrentMonthlyPmi).InclusiveBetween(0, StrategyRequestValidator.MaxMonthlyPmi).WholeCents().WithName("PMI per month");
+        RuleFor(r => r.NewPmiRate).Percentage(max: 5).WithName("New PMI rate");
+
         RuleFor(r => r.NextPaymentDate)
             .InclusiveBetween(AmortizationRequestValidator.EarliestFirstPayment, AmortizationRequestValidator.LatestFirstPayment)
             .WithName("Next payment date")

@@ -94,7 +94,12 @@ reference loan with 3% growth, year 2 starts owing $197,543.99 of a home worth $
     saving counts in net savings. This is the default: a borrower paying extra asks as soon as they can. The PMI tile
     says what the other way would do: when not asking would end it and what that costs, or, with automatic removal
     chosen, what asking would save.
+  - Either way, **at the loan's midpoint** (payment 180 of 360) whatever the balance: the Act's final termination.
+    It matters at high rates, where the balance falls slowly: 3% down at 12% would otherwise pay PMI 28 months longer.
 - Each month therefore carries two balances: the actual one and the original schedule's.
+- **On the other pages** (`LoanPmi`), only a loan and the home's value are known. PMI already on a loan is the premium
+  on the statement, until the balance is 80% of the home's value today, when the borrower can ask for it to go. A new
+  loan (a refinance) needs PMI only above 80% of the value, at a yearly rate on the loan, until 80% or its midpoint.
 
 ---
 
@@ -316,6 +321,7 @@ Compare the rest of the current loan with a new one. Reference: **$300,000 left 
 | Lifetime savings | **−$17,415.28**: the refinance costs *more* overall |
 | Why | The clock restarts: **60 more payments**, mostly interest again |
 | Break-even | Payment **25**, when the interest saved first covers the closing costs |
+| The same, on a home worth $360,000, with $120 of PMI now | Both loans carry PMI to $288,000 (80%): the new one $125 a month, for longer, so it costs **$18,440** more and breaks even at payment **26** |
 | Keep paying $2,120.34 on the new loan | Paid off in **247 payments**, and **$107,590.12** saved |
 
 Key ideas:
@@ -323,6 +329,8 @@ Key ideas:
   costs paid up front).
 - **Break-even counts interest, not payments**: principal repaid isn't a cost. The common "closing costs ÷
   monthly savings" overstates the benefit when costs are financed or the term is longer.
+- **PMI counts wherever the payment does**, given the home's value: in the monthly change, the lifetime totals and the
+  break-even. A new 30 years keeps PMI longer, and borrowing the closing costs can push the new loan back above 80%.
 - The loan today can be entered as **what's owed now**, or as **the original loan** (amount, term, first
   payment), from which the server works out the balance on that loan's own schedule.
 - A buydown on the new loan is paid at closing, so it changes **when** you pay, not how much.
@@ -352,6 +360,9 @@ differently, so all three spend the same each month.
 **Taxes, realistically:**
 - Mortgage interest only saves tax on itemized deductions **above the standard deduction**, year by year. Paying
   down early shrinks the deduction too. The $750,000 debt limit applies.
+- **PMI** is paid from the same budget until the balance is 80% of the home's value, so paying down ends it sooner: a
+  return investing does not earn. From 2026 it is deductible like interest, phasing out by 10% for each $1,000 of
+  income over $100,000 (pay less the 401(k) contribution), so none from $110,000.
 - Net worth counts every account **after the tax still owed**: a 401(k) at the income tax rate, capital gains on
   taxable growth, a Roth tax-free.
 

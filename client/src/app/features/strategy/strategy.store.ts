@@ -24,6 +24,7 @@ export class StrategyStore extends CalculationStore<StrategyRequest, StrategyCom
       remainingTermInMonths: request.remainingTermInMonths,
       homeValue: request.homeValue,
       rate: sharedRateFrom(request.buydown, request.adjustableRate),
+      monthlyPmi: request.monthlyPmi ?? 0,
     };
   }
 

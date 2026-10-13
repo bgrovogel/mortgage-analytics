@@ -202,6 +202,24 @@ public class AnalysisScenarioTests : SociableAnalysisTestBase
         });
     }
 
+    [TestCase(PmiCancellation.Automatic)]
+    [TestCase(PmiCancellation.BorrowerRequested)]
+    public void Pmi_EndsAtTheLoansMidpoint_WhenAHighRateKeepsTheBalanceAbove80Percent(PmiCancellation cancellation)
+    {
+        // 3% down at 12%: the balance is still above 80% of the price at payment 180, so the law's midpoint ends PMI.
+        var request = A.Request.WithHomePrice(400_000m).WithDownPayment(12_000m).WithRate(12m).WithTermInMonths(360)
+            .WithFirstPaymentDate(new DateOnly(2026, 12, 1)).WithHousingCosts(c => c.WithPmi(0.5m, cancellation));
+
+        var response = Service.Analyze(request);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Baseline.MortgageInsuranceEndDate, Is.EqualTo(new DateOnly(2041, 11, 1)), "payment 180 of 360, not March 2044");
+            Assert.That(response.Baseline.TotalHousingCosts.MortgageInsurance, Is.EqualTo(180 * 161.67m),
+                "180 payments of 0.5% of $388,000 / 12");
+        });
+    }
+
     [Test]
     public void PmiOtherChoice_IsNotSaid_WithoutPmi()
     {

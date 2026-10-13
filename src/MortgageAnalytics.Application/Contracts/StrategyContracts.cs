@@ -69,6 +69,13 @@ public sealed record StrategyRequest
     /// <example>4.3</example>
     public decimal HomeGrowthRate { get; init; }
 
+    /// <summary>
+    /// PMI on the mortgage each month now, from the statement; 0 for none. It is paid until the balance is 80% of
+    /// <see cref="HomeValue"/>, when the borrower can ask for it to go, so paying down ends it sooner.
+    /// </summary>
+    /// <example>0</example>
+    public decimal MonthlyPmi { get; init; }
+
     /// <summary>Pay before tax.</summary>
     /// <example>120000</example>
     public decimal GrossAnnualIncome { get; init; }
@@ -260,11 +267,13 @@ public sealed record StrategyOutcomeResponse(
 
 /// <summary>One strategy played out over 30 years.</summary>
 /// <param name="TotalInterest">Mortgage interest paid.</param>
-/// <param name="TotalTaxSaved">Tax saved by deducting it.</param>
+/// <param name="TotalTaxSaved">Tax saved by deducting it (and PMI, below the income limit).</param>
 /// <param name="PayoffMonth">The month the mortgage is paid off, or null when it is still owed after 30 years.</param>
 /// <param name="PayoffDate">That payment's due date, or null.</param>
 /// <param name="CrossoverMonth">The first month investments (after tax) cover the balance: 0 when they already do, null when never.</param>
 /// <param name="CrossoverDate">That payment's due date, or null.</param>
+/// <param name="TotalMortgageInsurance">PMI paid; zero without any.</param>
+/// <param name="MortgageInsuranceEndDate">The due date of the last payment with PMI, or null without any.</param>
 /// <param name="Years">Year 0 (today) through year 30.</param>
 public sealed record StrategyProjectionResponse(
     decimal TotalInterest,
@@ -273,6 +282,8 @@ public sealed record StrategyProjectionResponse(
     DateOnly? PayoffDate,
     int? CrossoverMonth,
     DateOnly? CrossoverDate,
+    decimal TotalMortgageInsurance,
+    DateOnly? MortgageInsuranceEndDate,
     IReadOnlyList<NetWorthYearResponse> Years);
 
 /// <summary>Where a strategy stands at the end of a year.</summary>

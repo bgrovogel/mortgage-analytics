@@ -46,6 +46,21 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
             "a loan already paid off has nothing to refinance");
 
     [Test]
+    public void Pmi_NeedsAHomeValue_AndStaysInRange()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertValid(Valid with { HomeValue = 360_000m, CurrentMonthlyPmi = 120m, NewPmiRate = 0.5m }, "PMI on a home worth $360,000");
+            AssertValid(Valid with { HomeValue = null, CurrentMonthlyPmi = 0m }, "no value and no PMI leaves PMI out");
+            AssertInvalid(Valid with { HomeValue = null, CurrentMonthlyPmi = 120m }, "HomeValue", "PMI ends at 80% of the value, so it needs one");
+            AssertInvalid(Valid with { HomeValue = 0m }, "HomeValue", "a home is worth something");
+            AssertInvalid(Valid with { HomeValue = 360_000m, CurrentMonthlyPmi = -0.01m }, "CurrentMonthlyPmi", "PMI is not negative");
+            AssertInvalid(Valid with { HomeValue = 360_000m, CurrentMonthlyPmi = 10_000.01m }, "CurrentMonthlyPmi", "within reason");
+            AssertInvalid(Valid with { HomeValue = 360_000m, NewPmiRate = 5.01m }, "NewPmiRate", "the same limit as the calculator's");
+        });
+    }
+
+    [Test]
     public void ZeroRatesAndNoClosingCosts_AreValid() =>
         AssertValid(Valid with { CurrentAnnualInterestRate = 0, NewAnnualInterestRate = 0, ClosingCosts = 0 }, "0% loans and free refinances are edge cases, not errors");
 

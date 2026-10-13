@@ -110,7 +110,7 @@ internal static class AmortizationMapper
     /// Builds the housing-cost plan. Zero amounts are left out, so each cost is optional.
     /// Homestead exemptions and over-65 relief apply only when <see cref="HousingCostsRequest.IsHomestead"/> is set.
     /// </summary>
-    public static HousingCostPlan ToHousingCostPlan(this HousingCostsRequest? costs, PropertyPurchase purchase, PropertyValuation valuation)
+    public static HousingCostPlan ToHousingCostPlan(this HousingCostsRequest? costs, PropertyPurchase purchase, PropertyValuation valuation, int termInMonths)
     {
         if (costs is null)
             return HousingCostPlan.None;
@@ -161,7 +161,7 @@ internal static class AmortizationMapper
 
         // MortgageInsurance itself charges nothing when the purchase does not require PMI.
         if (costs.PmiRate > 0)
-            items.Add(new MortgageInsurance(costs.PmiRate, purchase, costs.PmiCancellation.ToDomain()));
+            items.Add(new MortgageInsurance(costs.PmiRate, purchase, costs.PmiCancellation.ToDomain(), termInMonths));
 
         return items.Count == 0 ? HousingCostPlan.None : new HousingCostPlan(items);
     }

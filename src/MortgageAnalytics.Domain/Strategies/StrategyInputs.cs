@@ -1,3 +1,4 @@
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Domain.Strategies;
@@ -71,4 +72,10 @@ public sealed record StrategyInputs
     /// usually paid by the seller or builder, pays part of the payment in its years.
     /// </summary>
     public TemporaryBuydown? Buydown { get; init; }
+
+    /// <summary>
+    /// PMI on the mortgage, or <see cref="LoanPmi.None"/>. It is part of what the household pays each month until the
+    /// balance reaches 80% of the home's value, so paying down ends it sooner: a return investing does not earn.
+    /// </summary>
+    public LoanPmi Pmi { get; init; } = LoanPmi.None;
 }

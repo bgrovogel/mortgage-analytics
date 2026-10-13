@@ -17,6 +17,9 @@
       <app-number-field [control]="form.controls.annualInterestRate" [rule]="rules.annualInterestRate" testId="rate" />
       <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
     </div>
+
+    <app-number-field [control]="form.controls.monthlyPmi" [rule]="rules.monthlyPmi" testId="monthly-pmi" />
+    <p class="hint" data-testid="pmi-hint">From your statement, if you pay any. It ends once you owe 80% of the home's value, so paying down ends it sooner.</p>
   </fieldset>
 
   <details class="section" data-testid="section-rate">

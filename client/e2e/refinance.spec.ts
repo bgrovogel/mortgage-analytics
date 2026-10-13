@@ -39,4 +39,15 @@ test.describe('Refinance', () => {
     await expect(verdict(page), 'borrowed costs are repaid with interest').toContainText('Refinancing costs $24,367 more');
     await expect(page.getByTestId('refi-table'), 'the table shows where the costs went').toContainText('$6,000 in the loan');
   });
+
+  test('PMI on both loans counts in the payment, the totals and the break-even', async ({ page }) => {
+    await page.getByTestId('home-value').fill('360000');
+    await page.getByTestId('current-pmi').fill('120');
+
+    await expect(page.getByTestId('refi-new-pmi'), '0.5% of $300,000 a year: the new loan is 83% of the value')
+      .toContainText('with $125.00 PMI');
+    await expect(page.getByTestId('refi-payment'), '$5 more PMI than now narrows the saving').toContainText('$316.69 less than now');
+    await expect(page.getByTestId('refi-pmi'), "each loan's PMI is in the table").toBeVisible();
+    await expect(page.getByTestId('refi-break-even'), 'and the break-even counts it').toContainText('the interest and PMI saved');
+  });
 });

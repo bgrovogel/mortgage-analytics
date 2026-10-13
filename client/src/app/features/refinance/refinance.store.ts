@@ -18,13 +18,14 @@ export class RefinanceStore extends CalculationStore<RefinanceRequest, Refinance
   describe = describeRefinance;
   suggestName = suggestRefinanceName;
 
-  /** The loan today (the one being refinanced), and how it started when given. The page does not ask for the home's value. */
+  /** The loan today (the one being refinanced), how it started when given, the home's value and today's PMI. */
   protected loanOf(request: RefinanceRequest): SharedLoan {
     return {
       balance: request.currentBalance,
       annualInterestRate: request.currentAnnualInterestRate,
       remainingTermInMonths: request.remainingTermInMonths,
-      homeValue: null,
+      homeValue: request.homeValue ?? null,
+      monthlyPmi: request.homeValue == null ? null : (request.currentMonthlyPmi ?? 0),
       start: request.originalLoan ?? null,
       // The current loan's ARM counts from the next payment, or from the original first one when that is given.
       rate: sharedRateFrom(null, request.currentAdjustableRate, request.originalLoan ? paymentsMade(request.originalLoan.firstPaymentDate, new Date()) : 0),

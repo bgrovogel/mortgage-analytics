@@ -83,6 +83,21 @@ public class MortgageInsuranceTests
         Assert.That(pmi.CancelAtLoanToValue, Is.EqualTo(expected), "automatic removal is at 78%, a borrower request at 80%");
     }
 
+    [TestCase(MortgageInsuranceCancellation.Automatic, 360, 180, 98.96, TestName = "Midpoint: payment 180 of 360 still pays")]
+    [TestCase(MortgageInsuranceCancellation.Automatic, 360, 181, 0, TestName = "Midpoint: from payment 181 of 360, none, whatever the balance")]
+    [TestCase(MortgageInsuranceCancellation.BorrowerRequested, 360, 181, 0, TestName = "Midpoint: on request too")]
+    [TestCase(MortgageInsuranceCancellation.Automatic, 359, 180, 98.96, TestName = "Midpoint: an odd term rounds up, payment 180 of 359 pays")]
+    [TestCase(MortgageInsuranceCancellation.Automatic, 359, 181, 0, TestName = "Midpoint: an odd term rounds up, payment 181 of 359 does not")]
+    public void EndsAtTheLoansMidpoint_EvenAboveTheCancellationBalance(MortgageInsuranceCancellation cancellation, int term, int paymentNumber, decimal expected)
+    {
+        // Both balances are still far above 80% of value, as at a high rate on a small down payment.
+        var pmi = new MortgageInsurance(0.5m, A.FivePercentDownPurchase, cancellation, term);
+
+        var charge = pmi.AmountFor(Period(paymentNumber, openingBalance: 230_000m, scheduledOpeningBalance: 230_000m));
+
+        Assert.That(charge, Is.EqualTo(expected), "the Homeowners Protection Act ends PMI at the midpoint of the amortization period");
+    }
+
     [Test]
     public void RejectsANegativeRate()
     {

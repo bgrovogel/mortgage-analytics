@@ -160,4 +160,38 @@ describe('RefinanceResultsComponent', () => {
     expect(root.querySelector('[data-testid="refi-buydown-first-year"]')!.textContent).toBe('$1,432.25 in year 1, with the buydown');
     expect(Array.from(root.querySelectorAll('[data-testid="refi-table"] th'), (th) => th.textContent!.trim())).toContain('Closing costs + buydown');
   });
+
+  describe('with PMI', () => {
+    const withPmi = () => aRefinanceResponse({
+      current: aRefinanceOption({ loanAmount: 300_000, monthlyPayment: 2_120.34, numberOfPayments: 300, totalPaid: 636_100.16, payoffDate: '2050-12-01',
+        monthlyPmi: 120, totalPmi: 4_080, pmiEndDate: '2028-10-01' }),
+      refinanced: aRefinanceOption({ loanAmount: 300_000, monthlyPayment: 1_798.65, numberOfPayments: 360, totalPaid: 647_515.44, payoffDate: '2055-12-01',
+        monthlyPmi: 125, totalPmi: 8_000, pmiEndDate: '2031-04-01' }),
+      monthlySavings: 316.69,
+    });
+
+    it('counts it in the new payment, and says until when', () => {
+      render(withPmi());
+
+      expect(text('refi-payment')).toContain('$1,923.65');
+      expect(text('refi-new-pmi')).toBe('with $125.00 PMI, until Apr 2031');
+    });
+
+    it('shows each loan\'s PMI in the table, in the total cost, and in what the break-even counts', () => {
+      render(withPmi());
+
+      expect(text('refi-pmi')).toContain('$4,080 to Oct 2028');
+      expect(text('refi-pmi')).toContain('$8,000 to Apr 2031');
+      expect(text('refi-total-cost')).toContain('$640,180'); // $636,100.16 + $4,080
+      expect(text('refi-break-even')).toContain('the interest and PMI saved cover the closing costs');
+    });
+
+    it('leaves PMI out where neither loan has any', () => {
+      render(aRefinanceResponse());
+
+      expect(text('refi-pmi')).toBeUndefined();
+      expect(text('refi-new-pmi')).toBeUndefined();
+      expect(text('refi-break-even')).toContain('the interest saved covers');
+    });
+  });
 });

@@ -205,4 +205,36 @@ public class RefinanceServiceTests
 
         Assert.That(response.KeepingCurrentPayment, Is.Null, "paying today's payment on a dearer loan would not pay it off");
     }
+
+    [Test]
+    public void Analyze_WithAHomeValue_ShowsThePmiOnEachLoan_AndCountsIt()
+    {
+        // $300,000 on a home worth $360,000: both loans carry PMI until $288,000.
+        var response = _service.Analyze(Request() with { HomeValue = 360_000m, CurrentMonthlyPmi = 120m, NewPmiRate = 0.5m });
+        var without = _service.Analyze(Request());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Current.MonthlyPmi, Is.EqualTo(120m), "today's PMI");
+            Assert.That(response.Refinanced.MonthlyPmi, Is.EqualTo(125m), "0.5% of $300,000 a year on the new loan");
+            Assert.That(response.Current.TotalPmi, Is.Positive, "PMI left on the current loan");
+            Assert.That(response.Refinanced.PmiEndDate, Is.GreaterThan(response.Current.PmiEndDate!.Value), "a new 30 years keeps it longer");
+            Assert.That(response.MonthlySavings, Is.EqualTo(without.MonthlySavings - 5m), "$5 more PMI a month");
+            Assert.That(response.LifetimeSavings,
+                Is.EqualTo(without.LifetimeSavings + response.Current.TotalPmi - response.Refinanced.TotalPmi), "both counted in the total");
+        });
+    }
+
+    [Test]
+    public void Analyze_WithoutAHomeValue_LeavesPmiOut()
+    {
+        var response = _service.Analyze(Request());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Current.TotalPmi, Is.Zero, "no value to measure 80% against");
+            Assert.That(response.Refinanced.MonthlyPmi, Is.Zero, "on either loan");
+            Assert.That(response.Refinanced.PmiEndDate, Is.Null, "so no end date");
+        });
+    }
 }

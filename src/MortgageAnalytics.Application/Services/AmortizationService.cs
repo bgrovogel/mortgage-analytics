@@ -35,7 +35,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         var loan = request.ToLoanTerms(program?.LoanAmount ?? purchase.LoanAmount, firstPayment);
         var valuation = request.HousingCosts.ToValuation(purchase);
 
-        var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation);
+        var plan = request.HousingCosts.ToHousingCostPlan(purchase, valuation, request.TermInMonths);
         if (program is { Program: LoanProgram.Fha })
         {
             // FHA's MIP is figured on the original schedule at the starting rate, whatever the rate does later.
@@ -83,7 +83,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         var removal = costs.PmiCancellation == PmiCancellation.Automatic ? PmiCancellation.BorrowerRequested : PmiCancellation.Automatic;
         var otherWay = comparer.Compare(
             loan, request.ExtraPayments.ToExtraPaymentPlan(), request.ToRecastPolicy(),
-            (costs with { PmiCancellation = removal }).ToHousingCostPlan(purchase, valuation));
+            (costs with { PmiCancellation = removal }).ToHousingCostPlan(purchase, valuation, request.TermInMonths));
         var savedByAsking = Math.Abs(comparison.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]
             - otherWay.AcceleratedCosts.Totals[HousingCostCategory.MortgageInsurance]);
         return savedByAsking > 0 && otherWay.AcceleratedCosts.MortgageInsuranceLastPayment is { } last

@@ -54,4 +54,15 @@ test.describe('Pay off or invest', () => {
     await expect(page.getByTestId('counting-on'), 'four points off the expected return').toContainText('counting on 6% a year');
     await expect(page.getByTestId('card-Hybrid'), 'so the hybrid leans to the mortgage').toContainText('38% invested, 62% to the mortgage');
   });
+
+  test('PMI on the loan: paying down ends it sooner, and the comparison counts that', async ({ page }) => {
+    await page.getByTestId('balance').fill('370000');
+    await page.getByTestId('years-left').fill('30');
+    await page.getByTestId('monthly-pmi').fill('150');
+
+    await page.getByTestId('tab-why').click();
+    await expect(page.getByTestId('fact-sheet'), 'PMI lasts until the balance is $320,000, 80% of the $400,000 home')
+      .toContainText("Your PMI ends once you owe 80% of the home's value");
+    await expect(page.getByTestId('fact-sheet'), 'which paying down reaches sooner').toContainText('Paying down saves');
+  });
 });

@@ -176,6 +176,8 @@ class Costs:
         self.pmi_premium = money(loan * rate / 100 / 12) if self.pmi_required and rate > 0 else D(0)
         self.pmi_by_request = c.get('pmiCancellation', 'BorrowerRequested') == 'BorrowerRequested'
         self.pmi_threshold = price * (80 if self.pmi_by_request else 78) / 100
+        # The Homeowners Protection Act ends PMI at the loan's midpoint whatever the balance (rounded up for an odd term).
+        self.pmi_last = (request['termInMonths'] + 1) // 2
 
     def taxable_value(self, category, year):
         rate, (amount, percent), senior = self.taxes[category]
@@ -211,7 +213,7 @@ class Costs:
             out['hoaDues'] = grow(self.hoa[0], self.hoa[1], year)
         if not self.government_mip:
             tested = opening if self.pmi_by_request else scheduled_opening
-            out['mortgageInsurance'] = self.pmi_premium if tested > self.pmi_threshold else D(0)
+            out['mortgageInsurance'] = self.pmi_premium if tested > self.pmi_threshold and p <= self.pmi_last else D(0)
         return out
 
 
@@ -510,7 +512,9 @@ def refinance(request):
     """
     Keep the current loan, or refinance it: the rest of the current loan, the new loan (closing costs financed or
     paid up front), the new loan at today's payment when that is higher, lifetime savings and the break-even payment.
-    For the plain case: fixed rates, the loan given by what is owed now.
+    For the plain case: fixed rates, the loan given by what is owed now. With a home value, PMI on each loan: today's
+    premium on the current one, and the new rate on the new one if it is above 80% of the value; each until its
+    balance is 80% of the value, the new one by law not past its midpoint.
     """
     bal, cur_rate, left = D(str(request['currentBalance'])), D(str(request['currentAnnualInterestRate'])), request['remainingTermInMonths']
     new_rate, new_term, closing = D(str(request['newAnnualInterestRate'])), request['newTermInMonths'], D(str(request['closingCosts']))
@@ -522,25 +526,43 @@ def refinance(request):
     total = lambda s: sum((r['scheduled'] + r['extra'] for r in s['rows']), D(0))  # noqa: E731
     interest = lambda s: sum((r['interest'] for r in s['rows']), D(0))  # noqa: E731
 
-    # Break-even: the first payment by which the interest saved so far covers the closing costs, financed or not.
+    # PMI: (premium, removal balance, last payment) on each loan, or none.
+    value = D(str(request['homeValue'])) if request.get('homeValue') is not None else None
+    no_pmi = (D(0), D(0), 0)
+    cur_pmi, new_pmi = no_pmi, no_pmi
+    if value is not None:
+        removal = value * D('0.8')
+        premium_now = D(str(request.get('currentMonthlyPmi', 0)))
+        cur_pmi = (premium_now, removal, 10**9) if premium_now > 0 else no_pmi
+        rate = D(str(request.get('newPmiRate', 0.5)))
+        if principal > removal and rate > 0:
+            new_pmi = (money(principal * rate / 100 / 12), removal, (new_term + 1) // 2)
+    pmi_of = lambda pmi, row: pmi[0] if row['p'] <= pmi[2] and row['opening'] > pmi[1] else D(0)  # noqa: E731
+    pmi_total = lambda pmi, s: sum((pmi_of(pmi, r) for r in s['rows']), D(0))  # noqa: E731
+    first_pmi = lambda pmi, s: pmi_of(pmi, s['rows'][0])  # noqa: E731
+
+    # Break-even: the first payment by which the interest and PMI saved so far cover the closing costs, financed or not.
     break_even, saved = None, D(0)
     for i, row in enumerate(new['rows']):
-        cur_interest = current['rows'][i]['interest'] if i < len(current['rows']) else D(0)
-        saved += cur_interest - row['interest']
+        cur_cost = current['rows'][i]['interest'] + pmi_of(cur_pmi, current['rows'][i]) if i < len(current['rows']) else D(0)
+        saved += cur_cost - (row['interest'] + pmi_of(new_pmi, row))
         if saved >= closing:
             break_even = i + 1
             break
 
+    current_all = total(current) + pmi_total(cur_pmi, current)
+    monthly = current['initial'] + first_pmi(cur_pmi, current) - (new['initial'] + first_pmi(new_pmi, new))
     keep = None
-    if current['initial'] > new['initial']:
-        extra = current['initial'] - new['initial']
-        k = amortize(principal, new_rate, new_term, extra=lambda p: (extra, extra))
-        keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k), 'lifetimeSavings': total(current) - (total(k) + upfront)}
+    if monthly > 0:
+        k = amortize(principal, new_rate, new_term, extra=lambda p: (monthly, monthly))
+        keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k),
+                'lifetimeSavings': current_all - (total(k) + pmi_total(new_pmi, k) + upfront)}
     return {
         'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),
         'newPayment': new['initial'], 'newInterest': interest(new), 'newPayments': len(new['rows']),
-        'monthlySavings': current['initial'] - new['initial'],
-        'lifetimeSavings': total(current) - (total(new) + upfront),
+        'currentPmi': pmi_total(cur_pmi, current), 'newPmi': pmi_total(new_pmi, new),
+        'monthlySavings': monthly,
+        'lifetimeSavings': current_all - (total(new) + pmi_total(new_pmi, new) + upfront),
         'monthsAdded': len(new['rows']) - len(current['rows']),
         'breakEvenPaymentNumber': break_even,
         'keepPayment': keep,

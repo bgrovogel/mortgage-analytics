@@ -159,6 +159,9 @@ export function aRefinanceOption(overrides: Partial<RefinanceOption> = {}, payme
     payoffDate: payments[paymentCount - 1].dueDate,
     payments,
     rateChanges: [],
+    monthlyPmi: 0,
+    totalPmi: 0,
+    pmiEndDate: null,
     ...overrides,
   };
 }
@@ -210,7 +213,10 @@ export function aStrategyProjection(finalNetWorth: number, overrides: Partial<St
       netWorthInTodaysDollars: netWorth / 2,
     };
   });
-  return { totalInterest: 200_000, totalTaxSaved: 0, payoffMonth: 180, payoffDate: '2041-01-01', crossoverMonth: 90, crossoverDate: '2033-06-01', years, ...overrides };
+  return {
+    totalInterest: 200_000, totalTaxSaved: 0, payoffMonth: 180, payoffDate: '2041-01-01', crossoverMonth: 90, crossoverDate: '2033-06-01',
+    totalMortgageInsurance: 0, mortgageInsuranceEndDate: null, years, ...overrides,
+  };
 }
 
 /**

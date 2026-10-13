@@ -58,6 +58,21 @@ public sealed record RefinanceRequest
 
     /// <summary>A temporary buydown on the new loan, paid for in cash at closing. Omit for none.</summary>
     public TemporaryBuydownRequest? NewBuydown { get; init; }
+
+    /// <summary>
+    /// What the home is worth today, the new loan's appraisal. With it, each loan carries PMI while it is above 80% of
+    /// this value; without it, PMI is left out of the comparison.
+    /// </summary>
+    /// <example>360000</example>
+    public decimal? HomeValue { get; init; }
+
+    /// <summary>The PMI on the current loan's statement each month; 0 for none. Needs <see cref="HomeValue"/>.</summary>
+    /// <example>120</example>
+    public decimal CurrentMonthlyPmi { get; init; }
+
+    /// <summary>The new loan's yearly PMI rate, as a percentage of the loan, should it be above 80% of the value.</summary>
+    /// <example>0.5</example>
+    public decimal NewPmiRate { get; init; } = 0.5m;
 }
 
 /// <summary>A loan as it was taken out.</summary>
@@ -81,12 +96,12 @@ public sealed record OriginalLoanRequest
 /// <param name="Refinanced">The new loan, paid as scheduled.</param>
 /// <param name="KeepingCurrentPayment">The new loan while still paying today's payment, or null when the new payment is not lower.</param>
 /// <param name="UpfrontCosts">Cash due at closing: the closing costs unless they are financed.</param>
-/// <param name="MonthlySavings">How much lower the new payment is. Negative when it is higher.</param>
+/// <param name="MonthlySavings">How much lower the new payment is, PMI included. Negative when it is higher.</param>
 /// <param name="InterestSaved">Interest left on the current loan minus interest on the new one. Negative when the new loan charges more.</param>
-/// <param name="LifetimeSavings">Everything left to pay now, minus everything the refinance costs, closing costs included. Negative when refinancing costs more.</param>
+/// <param name="LifetimeSavings">Everything left to pay now, PMI included, minus everything the refinance costs, closing costs and PMI included. Negative when refinancing costs more.</param>
 /// <param name="KeepingCurrentPaymentLifetimeSavings">The same, when today's payment is kept up on the new loan; null when that option does not apply.</param>
 /// <param name="MonthsAdded">How many more payments the new loan takes than the current one has left: the amortization clock restarting.</param>
-/// <param name="BreakEvenPaymentNumber">The payment by which the interest saved first covers the closing costs, or null when it never does.</param>
+/// <param name="BreakEvenPaymentNumber">The payment by which the interest and PMI saved first cover the closing costs, or null when they never do.</param>
 /// <param name="BreakEvenDate">The due date of that payment, or null.</param>
 /// <param name="BuydownCost">What a buydown on the new loan costs at closing (included in <paramref name="UpfrontCosts"/>); it comes back as lower payments.</param>
 /// <param name="NewBuydown">The new loan's buydown years and payments, or null without one.</param>
@@ -117,6 +132,9 @@ public sealed record RefinanceResponse(
 /// <param name="PayoffDate">The due date of the last payment.</param>
 /// <param name="Payments">Every payment, in order; empty when the request asked for summaries only.</param>
 /// <param name="RateChanges">Rate resets along the way (an adjustable rate), with the payment before and after each.</param>
+/// <param name="MonthlyPmi">The PMI with the first payment; zero without any.</param>
+/// <param name="TotalPmi">All the PMI paid.</param>
+/// <param name="PmiEndDate">The due date of the last payment with PMI, or null without any.</param>
 public sealed record RefinanceOptionResponse(
     decimal LoanAmount,
     decimal MonthlyPayment,
@@ -126,7 +144,10 @@ public sealed record RefinanceOptionResponse(
     decimal TotalPaid,
     DateOnly PayoffDate,
     IReadOnlyList<LoanPaymentResponse> Payments,
-    IReadOnlyList<RateChangeResponse> RateChanges);
+    IReadOnlyList<RateChangeResponse> RateChanges,
+    decimal MonthlyPmi = 0m,
+    decimal TotalPmi = 0m,
+    DateOnly? PmiEndDate = null);
 
 /// <summary>One payment on a loan, without housing costs.</summary>
 /// <param name="PaymentNumber">The 1-based payment number.</param>

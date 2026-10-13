@@ -1,4 +1,5 @@
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 
 namespace MortgageAnalytics.Domain.Refinancing;
@@ -23,26 +24,50 @@ namespace MortgageAnalytics.Domain.Refinancing;
 /// What a buydown on the new loan costs, paid in cash at closing; 0 without one. It comes back as lower payments in
 /// the buydown's years, so it is left out of the lifetime savings and the break-even, which it does not change.
 /// </param>
+/// <param name="CurrentPmiOrNone">The PMI on the current loan; null for none.</param>
+/// <param name="NewPmiOrNone">The PMI on the new loan; null for none.</param>
+/// <remarks>
+/// PMI counts wherever the payment does: in the monthly savings, the lifetime totals and the break-even. A refinance
+/// that restarts the clock keeps PMI longer, and one that borrows its closing costs can bring PMI back.
+/// </remarks>
 public sealed record RefinanceAnalysis(
     RefinanceOffer Offer,
     AmortizationSchedule Current,
     AmortizationSchedule Refinanced,
     AmortizationSchedule? KeepingCurrentPayment,
     LoanTerms NewLoan,
-    decimal BuydownCost = 0m)
+    decimal BuydownCost = 0m,
+    LoanPmi? CurrentPmiOrNone = null,
+    LoanPmi? NewPmiOrNone = null)
 {
+    /// <summary>The PMI on the current loan, or <see cref="LoanPmi.None"/>.</summary>
+    public LoanPmi CurrentPmi => CurrentPmiOrNone ?? LoanPmi.None;
+
+    /// <summary>The PMI on the new loan, or <see cref="LoanPmi.None"/>.</summary>
+    public LoanPmi NewPmi => NewPmiOrNone ?? LoanPmi.None;
+
+    /// <summary>PMI still to pay on the current loan.</summary>
+    public decimal CurrentPmiTotal => CurrentPmi.TotalOn(Current);
+
+    /// <summary>PMI on the new loan, paid as scheduled.</summary>
+    public decimal RefinancedPmiTotal => NewPmi.TotalOn(Refinanced);
+
+    /// <summary>PMI on the new loan while today's payment is kept up, or null when that option does not apply.</summary>
+    public decimal? KeepingCurrentPaymentPmiTotal => KeepingCurrentPayment is null ? null : NewPmi.TotalOn(KeepingCurrentPayment);
+
     /// <summary>Cash due at closing: the closing costs unless they are financed, plus any buydown.</summary>
     public decimal CashAtClosing => Offer.UpfrontCosts + BuydownCost;
 
-    /// <summary>How much lower the new payment is. Negative when it is higher.</summary>
-    public decimal MonthlySavings => Current.InitialMonthlyPayment - Refinanced.InitialMonthlyPayment;
+    /// <summary>How much lower the new payment is, PMI included. Negative when it is higher.</summary>
+    public decimal MonthlySavings =>
+        Current.InitialMonthlyPayment + CurrentPmi.FirstOn(Current) - (Refinanced.InitialMonthlyPayment + NewPmi.FirstOn(Refinanced));
 
     /// <summary>Interest on the rest of the current loan minus interest on the new loan.</summary>
     public decimal InterestSaved => Current.TotalInterest - Refinanced.TotalInterest;
 
     /// <summary>
-    /// Everything still to pay on the current loan, minus everything the refinance costs (payments plus
-    /// up-front closing costs). Negative when refinancing costs more over the life of the loan.
+    /// Everything still to pay on the current loan, PMI included, minus everything the refinance costs (payments, PMI
+    /// and up-front closing costs). Negative when refinancing costs more over the life of the loan.
     /// </summary>
     public decimal LifetimeSavings => LifetimeSavingsOf(Refinanced);
 
@@ -53,15 +78,16 @@ public sealed record RefinanceAnalysis(
     public int MonthsAdded => Refinanced.NumberOfPayments - Current.NumberOfPayments;
 
     /// <summary>
-    /// The payment by which the interest saved so far first covers the closing costs, financed or not; null
-    /// when it never does. This counts interest only, because principal repaid is not a cost. A simple
+    /// The payment by which the interest (and PMI) saved so far first covers the closing costs, financed or not; null
+    /// when it never does. This counts interest and PMI only, because principal repaid is not a cost. A simple
     /// "closing costs ÷ monthly savings" would overstate the benefit when costs are financed or the term is longer.
     /// </summary>
-    public int? BreakEvenPaymentNumber { get; } = InterestBreakEven.PaymentNumber(Offer.ClosingCosts, Current, Refinanced);
+    public int? BreakEvenPaymentNumber { get; } = InterestBreakEven.PaymentNumber(
+        Offer.ClosingCosts, Current, Refinanced, CurrentPmiOrNone ?? LoanPmi.None, NewPmiOrNone ?? LoanPmi.None);
 
     /// <summary>The due date of <see cref="BreakEvenPaymentNumber"/>, or null when there is none.</summary>
     public DateOnly? BreakEvenDate => BreakEvenPaymentNumber is { } number ? Refinanced.Payments[number - 1].DueDate : null;
 
     private decimal LifetimeSavingsOf(AmortizationSchedule refinanced) =>
-        Current.TotalPaid - (refinanced.TotalPaid + Offer.UpfrontCosts);
+        Current.TotalPaid + CurrentPmiTotal - (refinanced.TotalPaid + NewPmi.TotalOn(refinanced) + Offer.UpfrontCosts);
 }

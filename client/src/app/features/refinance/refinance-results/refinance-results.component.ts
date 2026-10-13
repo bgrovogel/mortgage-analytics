@@ -10,7 +10,7 @@ interface TableColumn {
   option: RefinanceOption;
   /** Cash at closing, or a note that the costs are in the loan. */
   closing: string;
-  /** Everything paid: principal, interest and cash at closing. */
+  /** Everything paid: principal, interest, PMI and cash at closing. */
   totalCost: number;
 }
 
@@ -61,6 +61,9 @@ export class RefinanceResultsComponent {
     return lines.length > 0 || buydown || worstCase ? { resets: lines, buydown, worstCase } : null;
   });
 
+  /** True when either loan carries PMI, which then counts in the payments, the totals and the break-even. */
+  readonly hasPmi = computed(() => this.result().current.totalPmi > 0 || this.result().refinanced.totalPmi > 0);
+
   /** True when refinancing costs more over the life of the loan, closing costs included. */
   readonly costsMore = computed(() => this.result().lifetimeSavings < 0);
 
@@ -96,11 +99,12 @@ export class RefinanceResultsComponent {
     const financed = r.refinanced.loanAmount - r.current.loanAmount;
     const closing = r.upfrontCosts > 0 ? usd(r.upfrontCosts) : financed > 0 ? `${usd(financed)} in the loan` : '$0';
     const columns: TableColumn[] = [
-      { label: 'Keep current loan', option: r.current, closing: '—', totalCost: r.current.totalPaid },
-      { label: 'Refinance', option: r.refinanced, closing, totalCost: r.refinanced.totalPaid + r.upfrontCosts },
+      { label: 'Keep current loan', option: r.current, closing: '—', totalCost: r.current.totalPaid + r.current.totalPmi },
+      { label: 'Refinance', option: r.refinanced, closing, totalCost: r.refinanced.totalPaid + r.refinanced.totalPmi + r.upfrontCosts },
     ];
     if (r.keepingCurrentPayment) {
-      columns.push({ label: 'Refinance, keep payment', option: r.keepingCurrentPayment, closing, totalCost: r.keepingCurrentPayment.totalPaid + r.upfrontCosts });
+      const keep = r.keepingCurrentPayment;
+      columns.push({ label: 'Refinance, keep payment', option: keep, closing, totalCost: keep.totalPaid + keep.totalPmi + r.upfrontCosts });
     }
     return columns;
   });

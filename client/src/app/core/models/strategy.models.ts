@@ -14,6 +14,8 @@ export interface StrategyRequest {
   nextPaymentDate: string | null;
   homeValue: number;
   homeGrowthRate: number;
+  /** PMI on the mortgage each month now; 0 for none. It ends once the balance is 80% of the home's value. */
+  monthlyPmi?: number;
   grossAnnualIncome: number;
   marginalTaxRate: number;
   capitalGainsTaxRate: number;
@@ -94,6 +96,10 @@ export interface StrategyProjection {
   payoffDate: string | null;
   crossoverMonth: number | null;
   crossoverDate: string | null;
+  /** PMI paid; 0 without any. */
+  totalMortgageInsurance: number;
+  /** The last payment with PMI, or null without any. */
+  mortgageInsuranceEndDate: string | null;
   years: NetWorthYear[];
 }
 

@@ -75,6 +75,20 @@ describe('strategy text', () => {
       ]);
     });
 
+    it('says when PMI ends each way, and what paying down saves of it', () => {
+      const base = aStrategyComparison();
+      const withPmi = (strategy: string, total: number, end: string) => {
+        const outcome = base.strategies.find((o) => o.strategy === strategy)!;
+        return { ...outcome, riskAdjusted: { ...outcome.riskAdjusted, totalMortgageInsurance: total, mortgageInsuranceEndDate: end } };
+      };
+      const result = { ...base, strategies: [withPmi('PayOffFirst', 7_500, '2030-02-01'), withPmi('InvestTheDifference', 16_500, '2035-02-01'),
+        base.strategies[2]] } as StrategyComparison;
+
+      expect(facts(result)).toContain("Your PMI ends once you owe 80% of the home's value: Feb 2030 if you pay down first, Feb 2035 if you invest. "
+        + "Paying down saves $9,000 of it, a return investing doesn't earn.");
+      expect(facts(base).some((line) => line.includes('PMI'))).toBe(false);
+    });
+
     it('blends the IRA with a taxable account, taxed only when sold', () => {
       expect(facts(withRates({ iraShelteredPercent: 25, afterTaxRiskAdjustedReturn: 7.56, rateEdge: 1.06 }))[1]).toBe(
         '25% of your extra cash fits in your IRA, tax-free; the rest, taxed only when sold, keeps about 7.41% a year. Together: 7.56%. '

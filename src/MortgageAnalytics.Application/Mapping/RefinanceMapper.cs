@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Refinancing;
 
@@ -32,14 +33,19 @@ public static class RefinanceMapper
             Buydown = request.NewBuydown.ToDomain(),
         };
 
+    /// <summary>The PMI on each loan, from the home's value, or null when the request gives none.</summary>
+    /// <param name="request">A validated request.</param>
+    public static RefinancePmi? ToPmi(this RefinanceRequest request) =>
+        request.HomeValue is { } value ? new RefinancePmi(value, request.CurrentMonthlyPmi, request.NewPmiRate) : null;
+
     /// <summary>Maps the analysis to the response contract.</summary>
     /// <param name="analysis">The domain result.</param>
     /// <param name="worstCaseLifetimeSavings">The lifetime savings if rates rise as far as the caps allow, when either loan adjusts.</param>
     public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, decimal? worstCaseLifetimeSavings = null) =>
         new(
-            ToResponse(analysis.Current),
-            ToResponse(analysis.Refinanced),
-            analysis.KeepingCurrentPayment is null ? null : ToResponse(analysis.KeepingCurrentPayment),
+            ToResponse(analysis.Current, analysis.CurrentPmi),
+            ToResponse(analysis.Refinanced, analysis.NewPmi),
+            analysis.KeepingCurrentPayment is null ? null : ToResponse(analysis.KeepingCurrentPayment, analysis.NewPmi),
             analysis.CashAtClosing,
             analysis.MonthlySavings,
             analysis.InterestSaved,
@@ -65,7 +71,7 @@ public static class RefinanceMapper
             cost,
             BuydownFunding.Borrower);
 
-    private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule) =>
+    private static RefinanceOptionResponse ToResponse(AmortizationSchedule schedule, LoanPmi pmi) =>
         new(
             schedule.TotalPrincipal,
             schedule.InitialMonthlyPayment,
@@ -76,5 +82,8 @@ public static class RefinanceMapper
             schedule.PayoffDate,
             [.. schedule.Payments.Select(p => new LoanPaymentResponse(p.PaymentNumber, p.DueDate, p.Principal, p.Interest, p.ExtraPrincipal, p.RemainingBalance))],
             [.. schedule.RateChanges.Select(c => new RateChangeResponse(
-                c.PaymentNumber, schedule.Payments[c.PaymentNumber - 1].DueDate, c.PreviousRate, c.NewRate, c.PreviousPayment, c.NewPayment))]);
+                c.PaymentNumber, schedule.Payments[c.PaymentNumber - 1].DueDate, c.PreviousRate, c.NewRate, c.PreviousPayment, c.NewPayment))],
+            pmi.FirstOn(schedule),
+            pmi.TotalOn(schedule),
+            pmi.LastPaymentOn(schedule) is { } last ? schedule.Payments[last - 1].DueDate : null);
 }

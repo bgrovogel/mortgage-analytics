@@ -14,10 +14,13 @@
 <div class="tiles">
   <div class="tile" data-testid="refi-payment">
     <span class="label">New monthly payment</span>
-    <strong>{{ cents(r.refinanced.monthlyPayment) }}</strong>
+    <strong>{{ cents(r.refinanced.monthlyPayment + r.refinanced.monthlyPmi) }}</strong>
     <small>
       {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
     </small>
+    @if (r.refinanced.pmiEndDate; as end) {
+      <small data-testid="refi-new-pmi">with {{ cents(r.refinanced.monthlyPmi) }} PMI, until {{ date(end) }}</small>
+    }
     @if (r.newBuydown; as buydown) {
       <!-- What is actually paid at first, as the calculator's payment tile says. -->
       <small class="first-year" data-testid="refi-buydown-first-year">{{ cents(buydown.years[0].monthlyPayment) }} in year 1, with the buydown</small>
@@ -27,10 +30,10 @@
     <span class="label">Break-even</span>
     @if (r.breakEvenDate) {
       <strong>{{ date(r.breakEvenDate) }}</strong>
-      <small>after {{ r.breakEvenPaymentNumber }} payments, the interest saved covers the closing costs</small>
+      <small>after {{ r.breakEvenPaymentNumber }} payments, {{ hasPmi() ? 'the interest and PMI saved cover' : 'the interest saved covers' }} the closing costs</small>
     } @else {
       <strong>Never</strong>
-      <small>the interest saved never covers the closing costs</small>
+      <small>{{ hasPmi() ? 'the interest and PMI saved never cover' : 'the interest saved never covers' }} the closing costs</small>
     }
   </div>
   <div class="tile" [class.warning]="r.monthsAdded > 0" data-testid="refi-payoff">
@@ -58,7 +61,7 @@
 
 @if (r.keepingCurrentPayment; as keep) {
   <section class="panel keep" data-testid="refi-keep-payment">
-    <h3>Keep paying {{ cents(r.current.monthlyPayment) }} a month instead</h3>
+    <h3>Keep paying {{ cents(r.current.monthlyPayment + r.current.monthlyPmi) }} a month instead</h3>
     <p>
       Take the new rate but keep today's payment. The extra {{ cents(keep.extraMonthlyPrincipal) }} goes to principal:
       paid off {{ date(keep.payoffDate) }}, {{ months(keepingMonthsSooner()) }} sooner than your current loan,
@@ -107,7 +110,7 @@
         <tr>
           <th scope="row">Monthly payment</th>
           @for (column of columns(); track column.label) {
-            <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal) }}</td>
+            <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal + column.option.monthlyPmi) }}</td>
           }
         </tr>
         <tr>
@@ -128,6 +131,14 @@
             <td>{{ dollars(column.option.totalInterest) }}</td>
           }
         </tr>
+        @if (hasPmi()) {
+          <tr data-testid="refi-pmi">
+            <th scope="row">PMI</th>
+            @for (column of columns(); track column.label) {
+              <td>{{ column.option.pmiEndDate ? dollars(column.option.totalPmi) + ' to ' + date(column.option.pmiEndDate) : '$0' }}</td>
+            }
+          </tr>
+        }
         <tr>
           <th scope="row">{{ r.buydownCost > 0 ? 'Closing costs + buydown' : 'Closing costs' }}</th>
           @for (column of columns(); track column.label) {

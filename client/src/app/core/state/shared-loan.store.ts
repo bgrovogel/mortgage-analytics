@@ -49,6 +49,8 @@ export interface SharedLoan {
   start?: OriginalLoan | null;
   /** How its rate works, when the page can say; null (or missing) leaves each page's own rate type alone. */
   rate?: SharedRate | null;
+  /** The PMI paid on it each month now, when the page knows (0 for none); null (or missing) keeps the one shared. */
+  monthlyPmi?: number | null;
 }
 
 /** The shared loan, and the page it was last changed on (e.g. "Calculator"). */
@@ -75,8 +77,8 @@ export class SharedLoanStore {
   readonly version = computed(() => this.latest()?.version ?? 0);
 
   /**
-   * Records the loan a page has just sent. A page that does not know the home's value keeps the one already
-   * shared; one that does not know how the loan started, or how its rate works, keeps those too, as long as the
+   * Records the loan a page has just sent. A page that does not know the home's value, or the PMI, keeps the one
+   * already shared; one that does not know how the loan started, or how its rate works, keeps those too, as long as the
    * loan itself is unchanged. A page that cannot hold a buydown (it shows one as fixed) keeps a shared buydown.
    * Sending the same loan again is not a change.
    */
@@ -87,6 +89,7 @@ export class SharedLoanStore {
     const next: SharedLoan = {
       ...loan,
       homeValue: loan.homeValue ?? current?.loan.homeValue ?? null,
+      monthlyPmi: loan.monthlyPmi ?? current?.loan.monthlyPmi ?? null,
       start: loan.start ?? (unchanged ? current.loan.start ?? null : null),
       rate: !holdsBuydowns && loan.rate?.kind === 'fixed' && current?.loan.rate?.kind === 'buydown'
         ? current.loan.rate
@@ -103,6 +106,7 @@ export function sameLoan(a: SharedLoan, b: SharedLoan): boolean {
     && a.annualInterestRate === b.annualInterestRate
     && a.remainingTermInMonths === b.remainingTermInMonths
     && a.homeValue === b.homeValue
+    && (a.monthlyPmi ?? null) === (b.monthlyPmi ?? null)
     && sameStart(a.start ?? null, b.start ?? null)
     && sameRate(a.rate ?? null, b.rate ?? null);
 }

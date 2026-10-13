@@ -51,6 +51,7 @@ describe('RefinanceFormComponent', () => {
       closingCosts: 6_000,
       financeClosingCosts: false,
       originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+      homeValue: 400_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
     }]);
   });
 
@@ -178,6 +179,7 @@ describe('RefinanceFormComponent', () => {
         newAnnualInterestRate: 5, newTermInMonths: 360, closingCosts: 4_000, financeClosingCosts: false,
         originalLoan: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' },
         currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+        homeValue: 260_000, currentMonthlyPmi: 95, newPmiRate: 0.6,
       };
 
       create(saved);
@@ -210,11 +212,38 @@ describe('RefinanceFormComponent', () => {
     const previous: RefinanceRequest = {
       currentBalance: 250_000, currentAnnualInterestRate: 7.5, remainingTermInMonths: 240, nextPaymentDate: null,
       newAnnualInterestRate: 5.75, newTermInMonths: 240, closingCosts: 4_500, financeClosingCosts: true, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+      homeValue: 300_000, currentMonthlyPmi: 110, newPmiRate: 0.5,
     };
 
     create(previous);
 
     expect(emitted).toEqual([previous]);
     expect(controls().newTerm.value).toBe('keep');
+  });
+
+  describe('PMI', () => {
+    it("takes the home's value and today's PMI from another page's loan", () => {
+      fixture = TestBed.createComponent(RefinanceFormComponent);
+      component = fixture.componentInstance;
+      emitted = [];
+      component.analyze.subscribe((r) => emitted.push(r));
+      fixture.componentRef.setInput('loan', {
+        loan: { balance: 356_250, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, monthlyPmi: 148.44 },
+        from: 'Calculator', version: 2,
+      });
+      fixture.detectChanges();
+
+      expect(emitted[0]).toEqual(expect.objectContaining({ homeValue: 375_000, currentMonthlyPmi: 148.44, newPmiRate: 0.5 }));
+    });
+
+    it('sends what is typed', () => {
+      create();
+
+      controls().homeValue.setValue(350_000);
+      controls().currentMonthlyPmi.setValue(120);
+      controls().newPmiRate.setValue(0.4);
+
+      expect(emitted[emitted.length - 1]).toEqual(expect.objectContaining({ homeValue: 350_000, currentMonthlyPmi: 120, newPmiRate: 0.4 }));
+    });
   });
 });

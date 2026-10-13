@@ -41,6 +41,7 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
         : null,
       // An ARM's fixed period counts from the first payment here; shared, it counts from today.
       rate: sharedRateFrom(request.buydown, request.adjustableRate, today.made),
+      monthlyPmi: monthlyPmiOf(request),
     };
   }
 
@@ -73,4 +74,15 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   protected send$(request: AmortizationRequest) {
     return this.api.calculate(request);
   }
+}
+
+/**
+ * The PMI a conventional loan charges each month: the yearly rate on the loan borrowed, when that is more than 80% of
+ * the price; 0 otherwise. Null for an FHA or VA loan, whose mortgage insurance is not PMI and does not end at 80%.
+ */
+export function monthlyPmiOf(request: AmortizationRequest): number | null {
+  if (request.program && request.program.type !== 'Conventional') return null;
+  const loan = request.homePrice - request.downPayment;
+  const rate = request.housingCosts?.pmiRate ?? 0;
+  return loan > request.homePrice * 0.8 && rate > 0 ? toCents((loan * rate) / 100 / 12) : 0;
 }

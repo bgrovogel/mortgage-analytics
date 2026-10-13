@@ -7,6 +7,7 @@ export const IRA_LIMIT = 7_500;
 export const STRATEGY_RULES = {
   currentBalance: { label: 'Balance you owe', unit: '$', min: 0.01, max: MAX_AMOUNT },
   homeValue: { label: 'Home value', unit: '$', min: 0, max: MAX_AMOUNT },
+  monthlyPmi: { label: 'PMI per month', unit: '$', min: 0, max: 10_000 },
   annualInterestRate: { label: 'Interest rate', unit: '%', min: 0, max: 30, decimals: 4 },
   yearsLeft: { label: 'Years left', unit: 'years', min: 1 / 12, max: 30 },
   monthlyCashToPutToWork: { label: 'Cash each month', unit: '$', min: 0, max: MAX_AMOUNT },

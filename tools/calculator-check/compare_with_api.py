@@ -63,7 +63,8 @@ def money(rng, low, high, step=1):
 
 def random_purchase(rng):
     price = money(rng, 120_000, 1_500_000, 1_000)
-    rate = D(rng.randrange(250, 900)) / 100
+    # Some high rates too, where a small down payment keeps PMI to the loan's midpoint.
+    rate = D(rng.randrange(250, 900) if rng.random() < 0.85 else rng.randrange(900, 1400)) / 100
     term = rng.choice([120, 180, 240, 300, 360, 360, 360])
     first = rng.choice([None, '2026-11-01', '2026-11-01', '2023-04-01', '2019-08-01'])
     single = rng.random() < 0.5
@@ -175,7 +176,7 @@ def random_purchase(rng):
 
 
 def random_refinance(rng):
-    return {
+    request = {
         'currentBalance': money(rng, 50_000, 900_000, 1_000),
         'currentAnnualInterestRate': float(D(rng.randrange(300, 900)) / 100),
         'remainingTermInMonths': rng.randint(60, 360),
@@ -184,6 +185,12 @@ def random_refinance(rng):
         'closingCosts': money(rng, 0, 15_000, 250),
         'financeClosingCosts': rng.random() < 0.4,
     }
+    # Half with a home value, so PMI on either loan: from well under 80% of it to well over.
+    if rng.random() < 0.5:
+        request['homeValue'] = int(request['currentBalance'] / rng.choice([0.6, 0.75, 0.79, 0.82, 0.9, 0.97]))
+        request['currentMonthlyPmi'] = rng.choice([0, 0, 85.5, 150, 240])
+        request['newPmiRate'] = rng.choice([0.3, 0.5, 0.85])
+    return request
 
 
 def refinance_view(r):
@@ -194,6 +201,7 @@ def refinance_view(r):
         'currentPayments': r['current']['numberOfPayments'],
         'newPayment': r['refinanced']['monthlyPayment'], 'newInterest': r['refinanced']['totalInterest'],
         'newPayments': r['refinanced']['numberOfPayments'],
+        'currentPmi': r['current']['totalPmi'], 'newPmi': r['refinanced']['totalPmi'],
         'monthlySavings': r['monthlySavings'], 'lifetimeSavings': r['lifetimeSavings'], 'monthsAdded': r['monthsAdded'],
         'breakEvenPaymentNumber': r['breakEvenPaymentNumber'],
         'keepPayment': keep and {'numberOfPayments': keep['numberOfPayments'], 'totalInterest': keep['totalInterest'],

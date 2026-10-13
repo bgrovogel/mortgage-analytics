@@ -1,3 +1,4 @@
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Refinancing;
 using static MortgageAnalytics.Testing.ReferenceRefinances;
@@ -156,4 +157,83 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
         Assert.That(new RefinanceAnalyzer(Calculator).Analyze(new LoanTerms(10_000m, 7m, 12, ReferenceLoans.FirstPaymentDate),
                 new RefinanceOffer(6m, 360, 5_000m, financeClosingCosts: false)).BreakEvenPaymentNumber,
             Is.Null, "the break-even search walks past the end of the shorter, current loan");
+
+    // ---- PMI on either loan ----
+
+    /// <summary>A home now worth $360,000: PMI on either loan until it is down to $288,000 (80%).</summary>
+    private static readonly RefinancePmi BothWithPmi = new(360_000m, CurrentMonthlyPremium: 120m, NewAnnualRatePercent: 0.5m);
+
+    [Test]
+    public void PmiOnBothLoans_CountsInTheMonthlySavings_AndOverTheLifeOfEach()
+    {
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(CurrentLoan, SixPercentUpfront, BothWithPmi);
+        var currentPmi = LoanPmi.OnCurrentLoan(120m, 360_000m).TotalOn(analysis.Current);
+        var newPmi = LoanPmi.ForNewLoan(300_000m, 360_000m, 0.5m, 360).TotalOn(analysis.Refinanced);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.CurrentPmi.MonthlyPremium, Is.EqualTo(120m), "the PMI on today's statement");
+            Assert.That(analysis.NewPmi.MonthlyPremium, Is.EqualTo(125m), "0.5% of $300,000 a year: the new loan is 83% of the value");
+            Assert.That(analysis.MonthlySavings, Is.EqualTo(ToSixPercentFor30Years.MonthlySavings + 120m - 125m), "the payment with PMI, each way");
+            Assert.That(analysis.CurrentPmiTotal, Is.EqualTo(currentPmi), "PMI left on the current loan");
+            Assert.That(analysis.RefinancedPmiTotal, Is.EqualTo(newPmi), "PMI on the new one, which pays down more slowly");
+            Assert.That(newPmi, Is.GreaterThan(currentPmi), "a new 30 years keeps PMI longer");
+            Assert.That(analysis.LifetimeSavings, Is.EqualTo(ToSixPercentFor30Years.LifetimeSavings + currentPmi - newPmi), "both counted in the total");
+        });
+    }
+
+    [Test]
+    public void PmiOnBothLoans_CountsInTheBreakEven()
+    {
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(CurrentLoan, SixPercentUpfront, BothWithPmi);
+
+        Assert.That(analysis.BreakEvenPaymentNumber, Is.GreaterThan(ToSixPercentFor30Years.BreakEvenPaymentNumber),
+            "$5 more PMI a month, for longer, takes longer to earn the closing costs back");
+    }
+
+    [Test]
+    public void KeepingTodaysPayment_KeepsPayingWhatPmiNoLongerTakes()
+    {
+        var withoutCurrentPmi = new RefinancePmi(360_000m, CurrentMonthlyPremium: 0m, NewAnnualRatePercent: 0.5m);
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(CurrentLoan, SixPercentUpfront, BothWithPmi);
+        var noPmiNow = new RefinanceAnalyzer(Calculator).Analyze(CurrentLoan, SixPercentUpfront, withoutCurrentPmi);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.KeepingCurrentPayment!.Payments[0].ExtraPrincipal, Is.EqualTo(analysis.MonthlySavings),
+                "today's payment and PMI, less the new payment and PMI, goes to principal");
+            Assert.That(analysis.KeepingCurrentPaymentLifetimeSavings, Is.GreaterThan(noPmiNow.KeepingCurrentPaymentLifetimeSavings!.Value),
+                "PMI paid today is PMI the refinance can stop paying");
+        });
+    }
+
+    [Test]
+    public void FinancingTheClosingCosts_AboveEightyPercentOfTheValue_BringsPmiOnTheNewLoan()
+    {
+        // $285,000 owed on $360,000 (79%) carries no PMI; $6,000 of closing costs borrowed makes it $291,000 (81%).
+        var current = new LoanTerms(285_000m, 7m, 300, ReferenceLoans.FirstPaymentDate);
+        var financed = new RefinanceOffer(6m, 360, 6_000m, financeClosingCosts: true);
+
+        var analysis = new RefinanceAnalyzer(Calculator).Analyze(current, financed, new RefinancePmi(360_000m, 0m, 0.5m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.CurrentPmiTotal, Is.Zero, "the current loan is under 80%");
+            Assert.That(analysis.NewPmi.MonthlyPremium, Is.EqualTo(121.25m), "0.5% of $291,000 a year");
+            Assert.That(analysis.RefinancedPmiTotal, Is.Positive, "until the new balance is back to $288,000");
+        });
+    }
+
+    [Test]
+    public void WithoutAHomeValue_NeitherLoanCarriesPmi()
+    {
+        var analysis = Analyze(SixPercentUpfront);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.CurrentPmi, Is.EqualTo(LoanPmi.None), "nothing to measure 80% against");
+            Assert.That(analysis.NewPmi, Is.EqualTo(LoanPmi.None), "on either loan");
+            Assert.That(analysis.LifetimeSavings, Is.EqualTo(ToSixPercentFor30Years.LifetimeSavings), "so the comparison is as before");
+        });
+    }
 }
