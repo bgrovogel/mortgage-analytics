@@ -23,3 +23,26 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+// A tab with nothing to show yet: what it would say, and the one input that fills it.
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  button {
+    @include surfaces.action;
+  }
+}

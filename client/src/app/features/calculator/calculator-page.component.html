@@ -1,7 +1,6 @@
 @if (store.result(); as r) {
   <!-- Phones only, and only while the headline numbers are off screen. -->
-  <!-- Not on the Compare tab: there the figures are for two homes, and this bar has only Home A's. -->
-  <div class="summary-bar" [class.hidden]="store.headlineVisible() || comparing()" data-testid="summary-bar" aria-hidden="true">
+  <div class="summary-bar" [class.hidden]="store.headlineVisible()" data-testid="summary-bar" aria-hidden="true">
     <!-- The same figures the headline tiles lead with: the first payment due, and the net savings (or, without extra
          payments, the interest over the loan). -->
     <!-- A buydown's first payment rises after year 1: say so, as the tile does. -->
@@ -17,41 +16,12 @@
   </div>
 }
 
-<app-calculation-page [store]="pageStore()" heading="What will this home really cost?"
-                      intro="Every cost of owning it, month by month and year by year, and what extra payments save."
+<app-calculation-page [store]="store" heading="What will this home really cost?"
+                      intro="What it costs each month and to close, whether you can afford it, and what paying extra saves."
                       [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
-  <div form>
-    <!-- On the Compare tab, one form edits any of the homes; the page has one form at a time, so ids stay unique. -->
-    @if (comparing()) {
-      <div class="segmented house-switch" role="radiogroup" aria-label="Which home to edit" data-testid="house-switch">
-        @for (home of homeIndexes(); track home) {
-          <label>
-            <input type="radio" name="house" [value]="home" [checked]="editing() === home" (change)="edit(home)" [attr.data-testid]="'edit-home-' + letterOf(home)" />
-            {{ nameOf(home) }}
-          </label>
-        }
-      </div>
-      <div class="house-actions">
-        @if (homeIndexes().length < maxHomes) {
-          <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home</button>
-        }
-        @if (editing() > 0 && homeIndexes().length > 2) {
-          <button type="button" class="link-button" (click)="removeHome()" data-testid="remove-home">Remove {{ nameOf(editing()) }}</button>
-        }
-      </div>
-    }
-    @if (editing() === 0) {
-      <app-loan-form [heading]="comparing() ? 'Home A' : 'Your loan'" [initial]="startFrom()" [loan]="loan()" [firstYear]="store.result()?.projection?.[0] ?? null"
-                     (calculate)="store.send($event)" (problems)="problems.set($event)" />
-    } @else {
-      <!-- Tracked by the home, so each home gets a form of its own. -->
-      @for (home of [editing()]; track home) {
-        <app-loan-form [heading]="nameOf(home)" [shared]="false" [initial]="comparison.request()?.homes?.[home] ?? store.request()"
-                       [firstYear]="comparison.result()?.homes?.[home]?.projection?.[0] ?? null" (calculate)="sendOther(home, $event)" (problems)="problems.set($event)" />
-      }
-    }
-  </div>
+  <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
+                 (calculate)="store.send($event)" (problems)="problems.set($event)" />
 
   <nav tabs class="result-tabs" aria-label="Results">
     @for (tab of tabs; track tab.path) {

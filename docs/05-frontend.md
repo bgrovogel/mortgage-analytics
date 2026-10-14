@@ -31,7 +31,8 @@ client/src/app/
     rate-options/           fixed / buydown / ARM controls, used by all three forms
     save-calculation/       the Save button and dialog
   features/                 one folder per page
-    calculator/             page, store, loan-form (+ loan-form.model.ts, loan-fields.ts), result tabs and charts
+    calculator/             page, store, loan-form (+ loan-form.model.ts, loan-fields.ts, sections/), result tabs and charts
+    compare/                Compare homes: the page, its store, the results table and the figures it compares
     refinance/  strategy/   page, store, form (+ *-fields.ts), results
     history/                saved calculations: search, filter, open, rename, delete
     account/                sign in / up, confirm email, forgot / reset password, dev mailbox
@@ -80,13 +81,29 @@ Each page's store (`CalculatorStore`, `ComparisonStore`, `RefinanceStore`, `Stra
 (`loanOf`). This is the **Template Method** pattern: the base class runs the algorithm, the subclasses fill in the
 steps.
 
-`ComparisonStore` is the calculator's Compare tab: its request is a list of two to four calculator requests
-(`homes`), and `send$` calculates each with the calculator's endpoint (`forkJoin`), so comparing needs nothing new
-from the API. Home A is the calculator's own loan, which the page passes on as it changes; opening a saved comparison
+`ComparisonStore` is Compare homes' store (`features/compare`): its request is a list of two to four calculator
+requests (`homes`), and `send$` calculates each with the calculator's endpoint (`forkJoin`), so comparing needs nothing
+new from the API. It leaves out a seller's offer and affordability, which the comparison does not show. Home A is the calculator's own loan, which the page passes on as it changes; opening a saved comparison
 puts Home A back in the calculator too. Saved, the first home is `inputs` and the rest `otherHomes`. The page has one
 loan form at a time: the switch above it makes a new form for the chosen home from its store (an `@for` over the one
 home being edited, tracked by it, so switching from Home B to Home C makes a new form), so element ids stay unique.
 **Add a home** appends a copy of Home A; **Remove** takes out the home being edited, never Home A, and keeps two.
+
+`CalculatorStore` adds how a seller's offer is weighed (`offerSettings`: the years kept and the cut per point) to every
+request it sends. The settings are set beside the comparison they change, on the Closing tab (`setOfferSettings`),
+rather than in the form; a saved request that brings its own sets them.
+
+### The loan form: one form, six section components
+
+The loan form is one `FormGroup`, so the request is built in one place (`loan-form.model.ts`), but its template is
+the five main numbers and then one component per section (`loan-form/sections/`): loan type & rate; taxes, insurance,
+HOA & PMI; closing costs & credits; income & debts; extra payments; future increases. Each section injects the form
+through the `LOAN_FORM` token, reads its values and what it works out from them, and provides the form's
+`ControlContainer`, so its `formControlName`s bind to the one form group.
+
+A result that needs an input asks `FormNavigator` (`core/forms`) for it: **Add your income** calls
+`open('income', 'annual-income')`, and the form showing the calculator's loan opens that section, scrolls the field into
+view and focuses it. Only requests made after the form was built count, so a form made later does not jump.
 
 The stores are `providedIn: 'root'`, so they live for the whole app: leave a page and come back, and its
 numbers are still there.

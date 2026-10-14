@@ -1,0 +1,90 @@
+<details class="section" data-testid="section-loan">
+  <summary>
+    <span class="section-title">Loan type &amp; rate</span>
+    <span class="section-summary"><span data-testid="program-summary">{{ f.programSummary() }}</span> · <span data-testid="rate-summary">{{ f.rateSummary() }}</span></span>
+  </summary>
+  <div class="section-body">
+      <div class="segmented three" role="radiogroup" aria-label="Loan type">
+        <label><input type="radio" formControlName="loanProgram" value="Conventional" data-testid="program-conventional" /> Conventional</label>
+        <label><input type="radio" formControlName="loanProgram" value="Fha" data-testid="program-fha" /> <abbr title="Federal Housing Administration">FHA</abbr></label>
+        <label><input type="radio" formControlName="loanProgram" value="Va" data-testid="program-va" /> <abbr title="Department of Veterans Affairs">VA</abbr></label>
+      </div>
+      @switch (f.loanProgram()) {
+        @case ('Fha') {
+          <p class="hint" data-testid="program-hint">At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.</p>
+          <details class="help" data-testid="program-more">
+            <summary>More about FHA's MIP</summary>
+            <p class="hint">
+              The 1.75% upfront MIP is added to the loan unless you pay it at closing. The annual MIP comes from HUD's
+              table (0.55% of the balance for most 30-year loans with less than 5% down), for 11 years with 10% or more
+              down, otherwise for the whole loan.
+            </p>
+          </details>
+          <app-number-field [control]="f.form.controls.creditScore" [rule]="f.rules.creditScore" testId="credit-score" placeholder="580 or more" />
+          <p class="hint">With a score from 500 to 579, FHA needs 10% down; below 500, it does not insure the loan.</p>
+          <app-fha-county [county]="f.form.controls.countyFips" [loanAmount]="f.loanAmount()" />
+        }
+        @case ('Va') {
+          <div class="field">
+            <span id="va-use-label">VA funding fee</span>
+            <div class="segmented three" role="radiogroup" aria-labelledby="va-use-label" data-testid="va-use">
+              <label><input type="radio" formControlName="vaUse" value="FirstUse" data-testid="va-use-first" /> First use</label>
+              <label><input type="radio" formControlName="vaUse" value="SubsequentUse" data-testid="va-use-subsequent" /> Used before</label>
+              <label><input type="radio" formControlName="vaUse" value="Exempt" data-testid="va-use-exempt" /> Exempt</label>
+            </div>
+          </div>
+          <p class="hint" data-testid="program-hint">No down payment needed and no mortgage insurance, but a one-time funding fee.</p>
+          <details class="help" data-testid="program-more">
+            <summary>More about the funding fee</summary>
+            <p class="hint">
+              It is 2.15% (3.3% if used before) with less than 5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated
+              for a service-connected disability are exempt.
+            </p>
+          </details>
+        }
+        @default {
+          <p class="hint">PMI, below 20% down, is set under Taxes, insurance, HOA &amp; PMI.</p>
+        }
+      }
+      @if (f.loanProgram() !== 'Conventional') {
+        <label class="checkbox">
+          <input type="checkbox" formControlName="financeUpfrontFee" data-testid="finance-upfront-fee" />
+          <span>Add the {{ f.loanProgram() === 'Fha' ? 'upfront MIP' : 'funding fee' }} to the loan (most do), rather than pay it at closing</span>
+        </label>
+      }
+    
+
+      <app-rate-options [form]="f.form.controls.rate" [rate]="f.form.controls.annualInterestRate.value" />
+      @if (f.values().rate?.rateType === 'buydown') {
+        <!-- Who pays decides whether it saves anything: the seller's money, or your own paid earlier. -->
+        <div class="field">
+          <span id="buydown-paid-by-label">Who pays for the buydown?</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="buydown-paid-by-label" data-testid="buydown-paid-by">
+            <label><input type="radio" formControlName="buydownPaidBy" value="Seller" data-testid="buydown-paid-by-seller" /> Seller or builder</label>
+            <label><input type="radio" formControlName="buydownPaidBy" value="Borrower" data-testid="buydown-paid-by-you" /> You, at closing</label>
+          </div>
+        </div>
+        <p class="hint">Paid by the seller or builder, it saves you its cost in interest. Paid by you, it only lowers your early payments.</p>
+      }
+      @if (f.pointsOffered()) {
+        <label class="checkbox">
+          <input type="checkbox" formControlName="usePoints" data-testid="use-points" />
+          <span><strong>Discount points</strong>: a fee at closing for a lower rate for the whole loan</span>
+        </label>
+        @if (f.values().usePoints) {
+          <div class="row">
+            <app-number-field [control]="f.form.controls.points" [rule]="f.rules.points" testId="points" />
+            <app-number-field [control]="f.form.controls.rateWithoutPoints" [rule]="f.rules.rateWithoutPoints" testId="rate-without-points" />
+          </div>
+          @if (f.pointsRateTooLow()) {
+            <small class="error" data-testid="points-rate-error">{{ f.pointsRateMessage }}</small>
+          }
+          <p class="hint">
+            A point is 1% of the loan. The interest rate above is the rate with the points; enter the rate the same lender
+            quotes without them. The results say when the points pay for themselves.
+          </p>
+        }
+      }
+    
+  </div>
+</details>

@@ -39,12 +39,15 @@ for (const scheme of ['light', 'dark'] as const) {
       await openSections(page);
       expect(await violations(page), 'the Overview tab and the open form break no accessibility rule').toEqual([]);
 
-      for (const tab of ['projection', 'schedule', 'compare'] as const) {
+      for (const tab of ['affordability', 'closing', 'projection', 'schedule'] as const) {
         await page.getByTestId(`result-tab-${tab}`).click();
         await settled(page);
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);
       }
-      // The Compare tab's second form, in the same place as the first.
+      // Compare homes, and its second form, in the same place as the first.
+      await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Compare homes' }).click();
+      await settled(page);
+      expect(await violations(page), 'Compare homes breaks no accessibility rule').toEqual([]);
       await page.getByTestId('edit-home-b').check();
       await settled(page);
       expect(await violations(page), "Home B's form breaks no accessibility rule").toEqual([]);
@@ -63,14 +66,20 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByTestId('rate-type-buydown').check();
       await expect(page.getByTestId('buydown-years'), 'the buydown table has arrived').toBeVisible();
       await settled(page);
-      // The seller pays for the buydown, so the Overview also weighs the other ways to take that money; with an income,
-      // it says whether the home is affordable too.
+      // With an income the Overview answers whether the home is affordable; the seller pays for the buydown, so the
+      // Closing tab weighs the other ways to take that money.
       await page.getByTestId('annual-income').fill('150000');
       await settled(page);
-      await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money have arrived').toBeVisible();
-      await expect(page.getByTestId('affordability'), 'and whether it is affordable').toBeVisible();
-      expect(await violations(page), 'the buydown, year by year, and the seller’s money each way break no accessibility rule').toEqual([]);
+      await expect(page.getByTestId('afford-tile-answer'), 'the Overview answers whether it is affordable').toBeVisible();
+      expect(await violations(page), 'the buydown, year by year, breaks no accessibility rule').toEqual([]);
+      await page.getByTestId('result-tab-closing').click();
+      await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money').toBeVisible();
+      expect(await violations(page), 'the cash to close and the seller’s money each way break no accessibility rule').toEqual([]);
+      await page.getByTestId('result-tab-affordability').click();
+      await expect(page.getByTestId('affordability'), 'whether it is affordable').toBeVisible();
+      expect(await violations(page), 'affordability breaks no accessibility rule').toEqual([]);
 
+      await page.getByTestId('result-tab-overview').click();
       await page.getByTestId('rate-type-arm').check();
       await expect(page.getByTestId('arm-worst-case'), 'the adjustable rate plan has arrived').toBeVisible();
       await settled(page);

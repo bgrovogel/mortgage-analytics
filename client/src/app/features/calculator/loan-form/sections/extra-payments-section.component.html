@@ -1,0 +1,49 @@
+<details class="section" data-testid="section-options">
+  <summary>
+    <span class="section-title">Extra payments</span>
+    <span class="section-summary"><span data-testid="options-summary">{{ f.optionsSummary() }}</span></span>
+  </summary>
+  <div class="section-body">
+      <div class="row">
+        <app-number-field [control]="f.form.controls.annualExtra" [rule]="f.rules.annualExtra" testId="annual-extra" />
+        <app-number-field [control]="f.form.controls.annualFirstPayment" [rule]="f.rules.annualFirstPayment" testId="annual-first-payment" label="Starting with payment #" />
+      </div>
+
+      <div formArrayName="lumpSums" class="lump-sums">
+        @for (lumpSum of f.lumpSums.controls; track lumpSum; let i = $index) {
+          <div class="row lump-sum" [formGroupName]="i" data-testid="lump-sum">
+            <app-number-field [control]="lumpSum.controls.amount" [rule]="f.lumpSumRules.amount" testId="lump-sum-amount" />
+            <app-number-field [control]="lumpSum.controls.paymentNumber" [rule]="f.lumpSumRules.paymentNumber" testId="lump-sum-payment" label="With payment #" />
+            <button type="button" class="icon-button" (click)="f.removeLumpSum(i)" [attr.aria-label]="'Remove lump sum ' + (i + 1)">
+              ✕
+            </button>
+          </div>
+        }
+        <button type="button" class="link-button" (click)="f.addLumpSum()" data-testid="add-lump-sum">+ Add a lump sum</button>
+      </div>
+
+      <fieldset class="strategy">
+        <legend>Apply extra payments to</legend>
+        <label class="choice">
+          <input type="radio" formControlName="strategy" value="ShortenTerm" data-testid="strategy-shorten" />
+          <span><strong>Pay off sooner</strong> and keep the same monthly payment</span>
+        </label>
+        <label class="choice">
+          <input type="radio" formControlName="strategy" value="Recast" data-testid="strategy-recast" />
+          <span><strong>Recast after a lump sum</strong>: keep the payoff date and lower the payment</span>
+        </label>
+
+        @if (f.isRecast()) {
+          <div class="row recast-terms">
+            <app-number-field [control]="f.form.controls.recastMinimum" [rule]="f.rules.recastMinimum" testId="recast-minimum" label="Lender minimum" />
+            <app-number-field [control]="f.form.controls.recastFee" [rule]="f.rules.recastFee" testId="recast-fee" />
+          </div>
+          <p class="hint">
+            The lender recasts only after a single lump sum of at least the minimum (most banks require $10,000).
+            Smaller extra payments still shorten the term.
+          </p>
+        }
+      </fieldset>
+    
+  </div>
+</details>

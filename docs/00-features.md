@@ -19,9 +19,11 @@
 
 ## The calculator
 
-What a purchase costs month by month and year by year, and what extra payments do to it.
+What a purchase costs each month and to close, whether you can afford it, and what paying extra saves. The page
+answers in that order: the **Overview** leads with four answer tiles, and each answer's details have a tab of their
+own (**Affordability**, **Closing**), then **Projection** and **Schedule**. Comparing homes is a page of its own.
 
-![The calculator's Overview: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with the net savings, the monthly payment broken down, and the balance over time](images/calculator.png)
+![The calculator's Overview: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with four answer tiles (the monthly payment, the cash to close, can you afford it, and the net savings), when the loan and PMI end, the payment broken down, and the balance over time](images/calculator.png)
 
 ### The loan
 
@@ -105,7 +107,7 @@ MIP, and the first year's MIP is $134.33 a month.
 ### Cash to close
 
 What you bring to closing besides the monthly payment, laid out as page 2 of a Loan Estimate lays it out
-(**Closing costs**, under More details):
+(**Closing costs & credits** in the form; the **Closing** tab shows it):
 
 | Line | How it works |
 |---|---|
@@ -116,7 +118,7 @@ What you bring to closing besides the monthly payment, laid out as page 2 of a L
 | **A buydown you pay for** | Its whole subsidy is paid at closing; a seller's buydown is not your money, so it is not in the total. |
 | **Seller credits** and **lender credits** | They pay closing costs, the lender's first, and never the down payment: credits beyond the costs are shown as unused. The seller's are also held to the limit below. |
 
-The Overview lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
+The Closing tab lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
 interest and 3 months of escrow on the $415,000 home come to **$10,778.79** on top of the $37,350 down payment.
 
 #### What a seller or builder may pay
@@ -140,8 +142,9 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 #### Can you afford it?
 
-Add your household's income a year and your other debts a month (**Income & debts**), and the Overview measures the
-home the way a lender does. The housing payment counts principal and interest at the note rate (a buydown's cheaper
+Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
+measures the home the way a lender does; the Overview's tile answers in a word (Yes, A stretch, Too much). Until an
+income is given, the tile and the tab offer **Add your income**, which opens that section with the cursor in the field. The housing payment counts principal and interest at the note rate (a buydown's cheaper
 first years are not qualified on), taxes, insurance, mortgage insurance, dues and PID. It is shown as a share of gross
 monthly income, alone and with the other debts. Each limit then says what it allows for housing, the highest price
 it reaches with the same down payment share, rate and costs, and whether this home fits:
@@ -162,8 +165,8 @@ to the payment.
 
 #### The best use of the seller's money
 
-The same money can be taken four ways, and the Overview weighs them whenever the seller offers some (credits, or a
-buydown they pay for). Each way is worked out as its own loan, on the standard schedule, and costed over the years you
+The same money can be taken four ways, and the **Closing** tab weighs them whenever the seller offers some (credits,
+or a buydown they pay for); without an offer, it says where to enter one. Each way is worked out as its own loan, on the standard schedule, and costed over the years you
 expect to keep the loan (7 unless you change it): the cash to close, every payment with its taxes, insurance and PMI,
 and what you still owe at the end, which you pay when you sell or refinance.
 
@@ -184,10 +187,14 @@ all of it.
 
 ### The results
 
-- **Overview:** one headline number. With extra payments it is the net savings, with the new total interest against
-  the original; without them, the total interest over the loan (never a $0 saving). Then the monthly payment, when
-  the loan is paid off and how much sooner, and when PMI ends; the payment breakdown; and the balance over time,
-  with the gap between the two payoffs shaded; and the cash to close.
+- **Overview:** four answer tiles, each linking to its details: the **monthly payment** (principal and interest, and
+  the housing costs; a buydown's year-1 payment), the **cash to close**, **can you afford it**, and what **paying
+  extra saves** (the net savings and the total interest, or without extra payments, the total interest over the loan,
+  never a $0 saving). Then when the loan is paid off and how much sooner, and when PMI ends; the payment breakdown;
+  and the balance over time, with the gap between the two payoffs shaded.
+- **Affordability:** the home against your income and debts (below).
+- **Closing:** the cash to close and what a seller may pay, then the best use of the seller's money, with how it is
+  weighed (the years you keep the loan, the cut per point) set beside the table it changes.
 - **Projection:** the **quick numbers** for any year (each cost that year, through that year, and over the whole
   loan), then the yearly costs as stacked areas, the home's market value against what each tax is charged on, and
   your **equity**: what is still owed (on your plan, extra payments included) stacked under what is yours, so the top
@@ -195,8 +202,8 @@ all of it.
   The year starts where the loan is now; pick another, or click the chart.
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.
-- **Compare:** up to **four homes** side by side. **Home A** is the loan in the form; **Home B** starts as a copy of
-  it, and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
+- **Compare homes** (a page of its own, in the top links): up to **four homes** side by side. **Home A** is the
+  calculator's loan; **Home B** starts as a copy of it, and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
   input can differ: price, down payment, rate, loan type, taxes, closing costs. **Remove** takes out the home being
   edited, down to two. A table shows each home's price, down payment, loan, rate, first payment (principal and
   interest, and housing costs), cash to close, when mortgage insurance ends, when it is paid off, the interest over
@@ -217,7 +224,7 @@ all of it.
   <img src="images/schedule.png" alt="The Schedule tab: lifetime totals for every cost, then one row per payment with principal, interest, extra, housing costs and balance" width="49%" />
 </p>
 
-![The Compare tab with three homes: the example, a $450,000 home with 20% down and a $380,000 home; the $380,000 home costs the least over the first 5 years, and the best on each line is shaded](images/compare.png)
+![Compare homes with three homes: the example, a $450,000 home with 20% down and a $380,000 home; the $380,000 home costs the least over the first 5 years, and the best on each line is shaded](images/compare.png)
 
 ---
 
@@ -288,8 +295,11 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Answer first.** On a phone the results come first and the form follows, with **Edit your numbers** to jump to it;
   a sticky bar keeps the payment and savings in view. On a wider screen the form sits in its own column.
 - **A first visit.** Each form says its numbers are an example until the first edit.
-- **Bookmarkable.** The calculator's Overview, Projection, Schedule and Compare tabs have their own URLs, and the back
-  button works.
+- **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
+  Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future
+  increases.
+- **Bookmarkable.** The calculator's Overview, Affordability, Closing, Projection and Schedule tabs have their own
+  URLs, and so does Compare homes (an old link to the Compare tab lands there); the back button works.
 - **Light and dark mode,** following the system.
 
 <br clear="right" />

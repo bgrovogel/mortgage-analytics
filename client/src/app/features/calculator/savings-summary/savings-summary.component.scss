@@ -1,28 +1,40 @@
 @use '../../../core/layout/surfaces';
 
-// A wrapping row: the supporting tiles always fill their row, however many there are and however wide the
-// page (a grid of fixed tracks left a gap beside them on desktop, and one tile alone in a row on a phone).
-.tiles {
-  display: flex;
-  flex-wrap: wrap;
+// The four answers in one row of equal tiles; two to a row on a narrower screen.
+.answers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 0;
 }
 
-// The headline answer gets its own full-width row; the supporting figures share the row below. Green when it is
-// money saved, blue when it is only what the loan costs.
-.tile.hero {
-  flex-basis: 100%;
-  @include surfaces.verdict;
+@media (max-width: 1100px) {
+  .answers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// When the loan and its mortgage insurance end: a wrapping row of smaller tiles under the answers.
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
 
   dd {
-    font-size: 2.6rem;
-    letter-spacing: -0.02em;
+    font-size: 1.3rem;
   }
+}
 
-  dd.note {
-    font-size: 0.85rem;
-  }
+// The monthly payment is the page's first answer: it carries the verdict colour.
+.tile.primary {
+  @include surfaces.verdict;
+}
+
+// Money saved by paying extra is good news.
+.tile.positive {
+  background: var(--positive-soft);
+  border-color: var(--positive-border);
 }
 
 .tile {
@@ -74,10 +86,33 @@
   }
 }
 
-// On a phone the payment tile takes the whole row: beside another tile its breakdown wrapped to six lines.
+// A link or action to the answer's details, at the foot of its tile.
+.tile dd.link {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  a {
+    color: var(--accent-text);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  button {
+    @include surfaces.action;
+  }
+}
+
+// On a phone the payment and the savings take whole rows: the payment's breakdown would wrap to six lines beside
+// another tile, and the savings would sit alone at half width after the two tiles between them.
 @media (max-width: 600px) {
-  .tile.payment {
-    flex-basis: 100%;
+  .tile.payment,
+  .tile.savings {
+    grid-column: 1 / -1;
   }
 }
 

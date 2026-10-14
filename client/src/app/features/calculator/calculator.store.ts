@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { describeInputs, suggestName } from '../../core/formatting/describe-inputs';
-import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
+import { AmortizationRequest, AmortizationResponse, SellerOfferInput } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
@@ -8,6 +8,9 @@ import { loanToday, toCents } from '../../core/loans/loan-progress';
 import { wholeYearsOf } from './loan-form/loan-fields';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
+
+/** The seller's offer is weighed over seven years, the usual time a loan is kept, with a quarter point off per point. */
+export const DEFAULT_OFFER_SETTINGS: SellerOfferInput = { yearsKept: 7, rateCutPerPoint: 0.25 };
 
 /** The calculator's state, shared by the form, the result tabs and other pages. */
 @Injectable({ providedIn: 'root' })
@@ -20,6 +23,28 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
 
   /** Whether the headline numbers are on screen; when they are not, phones show a compact summary bar. */
   readonly headlineVisible = signal(false);
+
+  /**
+   * How the seller's money is weighed: over how many years, and what each point takes off the rate. They are set
+   * beside the comparison they change, not in the form, so every request gets them here.
+   */
+  readonly offerSettings = signal<SellerOfferInput>(DEFAULT_OFFER_SETTINGS);
+
+  /**
+   * Queues a request with the seller's offer weighed by the current settings. A request that brings its own (a saved
+   * one) sets them instead.
+   */
+  override send(request: AmortizationRequest): void {
+    if (request.sellerOffer) this.offerSettings.set(request.sellerOffer);
+    super.send({ ...request, sellerOffer: this.offerSettings() });
+  }
+
+  /** Weighs the seller's offer another way, and calculates again. */
+  setOfferSettings(settings: SellerOfferInput): void {
+    this.offerSettings.set(settings);
+    const request = this.request();
+    if (request) super.send({ ...request, sellerOffer: settings });
+  }
 
   describe = describeInputs;
   suggestName = suggestName;

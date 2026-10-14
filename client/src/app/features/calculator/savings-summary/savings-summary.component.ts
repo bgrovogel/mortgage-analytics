@@ -1,7 +1,9 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormNavigator } from '../../../core/forms/form-navigator';
 import { formatMonths } from '../../../core/formatting/duration';
-import { usd, usdCents } from '../../../core/formatting/format';
+import { decimal, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { buydownYears } from '../rate-plan/buydown-years';
@@ -14,40 +16,22 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
   ['mudTax', 'MUD tax'],
 ];
 
-/** Headline numbers. These are stat tiles rather than a chart, because each one is a single value. */
+/**
+ * The answer tiles: the monthly payment, the cash to close, whether you can afford it, and what paying extra saves,
+ * each linking to its details; then when the loan and its mortgage insurance end. Stat tiles rather than a chart,
+ * because each is a single value.
+ */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, RouterLink],
   template: `
     @let r = result();
-    <!-- Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt and dd). -->
-    <dl class="tiles">
-      @if (hasSavings()) {
-        <div class="tile hero positive">
-          <dt>Net savings from paying extra</dt>
-          <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-          @if (savingsDetail(); as detail) {
-            <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
-          }
-          <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
-          <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
-          @if (buydownNote(); as note) {
-            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
-          }
-        </div>
-      } @else {
-        <!-- Nothing extra is paid, so a $0 saving would say nothing: lead with what the loan costs instead. -->
-        <div class="tile hero">
-          <dt>Total interest over the loan</dt>
-          <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-          <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
-          @if (buydownNote(); as note) {
-            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
-          }
-        </div>
-      }
-      <div class="tile payment">
-        <dt>Required monthly payment</dt>
+    <!-- The four answers: what it costs each month, what it takes to close, whether you can afford it, what paying
+         extra saves. Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt
+         and dd). -->
+    <dl class="tiles answers">
+      <div class="tile payment primary">
+        <dt>Monthly payment</dt>
         <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
         <dd class="note">
           <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
@@ -62,6 +46,61 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dd class="note with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</dd>
         }
       </div>
+      <!-- Closing and affordability are for a purchase still ahead: a loan already being paid closed long ago. -->
+      @if (cash(); as cash) {
+        <div class="tile" data-testid="cash-tile">
+          <dt>Cash to close</dt>
+          <dd data-testid="cash-tile-total">{{ cash.total | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <dd class="note">
+            {{ cash.downPayment | currency: 'USD' : 'symbol' : '1.0-0' }} down + {{ cash.closingCosts | currency: 'USD' : 'symbol' : '1.0-0' }} closing costs
+            @if (cash.credits > 0) {
+              − {{ cash.credits | currency: 'USD' : 'symbol' : '1.0-0' }} credits
+            }
+          </dd>
+          <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
+        </div>
+      }
+      @if (!current()) {
+        <div class="tile" data-testid="afford-tile">
+          <dt>Can you afford it?</dt>
+          @if (afford(); as a) {
+            <dd [class.gain]="a.answer === 'Yes'" data-testid="afford-tile-answer">{{ a.answer }}</dd>
+            <dd class="note" data-testid="afford-tile-note">{{ a.note }}</dd>
+            <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">How lenders see it →</a></dd>
+          } @else {
+            <dd class="note">Your income and debts tell whether this home fits, and the most you could pay.</dd>
+            <dd class="link"><button type="button" (click)="addIncome()" data-testid="afford-tile-add">Add income</button></dd>
+          }
+        </div>
+      }
+      @if (hasSavings()) {
+        <div class="tile savings positive" data-testid="savings-tile">
+          <dt>Net savings from paying extra</dt>
+          <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          @if (savingsDetail(); as detail) {
+            <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
+          }
+          <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
+          <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
+          @if (buydownNote(); as note) {
+            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+          }
+        </div>
+      } @else {
+        <!-- Nothing extra is paid, so a $0 saving would say nothing: say what the loan costs instead. -->
+        <div class="tile savings" data-testid="savings-tile">
+          <dt>Total interest over the loan</dt>
+          <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
+          @if (buydownNote(); as note) {
+            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+          }
+        </div>
+      }
+    </dl>
+
+    <!-- When it ends: the payoff, and the mortgage insurance. -->
+    <dl class="tiles dates">
       <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
       <div class="tile">
         <dt>Paid off</dt>
@@ -120,6 +159,29 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
 export class SavingsSummaryComponent {
   /** The analysis to summarize. */
   readonly result = input.required<AmortizationResponse>();
+
+  private readonly navigator = inject(FormNavigator);
+
+  /** The cash to close, for a purchase still ahead; null for a loan already being paid, or without closing costs. */
+  readonly cash = computed(() => (this.current() ? null : this.result().cashToClose ?? null));
+
+  /**
+   * Can you afford it, in a word and a line: within the comfortable 28% and 36%, past them but within what the loan
+   * allows, or past that. Null until an income is given.
+   */
+  readonly afford = computed(() => {
+    const a = this.result().affordability;
+    if (!a) return null;
+    const share = `${decimal(a.housingPercent)}% of your income, ${decimal(a.totalPercent)}% with your debts`;
+    if (a.comfortable.fits) return { answer: 'Yes', note: `${share}: within the comfortable 28% and 36%.` };
+    if (a.mostAllowed.fits) return { answer: 'A stretch', note: `${share}: past the comfortable 28% and 36%, within what lenders allow.` };
+    return { answer: 'Too much', note: `${share}: past what lenders allow.` };
+  });
+
+  /** Opens the form's income section with the cursor in the income field. */
+  protected addIncome(): void {
+    this.navigator.open('income', 'annual-income');
+  }
 
   /**
    * On a loan already being paid, the payment due next: its housing costs have grown since the first payment, so the

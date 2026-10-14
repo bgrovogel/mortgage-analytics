@@ -6,7 +6,7 @@ import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 import { SharedLoanStore } from '../../core/state/shared-loan.store';
-import { CalculatorStore } from './calculator.store';
+import { CalculatorStore } from '../calculator/calculator.store';
 import { ComparisonStore } from './comparison.store';
 
 describe('ComparisonStore', () => {
@@ -30,7 +30,8 @@ describe('ComparisonStore', () => {
     store.send({ homes: [first, second, third] });
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
-    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second, third]);
+    // Without a seller's offer weighed or affordability: the comparison shows neither, so it does not ask for them.
+    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second, third].map((h) => ({ ...h, sellerOffer: null, affordability: null })));
     expect(store.result()?.homes.map((h) => h.savings.netSavings)).toEqual([415_000, 450_000, 380_000]);
   });
 
@@ -56,7 +57,7 @@ describe('ComparisonStore', () => {
     expect(calculator.saved()).toEqual({ id: 'p1', name: 'A purchase' });
   });
 
-  it('opens a saved comparison on the Compare tab, with the first home in the calculator', () => {
+  it('opens a saved comparison on the Compare page, with the first home in the calculator', () => {
     const calculator = TestBed.inject(CalculatorStore);
     calculator.linkTo({ id: 'p1', name: 'A purchase' });
     const saved: SavedCalculation = {
@@ -67,10 +68,10 @@ describe('ComparisonStore', () => {
     store.open(saved);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
-    expect(store.route).toEqual(['/calculator', 'compare']);
+    expect(store.route).toEqual(['/compare']);
     expect(store.saved()).toEqual({ id: 'c1', name: 'Oak or Elm' });
     expect(store.request()).toEqual({ homes: [first, second, third] });
-    expect(calculator.request()).toBe(first);
+    expect(calculator.request()).toEqual({ ...first, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 } });
     // The calculator now shows the comparison's first home: Save there makes a new purchase, not a change to another.
     expect(calculator.saved()).toBeNull();
     expect(TestBed.inject(SharedLoanStore).change()?.loan.balance).toBe(377_650);

@@ -22,16 +22,41 @@ describe('SellerOfferComponent', () => {
   const render = (comparison: SellerOfferComparison) => {
     const fixture = TestBed.createComponent(SellerOfferComponent);
     fixture.componentRef.setInput('offer', comparison);
+    fixture.componentRef.setInput('settings', { yearsKept: comparison.yearsKept, rateCutPerPoint: comparison.rateCutPerPoint });
+    const changes: unknown[] = [];
+    fixture.componentInstance.settingsChange.subscribe((s) => changes.push(s));
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+    const type = (testId: string, value: string) => {
+      const field = root.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
     const text = (id: string) => root.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
     const cells = (selector: string) => Array.from(root.querySelectorAll(selector), (c) => c.textContent!.replace(/\s+/g, ' ').trim());
     const row = (label: string) => {
       const tr = Array.from(root.querySelectorAll('tr')).find((r) => r.querySelector('th')?.textContent?.trim() === label);
       return tr ? Array.from(tr.querySelectorAll('td'), (c) => c.textContent!.replace(/\s+/g, ' ').trim()) : undefined;
     };
-    return { root, text, cells, row };
+    return { root, text, cells, row, type, changes };
   };
+
+  it('shows how it is weighed, beside the table: the years kept and the cut per point', () => {
+    const { root } = render(offer);
+
+    expect((root.querySelector('[data-testid="years-kept"]') as HTMLInputElement).value).toBe('7');
+    expect((root.querySelector('[data-testid="rate-cut-per-point"]') as HTMLInputElement).value).toBe('0.25');
+  });
+
+  it('asks to weigh it again when a setting changes, and not while one is out of range', () => {
+    const { type, changes } = render(offer);
+
+    type('years-kept', '10');
+    type('rate-cut-per-point', '2');
+
+    expect(changes).toEqual([{ yearsKept: 10, rateCutPerPoint: 0.25 }]);
+  });
 
   it('says what the offer is and over how long each way is weighed', () => {
     expect(render(offer).text('offer-intro')).toBe(

@@ -20,11 +20,15 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
       { path: 'overview', component: OverviewTabComponent, title: title('Overview') },
+      { path: 'affordability', loadComponent: () => import('./features/calculator/tabs/affordability-tab.component').then((m) => m.AffordabilityTabComponent), title: title('Can you afford it?') },
+      { path: 'closing', loadComponent: () => import('./features/calculator/tabs/closing-tab.component').then((m) => m.ClosingTabComponent), title: title('Closing') },
       { path: 'projection', loadComponent: () => import('./features/calculator/tabs/projection-tab.component').then((m) => m.ProjectionTabComponent), title: title('Projection') },
       { path: 'schedule', loadComponent: () => import('./features/calculator/tabs/schedule-tab.component').then((m) => m.ScheduleTabComponent), title: title('Schedule') },
-      { path: 'compare', loadComponent: () => import('./features/calculator/tabs/compare-tab.component').then((m) => m.CompareTabComponent), title: title('Compare homes') },
+      // Comparing homes was a tab here before it became a page of its own: old links still land on it.
+      { path: 'compare', redirectTo: '/compare' },
     ],
   },
+  { path: 'compare', loadComponent: () => import('./features/compare/compare-page.component').then((m) => m.ComparePageComponent), title: title('Compare homes') },
   { path: 'refinance', loadComponent: () => import('./features/refinance/refinance-page.component').then((m) => m.RefinancePageComponent), title: title('Refinance') },
   { path: 'strategy', loadComponent: () => import('./features/strategy/strategy-page.component').then((m) => m.StrategyPageComponent), title: title('Pay off or invest') },
   { path: 'history', loadComponent: () => import('./features/history/history-page.component').then((m) => m.HistoryPageComponent), canActivate: [signedInGuard], title: title('History') },

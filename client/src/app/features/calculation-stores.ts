@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SavedCalculation, SavedCalculationKind } from '../core/models/saved-calculation.models';
 import { CalculationStore, SavedLink } from '../core/state/calculation-store';
 import { CalculatorStore } from './calculator/calculator.store';
-import { ComparisonStore } from './calculator/comparison.store';
+import { ComparisonStore } from './compare/comparison.store';
 import { RefinanceStore } from './refinance/refinance.store';
 import { StrategyStore } from './strategy/strategy.store';
 

@@ -104,9 +104,6 @@ export function loanForm(fb: NonNullableFormBuilder) {
     // A household's income and debts, for what it can afford: left blank, there is no affordability panel.
     annualIncome: [null as number | null, validatorsFor(rules.annualIncome)],
     monthlyDebts: [null as number | null, validatorsFor(rules.monthlyDebts)],
-    // How the seller's money is weighed: over the years most keep a loan, with a quarter point off the rate per point.
-    yearsKept: [7, validatorsFor(rules.yearsKept)],
-    rateCutPerPoint: [0.25, validatorsFor(rules.rateCutPerPoint)],
 
     monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
     annualExtra: [0, validatorsFor(rules.annualExtra)],
@@ -312,7 +309,6 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       credits: v.closingCredits || 0,
       lenderCredits: v.lenderCredits || 0,
     },
-    sellerOffer: { yearsKept: v.yearsKept || 7, rateCutPerPoint: v.rateCutPerPoint || 0.25 },
     affordability: v.annualIncome ? { annualIncome: v.annualIncome, monthlyDebts: v.monthlyDebts || 0 } : null,
   };
 }
@@ -392,7 +388,6 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     ...(closing && { prepaidInterestDays: closing.prepaidInterestDays, escrowMonths: closing.escrowMonths }),
     closingCredits: closing?.credits ?? 0,
     lenderCredits: closing?.lenderCredits ?? 0,
-    ...(r.sellerOffer && { yearsKept: r.sellerOffer.yearsKept, rateCutPerPoint: r.sellerOffer.rateCutPerPoint }),
     annualIncome: r.affordability?.annualIncome ?? null,
     monthlyDebts: r.affordability ? r.affordability.monthlyDebts || null : null,
   });

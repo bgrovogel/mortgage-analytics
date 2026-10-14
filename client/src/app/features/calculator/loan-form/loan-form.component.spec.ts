@@ -3,6 +3,7 @@ import { AmortizationRequest } from '../../../core/models/amortization.models';
 import { of } from 'rxjs';
 import { FhaLimitsService } from '../../../core/services/fha-limits.service';
 import { FHA_LIMITS as LIMITS } from '../../../../testing/builders';
+import { FormNavigator } from '../../../core/forms/form-navigator';
 import { LoanFormComponent } from './loan-form.component';
 
 describe('LoanFormComponent', () => {
@@ -60,7 +61,7 @@ describe('LoanFormComponent', () => {
 
       expect(details.querySelector('h3')?.textContent).toBe('More details');
       expect([...details.querySelectorAll('details.section')].map((d) => d.getAttribute('data-testid')))
-        .toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-income', 'section-growth', 'section-options']);
+        .toEqual(['section-loan', 'section-costs', 'section-closing', 'section-income', 'section-options', 'section-growth']);
     });
 
     it('says the numbers are an example until the first edit, and never for a restored loan', () => {
@@ -96,6 +97,28 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('when a result asks for one of its inputs', () => {
+    it('opens the section, brings the field into view and puts the cursor in it', () => {
+      const field = el('annual-income')!;
+      field.scrollIntoView = jest.fn(); // jsdom has no layout to scroll
+      TestBed.inject(FormNavigator).open('income', 'annual-income');
+      fixture.detectChanges();
+
+      expect((el('section-income') as HTMLDetailsElement).open).toBe(true);
+      expect(field.scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+      expect(document.activeElement).toBe(field);
+    });
+
+    it('leaves a compared home alone: only the calculator’s own loan answers', () => {
+      fixture.componentRef.setInput('shared', false);
+      fixture.detectChanges();
+      TestBed.inject(FormNavigator).open('income', 'annual-income');
+      fixture.detectChanges();
+
+      expect((el('section-income') as HTMLDetailsElement).open).toBe(false);
+    });
+  });
+
   describe('layout', () => {
     it('shows only the five main fields; everything else is in sections that start closed', () => {
       const sections = [...fixture.nativeElement.querySelectorAll('details.section')] as HTMLDetailsElement[];
@@ -103,8 +126,8 @@ describe('LoanFormComponent', () => {
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();
       }
-      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-income', 'section-growth', 'section-options']);
-      expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-loan', 'section-costs', 'section-closing', 'section-income', 'section-options', 'section-growth']);
+      expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-costs');
       expect(sections.every((s) => !s.open)).toBe(true);
     });
 

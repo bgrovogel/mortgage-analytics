@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { aHousingCosts, aPayment, aPurchase, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
-import { AmortizationRequest, AmortizationResponse } from '../../../core/models/amortization.models';
-import { AmortizationApiService } from '../../../core/services/amortization-api.service';
-import { RECALCULATE_DELAY_MS } from '../../../core/state/latest-request';
-import { ComparisonStore } from '../comparison.store';
-import { CompareTabComponent } from './compare-tab.component';
+import { aHousingCosts, aPayment, aPurchase, aResponse, aSavings, aSchedule } from '../../../testing/builders';
+import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
+import { AmortizationApiService } from '../../core/services/amortization-api.service';
+import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
+import { ComparisonStore } from './comparison.store';
+import { CompareResultsComponent } from './compare-results.component';
 
-describe('CompareTabComponent', () => {
+describe('CompareResultsComponent', () => {
   /** A home at a price, with a first payment; its five years cost $500 of housing and a thousandth of the price in interest. */
   const home = (price: number, payment: number): AmortizationResponse => aResponse({
     purchase: aPurchase({ homePrice: price, downPayment: price / 10, downPaymentPercent: 10, loanAmount: price * 0.9 }),
@@ -27,7 +27,7 @@ describe('CompareTabComponent', () => {
     TestBed.inject(ComparisonStore).send({ homes: prices.map((homePrice) => ({ homePrice }) as AmortizationRequest) });
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
     jest.useRealTimers();
-    const fixture = TestBed.createComponent(CompareTabComponent);
+    const fixture = TestBed.createComponent(CompareResultsComponent);
     fixture.detectChanges();
     const page = fixture.nativeElement as HTMLElement;
     const text = (id: string) => page.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();

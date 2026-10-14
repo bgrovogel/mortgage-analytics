@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { aHousingCosts, aResponse, aSchedule, aSavings } from '../../../testing/builders';
@@ -12,7 +12,6 @@ import { AuthService } from '../../core/auth/auth.service';
 import { signal } from '@angular/core';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
-import { ComparisonStore } from './comparison.store';
 
 describe('CalculatorPageComponent', () => {
   let harness: RouterTestingHarness;
@@ -42,113 +41,25 @@ describe('CalculatorPageComponent', () => {
     expect(el('[data-testid="result-tab-overview"]')!.getAttribute('aria-current')).toBe('page');
   });
 
+  it('sends an old link to the Compare tab to the Compare page', async () => {
+    await open('/calculator/compare');
+
+    expect(TestBed.inject(Router).url).toBe('/compare');
+  });
+
   it('links to each result tab, and shows the one for the URL', async () => {
     await open('/calculator/schedule');
 
     const links = [...harness.routeNativeElement!.querySelectorAll('nav[aria-label="Results"] a')] as HTMLAnchorElement[];
     expect(links.map((a) => [a.textContent!.trim(), a.getAttribute('href')])).toEqual([
       ['Overview', '/calculator/overview'],
+      ['Affordability', '/calculator/affordability'],
+      ['Closing', '/calculator/closing'],
       ['Projection', '/calculator/projection'],
       ['Schedule', '/calculator/schedule'],
-      ['Compare', '/calculator/compare'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();
     expect(el('app-overview-tab')).toBeNull();
-  });
-
-  describe('comparing two homes', () => {
-    const switchTo = (house: 'a' | 'b' | 'c' | 'd') => {
-      el(`[data-testid="edit-home-${house}"]`)!.dispatchEvent(new Event('change'));
-      harness.detectChanges();
-      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
-      harness.detectChanges();
-    };
-    const homePrice = () => el('[data-testid="home-price"]') as HTMLInputElement;
-    const type = (input: HTMLInputElement, value: string) => {
-      input.value = value;
-      input.dispatchEvent(new Event('input'));
-      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
-      harness.detectChanges();
-    };
-
-    it('shows the switch between the homes only on the Compare tab, and starts Home B as a copy of Home A', async () => {
-      await open('/calculator/overview');
-      expect(el('[data-testid="house-switch"]')).toBeNull();
-
-      await harness.navigateByUrl('/calculator/compare');
-      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
-      harness.detectChanges();
-      const comparison = TestBed.inject(ComparisonStore);
-
-      expect(el('[data-testid="house-switch"]')).not.toBeNull();
-      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home A');
-      expect(comparison.request()!.homes).toEqual([comparison.request()!.homes[0], comparison.request()!.homes[0]]);
-    });
-
-    it('edits Home B in the same place, leaving Home A as it was, and only Home A is the shared loan', async () => {
-      await open('/calculator/compare');
-      const first = TestBed.inject(CalculatorStore).request();
-
-      switchTo('b');
-      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home B');
-      expect(el('[data-testid="shared-tag"]')).toBeNull();
-      type(homePrice(), '450000');
-
-      const comparison = TestBed.inject(ComparisonStore).request()!;
-      expect(comparison.homes[1].homePrice).toBe(450_000);
-      expect(comparison.homes[0]).toBe(first);
-      expect(TestBed.inject(CalculatorStore).request()).toBe(first);
-
-      switchTo('a');
-      expect(homePrice().value).toBe(first!.homePrice.toLocaleString('en-US'));
-    });
-
-    it('adds homes up to four, each a copy of Home A to edit, then offers no more', async () => {
-      await open('/calculator/compare');
-      const click = (id: string) => {
-        (el(`[data-testid="${id}"]`) as HTMLButtonElement).click();
-        harness.detectChanges();
-        jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
-        harness.detectChanges();
-      };
-
-      click('add-home');
-      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home C');
-      type(homePrice(), '380000');
-      click('add-home');
-
-      const comparison = TestBed.inject(ComparisonStore).request()!;
-      expect(comparison.homes.map((h) => h.homePrice)).toEqual([415_000, 415_000, 380_000, 415_000]);
-      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home D');
-      expect(el('[data-testid="edit-home-d"]')).not.toBeNull();
-      expect(el('[data-testid="add-home"]')).toBeNull();
-    });
-
-    it('removes the home being edited, never Home A, and keeps at least two', async () => {
-      await open('/calculator/compare');
-      expect(el('[data-testid="remove-home"]')).toBeNull();
-      (el('[data-testid="add-home"]') as HTMLButtonElement).click();
-      harness.detectChanges();
-      type(homePrice(), '380000');
-      expect(el('[data-testid="remove-home"]')!.textContent?.trim()).toBe('Remove Home C');
-
-      (el('[data-testid="remove-home"]') as HTMLButtonElement).click();
-      harness.detectChanges();
-      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
-      harness.detectChanges();
-
-      expect(TestBed.inject(ComparisonStore).request()!.homes.map((h) => h.homePrice)).toEqual([415_000, 415_000]);
-      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home B');
-      expect(el('[data-testid="remove-home"]')).toBeNull();
-      switchTo('a');
-      expect(el('[data-testid="remove-home"]')).toBeNull();
-    });
-
-    it('saves the comparison on the Compare tab, and the purchase on the others', async () => {
-      await open('/calculator/compare');
-      expect(TestBed.inject(ComparisonStore).savePayload()).toEqual(expect.objectContaining({ otherHomes: [expect.anything()] }));
-      expect(el('app-compare-tab')).not.toBeNull();
-    });
   });
 
   it('offers to save the calculation, beside the result tabs', async () => {

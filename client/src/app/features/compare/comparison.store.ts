@@ -6,7 +6,7 @@ import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
-import { CalculatorStore, purchaseLoanOf } from './calculator.store';
+import { CalculatorStore, purchaseLoanOf } from '../calculator/calculator.store';
 
 /**
  * Up to four homes compared on the calculator's Compare tab. The first home is the calculator's own loan; each other
@@ -19,7 +19,7 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
   private readonly calculator = inject(CalculatorStore);
 
   readonly kind = 'HomeComparison';
-  readonly route = ['/calculator', 'compare'];
+  readonly route = ['/compare'];
   readonly pageName = 'Compare homes';
 
   describe = describeComparison;
@@ -42,6 +42,8 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
   }
 
   protected send$(request: HomeComparisonRequest) {
-    return forkJoin(request.homes.map((home) => this.api.calculate(home))).pipe(map((homes) => ({ homes })));
+    // The comparison shows neither the best use of a seller's offer nor affordability: it does not ask for them.
+    const plain = request.homes.map((home) => ({ ...home, sellerOffer: null, affordability: null }));
+    return forkJoin(plain.map((home) => this.api.calculate(home))).pipe(map((homes) => ({ homes })));
   }
 }

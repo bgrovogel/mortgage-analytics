@@ -1,10 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { aHousingCosts, aPayment, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
-import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { FormNavigator } from '../../../core/forms/form-navigator';
+import { Affordability, AmortizationResponse, CashToClose } from '../../../core/models/amortization.models';
 import { SavingsSummaryComponent } from './savings-summary.component';
 
 describe('SavingsSummaryComponent', () => {
   let fixture: ComponentFixture<SavingsSummaryComponent>;
+
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
 
   const render = (response: AmortizationResponse) => {
     fixture = TestBed.createComponent(SavingsSummaryComponent);
@@ -43,10 +47,12 @@ describe('SavingsSummaryComponent', () => {
     expect(abbr.parentElement!.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^\$[\d,.]+ P&I \+ \$595\.83 property tax$/);
   });
 
-  it('labels the payment as the required payment', () => {
+  it('leads with the monthly payment, the first of the answers', () => {
     render(aResponse());
 
-    expect(fixture.nativeElement.textContent).toContain('Required monthly payment');
+    const first = fixture.nativeElement.querySelector('.answers .tile');
+    expect(first.querySelector('dt').textContent).toBe('Monthly payment');
+    expect(first.classList).toContain('primary');
   });
 
   it('shows what the first payment comes to with the extra principal', () => {
@@ -68,10 +74,11 @@ describe('SavingsSummaryComponent', () => {
     savings: aSavings({ interestSaved: 79_800.86, netSavings: 79_800.86, paymentsSaved: 108, totalExtraPrincipal: 50_400 }),
   });
 
-  it('makes net savings the headline figure when extra payments save something', () => {
+  it('shows the net savings, in green, as the answer to what paying extra saves', () => {
     render(withExtras());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="net-savings"]').closest('.tile').classList).toContain('hero');
+    expect(text('net-savings')).toBe('$79,801');
+    expect(fixture.nativeElement.querySelector('[data-testid="savings-tile"]').classList).toContain('positive');
   });
 
   it('shows the total interest with extra payments, and what it would have been', () => {
@@ -86,7 +93,7 @@ describe('SavingsSummaryComponent', () => {
 
     expect(text('net-savings')).toBeUndefined();
     expect(text('total-interest')).toBe('$231,677');
-    expect(fixture.nativeElement.querySelector('[data-testid="total-interest"]').closest('.tile').classList).toContain('hero');
+    expect(fixture.nativeElement.querySelector('[data-testid="savings-tile"]').classList).not.toContain('positive');
     expect(text('total-interest-detail')).toBe('Add an extra payment to see how much you could save.');
   });
 
@@ -181,7 +188,7 @@ describe('SavingsSummaryComponent', () => {
     expect(component.savingsDetail()).toBeNull();
     expect(text('savings-detail')).toBeUndefined();
     expect(text('net-savings')).toBe('$79,801');
-    expect(fixture.nativeElement.querySelector('.tile.hero').textContent.replace(/\s+/g, ' ')).toContain('Total interest $151,876 instead of $231,677');
+    expect(fixture.nativeElement.querySelector('[data-testid="savings-tile"]').textContent.replace(/\s+/g, ' ')).toContain('Total interest $151,876 instead of $231,677');
   });
 
   it('says when it is paid off and how much sooner in one tile, not two', () => {
@@ -189,7 +196,8 @@ describe('SavingsSummaryComponent', () => {
 
     expect(text('payoff-date')).toBe('Sep 2050');
     expect(fixture.nativeElement.querySelector('[data-testid="payoff-date"]').closest('.tile').textContent).toContain('6 yr 1 mo sooner, instead of Oct 2056');
-    expect(fixture.nativeElement.querySelectorAll('.tile')).toHaveLength(3); // the headline, the payment, and when it is paid off
+    // The payment, whether you can afford it, the savings, and when it is paid off: nothing to close, no PMI.
+    expect(fixture.nativeElement.querySelectorAll('.tile')).toHaveLength(4);
   });
 
   it('itemizes PMI saved and recast fees', () => {
@@ -319,5 +327,66 @@ describe('SavingsSummaryComponent', () => {
     expect(text('monthly-payment')).toBe('$2,325.26');
     expect(fixture.nativeElement.textContent).toContain('+ $928.94');
     expect(text('housing-costs-label')).toBe('property tax & insurance');
+  });
+
+  describe('the cash to close', () => {
+    const cash = { downPayment: 37_350, closingCosts: 10_778.79, credits: 8_000, total: 40_128.79 } as CashToClose;
+
+    it('says what it comes to, and from what, with a way to its details', () => {
+      render(aResponse({ cashToClose: cash }));
+
+      expect(text('cash-tile-total')).toBe('$40,129');
+      expect(fixture.nativeElement.querySelector('[data-testid="cash-tile"]').textContent.replace(/\s+/g, ' '))
+        .toContain('$37,350 down + $10,779 closing costs − $8,000 credits');
+      expect(fixture.nativeElement.querySelector('[data-testid="cash-tile-link"]').getAttribute('href')).toBe('/calculator/closing');
+    });
+
+    it('leaves out the credits when there are none', () => {
+      render(aResponse({ cashToClose: { ...cash, credits: 0, total: 48_128.79 } }));
+
+      expect(fixture.nativeElement.querySelector('[data-testid="cash-tile"]').textContent).not.toContain('credits');
+    });
+
+    it('is left out for a loan already being paid, which closed long ago', () => {
+      fixture = TestBed.createComponent(SavingsSummaryComponent);
+      fixture.componentRef.setInput('result', aResponse({ cashToClose: cash }));
+      fixture.componentRef.setInput('current', aPayment(13));
+      fixture.detectChanges();
+
+      expect(text('cash-tile')).toBeUndefined();
+      expect(text('afford-tile')).toBeUndefined();
+    });
+  });
+
+  describe('can you afford it', () => {
+    const affordability = (comfortable: boolean, allowed: boolean): Affordability => ({
+      monthlyIncome: 12_500, monthlyDebts: 600, housingPayment: 3_102.19, housingPercent: 24.82, totalPercent: 29.62,
+      comfortable: { housingPercent: 28, totalPercent: 36, maxHousingPayment: 3_500, maxHomePrice: 474_091, fits: comfortable },
+      mostAllowed: { housingPercent: null, totalPercent: 45, maxHousingPayment: 5_025, maxHomePrice: 700_615, fits: allowed },
+    });
+
+    it('answers in a word, says why, and links to how lenders see it', () => {
+      render(aResponse({ affordability: affordability(true, true) }));
+
+      expect(text('afford-tile-answer')).toBe('Yes');
+      expect(text('afford-tile-note')).toBe('24.82% of your income, 29.62% with your debts: within the comfortable 28% and 36%.');
+      expect(fixture.nativeElement.querySelector('[data-testid="afford-tile-link"]').getAttribute('href')).toBe('/calculator/affordability');
+    });
+
+    it('calls a home past the comfortable limit a stretch, and one past the loan’s too much', () => {
+      render(aResponse({ affordability: affordability(false, true) }));
+      expect(text('afford-tile-answer')).toBe('A stretch');
+
+      render(aResponse({ affordability: affordability(false, false) }));
+      expect(text('afford-tile-answer')).toBe('Too much');
+      expect(text('afford-tile-note')).toBe('24.82% of your income, 29.62% with your debts: past what lenders allow.');
+    });
+
+    it('without an income, offers to add one, which opens the income field', () => {
+      render(aResponse());
+      (fixture.nativeElement.querySelector('[data-testid="afford-tile-add"]') as HTMLButtonElement).click();
+
+      expect(TestBed.inject(FormNavigator).requested()).toEqual({ section: 'income', field: 'annual-income' });
+    });
   });
 });

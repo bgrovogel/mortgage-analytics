@@ -1,6 +1,6 @@
-import { AmortizationResponse } from '../../../core/models/amortization.models';
-import { usd, usdCents } from '../../../core/formatting/format';
-import { homeName } from '../../../core/models/home-comparison.models';
+import { AmortizationResponse } from '../../core/models/amortization.models';
+import { usd, usdCents } from '../../core/formatting/format';
+import { homeName } from '../../core/models/home-comparison.models';
 
 /** How many years the "first years" figures cover. */
 export const FIRST_YEARS = 5;

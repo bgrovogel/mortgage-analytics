@@ -1,0 +1,27 @@
+// The sections make one list under More details, divided by rules, rather than a stack of cards: square corners
+// between them, one rule where two meet, rounded only at the ends (the form marks its first and last section).
+:host {
+  display: block;
+}
+
+:host > .section {
+  border-radius: 0;
+}
+
+:host(:not(.first)) > .section {
+  border-top: 0;
+}
+
+:host(.first) > .section {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+
+:host(.last) > .section {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+:host > .section[open] {
+  background: var(--surface-2);
+}

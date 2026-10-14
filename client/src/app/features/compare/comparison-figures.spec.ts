@@ -1,5 +1,5 @@
-import { aHousingCosts, aPayment, aProjectionYear, aPurchase, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
-import { CashToClose } from '../../../core/models/amortization.models';
+import { aHousingCosts, aPayment, aProjectionYear, aPurchase, aResponse, aSavings, aSchedule } from '../../../testing/builders';
+import { CashToClose } from '../../core/models/amortization.models';
 import { cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
 
 describe('the figures a home is compared by', () => {

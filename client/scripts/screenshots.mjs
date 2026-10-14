@@ -28,7 +28,7 @@ const shots = {
   'schedule.png': async (b) => open(b, '/calculator/schedule'),
   // Three homes: the example, a $450,000 home with 20% down, and a $380,000 home with the same $37,350 down.
   'compare.png': async (b) => {
-    const page = await open(b, '/calculator/compare');
+    const page = await open(b, '/compare');
     await page.getByTestId('edit-home-b').check();
     await settled(page); // Home B's form fills in before it can be changed
     await page.getByTestId('home-price').fill('450000');
@@ -43,26 +43,26 @@ const shots = {
   },
   // Just the cash to close: a builder's 2-1 buydown and $8,000 of credits, more than 3% of the price allows.
   'concessions.png': async (b) => {
-    const page = await open(b, '/calculator/overview', { scale: 2 });
-    await page.getByText('Closing costs').first().click();
+    const page = await open(b, '/calculator/closing', { scale: 2 });
+    await page.getByTestId('section-closing').locator('summary').click();
     await page.getByTestId('closing-credits').fill('8000');
-    await page.getByText('Rate type').first().click();
+    await page.getByTestId('section-loan').locator('summary').click();
     await page.getByTestId('rate-type-buydown').check();
     await settled(page);
     return page.locator('app-cash-to-close');
   },
   // Just the seller's $8,000 four ways: off the price, toward closing, a 2-1 buydown, points.
   'seller-offer.png': async (b) => {
-    const page = await open(b, '/calculator/overview', { scale: 2 });
-    await page.getByText('Closing costs').first().click();
+    const page = await open(b, '/calculator/closing', { scale: 2 });
+    await page.getByTestId('section-closing').locator('summary').click();
     await page.getByTestId('closing-credits').fill('8000');
     await settled(page);
     return page.locator('app-seller-offer');
   },
   // Just the affordability panel: the example against $150,000 a year and $600 of other debts.
   'affordability.png': async (b) => {
-    const page = await open(b, '/calculator/overview', { scale: 2 });
-    await page.getByText('Income & debts').first().click();
+    const page = await open(b, '/calculator/affordability', { scale: 2 });
+    await page.getByTestId('section-income').locator('summary').click();
     await page.getByTestId('annual-income').fill('150000');
     await page.getByTestId('monthly-debts').fill('600');
     await settled(page);
@@ -74,7 +74,7 @@ const shots = {
   // Just the rate plan: a 2-1 buydown, year by year.
   'buydown.png': async (b) => {
     const page = await open(b, '/calculator/overview', { scale: 2 });
-    await page.getByText('Rate type').first().click();
+    await page.getByTestId('section-loan').locator('summary').click();
     await page.getByTestId('rate-type-buydown').check();
     await settled(page);
     return page.getByTestId('rate-plan');

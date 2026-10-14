@@ -1,4 +1,15 @@
-@use '../../../core/layout/scroll-hint';
+@use '../../core/layout/scroll-hint';
+@use '../../core/layout/surfaces';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.panel {
+  @include surfaces.card;
+  padding: 1.25rem;
+}
 
 .headline {
   margin: 0 0 1rem;

@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { money, monthOf, pct } from '../../../core/formatting/format';
-import { MAX_HOMES, homeName } from '../../../core/models/home-comparison.models';
-import { ComparisonStore } from '../comparison.store';
-import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from '../compare/comparison-figures';
+import { money, monthOf, pct } from '../../core/formatting/format';
+import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
+import { ComparisonStore } from './comparison.store';
+import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
 
 /** One line of the comparison: how to show a figure, whether a difference between homes means anything, and which way is better. */
 interface Line {
@@ -65,7 +65,7 @@ interface Row {
  * better, the best home is marked. Two homes are summed up in one line; more in a line each, after the cheapest.
  */
 @Component({
-  selector: 'app-compare-tab',
+  selector: 'app-compare-results',
   template: `
     @if (figures(); as homes) {
       <section class="panel compare">
@@ -107,10 +107,10 @@ interface Row {
       </section>
     }
   `,
-  styleUrls: ['./result-tab.scss', './compare-tab.component.scss'],
+  styleUrl: './compare-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CompareTabComponent {
+export class CompareResultsComponent {
   private readonly store = inject(ComparisonStore);
 
   protected readonly years = FIRST_YEARS;

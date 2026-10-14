@@ -9,6 +9,7 @@ import { CalculationStores } from './features/calculation-stores';
 /** The pages in the top navigation. */
 const PAGES = [
   { path: '/calculator', label: 'Calculator' },
+  { path: '/compare', label: 'Compare homes' },
   { path: '/refinance', label: 'Refinance' },
   { path: '/strategy', label: 'Pay off or invest' },
   { path: '/history', label: 'History' },

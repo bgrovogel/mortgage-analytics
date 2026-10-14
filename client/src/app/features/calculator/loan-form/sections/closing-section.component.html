@@ -1,0 +1,36 @@
+<details class="section" data-testid="section-closing">
+  <summary>
+    <span class="section-title">Closing costs &amp; credits</span>
+    <span class="section-summary"><span data-testid="closing-summary">{{ f.closingSummary() }}</span></span>
+  </summary>
+  <div class="section-body">
+      <div class="row">
+        <app-number-field [control]="f.form.controls.loanCosts" [rule]="f.rules.loanCosts" testId="loan-costs" />
+        <app-number-field [control]="f.form.controls.otherFees" [rule]="f.rules.otherFees" testId="other-fees" />
+      </div>
+      <p class="hint">
+        From page 2 of your Loan Estimate: loan costs are its total D (origination, appraisal, title); other fees are
+        sections E and H (recording fees, transfer taxes, an owner's title policy).
+      </p>
+
+      <div class="row">
+        <app-number-field [control]="f.form.controls.prepaidInterestDays" [rule]="f.rules.prepaidInterestDays" testId="prepaid-interest-days" label="Days of interest" />
+        <app-number-field [control]="f.form.controls.escrowMonths" [rule]="f.rules.escrowMonths" testId="escrow-months" />
+      </div>
+      <p class="hint">
+        Interest is paid from closing to the end of that month, and escrow starts with a few months of the taxes and
+        insurance above. The first year of insurance is always paid at closing.
+      </p>
+
+      <div class="row">
+        <app-number-field [control]="f.form.controls.closingCredits" [rule]="f.rules.closingCredits" testId="closing-credits" />
+        <app-number-field [control]="f.form.controls.lenderCredits" [rule]="f.rules.lenderCredits" testId="lender-credits" />
+      </div>
+      <p class="hint">
+        Credits pay closing costs, never the down payment. A seller or builder may pay only so much, a buydown they pay
+        for included: 3% to 9% of the price on a conventional loan, 6% on FHA, 4% on VA. The Closing tab says how much,
+        and the best way to take a seller's offer.
+      </p>
+    
+  </div>
+</details>

@@ -1,6 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NonNullableFormBuilder } from '@angular/forms';
+import { FieldRules, validatorsFor } from '../../../core/forms/field-rules';
+import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { decimal, pct, usd } from '../../../core/formatting/format';
-import { SellerOfferComparison, SellerOfferOption, SellerOfferUse } from '../../../core/models/amortization.models';
+import { SellerOfferComparison, SellerOfferInput, SellerOfferOption, SellerOfferUse } from '../../../core/models/amortization.models';
+import { DEFAULT_OFFER_SETTINGS } from '../calculator.store';
+
+/** How the offer is weighed, with the limits the API enforces (AmortizationRequestValidator). */
+const OFFER_RULES = {
+  yearsKept: { label: 'Years you keep the loan', unit: 'years', min: 1, max: 50, whole: true },
+  rateCutPerPoint: { label: 'Rate cut per point', unit: '%', min: 0.001, max: 1, decimals: 3 },
+} as const satisfies FieldRules;
 
 /** Each way's column heading, and how a sentence says taking the offer that way. */
 const WAYS: Record<SellerOfferUse, { heading: string; taking: string }> = {
@@ -23,12 +34,18 @@ interface Row {
  */
 @Component({
   selector: 'app-seller-offer',
+  imports: [NumberFieldComponent],
   template: `
     <h2 id="seller-offer-title">Best use of the seller’s money</h2>
     <p class="intro" data-testid="offer-intro">
       The seller’s {{ amount() }}, taken each way it can be, over the {{ years() }} you keep the loan: what you bring to
       closing, pay each month, and still owe after.
     </p>
+    <!-- How it is weighed, beside what it changes: the years kept, and the rate a point buys. -->
+    <div class="settings" data-testid="offer-settings">
+      <app-number-field [control]="form.controls.yearsKept" [rule]="rules.yearsKept" testId="years-kept" />
+      <app-number-field [control]="form.controls.rateCutPerPoint" [rule]="rules.rateCutPerPoint" testId="rate-cut-per-point" />
+    </div>
     <p class="verdict" data-testid="offer-best">{{ verdict() }}</p>
     @if (notUsed(); as note) {
       <p class="note warn" data-testid="offer-not-used">{{ note }}</p>
@@ -78,6 +95,29 @@ interface Row {
 export class SellerOfferComponent {
   /** The API's comparison of the ways to take the offer. */
   readonly offer = input.required<SellerOfferComparison>();
+
+  /** How the offer is weighed now. */
+  readonly settings = input<SellerOfferInput>(DEFAULT_OFFER_SETTINGS);
+
+  /** Asks to weigh the offer another way: emitted when a setting changes to a value in range. */
+  readonly settingsChange = output<SellerOfferInput>();
+
+  protected readonly rules = OFFER_RULES;
+  protected readonly form = inject(NonNullableFormBuilder).group({
+    yearsKept: [DEFAULT_OFFER_SETTINGS.yearsKept, validatorsFor(OFFER_RULES.yearsKept)],
+    rateCutPerPoint: [DEFAULT_OFFER_SETTINGS.rateCutPerPoint, validatorsFor(OFFER_RULES.rateCutPerPoint)],
+  });
+
+  constructor() {
+    // The fields follow the settings (a saved calculation brings its own) without asking to weigh it again.
+    effect(() => {
+      const settings = this.settings();
+      untracked(() => this.form.setValue(settings, { emitEvent: false }));
+    });
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.form.valid) this.settingsChange.emit(this.form.getRawValue());
+    });
+  }
 
   protected readonly usd = usd;
 

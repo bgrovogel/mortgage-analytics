@@ -93,7 +93,7 @@ export class CalculatorPage {
     return this.page.getByTestId(testId);
   }
 
-  /** A collapsible form section, e.g. "section-taxes". */
+  /** A collapsible form section, e.g. "section-costs". */
   section(testId: string): Locator {
     return this.page.getByTestId(testId);
   }
@@ -105,7 +105,7 @@ export class CalculatorPage {
 
   /** Opens every collapsed section, making the form as tall as it gets. */
   async openAllSections(): Promise<void> {
-    for (const id of ['section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']) {
+    for (const id of ['section-loan', 'section-costs', 'section-closing', 'section-income', 'section-options', 'section-growth']) {
       await this.openSection(id);
     }
   }
@@ -246,10 +246,16 @@ export class CalculatorPage {
     await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
   }
 
-  /** Opens a result tab: Overview, Projection, Schedule or Compare. Each has its own URL. */
-  async showResults(tab: 'overview' | 'projection' | 'schedule' | 'compare'): Promise<void> {
+  /** Opens a result tab: Overview, Affordability, Closing, Projection or Schedule. Each has its own URL. */
+  async showResults(tab: 'overview' | 'affordability' | 'closing' | 'projection' | 'schedule'): Promise<void> {
     await this.page.getByTestId(`result-tab-${tab}`).click();
     await expect(this.page, `the URL names the ${tab} tab`).toHaveURL(new RegExp(`/calculator/${tab}$`));
+  }
+
+  /** Goes to Compare homes from the page links, where Home A is the calculator's loan. */
+  async compareHomes(): Promise<void> {
+    await this.page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Compare homes' }).click();
+    await expect(this.page, 'the Compare homes page').toHaveURL(/\/compare$/);
   }
 
   /** Shows the yearly taxes & costs chart (on the Projection tab). */

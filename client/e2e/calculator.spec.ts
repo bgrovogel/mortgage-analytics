@@ -24,14 +24,14 @@ test.describe('Mortgage calculator', () => {
   });
 
   test('keeps advanced options collapsed, each summarized in one line', async ({ calculator }) => {
-    for (const id of ['section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']) {
+    for (const id of ['section-loan', 'section-costs', 'section-closing', 'section-income', 'section-options', 'section-growth']) {
       await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
     }
     await expect(calculator.sectionSummary('taxes-summary'), 'a closed section summarizes its values')
       .toHaveText('Tax 0.9% · Homestead');
     await expect(calculator.field('property-tax-rate'), 'fields inside a closed section are hidden').toBeHidden();
 
-    await calculator.openSection('section-taxes');
+    await calculator.openSection('section-costs');
 
     await expect(calculator.field('property-tax-rate'), 'opening the section reveals its fields').toBeVisible();
   });
@@ -78,6 +78,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('homestead-exemption', 50_000);
     await calculator.set('annual-insurance', 2_400);
     await calculator.calculate();
+    await calculator.showResults('closing');
     const lines = page.getByTestId('cash-to-close');
     const total = page.getByTestId('cash-to-close-total');
 
@@ -107,6 +108,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('closing-credits', 5_000);
     await calculator.chooseRateType('buydown');
     await calculator.calculate();
+    await calculator.showResults('closing');
 
     await expect(page.getByTestId('concession-limit'), 'the limit, why, and what the builder offers')
       .toHaveText('A seller or builder may pay up to $11,250 of your costs: 3% of the price, with less than 10% down. Here they pay $12,899, with the buydown.');
@@ -130,6 +132,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('annual-insurance', 2_400);
     await calculator.set('closing-credits', 10_000);
     await calculator.calculate();
+    await calculator.showResults('closing');
 
     const offer = page.getByTestId('seller-offer');
     await expect(offer.locator('thead th'), 'a column for each way, the cheapest marked')
@@ -187,7 +190,7 @@ test.describe('Mortgage calculator', () => {
   test('compares two homes side by side: Home B starts as a copy, and each keeps its own numbers', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();
-    await calculator.showResults('compare');
+    await calculator.compareHomes();
     await calculator.calculate();
     await expect(page.getByTestId('compare-headline'), 'a copy costs the same').toHaveText('Home B costs the same a month, needs the same at closing, and costs the same over the first 5 years.');
 
@@ -212,6 +215,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('annual-income', 120_000);
     await calculator.set('monthly-debts', 500);
     await calculator.calculate();
+    await calculator.showResults('affordability');
 
     await expect(page.getByTestId('afford-intro'), 'the payment as a share of $10,000 a month')
       .toHaveText('This home’s payment, $3,128 a month with taxes, insurance and mortgage insurance, is 31.28% of your $10,000 monthly income, and 36.28% with your $500 of other debts.');
@@ -232,7 +236,7 @@ test.describe('Mortgage calculator', () => {
   test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();
-    await calculator.showResults('compare');
+    await calculator.compareHomes();
     await calculator.editHome('B');
     await calculator.set('home-price', 450_000);
     await calculator.set('down-payment', 90_000);
@@ -275,6 +279,7 @@ test.describe('Mortgage calculator', () => {
       .toHaveText([/Without points\s*6\.25%\s*\$1,231\.43\/mo/, /With 1 point\s*6%\s*\$1,199\.10\/mo/]);
     await expect(page.getByTestId('points-verdict'), 'it pays for itself by payment 48')
       .toContainText('1 point costs $2,000 at closing and lowers the payment $32.33 a month. The interest it saves covers that by payment 48 (Dec 2039)');
+    await calculator.showResults('closing');
     await expect(page.getByTestId('cash-to-close'), 'and is paid at closing').toContainText('Discount points$2,000.00');
   });
 

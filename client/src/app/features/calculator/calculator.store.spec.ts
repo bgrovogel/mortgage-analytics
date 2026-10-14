@@ -60,8 +60,10 @@ describe('CalculatorStore', () => {
       store.open(saved);
       settle();
 
-      expect(store.request()).toBe(saved.inputs);
-      expect(calculate).toHaveBeenCalledWith(saved.inputs);
+      // Weighed by the current settings for the seller's offer, which a save made before them leaves out.
+      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 } };
+      expect(store.request()).toEqual(sent);
+      expect(calculate).toHaveBeenCalledWith(sent);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
     });
 
@@ -76,6 +78,41 @@ describe('CalculatorStore', () => {
       store.linkTo({ ...saved, name: 'Renamed' });
 
       expect(store.saved()).toEqual({ id: 'abc', name: 'Renamed' });
+    });
+  });
+
+  describe('weighing the seller’s offer', () => {
+    beforeEach(() => calculate.mockReturnValue(of(aResponse())));
+
+    it('weighs it over seven years, a quarter point off for each point, unless set', () => {
+      store.send(request());
+
+      expect(store.request()?.sellerOffer).toEqual({ yearsKept: 7, rateCutPerPoint: 0.25 });
+    });
+
+    it('calculates again when the settings change, and keeps them for the requests after', () => {
+      store.send(request());
+      settle();
+
+      store.setOfferSettings({ yearsKept: 10, rateCutPerPoint: 0.375 });
+      settle();
+      store.send(request(5));
+
+      expect(calculate.mock.calls.map(([r]) => r.sellerOffer?.yearsKept)).toEqual([7, 10]);
+      expect(store.request()?.sellerOffer).toEqual({ yearsKept: 10, rateCutPerPoint: 0.375 });
+    });
+
+    it('takes the settings a saved calculation brings', () => {
+      store.send({ ...request(), sellerOffer: { yearsKept: 3, rateCutPerPoint: 0.125 } });
+
+      expect(store.offerSettings()).toEqual({ yearsKept: 3, rateCutPerPoint: 0.125 });
+    });
+
+    it('waits for a first request before calculating anything', () => {
+      store.setOfferSettings({ yearsKept: 10, rateCutPerPoint: 0.25 });
+      settle();
+
+      expect(calculate).not.toHaveBeenCalled();
     });
   });
 

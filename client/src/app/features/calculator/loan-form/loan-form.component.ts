@@ -1,11 +1,12 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, Signal, computed, effect, forwardRef, inject, input, output, signal, untracked } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { merge } from 'rxjs';
 import { problemsIn, problemsOf } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
+import { FormNavigator } from '../../../core/forms/form-navigator';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
@@ -14,8 +15,13 @@ import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
-import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
-import { FhaCountyComponent } from './fha-county.component';
+import { LOAN_FORM } from './loan-form.token';
+import { ClosingSectionComponent } from './sections/closing-section.component';
+import { CostsSectionComponent } from './sections/costs-section.component';
+import { ExtraPaymentsSectionComponent } from './sections/extra-payments-section.component';
+import { GrowthSectionComponent } from './sections/growth-section.component';
+import { IncomeSectionComponent } from './sections/income-section.component';
+import { LoanTypeSectionComponent } from './sections/loan-type-section.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
   LumpSumForm, RateChangeForm, chargedTaxes, fhaDownProblem, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
@@ -41,7 +47,7 @@ const SECTION_CONTROLS = {
     'transferredCeilingPercent', 'rateChanges'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   program: ['creditScore'],
-  closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits', 'yearsKept', 'rateCutPerPoint'],
+  closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits'],
   income: ['annualIncome', 'monthlyDebts'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
@@ -58,7 +64,12 @@ const SECTION_CONTROLS = {
  */
 @Component({
   selector: 'app-loan-form',
-  imports: [ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, RateOptionsComponent, FhaCountyComponent],
+  imports: [
+    ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective,
+    LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent,
+  ],
+  // The sections read the form from here.
+  providers: [{ provide: LOAN_FORM, useExisting: forwardRef(() => LoanFormComponent) }],
   templateUrl: './loan-form.component.html',
   styleUrl: './loan-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,16 +125,16 @@ export class LoanFormComponent implements OnInit {
   /** True while a request is being loaded into the form, so its many changes do not each emit. */
   private restoring = false;
 
-  protected readonly rules = rules;
-  protected readonly lumpSumRules = LUMP_SUM_RULES;
-  protected readonly rateChangeRules = RATE_CHANGE_RULES;
+  readonly rules = rules;
+  readonly lumpSumRules = LUMP_SUM_RULES;
+  readonly rateChangeRules = RATE_CHANGE_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
-  protected readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
+  readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
 
   readonly form = loanForm(this.fb);
 
-  protected readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   /** Emits what is wrong whenever that changes: an empty list once the form can be sent again. */
   readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));
@@ -262,6 +273,21 @@ export class LoanFormComponent implements OnInit {
     // Recalculate as the user types: every change that leaves the form valid produces a request.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (!this.restoring && this.canSend()) this.calculate.emit(this.toRequest());
+    });
+
+    // A result asking for one of the loan's inputs ("Add your income") opens its section and puts the cursor in it.
+    // Only the calculator's own loan answers, and only requests made after this form was: not one it was built after.
+    const navigator = inject(FormNavigator);
+    const host: HTMLElement = inject(ElementRef).nativeElement;
+    const before = navigator.requested();
+    effect(() => {
+      const to = navigator.requested();
+      if (!to || to === before || !untracked(this.shared)) return;
+      const section = host.querySelector<HTMLDetailsElement>(`[data-testid="section-${to.section}"]`);
+      if (section) section.open = true;
+      const field = host.querySelector<HTMLInputElement>(`[data-testid="${to.field}"]`);
+      field?.scrollIntoView({ block: 'center' });
+      field?.focus({ preventScroll: true });
     });
   }
 
