@@ -445,7 +445,70 @@ def analyze(request, today, other_choice=True):
             'worstCaseTotalInterest': sum((r['interest'] for r in worst['rows']), D(0)),
         }
     out['pmiOtherChoice'] = pmi_other_choice(request, today, acc) if program is None and other_choice else None
+    out['sellerOffer'] = seller_offer(request, today, out)
     return out
+
+
+def seller_offer(request, today, out):
+    """
+    The seller's or builder's offer (their credits, and a buydown they pay for) taken each way it can be, each the
+    request analyzed again as it would be, on its standard schedule: off the price (the same down payment, so a smaller
+    loan); as credits; for a 2-1 buydown the seller pays as far as the offer and the limit go, the rest as credits and
+    any shortfall paid by the buyer at closing; and for discount points, as many thousandths of a point as the offer
+    pays within the limit (VA's leaves points out), at most 5, each lowering the rate by the cut per point. Each is
+    costed over the years kept: the cash to close, every payment, and the balance still owed.
+    """
+    weigh, closing = request.get('sellerOffer'), request.get('closingCosts')
+    if not weigh or not closing or request.get('adjustableRate') or request.get('discountPoints'):
+        return None
+    sellers = out['buydown']['totalSubsidy'] if out['buydown'] and out['buydown']['paidBy'] == 'Seller' else D(0)
+    offer = D(str(closing['credits'])) + sellers
+    if offer == 0:
+        return None
+    years, cut = weigh['yearsKept'], D(str(weigh['rateCutPerPoint']))
+    price, down, rate = D(str(request['homePrice'])), D(str(request['downPayment'])), D(str(request['annualInterestRate']))
+    kind = (request.get('program') or {}).get('type', 'Conventional')
+    plain = dict(request, extraPayments=None, buydown=None, sellerOffer=None, closingCosts=dict(closing, credits=0))
+    credited = lambda r, c: dict(r, closingCosts=dict(closing, credits=c))  # noqa: E731
+    loan_of = lambda a: a['program']['loanAmount'] if a['program'] else a['purchase']['loanAmount']  # noqa: E731
+
+    def way(use, r, split=None):
+        a = analyze(r, today, other_choice=False)
+        cash = a['cashToClose']
+        if split:
+            subsidy = a['buydown']['totalSubsidy']
+            share = min(offer, subsidy, concession_limit(kind, a['purchase']['homePrice'], down)[1])
+            program = a['program']
+            cash = cash_to_close(dict(closing, credits=offer - share), down, loan_of(a), rate, a['projection'][0]['costs'],
+                                 subsidy - share, D(0), program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0),
+                                 share, kind, a['purchase']['homePrice'])
+        kept = a['baseline']['payments'][:years * 12]
+        first = kept[0]
+        payments = sum((p['totalOutlay'] for p in kept), D(0))
+        return {
+            'use': use, 'homePrice': a['purchase']['homePrice'], 'loanAmount': loan_of(a),
+            'annualInterestRate': D(str(r['annualInterestRate'])),
+            'points': D(str(r['discountPoints']['points'])) if r.get('discountPoints') else D(0),
+            'firstPayment': first['totalOutlay'], 'laterPayment': first['totalOutlay'] + first['buydownSubsidy'],
+            'cashToClose': cash['total'], 'payments': payments, 'balance': kept[-1]['remainingBalance'],
+            'cost': cash['total'] + payments + kept[-1]['remainingBalance'],
+            'notUsed': D(0) if use == 'PriceCut' else offer - cash['sellerCredits'] - cash['concessions']['sellerBuydown'],
+        }
+
+    ways = []
+    if price - offer > down:
+        ways.append(way('PriceCut', dict(plain, homePrice=price - offer)))
+    ways.append(way('ClosingCosts', credited(plain, offer)))
+    ways.append(way('TemporaryBuydown', dict(plain, buydown={'yearlyReductions': [2, 1]}, buydownPaidBy='Seller'), split=True))
+    limit = concession_limit(kind, price, down)[1]
+    budget = offer if kind == 'Va' else min(offer, limit)
+    points = min(D(5), (budget / loan_of(out) * 100_000).to_integral_value(rounding='ROUND_FLOOR') / 1000)
+    if points > 0:
+        cut_rate = max(D(0), (rate - points * cut).quantize(D('0.001'), rounding=ROUND_HALF_UP))
+        ways.append(way('DiscountPoints', dict(credited(plain, offer), annualInterestRate=cut_rate,
+                                               discountPoints={'points': points, 'rateWithoutPoints': rate})))
+    best = min(ways, key=lambda w: w['cost'])['use']
+    return {'offer': offer, 'yearsKept': years, 'rateCutPerPoint': cut, 'options': ways, 'best': best}
 
 
 def pmi_other_choice(request, today, acc):

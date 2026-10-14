@@ -120,6 +120,35 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('concessions-over'), 'with 10% down, the whole offer is allowed').toBeHidden();
   });
 
+  test("the best use of a builder's money: off the price, toward closing, a 2-1 buydown or points", async ({ calculator, page }) => {
+    // The same $375,000 home with 5% down at 5.99%, and a builder offering $10,000: within the 3% ($11,250) limit and
+    // the closing costs, so every way can use all of it. Each is costed over the seven years the loan is kept
+    // (tools/calculator-check models each way independently).
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.set('closing-credits', 10_000);
+    await calculator.calculate();
+
+    const offer = page.getByTestId('seller-offer');
+    await expect(offer.locator('thead th'), 'a column for each way, the cheapest marked')
+      .toHaveText(['', 'Off the price', 'Toward closing', '2-1 buydown', 'Points Least']);
+    await expect(offer.locator('tr', { hasText: 'Rate' }).locator('td'), 'points: $10,000 is 2.807 points, each a quarter off 5.99%')
+      .toHaveText(['5.99%', '5.99%', '5.99%', '5.288% 2.807 points']);
+    await expect(offer.locator('tfoot td'), 'the cash to close, seven years of payments and what is still owed')
+      .toHaveText(['$606,432', '$612,608', '$612,608', '$605,063']);
+    await expect(page.getByTestId('offer-best'), 'the way that costs the least')
+      .toHaveText('Taking it as points costs the least: $1,369 less over 7 years than off the price, the next best.');
+    await expect(page.getByTestId('offer-not-used'), 'all of the offer can pay costs').toBeHidden();
+
+    // A lender that takes ⅜ of a point off for each point makes points cheaper still.
+    await calculator.set('rate-cut-per-point', 0.375);
+    await calculator.calculate();
+    await expect(page.getByTestId('offer-best'), 'points win by more')
+      .toHaveText('Taking it as points costs the least: $10,089 less over 7 years than off the price, the next best.');
+  });
+
   test('an FHA loan: the upfront MIP borrowed, the annual MIP instead of PMI, and its end with the loan', async ({ calculator, page }) => {
     // $300,000 with FHA's 3.5% minimum down at 6.5%: $5,066.25 of upfront MIP makes the loan $294,566.25, and the
     // annual MIP is 0.55% for the whole term, $134.33 a month in year 1 (tools/calculator-check).

@@ -138,6 +138,28 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 ![The cash to close with a builder's 2-1 buydown and $8,000 of credits: $16,488 against a $12,450 limit, so $4,038 of the credits cannot pay costs, and 10% down would raise the limit to $24,900](images/concessions.png)
 
+#### The best use of the seller's money
+
+The same money can be taken four ways, and the Overview weighs them whenever the seller offers some (credits, or a
+buydown they pay for). Each way is worked out as its own loan, on the standard schedule, and costed over the years you
+expect to keep the loan (7 unless you change it): the cash to close, every payment with its taxes, insurance and PMI,
+and what you still owe at the end, which you pay when you sell or refinance.
+
+| Way | What changes |
+|---|---|
+| **Off the price** | The price is lower by the offer. With the same down payment the loan is smaller, and so are the taxes and PMI. It is not a concession, so the limit does not apply. |
+| **Toward closing** | Seller credits, within the closing costs and the limit. |
+| **2-1 buydown** | The seller pays the subsidy as far as the offer and the limit go. The buyer pays any shortfall at closing, and any of the offer left over goes toward closing. |
+| **Points** | The offer buys as many points as it pays for within the limit, up to 5. Each point takes the rate cut per point off the rate: a quarter of a percentage point unless you change it. |
+
+On the example with **$8,000** of seller credits, points cost the least over 7 years: **2.118 points** take the rate
+from 6.25% to 5.721%, for **$642,209** against **$644,043** off the price and **$648,276** toward closing or as a
+buydown. Those last two cost the same. Once the buydown's two years are over, the seller's money has paid the same
+costs either way, sooner or later. Offer more than the closing costs or the limit allow, and only the price cut uses
+all of it.
+
+![The seller's $8,000 four ways over 7 years: off the price $644,043, toward closing $648,276, a 2-1 buydown $648,276, points $642,209, the least](images/seller-offer.png)
+
 ### The results
 
 - **Overview:** one headline number. With extra payments it is the net savings, with the new total interest against

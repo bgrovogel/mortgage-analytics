@@ -34,6 +34,7 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
                 .WithPid(1_200m, 20)
                 .WithPmi(0.5m, PmiCancellation.BorrowerRequested))
             .WithClosingCosts(credits: 3_000m)
+            .WithSellerOffer(yearsKept: 10, rateCutPerPoint: 0.375m)
             .WithDiscountPoints(1.375m, 6.875m);
 
         AssertValid(request, "every optional section filled with sensible values must pass");
@@ -276,6 +277,16 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     public void ClosingCost_OutOfRange_IsRejected(AmortizationRequest request, string path)
     {
         AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
+    }
+
+    [TestCase(0, 0.25, "SellerOffer.YearsKept", TestName = "An offer weighed over no years")]
+    [TestCase(51, 0.25, "SellerOffer.YearsKept", TestName = "An offer weighed over more than 50 years")]
+    [TestCase(7, 0, "SellerOffer.RateCutPerPoint", TestName = "Points that cut no rate")]
+    [TestCase(7, 1.01, "SellerOffer.RateCutPerPoint", TestName = "A point that cuts more than a percentage point")]
+    [TestCase(7, 0.0001, "SellerOffer.RateCutPerPoint", TestName = "A cut per point to more than three decimals")]
+    public void SellerOffer_OutOfRange_IsRejected(int yearsKept, decimal rateCutPerPoint, string path)
+    {
+        AssertInvalid(A.Request.WithClosingCosts(credits: 5_000m).WithSellerOffer(yearsKept, rateCutPerPoint), path, "the offer is weighed over a loan's years, with points lenders sell");
     }
 
     [TestCase(0, 7, "DiscountPoints.Points", TestName = "No points")]

@@ -19,7 +19,7 @@
 > "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
-> The math is exact to the cent and checked against independent Python models, and over 1,900 tests run in CI."
+> The math is exact to the cent and checked against independent Python models, and over 2,000 tests run in CI."
 
 **In 2 minutes, add:**
 1. **Architecture:** Clean Architecture in four projects. The domain has no dependencies at all, so the money
@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 574 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 585 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -157,6 +157,15 @@ of the price with a loan above 90%, 6% to 75%, 9% below), 6% for FHA, and 4% for
 lender's credits are used first and don't count, and any excess comes off the seller's credits, as a lender would
 take it. The cash to close says what the limit is and why, what 10% down would raise it to, and to ask for the rest
 off the price. The Python model implements the rule separately, and its random purchases include offers over it.
+
+**How do you compare taking a builder's money as a price cut, credits, a buydown or points?**
+By running the calculator four times. `SellerOfferComparison` builds each way as a request: a lower price, credits, a
+2-1 buydown, or points at a lower rate. Each one goes through the same pipeline as any loan, so taxes, PMI, the
+upfront fee and the seller's limit are all priced the same way. Then `OwnershipCost` adds the cash to close, the
+payments over the years you keep the loan, and the balance still owed. The balance matters: a price cut or points
+leave you owing less, and comparing payments alone would miss that. Only the split is new logic, and it's in
+`SellerOffer`: how much of the offer each way takes within the limit. One finding surprised me. Credits and a buydown
+come out exactly equal once its two years are over, because the seller's money pays for the same costs either way.
 
 ### C# and .NET
 
@@ -336,7 +345,7 @@ classic assert is used. Code review standards become automatic.
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
-domain code about 1,190 ways and checks a test fails each time. It scores 98.2%, and CI fails below 95%; the
+domain code about 1,210 ways and checks a test fails each time. It scores 98.3%, and CI fails below 95%; the
 Application layer scores 97.8% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
@@ -462,7 +471,8 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
 | Builder limit | The example, 9% down: **$12,450** (3%); with **$41,500** down (10%), **$24,900** (6%) |
-| Tests | 1,069 .NET · 778 Jest · 108 Playwright (18 axe scans); 85% coverage gate |
+| Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
+| Tests | 1,101 .NET · 791 Jest · 109 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

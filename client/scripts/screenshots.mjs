@@ -46,6 +46,14 @@ const shots = {
     await settled(page);
     return page.locator('app-cash-to-close');
   },
+  // Just the seller's $8,000 four ways: off the price, toward closing, a 2-1 buydown, points.
+  'seller-offer.png': async (b) => {
+    const page = await open(b, '/calculator/overview', { scale: 2 });
+    await page.getByText('Closing costs').first().click();
+    await page.getByTestId('closing-credits').fill('8000');
+    await settled(page);
+    return page.locator('app-seller-offer');
+  },
   'refinance.png': async (b) => open(b, '/refinance'),
   'pay-off-or-invest-dark.png': async (b) => open(b, '/strategy', { scheme: 'dark' }),
   'phone.png': async (b) => open(b, '/calculator/overview', { viewport: phone, scale: 2 }),

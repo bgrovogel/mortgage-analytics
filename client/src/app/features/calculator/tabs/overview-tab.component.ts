@@ -9,11 +9,12 @@ import { PointsSummaryComponent } from '../points-summary/points-summary.compone
 import { ProgramSummaryComponent } from '../program-summary/program-summary.component';
 import { RatePlanComponent } from '../rate-plan/rate-plan.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
+import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 
-/** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, and the cash to close. */
+/** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, the cash to close, and the best use of the seller's money. */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, SellerOfferComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" [current]="nextPayment()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-program-summary [result]="result()" />
@@ -26,6 +27,9 @@ import { SavingsSummaryComponent } from '../savings-summary/savings-summary.comp
     <!-- Cash to close is for a purchase still ahead; on a loan already being paid it closed long ago. -->
     @if (result().cashToClose && !nextPayment()) {
       <div class="panel"><app-cash-to-close [cash]="result().cashToClose!" [program]="result().program" /></div>
+      @if (result().sellerOffer; as offer) {
+        <div class="panel"><app-seller-offer [offer]="offer" /></div>
+      }
     }
   `,
   styleUrl: './result-tab.scss',

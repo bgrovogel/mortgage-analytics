@@ -41,7 +41,7 @@ const SECTION_CONTROLS = {
     'transferredCeilingPercent', 'rateChanges'],
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   program: ['creditScore'],
-  closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits'],
+  closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits', 'yearsKept', 'rateCutPerPoint'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
   rate: ['rate', 'points', 'rateWithoutPoints'],

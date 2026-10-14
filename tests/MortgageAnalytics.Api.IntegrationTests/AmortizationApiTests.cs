@@ -74,6 +74,31 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_TheSellersOffer_FillsInItsDefaults_AndNamesEachWay()
+    {
+        // An empty sellerOffer takes the request's defaults: seven years, a quarter point off for each point.
+        var response = await PostCalculateAsync(new
+        {
+            homePrice = Standard.HomePrice, downPayment = Standard.DownPayment, annualInterestRate = Standard.AnnualInterestRate,
+            termInMonths = Standard.TermInMonths, closingCosts = new { loanCosts = 4_000, credits = 5_000 }, sellerOffer = new { },
+        });
+        var invalid = await PostCalculateAsync(A.Request.WithClosingCosts(credits: 5_000m).WithSellerOffer(yearsKept: 0).Build());
+
+        var offer = (await ReadJsonAsync(response)).GetProperty("sellerOffer");
+        Assert.Multiple(async () =>
+        {
+            Assert.That(offer.GetProperty("offer").GetDecimal(), Is.EqualTo(5_000m), "the seller's credits");
+            Assert.That(offer.GetProperty("yearsKept").GetInt32(), Is.EqualTo(7), "seven years unless told otherwise");
+            Assert.That(offer.GetProperty("rateCutPerPoint").GetDecimal(), Is.EqualTo(0.25m), "and a quarter point for each point");
+            Assert.That(offer.GetProperty("options").EnumerateArray().Select(o => o.GetProperty("use").GetString()),
+                Is.EqualTo(new[] { "PriceCut", "ClosingCosts", "TemporaryBuydown", "DiscountPoints" }), "each way, named as a string");
+            Assert.That(offer.GetProperty("best").GetString(), Is.AnyOf("PriceCut", "ClosingCosts", "TemporaryBuydown", "DiscountPoints"), "the best, named too");
+            Assert.That((await ReadJsonAsync(invalid)).GetProperty("errors").TryGetProperty("sellerOffer.yearsKept", out _), Is.True,
+                "years out of range are reported at their JSON path");
+        });
+    }
+
+    [Test]
     public async Task Calculate_WithoutPayments_LeavesOutTheMonthlyRowsButKeepsEverythingElse()
     {
         var response = await PostCalculateAsync(A.Request.WithMonthlyExtra(Extra200.MonthlyExtra).Build(), query: "?includePayments=false");

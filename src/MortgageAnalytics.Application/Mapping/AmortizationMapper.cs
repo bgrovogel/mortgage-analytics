@@ -244,18 +244,25 @@ internal static class AmortizationMapper
     /// insurance (the escrowed costs; PID, HOA dues and PMI are left out). A buydown the buyer pays for, and discount
     /// points, are paid at closing; one the seller pays for counts against the limit on what they may pay.
     /// </summary>
-    private static CashToClose CashToCloseFor(ClosingCosts closing, PropertyPurchase purchase, LoanComparison comparison, LoanRates rates)
+    internal static CashToClose CashToCloseFor(ClosingCosts closing, PropertyPurchase purchase, LoanComparison comparison, LoanRates rates)
+    {
+        var subsidy = rates.Buydown?.TotalSubsidy(rates.Loan, comparison.Baseline) ?? 0m;
+        var paidByBuyer = rates.BuydownPaidBy == BuydownPayer.Borrower;
+        return CashToCloseFor(closing, purchase, comparison, rates, paidByBuyer ? subsidy : 0m, paidByBuyer ? 0m : subsidy);
+    }
+
+    /// <summary>The cash to close, with a buydown's subsidy split between the buyer and the seller.</summary>
+    internal static CashToClose CashToCloseFor(
+        ClosingCosts closing, PropertyPurchase purchase, LoanComparison comparison, LoanRates rates, decimal buyersBuydown, decimal sellersBuydown)
     {
         var yearOne = comparison.BaselineCosts.ByYear[0];
         var taxes = yearOne[HousingCostCategory.PropertyTax] + yearOne[HousingCostCategory.SchoolTax]
             + yearOne[HousingCostCategory.LocalTax] + yearOne[HousingCostCategory.MudTax];
-        var subsidy = rates.Buydown?.TotalSubsidy(rates.Loan, comparison.Baseline) ?? 0m;
-        var paidByBuyer = rates.BuydownPaidBy == BuydownPayer.Borrower;
 
-        return closing.CashToClose(purchase, rates.Loan, taxes, yearOne[HousingCostCategory.HomeownersInsurance], paidByBuyer ? subsidy : 0m,
+        return closing.CashToClose(purchase, rates.Loan, taxes, yearOne[HousingCostCategory.HomeownersInsurance], buyersBuydown,
             rates.Points?.CostFor(rates.Loan.Principal) ?? 0m,
             rates.Program is { UpfrontFeeFinanced: false } program ? program.UpfrontFee : 0m,
-            paidByBuyer ? 0m : subsidy,
+            sellersBuydown,
             rates.Program?.Program ?? LoanProgram.Conventional);
     }
 

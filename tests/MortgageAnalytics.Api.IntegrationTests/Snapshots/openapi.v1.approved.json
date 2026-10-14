@@ -874,6 +874,9 @@
           },
           "closingCosts": {
             "$ref": "#/components/schemas/ClosingCostsRequest"
+          },
+          "sellerOffer": {
+            "$ref": "#/components/schemas/SellerOfferRequest"
           }
         },
         "additionalProperties": false
@@ -917,6 +920,9 @@
           },
           "pmiOtherChoice": {
             "$ref": "#/components/schemas/PmiOtherChoiceResponse"
+          },
+          "sellerOffer": {
+            "$ref": "#/components/schemas/SellerOfferResponse"
           }
         },
         "additionalProperties": false
@@ -2434,6 +2440,110 @@
           }
         },
         "additionalProperties": false
+      },
+      "SellerOfferOptionResponse": {
+        "type": "object",
+        "properties": {
+          "use": {
+            "$ref": "#/components/schemas/SellerOfferUse"
+          },
+          "homePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "loanAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "points": {
+            "type": "number",
+            "format": "double"
+          },
+          "firstPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "laterPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashToClose": {
+            "type": "number",
+            "format": "double"
+          },
+          "payments": {
+            "type": "number",
+            "format": "double"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          },
+          "notUsed": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SellerOfferRequest": {
+        "type": "object",
+        "properties": {
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rateCutPerPoint": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SellerOfferResponse": {
+        "type": "object",
+        "properties": {
+          "offer": {
+            "type": "number",
+            "format": "double"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rateCutPerPoint": {
+            "type": "number",
+            "format": "double"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerOfferOptionResponse"
+            },
+            "nullable": true
+          },
+          "best": {
+            "$ref": "#/components/schemas/SellerOfferUse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SellerOfferUse": {
+        "enum": [
+          "PriceCut",
+          "ClosingCosts",
+          "TemporaryBuydown",
+          "DiscountPoints"
+        ],
+        "type": "string"
       },
       "StrategyComparisonResponse": {
         "type": "object",

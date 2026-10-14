@@ -15,6 +15,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// With PMI, what the other way of removing it would do. Asking at 80% follows the actual balance and automatic removal
 /// at 78% the original schedule, so with extra payments the two can end years apart. Null unless they end apart.
 /// </param>
+/// <param name="SellerOffer">The seller's or builder's offer taken each way it can be. Null unless the request asks and there is an offer.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -26,7 +27,64 @@ public sealed record AmortizationResponse(
     CashToCloseResponse? CashToClose = null,
     DiscountPointsResponse? DiscountPoints = null,
     LoanProgramResponse? Program = null,
-    PmiOtherChoiceResponse? PmiOtherChoice = null);
+    PmiOtherChoiceResponse? PmiOtherChoice = null,
+    SellerOfferResponse? SellerOffer = null);
+
+/// <summary>
+/// The seller's or builder's offer taken each way it can be, each on the standard schedule with no extra payments, and
+/// costed over the years the loan is kept: the cash to close, the payments, and the balance still owed then.
+/// </summary>
+/// <param name="Offer">What the seller or builder offers: their credits, and a buydown they pay for.</param>
+/// <param name="YearsKept">The years each way is costed over.</param>
+/// <param name="RateCutPerPoint">How much each discount point lowers the rate.</param>
+/// <param name="Options">Each way: off the price (unless the offer leaves nothing to borrow), toward the closing costs, for
+/// a 2-1 buydown, and for discount points (unless the offer buys none).</param>
+/// <param name="Best">The way that costs the least over the years kept.</param>
+public sealed record SellerOfferResponse(
+    decimal Offer, int YearsKept, decimal RateCutPerPoint, IReadOnlyList<SellerOfferOptionResponse> Options, SellerOfferUse Best);
+
+/// <summary>The offer taken one way.</summary>
+/// <param name="Use">The way it is taken.</param>
+/// <param name="HomePrice">The price: less by the offer when it comes off the price.</param>
+/// <param name="LoanAmount">The amount borrowed.</param>
+/// <param name="AnnualInterestRate">The loan's rate: lower with points.</param>
+/// <param name="Points">The discount points the offer buys; zero for the other ways.</param>
+/// <param name="FirstPayment">The first month's payment: principal, interest and housing costs, less a buydown's subsidy.</param>
+/// <param name="LaterPayment">The same month's payment without the subsidy, as it is once a buydown ends; the first payment otherwise.</param>
+/// <param name="CashToClose">What the buyer brings to closing.</param>
+/// <param name="Payments">Every payment over the years kept.</param>
+/// <param name="Balance">What is still owed after them.</param>
+/// <param name="Cost">The cash to close, the payments and the balance: what the buyer pays over the years kept.</param>
+/// <param name="NotUsed">The part of the offer the loan does not let pay the buyer's costs, beyond them or the limit.</param>
+public sealed record SellerOfferOptionResponse(
+    SellerOfferUse Use,
+    decimal HomePrice,
+    decimal LoanAmount,
+    decimal AnnualInterestRate,
+    decimal Points,
+    decimal FirstPayment,
+    decimal LaterPayment,
+    decimal CashToClose,
+    decimal Payments,
+    decimal Balance,
+    decimal Cost,
+    decimal NotUsed);
+
+/// <summary>A way to take a seller's or builder's offer.</summary>
+public enum SellerOfferUse
+{
+    /// <summary>Off the price: a smaller loan, and lower taxes and mortgage insurance. Not a concession, so not limited.</summary>
+    PriceCut,
+
+    /// <summary>As credits toward the closing costs.</summary>
+    ClosingCosts,
+
+    /// <summary>For a 2-1 buydown the seller pays, as far as the offer and the limit go; the rest toward the closing costs.</summary>
+    TemporaryBuydown,
+
+    /// <summary>For discount points: a lower rate for the whole loan.</summary>
+    DiscountPoints,
+}
 
 /// <summary>PMI removed the other way from the request's, with the same extra payments.</summary>
 /// <param name="Removal">The other way: on request at 80%, or automatically at 78%.</param>

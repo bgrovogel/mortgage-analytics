@@ -23,7 +23,7 @@ describe('loan form model', () => {
         firstPaymentDate: firstOfMonthFromNext(0),
         localHomesteadExemptionPercent: 0, mudHomesteadExemptionPercent: 0, homesteadAssessmentCap: 10,
         isOver65: false, over65Year: 1, over65LocalExemption: 0, transferredCeilingPercent: null,
-        pidAnnual: 0, pidYears: null, pmiCancellation: 'BorrowerRequested', closingCredits: 0, lenderCredits: 0,
+        pidAnnual: 0, pidYears: null, pmiCancellation: 'BorrowerRequested', closingCredits: 0, lenderCredits: 0, yearsKept: 7, rateCutPerPoint: 0.25,
         annualExtra: 0, annualFirstPayment: 12, usePoints: false, rateWithoutPoints: 6.5, buydownPaidBy: 'Seller',
       }));
     });
@@ -40,6 +40,8 @@ describe('loan form model', () => {
       ['pidAnnual', -1],
       ['closingCredits', -1],
       ['lenderCredits', -1],
+      ['yearsKept', 0],
+      ['rateCutPerPoint', 1.01],
       ['annualExtra', -1],
       ['annualFirstPayment', 0],
       ['rateWithoutPoints', -1],
@@ -207,6 +209,31 @@ describe('loan form model', () => {
     });
   });
 
+  describe('the seller’s offer', () => {
+    it('is weighed over the years kept, at the cut per point', () => {
+      const form = newForm();
+      form.patchValue({ yearsKept: 10, rateCutPerPoint: 0.375 });
+
+      expect(toLoanRequest(form, 1).sellerOffer).toEqual({ yearsKept: 10, rateCutPerPoint: 0.375 });
+    });
+
+    it('takes the usual seven years and quarter point when they are left blank', () => {
+      const form = newForm();
+      form.patchValue({ yearsKept: null, rateCutPerPoint: null } as never);
+
+      expect(toLoanRequest(form, 1).sellerOffer).toEqual({ yearsKept: 7, rateCutPerPoint: 0.25 });
+    });
+
+    it('leaves them as they are when restoring a request saved before them', () => {
+      const form = newForm();
+      form.patchValue({ yearsKept: 12 });
+
+      restoreLoanForm(form, fb, { ...toLoanRequest(newForm(), 1), sellerOffer: undefined });
+
+      expect(form.controls.yearsKept.value).toBe(12);
+    });
+  });
+
   describe('restoring a request', () => {
     /** A form with every field away from its default, so a value lost on the way back shows. */
     function unusualForm() {
@@ -218,7 +245,7 @@ describe('loan form model', () => {
         isOver65: true, over65Year: 3, over65SchoolExemption: 10_000, over65LocalExemption: 5_000, over65LocalCeiling: true,
         transferredCeilingPercent: 62.5, homeValueGrowthRate: 3, insuranceIncreaseRate: 5, hoaIncreaseRate: 2,
         pidAnnual: 900, pidYears: 12, annualInsurance: 2_000, monthlyHoa: 75, pmiCancellation: 'BorrowerRequested',
-        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250,
+        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250, yearsKept: 10, rateCutPerPoint: 0.375,
         monthlyExtra: 150, annualExtra: 1_200, annualFirstPayment: 6, buydownPaidBy: 'Borrower',
         loanProgram: 'Fha', financeUpfrontFee: false, creditScore: 600, countyFips: '48491',
         usePoints: true, points: 1.5, rateWithoutPoints: 6.5,

@@ -1,0 +1,107 @@
+@use '../../../core/layout/scroll-hint';
+
+h2 {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.intro,
+.note {
+  margin: 0 0 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.verdict {
+  margin: 0 0 0.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+// An offer the loan does not let pay all of the costs.
+.warn {
+  color: var(--text-primary);
+  border-left: 3px solid var(--warning-border);
+  padding-left: 0.6rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 0.4rem 0 0.8rem;
+  // On a narrow screen the table may scroll: fade the edge that has more.
+  @include scroll-hint.fade-edge;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th,
+tfoot th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+// The row names stay put while a narrow screen scrolls the ways under them.
+th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: 0;
+  background: var(--surface-1);
+}
+
+tfoot th,
+tfoot td {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+// A line under a figure: the points bought, or the payment once a buydown ends.
+small {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+// The way that costs the least.
+.best {
+  background: var(--positive-soft);
+}
+
+.badge {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--positive);
+}
+
+@media (max-width: 560px) {
+  table {
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: 0.4rem 0.35rem;
+  }
+}

@@ -63,6 +63,25 @@ public sealed record AmortizationRequest
 
     /// <summary>What is paid at closing besides the down payment, for the cash to close. Omit for no estimate.</summary>
     public ClosingCostsRequest? ClosingCosts { get; init; }
+
+    /// <summary>
+    /// Compares the ways to take what the seller or builder offers (their credits, and a buydown they pay for): off the
+    /// price, toward the closing costs, for a 2-1 buydown, or for discount points. Needs <see cref="ClosingCosts"/>; not
+    /// with an <see cref="AdjustableRate"/> or <see cref="DiscountPoints"/>. Omit for no comparison.
+    /// </summary>
+    public SellerOfferRequest? SellerOffer { get; init; }
+}
+
+/// <summary>How to weigh the ways to take the seller's or builder's offer.</summary>
+public sealed record SellerOfferRequest
+{
+    /// <summary>The years the loan is kept before the home is sold or the loan refinanced: each way is costed over them.</summary>
+    /// <example>7</example>
+    public int YearsKept { get; init; } = 7;
+
+    /// <summary>How much each discount point lowers the rate, in percentage points: usually about a quarter.</summary>
+    /// <example>0.25</example>
+    public decimal RateCutPerPoint { get; init; } = 0.25m;
 }
 
 /// <summary>

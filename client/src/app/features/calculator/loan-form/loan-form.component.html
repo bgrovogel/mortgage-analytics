@@ -367,6 +367,15 @@
         Credits pay closing costs, never the down payment. A seller or builder may pay only so much, a buydown they pay
         for included: 3% to 9% of the price on a conventional loan, 6% on FHA, 4% on VA. The cash to close says how much.
       </p>
+
+      <div class="row">
+        <app-number-field [control]="form.controls.yearsKept" [rule]="rules.yearsKept" testId="years-kept" />
+        <app-number-field [control]="form.controls.rateCutPerPoint" [rule]="rules.rateCutPerPoint" testId="rate-cut-per-point" />
+      </div>
+      <p class="hint">
+        With money from the seller, the Overview weighs taking it off the price, toward these costs, for a 2-1 buydown or
+        for points, over the years you expect to keep the loan. Each point usually takes about a quarter off the rate.
+      </p>
     </div>
   </details>
 

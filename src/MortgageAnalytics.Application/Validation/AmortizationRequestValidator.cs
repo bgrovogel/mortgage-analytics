@@ -153,6 +153,17 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .SetValidator(new ClosingCostsValidator())
             .When(r => r.ClosingCosts is not null);
 
+        RuleFor(r => r.SellerOffer!.YearsKept)
+            .InclusiveBetween(1, LoanTerms.MaxTermInMonths / 12)
+            .OverridePropertyName("SellerOffer.YearsKept").WithName("Years the loan is kept")
+            .When(r => r.SellerOffer is not null);
+
+        RuleFor(r => r.SellerOffer!.RateCutPerPoint)
+            .GreaterThan(0).LessThanOrEqualTo(SellerOffer.MaxRateCutPerPoint)
+            .Must(cut => decimal.Round(cut, 3) == cut).WithMessage("'Rate cut per point' can have at most 3 decimal places.")
+            .OverridePropertyName("SellerOffer.RateCutPerPoint").WithName("Rate cut per point")
+            .When(r => r.SellerOffer is not null);
+
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
             .When(r => r.HousingCosts is not null);

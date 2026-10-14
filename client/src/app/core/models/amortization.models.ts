@@ -119,6 +119,53 @@ export interface AmortizationRequest {
   discountPoints?: DiscountPointsInput | null;
   /** An FHA or VA loan; leave out for a conventional one. */
   program?: LoanProgramInput | null;
+  /** Weighs the ways to take the seller's money; needs closing costs, and not with an adjustable rate or points. */
+  sellerOffer?: SellerOfferInput | null;
+}
+
+/** How to weigh the ways to take the seller's or builder's money. */
+export interface SellerOfferInput {
+  /** The years the loan is kept before selling or refinancing: each way is costed over them. */
+  yearsKept: number;
+  /** How much each discount point lowers the rate, in percentage points. */
+  rateCutPerPoint: number;
+}
+
+/** A way to take a seller's or builder's offer. */
+export type SellerOfferUse = 'PriceCut' | 'ClosingCosts' | 'TemporaryBuydown' | 'DiscountPoints';
+
+/** The offer taken one way, on the standard schedule, costed over the years kept. */
+export interface SellerOfferOption {
+  use: SellerOfferUse;
+  homePrice: number;
+  loanAmount: number;
+  annualInterestRate: number;
+  /** The points the offer buys; zero for the other ways. */
+  points: number;
+  /** The first month's payment, housing costs included, less a buydown's subsidy. */
+  firstPayment: number;
+  /** The same month's payment without the subsidy, as once a buydown ends; the first payment otherwise. */
+  laterPayment: number;
+  cashToClose: number;
+  /** Every payment over the years kept. */
+  payments: number;
+  /** What is still owed after them. */
+  balance: number;
+  /** The cash to close, the payments and the balance. */
+  cost: number;
+  /** The part of the offer the loan does not let pay the buyer's costs. */
+  notUsed: number;
+}
+
+/** The seller's or builder's offer taken each way it can be. */
+export interface SellerOfferComparison {
+  /** Their credits, and a buydown they pay for. */
+  offer: number;
+  yearsKept: number;
+  rateCutPerPoint: number;
+  options: SellerOfferOption[];
+  /** The way that costs the least over the years kept. */
+  best: SellerOfferUse;
 }
 
 /** The kind of loan. */
@@ -411,6 +458,8 @@ export interface AmortizationResponse {
   program?: LoanProgramSummary | null;
   /** With PMI: when the other way of removing it would end it, and what asking at 80% saves. Null when both end together. */
   pmiOtherChoice?: { removal: MortgageInsuranceCancellation; endDate: string; savedByAsking: number } | null;
+  /** The seller's offer taken each way; null unless asked for with an offer. */
+  sellerOffer?: SellerOfferComparison | null;
 }
 
 export interface BuydownSummary {

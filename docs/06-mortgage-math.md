@@ -318,6 +318,37 @@ cash to close   = down payment + closing costs − lender credits − seller cre
 - The domain is `ClosingCosts`, `CashToClose` and `ConcessionLimit` (`Domain/Closing`); the Python model in `tools/calculator-check`
   prices the same lines independently, and 300 random purchases match it to the cent.
 
+### The best use of the seller's money
+
+The offer is the seller's credits plus a buydown they pay for. Each way to take it is the same request analyzed again
+as it would be, with no extra payments, so it is priced exactly as the calculator prices any loan:
+
+```
+off the price    price − offer, the same down payment, no seller credits     (only when it leaves a loan)
+toward closing   seller credits = offer
+2-1 buydown      seller's share = min(offer, subsidy, limit)
+                 the buyer pays subsidy − share at closing; seller credits = offer − share
+points           budget = min(offer, limit)                                   (VA: the offer; its limit leaves points out)
+                 points = min(5, ⌊budget ÷ loan × 100, to a thousandth⌋)
+                 rate   = max(0, rate − points × cut per point), to a thousandth, half up; seller credits = offer
+```
+
+Each is costed over the years kept (up to the loan's end):
+
+```
+cost = cash to close + Σ (principal + interest + housing costs − buydown subsidy) + the balance still owed
+```
+
+- The balance counts because a price cut or points leave less owed: comparing payments alone would miss that.
+- **Not used** is the part of the offer that pays nothing: beyond the closing costs, or the limit. A price cut uses all
+  of it.
+- The best is the lowest cost. Not with an adjustable rate (points and buydowns are priced differently) or with
+  points of the buyer's own, which already set the rate.
+- On the reference purchase ($250,000, 5% down, 6.5%) with $5,000 offered, $5,000 is **2.105 points**, and the rate
+  is 6.5 − 2.105 × 0.25 = 5.97375, so **5.974%**. A 2-1 buydown costs $5,405.28, so the buyer pays $405.28 of it.
+- The domain is `SellerOffer` and `OwnershipCost` (`Domain/Closing`), and `SellerOfferComparison` runs the ways
+  (`Application/Services`). The Python model reruns each way its own way, and the random purchases ask for it.
+
 ---
 
 ## Refinancing

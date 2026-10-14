@@ -155,6 +155,9 @@ def random_purchase(rng):
     if rng.random() < 0.3:
         request['strategy'] = 'Recast'
         request['recast'] = {'minimumLumpSum': money(rng, 5_000, 20_000, 500), 'fee': money(rng, 0, 500, 50)}
+    # Most ask for the ways to take the seller's offer, over a few years or the whole loan, at the usual cut per point or not.
+    if rng.random() < 0.6:
+        request['sellerOffer'] = {'yearsKept': rng.choice([1, 3, 7, 7, 10, 30]), 'rateCutPerPoint': rng.choice([0.25, 0.25, 0.125, 0.375])}
     kind = rng.random()
     # Points on a fixed rate (with or without a buydown): sometimes a good deal, sometimes one that never pays back.
     if kind < 0.45 and rng.random() < 0.4:

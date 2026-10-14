@@ -28,6 +28,18 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     /// <inheritdoc />
     public AmortizationResponse Analyze(AmortizationRequest request)
     {
+        var analysis = Run(request);
+        var (purchase, valuation, plan, comparison, rates) = analysis;
+        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts()) with
+        {
+            PmiOtherChoice = rates.Program is null ? PmiOtherChoice(request, purchase, valuation, rates.Loan, comparison) : null,
+            SellerOffer = SellerOfferComparison.For(request, analysis, Run),
+        };
+    }
+
+    /// <summary>Builds the loan, its housing costs and its schedules, and how its payments are figured.</summary>
+    private Analysis Run(AmortizationRequest request)
+    {
         var purchase = request.ToPurchase();
         var firstPayment = request.FirstPaymentDate ?? clock.FirstOfNextMonth();
         // An FHA or VA loan borrows its upfront fee too, unless it is paid at closing.
@@ -63,10 +75,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
 
         var county = request.Program is { Type: LoanProgramType.Fha, CountyFips: { } fips } ? FhaLoanLimitData.Current.Find(fips) : null;
         var rates = new LoanRates(loan, request.ToBuydown(), worstCase, request.BuydownPaidBy.ToDomain(), points, withoutPoints, program, county);
-        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts()) with
-        {
-            PmiOtherChoice = program is null ? PmiOtherChoice(request, purchase, valuation, loan, comparison) : null,
-        };
+        return new Analysis(purchase, valuation, plan, comparison, rates);
     }
 
     /// <summary>

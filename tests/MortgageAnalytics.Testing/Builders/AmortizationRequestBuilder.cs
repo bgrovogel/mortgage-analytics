@@ -133,6 +133,10 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Asks for the ways to take the seller's offer, costed over <paramref name="yearsKept"/> with <paramref name="rateCutPerPoint"/> a point.</summary>
+    public AmortizationRequestBuilder WithSellerOffer(int yearsKept = 7, decimal rateCutPerPoint = 0.25m) =>
+        With(r => r with { SellerOffer = new SellerOfferRequest { YearsKept = yearsKept, RateCutPerPoint = rateCutPerPoint } });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 
