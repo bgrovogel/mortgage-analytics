@@ -137,7 +137,7 @@ Three details matter:
 
 ### One loan, typed once: `SharedLoanStore`
 
-`core/state/shared-loan.store.ts`. The three pages ask about the same mortgage, so its key facts are shared:
+`core/state/shared-loan.store.ts`. The pages ask about the same mortgage, so its key facts are shared:
 
 ```ts
 interface SharedLoan {
@@ -265,7 +265,7 @@ The flows are designed around the people using it:
   current one and clears both boxes once done. Deleting the account takes two
   deliberate steps, "Delete my account…" and then the password, and the button that deletes is red. A
   wrong password shows the server's own message; success unlinks the pages from the saves that went with it.
-- **The form card:** the main group's heading is a real heading, tagged "Used on all three pages" (the long "Filled in
+- **The form card:** the main group's heading is a real heading, tagged "Shared with the other pages" (the long "Filled in
   from your loan on the Refinance page" line only appears when it happened). What the numbers add up to is a summary
   chip; help only some need is a `details.help` toggle; the optional sections are one divided list under **More
   details**; each top-level group after the first starts below a rule. These styles are one global `form-card` mixin

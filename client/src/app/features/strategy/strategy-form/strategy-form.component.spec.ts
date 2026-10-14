@@ -21,7 +21,7 @@ describe('StrategyFormComponent', () => {
   it('marks the mortgage as shared in its heading, and groups the household details under More details', () => {
     const root = render();
 
-    expect(text(root, 'shared-tag')).toBe('Used on all three pages');
+    expect(text(root, 'shared-tag')).toBe('Shared with the other pages');
     expect([...root.querySelectorAll('[data-testid="more-details"] details.section')].map((d) => d.getAttribute('data-testid')))
       .toEqual(['section-taxes', 'section-savings', 'section-stock', 'section-market']);
   });

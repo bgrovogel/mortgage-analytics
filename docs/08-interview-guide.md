@@ -27,7 +27,7 @@
 2. **The interesting domain rules:** PMI comes off on the *original* schedule; recasts need *one* qualifying lump
    sum; Texas homestead exemptions apply per tax; ARMs reset within caps and stop at a margin floor; a refinance can
    lower the payment and still cost more.
-3. **Frontend:** results update as you type (debounce + `switchMap`), one loan is shared across the three pages,
+3. **Frontend:** results update as you type (debounce + `switchMap`), one loan is shared across the pages,
    and every form is driven by one rules table that mirrors the API.
 4. **Quality:** TDD, an 85% coverage gate, and conventions tests that use Roslyn to fail the build when a test
    breaks the team's assertion standards.

@@ -35,7 +35,7 @@ describe('LoanFormComponent', () => {
     });
 
     it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
-      expect(text('shared-tag')).toBe('Used on all three pages');
+      expect(text('shared-tag')).toBe('Shared with the other pages');
       expect(el('loan-shared')).toBeNull();
     });
 
