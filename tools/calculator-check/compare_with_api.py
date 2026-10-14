@@ -155,6 +155,11 @@ def random_purchase(rng):
     if rng.random() < 0.3:
         request['strategy'] = 'Recast'
         request['recast'] = {'minimumLumpSum': money(rng, 5_000, 20_000, 500), 'fee': money(rng, 0, 500, 50)}
+    # Some weigh buying against renting a similar home: rent from cheap to dear for the price, with varied assumptions.
+    if rng.random() < 0.4:
+        request['rentOrBuy'] = {'monthlyRent': money(rng, int(price / 400), int(price / 120), 25),
+                                'rentIncreasePercent': rng.choice([0, 2.5, 3.5, 5]), 'investmentReturnPercent': rng.choice([4, 7, 10]),
+                                'maintenancePercent': rng.choice([0, 1, 1.5]), 'sellingCostPercent': rng.choice([0, 5, 6, 8])}
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}

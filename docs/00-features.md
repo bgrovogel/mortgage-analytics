@@ -21,7 +21,7 @@
 
 What a purchase costs each month and to close, whether you can afford it, and what paying extra saves. The page
 answers in that order: the **Overview** leads with four answer tiles, and each answer's details have a tab of their
-own (**Affordability**, **Closing**), then **Projection** and **Schedule**. Comparing homes is a page of its own.
+own (**Affordability**, **Closing**), then **Rent or buy**, **Projection** and **Schedule**. Comparing homes is a page of its own.
 
 ![The calculator's Overview: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with four answer tiles (the monthly payment, the cash to close, can you afford it, and the net savings), when the loan and PMI end, the payment broken down, and the balance over time](images/calculator.png)
 
@@ -163,6 +163,22 @@ to the payment.
 
 ![Can you afford it: the example's $3,102 payment is 24.82% of $12,500 a month and 29.62% with $600 of debts; the comfortable limit reaches $474,091 and a conventional loan's 45% reaches $700,615](images/affordability.png)
 
+#### Rent or buy
+
+The **Rent or buy** tab weighs buying this home against renting a similar one. Type the rent; the rest has usual
+values to change beside it: rent rising **3.5%** a year, investments earning **7%**, upkeep of **1%** of the home's
+value a year, and **6%** to sell. The two households spend the same each month: whichever of owning and renting
+costs less invests the difference, and the renter also invests what buying takes to close. Year by year, the buyer
+is worth the home after a sale (its value, less what is owed and the selling costs) and their investments; the renter,
+their investments.
+
+The answer is how long you must stay for buying to come out ahead, with a chart of how far ahead it is each year
+(crossing zero where it breaks even) and a table of the years 1, 3, 5, 7, 10, 15, 20 and 30. On the example, renting a
+similar home for **$2,700** a month, buying comes out ahead **if you stay 4 years or more**; at **$2,100**, renting stays
+ahead for all 30 years. Taxes on investment gains, the mortgage interest deduction and extra payments are left out.
+
+![Rent or buy: the example against $2,700 a month of rent; buying comes out ahead if you stay 4 years or more, the gap crossing zero in year 4](images/rent-or-buy.png)
+
 #### The best use of the seller's money
 
 The same money can be taken four ways, and the **Closing** tab weighs them whenever the seller offers some (credits,
@@ -193,6 +209,7 @@ all of it.
   never a $0 saving). Then when the loan is paid off and how much sooner, and when PMI ends; the payment breakdown;
   and the balance over time, with the gap between the two payoffs shaded.
 - **Affordability:** the home against your income and debts (below).
+- **Rent or buy:** buying against renting a similar home, year by year (below).
 - **Closing:** the cash to close and what a seller may pay, then the best use of the seller's money, with how it is
   weighed (the years you keep the loan, the cut per point) set beside the table it changes.
 - **Projection:** the **quick numbers** for any year (each cost that year, through that year, and over the whole
@@ -298,7 +315,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
   Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future
   increases.
-- **Bookmarkable.** The calculator's Overview, Affordability, Closing, Projection and Schedule tabs have their own
+- **Bookmarkable.** The calculator's Overview, Affordability, Closing, Rent or buy, Projection and Schedule tabs have their own
   URLs, and so does Compare homes (an old link to the Compare tab lands there); the back button works.
 - **Light and dark mode,** following the system.
 

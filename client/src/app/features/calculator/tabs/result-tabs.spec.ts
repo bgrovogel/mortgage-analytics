@@ -7,10 +7,11 @@ import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
 import { AmortizationRequest, AmortizationResponse } from '../../../core/models/amortization.models';
 import { of } from 'rxjs';
 import { FormNavigator } from '../../../core/forms/form-navigator';
-import { Affordability, CashToClose, SellerOfferComparison } from '../../../core/models/amortization.models';
+import { Affordability, CashToClose, RentOrBuyComparison, SellerOfferComparison } from '../../../core/models/amortization.models';
 import { AffordabilityTabComponent } from './affordability-tab.component';
 import { ClosingTabComponent } from './closing-tab.component';
 import { OverviewTabComponent } from './overview-tab.component';
+import { RentOrBuyTabComponent } from './rent-or-buy-tab.component';
 import { ProjectionTabComponent } from './projection-tab.component';
 import { ScheduleTabComponent } from './schedule-tab.component';
 
@@ -147,6 +148,42 @@ describe('result tabs', () => {
 
       expect(root.querySelector('[data-testid="seller-offer-empty"]')).not.toBeNull();
       expect(TestBed.inject(FormNavigator).requested()).toEqual({ section: 'closing', field: 'closing-credits' });
+    });
+  });
+
+  describe('Rent or buy', () => {
+    const type = (root: HTMLElement, testId: string, value: string) => {
+      const field = root.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+    };
+
+    it('asks for the rent of a similar home, with the usual assumptions filled in', () => {
+      const root = render(RentOrBuyTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="rent-or-buy-empty"]')).not.toBeNull();
+      expect((root.querySelector('[data-testid="monthly-rent"]') as HTMLInputElement).value).toBe('');
+      expect((root.querySelector('[data-testid="rent-increase"]') as HTMLInputElement).value).toBe('3.5');
+      expect((root.querySelector('[data-testid="selling-costs"]') as HTMLInputElement).value).toBe('6');
+    });
+
+    it('weighs buying against renting once a rent is given, and stops when it is cleared', () => {
+      const fixture = render(RentOrBuyTabComponent);
+      type(fixture.nativeElement, 'monthly-rent', '2100');
+
+      expect(store.rentSettings()).toEqual({ monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 });
+
+      type(fixture.nativeElement, 'monthly-rent', '');
+      expect(store.rentSettings()).toBeNull();
+    });
+
+    it('shows the comparison once it arrives', () => {
+      answer({ rentOrBuy: {
+        monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6,
+        cashToClose: 48_128.79, breakEvenYear: 1, years: [],
+      } as RentOrBuyComparison });
+
+      expect(render(RentOrBuyTabComponent).nativeElement.querySelector('app-rent-or-buy')).not.toBeNull();
     });
   });
 

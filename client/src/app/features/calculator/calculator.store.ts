@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { describeInputs, suggestName } from '../../core/formatting/describe-inputs';
-import { AmortizationRequest, AmortizationResponse, SellerOfferInput } from '../../core/models/amortization.models';
+import { AmortizationRequest, AmortizationResponse, RentOrBuyInput, SellerOfferInput } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
@@ -31,19 +31,41 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   readonly offerSettings = signal<SellerOfferInput>(DEFAULT_OFFER_SETTINGS);
 
   /**
-   * Queues a request with the seller's offer weighed by the current settings. A request that brings its own (a saved
-   * one) sets them instead.
+   * Renting a similar home, to weigh buying against: set on the Rent or buy tab, beside the answer, rather than in the
+   * form. Null until a rent is given.
+   */
+  readonly rentSettings = signal<RentOrBuyInput | null>(null);
+
+  /**
+   * Queues a request with the settings the tabs keep: how the seller's offer is weighed, and the rent to weigh buying
+   * against. A request that brings its own (a saved one) sets them instead.
    */
   override send(request: AmortizationRequest): void {
     if (request.sellerOffer) this.offerSettings.set(request.sellerOffer);
-    super.send({ ...request, sellerOffer: this.offerSettings() });
+    if (request.rentOrBuy) this.rentSettings.set(request.rentOrBuy);
+    super.send(this.withSettings(request));
   }
 
   /** Weighs the seller's offer another way, and calculates again. */
   setOfferSettings(settings: SellerOfferInput): void {
     this.offerSettings.set(settings);
+    this.resend();
+  }
+
+  /** Weighs buying against renting at another rent (or none), and calculates again. */
+  setRentSettings(settings: RentOrBuyInput | null): void {
+    this.rentSettings.set(settings);
+    this.resend();
+  }
+
+  private withSettings(request: AmortizationRequest): AmortizationRequest {
+    return { ...request, sellerOffer: this.offerSettings(), rentOrBuy: this.rentSettings() };
+  }
+
+  /** Sends the current request again with the settings as they are now, once there is one. */
+  private resend(): void {
     const request = this.request();
-    if (request) super.send({ ...request, sellerOffer: settings });
+    if (request) super.send(this.withSettings(request));
   }
 
   describe = describeInputs;

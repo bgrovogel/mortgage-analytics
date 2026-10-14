@@ -233,6 +233,27 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('rent or buy: how long to stay for buying to come out ahead', async ({ calculator, page }) => {
+    // $375,000 with 5% down at 5.99%, against renting a similar home for $2,400 a month, rising 3.5% a year.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.calculate();
+    await calculator.showResults('rent-or-buy');
+    await expect(page.getByTestId('rent-or-buy-empty'), 'it asks for the rent first').toBeVisible();
+
+    await page.getByTestId('monthly-rent').fill('2400');
+    await calculator.calculate();
+    await expect(page.getByTestId('rent-or-buy-verdict'), 'the year buying pulls ahead for good')
+      .toHaveText('Buying comes out ahead if you stay 7 years or more; before that, renting leaves you better off.');
+    const rows = page.getByTestId('rent-or-buy').locator('tbody tr');
+    await expect(rows.nth(2).locator('td'), 'year 5: renting still ahead, its head start and savings growing at 7%')
+      .toHaveText(['$44,083', '$33,049', '$103,627', '$112,196', 'Rent by $8,569']);
+    await expect(rows.nth(3).locator('td'), `year 7: buying ahead, the equity outgrowing the renter's investments`)
+      .toHaveText(['$45,672', '$35,403', '$154,031', '$151,407', 'Buy by $2,623']);
+  });
+
   test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

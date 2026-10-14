@@ -55,6 +55,7 @@ describe('CalculatorPageComponent', () => {
       ['Overview', '/calculator/overview'],
       ['Affordability', '/calculator/affordability'],
       ['Closing', '/calculator/closing'],
+      ['Rent or buy', '/calculator/rent-or-buy'],
       ['Projection', '/calculator/projection'],
       ['Schedule', '/calculator/schedule'],
     ]);

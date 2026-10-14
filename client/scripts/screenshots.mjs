@@ -68,6 +68,14 @@ const shots = {
     await settled(page);
     return page.locator('app-affordability');
   },
+  // Just the Rent or buy tab: the example against renting a similar home for $2,700 a month.
+  'rent-or-buy.png': async (b) => {
+    const page = await open(b, '/calculator/rent-or-buy', { scale: 2 });
+    await page.getByTestId('monthly-rent').fill('2700');
+    await page.getByTestId('monthly-rent').blur(); // formatted, as it shows once typed
+    await settled(page);
+    return page.locator('app-rent-or-buy-tab');
+  },
   'refinance.png': async (b) => open(b, '/refinance'),
   'pay-off-or-invest-dark.png': async (b) => open(b, '/strategy', { scheme: 'dark' }),
   'phone.png': async (b) => open(b, '/calculator/overview', { viewport: phone, scale: 2 }),

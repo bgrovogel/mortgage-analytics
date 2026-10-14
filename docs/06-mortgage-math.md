@@ -351,6 +351,31 @@ most for housing = min(income × total limit − debts, income × housing limit)
   `AffordabilityAnalysis` (`Application/Services`). The Python model finds every price its own way, from its own
   first-month costs, and the random purchases include incomes from $40,000 to $400,000.
 
+### Rent or buy
+
+Two households that spend the same each month: one buys, one rents a similar home. Month by month, for up to 30
+years (or the loan's term):
+
+```
+owning      = principal and interest + housing costs − a buydown's subsidy + upkeep
+upkeep      = home value that year × upkeep % ÷ 12, to the cent
+rent        = the rent × (1 + rise %)^(year − 1), to the cent
+buyer       = buyer × (1 + return % ÷ 12) + max(0, rent − owning)
+renter      = renter × (1 + return % ÷ 12) + max(0, owning − rent)      (starting with the cash to close)
+```
+
+At each year's end the buyer is worth the home's value then, less what is owed and the selling costs, plus their
+investments; the renter, their investments. Buying **breaks even** in the first year from which it is ahead (or level)
+every year after; one good year followed by a bad one does not count.
+
+- It uses the loan's standard schedule: extra payments are an investment choice, like the renter's.
+- Left out: taxes on investment gains, the mortgage interest deduction (most households take the standard deduction),
+  and renters insurance.
+- On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
+  else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
+- The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
+  Python model compares every year its own way: 300 of 300 random purchases match, 130 of them with a rent.
+
 ### The best use of the seller's money
 
 The offer is the seller's credits plus a buydown they pay for. Each way to take it is the same request analyzed again

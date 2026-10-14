@@ -11,6 +11,7 @@ const RESULT_TABS = [
   { path: 'overview', label: 'Overview' },
   { path: 'affordability', label: 'Affordability' },
   { path: 'closing', label: 'Closing' },
+  { path: 'rent-or-buy', label: 'Rent or buy' },
   { path: 'projection', label: 'Projection' },
   { path: 'schedule', label: 'Schedule' },
 ] as const;

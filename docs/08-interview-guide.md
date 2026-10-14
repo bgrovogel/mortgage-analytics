@@ -19,7 +19,7 @@
 > "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
-> The math is exact to the cent and checked against independent Python models, and over 2,000 tests run in CI."
+> The math is exact to the cent and checked against independent Python models, and over 2,100 tests run in CI."
 
 **In 2 minutes, add:**
 1. **Architecture:** Clean Architecture in four projects. The domain has no dependencies at all, so the money
@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 602 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 629 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -157,6 +157,14 @@ of the price with a loan above 90%, 6% to 75%, 9% below), 6% for FHA, and 4% for
 lender's credits are used first and don't count, and any excess comes off the seller's credits, as a lender would
 take it. The cash to close says what the limit is and why, what 10% down would raise it to, and to ask for the rest
 off the price. The Python model implements the rule separately, and its random purchases include offers over it.
+
+**How does rent vs. buy work?**
+Two households spending the same each month, one buying and one renting. Each month the cheaper one invests the
+difference, and the renter also invests what buying takes to close. The buyer's net worth is the home after a sale,
+less what's owed and selling costs, plus their investments; the renter's is their investments. The answer is the
+year buying pulls ahead for good, not just its first good year. It's very sensitive to the rent: on the example
+home, $2,700 a month breaks even in 4 years, and $2,100 never does in 30. The chart plots the gap rather than the
+two net worths, because those grow so large that the gap, which is the answer, disappears.
 
 **How does the calculator say what someone can afford?**
 The way a lender does: debt-to-income. The housing payment, at the note rate with every escrowed cost, as a share
@@ -376,7 +384,7 @@ classic assert is used. Code review standards become automatic.
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
-domain code about 1,240 ways and checks a test fails each time. It scores 98.3%, and CI fails below 95%; the
+domain code about 1,320 ways and checks a test fails each time. It scores 98.4%, and CI fails below 95%; the
 Application layer scores 97.8% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
@@ -502,10 +510,11 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
 | Builder limit | The example, 9% down: **$12,450** (3%); with **$41,500** down (10%), **$24,900** (6%) |
+| Rent or buy | The example against **$2,700** of rent: buying comes out ahead after **4 years**; at **$2,100**, renting stays ahead for all 30 years |
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,139 .NET · 830 Jest · 111 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,178 .NET · 842 Jest · 112 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

@@ -35,6 +35,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
             PmiOtherChoice = rates.Program is null ? PmiOtherChoice(request, purchase, valuation, rates.Loan, comparison) : null,
             SellerOffer = SellerOfferComparison.For(request, analysis, Run),
             Affordability = AffordabilityAnalysis.For(request, analysis, QualifyingPayment),
+            RentOrBuy = RentOrBuyAnalysis.For(request, analysis),
         };
     }
 

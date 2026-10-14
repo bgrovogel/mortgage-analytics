@@ -39,7 +39,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await openSections(page);
       expect(await violations(page), 'the Overview tab and the open form break no accessibility rule').toEqual([]);
 
-      for (const tab of ['affordability', 'closing', 'projection', 'schedule'] as const) {
+      for (const tab of ['affordability', 'closing', 'rent-or-buy', 'projection', 'schedule'] as const) {
         await page.getByTestId(`result-tab-${tab}`).click();
         await settled(page);
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);
@@ -78,6 +78,11 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByTestId('result-tab-affordability').click();
       await expect(page.getByTestId('affordability'), 'whether it is affordable').toBeVisible();
       expect(await violations(page), 'affordability breaks no accessibility rule').toEqual([]);
+      await page.getByTestId('result-tab-rent-or-buy').click();
+      await page.getByTestId('monthly-rent').fill('2400');
+      await expect(page.getByTestId('rent-or-buy-verdict'), 'buying against renting').toBeVisible();
+      await settled(page);
+      expect(await violations(page), 'rent or buy breaks no accessibility rule').toEqual([]);
 
       await page.getByTestId('result-tab-overview').click();
       await page.getByTestId('rate-type-arm').check();

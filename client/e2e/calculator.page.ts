@@ -246,8 +246,8 @@ export class CalculatorPage {
     await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
   }
 
-  /** Opens a result tab: Overview, Affordability, Closing, Projection or Schedule. Each has its own URL. */
-  async showResults(tab: 'overview' | 'affordability' | 'closing' | 'projection' | 'schedule'): Promise<void> {
+  /** Opens a result tab: Overview, Affordability, Closing, Rent or buy, Projection or Schedule. Each has its own URL. */
+  async showResults(tab: 'overview' | 'affordability' | 'closing' | 'rent-or-buy' | 'projection' | 'schedule'): Promise<void> {
     await this.page.getByTestId(`result-tab-${tab}`).click();
     await expect(this.page, `the URL names the ${tab} tab`).toHaveURL(new RegExp(`/calculator/${tab}$`));
   }

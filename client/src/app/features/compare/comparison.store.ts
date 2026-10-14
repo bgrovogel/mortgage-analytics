@@ -42,8 +42,8 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
   }
 
   protected send$(request: HomeComparisonRequest) {
-    // The comparison shows neither the best use of a seller's offer nor affordability: it does not ask for them.
-    const plain = request.homes.map((home) => ({ ...home, sellerOffer: null, affordability: null }));
+    // The comparison shows none of the seller's offer, affordability, or renting: it does not ask for them.
+    const plain = request.homes.map((home) => ({ ...home, sellerOffer: null, affordability: null, rentOrBuy: null }));
     return forkJoin(plain.map((home) => this.api.calculate(home))).pipe(map((homes) => ({ homes })));
   }
 }

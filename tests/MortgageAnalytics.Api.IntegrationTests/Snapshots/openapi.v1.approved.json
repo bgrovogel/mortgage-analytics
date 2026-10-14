@@ -952,6 +952,9 @@
           },
           "affordability": {
             "$ref": "#/components/schemas/AffordabilityRequest"
+          },
+          "rentOrBuy": {
+            "$ref": "#/components/schemas/RentOrBuyRequest"
           }
         },
         "additionalProperties": false
@@ -1001,6 +1004,9 @@
           },
           "affordability": {
             "$ref": "#/components/schemas/AffordabilityResponse"
+          },
+          "rentOrBuy": {
+            "$ref": "#/components/schemas/RentOrBuyResponse"
           }
         },
         "additionalProperties": false
@@ -2292,6 +2298,112 @@
           "password": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentOrBuyRequest": {
+        "type": "object",
+        "properties": {
+          "monthlyRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "rentIncreasePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "investmentReturnPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "maintenancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "sellingCostPercent": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentOrBuyResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "rentIncreasePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "investmentReturnPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "maintenancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "sellingCostPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashToClose": {
+            "type": "number",
+            "format": "double"
+          },
+          "breakEvenYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RentOrBuyYearResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentOrBuyYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ownershipCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "rent": {
+            "type": "number",
+            "format": "double"
+          },
+          "homeEquity": {
+            "type": "number",
+            "format": "double"
+          },
+          "buyerInvestments": {
+            "type": "number",
+            "format": "double"
+          },
+          "buyerNetWorth": {
+            "type": "number",
+            "format": "double"
+          },
+          "renterNetWorth": {
+            "type": "number",
+            "format": "double"
+          },
+          "advantage": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

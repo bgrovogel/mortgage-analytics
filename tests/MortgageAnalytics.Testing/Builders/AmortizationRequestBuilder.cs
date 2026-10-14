@@ -141,6 +141,18 @@ public sealed class AmortizationRequestBuilder
     public AmortizationRequestBuilder WithAffordability(decimal annualIncome, decimal monthlyDebts = 0m) =>
         With(r => r with { Affordability = new AffordabilityRequest { AnnualIncome = annualIncome, MonthlyDebts = monthlyDebts } });
 
+    /// <summary>Weighs buying against renting a similar home for <paramref name="monthlyRent"/>, with the request's defaults for the rest.</summary>
+    public AmortizationRequestBuilder WithRentOrBuy(
+        decimal monthlyRent, decimal rentIncrease = 3.5m, decimal investmentReturn = 7m, decimal maintenance = 1m, decimal selling = 6m) =>
+        With(r => r with
+        {
+            RentOrBuy = new RentOrBuyRequest
+            {
+                MonthlyRent = monthlyRent, RentIncreasePercent = rentIncrease, InvestmentReturnPercent = investmentReturn,
+                MaintenancePercent = maintenance, SellingCostPercent = selling,
+            },
+        });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 

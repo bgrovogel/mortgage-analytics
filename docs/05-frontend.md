@@ -89,9 +89,10 @@ loan form at a time: the switch above it makes a new form for the chosen home fr
 home being edited, tracked by it, so switching from Home B to Home C makes a new form), so element ids stay unique.
 **Add a home** appends a copy of Home A; **Remove** takes out the home being edited, never Home A, and keeps two.
 
-`CalculatorStore` adds how a seller's offer is weighed (`offerSettings`: the years kept and the cut per point) to every
-request it sends. The settings are set beside the comparison they change, on the Closing tab (`setOfferSettings`),
-rather than in the form; a saved request that brings its own sets them.
+`CalculatorStore` adds two sets of settings to every request it sends: how a seller's offer is weighed
+(`offerSettings`: the years kept and the cut per point) and the rent to weigh buying against (`rentSettings`, null until
+a rent is given). Each is set beside the answer it changes, on the Closing and Rent or buy tabs (`setOfferSettings`,
+`setRentSettings`), rather than in the form; a saved request that brings its own sets them.
 
 ### The loan form: one form, six section components
 

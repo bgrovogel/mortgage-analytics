@@ -17,6 +17,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// </param>
 /// <param name="SellerOffer">The seller's or builder's offer taken each way it can be. Null unless the request asks and there is an offer.</param>
 /// <param name="Affordability">The home against the household's income and debts. Null unless the request gives them.</param>
+/// <param name="RentOrBuy">Buying the home against renting a similar one, year by year. Null unless the request asks.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -30,7 +31,43 @@ public sealed record AmortizationResponse(
     LoanProgramResponse? Program = null,
     PmiOtherChoiceResponse? PmiOtherChoice = null,
     SellerOfferResponse? SellerOffer = null,
-    AffordabilityResponse? Affordability = null);
+    AffordabilityResponse? Affordability = null,
+    RentOrBuyResponse? RentOrBuy = null);
+
+/// <summary>
+/// Buying the home against renting a similar one, for households that spend the same each month: whichever of owning
+/// and renting costs less invests the difference, and the renter also invests what buying takes to close. Taxes on
+/// investment gains, the mortgage interest deduction and extra payments are left out.
+/// </summary>
+/// <param name="MonthlyRent">The rent now, a month.</param>
+/// <param name="RentIncreasePercent">How much it rises each year.</param>
+/// <param name="InvestmentReturnPercent">What money invested earns a year.</param>
+/// <param name="MaintenancePercent">Upkeep a year, as a percentage of the home's value.</param>
+/// <param name="SellingCostPercent">What selling costs, as a percentage of the home's value then.</param>
+/// <param name="CashToClose">What buying takes at closing (the down payment alone without closing costs), which the renter invests.</param>
+/// <param name="BreakEvenYear">The first year from which buying is ahead for good; null when it never is within the years compared.</param>
+/// <param name="Years">Each year, up to 30 (or the loan's term when shorter).</param>
+public sealed record RentOrBuyResponse(
+    decimal MonthlyRent,
+    decimal RentIncreasePercent,
+    decimal InvestmentReturnPercent,
+    decimal MaintenancePercent,
+    decimal SellingCostPercent,
+    decimal CashToClose,
+    int? BreakEvenYear,
+    IReadOnlyList<RentOrBuyYearResponse> Years);
+
+/// <summary>One year of renting instead of buying.</summary>
+/// <param name="Year">The 1-based year.</param>
+/// <param name="OwnershipCost">What owning cost that year: payments, housing costs and upkeep.</param>
+/// <param name="Rent">The rent paid that year.</param>
+/// <param name="HomeEquity">What selling would leave at the year's end: the value, less what is owed and selling costs.</param>
+/// <param name="BuyerInvestments">The buyer's invested savings by then.</param>
+/// <param name="BuyerNetWorth">The equity and the buyer's investments.</param>
+/// <param name="RenterNetWorth">The renter's investments.</param>
+/// <param name="Advantage">How far buying is ahead; negative while renting is.</param>
+public sealed record RentOrBuyYearResponse(
+    int Year, decimal OwnershipCost, decimal Rent, decimal HomeEquity, decimal BuyerInvestments, decimal BuyerNetWorth, decimal RenterNetWorth, decimal Advantage);
 
 /// <summary>
 /// The home against a household's income and debts: its debt-to-income ratios, and for each limit, the most the housing

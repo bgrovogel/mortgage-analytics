@@ -123,6 +123,45 @@ export interface AmortizationRequest {
   sellerOffer?: SellerOfferInput | null;
   /** A household's income and debts, to measure the home against; leave out for none. */
   affordability?: AffordabilityInput | null;
+  /** Weighs buying the home against renting a similar one; leave out for none. */
+  rentOrBuy?: RentOrBuyInput | null;
+}
+
+/** What renting a similar home would cost, and what money does meanwhile. */
+export interface RentOrBuyInput {
+  monthlyRent: number;
+  /** How much the rent rises each year, as a percentage. */
+  rentIncreasePercent: number;
+  /** What money invested earns a year, as a percentage. */
+  investmentReturnPercent: number;
+  /** Upkeep a year, as a percentage of the home's value. */
+  maintenancePercent: number;
+  /** What selling costs, as a percentage of the home's value then. */
+  sellingCostPercent: number;
+}
+
+/** One year of renting instead of buying. */
+export interface RentOrBuyYear {
+  year: number;
+  /** What owning cost that year: payments, housing costs and upkeep. */
+  ownershipCost: number;
+  rent: number;
+  /** What selling would leave: the value, less what is owed and selling costs. */
+  homeEquity: number;
+  buyerInvestments: number;
+  buyerNetWorth: number;
+  renterNetWorth: number;
+  /** How far buying is ahead; negative while renting is. */
+  advantage: number;
+}
+
+/** Buying the home against renting a similar one, year by year. */
+export interface RentOrBuyComparison extends RentOrBuyInput {
+  /** What buying takes at closing, which the renter invests instead. */
+  cashToClose: number;
+  /** The first year from which buying is ahead for good; null when it never is. */
+  breakEvenYear: number | null;
+  years: RentOrBuyYear[];
 }
 
 /** A household's gross income and other debts. */
@@ -497,6 +536,8 @@ export interface AmortizationResponse {
   sellerOffer?: SellerOfferComparison | null;
   /** The home against the household's income and debts; null unless they are given. */
   affordability?: Affordability | null;
+  /** Buying against renting; null unless asked. */
+  rentOrBuy?: RentOrBuyComparison | null;
 }
 
 export interface BuydownSummary {

@@ -447,7 +447,50 @@ def analyze(request, today, other_choice=True):
     out['pmiOtherChoice'] = pmi_other_choice(request, today, acc) if program is None and other_choice else None
     out['sellerOffer'] = seller_offer(request, today, out)
     out['affordability'] = affordability(request, today)
+    out['rentOrBuy'] = rent_or_buy(request, out)
     return out
+
+
+def rent_or_buy(request, out):
+    """
+    Buying against renting a similar home, year by year, up to 30 years (or the loan's term): each month the cheaper of
+    owning (the standard schedule's outlay, less any buydown subsidy, plus upkeep on that year's value) and renting (the
+    rent, rising each year) invests the difference at the return a year compounded monthly; the renter also invests
+    what buying takes to close. The buyer has the home after a sale (its value less what is owed and the selling
+    costs) and their investments; the renter, their investments.
+    """
+    a = request.get('rentOrBuy')
+    if not a:
+        return None
+    rent0, rise = D(str(a['monthlyRent'])), D(str(a.get('rentIncreasePercent', 3.5)))
+    ret, upkeep_pct = D(str(a.get('investmentReturnPercent', 7))), D(str(a.get('maintenancePercent', 1)))
+    selling = D(str(a.get('sellingCostPercent', 6)))
+    price = D(str(request['homePrice']))
+    growth = D(str((request.get('housingCosts') or {}).get('homeValueGrowthRate', 0)))
+    cash = out['cashToClose']['total'] if out['cashToClose'] else D(str(request['downPayment']))
+    payments = out['baseline']['payments']
+    monthly = 1 + ret / 100 / 12
+    buyer, renter, years = D(0), cash, []
+    for year in range(1, min(30, len(payments) // 12) + 1):
+        upkeep = money(grow(price, growth, year - 1) * upkeep_pct / 100 / 12)
+        rent = grow(rent0, rise, year - 1)
+        owned = rented = D(0)
+        for p in payments[(year - 1) * 12:year * 12]:
+            owning = p['totalOutlay'] + upkeep
+            buyer = buyer * monthly + max(D(0), rent - owning)
+            renter = renter * monthly + max(D(0), owning - rent)
+            owned += owning
+            rented += rent
+        sold = grow(price, growth, year)
+        equity = sold - payments[year * 12 - 1]['remainingBalance'] - money(sold * selling / 100)
+        b, r = money(buyer), money(renter)
+        years.append({'year': year, 'ownershipCost': owned, 'rent': rented, 'homeEquity': equity, 'buyerInvestments': b,
+                      'buyerNetWorth': equity + b, 'renterNetWorth': r, 'advantage': equity + b - r})
+    since = None
+    for y in years:
+        since = (since or y['year']) if y['advantage'] >= 0 else None
+    return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
+            'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years}
 
 
 # Debt-to-income limits, as percentages of gross monthly income: (housing, total). Comfortable is the classic 28/36;

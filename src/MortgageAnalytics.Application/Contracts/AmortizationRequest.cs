@@ -76,6 +76,33 @@ public sealed record AmortizationRequest
     /// pay at the same down payment share. Omit for none.
     /// </summary>
     public AffordabilityRequest? Affordability { get; init; }
+
+    /// <summary>Weighs buying the home against renting a similar one, year by year. Omit for none.</summary>
+    public RentOrBuyRequest? RentOrBuy { get; init; }
+}
+
+/// <summary>What renting a similar home would cost, and what money does meanwhile.</summary>
+public sealed record RentOrBuyRequest
+{
+    /// <summary>The rent for a similar home now, a month.</summary>
+    /// <example>2100</example>
+    public decimal MonthlyRent { get; init; }
+
+    /// <summary>How much the rent rises each year, as a percentage.</summary>
+    /// <example>3.5</example>
+    public decimal RentIncreasePercent { get; init; } = 3.5m;
+
+    /// <summary>What money invested earns a year, as a percentage, compounded monthly.</summary>
+    /// <example>7</example>
+    public decimal InvestmentReturnPercent { get; init; } = 7m;
+
+    /// <summary>What upkeep costs the owner a year, as a percentage of the home's value that year.</summary>
+    /// <example>1</example>
+    public decimal MaintenancePercent { get; init; } = 1m;
+
+    /// <summary>What selling costs, as a percentage of the home's value then: commissions and the seller's closing costs.</summary>
+    /// <example>6</example>
+    public decimal SellingCostPercent { get; init; } = 6m;
 }
 
 /// <summary>A household's income and debts, for what it can afford.</summary>

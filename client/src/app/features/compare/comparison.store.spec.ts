@@ -31,7 +31,7 @@ describe('ComparisonStore', () => {
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
     // Without a seller's offer weighed or affordability: the comparison shows neither, so it does not ask for them.
-    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second, third].map((h) => ({ ...h, sellerOffer: null, affordability: null })));
+    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second, third].map((h) => ({ ...h, sellerOffer: null, affordability: null, rentOrBuy: null })));
     expect(store.result()?.homes.map((h) => h.savings.netSavings)).toEqual([415_000, 450_000, 380_000]);
   });
 
@@ -71,7 +71,7 @@ describe('ComparisonStore', () => {
     expect(store.route).toEqual(['/compare']);
     expect(store.saved()).toEqual({ id: 'c1', name: 'Oak or Elm' });
     expect(store.request()).toEqual({ homes: [first, second, third] });
-    expect(calculator.request()).toEqual({ ...first, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 } });
+    expect(calculator.request()).toEqual({ ...first, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null });
     // The calculator now shows the comparison's first home: Save there makes a new purchase, not a change to another.
     expect(calculator.saved()).toBeNull();
     expect(TestBed.inject(SharedLoanStore).change()?.loan.balance).toBe(377_650);

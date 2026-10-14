@@ -36,6 +36,7 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             .WithClosingCosts(credits: 3_000m)
             .WithSellerOffer(yearsKept: 10, rateCutPerPoint: 0.375m)
             .WithAffordability(150_000m, 600m)
+            .WithRentOrBuy(2_100m)
             .WithDiscountPoints(1.375m, 6.875m);
 
         AssertValid(request, "every optional section filled with sensible values must pass");
@@ -278,6 +279,17 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     public void ClosingCost_OutOfRange_IsRejected(AmortizationRequest request, string path)
     {
         AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
+    }
+
+    [TestCase(0, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "No rent")]
+    [TestCase(2_000.001, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "Rent to a fraction of a cent")]
+    [TestCase(2_000, 20.01, 7, 1, 6, "RentOrBuy.RentIncreasePercent", TestName = "Rent rising more than 20% a year")]
+    [TestCase(2_000, 3.5, 30.01, 1, 6, "RentOrBuy.InvestmentReturnPercent", TestName = "Investments earning more than 30%")]
+    [TestCase(2_000, 3.5, 7, -0.01, 6, "RentOrBuy.MaintenancePercent", TestName = "Upkeep below nothing")]
+    [TestCase(2_000, 3.5, 7, 1, 20.01, "RentOrBuy.SellingCostPercent", TestName = "Selling costs over 20%")]
+    public void RentOrBuy_OutOfRange_IsRejected(decimal rent, decimal increase, decimal investmentReturn, decimal maintenance, decimal selling, string path)
+    {
+        AssertInvalid(A.Request.WithRentOrBuy(rent, increase, investmentReturn, maintenance, selling), path, "assumptions a market could have");
     }
 
     [TestCase(0, 0, "Affordability.AnnualIncome", TestName = "No income")]

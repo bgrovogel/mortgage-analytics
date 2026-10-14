@@ -3,6 +3,7 @@ using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Data;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
+using MortgageAnalytics.Domain.RentOrBuy;
 
 namespace MortgageAnalytics.Application.Validation;
 
@@ -177,6 +178,8 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .OverridePropertyName("Affordability.MonthlyDebts").WithName("Monthly debts")
             .When(r => r.Affordability is not null);
 
+        RuleFor(r => r.RentOrBuy!).SetValidator(new RentOrBuyValidator()).When(r => r.RentOrBuy is not null);
+
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
             .When(r => r.HousingCosts is not null);
@@ -250,6 +253,19 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(c => c.EscrowMonths).InclusiveBetween(0, ClosingCosts.MaxEscrowMonths).WithName("Months of escrow");
             RuleFor(c => c.Credits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Credits");
             RuleFor(c => c.LenderCredits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Lender credits");
+        }
+    }
+
+    /// <summary>Renting's cost and what money earns: values a market could have, the domain's own limits.</summary>
+    private sealed class RentOrBuyValidator : AbstractValidator<RentOrBuyRequest>
+    {
+        public RentOrBuyValidator()
+        {
+            RuleFor(r => r.MonthlyRent).GreaterThan(0).LessThanOrEqualTo(RentOrBuyAssumptions.MaxMonthlyRent).WholeCents().WithName("Rent");
+            RuleFor(r => r.RentIncreasePercent).InclusiveBetween(-20, 20).WithName("Rent increase");
+            RuleFor(r => r.InvestmentReturnPercent).InclusiveBetween(-20, 30).WithName("Investment return");
+            RuleFor(r => r.MaintenancePercent).InclusiveBetween(0, 10).WithName("Upkeep");
+            RuleFor(r => r.SellingCostPercent).InclusiveBetween(0, 20).WithName("Selling costs");
         }
     }
 

@@ -129,7 +129,7 @@ describe('HistoryPageComponent', () => {
 
       click(button(items()[0], 'Open'));
 
-      expect(store.request()).toEqual({ ...oak.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 } });
+      expect(store.request()).toEqual({ ...oak.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null });
       expect(store.saved()).toEqual({ id: '1', name: 'Oak St, 20% down' });
       expect(navigate).toHaveBeenCalledWith(['/calculator', 'overview']);
     });
