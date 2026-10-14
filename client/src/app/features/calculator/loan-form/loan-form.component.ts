@@ -20,7 +20,7 @@ import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } 
 import {
   LumpSumForm, RateChangeForm, chargedTaxes, fhaDownProblem, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
-import { closingSummary, costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
+import { closingSummary, costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
 const rules = LOAN_RULES;
 
@@ -42,6 +42,7 @@ const SECTION_CONTROLS = {
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   program: ['creditScore'],
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits', 'yearsKept', 'rateCutPerPoint'],
+  income: ['annualIncome', 'monthlyDebts'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
   rate: ['rate', 'points', 'rateWithoutPoints'],
@@ -190,6 +191,7 @@ export class LoanFormComponent implements OnInit {
   readonly closingSummary = computed(() => (this.sectionInvalid('closing') ? CHECK_SECTION : closingSummary(this.values())));
 
   /** One-line summary of the yearly-increase assumptions. */
+  readonly incomeSummary = computed(() => (this.sectionInvalid('income') ? CHECK_SECTION : incomeSummary(this.values())));
   readonly growthSummary = computed(() => (this.sectionInvalid('growth') ? CHECK_SECTION : growthSummary(this.values())));
 
   /**

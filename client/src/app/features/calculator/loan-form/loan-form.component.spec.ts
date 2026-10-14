@@ -60,7 +60,7 @@ describe('LoanFormComponent', () => {
 
       expect(details.querySelector('h3')?.textContent).toBe('More details');
       expect([...details.querySelectorAll('details.section')].map((d) => d.getAttribute('data-testid')))
-        .toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
+        .toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-income', 'section-growth', 'section-options']);
     });
 
     it('says the numbers are an example until the first edit, and never for a restored loan', () => {
@@ -103,7 +103,7 @@ describe('LoanFormComponent', () => {
       for (const id of ['home-price', 'down-payment', 'interest-rate', 'term-years', 'monthly-extra']) {
         expect(el(id)?.closest('details')).toBeNull();
       }
-      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-growth', 'section-options']);
+      expect(sections.map((s) => s.dataset['testid'])).toEqual(['section-program', 'section-rate', 'section-taxes', 'section-costs', 'section-closing', 'section-income', 'section-growth', 'section-options']);
       expect(el('pid-annual')?.closest('details')?.dataset['testid']).toBe('section-taxes');
       expect(sections.every((s) => !s.open)).toBe(true);
     });

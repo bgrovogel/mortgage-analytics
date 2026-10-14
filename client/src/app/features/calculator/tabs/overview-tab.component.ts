@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { InViewDirective } from '../../../core/layout/in-view.directive';
 import { paymentsMade } from '../../../core/loans/loan-progress';
+import { AffordabilityComponent } from '../affordability/affordability.component';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { CalculatorStore } from '../calculator.store';
@@ -11,10 +12,10 @@ import { RatePlanComponent } from '../rate-plan/rate-plan.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 
-/** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, the cash to close, and the best use of the seller's money. */
+/** The answer at a glance: the headline numbers, where each month's payment goes, the payoff race, whether you can afford it, the cash to close, and the best use of the seller's money. */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, SellerOfferComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, PaymentBreakdownComponent, BalanceChartComponent, CashToCloseComponent, SellerOfferComponent, AffordabilityComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" [current]="nextPayment()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-program-summary [result]="result()" />
@@ -24,7 +25,13 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
       <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" [current]="nextPayment()" [program]="result().program ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>
     </div>
-    <!-- Cash to close is for a purchase still ahead; on a loan already being paid it closed long ago. -->
+    <!-- Affordability and the cash to close are for a purchase still ahead; a loan already being paid closed long ago. -->
+    @if (result().affordability && !nextPayment()) {
+      <div class="panel">
+        <app-affordability [affordability]="result().affordability!" [program]="result().program?.type ?? 'Conventional'"
+                           [downPaymentPercent]="result().purchase.downPaymentPercent" />
+      </div>
+    }
     @if (result().cashToClose && !nextPayment()) {
       <div class="panel"><app-cash-to-close [cash]="result().cashToClose!" [program]="result().program" /></div>
       @if (result().sellerOffer; as offer) {

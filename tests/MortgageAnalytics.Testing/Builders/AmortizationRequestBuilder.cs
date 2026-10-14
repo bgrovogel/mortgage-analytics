@@ -137,6 +137,10 @@ public sealed class AmortizationRequestBuilder
     public AmortizationRequestBuilder WithSellerOffer(int yearsKept = 7, decimal rateCutPerPoint = 0.25m) =>
         With(r => r with { SellerOffer = new SellerOfferRequest { YearsKept = yearsKept, RateCutPerPoint = rateCutPerPoint } });
 
+    /// <summary>Measures the home against a household's gross <paramref name="annualIncome"/> and other <paramref name="monthlyDebts"/>.</summary>
+    public AmortizationRequestBuilder WithAffordability(decimal annualIncome, decimal monthlyDebts = 0m) =>
+        With(r => r with { Affordability = new AffordabilityRequest { AnnualIncome = annualIncome, MonthlyDebts = monthlyDebts } });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 

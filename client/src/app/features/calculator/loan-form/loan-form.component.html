@@ -379,6 +379,24 @@
     </div>
   </details>
 
+  <details class="section" data-testid="section-income">
+    <summary>
+      <span class="section-title">Income & debts</span>
+      <span class="section-summary" data-testid="income-summary">{{ incomeSummary() }}</span>
+    </summary>
+    <div class="section-body">
+      <div class="row">
+        <app-number-field [control]="form.controls.annualIncome" [rule]="rules.annualIncome" testId="annual-income" label="Income a year" />
+        <app-number-field [control]="form.controls.monthlyDebts" [rule]="rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
+      </div>
+      <p class="hint">
+        Your household's income before taxes, and what other debts take each month: car, student and personal loans,
+        card minimums, support. Not rent or utilities. The Overview then measures this home against them as a lender
+        would, and says the most you could pay.
+      </p>
+    </div>
+  </details>
+
   <details class="section" data-testid="section-growth">
     <summary>
       <span class="section-title">Future increases</span>

@@ -821,6 +821,78 @@
         },
         "additionalProperties": false
       },
+      "AffordabilityLimitResponse": {
+        "type": "object",
+        "properties": {
+          "housingPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxHousingPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxHomePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "fits": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AffordabilityRequest": {
+        "type": "object",
+        "properties": {
+          "annualIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyDebts": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AffordabilityResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyDebts": {
+            "type": "number",
+            "format": "double"
+          },
+          "housingPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "housingPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "comfortable": {
+            "$ref": "#/components/schemas/AffordabilityLimitResponse"
+          },
+          "mostAllowed": {
+            "$ref": "#/components/schemas/AffordabilityLimitResponse"
+          }
+        },
+        "additionalProperties": false
+      },
       "AmortizationRequest": {
         "type": "object",
         "properties": {
@@ -877,6 +949,9 @@
           },
           "sellerOffer": {
             "$ref": "#/components/schemas/SellerOfferRequest"
+          },
+          "affordability": {
+            "$ref": "#/components/schemas/AffordabilityRequest"
           }
         },
         "additionalProperties": false
@@ -923,6 +998,9 @@
           },
           "sellerOffer": {
             "$ref": "#/components/schemas/SellerOfferResponse"
+          },
+          "affordability": {
+            "$ref": "#/components/schemas/AffordabilityResponse"
           }
         },
         "additionalProperties": false

@@ -121,6 +121,41 @@ export interface AmortizationRequest {
   program?: LoanProgramInput | null;
   /** Weighs the ways to take the seller's money; needs closing costs, and not with an adjustable rate or points. */
   sellerOffer?: SellerOfferInput | null;
+  /** A household's income and debts, to measure the home against; leave out for none. */
+  affordability?: AffordabilityInput | null;
+}
+
+/** A household's gross income and other debts. */
+export interface AffordabilityInput {
+  annualIncome: number;
+  /** Car, student and personal loans, card minimums, support: not rent, utilities or this home. */
+  monthlyDebts: number;
+}
+
+/** One debt-to-income limit, and what it allows. */
+export interface AffordabilityLimit {
+  /** The most of income for housing; null when only the total is limited. */
+  housingPercent: number | null;
+  totalPercent: number;
+  maxHousingPayment: number;
+  /** The highest price within it, with the same down payment share and costs; 0 when none is. */
+  maxHomePrice: number;
+  /** True when this home's payment is within it. */
+  fits: boolean;
+}
+
+/** The home against a household's income and debts. */
+export interface Affordability {
+  monthlyIncome: number;
+  monthlyDebts: number;
+  /** This home's payment as a lender counts it: at the note rate, with every housing cost. */
+  housingPayment: number;
+  housingPercent: number;
+  totalPercent: number;
+  /** The classic 28% and 36%. */
+  comfortable: AffordabilityLimit;
+  /** The program's: conventional 45% in all, FHA 31% and 43%, VA 41% in all. */
+  mostAllowed: AffordabilityLimit;
 }
 
 /** How to weigh the ways to take the seller's or builder's money. */
@@ -460,6 +495,8 @@ export interface AmortizationResponse {
   pmiOtherChoice?: { removal: MortgageInsuranceCancellation; endDate: string; savedByAsking: number } | null;
   /** The seller's offer taken each way; null unless asked for with an offer. */
   sellerOffer?: SellerOfferComparison | null;
+  /** The home against the household's income and debts; null unless they are given. */
+  affordability?: Affordability | null;
 }
 
 export interface BuydownSummary {

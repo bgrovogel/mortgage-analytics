@@ -35,6 +35,7 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
                 .WithPmi(0.5m, PmiCancellation.BorrowerRequested))
             .WithClosingCosts(credits: 3_000m)
             .WithSellerOffer(yearsKept: 10, rateCutPerPoint: 0.375m)
+            .WithAffordability(150_000m, 600m)
             .WithDiscountPoints(1.375m, 6.875m);
 
         AssertValid(request, "every optional section filled with sensible values must pass");
@@ -277,6 +278,17 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     public void ClosingCost_OutOfRange_IsRejected(AmortizationRequest request, string path)
     {
         AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
+    }
+
+    [TestCase(0, 0, "Affordability.AnnualIncome", TestName = "No income")]
+    [TestCase(100_000_000.01, 0, "Affordability.AnnualIncome", TestName = "An income past $100 million")]
+    [TestCase(90_000.001, 0, "Affordability.AnnualIncome", TestName = "An income to a fraction of a cent")]
+    [TestCase(90_000, -1, "Affordability.MonthlyDebts", TestName = "Debts below zero")]
+    [TestCase(90_000, 0.001, "Affordability.MonthlyDebts", TestName = "Debts to a fraction of a cent")]
+    [TestCase(90_000, 8_333_333.34, "Affordability.MonthlyDebts", TestName = "Debts past a twelfth of the most income")]
+    public void Affordability_OutOfRange_IsRejected(decimal income, decimal debts, string path)
+    {
+        AssertInvalid(A.Request.WithAffordability(income, debts), path, "a household's income and debts, in dollars and cents");
     }
 
     [TestCase(0, 0.25, "SellerOffer.YearsKept", TestName = "An offer weighed over no years")]

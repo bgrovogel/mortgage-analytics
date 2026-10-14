@@ -42,6 +42,8 @@ describe('loan form model', () => {
       ['lenderCredits', -1],
       ['yearsKept', 0],
       ['rateCutPerPoint', 1.01],
+      ['annualIncome', 0],
+      ['monthlyDebts', -1],
       ['annualExtra', -1],
       ['annualFirstPayment', 0],
       ['rateWithoutPoints', -1],
@@ -209,6 +211,27 @@ describe('loan form model', () => {
     });
   });
 
+  describe('affordability', () => {
+    it('is asked for only with an income, a blank debt as none', () => {
+      const form = newForm();
+      expect(toLoanRequest(form, 1).affordability).toBeNull();
+
+      form.patchValue({ annualIncome: 150_000 });
+      expect(toLoanRequest(form, 1).affordability).toEqual({ annualIncome: 150_000, monthlyDebts: 0 });
+      form.patchValue({ monthlyDebts: 600 });
+      expect(toLoanRequest(form, 1).affordability).toEqual({ annualIncome: 150_000, monthlyDebts: 600 });
+    });
+
+    it('is cleared by restoring a request without it', () => {
+      const form = newForm();
+      form.patchValue({ annualIncome: 150_000, monthlyDebts: 600 });
+
+      restoreLoanForm(form, fb, toLoanRequest(newForm(), 1));
+
+      expect([form.controls.annualIncome.value, form.controls.monthlyDebts.value]).toEqual([null, null]);
+    });
+  });
+
   describe('the seller’s offer', () => {
     it('is weighed over the years kept, at the cut per point', () => {
       const form = newForm();
@@ -245,7 +268,7 @@ describe('loan form model', () => {
         isOver65: true, over65Year: 3, over65SchoolExemption: 10_000, over65LocalExemption: 5_000, over65LocalCeiling: true,
         transferredCeilingPercent: 62.5, homeValueGrowthRate: 3, insuranceIncreaseRate: 5, hoaIncreaseRate: 2,
         pidAnnual: 900, pidYears: 12, annualInsurance: 2_000, monthlyHoa: 75, pmiCancellation: 'BorrowerRequested',
-        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250, yearsKept: 10, rateCutPerPoint: 0.375,
+        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250, yearsKept: 10, rateCutPerPoint: 0.375, annualIncome: 120_000, monthlyDebts: 450,
         monthlyExtra: 150, annualExtra: 1_200, annualFirstPayment: 6, buydownPaidBy: 'Borrower',
         loanProgram: 'Fha', financeUpfrontFee: false, creditScore: 600, countyFips: '48491',
         usePoints: true, points: 1.5, rateWithoutPoints: 6.5,

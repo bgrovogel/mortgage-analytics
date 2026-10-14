@@ -59,6 +59,15 @@ const shots = {
     await settled(page);
     return page.locator('app-seller-offer');
   },
+  // Just the affordability panel: the example against $150,000 a year and $600 of other debts.
+  'affordability.png': async (b) => {
+    const page = await open(b, '/calculator/overview', { scale: 2 });
+    await page.getByText('Income & debts').first().click();
+    await page.getByTestId('annual-income').fill('150000');
+    await page.getByTestId('monthly-debts').fill('600');
+    await settled(page);
+    return page.locator('app-affordability');
+  },
   'refinance.png': async (b) => open(b, '/refinance'),
   'pay-off-or-invest-dark.png': async (b) => open(b, '/strategy', { scheme: 'dark' }),
   'phone.png': async (b) => open(b, '/calculator/overview', { viewport: phone, scale: 2 }),

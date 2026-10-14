@@ -446,7 +446,76 @@ def analyze(request, today, other_choice=True):
         }
     out['pmiOtherChoice'] = pmi_other_choice(request, today, acc) if program is None and other_choice else None
     out['sellerOffer'] = seller_offer(request, today, out)
+    out['affordability'] = affordability(request, today)
     return out
+
+
+# Debt-to-income limits, as percentages of gross monthly income: (housing, total). Comfortable is the classic 28/36;
+# the most allowed is the program's (Fannie Mae B3-6-02's 45% total; HUD's 31/43 for FHA; VA's 41% total).
+COMFORTABLE = (D(28), D(36))
+MOST_ALLOWED = {'Conventional': (None, D(45)), 'Fha': (D(31), D(43)), 'Va': (None, D(41))}
+
+
+def qualifying_payment(request, today):
+    """
+    The first month's payment as a lender qualifies it, or None when no loan can be had (an FHA loan past its county's
+    limit): principal and interest at the note rate, and every housing cost charged with the first payment.
+    """
+    price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
+    rate, term = D(str(request['annualInterestRate'])), request['termInMonths']
+    first = date.fromisoformat(request['firstPaymentDate']) if request.get('firstPaymentDate') else first_of_next_month(today)
+    program, loan, fha_mip = program_of(request, price, down, rate, term, first)
+    if program and program['countyLoanLimit'] is not None and price - down > program['countyLoanLimit']:
+        return None
+    costs = Costs(request, (term + 11) // 12, fha_mip if program else None)
+    return payment(loan, rate, term) + sum(costs.for_payment(1, loan, loan).values(), D(0))
+
+
+def affordability(request, today):
+    """
+    The home against a household's income and debts: its debt-to-income ratios, and for each limit the most the housing
+    payment may be and the highest whole-dollar price whose payment fits, with the same down payment share (rounded up
+    to the cent) and nothing else changed. The price is found by doubling from the home's price, then halving the gap.
+    """
+    household = request.get('affordability')
+    if not household:
+        return None
+    income, debts = money(D(str(household['annualIncome'])) / 12), D(str(household['monthlyDebts']))
+    housing = qualifying_payment(request, today)
+    percent = lambda x: (x / income * 100).quantize(CENT, rounding=ROUND_HALF_UP)  # noqa: E731
+    price0, share = D(str(request['homePrice'])), D(str(request['downPayment'])) / D(str(request['homePrice']))
+    cache = {}
+
+    def payment_at(price):
+        if price not in cache:
+            down = (price * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100
+            cache[price] = qualifying_payment(dict(request, homePrice=price, downPayment=down), today)
+        return cache[price]
+
+    def most_price(budget, cap=D(100_000_000)):
+        fits = lambda p: (lambda pay: pay is not None and pay <= budget)(payment_at(p))  # noqa: E731
+        low, high = D(0), min(max(D(1), price0.to_integral_value(rounding='ROUND_FLOOR')), cap)
+        while fits(high):
+            if high == cap:
+                return cap
+            low, high = high, min(high * 2, cap)
+        while high - low > 1:
+            middle = ((low + high) / 2).to_integral_value(rounding='ROUND_FLOOR')
+            low, high = (middle, high) if fits(middle) else (low, middle)
+        return low
+
+    def limit(housing_percent, total_percent):
+        most = income * total_percent / 100 - debts
+        if housing_percent is not None:
+            most = min(most, income * housing_percent / 100)
+        most = max(D(0), (most * 100).to_integral_value(rounding='ROUND_FLOOR') / 100)
+        return {'housingPercent': housing_percent, 'totalPercent': total_percent, 'maxHousingPayment': most,
+                'maxHomePrice': most_price(most), 'fits': housing <= most}
+
+    kind = (request.get('program') or {}).get('type', 'Conventional')
+    return {'monthlyIncome': income, 'monthlyDebts': debts, 'housingPayment': housing,
+            'housingPercent': percent(housing), 'totalPercent': percent(housing + debts),
+            'comfortable': limit(*COMFORTABLE), 'mostAllowed': limit(*MOST_ALLOWED[kind])}
 
 
 def seller_offer(request, today, out):

@@ -318,6 +318,37 @@ cash to close   = down payment + closing costs − lender credits − seller cre
 - The domain is `ClosingCosts`, `CashToClose` and `ConcessionLimit` (`Domain/Closing`); the Python model in `tools/calculator-check`
   prices the same lines independently, and 300 random purchases match it to the cent.
 
+### Can you afford it?
+
+Lenders qualify a buyer on debt-to-income: the housing payment as a share of gross monthly income (the "front-end"
+ratio), and it with the other monthly debts (the "back-end").
+
+```
+monthly income   = income a year ÷ 12, to the cent
+housing payment  = principal and interest at the note rate + the first month's taxes, insurance, PMI or MIP, dues, PID
+housing %        = housing payment ÷ monthly income × 100, to two decimals
+total %          = (housing payment + other debts) ÷ monthly income × 100
+most for housing = min(income × total limit − debts, income × housing limit), rounded down to the cent, never below 0
+```
+
+- **The limits:** comfortable is 28% and 36%. The most allowed is the program's: conventional 45% in all (Fannie
+  Mae's Selling Guide B3-6-02, for a manually underwritten loan with the credit score and reserves its matrix asks;
+  its automated underwriting goes to 50%). FHA is 31% and 43% (HUD, without compensating factors, which can raise
+  them to 40% and 50%). VA is 41% in all; past it, VA asks for residual income 20% over its guideline.
+- **A temporary buydown is qualified at the note rate**, as Fannie Mae requires, so its first years do not help.
+- **The highest price** keeps the down payment's share of the price (rounded up to the cent, so a program's minimum
+  is never missed), the rate and every cost, and changes only the price. The payment rises with the price, but through
+  taxes after exemptions and mortgage insurance that no formula inverts, so the price is searched: doubling from this
+  home's price until the budget is passed, then halving the gap to the whole dollar. A price no loan can have (past a
+  county's FHA limit) counts as beyond reach.
+- Each price needs only the first month's payment, not a schedule (`HousingCostPlan.FirstMonth`), so the search adds
+  about 10 ms to a calculation. FHA's MIP still needs the original schedule.
+- On the reference purchase ($250,000, 5% down, 6.5%, Texas taxes) with $90,000 a year and $400 of debts, the
+  comfortable limit allows **$2,100** for housing (28% of $7,500; 36% less the debts would be $2,300).
+- The domain is `DebtToIncome`, `DebtToIncomeLimit` and `MostAffordable` (`Domain/Affordability`), and
+  `AffordabilityAnalysis` (`Application/Services`). The Python model finds every price its own way, from its own
+  first-month costs, and the random purchases include incomes from $40,000 to $400,000.
+
 ### The best use of the seller's money
 
 The offer is the seller's credits plus a buydown they pay for. Each way to take it is the same request analyzed again

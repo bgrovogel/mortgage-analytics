@@ -20,6 +20,26 @@ public class HousingCostPlanTests : AmortizationTestBase
             RecastPolicy.Never);
 
     [Test]
+    public void TheFirstMonth_IsTheFirstPaymentsCosts_WithoutASchedule()
+    {
+        var plan = new HousingCostPlan([
+            new MortgageInsurance(FivePercentDown.PmiRate, A.FivePercentDownPurchase, MortgageInsuranceCancellation.Automatic),
+            new MonthlyFixedCost(HousingCostCategory.HoaDues, 75m),
+            new AnnualFixedCost(HousingCostCategory.HomeownersInsurance, 2_400m),
+        ]);
+
+        var first = plan.FirstMonth(FivePercentDown.LoanAmount);
+        var scheduled = plan.ApplyTo(FivePercentDownSchedule()).Periods[0];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.Total, Is.EqualTo(scheduled.Total), "the same costs as the schedule's first payment");
+            Assert.That(first[HousingCostCategory.MortgageInsurance], Is.EqualTo(scheduled[HousingCostCategory.MortgageInsurance]), "PMI included");
+            Assert.That(first.Total, Is.EqualTo(FivePercentDown.MonthlyPmi + 75m + 200m), "PMI, dues and a twelfth of the insurance");
+        });
+    }
+
+    [Test]
     public void ApplyTo_ProducesOneBreakdownPerPayment()
     {
         var schedule = FivePercentDownSchedule();

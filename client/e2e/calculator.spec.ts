@@ -203,6 +203,32 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.field('home-price'), 'Home A is as it was').toHaveValue('415,000');
   });
 
+  test('can you afford it: this home against income and debts, and the most each limit reaches', async ({ calculator, page }) => {
+    // $375,000 with 5% down at 5.99%, and a household earning $120,000 a year with $500 of other debts.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.set('annual-income', 120_000);
+    await calculator.set('monthly-debts', 500);
+    await calculator.calculate();
+
+    await expect(page.getByTestId('afford-intro'), 'the payment as a share of $10,000 a month')
+      .toHaveText('This home’s payment, $3,128 a month with taxes, insurance and mortgage insurance, is 31.28% of your $10,000 monthly income, and 36.28% with your $500 of other debts.');
+    await expect(page.getByTestId('afford-verdict'), 'past 28/36, within 45%')
+      .toHaveText('This home is past the comfortable 28% and 36%, but within the most a conventional loan allows, 45%.');
+    const rows = page.getByTestId('affordability').locator('tbody tr');
+    await expect(rows.nth(0).locator('td'), 'comfortable: $2,800 for housing reaches $333,595').toHaveText(['28% · 36%', '$2,800', '$333,595', 'Past it']);
+    await expect(rows.nth(1).locator('td'), 'conventional: 45% less the debts is $4,000').toHaveText(['45% in all', '$4,000', '$485,133', 'Fits']);
+
+    // As an FHA loan, the upfront MIP borrowed and the annual MIP make it $3,167: past FHA's 31% for housing alone.
+    await calculator.setChecked('program-fha', true);
+    await calculator.calculate();
+    await expect(page.getByTestId('afford-verdict'), 'FHA holds housing to 31%')
+      .toHaveText('This home is past the most an FHA loan allows, 31% and 43%: a lender would not lend this much on this income.');
+    await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
+  });
+
   test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

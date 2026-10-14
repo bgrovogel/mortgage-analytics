@@ -62,6 +62,13 @@ export function closingSummary(v: LoanFormValues): string {
   ]) || 'No fees';
 }
 
+/** The household's income a year and debts a month, or that they are not given. */
+export function incomeSummary(v: LoanFormValues): string {
+  return v.annualIncome
+    ? joined([`Income ${usd(v.annualIncome)}/yr`, `Debts ${usd(v.monthlyDebts ?? 0)}/mo`])
+    : 'Add yours to see what you can afford';
+}
+
 /** The yearly-increase assumptions, each signed; a blank counts as no change. */
 export function growthSummary(v: LoanFormValues): string {
   return joined([

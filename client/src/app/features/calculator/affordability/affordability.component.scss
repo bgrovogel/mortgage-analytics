@@ -1,0 +1,92 @@
+h2 {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.intro,
+.note {
+  margin: 0 0 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.verdict {
+  margin: 0 0 0.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+// A home past every limit.
+.warn {
+  border-left: 3px solid var(--warning-border);
+  padding-left: 0.6rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.4rem 0 0.8rem;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  white-space: nowrap;
+}
+
+// The limit under the row's name, for a phone, where it has no column of its own.
+.limit-under {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.fits {
+  color: var(--positive);
+  font-weight: 600;
+}
+
+.past {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+// On a phone, the limit goes under the row's name, and the padding is tighter.
+@media (max-width: 560px) {
+  table {
+    font-size: 0.8rem;
+  }
+
+  .limit {
+    display: none;
+  }
+
+  .limit-under {
+    display: block;
+  }
+
+  th,
+  td {
+    padding: 0.4rem 0.3rem;
+  }
+}

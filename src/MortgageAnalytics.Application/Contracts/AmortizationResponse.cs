@@ -16,6 +16,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// at 78% the original schedule, so with extra payments the two can end years apart. Null unless they end apart.
 /// </param>
 /// <param name="SellerOffer">The seller's or builder's offer taken each way it can be. Null unless the request asks and there is an offer.</param>
+/// <param name="Affordability">The home against the household's income and debts. Null unless the request gives them.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -28,7 +29,38 @@ public sealed record AmortizationResponse(
     DiscountPointsResponse? DiscountPoints = null,
     LoanProgramResponse? Program = null,
     PmiOtherChoiceResponse? PmiOtherChoice = null,
-    SellerOfferResponse? SellerOffer = null);
+    SellerOfferResponse? SellerOffer = null,
+    AffordabilityResponse? Affordability = null);
+
+/// <summary>
+/// The home against a household's income and debts: its debt-to-income ratios, and for each limit, the most the housing
+/// payment may be and the most the household could pay for a home with the same down payment share and costs.
+/// </summary>
+/// <param name="MonthlyIncome">Gross income a month: the year's divided by 12, to the cent.</param>
+/// <param name="MonthlyDebts">The other debts a month.</param>
+/// <param name="HousingPayment">This home's payment as a lender counts it: principal and interest at the note rate (a
+/// buydown's lower years are not qualified on), taxes, insurance, mortgage insurance, dues and PID, in the first month.</param>
+/// <param name="HousingPercent">The housing payment as a percentage of income.</param>
+/// <param name="TotalPercent">It and the debts as a percentage of income.</param>
+/// <param name="Comfortable">The classic rule of thumb: 28% for housing, 36% in all.</param>
+/// <param name="MostAllowed">The loan program's limit: conventional 45% in all, FHA 31% and 43%, VA 41% in all.</param>
+public sealed record AffordabilityResponse(
+    decimal MonthlyIncome,
+    decimal MonthlyDebts,
+    decimal HousingPayment,
+    decimal HousingPercent,
+    decimal TotalPercent,
+    AffordabilityLimitResponse Comfortable,
+    AffordabilityLimitResponse MostAllowed);
+
+/// <summary>One debt-to-income limit, and what it allows.</summary>
+/// <param name="HousingPercent">The most of income for housing; null when only the total is limited.</param>
+/// <param name="TotalPercent">The most of income for housing and the debts.</param>
+/// <param name="MaxHousingPayment">The most the housing payment may be.</param>
+/// <param name="MaxHomePrice">The highest price whose payment is within it, with the same down payment share, rate and
+/// costs, to the dollar; 0 when none is. An FHA loan's county limit holds it too.</param>
+/// <param name="Fits">True when this home's payment is within it.</param>
+public sealed record AffordabilityLimitResponse(decimal? HousingPercent, decimal TotalPercent, decimal MaxHousingPayment, decimal MaxHomePrice, bool Fits);
 
 /// <summary>
 /// The seller's or builder's offer taken each way it can be, each on the standard schedule with no extra payments, and

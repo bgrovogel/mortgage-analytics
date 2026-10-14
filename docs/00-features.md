@@ -138,6 +138,28 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 ![The cash to close with a builder's 2-1 buydown and $8,000 of credits: $16,488 against a $12,450 limit, so $4,038 of the credits cannot pay costs, and 10% down would raise the limit to $24,900](images/concessions.png)
 
+#### Can you afford it?
+
+Add your household's income a year and your other debts a month (**Income & debts**), and the Overview measures the
+home the way a lender does. The housing payment counts principal and interest at the note rate (a buydown's cheaper
+first years are not qualified on), taxes, insurance, mortgage insurance, dues and PID. It is shown as a share of gross
+monthly income, alone and with the other debts. Each limit then says what it allows for housing, the highest price
+it reaches with the same down payment share, rate and costs, and whether this home fits:
+
+| Limit | Housing | With other debts |
+|---|---|---|
+| **Comfortable** | 28% | 36% |
+| **Most a conventional loan allows** | (none) | **45%** (Fannie Mae's Selling Guide B3-6-02, with good credit and reserves; up to 50% through its automated underwriting) |
+| **Most an FHA loan allows** | **31%** | **43%** (HUD; up to 40% and 50% with compensating factors) |
+| **Most a VA loan allows** | (none) | **41%** (past it, VA asks for 20% more residual income) |
+
+On the example with **$150,000** a year and **$600** of debts, the $3,102 payment is **24.82%** of the $12,500 monthly
+income and **29.62%** with the debts: within the comfortable limit, which reaches **$474,091**. A conventional loan's
+45% reaches **$700,615**. An FHA loan's 31% for housing alone can fail a home that conventional allows: its MIP adds
+to the payment.
+
+![Can you afford it: the example's $3,102 payment is 24.82% of $12,500 a month and 29.62% with $600 of debts; the comfortable limit reaches $474,091 and a conventional loan's 45% reaches $700,615](images/affordability.png)
+
 #### The best use of the seller's money
 
 The same money can be taken four ways, and the Overview weighs them whenever the seller offers some (credits, or a

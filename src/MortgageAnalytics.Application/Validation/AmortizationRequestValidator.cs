@@ -30,6 +30,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// </summary>
     public const decimal MinimumRecastLumpSum = 1_000m;
 
+    /// <summary>The most household income accepted a year, well beyond any loan the calculator takes.</summary>
+    public const decimal MaxIncome = 100_000_000m;
+
     // Keeps the last due date (up to 600 months out) well inside DateOnly's range. Shared with the refinance validator.
     internal static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
     internal static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
@@ -163,6 +166,16 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .Must(cut => decimal.Round(cut, 3) == cut).WithMessage("'Rate cut per point' can have at most 3 decimal places.")
             .OverridePropertyName("SellerOffer.RateCutPerPoint").WithName("Rate cut per point")
             .When(r => r.SellerOffer is not null);
+
+        RuleFor(r => r.Affordability!.AnnualIncome)
+            .GreaterThan(0).LessThanOrEqualTo(MaxIncome).WholeCents()
+            .OverridePropertyName("Affordability.AnnualIncome").WithName("Income")
+            .When(r => r.Affordability is not null);
+
+        RuleFor(r => r.Affordability!.MonthlyDebts)
+            .InclusiveBetween(0, MaxIncome / 12).WholeCents()
+            .OverridePropertyName("Affordability.MonthlyDebts").WithName("Monthly debts")
+            .When(r => r.Affordability is not null);
 
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))

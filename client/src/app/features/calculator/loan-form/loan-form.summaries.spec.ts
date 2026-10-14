@@ -1,4 +1,4 @@
-import { costsSummary, growthSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
+import { costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
 describe('loan form section summaries', () => {
   describe('taxesSummary', () => {
@@ -35,6 +35,17 @@ describe('loan form section summaries', () => {
   describe('growthSummary', () => {
     it('signs each yearly change, and counts a blank as no change', () => {
       expect(growthSummary({ homeValueGrowthRate: 3, insuranceIncreaseRate: -2 })).toBe('Home +3% · Insurance -2% · HOA 0%');
+    });
+  });
+
+  describe('incomeSummary', () => {
+    it('gives the income a year and the debts a month, a blank debt as none', () => {
+      expect(incomeSummary({ annualIncome: 150_000, monthlyDebts: 600 })).toBe('Income $150,000/yr · Debts $600/mo');
+      expect(incomeSummary({ annualIncome: 150_000, monthlyDebts: null })).toBe('Income $150,000/yr · Debts $0/mo');
+    });
+
+    it('invites an income when there is none', () => {
+      expect(incomeSummary({ annualIncome: null })).toBe('Add yours to see what you can afford');
     });
   });
 

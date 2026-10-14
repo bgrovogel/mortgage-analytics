@@ -70,6 +70,27 @@ public sealed record AmortizationRequest
     /// with an <see cref="AdjustableRate"/> or <see cref="DiscountPoints"/>. Omit for no comparison.
     /// </summary>
     public SellerOfferRequest? SellerOffer { get; init; }
+
+    /// <summary>
+    /// Measures the home against a household's income and debts, as a lender would, and works out the most it could
+    /// pay at the same down payment share. Omit for none.
+    /// </summary>
+    public AffordabilityRequest? Affordability { get; init; }
+}
+
+/// <summary>A household's income and debts, for what it can afford.</summary>
+public sealed record AffordabilityRequest
+{
+    /// <summary>Gross household income a year, before taxes, as a lender counts it.</summary>
+    /// <example>150000</example>
+    public decimal AnnualIncome { get; init; }
+
+    /// <summary>
+    /// Other debts a month: car, student and personal loans, credit card minimums, child support. Not rent, utilities
+    /// or the home being bought.
+    /// </summary>
+    /// <example>600</example>
+    public decimal MonthlyDebts { get; init; }
 }
 
 /// <summary>How to weigh the ways to take the seller's or builder's offer.</summary>

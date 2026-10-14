@@ -63,8 +63,12 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByTestId('rate-type-buydown').check();
       await expect(page.getByTestId('buydown-years'), 'the buydown table has arrived').toBeVisible();
       await settled(page);
-      // The seller pays for the buydown, so the Overview also weighs the other ways to take that money.
+      // The seller pays for the buydown, so the Overview also weighs the other ways to take that money; with an income,
+      // it says whether the home is affordable too.
+      await page.getByTestId('annual-income').fill('150000');
+      await settled(page);
       await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money have arrived').toBeVisible();
+      await expect(page.getByTestId('affordability'), 'and whether it is affordable').toBeVisible();
       expect(await violations(page), 'the buydown, year by year, and the seller’s money each way break no accessibility rule').toEqual([]);
 
       await page.getByTestId('rate-type-arm').check();

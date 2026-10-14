@@ -26,6 +26,14 @@ public sealed class HousingCostPlan
     /// <param name="cost">The cost to add, such as FHA's mortgage insurance.</param>
     public HousingCostPlan With(IHousingCost cost) => new([.. _costs, cost]);
 
+    /// <summary>
+    /// The costs of the first payment, when the whole loan is still owed: what a lender qualifies a buyer on, without
+    /// working out a schedule.
+    /// </summary>
+    /// <param name="loanAmount">The amount borrowed: the first payment's opening balance.</param>
+    public HousingCostBreakdown FirstMonth(decimal loanAmount) =>
+        HousingCostBreakdown.For(_costs, new CostPeriod(1, loanAmount, loanAmount));
+
     /// <summary>Calculates every cost for every payment in a schedule that is itself the original schedule (no extra payments).</summary>
     /// <param name="schedule">The amortization schedule the costs are charged alongside.</param>
     public HousingCostSchedule ApplyTo(AmortizationSchedule schedule) => ApplyTo(schedule, schedule);
