@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 2,170 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 2,180 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -14,7 +14,7 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 639 | NUnit | < 1 s |
-| Application | 393 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Application | 394 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 43 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 109 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
@@ -215,7 +215,7 @@ independent models do that job.
 
 ## Mutation testing
 
-**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,320 small changes
+**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,350 small changes
 (mutants) to `MortgageAnalytics.Domain` (`<` to `<=`, `+` to `-`, `Sum` to `Max`, an emptied message, a deleted
 statement) and runs the tests against each. A mutant no test notices *survives*, and points at an assertion that is
 missing. **The score is 98.4%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
@@ -246,7 +246,7 @@ Its first run scored 88.7%: rules no test reached (a VA funding-fee type, a year
 each tax's rate-change message), refinance boundaries (a loan whose last payment is today), mapped fields nobody
 asserted (an FHA response's loan type, a rate reset's date), and code that could not matter, now removed (a first
 payment date resolved twice, a cap of 50 rate changes that one-a-year in a 50-year loan never reaches). It now scores
-**97.8%**: of the 15 left, 8 are messages on `switch` arms that validation makes unreachable, and the rest are
+**98.2%**: of the 14 left, 8 are messages on `switch` arms that validation makes unreachable, and the rest are
 equivalent ("empty list → None" shortcuts, `Append` against `Prepend` before a `Max`) or boundaries another rule
 already covers.
 

@@ -615,14 +615,21 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
                 "a score from 500 to 579 limits the loan to 90% of the value");
             AssertNoErrorFor(Fha(30_000m, creditScore: 579), "DownPayment", "10% down is enough");
             AssertNoErrorFor(Fha(10_500m, creditScore: 580), "DownPayment", "from 580, 3.5% is enough");
+            AssertErrorMessage(Fha(10_500m, creditScore: 500), "DownPayment", "With a credit score below 580, an FHA loan needs at least 10% down.",
+                "500 is the lowest score FHA insures, and it needs 10% down too");
         });
     }
 
     [Test]
     public void ACreditScoreBelow500_IsRefused()
     {
-        AssertErrorMessage(Fha(60_000m, creditScore: 499), "Program.CreditScore", "FHA insures loans only for credit scores of 500 or more.",
-            "no down payment makes up for it");
+        Assert.Multiple(() =>
+        {
+            AssertErrorMessage(Fha(60_000m, creditScore: 499), "Program.CreditScore", "FHA insures loans only for credit scores of 500 or more.",
+                "no down payment makes up for it");
+            AssertErrorMessage(Fha(60_000m, creditScore: 300), "Program.CreditScore", "FHA insures loans only for credit scores of 500 or more.",
+                "down to the lowest score on the scale");
+        });
     }
 
     [TestCase(299, TestName = "CreditScore_Below300")]

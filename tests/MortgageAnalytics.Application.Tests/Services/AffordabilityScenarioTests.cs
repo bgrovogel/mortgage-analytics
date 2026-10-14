@@ -96,6 +96,18 @@ public class AffordabilityScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void AnFhaOneYearArm_WithTenPercentDown_IsQualifiedAtItsStartingRate()
+    {
+        var request = A.Request.WithHomePrice(300_000m).WithDownPayment(30_000m).WithProgram(LoanProgramType.Fha)
+            .WithAdjustableRate(7m, initialFixedMonths: 12, initialCap: 1m, periodicCap: 1m);
+
+        var a = AffordabilityOf(request);
+
+        Assert.That((a.QualifyingRate, a.QualifyingRateBasis), Is.EqualTo((6m, QualifyingRateBasis.NoteRate)),
+            "a 90% loan, below the 95% that adds a point");
+    }
+
+    [Test]
     public void TheComfortableLimit_Is28And36_AndThePriceIsTheMostItReaches()
     {
         var comfortable = AffordabilityOf(TexasPurchase()).Comfortable;

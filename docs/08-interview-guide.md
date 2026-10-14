@@ -150,6 +150,15 @@ The mapping makes business decisions: a zero amount means "none", "Recast" becom
 only below 20% down. As explicit code, each decision can be read and unit-tested. AutoMapper would hide them in
 configuration, and mistakes would only show up at runtime.
 
+**How does sharing a calculation by link work?**
+The inputs go in the URL's fragment, after `#share=`, as versioned JSON in URL-safe base64. A fragment never leaves
+the browser: it isn't sent to the server, so it isn't in any request or log, and nothing needs storing. A short link
+would need a database table, an expiry policy and a public endpoint, and a query string would put the numbers in
+every log on the way. A route guard reads the link before the page opens, so the form starts from the shared inputs,
+then drops the fragment from the address. A link is untrusted input, so it's checked to be the right shape, and the
+API validates the numbers as it does any request. A purchase link leaves out income and debts; Pay off or invest
+can't work without them, so its message says the link includes them.
+
 **How did you add what a builder may pay?**
 As a rule in the domain, written from its source: Fannie Mae's Selling Guide B3-4.1-02 for a conventional loan (3%
 of the price with a loan above 90%, 6% to 75%, 9% below), 6% for FHA, and 4% for VA besides the normal closing costs.
@@ -386,8 +395,8 @@ classic assert is used. Code review standards become automatic.
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
-domain code about 1,320 ways and checks a test fails each time. It scores 98.4%, and CI fails below 95%; the
-Application layer scores 97.8% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
+domain code about 1,350 ways and checks a test fails each time. It scores 98.4%, and CI fails below 95%; the
+Application layer scores 98.2% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
 **Unit vs. integration?**
@@ -440,7 +449,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Database | SQLite by default; PostgreSQL by configuration, tested against a real one locally | Run the PostgreSQL tests in CI, once its minutes allow |
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
-| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI), and 97.8% on the Application layer and 97.9% on the Angular logic (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
+| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI), and 98.2% on the Application layer and 97.9% on the Angular logic (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | Several instances on PostgreSQL, sharing their signing keys in it | Encrypt the keys at rest (a certificate or key vault) |
 
@@ -516,7 +525,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,191 .NET · 869 Jest · 114 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,192 .NET · 869 Jest · 114 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

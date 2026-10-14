@@ -147,6 +147,8 @@ in or not. The inputs travel in the link's `#share=` fragment, which a browser n
 stored. A purchase's link leaves out your income and debts; Pay off or invest needs them, so its link says it includes
 them. A link cut short when copied opens the page as usual and says it could not be read.
 
+![Copy link beside Save: "Link copied. Anyone with it sees these numbers. Your income and debts are left out."](images/share-link.png)
+
 #### Can you afford it?
 
 Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
