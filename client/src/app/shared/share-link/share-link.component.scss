@@ -1,0 +1,68 @@
+// The status, the button and the link to copy by hand take their places in the page's row of actions.
+:host {
+  display: contents;
+}
+
+.status {
+  order: -1;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  // A phone has no room beside the buttons: it goes under them.
+  @media (max-width: 600px) {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
+button {
+  font: inherit;
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &.link {
+    border-color: transparent;
+    background: transparent;
+    color: var(--accent-text);
+  }
+}
+
+// The link to copy by hand: the whole width under the buttons.
+.manual {
+  order: 2;
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+
+  label {
+    flex-basis: 100%;
+    color: var(--text-secondary);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    min-height: 36px;
+    padding: 0 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+}

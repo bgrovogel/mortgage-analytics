@@ -8,6 +8,7 @@ import { AmortizationApiService } from '../core/services/amortization-api.servic
 import { RefinanceApiService } from '../core/services/refinance-api.service';
 import { StrategyApiService } from '../core/services/strategy-api.service';
 import { RECALCULATE_DELAY_MS } from '../core/state/latest-request';
+import { SharedInputs, readShareLink } from '../core/state/share-link';
 import { CalculationStores } from './calculation-stores';
 import { CalculatorStore } from './calculator/calculator.store';
 import { RefinanceStore } from './refinance/refinance.store';
@@ -228,6 +229,58 @@ describe('CalculationStores', () => {
 
       expect(strategyPage().loanToApply()!.loan).toEqual(
         { balance: 300_000, annualInterestRate: 6.5, remainingTermInMonths: 360, homeValue: 375_000, start: null, rate: { kind: 'fixed' }, monthlyPmi: 0 });
+    });
+  });
+
+  describe('share links', () => {
+    const shared = (kind: SavedCalculation['kind']) => readShareLink(stores.of(kind).shareFragment()) as SharedInputs;
+
+    it('shares each page’s inputs under its kind, once there are any', () => {
+      expect(stores.of('Refinance').shareFragment()).toBeNull();
+      TestBed.inject(RefinanceStore).send(refinance);
+      TestBed.inject(StrategyStore).send(strategy);
+
+      expect(shared('Refinance')).toEqual({ kind: 'Refinance', request: refinance });
+      expect(shared('Strategy')).toEqual({ kind: 'Strategy', request: strategy });
+    });
+
+    it('leaves a household’s income and debts out of a purchase, and says so', () => {
+      TestBed.inject(CalculatorStore).send({ ...purchase, affordability: { annualIncome: 150_000, monthlyDebts: 600 } });
+
+      expect((shared('Purchase').request as AmortizationRequest).affordability).toBeNull();
+      expect((shared('Purchase').request as AmortizationRequest).homePrice).toBe(375_000);
+      expect(stores.of('Purchase').shareNote).toBe('Your income and debts are left out.');
+      expect(stores.of('Strategy').shareNote).toBe('It includes your income and savings.');
+      expect(stores.of('Refinance').shareNote).toBeNull();
+    });
+
+    it('leaves income out of every home compared', () => {
+      const withIncome = { ...purchase, affordability: { annualIncome: 150_000, monthlyDebts: 600 } };
+      stores.of('HomeComparison').send({ homes: [withIncome, withIncome] });
+
+      expect((shared('HomeComparison').request as { homes: AmortizationRequest[] }).homes.map((h) => h.affordability)).toEqual([null, null]);
+    });
+
+    it('opens a shared calculation as the user’s own: not linked to a saved one, and its loan shared', () => {
+      const page = TestBed.inject(RefinanceStore);
+      page.linkTo({ id: 'r', name: 'Mine' });
+
+      page.openShared(refinance);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+      expect(calls.analyze).toHaveBeenCalledWith(refinance);
+      expect(page.saved()).toBeNull();
+      expect(TestBed.inject(StrategyStore).loanToApply()).not.toBeNull();
+    });
+
+    it('opens shared homes with the first in the calculator too', () => {
+      const calculator = TestBed.inject(CalculatorStore);
+      calculator.linkTo({ id: 'p', name: 'Mine' });
+
+      stores.of('HomeComparison').openShared({ homes: [purchase, { ...purchase, homePrice: 450_000 }] });
+
+      expect(calculator.request()!.homePrice).toBe(375_000);
+      expect(calculator.saved()).toBeNull();
     });
   });
 

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
+import { ShareLinkComponent } from '../share-link/share-link.component';
 
 /**
  * The layout every calculator page shares: the question the page answers and one line on how, then the form on the
@@ -18,7 +19,7 @@ import { SaveCalculationComponent } from '../save-calculation/save-calculation.c
  */
 @Component({
   selector: 'app-calculation-page',
-  imports: [SaveCalculationComponent],
+  imports: [SaveCalculationComponent, ShareLinkComponent],
   templateUrl: './calculation-page.component.html',
   styleUrl: './calculation-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

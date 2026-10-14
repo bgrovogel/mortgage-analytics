@@ -17,6 +17,9 @@ export class StrategyStore extends CalculationStore<StrategyRequest, StrategyCom
   describe = describeStrategy;
   suggestName = suggestStrategyName;
 
+  /** The comparison needs the household's income and savings, so a share link carries them. */
+  override readonly shareNote = 'It includes your income and savings.';
+
   protected loanOf(request: StrategyRequest): SharedLoan {
     return {
       balance: request.currentBalance,

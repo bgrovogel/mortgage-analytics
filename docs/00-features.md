@@ -140,6 +140,13 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 ![The cash to close with a builder's 2-1 buydown and $8,000 of credits: $16,488 against a $12,450 limit, so $4,038 of the credits cannot pay costs, and 10% down would raise the limit to $24,900](images/concessions.png)
 
+#### Share by link
+
+**Copy link**, beside Save on every page, copies a link that opens the same numbers (and tab) in any browser, signed
+in or not. The inputs travel in the link's `#share=` fragment, which a browser never sends to the server, so nothing is
+stored. A purchase's link leaves out your income and debts; Pay off or invest needs them, so its link says it includes
+them. A link cut short when copied opens the page as usual and says it could not be read.
+
 #### Can you afford it?
 
 Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab

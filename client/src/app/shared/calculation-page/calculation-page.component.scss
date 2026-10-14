@@ -67,6 +67,14 @@
   min-height: 2.75rem;
 }
 
+.page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .panel {
   @include surfaces.card;
   padding: 1.25rem;

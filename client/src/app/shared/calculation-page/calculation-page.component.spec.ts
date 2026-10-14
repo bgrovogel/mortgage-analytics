@@ -76,6 +76,30 @@ describe('CalculationPageComponent', () => {
     expect(text('results')).not.toContain('Working…');
   });
 
+  it('offers a link to the inputs beside Save, once there are inputs', () => {
+    const { host, fixture } = render();
+    const copy = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="share-copy"]')!;
+    expect(copy().disabled).toBe(true);
+
+    host.store.send(1);
+    fixture.detectChanges();
+
+    expect(copy().disabled).toBe(false);
+  });
+
+  it('says when a share link could not be opened, until it is dismissed', () => {
+    const { host, fixture, text } = render();
+    host.store.linkProblem.set('This link could not be opened.');
+    fixture.detectChanges();
+
+    expect(text('link-problem')).toBe('This link could not be opened. Dismiss');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="link-problem"] button')!.click();
+    fixture.detectChanges();
+    expect(text('link-problem')).toBeUndefined();
+    expect(host.store.linkProblem()).toBeNull();
+  });
+
   it('takes you from the results to the form, which a phone puts after them, and moves focus there', () => {
     const { fixture } = render();
     const root = fixture.nativeElement as HTMLElement;

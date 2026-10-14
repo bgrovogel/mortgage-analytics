@@ -2,6 +2,7 @@ import { DestroyRef, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SavedCalculation, SavedCalculationKind, SavedInputs, requestOf, savedInputsFor } from '../models/saved-calculation.models';
 import { latestRequest } from './latest-request';
+import { shareFragment as fragmentFor } from './share-link';
 import { SharedLoan, SharedLoanChange, SharedLoanStore, SharedRate, sameLoan, sameRate } from './shared-loan.store';
 
 /** The saved calculation a page is showing: enough to update it in place, and to name it. */
@@ -58,6 +59,18 @@ export abstract class CalculationStore<TRequest, TResponse> {
     return request ? savedInputsFor(this.kind, request) : null;
   });
 
+  /** The URL fragment that shares the current inputs (`share=…`), once there are any. */
+  readonly shareFragment = computed(() => {
+    const request = this.request();
+    return request ? fragmentFor(this.kind, this.shareable(request)) : null;
+  });
+
+  /** Why a share link to this page could not be opened, until the user dismisses it; null otherwise. */
+  readonly linkProblem = signal<string | null>(null);
+
+  /** What a share link leaves out, or includes that someone might not expect; null when it is simply the inputs. */
+  readonly shareNote: string | null = null;
+
   /** The name Save suggests for the current inputs. */
   readonly suggestedName = computed(() => {
     const request = this.request();
@@ -94,10 +107,29 @@ export abstract class CalculationStore<TRequest, TResponse> {
    */
   open(calculation: SavedCalculation): void {
     if (calculation.kind !== this.kind) return;
-    const request = this.inputsOf(calculation);
     this.linkTo(calculation);
+    this.load(this.inputsOf(calculation));
+  }
+
+  /**
+   * Loads inputs from a share link: the user's own from now on, so Save makes a new calculation. Like opening a
+   * saved one, it chooses the loan the other pages start from.
+   */
+  openShared(request: TRequest): void {
+    this.linkProblem.set(null);
+    this.saved.set(null);
+    this.load(request);
+  }
+
+  /** Shows these inputs, and makes their loan the one every page starts from. */
+  protected load(request: TRequest): void {
     this.send(request);
     this.share(request);
+  }
+
+  /** The inputs a share link carries: all of them, unless a page leaves something private out. */
+  protected shareable(request: TRequest): TRequest {
+    return request;
   }
 
   /** Records that the current calculation is this saved one (after saving or renaming it). */

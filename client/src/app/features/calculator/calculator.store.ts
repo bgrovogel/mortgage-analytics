@@ -71,6 +71,13 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   describe = describeInputs;
   suggestName = suggestName;
 
+  /** A share link leaves out the household's income and debts. */
+  override readonly shareNote = 'Your income and debts are left out.';
+
+  protected override shareable(request: AmortizationRequest): AmortizationRequest {
+    return withoutIncome(request);
+  }
+
   protected loanOf(request: AmortizationRequest): SharedLoan {
     return purchaseLoanOf(request);
   }
@@ -121,6 +128,11 @@ export function purchaseLoanOf(request: AmortizationRequest): SharedLoan {
     rate: sharedRateFrom(request.buydown, request.adjustableRate, today.made),
     monthlyPmi: monthlyPmiOf(request),
   };
+}
+
+/** A purchase without the household's income and debts: what a share link carries. */
+export function withoutIncome(request: AmortizationRequest): AmortizationRequest {
+  return { ...request, affordability: null };
 }
 
 function todayOf(request: AmortizationRequest) {

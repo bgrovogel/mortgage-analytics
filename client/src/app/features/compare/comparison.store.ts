@@ -2,11 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { forkJoin, map } from 'rxjs';
 import { describeComparison, suggestComparisonName } from '../../core/formatting/describe-inputs';
 import { HomeComparisonRequest, HomeComparisonResponse } from '../../core/models/home-comparison.models';
-import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
-import { CalculatorStore, purchaseLoanOf } from '../calculator/calculator.store';
+import { CalculatorStore, purchaseLoanOf, withoutIncome } from '../calculator/calculator.store';
 
 /**
  * Up to four homes compared on the calculator's Compare tab. The first home is the calculator's own loan; each other
@@ -25,15 +24,21 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
   describe = describeComparison;
   suggestName = suggestComparisonName;
 
+  /** A share link leaves out each home's income and debts. */
+  override readonly shareNote = 'Your income and debts are left out.';
+
   /**
-   * Opens a saved comparison, with its first home in the calculator as well: the Compare tab's first home is the
+   * Shows homes compared (saved or shared), with the first in the calculator as well: the first home is the
    * calculator's loan. The calculator is unlinked from any purchase it was showing, so Save there starts a new one.
    */
-  override open(calculation: SavedCalculation): void {
-    if (calculation.kind !== this.kind) return;
-    super.open(calculation);
-    this.calculator.send(this.inputsOf(calculation).homes[0]);
+  protected override load(request: HomeComparisonRequest): void {
+    super.load(request);
+    this.calculator.send(request.homes[0]);
     this.calculator.saved.set(null);
+  }
+
+  protected override shareable(request: HomeComparisonRequest): HomeComparisonRequest {
+    return { homes: request.homes.map(withoutIncome) };
   }
 
   /** The first home's loan: the one the calculator shares with the other pages. */
