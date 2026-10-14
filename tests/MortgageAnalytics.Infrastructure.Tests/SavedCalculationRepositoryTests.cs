@@ -75,6 +75,24 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
     }
 
     [Test]
+    public async Task AHomeComparison_RoundTrips()
+    {
+        var second = A.Request.Build() with { HomePrice = 450_000m, DownPayment = 90_000m };
+        var saved = ACalculation("Oak St or Elm St");
+        saved.SecondHome = second;
+        await SeedAsync(saved);
+
+        var found = await NewRepository().FindAsync(Alice, saved.Id, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found?.SecondHome, Is.EqualTo(second), "the second home is stored whole, beside the first");
+            Assert.That(found?.Inputs, Is.EqualTo(saved.Inputs), "and the first is kept as it was");
+            Assert.That(found?.Kind, Is.EqualTo(SavedCalculationKind.HomeComparison), "so it reads back as a comparison");
+        });
+    }
+
+    [Test]
     public async Task Find_ReturnsNull_ForAnUnknownId()
     {
         var found = await NewRepository().FindAsync(Alice, Guid.NewGuid(), CancellationToken.None);

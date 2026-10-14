@@ -20,6 +20,7 @@ public class StoredFormatTests : RepositoryTestBase
     [TestCase("calculator.json", "Inputs")]
     [TestCase("refinance.json", "Refinance")]
     [TestCase("strategy.json", "Strategy")]
+    [TestCase("calculator.json", "SecondHome")] // a compared home is stored in the calculator's format
     public async Task ASaveInTodaysFormat_StillLoads_WithEveryValue(string file, string column)
     {
         var stored = await File.ReadAllTextAsync(Path.Combine(TestContext.CurrentContext.TestDirectory, "StoredFormats", file));
@@ -33,13 +34,17 @@ public class StoredFormatTests : RepositoryTestBase
             {
                 "Inputs" => context.Database.ExecuteSqlAsync($"UPDATE SavedCalculations SET Inputs = {stored} WHERE Id = {saved.Id}"),
                 "Refinance" => context.Database.ExecuteSqlAsync($"UPDATE SavedCalculations SET Refinance = {stored} WHERE Id = {saved.Id}"),
+                "SecondHome" => context.Database.ExecuteSqlAsync($"UPDATE SavedCalculations SET SecondHome = {stored} WHERE Id = {saved.Id}"),
                 _ => context.Database.ExecuteSqlAsync($"UPDATE SavedCalculations SET Strategy = {stored} WHERE Id = {saved.Id}"),
             };
             rowsWritten = await write;
         }
 
         var found = await NewRepository().FindAsync(Alice, saved.Id, CancellationToken.None);
-        object? loaded = column switch { "Inputs" => found?.Inputs, "Refinance" => found?.Refinance, _ => found?.Strategy };
+        object? loaded = column switch
+        {
+            "Inputs" => found?.Inputs, "Refinance" => found?.Refinance, "SecondHome" => found?.SecondHome, _ => found?.Strategy,
+        };
         var reloaded = loaded is null ? default : JsonSerializer.SerializeToElement(loaded, loaded.GetType(), StoredJson);
 
         Assert.Multiple(() =>

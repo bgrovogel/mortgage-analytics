@@ -22,7 +22,7 @@ describe('HistoryPageComponent', () => {
 
   const inputs = { homePrice: 375_000, downPayment: 18_750, annualInterestRate: 6.5, termInMonths: 360, extraPayments: null } as AmortizationRequest;
   const aSaved = (id: string, name: string, overrides: Partial<SavedCalculation> = {}): SavedCalculation => ({
-    id, name, kind: 'Purchase', inputs, refinance: null, strategy: null, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
+    id, name, kind: 'Purchase', inputs, secondHome: null, refinance: null, strategy: null, createdAt: '2026-10-09T15:30:00Z', updatedAt: '2026-10-09T15:30:00Z', ...overrides,
   });
   const oak = aSaved('1', 'Oak St, 20% down');
   const maple = aSaved('2', 'Maple Ave', { updatedAt: '2026-10-12T09:00:00Z' });

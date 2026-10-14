@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: 'overview', component: OverviewTabComponent, title: title('Overview') },
       { path: 'projection', loadComponent: () => import('./features/calculator/tabs/projection-tab.component').then((m) => m.ProjectionTabComponent), title: title('Projection') },
       { path: 'schedule', loadComponent: () => import('./features/calculator/tabs/schedule-tab.component').then((m) => m.ScheduleTabComponent), title: title('Schedule') },
+      { path: 'compare', loadComponent: () => import('./features/calculator/tabs/compare-tab.component').then((m) => m.CompareTabComponent), title: title('Compare homes') },
     ],
   },
   { path: 'refinance', loadComponent: () => import('./features/refinance/refinance-page.component').then((m) => m.RefinancePageComponent), title: title('Refinance') },

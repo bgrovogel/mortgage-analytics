@@ -110,4 +110,27 @@ test.describe('History', () => {
     await expect(page.getByTestId('rsu'), 'and the saved RSUs').toHaveValue('20,000');
     await expect(page.getByTestId('save-open'), 'Save can now update it in place').toBeEnabled();
   });
+
+  test('saves two homes compared, and reopens both on the Compare tab', async ({ signedIn: calculator, page }) => {
+    const name = `Oak or Elm ${tag}`;
+    await calculator.showResults('compare');
+    await calculator.editHome('B');
+    await calculator.set('home-price', 450_000);
+    await calculator.calculate();
+    await calculator.saveAs(name);
+
+    await page.goto('/');
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await expect(history.item(name), 'it is listed as a comparison of homes').toContainText('Compare homes');
+    await expect(history.item(name), 'with both homes summed up').toContainText('vs $450,000 home');
+
+    await history.act(name, 'Open');
+
+    await expect(page, 'it opens on the Compare tab').toHaveURL(/\/calculator\/compare$/);
+    await expect(calculator.field('home-price'), 'Home A is in the form').toHaveValue('415,000');
+    await calculator.editHome('B');
+    await expect(calculator.field('home-price'), 'and Home B is kept beside it').toHaveValue('450,000');
+  });
 });

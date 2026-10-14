@@ -26,6 +26,15 @@ const shots = {
   'calculator.png': async (b) => open(b, '/calculator/overview', { scale: 2 }),
   'projection.png': async (b) => open(b, '/calculator/projection'),
   'schedule.png': async (b) => open(b, '/calculator/schedule'),
+  // Two homes: the example, and a $450,000 home with 20% down.
+  'compare.png': async (b) => {
+    const page = await open(b, '/calculator/compare');
+    await page.getByTestId('edit-home-b').check();
+    await page.getByTestId('home-price').fill('450000');
+    await page.getByTestId('down-payment').fill('90000');
+    await settled(page);
+    return page;
+  },
   'refinance.png': async (b) => open(b, '/refinance'),
   'pay-off-or-invest-dark.png': async (b) => open(b, '/strategy', { scheme: 'dark' }),
   'phone.png': async (b) => open(b, '/calculator/overview', { viewport: phone, scale: 2 }),

@@ -226,6 +226,12 @@ export class CalculatorPage {
     return this.page.waitForTimeout(1_000);
   }
 
+  /** On the Compare tab, switches the form to one of the two homes. */
+  async editHome(house: 'A' | 'B'): Promise<void> {
+    await this.page.getByTestId(`edit-home-${house.toLowerCase()}`).check();
+    await expect(this.page.getByTestId('loan-heading'), `the form now edits Home ${house}`).toHaveText(`Home ${house}`);
+  }
+
   /** Saves the current calculation under `name`, as a new saved calculation. */
   async saveAs(name: string): Promise<void> {
     await this.page.getByTestId('save-open').click();
@@ -234,8 +240,8 @@ export class CalculatorPage {
     await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
   }
 
-  /** Opens a result tab: Overview, Projection or Schedule. Each has its own URL. */
-  async showResults(tab: 'overview' | 'projection' | 'schedule'): Promise<void> {
+  /** Opens a result tab: Overview, Projection, Schedule or Compare. Each has its own URL. */
+  async showResults(tab: 'overview' | 'projection' | 'schedule' | 'compare'): Promise<void> {
     await this.page.getByTestId(`result-tab-${tab}`).click();
     await expect(this.page, `the URL names the ${tab} tab`).toHaveURL(new RegExp(`/calculator/${tab}$`));
   }

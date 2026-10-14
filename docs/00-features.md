@@ -132,11 +132,20 @@ interest and 3 months of escrow on the $415,000 home come to **$10,778.79** on t
   The year starts where the loan is now; pick another, or click the chart.
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.
+- **Compare:** two homes side by side. **Home A** is the loan in the form; **Home B** starts as a copy of it, and a
+  switch above the form edits either one, so any input can differ: price, down payment, rate, loan type, taxes,
+  closing costs. One line sums up what Home B costs more or less each month, at closing, and over the first 5 years;
+  a table shows each home's price, down payment, loan, rate, first payment (principal and interest, and housing
+  costs), cash to close, when mortgage insurance ends, when it is paid off, the interest over the loan, the **cost of
+  the first 5 years** (interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what builds
+  no equity), and the equity after 5 years, with the difference beside each amount. Only Home A is the shared loan.
 
 <p>
   <img src="images/projection.png" alt="The Projection tab: each cost in year 1, through year 1 and over all 30 years, above the yearly costs as stacked areas" width="49%" />
   <img src="images/schedule.png" alt="The Schedule tab: lifetime totals for every cost, then one row per payment with principal, interest, extra, housing costs and balance" width="49%" />
 </p>
+
+![The Compare tab: the example home against a $450,000 home with 20% down, which costs $239.78 a month less but needs $52,683 more at closing](images/compare.png)
 
 ---
 
@@ -207,8 +216,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Answer first.** On a phone the results come first and the form follows, with **Edit your numbers** to jump to it;
   a sticky bar keeps the payment and savings in view. On a wider screen the form sits in its own column.
 - **A first visit.** Each form says its numbers are an example until the first edit.
-- **Bookmarkable.** The calculator's Overview, Projection and Schedule tabs have their own URLs, and the back button
-  works.
+- **Bookmarkable.** The calculator's Overview, Projection, Schedule and Compare tabs have their own URLs, and the back
+  button works.
 - **Light and dark mode,** following the system.
 
 <br clear="right" />
@@ -219,7 +228,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 
 - **Sign up** with an email and a password, and confirm the email from the link sent to it. A forgotten password is
   reset by email.
-- **Save** any calculation, refinance comparison or pay-off-or-invest comparison under a name.
+- **Save** any calculation, two homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **History** lists them newest first, filtered by kind or searched by name. Open one on its own page (every number
   is restored), rename it, or delete it. Each person sees only their own.
 

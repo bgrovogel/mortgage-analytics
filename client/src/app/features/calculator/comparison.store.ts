@@ -1,0 +1,47 @@
+import { Injectable, inject } from '@angular/core';
+import { forkJoin, map } from 'rxjs';
+import { describeComparison, suggestComparisonName } from '../../core/formatting/describe-inputs';
+import { HomeComparisonRequest, HomeComparisonResponse } from '../../core/models/home-comparison.models';
+import { SavedCalculation } from '../../core/models/saved-calculation.models';
+import { AmortizationApiService } from '../../core/services/amortization-api.service';
+import { CalculationStore } from '../../core/state/calculation-store';
+import { SharedLoan } from '../../core/state/shared-loan.store';
+import { CalculatorStore, purchaseLoanOf } from './calculator.store';
+
+/**
+ * Two homes compared on the calculator's Compare tab. The first home is the calculator's own loan; the second is
+ * another full set of inputs. Each is calculated by the calculator's endpoint, so the comparison needs nothing new
+ * from the API but a place to save the second home.
+ */
+@Injectable({ providedIn: 'root' })
+export class ComparisonStore extends CalculationStore<HomeComparisonRequest, HomeComparisonResponse> {
+  private readonly api = inject(AmortizationApiService);
+  private readonly calculator = inject(CalculatorStore);
+
+  readonly kind = 'HomeComparison';
+  readonly route = ['/calculator', 'compare'];
+  readonly pageName = 'Compare homes';
+
+  describe = describeComparison;
+  suggestName = suggestComparisonName;
+
+  /**
+   * Opens a saved comparison, with its first home in the calculator as well: the Compare tab's first home is the
+   * calculator's loan. The calculator is unlinked from any purchase it was showing, so Save there starts a new one.
+   */
+  override open(calculation: SavedCalculation): void {
+    if (calculation.kind !== this.kind) return;
+    super.open(calculation);
+    this.calculator.send(this.inputsOf(calculation).first);
+    this.calculator.saved.set(null);
+  }
+
+  /** The first home's loan: the one the calculator shares with the other pages. */
+  protected loanOf(request: HomeComparisonRequest): SharedLoan {
+    return purchaseLoanOf(request.first);
+  }
+
+  protected send$(request: HomeComparisonRequest) {
+    return forkJoin([this.api.calculate(request.first), this.api.calculate(request.second)]).pipe(map(([first, second]) => ({ first, second })));
+  }
+}

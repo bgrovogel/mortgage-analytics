@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="loan-form">
   <!-- The five main inputs are always visible; everything else is under More details below. -->
   <fieldset class="primary-fields">
-    <legend class="title">Your loan <span class="shared-tag" data-testid="shared-tag">Used on all three pages</span></legend>
+    <legend class="title"><span data-testid="loan-heading">{{ heading() }}</span>@if (shared()) { <span class="shared-tag" data-testid="shared-tag">Used on all three pages</span>}</legend>
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
     }

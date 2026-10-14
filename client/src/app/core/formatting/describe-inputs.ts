@@ -1,4 +1,5 @@
 import { AmortizationRequest } from '../models/amortization.models';
+import { HomeComparisonRequest } from '../models/home-comparison.models';
 import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
 import { decimal, usd } from './format';
@@ -22,6 +23,16 @@ export function describeInputs(r: AmortizationRequest): string {
 /** A starting name for a new saved calculation, e.g. "$375,000 home, 20% down at 6.25%". */
 export function suggestName(r: AmortizationRequest): string {
   return `${usd(r.homePrice)} home, ${decimal(downPaymentPercent(r), 1)}% down at ${decimal(r.annualInterestRate)}%`;
+}
+
+/** "$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%": the price, down payment and rate of each. */
+export function describeComparison(r: HomeComparisonRequest): string {
+  return `${suggestName(r.first)} vs ${suggestName(r.second)}`;
+}
+
+/** A starting name for a saved comparison, e.g. "$415,000 or $450,000 home". */
+export function suggestComparisonName(r: HomeComparisonRequest): string {
+  return `${usd(r.first.homePrice)} or ${usd(r.second.homePrice)} home`;
 }
 
 /** "$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs". */

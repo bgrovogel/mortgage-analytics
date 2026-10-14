@@ -514,7 +514,8 @@ def amortization_engine():
 
 def schema():
     s = Svg(960, 500, "The database schema",
-            "SavedCalculations has Id, OwnerId, Name, three JSON columns (Inputs, Refinance, Strategy, one set per row), "
+            "SavedCalculations has Id, OwnerId, Name, four JSON columns (Inputs, SecondHome, Refinance, Strategy: one kind "
+            "per row, and a comparison of two homes sets Inputs and SecondHome), "
             "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
             "with cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
             "__EFMigrationsHistory records the applied migrations.")
@@ -547,11 +548,12 @@ def schema():
         ("OwnerId", "TEXT", "FK"),
         ("Name", "TEXT · ≤ 100", ""),
         ("Inputs", "TEXT · JSON", ""),
+        ("SecondHome", "TEXT · JSON", ""),
         ("Refinance", "TEXT · JSON", ""),
         ("Strategy", "TEXT · JSON", ""),
         ("CreatedAt", "INTEGER", ""),
         ("UpdatedAt", "INTEGER", ""),
-    ], note="Index (OwnerId, UpdatedAt) · one JSON column set per row")
+    ], note="Index (OwnerId, UpdatedAt) · one kind of inputs per row")
     table(532, 88, 400, "AspNetUsers", "neutral", [
         ("Id", "TEXT", "PK"),
         ("Email · NormalizedEmail", "TEXT", ""),

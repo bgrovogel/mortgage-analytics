@@ -132,6 +132,25 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.breakdown, 'no PMI with nothing down').not.toContainText('PMI');
   });
 
+  test('compares two homes side by side: Home B starts as a copy, and each keeps its own numbers', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('compare');
+    await calculator.calculate();
+    await expect(page.getByTestId('compare-headline'), 'a copy costs the same').toHaveText('Home B costs the same a month, needs the same at closing, and costs the same over the first 5 years.');
+
+    await calculator.editHome('B');
+    await calculator.set('home-price', 450_000);
+    await calculator.set('down-payment', 90_000);
+    await calculator.calculate();
+
+    await expect(page.getByTestId('compare-headline'), 'the second home, with 20% down and no PMI, costs less a month but more at closing')
+      // $108.68 less principal and interest (on $17,650 less), $157.35 of PMI gone, $26.25 more property tax.
+      .toHaveText('Home B costs $239.78 a month less, needs $52,683 more at closing, and costs $13,115 less over the first 5 years.');
+    await calculator.editHome('A');
+    await expect(calculator.field('home-price'), 'Home A is as it was').toHaveValue('415,000');
+  });
+
   test('discount points: what they cost, when they pay for themselves, and their line in the cash to close', async ({ calculator, page }) => {
     // The reference loan, $200,000 at 6%, bought down with one point from 6.25% (tools/calculator-check).
     await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });

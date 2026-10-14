@@ -81,6 +81,37 @@ public class SavedCalculationServiceTests
     }
 
     [Test]
+    public async Task Save_KeepsBothHomesOfAComparison_AsAKindOfItsOwn()
+    {
+        var second = A.Request.Build() with { HomePrice = 450_000m };
+
+        var saved = await _service.SaveAsync(Owner, Request() with { SecondHome = second }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved.Kind, Is.EqualTo(SavedCalculationKind.HomeComparison), "two homes make a comparison, not a purchase");
+            Assert.That(saved.Inputs?.HomePrice, Is.EqualTo(400_000m), "the first home is the calculator's inputs");
+            Assert.That(saved.SecondHome, Is.SameAs(second), "and the second is kept beside them");
+        });
+    }
+
+    [Test]
+    public async Task Update_ReplacesTheSecondHome_OrDropsIt()
+    {
+        var stored = Stored();
+        stored.SecondHome = A.Request.Build();
+        _repository.FindAsync(Owner, stored.Id, Arg.Any<CancellationToken>()).Returns(stored);
+
+        var response = await _service.UpdateAsync(Owner, stored.Id, Request(), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response?.SecondHome, Is.Null, "saved over with one home, it is a purchase again");
+            Assert.That(response?.Kind, Is.EqualTo(SavedCalculationKind.Purchase), "and is listed as one");
+        });
+    }
+
+    [Test]
     public async Task Save_GivesEachCalculationItsOwnId()
     {
         var first = await _service.SaveAsync(Owner, Request(), CancellationToken.None);

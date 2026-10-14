@@ -22,7 +22,8 @@ describe('CalculationStores', () => {
   const strategy = { currentBalance: 300_000, annualInterestRate: 6.5, monthlyCashToPutToWork: 1_000, riskProfile: 'Balanced' } as StrategyRequest;
   const saved = (kind: SavedCalculation['kind'], id: string): SavedCalculation => ({
     id, name: `${kind} ${id}`, kind, createdAt: '', updatedAt: '',
-    inputs: kind === 'Purchase' ? purchase : null,
+    inputs: kind === 'Purchase' || kind === 'HomeComparison' ? purchase : null,
+    secondHome: kind === 'HomeComparison' ? { ...purchase, homePrice: 450_000 } : null,
     refinance: kind === 'Refinance' ? refinance : null,
     strategy: kind === 'Strategy' ? strategy : null,
   });
@@ -74,6 +75,17 @@ describe('CalculationStores', () => {
     expect(stores.describe(saved('Purchase', '1'))).toContain('$375,000 home');
     expect(stores.describe(saved('Refinance', '2'))).toContain('$300,000 left at 7% → 6%');
     expect(stores.describe(saved('Strategy', '3'))).toContain('$1,000/mo to put to work');
+    expect(stores.describe(saved('HomeComparison', '4'))).toBe('$375,000 home, 20% down at 6.5% vs $450,000 home, 16.7% down at 6.5%');
+  });
+
+  it('opens two homes compared on the Compare tab, and lists them under their own name', () => {
+    const store = stores.of('HomeComparison');
+    store.open(saved('HomeComparison', 'c'));
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+    expect(store.route).toEqual(['/calculator', 'compare']);
+    expect(calls.calculate.mock.calls.map(([r]) => r.homePrice)).toEqual(expect.arrayContaining([375_000, 450_000]));
+    expect(stores.pages().map((p) => p.pageName)).toEqual(['Calculator', 'Compare homes', 'Refinance', 'Pay off or invest']);
   });
 
   it('keeps a page linked to a renamed item, and unlinks it when the item is deleted or on sign-out', () => {

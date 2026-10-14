@@ -10,6 +10,12 @@ public sealed record SaveCalculationRequest
     /// <summary>The calculator inputs, exactly as sent to the calculate endpoint. Give exactly one of the three kinds.</summary>
     public AmortizationRequest? Inputs { get; init; }
 
+    /// <summary>
+    /// A second home to compare with the one in <see cref="Inputs"/>, in the same shape. Only with calculator inputs:
+    /// the two together are a home comparison.
+    /// </summary>
+    public AmortizationRequest? SecondHome { get; init; }
+
     /// <summary>A refinance comparison, exactly as sent to the refinance endpoint.</summary>
     public RefinanceRequest? Refinance { get; init; }
 
@@ -28,6 +34,9 @@ public enum SavedCalculationKind
 
     /// <summary>A pay-off-or-invest comparison; its <c>strategy</c> inputs go to the strategies endpoint.</summary>
     Strategy = 2,
+
+    /// <summary>Two homes side by side: <c>inputs</c> and <c>secondHome</c> each go to the calculate endpoint.</summary>
+    HomeComparison = 3,
 }
 
 /// <summary>A saved calculation: its name, its inputs, and when it was saved and last changed.</summary>
@@ -40,11 +49,14 @@ public sealed record SavedCalculationResponse
     /// <example>Oak St, 20% down</example>
     public required string Name { get; init; }
 
-    /// <summary>Whether this is a purchase calculation, a refinance comparison or a pay-off-or-invest comparison.</summary>
+    /// <summary>Whether this is a purchase, two homes compared, a refinance comparison or a pay-off-or-invest comparison.</summary>
     public required SavedCalculationKind Kind { get; init; }
 
     /// <summary>For a purchase: the calculator inputs. Post them to the calculate endpoint to see the results again.</summary>
     public required AmortizationRequest? Inputs { get; init; }
+
+    /// <summary>For a home comparison: the second home, compared with <see cref="Inputs"/>. Null for anything else.</summary>
+    public required AmortizationRequest? SecondHome { get; init; }
 
     /// <summary>For a refinance comparison: its inputs. Post them to the refinance endpoint to see the results again.</summary>
     public required RefinanceRequest? Refinance { get; init; }

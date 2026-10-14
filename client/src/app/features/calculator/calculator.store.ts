@@ -24,25 +24,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   describe = describeInputs;
   suggestName = suggestName;
 
-  /**
-   * The loan as it stands today. A new loan (first payment still ahead) is the price less the down payment, over
-   * the whole term. A loan already being paid shares what is owed now, the payments left, the home's value now,
-   * and how it started.
-   */
   protected loanOf(request: AmortizationRequest): SharedLoan {
-    const today = this.today(request);
-    return {
-      balance: today.balance,
-      annualInterestRate: request.annualInterestRate,
-      remainingTermInMonths: today.monthsLeft,
-      homeValue: today.homeValue,
-      start: today.made > 0 && request.firstPaymentDate
-        ? { amount: toCents(request.homePrice - request.downPayment), termInMonths: request.termInMonths, firstPaymentDate: request.firstPaymentDate }
-        : null,
-      // An ARM's fixed period counts from the first payment here; shared, it counts from today.
-      rate: sharedRateFrom(request.buydown, request.adjustableRate, today.made),
-      monthlyPmi: monthlyPmiOf(request),
-    };
+    return purchaseLoanOf(request);
   }
 
   /**
@@ -52,7 +35,7 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
    * own purchase price.
    */
   protected override matchesShared(request: AmortizationRequest, shared: SharedLoan): boolean {
-    const today = this.today(request);
+    const today = todayOf(request);
     if (!this.rateMatches(sharedRateFrom(request.buydown, request.adjustableRate, today.made), shared.rate ?? null)) return false;
     if (shared.start) {
       // The loan as it started: the calculator holds it exactly, but for a term in whole years.
@@ -67,13 +50,34 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
       && (today.made > 0 || shared.homeValue === null || request.homePrice === Math.max(shared.homeValue, shared.balance));
   }
 
-  private today(request: AmortizationRequest) {
-    return loanToday({ ...request, homeValueGrowthRate: request.housingCosts?.homeValueGrowthRate }, new Date());
-  }
-
   protected send$(request: AmortizationRequest) {
     return this.api.calculate(request);
   }
+}
+
+/**
+ * A purchase's loan as it stands today. A new loan (first payment still ahead) is the price less the down payment,
+ * over the whole term. A loan already being paid shares what is owed now, the payments left, the home's value now,
+ * and how it started.
+ */
+export function purchaseLoanOf(request: AmortizationRequest): SharedLoan {
+  const today = todayOf(request);
+  return {
+    balance: today.balance,
+    annualInterestRate: request.annualInterestRate,
+    remainingTermInMonths: today.monthsLeft,
+    homeValue: today.homeValue,
+    start: today.made > 0 && request.firstPaymentDate
+      ? { amount: toCents(request.homePrice - request.downPayment), termInMonths: request.termInMonths, firstPaymentDate: request.firstPaymentDate }
+      : null,
+    // An ARM's fixed period counts from the first payment here; shared, it counts from today.
+    rate: sharedRateFrom(request.buydown, request.adjustableRate, today.made),
+    monthlyPmi: monthlyPmiOf(request),
+  };
+}
+
+function todayOf(request: AmortizationRequest) {
+  return loanToday({ ...request, homeValueGrowthRate: request.housingCosts?.homeValueGrowthRate }, new Date());
 }
 
 /**

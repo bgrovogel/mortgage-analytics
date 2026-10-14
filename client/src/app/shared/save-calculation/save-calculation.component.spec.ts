@@ -18,7 +18,7 @@ describe('SaveCalculationComponent', () => {
   const inputs = { homePrice: 375_000 } as AmortizationRequest;
   const payload: SavedInputs = { inputs };
   const savedAs = (name: string, id = 'new-id'): SavedCalculation =>
-    ({ id, name, kind: 'Purchase', inputs, refinance: null, strategy: null, createdAt: '', updatedAt: '' });
+    ({ id, name, kind: 'Purchase', inputs, secondHome: null, refinance: null, strategy: null, createdAt: '', updatedAt: '' });
 
   /** Creates the control the way a page uses it: what to save, a suggested name, and what it is linked to. */
   const create = (options: { payload?: SavedInputs | null; linked?: { id: string; name: string } | null } = {}) => {

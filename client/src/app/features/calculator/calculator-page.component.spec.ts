@@ -12,6 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { signal } from '@angular/core';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
+import { ComparisonStore } from './comparison.store';
 
 describe('CalculatorPageComponent', () => {
   let harness: RouterTestingHarness;
@@ -49,9 +50,64 @@ describe('CalculatorPageComponent', () => {
       ['Overview', '/calculator/overview'],
       ['Projection', '/calculator/projection'],
       ['Schedule', '/calculator/schedule'],
+      ['Compare', '/calculator/compare'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();
     expect(el('app-overview-tab')).toBeNull();
+  });
+
+  describe('comparing two homes', () => {
+    const switchTo = (house: 'a' | 'b') => {
+      el(`[data-testid="edit-home-${house}"]`)!.dispatchEvent(new Event('change'));
+      harness.detectChanges();
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      harness.detectChanges();
+    };
+    const homePrice = () => el('[data-testid="home-price"]') as HTMLInputElement;
+    const type = (input: HTMLInputElement, value: string) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      harness.detectChanges();
+    };
+
+    it('shows the switch between the homes only on the Compare tab, and starts Home B as a copy of Home A', async () => {
+      await open('/calculator/overview');
+      expect(el('[data-testid="house-switch"]')).toBeNull();
+
+      await harness.navigateByUrl('/calculator/compare');
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      harness.detectChanges();
+      const comparison = TestBed.inject(ComparisonStore);
+
+      expect(el('[data-testid="house-switch"]')).not.toBeNull();
+      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home A');
+      expect(comparison.request()!.second).toEqual(comparison.request()!.first);
+    });
+
+    it('edits Home B in the same place, leaving Home A as it was, and only Home A is the shared loan', async () => {
+      await open('/calculator/compare');
+      const first = TestBed.inject(CalculatorStore).request();
+
+      switchTo('b');
+      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home B');
+      expect(el('[data-testid="shared-tag"]')).toBeNull();
+      type(homePrice(), '450000');
+
+      const comparison = TestBed.inject(ComparisonStore).request()!;
+      expect(comparison.second.homePrice).toBe(450_000);
+      expect(comparison.first).toBe(first);
+      expect(TestBed.inject(CalculatorStore).request()).toBe(first);
+
+      switchTo('a');
+      expect(homePrice().value).toBe(first!.homePrice.toLocaleString('en-US'));
+    });
+
+    it('saves the comparison on the Compare tab, and the purchase on the others', async () => {
+      await open('/calculator/compare');
+      expect(TestBed.inject(ComparisonStore).savePayload()).toEqual(expect.objectContaining({ secondHome: expect.anything() }));
+      expect(el('app-compare-tab')).not.toBeNull();
+    });
   });
 
   it('offers to save the calculation, beside the result tabs', async () => {

@@ -62,7 +62,7 @@ it. Inputs and outputs use the signal APIs (`input<T>()`, `output<T>()`). A form
 - **Forms and result components** are presentational: they take `input()`s and emit `output()`s, and know
   nothing about HTTP. That makes them easy to test (set inputs, check outputs).
 
-### Stores: `CalculationStore` and its three subclasses
+### Stores: `CalculationStore` and its four subclasses
 
 `core/state/calculation-store.ts` is an **abstract base class** holding everything a calculator page needs:
 
@@ -75,14 +75,21 @@ it. Inputs and outputs use the signal APIs (`input<T>()`, `output<T>()`). A form
 | `loanToApply()` | The loan another page changed since this page last sent one |
 | `savePayload`, `suggestedName` | Computed: what Save stores, and the name it suggests |
 
-Each page's store (`CalculatorStore`, `RefinanceStore`, `StrategyStore`) says only what differs: `kind`, `route`,
-`pageName`, how to call the API (`send$`), how to describe and name its inputs, and where its loan is (`loanOf`).
-This is the **Template Method** pattern: the base class runs the algorithm, the subclasses fill in the steps.
+Each page's store (`CalculatorStore`, `ComparisonStore`, `RefinanceStore`, `StrategyStore`) says only what differs:
+`kind`, `route`, `pageName`, how to call the API (`send$`), how to describe and name its inputs, and where its loan is
+(`loanOf`). This is the **Template Method** pattern: the base class runs the algorithm, the subclasses fill in the
+steps.
+
+`ComparisonStore` is the calculator's Compare tab: its request is two calculator requests (`first`, `second`), and
+`send$` calculates each with the calculator's endpoint (`forkJoin`), so comparing needs nothing new from the API.
+Home A is the calculator's own loan, which the page passes on as it changes; opening a saved comparison puts Home A
+back in the calculator too. Saved, the two homes are `inputs` and `secondHome`. The page has one loan form at a
+time: the switch above it makes a new form for the other home from its store, so element ids stay unique.
 
 The stores are `providedIn: 'root'`, so they live for the whole app: leave a page and come back, and its
 numbers are still there.
 
-`CalculationStores` (`features/calculation-stores.ts`) lists the three stores, so History can open, describe,
+`CalculationStores` (`features/calculation-stores.ts`) lists the four stores, so History can open, describe,
 rename or unlink a saved item of any kind without a `switch` on its kind.
 
 ### Results as you type: `latestRequest`

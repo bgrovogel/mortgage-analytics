@@ -39,11 +39,15 @@ for (const scheme of ['light', 'dark'] as const) {
       await openSections(page);
       expect(await violations(page), 'the Overview tab and the open form break no accessibility rule').toEqual([]);
 
-      for (const tab of ['projection', 'schedule'] as const) {
+      for (const tab of ['projection', 'schedule', 'compare'] as const) {
         await page.getByTestId(`result-tab-${tab}`).click();
         await settled(page);
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);
       }
+      // The Compare tab's second form, in the same place as the first.
+      await page.getByTestId('edit-home-b').check();
+      await settled(page);
+      expect(await violations(page), "Home B's form breaks no accessibility rule").toEqual([]);
     });
 
     test('the calculator with a buydown, then an adjustable rate: each rate plan', async ({ page }) => {

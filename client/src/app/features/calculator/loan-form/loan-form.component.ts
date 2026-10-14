@@ -68,6 +68,12 @@ export class LoanFormComponent implements OnInit {
   /** A request to start from (the last calculation, or a saved one) instead of the worked example. */
   readonly initial = input<AmortizationRequest | null>(null);
 
+  /** The form's heading: "Your loan", or which home it is when two are compared. */
+  readonly heading = input('Your loan');
+
+  /** False for a compared home: only the calculator's own loan is shared with the other pages. */
+  readonly shared = input(true);
+
   /** The first year of the latest result, to say what the homestead exemptions save. */
   readonly firstYear = input<YearProjection | null>(null);
 

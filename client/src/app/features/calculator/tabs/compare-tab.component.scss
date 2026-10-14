@@ -1,0 +1,91 @@
+@use '../../../core/layout/scroll-hint';
+
+.headline {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  // On a very narrow screen the table may still scroll: fade the edge that has more.
+  @include scroll-hint.fade-edge;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.55rem 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+
+  small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+}
+
+.difference {
+  color: var(--text-secondary);
+}
+
+.under {
+  display: none;
+}
+
+.note {
+  margin: 0.9rem 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+// On a phone, three columns of dollars fit once the padding is tighter and the row names may wrap.
+@media (max-width: 560px) {
+  table {
+    font-size: 0.82rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  .difference {
+    display: none;
+  }
+
+  .under {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  tbody th {
+    white-space: normal;
+    // The notes under the names are left to the wider screens: here they would make every row three lines tall.
+    small {
+      display: none;
+    }
+  }
+}

@@ -22,7 +22,7 @@
 | What | Where | Written when |
 |---|---|---|
 | **Accounts:** email, password hash, whether the email is confirmed, lockout state | `AspNetUsers` table | Sign-up, email confirmation, sign-in (failed attempts), password reset; deleted with the account |
-| **Saved calculations:** a name and the **inputs** of a calculation, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
+| **Saved calculations:** a name and the **inputs** of a calculation, two homes compared, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
 | **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files; or the `DataProtectionKeys` table, when several instances share them | First startup, then when a key nears expiry |
 | **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email; `/dev/mailbox` lists the newest 100 | Sign-up, resend, forgot password |
@@ -60,7 +60,7 @@ three files are one database: copy them together, or stop the app first (see [In
 
 ## The schema
 
-![The database: SavedCalculations (Id, OwnerId, Name, the three JSON columns Inputs, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete; Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
+![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, SecondHome, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete; Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
 
 **`SavedCalculations`**, the app's own table, defined in `CalculationsDbContext.OnModelCreating`:
 
@@ -69,13 +69,15 @@ three files are one database: copy them together, or stop the app first (see [In
 | `Id` | TEXT (a GUID) | Primary key. A **version 7** GUID, which starts with the time, so new rows land at the end of the index instead of at random places |
 | `OwnerId` | TEXT, required | The user's id from `AspNetUsers`. A foreign key with **cascade delete** |
 | `Name` | TEXT, required, at most 100 | Trimmed before it is stored; the limit is the validator's `MaxNameLength`, so the two cannot disagree |
-| `Inputs` | TEXT (JSON), or null | An `AmortizationRequest`: the calculator's inputs |
+| `Inputs` | TEXT (JSON), or null | An `AmortizationRequest`: the calculator's inputs (Home A, when two homes are compared) |
+| `SecondHome` | TEXT (JSON), or null | Another `AmortizationRequest`: Home B, set only beside `Inputs` |
 | `Refinance` | TEXT (JSON), or null | A `RefinanceRequest` |
 | `Strategy` | TEXT (JSON), or null | A `StrategyRequest` |
 | `CreatedAt`, `UpdatedAt` | INTEGER | Server time (the injected `TimeProvider`), stored as a sortable 64-bit number because SQLite cannot sort `DateTimeOffset` |
 
-Exactly one of the three JSON columns is set; which one says what kind of save it is (`SavedCalculation.Kind` is
-computed from it, not stored). One index, on **(OwnerId, UpdatedAt)**, matches the one list query every History page
+One kind of inputs is set per row, and which says what kind of save it is (`SavedCalculation.Kind` is computed from
+it, not stored): `Inputs` alone is a purchase, `Inputs` and `SecondHome` two homes compared, `Refinance` or
+`Strategy` a comparison of its own. One index, on **(OwnerId, UpdatedAt)**, matches the one list query every History page
 makes.
 
 **ASP.NET Core Identity's tables** come from `IdentityDbContext`. The app uses `AspNetUsers` (email, normalized email
@@ -157,7 +159,7 @@ silently lose its value. Two things stop that:
 | `GET /api/v1/calculations?search=` | List, newest change first, optionally by name | `SELECT … WHERE OwnerId = @me [AND Name LIKE '%term%' ESCAPE '\'] ORDER BY UpdatedAt DESC` |
 | `GET /api/v1/calculations/{id}` | Find one | `SELECT … WHERE Id = @id AND OwnerId = @me` |
 | `POST /api/v1/calculations` | Add | `INSERT` with a new v7 id, `CreatedAt = UpdatedAt = now` |
-| `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, Refinance, Strategy, UpdatedAt` for the changed columns |
+| `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, SecondHome, Refinance, Strategy, UpdatedAt` for the changed columns |
 | `DELETE /api/v1/calculations/{id}` | Delete in one statement, without loading it | `DELETE … WHERE Id = @id AND OwnerId = @me` (`ExecuteDeleteAsync`) |
 
 - **Ownership is in the query**, not checked afterwards: another user's id simply finds nothing, which the API returns
@@ -212,6 +214,7 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddUserAccounts` | Identity's tables; `OwnerId` with its foreign key and cascade; the index became (OwnerId, UpdatedAt). **It deletes every existing save first** (`DELETE FROM SavedCalculations`): saves made before accounts had no owner, and could not be given one |
 | `AddStrategyComparisons` | Added `Strategy` |
 | `AddDataProtectionKeys` | `DataProtectionKeys`, for signing keys kept in the database |
+| `AddHomeComparisons` | Added `SecondHome` (on PostgreSQL, `PostgresAddHomeComparisons`) |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:
 `TheMigrations_MatchTheModel` fails if the model has changes no migration covers, and every repository test runs on a

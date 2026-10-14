@@ -1,7 +1,10 @@
 import { AmortizationRequest } from '../models/amortization.models';
 import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
-import { describeInputs, describeRefinance, describeStrategy, suggestName, suggestRefinanceName, suggestStrategyName } from './describe-inputs';
+import {
+  describeComparison, describeInputs, describeRefinance, describeStrategy, suggestComparisonName, suggestName, suggestRefinanceName,
+  suggestStrategyName,
+} from './describe-inputs';
 
 describe('describeInputs', () => {
   const request = {
@@ -31,6 +34,19 @@ describe('describeInputs', () => {
   it('rounds the down payment percentage to one decimal, and copes with a zero price', () => {
     expect(describeInputs({ ...request, downPayment: 12_345 })).toContain('3.3% down');
     expect(describeInputs({ ...request, homePrice: 0, downPayment: 0 })).toContain('0% down');
+  });
+});
+
+describe('a comparison of two homes', () => {
+  const first = { homePrice: 415_000, downPayment: 37_350, annualInterestRate: 6.25, termInMonths: 360 } as AmortizationRequest;
+  const second = { homePrice: 450_000, downPayment: 90_000, annualInterestRate: 6, termInMonths: 360 } as AmortizationRequest;
+
+  it('sums up both homes in one line: what most often tells them apart', () => {
+    expect(describeComparison({ first, second })).toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%');
+  });
+
+  it('suggests a name from the two prices', () => {
+    expect(suggestComparisonName({ first, second })).toBe('$415,000 or $450,000 home');
   });
 });
 

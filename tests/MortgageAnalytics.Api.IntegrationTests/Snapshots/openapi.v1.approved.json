@@ -2193,6 +2193,9 @@
           "inputs": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
+          "secondHome": {
+            "$ref": "#/components/schemas/AmortizationRequest"
+          },
           "refinance": {
             "$ref": "#/components/schemas/RefinanceRequest"
           },
@@ -2206,7 +2209,8 @@
         "enum": [
           "Purchase",
           "Refinance",
-          "Strategy"
+          "Strategy",
+          "HomeComparison"
         ],
         "type": "string"
       },
@@ -2218,6 +2222,7 @@
           "kind",
           "name",
           "refinance",
+          "secondHome",
           "strategy",
           "updatedAt"
         ],
@@ -2235,6 +2240,9 @@
             "$ref": "#/components/schemas/SavedCalculationKind"
           },
           "inputs": {
+            "$ref": "#/components/schemas/AmortizationRequest"
+          },
+          "secondHome": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
           "refinance": {

@@ -1,6 +1,6 @@
 import { DestroyRef, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
-import { INPUTS_FIELD, SavedCalculation, SavedCalculationKind, SavedInputs, savedInputsFor } from '../models/saved-calculation.models';
+import { SavedCalculation, SavedCalculationKind, SavedInputs, requestOf, savedInputsFor } from '../models/saved-calculation.models';
 import { latestRequest } from './latest-request';
 import { SharedLoan, SharedLoanChange, SharedLoanStore, SharedRate, sameLoan, sameRate } from './shared-loan.store';
 
@@ -135,7 +135,7 @@ export abstract class CalculationStore<TRequest, TResponse> {
 
   /** The inputs a saved calculation of this page's kind holds. */
   inputsOf(calculation: SavedCalculation): TRequest {
-    return calculation[INPUTS_FIELD[this.kind]] as TRequest;
+    return requestOf(calculation) as TRequest;
   }
 
   /** One line that tells saved calculations of this kind apart, e.g. in History. */

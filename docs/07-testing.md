@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 1,880 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 1,920 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -14,12 +14,12 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 555 | NUnit | < 1 s |
-| Application | 326 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
-| API integration | 107 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Application | 332 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Infrastructure | 40 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
+| API integration | 108 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 743 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 105 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 768 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 107 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -127,7 +127,7 @@ Take the ARM margin floor as an example of the order of work:
 - A tax rate change: the quick numbers before and after its year.
 - Discount points: both payments, the break-even payment and date, and the line in the cash to close.
 - The equity chart: the down payment at the start, and the year the loan is paid off.
-- Sign-up with the email from the dev mailbox, password reset, saving and reopening all three kinds from History,
+- Sign-up with the email from the dev mailbox, password reset, saving and reopening all four kinds from History,
   and deleting the account from its page (a wrong password first, then the right one).
 - A consistency suite checks every number on the Pay off or invest page (banner, cards, milestones in each scenario
   and in today's dollars, crossover notes, the fact sheet) against the API response it came from, for three very
@@ -256,7 +256,7 @@ gaps. The rules for when a page shares its loan with the others (the fix for the
 Playwright, so a wrong `<` passed every unit test; they now have their own, case by case. And the loan form's defaults,
 its blank-to-zero mapping and its restore were checked only through the whole component, so a lost default or a value
 dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks them directly, with a round trip through
-every unusual value. It now scores **97.9%**; the 44 survivors are almost all equivalent: caches that only save work,
+every unusual value. It now scores **97.9%**; the 45 survivors are almost all equivalent: caches that only save work,
 `emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
 the last payment is 0 either way).
 

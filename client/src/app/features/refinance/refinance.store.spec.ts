@@ -31,7 +31,7 @@ describe('RefinanceStore', () => {
     TestBed.configureTestingModule({ providers: [{ provide: RefinanceApiService, useValue: { analyze } }] });
     const store = TestBed.inject(RefinanceStore);
     const refinance = { currentBalance: 1 } as RefinanceRequest;
-    const base = { id: 'r1', name: 'Refi', createdAt: '', updatedAt: '' };
+    const base = { id: 'r1', name: 'Refi', createdAt: '', updatedAt: '', secondHome: null };
 
     store.open({ ...base, kind: 'Purchase', inputs: {} as never, refinance: null, strategy: null });
     expect(store.saved()).toBeNull();

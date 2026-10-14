@@ -1,6 +1,7 @@
 @if (store.result(); as r) {
   <!-- Phones only, and only while the headline numbers are off screen. -->
-  <div class="summary-bar" [class.hidden]="store.headlineVisible()" data-testid="summary-bar" aria-hidden="true">
+  <!-- Not on the Compare tab: there the figures are for two homes, and this bar has only Home A's. -->
+  <div class="summary-bar" [class.hidden]="store.headlineVisible() || comparing()" data-testid="summary-bar" aria-hidden="true">
     <!-- The same figures the headline tiles lead with: the first payment due, and the net savings (or, without extra
          payments, the interest over the loan). -->
     <!-- A buydown's first payment rises after year 1: say so, as the tile does. -->
@@ -16,11 +17,26 @@
   </div>
 }
 
-<app-calculation-page [store]="store" heading="What will this home really cost?"
+<app-calculation-page [store]="pageStore()" heading="What will this home really cost?"
                       intro="Every cost of owning it, month by month and year by year, and what extra payments save."
                       [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
-  <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null" (calculate)="store.send($event)" (problems)="problems.set($event)" />
+  <div form>
+    <!-- On the Compare tab, one form edits either home; the page has one form at a time, so ids stay unique. -->
+    @if (comparing()) {
+      <div class="segmented house-switch" role="radiogroup" aria-label="Which home to edit" data-testid="house-switch">
+        <label><input type="radio" name="house" value="A" [checked]="house() === 'A'" (change)="edit('A')" data-testid="edit-home-a" /> Home A</label>
+        <label><input type="radio" name="house" value="B" [checked]="house() === 'B'" (change)="edit('B')" data-testid="edit-home-b" /> Home B</label>
+      </div>
+    }
+    @if (editing() === 'A') {
+      <app-loan-form [heading]="comparing() ? 'Home A' : 'Your loan'" [initial]="startFrom()" [loan]="loan()" [firstYear]="store.result()?.projection?.[0] ?? null"
+                     (calculate)="store.send($event)" (problems)="problems.set($event)" />
+    } @else {
+      <app-loan-form heading="Home B" [shared]="false" [initial]="comparison.request()?.second ?? store.request()"
+                     [firstYear]="comparison.result()?.second?.projection?.[0] ?? null" (calculate)="sendSecond($event)" (problems)="problems.set($event)" />
+    }
+  </div>
 
   <nav tabs class="result-tabs" aria-label="Results">
     @for (tab of tabs; track tab.path) {

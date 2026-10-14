@@ -38,6 +38,15 @@ describe('LoanFormComponent', () => {
       expect(el('loan-shared')).toBeNull();
     });
 
+    it("names a compared home in its heading, without the shared tag: only the calculator's own loan is shared", () => {
+      fixture.componentRef.setInput('heading', 'Home B');
+      fixture.componentRef.setInput('shared', false);
+      fixture.detectChanges();
+
+      expect(text('loan-heading')).toBe('Home B');
+      expect(el('shared-tag')).toBeNull();
+    });
+
     it('keeps how to enter a loan you already have one tap away, rather than always on', () => {
       const help = el('first-payment-help') as HTMLDetailsElement;
 
