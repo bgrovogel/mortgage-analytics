@@ -243,15 +243,15 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OtherHomes")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Refinance")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SecondHome")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Strategy")

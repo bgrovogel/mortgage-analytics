@@ -22,19 +22,34 @@
                       [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
   <div form>
-    <!-- On the Compare tab, one form edits either home; the page has one form at a time, so ids stay unique. -->
+    <!-- On the Compare tab, one form edits any of the homes; the page has one form at a time, so ids stay unique. -->
     @if (comparing()) {
       <div class="segmented house-switch" role="radiogroup" aria-label="Which home to edit" data-testid="house-switch">
-        <label><input type="radio" name="house" value="A" [checked]="house() === 'A'" (change)="edit('A')" data-testid="edit-home-a" /> Home A</label>
-        <label><input type="radio" name="house" value="B" [checked]="house() === 'B'" (change)="edit('B')" data-testid="edit-home-b" /> Home B</label>
+        @for (home of homeIndexes(); track home) {
+          <label>
+            <input type="radio" name="house" [value]="home" [checked]="editing() === home" (change)="edit(home)" [attr.data-testid]="'edit-home-' + letterOf(home)" />
+            {{ nameOf(home) }}
+          </label>
+        }
+      </div>
+      <div class="house-actions">
+        @if (homeIndexes().length < maxHomes) {
+          <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home</button>
+        }
+        @if (editing() > 0 && homeIndexes().length > 2) {
+          <button type="button" class="link-button" (click)="removeHome()" data-testid="remove-home">Remove {{ nameOf(editing()) }}</button>
+        }
       </div>
     }
-    @if (editing() === 'A') {
+    @if (editing() === 0) {
       <app-loan-form [heading]="comparing() ? 'Home A' : 'Your loan'" [initial]="startFrom()" [loan]="loan()" [firstYear]="store.result()?.projection?.[0] ?? null"
                      (calculate)="store.send($event)" (problems)="problems.set($event)" />
     } @else {
-      <app-loan-form heading="Home B" [shared]="false" [initial]="comparison.request()?.second ?? store.request()"
-                     [firstYear]="comparison.result()?.second?.projection?.[0] ?? null" (calculate)="sendSecond($event)" (problems)="problems.set($event)" />
+      <!-- Tracked by the home, so each home gets a form of its own. -->
+      @for (home of [editing()]; track home) {
+        <app-loan-form [heading]="nameOf(home)" [shared]="false" [initial]="comparison.request()?.homes?.[home] ?? store.request()"
+                       [firstYear]="comparison.result()?.homes?.[home]?.projection?.[0] ?? null" (calculate)="sendOther(home, $event)" (problems)="problems.set($event)" />
+      }
     }
   </div>
 

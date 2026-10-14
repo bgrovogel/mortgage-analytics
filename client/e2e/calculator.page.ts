@@ -226,10 +226,16 @@ export class CalculatorPage {
     return this.page.waitForTimeout(1_000);
   }
 
-  /** On the Compare tab, switches the form to one of the two homes. */
-  async editHome(house: 'A' | 'B'): Promise<void> {
+  /** On the Compare tab, switches the form to one of the homes. */
+  async editHome(house: 'A' | 'B' | 'C' | 'D'): Promise<void> {
     await this.page.getByTestId(`edit-home-${house.toLowerCase()}`).check();
     await expect(this.page.getByTestId('loan-heading'), `the form now edits Home ${house}`).toHaveText(`Home ${house}`);
+  }
+
+  /** On the Compare tab, adds a home (a copy of Home A) and edits it. */
+  async addHome(house: 'C' | 'D'): Promise<void> {
+    await this.page.getByTestId('add-home').click();
+    await expect(this.page.getByTestId('loan-heading'), `the form now edits the new Home ${house}`).toHaveText(`Home ${house}`);
   }
 
   /** Saves the current calculation under `name`, as a new saved calculation. */

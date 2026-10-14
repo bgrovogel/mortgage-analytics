@@ -22,7 +22,7 @@
 | What | Where | Written when |
 |---|---|---|
 | **Accounts:** email, password hash, whether the email is confirmed, lockout state | `AspNetUsers` table | Sign-up, email confirmation, sign-in (failed attempts), password reset; deleted with the account |
-| **Saved calculations:** a name and the **inputs** of a calculation, two homes compared, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
+| **Saved calculations:** a name and the **inputs** of a calculation, up to four homes compared, a refinance or a pay-off-or-invest comparison | `SavedCalculations` table | Save, rename or replace, delete |
 | **Which migrations have run** | `__EFMigrationsHistory` table | App startup, when a new migration ships |
 | **Signing keys** for the session cookie and the codes in emailed links | `keys/` folder, XML files; or the `DataProtectionKeys` table, when several instances share them | First startup, then when a key nears expiry |
 | **Emails** (only when no mail server is configured) | `outbox/` folder, one JSON file per email; `/dev/mailbox` lists the newest 100 | Sign-up, resend, forgot password |
@@ -60,7 +60,7 @@ three files are one database: copy them together, or stop the app first (see [In
 
 ## The schema
 
-![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, SecondHome, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete; Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
+![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete; Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
 
 **`SavedCalculations`**, the app's own table, defined in `CalculationsDbContext.OnModelCreating`:
 
@@ -69,14 +69,14 @@ three files are one database: copy them together, or stop the app first (see [In
 | `Id` | TEXT (a GUID) | Primary key. A **version 7** GUID, which starts with the time, so new rows land at the end of the index instead of at random places |
 | `OwnerId` | TEXT, required | The user's id from `AspNetUsers`. A foreign key with **cascade delete** |
 | `Name` | TEXT, required, at most 100 | Trimmed before it is stored; the limit is the validator's `MaxNameLength`, so the two cannot disagree |
-| `Inputs` | TEXT (JSON), or null | An `AmortizationRequest`: the calculator's inputs (Home A, when two homes are compared) |
-| `SecondHome` | TEXT (JSON), or null | Another `AmortizationRequest`: Home B, set only beside `Inputs` |
+| `Inputs` | TEXT (JSON), or null | An `AmortizationRequest`: the calculator's inputs (Home A, when homes are compared) |
+| `OtherHomes` | TEXT (JSON array), or null | One to three more `AmortizationRequest`s: Homes B to D, set only beside `Inputs` |
 | `Refinance` | TEXT (JSON), or null | A `RefinanceRequest` |
 | `Strategy` | TEXT (JSON), or null | A `StrategyRequest` |
 | `CreatedAt`, `UpdatedAt` | INTEGER | Server time (the injected `TimeProvider`), stored as a sortable 64-bit number because SQLite cannot sort `DateTimeOffset` |
 
 One kind of inputs is set per row, and which says what kind of save it is (`SavedCalculation.Kind` is computed from
-it, not stored): `Inputs` alone is a purchase, `Inputs` and `SecondHome` two homes compared, `Refinance` or
+it, not stored): `Inputs` alone is a purchase, `Inputs` and `OtherHomes` homes compared, `Refinance` or
 `Strategy` a comparison of its own. One index, on **(OwnerId, UpdatedAt)**, matches the one list query every History page
 makes.
 
@@ -159,7 +159,7 @@ silently lose its value. Two things stop that:
 | `GET /api/v1/calculations?search=` | List, newest change first, optionally by name | `SELECT … WHERE OwnerId = @me [AND Name LIKE '%term%' ESCAPE '\'] ORDER BY UpdatedAt DESC` |
 | `GET /api/v1/calculations/{id}` | Find one | `SELECT … WHERE Id = @id AND OwnerId = @me` |
 | `POST /api/v1/calculations` | Add | `INSERT` with a new v7 id, `CreatedAt = UpdatedAt = now` |
-| `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, SecondHome, Refinance, Strategy, UpdatedAt` for the changed columns |
+| `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, OtherHomes, Refinance, Strategy, UpdatedAt` for the changed columns |
 | `DELETE /api/v1/calculations/{id}` | Delete in one statement, without loading it | `DELETE … WHERE Id = @id AND OwnerId = @me` (`ExecuteDeleteAsync`) |
 
 - **Ownership is in the query**, not checked afterwards: another user's id simply finds nothing, which the API returns
@@ -215,6 +215,7 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddStrategyComparisons` | Added `Strategy` |
 | `AddDataProtectionKeys` | `DataProtectionKeys`, for signing keys kept in the database |
 | `AddHomeComparisons` | Added `SecondHome` (on PostgreSQL, `PostgresAddHomeComparisons`) |
+| `CompareUpToFourHomes` | Renamed `SecondHome` to `OtherHomes`, and **moved the data** with SQL added by hand: each saved second home becomes a list of one (`'[' \|\| OtherHomes \|\| ']'`). Down, the first of the list becomes the second home again, and a third or fourth home is lost. `HomeComparisonMigrationTests` checks both ways on SQLite, and a Postgres test on PostgreSQL |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:
 `TheMigrations_MatchTheModel` fails if the model has changes no migration covers, and every repository test runs on a
@@ -273,7 +274,7 @@ unencrypted, as they are on disk. A production deployment would encrypt them at 
 | `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; deleting a user deletes their saves and no one else's; the migrations match the model |
 | `StoredFormatTests` | A save of each kind in today's JSON still loads, with every value |
 | `DatabaseProviderTests` | SQLite is the default; `Postgres` picks the PostgreSQL context and its migrations, which match the model; the keys table works; backups are off on PostgreSQL |
-| `PostgresTests` | On a real PostgreSQL 17 in a container (Testcontainers): the migrations build the schema, a save round-trips, each owner sees only their own, deleting a user cascades, and search ignores case. Run locally, as they need Docker: `dotnet test --filter TestCategory=Postgres` |
+| `PostgresTests` | On a real PostgreSQL 17 in a container (Testcontainers): the migrations build the schema, a save round-trips, each owner sees only their own, deleting a user cascades, search ignores case, and a saved second home moves into the list of other homes and back. Run locally, as they need Docker: `dotnet test --filter TestCategory=Postgres` |
 | `DatabaseHealthCheckTests` | `/health` is Healthy for the database the app created, and Unhealthy when the database is missing (a broken Docker volume shows up there) |
 | API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, lockout at its limit (four wrong passwords still sign in with the right one; five lock the account), and deleting an account: it needs the password, takes the saves, frees the email and ends every session |
 | Playwright History tests | Saving each kind, finding it by name, reopening it with every value, renaming and deleting, in a real browser |

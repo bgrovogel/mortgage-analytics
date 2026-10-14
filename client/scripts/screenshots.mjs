@@ -26,13 +26,18 @@ const shots = {
   'calculator.png': async (b) => open(b, '/calculator/overview', { scale: 2 }),
   'projection.png': async (b) => open(b, '/calculator/projection'),
   'schedule.png': async (b) => open(b, '/calculator/schedule'),
-  // Two homes: the example, and a $450,000 home with 20% down.
+  // Three homes: the example, a $450,000 home with 20% down, and a $380,000 home with the same $37,350 down.
   'compare.png': async (b) => {
     const page = await open(b, '/calculator/compare');
     await page.getByTestId('edit-home-b').check();
     await settled(page); // Home B's form fills in before it can be changed
     await page.getByTestId('home-price').fill('450000');
     await page.getByTestId('down-payment').fill('90000');
+    await page.getByTestId('add-home').click();
+    await page.getByTestId('loan-heading').filter({ hasText: 'Home C' }).waitFor(); // the new home's form, before typing
+    await page.getByTestId('home-price').fill('380000');
+    await page.getByTestId('home-price').blur(); // formatted, as it shows once typed
+    await page.mouse.move(0, 0);
     await settled(page);
     return page;
   },

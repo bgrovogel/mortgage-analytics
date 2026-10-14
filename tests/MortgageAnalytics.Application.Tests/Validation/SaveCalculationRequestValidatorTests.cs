@@ -97,23 +97,41 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
 
     [Test]
     public void TwoHomes_CanBeSavedAsOneComparison() =>
-        AssertValid(new SaveCalculationRequest { Name = "Oak St or Elm St", Inputs = A.Request.Build(), SecondHome = A.Request.Build() with { HomePrice = 450_000m } },
-            "a comparison is the calculator's inputs plus a second home's");
+        AssertValid(new SaveCalculationRequest { Name = "Oak St or Elm St", Inputs = A.Request.Build(), OtherHomes = [A.Request.Build() with { HomePrice = 450_000m }] },
+            "a comparison is the calculator's inputs plus another home's");
 
     [Test]
-    public void ASecondHomeAlone_IsRejected() =>
-        AssertErrorMessage(new SaveCalculationRequest { Name = "Half", SecondHome = A.Request.Build() }, "SecondHome",
-            "A second home is compared with the calculator inputs: include those too.", "there is nothing to compare it with");
+    public void FourHomes_CanBeSavedAsOneComparison() =>
+        AssertValid(new SaveCalculationRequest
+        {
+            Name = "Four streets", Inputs = A.Request.Build(),
+            OtherHomes = [A.Request.Build() with { HomePrice = 400_000m }, A.Request.Build() with { HomePrice = 450_000m }, A.Request.Build() with { HomePrice = 500_000m }],
+        }, "the calculator's inputs and three more");
 
     [Test]
-    public void ASecondHomeWithAnotherKind_IsRejected() =>
-        AssertErrorMessage(new SaveCalculationRequest { Name = "Mixed", Refinance = ARefinance(), SecondHome = A.Request.Build() }, "SecondHome",
-            "A second home is compared with the calculator inputs: include those too.", "a refinance has no house to compare");
+    public void FiveHomes_AreRejected() =>
+        AssertErrorMessage(new SaveCalculationRequest { Name = "Five", Inputs = A.Request.Build(), OtherHomes = [.. Enumerable.Repeat(A.Request.Build(), 4)] },
+            "OtherHomes", "Compare up to 4 homes: the calculator inputs and up to 3 more.", "the Compare tab holds four homes");
 
     [Test]
-    public void AnInvalidSecondHome_IsRejectedWithTheSameRulesAsTheCalculator() =>
-        AssertInvalid(new SaveCalculationRequest { Name = "Bad", Inputs = A.Request.Build(), SecondHome = A.Request.Build() with { HomePrice = 0 } },
-            "SecondHome.HomePrice", "each home must be one the calculator would accept; the error names the house");
+    public void NoOtherHomes_AreRejected() =>
+        AssertErrorMessage(new SaveCalculationRequest { Name = "One", Inputs = A.Request.Build(), OtherHomes = [] },
+            "OtherHomes", "Compare up to 4 homes: the calculator inputs and up to 3 more.", "an empty list compares nothing; leave it out to save a purchase");
+
+    [Test]
+    public void OtherHomesAlone_AreRejected() =>
+        AssertErrorMessage(new SaveCalculationRequest { Name = "Half", OtherHomes = [A.Request.Build()] }, "OtherHomes",
+            "Other homes are compared with the calculator inputs: include those too.", "there is nothing to compare them with");
+
+    [Test]
+    public void OtherHomesWithAnotherKind_AreRejected() =>
+        AssertErrorMessage(new SaveCalculationRequest { Name = "Mixed", Refinance = ARefinance(), OtherHomes = [A.Request.Build()] }, "OtherHomes",
+            "Other homes are compared with the calculator inputs: include those too.", "a refinance has no house to compare");
+
+    [Test]
+    public void AnInvalidOtherHome_IsRejectedWithTheSameRulesAsTheCalculator() =>
+        AssertInvalid(new SaveCalculationRequest { Name = "Bad", Inputs = A.Request.Build(), OtherHomes = [A.Request.Build(), A.Request.Build() with { HomePrice = 0 }] },
+            "OtherHomes[1].HomePrice", "each home must be one the calculator would accept; the error names the house");
 
     [Test]
     public void InvalidRefinanceInputs_AreRejectedWithTheRefinanceRules() =>

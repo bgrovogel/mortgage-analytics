@@ -23,7 +23,7 @@ describe('CalculationStores', () => {
   const saved = (kind: SavedCalculation['kind'], id: string): SavedCalculation => ({
     id, name: `${kind} ${id}`, kind, createdAt: '', updatedAt: '',
     inputs: kind === 'Purchase' || kind === 'HomeComparison' ? purchase : null,
-    secondHome: kind === 'HomeComparison' ? { ...purchase, homePrice: 450_000 } : null,
+    otherHomes: kind === 'HomeComparison' ? [{ ...purchase, homePrice: 450_000 }] : null,
     refinance: kind === 'Refinance' ? refinance : null,
     strategy: kind === 'Strategy' ? strategy : null,
   });

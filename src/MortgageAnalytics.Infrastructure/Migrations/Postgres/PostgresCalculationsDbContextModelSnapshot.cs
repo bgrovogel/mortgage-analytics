@@ -254,15 +254,15 @@ namespace MortgageAnalytics.Infrastructure.Migrations.Postgres
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("OtherHomes")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
                     b.Property<string>("Refinance")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SecondHome")
                         .HasColumnType("text");
 
                     b.Property<string>("Strategy")

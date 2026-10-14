@@ -2264,8 +2264,12 @@
           "inputs": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
-          "secondHome": {
-            "$ref": "#/components/schemas/AmortizationRequest"
+          "otherHomes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmortizationRequest"
+            },
+            "nullable": true
           },
           "refinance": {
             "$ref": "#/components/schemas/RefinanceRequest"
@@ -2292,8 +2296,8 @@
           "inputs",
           "kind",
           "name",
+          "otherHomes",
           "refinance",
-          "secondHome",
           "strategy",
           "updatedAt"
         ],
@@ -2313,8 +2317,12 @@
           "inputs": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
-          "secondHome": {
-            "$ref": "#/components/schemas/AmortizationRequest"
+          "otherHomes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmortizationRequest"
+            },
+            "nullable": true
           },
           "refinance": {
             "$ref": "#/components/schemas/RefinanceRequest"

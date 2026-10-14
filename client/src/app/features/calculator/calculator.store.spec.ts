@@ -48,7 +48,7 @@ describe('CalculatorStore', () => {
   });
 
   describe('saved calculations', () => {
-    const saved: SavedCalculation = { id: 'abc', name: 'Oak St', kind: 'Purchase', inputs: request(42), secondHome: null, refinance: null, strategy: null, createdAt: '', updatedAt: '' };
+    const saved: SavedCalculation = { id: 'abc', name: 'Oak St', kind: 'Purchase', inputs: request(42), otherHomes: null, refinance: null, strategy: null, createdAt: '', updatedAt: '' };
 
     it('is not linked to a saved calculation at first', () => {
       expect(store.saved()).toBeNull();

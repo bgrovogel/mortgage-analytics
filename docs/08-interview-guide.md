@@ -239,6 +239,17 @@ only *added* fields, which old saves load as defaults. `StoredFormatTests` loads
 format, with every option set, and checks every value comes back, so a rename fails CI and names the field. The
 URLs are versioned too (`/api/v1`).
 
+**What changed when Compare went from two homes to four?**
+The column, not the JSON inside it. A comparison stored its second home in a `SecondHome` column, so four homes meant
+a list: `OtherHomes`, a JSON array of one to three homes. EF Core generated a rename, which keeps the data but leaves
+an object where a list now belongs, so I added one line of SQL to the migration: wrap each saved second home in an
+array. The Down migration takes the first home back out. Each home in the array keeps its own `formatVersion`, so it
+upgrades exactly as a single save would. A test migrates an empty SQLite database to the migration before, writes a
+comparison the old way, migrates up and reads it back. Then it migrates down and checks the second home is still
+there. The same test runs on a real PostgreSQL in a container, because the Down SQL differs (`json_extract` against
+`jsonb -> 0`). On the client, the request became `homes: AmortizationRequest[]`. The table shows each figure's
+difference from Home A and shades the best home on each line.
+
 **How is one user kept from seeing another's data?**
 - The owner id comes from the session's claims, never from the request.
 - The repository filters **in the query** (`WHERE OwnerId = @user`), not after loading.
@@ -471,8 +482,9 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
 | Builder limit | The example, 9% down: **$12,450** (3%); with **$41,500** down (10%), **$24,900** (6%) |
+| Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,101 .NET · 791 Jest · 109 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,107 .NET · 802 Jest · 110 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

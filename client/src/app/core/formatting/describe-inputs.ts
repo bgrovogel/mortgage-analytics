@@ -27,12 +27,13 @@ export function suggestName(r: AmortizationRequest): string {
 
 /** "$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%": the price, down payment and rate of each. */
 export function describeComparison(r: HomeComparisonRequest): string {
-  return `${suggestName(r.first)} vs ${suggestName(r.second)}`;
+  return r.homes.map(suggestName).join(' vs ');
 }
 
-/** A starting name for a saved comparison, e.g. "$415,000 or $450,000 home". */
+/** A starting name for a saved comparison, e.g. "$415,000 or $450,000 home", or "$415,000, $450,000 or $380,000 home". */
 export function suggestComparisonName(r: HomeComparisonRequest): string {
-  return `${usd(r.first.homePrice)} or ${usd(r.second.homePrice)} home`;
+  const prices = r.homes.map((home) => usd(home.homePrice));
+  return `${prices.slice(0, -1).join(', ')} or ${prices[prices.length - 1]} home`;
 }
 
 /** "$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs". */

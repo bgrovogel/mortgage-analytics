@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.SavedCalculations;
 using Testcontainers.PostgreSql;
 
@@ -96,5 +100,38 @@ public class PostgresTests
         var found = await new SavedCalculationRepository(NewContext()).ListAsync("alice-id", "avenue", CancellationToken.None);
 
         Assert.That(found.Select(c => c.Name), Has.Member("Maple AVENUE"), "PostgreSQL compares case-sensitively unless told otherwise");
+    }
+
+    [Test]
+    public async Task ASavedSecondHome_BecomesTheOnlyOtherHome_AndComesBackOnTheWayDown()
+    {
+        // Back to before lists, a comparison saved the old way, then up again: the migration's own SQL moves it.
+        const string beforeLists = "20261014005039_PostgresAddHomeComparisons";
+        var id = Guid.CreateVersion7(TestClock.Now);
+        var second = A.Request.Build() with { HomePrice = 450_000m, DownPayment = 90_000m };
+        var format = new StoredJson<AmortizationRequest>();
+        var at = (long)new DateTimeOffsetToBinaryConverter().ConvertToProvider(TestClock.Now)!;
+        await using (var context = NewContext())
+        {
+            await context.GetService<IMigrator>().MigrateAsync(beforeLists);
+            await context.Database.ExecuteSqlAsync(
+                $"INSERT INTO \"SavedCalculations\" (\"Id\", \"OwnerId\", \"Name\", \"Inputs\", \"SecondHome\", \"CreatedAt\", \"UpdatedAt\") VALUES ({id}, 'alice-id', 'Oak St or Elm St', {format.Write(A.Request.Build())}, {format.Write(second)}, {at}, {at})");
+            await context.GetService<IMigrator>().MigrateAsync();
+        }
+
+        var found = await new SavedCalculationRepository(NewContext()).FindAsync("alice-id", id, CancellationToken.None);
+        string down;
+        await using (var context = NewContext())
+        {
+            await context.GetService<IMigrator>().MigrateAsync(beforeLists);
+            down = await context.Database.SqlQuery<string>($"SELECT \"SecondHome\" AS \"Value\" FROM \"SavedCalculations\" WHERE \"Id\" = {id}").SingleAsync();
+            await context.GetService<IMigrator>().MigrateAsync();
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found?.OtherHomes, Is.EqualTo(new[] { second }), "a list of one, every value kept");
+            Assert.That(format.Read(down), Is.EqualTo(second), "and one home again on the way down");
+        });
     }
 }

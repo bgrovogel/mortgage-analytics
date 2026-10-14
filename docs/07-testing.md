@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 2,000 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 2,020 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -14,12 +14,12 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 585 | NUnit | < 1 s |
-| Application | 360 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 40 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
+| Application | 363 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Infrastructure | 43 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 109 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 791 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 109 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 802 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 110 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -72,7 +72,9 @@ Take the ARM margin floor as an example of the order of work:
 - **The database provider:** SQLite by default, PostgreSQL by configuration with its own context and migrations
   (which match the model too), the signing-keys table, and no app backups on PostgreSQL.
 - **On a real PostgreSQL** (`[Category("Postgres")]`, Testcontainers): the migrations, a round trip, owners,
-  the cascade and a case-insensitive search. They need Docker, so they run locally, not in CI:
+  the cascade, a case-insensitive search, and moving a saved second home into the list of other homes and back.
+- **The data a migration moves:** `HomeComparisonMigrationTests` migrates an empty SQLite database to the migration
+  before, saves a comparison the old way, then migrates up and down, checking the home both ways. They need Docker, so they run locally, not in CI:
   `dotnet test --filter TestCategory=Postgres`.
 
 **API integration**

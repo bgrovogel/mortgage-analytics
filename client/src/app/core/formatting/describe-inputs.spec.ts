@@ -37,16 +37,20 @@ describe('describeInputs', () => {
   });
 });
 
-describe('a comparison of two homes', () => {
+describe('a comparison of homes', () => {
   const first = { homePrice: 415_000, downPayment: 37_350, annualInterestRate: 6.25, termInMonths: 360 } as AmortizationRequest;
   const second = { homePrice: 450_000, downPayment: 90_000, annualInterestRate: 6, termInMonths: 360 } as AmortizationRequest;
+  const third = { homePrice: 380_000, downPayment: 76_000, annualInterestRate: 6.5, termInMonths: 360 } as AmortizationRequest;
 
-  it('sums up both homes in one line: what most often tells them apart', () => {
-    expect(describeComparison({ first, second })).toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%');
+  it('sums up every home in one line: what most often tells them apart', () => {
+    expect(describeComparison({ homes: [first, second] })).toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%');
+    expect(describeComparison({ homes: [first, second, third] }))
+      .toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6% vs $380,000 home, 20% down at 6.5%');
   });
 
-  it('suggests a name from the two prices', () => {
-    expect(suggestComparisonName({ first, second })).toBe('$415,000 or $450,000 home');
+  it('suggests a name from the prices', () => {
+    expect(suggestComparisonName({ homes: [first, second] })).toBe('$415,000 or $450,000 home');
+    expect(suggestComparisonName({ homes: [first, second, third] })).toBe('$415,000, $450,000 or $380,000 home');
   });
 });
 

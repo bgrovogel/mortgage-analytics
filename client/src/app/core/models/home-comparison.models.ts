@@ -1,16 +1,20 @@
 import { AmortizationRequest, AmortizationResponse } from './amortization.models';
 
+/** The most homes compared at once: Home A and up to three more. */
+export const MAX_HOMES = 4;
+
+/** "Home A", "Home B"…: a home's name by its place in the comparison. */
+export const homeName = (index: number) => `Home ${String.fromCharCode(65 + index)}`;
+
 /**
- * Two homes compared, each a full calculator request: any input can differ. The API calculates each on its own;
- * saved, the first is a calculation's `inputs` and the second its `secondHome`.
+ * Two to four homes compared, each a full calculator request: any input can differ. The API calculates each on its
+ * own; saved, the first is a calculation's `inputs` and the rest its `otherHomes`.
  */
 export interface HomeComparisonRequest {
-  first: AmortizationRequest;
-  second: AmortizationRequest;
+  homes: AmortizationRequest[];
 }
 
-/** The calculator's results for each home. */
+/** The calculator's results for each home, in the same order. */
 export interface HomeComparisonResponse {
-  first: AmortizationResponse;
-  second: AmortizationResponse;
+  homes: AmortizationResponse[];
 }

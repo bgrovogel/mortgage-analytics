@@ -74,7 +74,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
             OwnerId = ownerId,
             Name = request.Name.Trim(),
             Inputs = request.Inputs,
-            SecondHome = request.SecondHome,
+            OtherHomes = request.OtherHomes,
             Refinance = request.Refinance,
             Strategy = request.Strategy,
             CreatedAt = now,
@@ -94,7 +94,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
 
         calculation.Name = request.Name.Trim();
         calculation.Inputs = request.Inputs;
-        calculation.SecondHome = request.SecondHome;
+        calculation.OtherHomes = request.OtherHomes;
         calculation.Refinance = request.Refinance;
         calculation.Strategy = request.Strategy;
         calculation.UpdatedAt = clock.GetUtcNow();
@@ -113,7 +113,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
         Name = calculation.Name,
         Kind = calculation.Kind,
         Inputs = calculation.Inputs,
-        SecondHome = calculation.SecondHome,
+        OtherHomes = calculation.OtherHomes,
         Refinance = calculation.Refinance,
         Strategy = calculation.Strategy,
         CreatedAt = calculation.CreatedAt,

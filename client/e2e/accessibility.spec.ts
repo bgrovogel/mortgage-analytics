@@ -48,6 +48,12 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByTestId('edit-home-b').check();
       await settled(page);
       expect(await violations(page), "Home B's form breaks no accessibility rule").toEqual([]);
+      // Four homes: the widest table, and the switch with Remove.
+      await page.getByTestId('add-home').click();
+      await page.getByTestId('add-home').click();
+      await expect(page.getByTestId('loan-heading'), 'the form edits Home D').toHaveText('Home D');
+      await settled(page);
+      expect(await violations(page), 'four homes side by side break no accessibility rule').toEqual([]);
     });
 
     test('the calculator with a buydown, then an adjustable rate: each rate plan', async ({ page }) => {

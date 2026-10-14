@@ -111,11 +111,13 @@ test.describe('History', () => {
     await expect(page.getByTestId('save-open'), 'Save can now update it in place').toBeEnabled();
   });
 
-  test('saves two homes compared, and reopens both on the Compare tab', async ({ signedIn: calculator, page }) => {
-    const name = `Oak or Elm ${tag}`;
+  test('saves three homes compared, and reopens them all on the Compare tab', async ({ signedIn: calculator, page }) => {
+    const name = `Oak, Elm or Ash ${tag}`;
     await calculator.showResults('compare');
     await calculator.editHome('B');
     await calculator.set('home-price', 450_000);
+    await calculator.addHome('C');
+    await calculator.set('home-price', 380_000);
     await calculator.calculate();
     await calculator.saveAs(name);
 
@@ -124,7 +126,7 @@ test.describe('History', () => {
     await history.openFromNav();
     await history.searchFor(tag);
     await expect(history.item(name), 'it is listed as a comparison of homes').toContainText('Compare homes');
-    await expect(history.item(name), 'with both homes summed up').toContainText('vs $450,000 home');
+    await expect(history.item(name), 'with every home summed up').toContainText('vs $450,000 home, 8.3% down at 6.25% vs $380,000 home');
 
     await history.act(name, 'Open');
 
@@ -132,5 +134,7 @@ test.describe('History', () => {
     await expect(calculator.field('home-price'), 'Home A is in the form').toHaveValue('415,000');
     await calculator.editHome('B');
     await expect(calculator.field('home-price'), 'and Home B is kept beside it').toHaveValue('450,000');
+    await calculator.editHome('C');
+    await expect(calculator.field('home-price'), 'and Home C').toHaveValue('380,000');
   });
 });

@@ -46,12 +46,34 @@ tbody th {
   }
 }
 
-.difference {
+// Three or four homes: each measured against Home A, under the cheapest.
+.each {
+  margin: -0.4rem 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
+// A figure's difference from Home A, under it.
 .under {
-  display: none;
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+// The best home on a line where less (or more) is better.
+td.best {
+  background: var(--positive-soft);
+}
+
+// The row names stay put while a narrow screen scrolls the homes under them.
+tbody th,
+thead td {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface-1);
 }
 
 .note {
@@ -60,7 +82,7 @@ tbody th {
   color: var(--text-muted);
 }
 
-// On a phone, three columns of dollars fit once the padding is tighter and the row names may wrap.
+// On a phone, two or three homes fit once the padding is tighter and the row names may wrap; four scroll sideways.
 @media (max-width: 560px) {
   table {
     font-size: 0.82rem;
@@ -69,16 +91,6 @@ tbody th {
   th,
   td {
     padding: 0.5rem 0.35rem;
-  }
-
-  .difference {
-    display: none;
-  }
-
-  .under {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted);
   }
 
   tbody th {

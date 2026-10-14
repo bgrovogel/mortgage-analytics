@@ -57,7 +57,7 @@ describe('CalculatorPageComponent', () => {
   });
 
   describe('comparing two homes', () => {
-    const switchTo = (house: 'a' | 'b') => {
+    const switchTo = (house: 'a' | 'b' | 'c' | 'd') => {
       el(`[data-testid="edit-home-${house}"]`)!.dispatchEvent(new Event('change'));
       harness.detectChanges();
       jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -82,7 +82,7 @@ describe('CalculatorPageComponent', () => {
 
       expect(el('[data-testid="house-switch"]')).not.toBeNull();
       expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home A');
-      expect(comparison.request()!.second).toEqual(comparison.request()!.first);
+      expect(comparison.request()!.homes).toEqual([comparison.request()!.homes[0], comparison.request()!.homes[0]]);
     });
 
     it('edits Home B in the same place, leaving Home A as it was, and only Home A is the shared loan', async () => {
@@ -95,17 +95,58 @@ describe('CalculatorPageComponent', () => {
       type(homePrice(), '450000');
 
       const comparison = TestBed.inject(ComparisonStore).request()!;
-      expect(comparison.second.homePrice).toBe(450_000);
-      expect(comparison.first).toBe(first);
+      expect(comparison.homes[1].homePrice).toBe(450_000);
+      expect(comparison.homes[0]).toBe(first);
       expect(TestBed.inject(CalculatorStore).request()).toBe(first);
 
       switchTo('a');
       expect(homePrice().value).toBe(first!.homePrice.toLocaleString('en-US'));
     });
 
+    it('adds homes up to four, each a copy of Home A to edit, then offers no more', async () => {
+      await open('/calculator/compare');
+      const click = (id: string) => {
+        (el(`[data-testid="${id}"]`) as HTMLButtonElement).click();
+        harness.detectChanges();
+        jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+        harness.detectChanges();
+      };
+
+      click('add-home');
+      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home C');
+      type(homePrice(), '380000');
+      click('add-home');
+
+      const comparison = TestBed.inject(ComparisonStore).request()!;
+      expect(comparison.homes.map((h) => h.homePrice)).toEqual([415_000, 415_000, 380_000, 415_000]);
+      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home D');
+      expect(el('[data-testid="edit-home-d"]')).not.toBeNull();
+      expect(el('[data-testid="add-home"]')).toBeNull();
+    });
+
+    it('removes the home being edited, never Home A, and keeps at least two', async () => {
+      await open('/calculator/compare');
+      expect(el('[data-testid="remove-home"]')).toBeNull();
+      (el('[data-testid="add-home"]') as HTMLButtonElement).click();
+      harness.detectChanges();
+      type(homePrice(), '380000');
+      expect(el('[data-testid="remove-home"]')!.textContent?.trim()).toBe('Remove Home C');
+
+      (el('[data-testid="remove-home"]') as HTMLButtonElement).click();
+      harness.detectChanges();
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      harness.detectChanges();
+
+      expect(TestBed.inject(ComparisonStore).request()!.homes.map((h) => h.homePrice)).toEqual([415_000, 415_000]);
+      expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home B');
+      expect(el('[data-testid="remove-home"]')).toBeNull();
+      switchTo('a');
+      expect(el('[data-testid="remove-home"]')).toBeNull();
+    });
+
     it('saves the comparison on the Compare tab, and the purchase on the others', async () => {
       await open('/calculator/compare');
-      expect(TestBed.inject(ComparisonStore).savePayload()).toEqual(expect.objectContaining({ secondHome: expect.anything() }));
+      expect(TestBed.inject(ComparisonStore).savePayload()).toEqual(expect.objectContaining({ otherHomes: [expect.anything()] }));
       expect(el('app-compare-tab')).not.toBeNull();
     });
   });

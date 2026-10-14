@@ -81,32 +81,32 @@ public class SavedCalculationServiceTests
     }
 
     [Test]
-    public async Task Save_KeepsBothHomesOfAComparison_AsAKindOfItsOwn()
+    public async Task Save_KeepsEveryHomeOfAComparison_AsAKindOfItsOwn()
     {
-        var second = A.Request.Build() with { HomePrice = 450_000m };
+        IReadOnlyList<AmortizationRequest> others = [A.Request.Build() with { HomePrice = 450_000m }, A.Request.Build() with { HomePrice = 380_000m }];
 
-        var saved = await _service.SaveAsync(Owner, Request() with { SecondHome = second }, CancellationToken.None);
+        var saved = await _service.SaveAsync(Owner, Request() with { OtherHomes = others }, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
-            Assert.That(saved.Kind, Is.EqualTo(SavedCalculationKind.HomeComparison), "two homes make a comparison, not a purchase");
+            Assert.That(saved.Kind, Is.EqualTo(SavedCalculationKind.HomeComparison), "several homes make a comparison, not a purchase");
             Assert.That(saved.Inputs?.HomePrice, Is.EqualTo(400_000m), "the first home is the calculator's inputs");
-            Assert.That(saved.SecondHome, Is.SameAs(second), "and the second is kept beside them");
+            Assert.That(saved.OtherHomes, Is.SameAs(others), "and the others are kept beside them");
         });
     }
 
     [Test]
-    public async Task Update_ReplacesTheSecondHome_OrDropsIt()
+    public async Task Update_ReplacesTheOtherHomes_OrDropsThem()
     {
         var stored = Stored();
-        stored.SecondHome = A.Request.Build();
+        stored.OtherHomes = [A.Request.Build()];
         _repository.FindAsync(Owner, stored.Id, Arg.Any<CancellationToken>()).Returns(stored);
 
         var response = await _service.UpdateAsync(Owner, stored.Id, Request(), CancellationToken.None);
 
         Assert.Multiple(() =>
         {
-            Assert.That(response?.SecondHome, Is.Null, "saved over with one home, it is a purchase again");
+            Assert.That(response?.OtherHomes, Is.Null, "saved over with one home, it is a purchase again");
             Assert.That(response?.Kind, Is.EqualTo(SavedCalculationKind.Purchase), "and is listed as one");
         });
     }

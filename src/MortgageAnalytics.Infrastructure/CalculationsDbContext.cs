@@ -40,10 +40,10 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
 
         // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
         // field, and the contracts can grow without a schema change. A row holds one kind; the others are null
-        // (a home comparison is the calculator's inputs and a second home, of the same shape).
+        // (a home comparison is the calculator's inputs and a list of other homes, of the same shape).
         // Each is stamped with its format version and upgraded as it loads (StoredJson).
         calculation.Property(c => c.Inputs).HasConversion(JsonConverter<AmortizationRequest>(), JsonComparer<AmortizationRequest>());
-        calculation.Property(c => c.SecondHome).HasConversion(JsonConverter<AmortizationRequest>(), JsonComparer<AmortizationRequest>());
+        calculation.Property(c => c.OtherHomes).HasConversion(JsonListConverter<AmortizationRequest>(), JsonComparer<IReadOnlyList<AmortizationRequest>>());
         calculation.Property(c => c.Refinance).HasConversion(JsonConverter<RefinanceRequest>(), JsonComparer<RefinanceRequest>());
         calculation.Property(c => c.Strategy).HasConversion(JsonConverter<StrategyRequest>(), JsonComparer<StrategyRequest>());
         calculation.Ignore(c => c.Kind);
@@ -61,6 +61,15 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
     {
         var format = new StoredJson<T>();
         return new(value => value == null ? null : format.Write(value), json => json == null ? null : format.Read(json));
+    }
+
+    // A list is a JSON array of saves, each stamped with its own format version, so each upgrades as a single save would.
+    private static ValueConverter<IReadOnlyList<T>?, string?> JsonListConverter<T>() where T : class
+    {
+        var format = new StoredJson<T>();
+        return new(
+            value => value == null ? null : StoredJson.WriteList(value, format),
+            json => json == null ? null : StoredJson.ReadList(json, format));
     }
 
     // Compares the JSON, so replacing the inputs with an equal copy is not seen as a change.

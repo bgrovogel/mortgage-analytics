@@ -173,20 +173,29 @@ all of it.
   The year starts where the loan is now; pick another, or click the chart.
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.
-- **Compare:** two homes side by side. **Home A** is the loan in the form; **Home B** starts as a copy of it, and a
-  switch above the form edits either one, so any input can differ: price, down payment, rate, loan type, taxes,
-  closing costs. One line sums up what Home B costs more or less each month, at closing, and over the first 5 years;
-  a table shows each home's price, down payment, loan, rate, first payment (principal and interest, and housing
-  costs), cash to close, when mortgage insurance ends, when it is paid off, the interest over the loan, the **cost of
-  the first 5 years** (interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what builds
-  no equity), and the equity after 5 years, with the difference beside each amount. Only Home A is the shared loan.
+- **Compare:** up to **four homes** side by side. **Home A** is the loan in the form; **Home B** starts as a copy of
+  it, and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
+  input can differ: price, down payment, rate, loan type, taxes, closing costs. **Remove** takes out the home being
+  edited, down to two. A table shows each home's price, down payment, loan, rate, first payment (principal and
+  interest, and housing costs), cash to close, when mortgage insurance ends, when it is paid off, the interest over
+  the loan, the **cost of the first 5 years** (interest, taxes, insurance, mortgage insurance and dues, plus the
+  closing costs: what builds no equity), and the equity after 5 years.
+  - **Differences:** under each figure is its difference from Home A.
+  - **The best home on each line is shaded:** on the lines where less is better (the payment, cash to close,
+    interest, the 5-year cost) or more is (equity).
+  - **The summary:** with two homes, one line says what Home B costs more or less each month, at closing and over
+    the first 5 years. With more, it names the home that costs the least over the first 5 years, then has the same
+    line for each home against Home A.
+  - **On a phone,** three or four homes scroll sideways under the row names, which stay put.
+
+  Only Home A is the shared loan.
 
 <p>
   <img src="images/projection.png" alt="The Projection tab: each cost in year 1, through year 1 and over all 30 years, above the yearly costs as stacked areas" width="49%" />
   <img src="images/schedule.png" alt="The Schedule tab: lifetime totals for every cost, then one row per payment with principal, interest, extra, housing costs and balance" width="49%" />
 </p>
 
-![The Compare tab: the example home against a $450,000 home with 20% down, which costs $239.78 a month less but needs $52,683 more at closing](images/compare.png)
+![The Compare tab with three homes: the example, a $450,000 home with 20% down and a $380,000 home; the $380,000 home costs the least over the first 5 years, and the best on each line is shaded](images/compare.png)
 
 ---
 
@@ -269,7 +278,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 
 - **Sign up** with an email and a password, and confirm the email from the link sent to it. A forgotten password is
   reset by email.
-- **Save** any calculation, two homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
+- **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **History** lists them newest first, filtered by kind or searched by name. Open one on its own page (every number
   is restored), rename it, or delete it. Each person sees only their own.
 

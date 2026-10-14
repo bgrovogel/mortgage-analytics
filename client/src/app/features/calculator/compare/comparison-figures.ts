@@ -1,5 +1,6 @@
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { usd, usdCents } from '../../../core/formatting/format';
+import { homeName } from '../../../core/models/home-comparison.models';
 
 /** How many years the "first years" figures cover. */
 export const FIRST_YEARS = 5;
@@ -61,13 +62,26 @@ export function figuresOf(r: AmortizationResponse): HomeFigures {
   };
 }
 
-/** "Home B costs $357.83 a month more, needs $8,081 more at closing, and costs $11,500 more over the first 5 years." */
-export function comparisonHeadline(a: HomeFigures, b: HomeFigures): string {
+/**
+ * "Home B costs $357.83 a month more, needs $8,081 more at closing, and costs $11,500 more over the first 5 years.":
+ * another home measured against Home A.
+ */
+export function comparisonHeadline(a: HomeFigures, b: HomeFigures, name = homeName(1)): string {
   const by = (difference: number, format: (value: number) => string, unit = '') =>
     format(Math.abs(difference)) === format(0) ? `the same${unit}` : `${format(Math.abs(difference))}${unit} ${difference > 0 ? 'more' : 'less'}`;
   const parts = [`costs ${by(b.monthlyPayment - a.monthlyPayment, usdCents, ' a month')}`];
   if (a.cashToClose !== null && b.cashToClose !== null) parts.push(`needs ${by(b.cashToClose - a.cashToClose, usd)} at closing`);
   parts.push(`costs ${by(b.fiveYearCost - a.fiveYearCost, usd)} over the first ${FIRST_YEARS} years`);
   const last = parts.pop()!;
-  return `Home B ${parts.join(', ')}, and ${last}.`;
+  return `${name} ${parts.join(', ')}, and ${last}.`;
+}
+
+/** "Home C costs the least over the first 5 years: $7,250 less than Home B, the next.": the cheapest of several homes. */
+export function cheapestHome(homes: HomeFigures[]): string {
+  const [best, next] = homes.map((f, i) => ({ name: homeName(i), cost: f.fiveYearCost })).sort((x, y) => x.cost - y.cost);
+  const gap = Math.round(next.cost - best.cost);
+  const [first, second] = [best, next].map((h) => h.name).sort();
+  return gap === 0
+    ? `${first} and ${second} cost the least over the first ${FIRST_YEARS} years, the same.`
+    : `${best.name} costs the least over the first ${FIRST_YEARS} years: ${usd(gap)} less than ${next.name}, the next.`;
 }

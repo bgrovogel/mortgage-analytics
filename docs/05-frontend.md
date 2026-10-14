@@ -80,11 +80,13 @@ Each page's store (`CalculatorStore`, `ComparisonStore`, `RefinanceStore`, `Stra
 (`loanOf`). This is the **Template Method** pattern: the base class runs the algorithm, the subclasses fill in the
 steps.
 
-`ComparisonStore` is the calculator's Compare tab: its request is two calculator requests (`first`, `second`), and
-`send$` calculates each with the calculator's endpoint (`forkJoin`), so comparing needs nothing new from the API.
-Home A is the calculator's own loan, which the page passes on as it changes; opening a saved comparison puts Home A
-back in the calculator too. Saved, the two homes are `inputs` and `secondHome`. The page has one loan form at a
-time: the switch above it makes a new form for the other home from its store, so element ids stay unique.
+`ComparisonStore` is the calculator's Compare tab: its request is a list of two to four calculator requests
+(`homes`), and `send$` calculates each with the calculator's endpoint (`forkJoin`), so comparing needs nothing new
+from the API. Home A is the calculator's own loan, which the page passes on as it changes; opening a saved comparison
+puts Home A back in the calculator too. Saved, the first home is `inputs` and the rest `otherHomes`. The page has one
+loan form at a time: the switch above it makes a new form for the chosen home from its store (an `@for` over the one
+home being edited, tracked by it, so switching from Home B to Home C makes a new form), so element ids stay unique.
+**Add a home** appends a copy of Home A; **Remove** takes out the home being edited, never Home A, and keeps two.
 
 The stores are `providedIn: 'root'`, so they live for the whole app: leave a page and come back, and its
 numbers are still there.

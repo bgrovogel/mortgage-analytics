@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { money, monthOf, pct } from '../../../core/formatting/format';
+import { MAX_HOMES, homeName } from '../../../core/models/home-comparison.models';
 import { ComparisonStore } from '../comparison.store';
-import { FIRST_YEARS, HomeFigures, comparisonHeadline, figuresOf } from '../compare/comparison-figures';
+import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from '../compare/comparison-figures';
 
-/** One line of the comparison: how to show a figure, and whether the difference between the homes means anything. */
+/** One line of the comparison: how to show a figure, whether a difference between homes means anything, and which way is better. */
 interface Line {
   label: string;
   /** A smaller line under the label. */
@@ -11,6 +12,8 @@ interface Line {
   show: (f: HomeFigures) => string;
   /** The amount compared, when a difference is worth showing; dates and rates have none. */
   amount?: (f: HomeFigures) => number | null;
+  /** Whether less or more of the amount is better, for the lines where one is: the best home is marked. */
+  better?: 'lower' | 'higher';
 }
 
 const LINES: readonly Line[] = [
@@ -18,20 +21,29 @@ const LINES: readonly Line[] = [
   { label: 'Down payment', show: (f) => `${money(f.downPayment)} (${pct(f.downPaymentPercent, 1)})`, amount: (f) => f.downPayment },
   { label: 'Loan', show: (f) => money(f.loanAmount), amount: (f) => f.loanAmount },
   { label: 'Rate', show: (f) => pct(f.rate, 3) },
-  { label: 'Monthly payment', note: 'the first, with housing costs', show: (f) => money(f.monthlyPayment), amount: (f) => f.monthlyPayment },
-  { label: 'Principal & interest', show: (f) => money(f.principalAndInterest), amount: (f) => f.principalAndInterest },
-  { label: 'Housing costs', note: 'taxes, insurance, mortgage insurance, dues', show: (f) => money(f.housingCosts), amount: (f) => f.housingCosts },
-  { label: 'Cash to close', show: (f) => (f.cashToClose === null ? '—' : money(f.cashToClose)), amount: (f) => f.cashToClose },
+  {
+    label: 'Monthly payment', note: 'the first, with housing costs',
+    show: (f) => money(f.monthlyPayment), amount: (f) => f.monthlyPayment, better: 'lower',
+  },
+  { label: 'Principal & interest', show: (f) => money(f.principalAndInterest), amount: (f) => f.principalAndInterest, better: 'lower' },
+  {
+    label: 'Housing costs', note: 'taxes, insurance, mortgage insurance, dues',
+    show: (f) => money(f.housingCosts), amount: (f) => f.housingCosts, better: 'lower',
+  },
+  { label: 'Cash to close', show: (f) => (f.cashToClose === null ? '—' : money(f.cashToClose)), amount: (f) => f.cashToClose, better: 'lower' },
   { label: 'Mortgage insurance ends', show: (f) => (f.insuranceEnds ? monthOf(f.insuranceEnds) : 'None') },
   { label: 'Paid off', note: 'with extra payments', show: (f) => monthOf(f.paidOff) },
-  { label: 'Interest over the loan', note: 'with extra payments', show: (f) => money(Math.round(f.interest)), amount: (f) => Math.round(f.interest) },
+  {
+    label: 'Interest over the loan', note: 'with extra payments',
+    show: (f) => money(Math.round(f.interest)), amount: (f) => Math.round(f.interest), better: 'lower',
+  },
   {
     label: `Cost of the first ${FIRST_YEARS} years`, note: 'what builds no equity',
-    show: (f) => money(Math.round(f.fiveYearCost)), amount: (f) => Math.round(f.fiveYearCost),
+    show: (f) => money(Math.round(f.fiveYearCost)), amount: (f) => Math.round(f.fiveYearCost), better: 'lower',
   },
   {
     label: `Equity after ${FIRST_YEARS} years`, note: 'value less what is owed',
-    show: (f) => money(Math.round(f.equityAfterFiveYears)), amount: (f) => Math.round(f.equityAfterFiveYears),
+    show: (f) => money(Math.round(f.equityAfterFiveYears)), amount: (f) => Math.round(f.equityAfterFiveYears), better: 'higher',
   },
 ];
 
@@ -41,38 +53,56 @@ function signedMoney(difference: number): string {
   return rounded === 0 ? '' : `${rounded > 0 ? '+' : '−'}${money(Math.abs(rounded))}`;
 }
 
+/** One row of the table: each home's figure, its difference from Home A, and whether it is the best. */
+interface Row {
+  line: Line;
+  cells: { value: string; difference: string; best: boolean }[];
+}
+
 /**
- * Two homes side by side: the one in the form (Home A) and a second (Home B), each any loan the calculator takes.
- * One line sums up what Home B costs more or less; the table shows each figure and the difference.
+ * Two to four homes side by side: the one in the form (Home A) and the others, each any loan the calculator takes.
+ * Every figure of another home has its difference from Home A under it, and on the lines where less (or more) is
+ * better, the best home is marked. Two homes are summed up in one line; more in a line each, after the cheapest.
  */
 @Component({
   selector: 'app-compare-tab',
   template: `
-    @if (figures(); as f) {
+    @if (figures(); as homes) {
       <section class="panel compare">
         <p class="headline" data-testid="compare-headline">{{ headline() }}</p>
-        <div class="table-wrap">
+        @if (homes.length > 2) {
+          <ul class="each" data-testid="compare-each">
+            @for (sentence of eachAgainstA(); track $index) {
+              <li>{{ sentence }}</li>
+            }
+          </ul>
+        }
+        <div class="table-wrap" tabindex="0" aria-label="The homes side by side">
           <table data-testid="compare-table">
             <thead>
-              <tr><td></td><th scope="col">Home A</th><th scope="col">Home B</th><th scope="col" class="difference">Difference</th></tr>
+              <tr>
+                <td></td>
+                @for (f of homes; track $index) {
+                  <th scope="col">{{ nameOf($index) }}</th>
+                }
+              </tr>
             </thead>
             <tbody>
-              @for (line of lines; track line.label) {
+              @for (row of rows(); track row.line.label) {
                 <tr>
-                  <th scope="row">{{ line.label }}@if (line.note) {<small>{{ line.note }}</small>}</th>
-                  <td>{{ line.show(f.a) }}</td>
-                  <!-- A phone has no room for the Difference column: there it goes under Home B's figure. -->
-                  @let gap = difference(line, f.a, f.b);
-                  <td>{{ line.show(f.b) }}@if (gap) {<small class="under">{{ gap }}</small>}</td>
-                  <td class="difference">{{ gap }}</td>
+                  <th scope="row">{{ row.line.label }}@if (row.line.note) {<small>{{ row.line.note }}</small>}</th>
+                  @for (cell of row.cells; track $index) {
+                    <td [class.best]="cell.best">{{ cell.value }} @if (cell.difference) {<small class="under">{{ cell.difference }}</small>}</td>
+                  }
                 </tr>
               }
             </tbody>
           </table>
         </div>
         <p class="note">
-          Edit either home with the switch above the form. The cost of the first {{ years }} years is interest, taxes,
-          insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.
+          Edit any home with the switch above the form, where you can add one, up to {{ maxHomes }}. Under each figure is
+          its difference from Home A, and the best on each line is shaded. The cost of the first {{ years }} years is
+          interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.
         </p>
       </section>
     }
@@ -83,24 +113,46 @@ function signedMoney(difference: number): string {
 export class CompareTabComponent {
   private readonly store = inject(ComparisonStore);
 
-  protected readonly lines = LINES;
   protected readonly years = FIRST_YEARS;
+  protected readonly maxHomes = MAX_HOMES;
+  protected readonly nameOf = homeName;
 
-  /** Each home's figures, once both are calculated. */
-  protected readonly figures = computed(() => {
-    const result = this.store.result();
-    return result ? { a: figuresOf(result.first), b: figuresOf(result.second) } : null;
-  });
+  /** Each home's figures, once all are calculated. */
+  protected readonly figures = computed(() => this.store.result()?.homes.map(figuresOf) ?? null);
 
+  /** Two homes: what Home B costs more or less. More: which costs the least over the first years. */
   protected readonly headline = computed(() => {
-    const f = this.figures();
-    return f ? comparisonHeadline(f.a, f.b) : '';
+    const homes = this.figures();
+    if (!homes || homes.length < 2) return '';
+    return homes.length === 2 ? comparisonHeadline(homes[0], homes[1]) : cheapestHome(homes);
   });
 
-  /** Home B less Home A, for the lines where that means something. */
-  protected difference(line: Line, a: HomeFigures, b: HomeFigures): string {
-    const first = line.amount?.(a);
-    const second = line.amount?.(b);
-    return first == null || second == null ? '' : signedMoney(second - first);
-  }
+  /** Each home after Home A, measured against it. */
+  protected readonly eachAgainstA = computed(() => {
+    const [a, ...others] = this.figures() ?? [];
+    return others.map((f, i) => comparisonHeadline(a, f, homeName(i + 1)));
+  });
+
+  protected readonly rows = computed<Row[]>(() => {
+    const homes = this.figures() ?? [];
+    return LINES.map((line) => {
+      const amounts = homes.map((f) => line.amount?.(f) ?? null);
+      const best = bestOf(amounts, line.better);
+      return {
+        line,
+        cells: homes.map((f, i) => ({
+          value: line.show(f),
+          difference: i === 0 || amounts[0] === null || amounts[i] === null ? '' : signedMoney(amounts[i]! - amounts[0]),
+          best: best !== null && amounts[i] === best,
+        })),
+      };
+    });
+  });
+}
+
+/** The best amount on a line where lower or higher is better, or null when there is no better or every home is level. */
+function bestOf(amounts: (number | null)[], better: Line['better']): number | null {
+  const known = amounts.filter((a): a is number => a !== null);
+  if (!better || known.length < 2 || known.every((a) => a === known[0])) return null;
+  return better === 'lower' ? Math.min(...known) : Math.max(...known);
 }

@@ -1,6 +1,6 @@
 import { aHousingCosts, aPayment, aProjectionYear, aPurchase, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
 import { CashToClose } from '../../../core/models/amortization.models';
-import { comparisonHeadline, figuresOf } from './comparison-figures';
+import { cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
 
 describe('the figures a home is compared by', () => {
   const cash = (overrides: Partial<CashToClose> = {}) => ({
@@ -75,5 +75,26 @@ describe('the comparison in one line', () => {
   it('says when a figure is the same, and leaves out closing for a loan already being paid', () => {
     expect(comparisonHeadline(homeWith(3_000, null, 100_000), homeWith(3_000, null, 100_000)))
       .toBe('Home B costs the same a month, and costs the same over the first 5 years.');
+  });
+
+  it('names the home it compares with Home A', () => {
+    expect(comparisonHeadline(homeWith(3_000, null, 100_000), homeWith(3_100, null, 104_000), 'Home D'))
+      .toBe('Home D costs $100.00 a month more, and costs $4,000 more over the first 5 years.');
+  });
+});
+
+describe('the cheapest of several homes', () => {
+  const costing = (fiveYearCost: number) => ({ fiveYearCost }) as ReturnType<typeof figuresOf>;
+
+  it('names the home that costs the least over five years, and by how much it beats the next', () => {
+    expect(cheapestHome([costing(120_000), costing(118_500.4), costing(111_250)]))
+      .toBe('Home C costs the least over the first 5 years: $7,250 less than Home B, the next.');
+    expect(cheapestHome([costing(100_000), costing(130_000), costing(110_000), costing(105_000)]))
+      .toBe('Home A costs the least over the first 5 years: $5,000 less than Home D, the next.');
+  });
+
+  it('says when the two cheapest cost the same', () => {
+    expect(cheapestHome([costing(120_000), costing(110_000), costing(110_000.2)]))
+      .toBe('Home B and Home C cost the least over the first 5 years, the same.');
   });
 });

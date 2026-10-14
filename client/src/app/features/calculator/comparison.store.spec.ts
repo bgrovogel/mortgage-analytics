@@ -12,6 +12,7 @@ import { ComparisonStore } from './comparison.store';
 describe('ComparisonStore', () => {
   const first = { homePrice: 415_000, downPayment: 37_350, annualInterestRate: 6.25, termInMonths: 360 } as AmortizationRequest;
   const second = { homePrice: 450_000, downPayment: 90_000, annualInterestRate: 6, termInMonths: 360 } as AmortizationRequest;
+  const third = { homePrice: 380_000, downPayment: 76_000, annualInterestRate: 6.5, termInMonths: 360 } as AmortizationRequest;
   const responseFor = (r: AmortizationRequest) => aResponse({ savings: aSavings({ netSavings: r.homePrice }) });
 
   let store: ComparisonStore;
@@ -25,22 +26,21 @@ describe('ComparisonStore', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('calculates each home on its own, and keeps the two results side by side', () => {
-    store.send({ first, second });
+  it('calculates each home on its own, and keeps the results side by side, in order', () => {
+    store.send({ homes: [first, second, third] });
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
 
-    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second]);
-    expect(store.result()?.first.savings.netSavings).toBe(415_000);
-    expect(store.result()?.second.savings.netSavings).toBe(450_000);
+    expect(calculate.mock.calls.map(([r]) => r)).toEqual([first, second, third]);
+    expect(store.result()?.homes.map((h) => h.savings.netSavings)).toEqual([415_000, 450_000, 380_000]);
   });
 
-  it('saves both homes as one comparison, named and described by them', () => {
-    store.send({ first, second });
+  it('saves the homes as one comparison, named and described by them', () => {
+    store.send({ homes: [first, second, third] });
 
     expect(store.kind).toBe('HomeComparison');
-    expect(store.savePayload()).toEqual({ inputs: first, secondHome: second });
-    expect(store.suggestedName()).toBe('$415,000 or $450,000 home');
-    expect(store.describe({ first, second })).toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%');
+    expect(store.savePayload()).toEqual({ inputs: first, otherHomes: [second, third] });
+    expect(store.suggestedName()).toBe('$415,000, $450,000 or $380,000 home');
+    expect(store.describe({ homes: [first, second] })).toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6%');
   });
 
   it('leaves another kind of saved calculation, and the calculator, alone', () => {
@@ -48,7 +48,7 @@ describe('ComparisonStore', () => {
     calculator.linkTo({ id: 'p1', name: 'A purchase' });
 
     store.open({
-      id: 'p2', name: 'Oak St', kind: 'Purchase', inputs: first, secondHome: null, refinance: null, strategy: null, createdAt: '', updatedAt: '',
+      id: 'p2', name: 'Oak St', kind: 'Purchase', inputs: first, otherHomes: null, refinance: null, strategy: null, createdAt: '', updatedAt: '',
     });
 
     expect(store.request()).toBeNull();
@@ -60,7 +60,7 @@ describe('ComparisonStore', () => {
     const calculator = TestBed.inject(CalculatorStore);
     calculator.linkTo({ id: 'p1', name: 'A purchase' });
     const saved: SavedCalculation = {
-      id: 'c1', name: 'Oak or Elm', kind: 'HomeComparison', inputs: first, secondHome: second, refinance: null, strategy: null,
+      id: 'c1', name: 'Oak or Elm', kind: 'HomeComparison', inputs: first, otherHomes: [second, third], refinance: null, strategy: null,
       createdAt: '', updatedAt: '',
     };
 
@@ -69,7 +69,7 @@ describe('ComparisonStore', () => {
 
     expect(store.route).toEqual(['/calculator', 'compare']);
     expect(store.saved()).toEqual({ id: 'c1', name: 'Oak or Elm' });
-    expect(store.request()).toEqual({ first, second });
+    expect(store.request()).toEqual({ homes: [first, second, third] });
     expect(calculator.request()).toBe(first);
     // The calculator now shows the comparison's first home: Save there makes a new purchase, not a change to another.
     expect(calculator.saved()).toBeNull();

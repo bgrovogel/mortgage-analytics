@@ -107,25 +107,26 @@ public class SavedCalculationApiTests : ApiTestBase
     }
 
     [Test]
-    public async Task TwoHomes_AreSavedAsOneComparison_AndEachCalculatesAgain()
+    public async Task SeveralHomes_AreSavedAsOneComparison_AndEachCalculatesAgain()
     {
         var saved = await ReadJsonAsync(await Me.PostAsJsonAsync(CalculationsUrl, new
         {
             name = UniqueName("Oak St or Elm St"),
             inputs = A.Request.WithHomePrice(415_000m).Build(),
-            secondHome = A.Request.WithHomePrice(450_000m).Build(),
+            otherHomes = new[] { A.Request.WithHomePrice(450_000m).Build(), A.Request.WithHomePrice(380_000m).Build() },
         }));
 
         var fetched = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{saved.GetProperty("id").GetGuid()}"));
         var second = await Me.PostAsync("/api/v1/amortization/calculate",
-            new StringContent(fetched.GetProperty("secondHome").GetRawText(), System.Text.Encoding.UTF8, "application/json"));
+            new StringContent(fetched.GetProperty("otherHomes")[1].GetRawText(), System.Text.Encoding.UTF8, "application/json"));
 
         Assert.Multiple(() =>
         {
             Assert.That(fetched.GetProperty("kind").GetString(), Is.EqualTo("HomeComparison"), "the kind is a readable string");
             Assert.That(fetched.GetProperty("inputs").GetProperty("homePrice").GetDecimal(), Is.EqualTo(415_000m), "the first home is the inputs");
-            Assert.That(fetched.GetProperty("secondHome").GetProperty("homePrice").GetDecimal(), Is.EqualTo(450_000m), "the second is beside it");
-            Assert.That(second.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the second home can be posted straight to the calculator");
+            Assert.That(fetched.GetProperty("otherHomes").EnumerateArray().Select(h => h.GetProperty("homePrice").GetDecimal()),
+                Is.EqualTo(new[] { 450_000m, 380_000m }), "the others are beside it, in order");
+            Assert.That(second.StatusCode, Is.EqualTo(HttpStatusCode.OK), "any of them can be posted straight to the calculator");
         });
     }
 

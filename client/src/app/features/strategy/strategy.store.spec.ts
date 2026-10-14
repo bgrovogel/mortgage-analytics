@@ -13,7 +13,7 @@ describe('StrategyStore', () => {
     TestBed.configureTestingModule({ providers: [{ provide: StrategyApiService, useValue: { compare } }] });
     const store = TestBed.inject(StrategyStore);
     const strategy = { currentBalance: 1 } as StrategyRequest;
-    const base = { id: 's1', name: 'Pay off?', createdAt: '', updatedAt: '', inputs: null, secondHome: null, refinance: null };
+    const base = { id: 's1', name: 'Pay off?', createdAt: '', updatedAt: '', inputs: null, otherHomes: null, refinance: null };
 
     store.open({ ...base, kind: 'Refinance', strategy: null });
     expect(store.saved()).toBeNull();

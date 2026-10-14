@@ -203,6 +203,40 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.field('home-price'), 'Home A is as it was').toHaveValue('415,000');
   });
 
+  test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('compare');
+    await calculator.editHome('B');
+    await calculator.set('home-price', 450_000);
+    await calculator.set('down-payment', 90_000);
+    await calculator.addHome('C');
+    await calculator.set('home-price', 380_000);
+    await calculator.addHome('D');
+    await calculator.set('interest-rate', 5.75);
+    await calculator.calculate();
+
+    const table = page.getByTestId('compare-table');
+    await expect(table.locator('thead th'), 'a column for each home').toHaveText(['Home A', 'Home B', 'Home C', 'Home D']);
+    await expect(page.getByTestId('add-home'), 'four is the most').toBeHidden();
+    // Home C, $380,000 with the same $37,350 down, pays the least interest and nearly the least each month.
+    await expect(page.getByTestId('compare-headline'), 'the cheapest over five years')
+      .toHaveText('Home C costs the least over the first 5 years: $165 less than Home B, the next.');
+    await expect(page.getByTestId('compare-each').locator('li'), 'each measured against Home A').toHaveText([
+      'Home B costs $239.78 a month less, needs $52,683 more at closing, and costs $13,115 less over the first 5 years.',
+      'Home C costs $256.34 a month less, needs $169 less at closing, and costs $13,279 less over the first 5 years.',
+      'Home D costs $121.40 a month less, needs $78 less at closing, and costs $9,354 less over the first 5 years.',
+    ]);
+    await expect(table.locator('tr', { hasText: 'Monthly payment' }).locator('td.best'), 'the lowest payment is shaded, with its difference from Home A')
+      .toHaveText(['$2,845.85 −$256.34']);
+    await expect(table.locator('tr', { hasText: 'Equity after' }).locator('td.best'), 'and the most equity: Home B, with 20% down')
+      .toHaveText(['$233,466 +$59,674']);
+
+    await page.getByTestId('remove-home').click();
+    await expect(table.locator('thead th'), 'Home D is gone').toHaveText(['Home A', 'Home B', 'Home C']);
+    await expect(page.getByTestId('loan-heading'), 'and the form edits Home C').toHaveText('Home C');
+  });
+
   test('discount points: what they cost, when they pay for themselves, and their line in the cash to close', async ({ calculator, page }) => {
     // The reference loan, $200,000 at 6%, bought down with one point from 6.25% (tools/calculator-check).
     await calculator.fillLoan({ homePrice: 250_000, downPayment: 50_000, rate: 6, years: 30, firstPayment: '2036-01-01' });

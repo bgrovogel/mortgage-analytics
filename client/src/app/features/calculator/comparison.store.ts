@@ -9,9 +9,9 @@ import { SharedLoan } from '../../core/state/shared-loan.store';
 import { CalculatorStore, purchaseLoanOf } from './calculator.store';
 
 /**
- * Two homes compared on the calculator's Compare tab. The first home is the calculator's own loan; the second is
- * another full set of inputs. Each is calculated by the calculator's endpoint, so the comparison needs nothing new
- * from the API but a place to save the second home.
+ * Up to four homes compared on the calculator's Compare tab. The first home is the calculator's own loan; each other
+ * is a full set of inputs. Each is calculated by the calculator's endpoint, so the comparison needs nothing new from
+ * the API but a place to save the other homes.
  */
 @Injectable({ providedIn: 'root' })
 export class ComparisonStore extends CalculationStore<HomeComparisonRequest, HomeComparisonResponse> {
@@ -32,16 +32,16 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
   override open(calculation: SavedCalculation): void {
     if (calculation.kind !== this.kind) return;
     super.open(calculation);
-    this.calculator.send(this.inputsOf(calculation).first);
+    this.calculator.send(this.inputsOf(calculation).homes[0]);
     this.calculator.saved.set(null);
   }
 
   /** The first home's loan: the one the calculator shares with the other pages. */
   protected loanOf(request: HomeComparisonRequest): SharedLoan {
-    return purchaseLoanOf(request.first);
+    return purchaseLoanOf(request.homes[0]);
   }
 
   protected send$(request: HomeComparisonRequest) {
-    return forkJoin([this.api.calculate(request.first), this.api.calculate(request.second)]).pipe(map(([first, second]) => ({ first, second })));
+    return forkJoin(request.homes.map((home) => this.api.calculate(home))).pipe(map((homes) => ({ homes })));
   }
 }

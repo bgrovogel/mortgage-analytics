@@ -19,6 +19,14 @@ public static class StoredJson
 
     /// <summary>The same JSON shape the API uses, so a stored row reads like the request that created it.</summary>
     internal static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
+    /// <summary>A JSON array of <paramref name="values"/>, each written by <paramref name="format"/>.</summary>
+    public static string WriteList<T>(IEnumerable<T> values, StoredJson<T> format) where T : class =>
+        new JsonArray([.. values.Select(value => JsonNode.Parse(format.Write(value)))]).ToJsonString(Options);
+
+    /// <summary>Reads a JSON array of saves, each by <paramref name="format"/>, so each is upgraded on its own.</summary>
+    public static IReadOnlyList<T> ReadList<T>(string stored, StoredJson<T> format) where T : class =>
+        [.. JsonNode.Parse(stored)!.AsArray().Select(item => format.Read(item!.ToJsonString(Options)))];
 }
 
 /// <summary>
