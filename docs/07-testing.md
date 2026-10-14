@@ -18,7 +18,7 @@
 | Infrastructure | 38 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 107 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 739 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 743 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 105 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
@@ -256,7 +256,7 @@ gaps. The rules for when a page shares its loan with the others (the fix for the
 Playwright, so a wrong `<` passed every unit test; they now have their own, case by case. And the loan form's defaults,
 its blank-to-zero mapping and its restore were checked only through the whole component, so a lost default or a value
 dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks them directly, with a round trip through
-every unusual value. It now scores **97.8%**; the 45 survivors are almost all equivalent: caches that only save work,
+every unusual value. It now scores **97.9%**; the 44 survivors are almost all equivalent: caches that only save work,
 `emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
 the last payment is 0 either way).
 

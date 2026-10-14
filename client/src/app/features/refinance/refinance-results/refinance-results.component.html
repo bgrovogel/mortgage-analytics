@@ -53,7 +53,7 @@
     <h3>The clock restarts</h3>
     <p>
       Your loan has {{ months(r.current.numberOfPayments) }} left; the new one starts a fresh {{ months(r.refinanced.numberOfPayments) }}.
-      Early payments go mostly to interest again: {{ money(firstInterest()) }} of the first {{ money(r.refinanced.monthlyPayment) }} payment is interest.
+      Early payments go mostly to interest again: of the first payment's {{ money(r.refinanced.monthlyPayment) }} in principal and interest, {{ money(firstInterest()) }} is interest.
       @if (costsMore()) {
         That is how a lower rate and a lower payment can still cost more in the end.
       } @else {

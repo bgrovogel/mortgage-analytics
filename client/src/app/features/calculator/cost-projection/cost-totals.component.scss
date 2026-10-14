@@ -44,6 +44,11 @@ table {
   td {
     padding: 0.4rem 0 0.4rem 1rem;
     text-align: right;
+
+    // Year 1's three columns then fit a phone whole; only the fourth (from year 2) scrolls.
+    @media (max-width: 480px) {
+      padding-left: 0.375rem;
+    }
   }
 
   th:first-child {

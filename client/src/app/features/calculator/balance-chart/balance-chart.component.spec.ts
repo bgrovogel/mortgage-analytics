@@ -41,4 +41,16 @@ describe('BalanceChartComponent', () => {
     const shown = payments.map((_, i) => i).filter((i) => ticks.callback(i, i) !== null);
     expect(shown).toEqual([0, 60, 120, 180, 240, 300, 359]);
   });
+
+  it('draws one line when there are no extra payments: two would sit on top of each other under a legend for both', () => {
+    const charts = fakeCharts();
+    TestBed.configureTestingModule({ providers: [charts.provider] });
+    const fixture = TestBed.createComponent(BalanceChartComponent);
+    const payments = [aPayment(1, { remainingBalance: 2_000 }), aPayment(2, { remainingBalance: 0 })];
+    fixture.componentRef.setInput('result', aResponse({ baseline: aSchedule({ payments }), accelerated: aSchedule({ payments }) }));
+
+    fixture.detectChanges();
+
+    expect(charts.lastConfig().data.datasets.map((d) => [d.label, d.data])).toEqual([['Balance', [2_000, 0]]]);
+  });
 });

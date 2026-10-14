@@ -533,6 +533,17 @@ describe('LoanFormComponent', () => {
       expect(text('homestead-savings')).toBe('In year 1 the exemption saves $450 in tax.'); // 0.9% of the $50,000 exempt
     });
 
+    it('says nothing when the exemption saves nothing: a $0 exemption, as in the example', () => {
+      fixture.componentRef.setInput('firstYear', {
+        year: 1, startDate: '2026-11-01', marketValue: 415_000, assessedValue: 415_000,
+        schoolTaxableValue: null, localTaxableValue: null, mudTaxableValue: null, propertyTaxableValue: 415_000,
+        costs: { propertyTax: 0, schoolTax: 0, localTax: 0, mudTax: 0, pidAssessment: 0, homeownersInsurance: 0, mortgageInsurance: 0, hoaDues: 0, total: 0 },
+      });
+      fixture.detectChanges();
+
+      expect(text('homestead-savings')).toBeUndefined();
+    });
+
     it('reopens a calculation saved with separate taxes as separate taxes', () => {
       controls().taxMode.setValue('separate');
       const saved = last();

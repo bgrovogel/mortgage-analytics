@@ -80,7 +80,7 @@ describe('RefinanceResultsComponent', () => {
       render(aRefinanceResponse());
 
       expect(text('refi-restart')).toContain('The clock restarts');
-      expect(text('refi-restart')).toContain('$1,500 of the first $1,798.65 payment is interest');
+      expect(text('refi-restart')).toContain("of the first payment's $1,798.65 in principal and interest, $1,500 is interest");
       expect(text('refi-restart')).toContain('That is how a lower rate and a lower payment can still cost more in the end.');
     });
 

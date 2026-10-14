@@ -37,6 +37,15 @@ describe('strategy text', () => {
 
       expect(r.detail).toBe('Tied with Hybrid after 30 years, counting on your full 10% a year. Paying down debt carries no market risk, so it takes the tie.');
     });
+
+    it('says a tie with a hybrid that invests everything is no tie at all: they are the same plan', () => {
+      const r = recommendation(withRates(
+        { riskMargin: 0, riskAdjustedReturn: 10, hybridInvestPercent: 100 },
+        { lead: 0, recommended: 'InvestTheDifference', runnerUp: 'Hybrid' },
+      ));
+
+      expect(r.detail).toBe('Counting on your full 10% a year, the hybrid invests all your extra cash too, so the two are the same plan.');
+    });
   });
 
   describe('closeness', () => {

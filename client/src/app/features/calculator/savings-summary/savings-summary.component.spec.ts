@@ -228,6 +228,18 @@ describe('SavingsSummaryComponent', () => {
     expect(text('pmi-sooner')).toBe('5 yr 6 mo sooner, instead of Mar 2037'); // like the payoff tile beside it
   });
 
+  it('says insurance kept for the life of the loan ends with it, rather than repeating the payoff tile beside it', () => {
+    render(aResponse({
+      baseline: aSchedule({ mortgageInsuranceEndDate: '2056-10-01' }),
+      accelerated: aSchedule({ mortgageInsuranceEndDate: '2051-02-01' }),
+      savings: aSavings({ acceleratedPayoffDate: '2051-02-01', originalPayoffDate: '2056-10-01', paymentsSaved: 68 }),
+    }));
+
+    expect(text('pmi-end')).toBe('Feb 2051');
+    expect(text('pmi-sooner')).toBeUndefined();
+    expect(text('pmi-with-loan')).toBe('Lasts as long as the loan, so paying it off sooner ends it too');
+  });
+
   it("names an FHA loan's mortgage insurance MIP", () => {
     const component = render(aResponse({
       program: { type: 'Fha', upfrontFeePercent: 1.75, upfrontFee: 5_066.25, upfrontFeeFinanced: true, loanAmount: 294_566.25, annualMipPercent: 0.55, mipPayments: 360 },

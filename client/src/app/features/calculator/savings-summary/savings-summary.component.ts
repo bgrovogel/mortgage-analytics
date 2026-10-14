@@ -76,7 +76,10 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         <div class="tile">
           <dt>{{ insuranceName() }} ends</dt>
           <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
-          @if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
+          <!-- Kept for the life of the loan (FHA MIP with under 10% down), it ends with the payoff tile's date. -->
+          @if (pmiEnd.slice(0, 7) === r.savings.acceleratedPayoffDate.slice(0, 7)) {
+            <dd class="note" data-testid="pmi-with-loan">Lasts as long as the loan, so paying it off sooner ends it too</dd>
+          } @else if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
             <dd class="note gain" data-testid="pmi-sooner">{{ pmiSooner() }} sooner, instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
           } @else {
             <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>

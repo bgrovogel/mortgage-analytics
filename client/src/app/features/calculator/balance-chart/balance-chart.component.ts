@@ -33,10 +33,13 @@ export class BalanceChartComponent {
       () => this.canvas().nativeElement,
       (host) => {
         const { baseline, accelerated } = this.result();
+        // No extra payments: the two curves are one, so it is drawn once.
+        const same = accelerated.payments.length === baseline.payments.length
+          && baseline.payments.every((p, i) => p.remainingBalance === accelerated.payments[i].remainingBalance);
         return buildLineChart(
           {
             labels: baseline.payments.map((p) => monthOf(p.dueDate)),
-            series: [
+            series: same ? [{ label: 'Balance', color: '--series-1', data: baseline.payments.map((p) => p.remainingBalance) }] : [
               { label: 'Standard payoff', color: '--series-1', data: baseline.payments.map((p) => p.remainingBalance) },
               // Shading down to the standard payoff makes the time and interest saved visible as an area.
               // Once paid off the balance stays at $0, so the line and the shading run to the standard payoff.

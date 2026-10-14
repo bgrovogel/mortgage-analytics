@@ -85,7 +85,9 @@ export class LoanFormComponent implements OnInit {
     const school = saved(year.schoolTaxableValue, v.schoolTaxRate);
     const local = saved(year.localTaxableValue, v.localTaxRate);
     const mud = saved(year.mudTaxableValue, v.mudTaxRate);
-    return { total: property + school + local + mud, school, local, mud };
+    const total = property + school + local + mud;
+    // A $0 exemption (the example's) saves nothing worth a line.
+    return Math.round(total) > 0 ? { total, school, local, mud } : null;
   });
 
   /** A loan changed on another page since this one was last open: the form starts from it. */

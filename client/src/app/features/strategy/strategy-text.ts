@@ -38,9 +38,12 @@ export function recommendation(result: StrategyComparison): Recommendation {
   const countingOn = rates.riskMargin > 0
     ? `counting on ${pct(rates.riskAdjustedReturn)} a year (your ${pct(rates.expectedReturn)} less ${decimal(rates.riskMargin)} points for risk)`
     : `counting on your full ${pct(rates.expectedReturn)} a year`;
-  const detail = result.lead > 0
-    ? `${usd(result.lead)} ahead of ${nameOf(result.runnerUp)} after 30 years, ${countingOn}.`
-    : `Tied with ${nameOf(result.runnerUp)} after 30 years, ${countingOn}. Paying down debt carries no market risk, so it takes the tie.`;
+  // A tie goes to the strategy with less risk (paying off first). Investing ties the hybrid only when the hybrid
+  // invests everything too: then they are one plan, not two that happen to end level.
+  const tie = result.recommended === 'PayOffFirst'
+    ? `Tied with ${nameOf(result.runnerUp)} after 30 years, ${countingOn}. Paying down debt carries no market risk, so it takes the tie.`
+    : `${countingOn[0].toUpperCase()}${countingOn.slice(1)}, the hybrid invests all your extra cash too, so the two are the same plan.`;
+  const detail = result.lead > 0 ? `${usd(result.lead)} ahead of ${nameOf(result.runnerUp)} after 30 years, ${countingOn}.` : tie;
 
   const badWinner = result.badDecadeWinner;
   const lostDecade = `a lost decade (${pct(rates.badDecadeReturn)} a year, like 2000–2009)`;

@@ -329,7 +329,7 @@ Coverage only shows what *isn't* executed. It can't show that the assertions are
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
 domain code about 1,150 ways and checks a test fails each time. It scores 98.3%, and CI fails below 95%; the
-Application layer and the Angular logic (StrykerJS) both score 97.8%, both run locally. The domain's first run
+Application layer scores 97.8% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
 **Unit vs. integration?**
@@ -382,7 +382,7 @@ Interviewers like a candidate who knows a design's weaknesses. Be ready with the
 | Database | SQLite by default; PostgreSQL by configuration, tested against a real one locally | Run the PostgreSQL tests in CI, once its minutes allow |
 | Client models | TypeScript mirrors of the C# contracts; a snapshot of the OpenAPI document fails on any contract change | Generate them from that document (NSwag or openapi-typescript) |
 | Runtime versions | .NET 10 (LTS), Angular 22 | Each Angular major with `ng update`, one at a time; .NET 12 (the next LTS) in late 2027 |
-| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI), and 97.8% on the Application layer and the Angular logic (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
+| Test strength | Coverage gate, independent models, mutation scores of 98% on the domain (CI), and 97.8% on the Application layer and 97.9% on the Angular logic (both local) | Mutation runs beyond the domain in CI, once its minutes allow |
 | History | Loads all of a user's saves | Pagination, once lists get long |
 | Scaling out | Several instances on PostgreSQL, sharing their signing keys in it | Encrypt the keys at rest (a certificate or key vault) |
 
@@ -453,7 +453,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 1,033 .NET · 739 Jest · 105 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,033 .NET · 743 Jest · 105 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---
