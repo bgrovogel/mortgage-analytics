@@ -85,7 +85,7 @@ describe('LoanFormComponent', () => {
         recast: null,
         extraPayments: { monthlyAmount: 200, monthlyStartingPaymentNumber: 1, annual: null, lumpSums: [] },
         housingCosts: { isHomestead: true, schoolHomesteadExemption: 140_000, over65OrDisabled: null, pid: null },
-        closingCosts: { loanCosts: 4_000, otherFees: 1_000, prepaidInterestDays: 15, escrowMonths: 3, credits: 0 },
+        closingCosts: { loanCosts: 4_000, otherFees: 1_000, prepaidInterestDays: 15, escrowMonths: 3, credits: 0, lenderCredits: 0 },
       });
     });
 
@@ -136,10 +136,11 @@ describe('LoanFormComponent', () => {
       controls().firstPaymentDate.setValue('2027-03-01');
       controls().escrowMonths.setValue(2);
       controls().closingCredits.setValue(3_000);
+      controls().lenderCredits.setValue(1_000);
       fixture.detectChanges();
 
       expect(text('taxes-summary')).toBe('School 1% · County/city 1.1% · PID $1,200/yr · Homestead · Over 65');
-      expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 2 mo escrow · Credits $3,000');
+      expect(text('closing-summary')).toBe('Fees $5,000 · 15 days interest · 2 mo escrow · Seller credits $3,000 · Lender credits $1,000');
       expect(text('costs-summary')).toBe('Insurance $3,100/yr · HOA $50/mo');
       expect(text('growth-summary')).toBe('Home -2% · Insurance +4.8% · HOA +4%');
       expect(text('options-summary')).toBe('$2,000 yearly · 1 lump sum · Recast (min $10,000)');
@@ -313,7 +314,7 @@ describe('LoanFormComponent', () => {
         'monthlyExtra', 'schoolTaxRate', 'localTaxRate', 'mudTaxRate', 'schoolHomesteadExemption',
         'localHomesteadExemptionPercent', 'homesteadAssessmentCap', 'homeValueGrowthRate', 'insuranceIncreaseRate',
         'hoaIncreaseRate', 'annualInsurance', 'monthlyHoa', 'pmiRate', 'loanCosts', 'otherFees', 'prepaidInterestDays',
-        'escrowMonths', 'closingCredits',
+        'escrowMonths', 'closingCredits', 'lenderCredits',
       ] as const;
       optional.forEach((name) => controls()[name].setValue(null as never));
       controls().isOver65.setValue(true);
@@ -328,7 +329,7 @@ describe('LoanFormComponent', () => {
       expect(request.extraPayments?.monthlyAmount).toBe(0);
       expect(request.housingCosts).toMatchObject({ schoolTaxRate: 0, localTaxRate: 0, pmiRate: 0, monthlyHoaDues: 0 });
       expect(request.housingCosts?.over65OrDisabled).toEqual({ qualifiesInYear: 1, schoolExemption: 0, localExemption: 0, localTaxCeiling: false, transferredCeilingPercent: null });
-      expect(request.closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 0, escrowMonths: 0, credits: 0 });
+      expect(request.closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 0, escrowMonths: 0, credits: 0, lenderCredits: 0 });
     });
   });
 
@@ -399,7 +400,7 @@ describe('LoanFormComponent', () => {
 
       const { sent } = restore(saved);
 
-      expect(sent[0].closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 15, escrowMonths: 3, credits: 0 });
+      expect(sent[0].closingCosts).toEqual({ loanCosts: 0, otherFees: 0, prepaidInterestDays: 15, escrowMonths: 3, credits: 0, lenderCredits: 0 });
     });
   });
 

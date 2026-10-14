@@ -57,7 +57,8 @@ export function closingSummary(v: LoanFormValues): string {
     fees ? `Fees ${usd(fees)}` : '',
     v.prepaidInterestDays ? `${v.prepaidInterestDays} days interest` : '',
     v.escrowMonths ? `${v.escrowMonths} mo escrow` : '',
-    v.closingCredits ? `Credits ${usd(v.closingCredits)}` : '',
+    v.closingCredits ? `Seller credits ${usd(v.closingCredits)}` : '',
+    v.lenderCredits ? `Lender credits ${usd(v.lenderCredits)}` : '',
   ]) || 'No fees';
 }
 

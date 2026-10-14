@@ -114,10 +114,29 @@ What you bring to closing besides the monthly payment, laid out as page 2 of a L
 | **Homeowners insurance** | The first year's premium, always paid at closing. |
 | **Escrow deposit** | Months of the first year's property taxes and insurance, a month being a twelfth of the year to the cent: (3,735 + 3,100) ÷ 12 = $569.58, so 3 months is $1,708.74. PID, HOA dues and PMI are not escrowed here. |
 | **A buydown you pay for** | Its whole subsidy is paid at closing; a seller's buydown is not your money, so it is not in the total. |
-| **Credits** | From the seller or lender, they pay closing costs and never the down payment: credits beyond the costs are shown as unused. |
+| **Seller credits** and **lender credits** | They pay closing costs, the lender's first, and never the down payment: credits beyond the costs are shown as unused. The seller's are also held to the limit below. |
 
 The Overview lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
 interest and 3 months of escrow on the $415,000 home come to **$10,778.79** on top of the $37,350 down payment.
+
+#### What a seller or builder may pay
+
+Builders often offer money toward closing, or a buydown, as an incentive, but the loan limits how much of it can pay
+your costs. The limit is a percentage of the price, and a buydown the seller pays for counts toward it along with
+their credits; the lender's credits do not:
+
+| Loan | Most the seller or builder may pay |
+|---|---|
+| **Conventional** | **3%** with less than 10% down · **6%** with 10% to 25% down · **9%** with 25% or more (Fannie Mae's Selling Guide B3-4.1-02, for a home you live in or a second home; an investment property is 2%, not modelled here) |
+| **FHA** | **6%** |
+| **VA** | **4%**, and the seller may also pay your normal closing costs and discount points (the fees and prepaid interest here) |
+
+The cash to close says what the limit is and why, and what the seller pays of it. When the offer is more than the
+limit, the lender does not let the rest pay your costs: the seller credits are cut by that much, the total goes up,
+and a note says to ask for it off the price instead. On a conventional loan it also says what more down would do:
+on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
+
+![The cash to close with a builder's 2-1 buydown and $8,000 of credits: $16,488 against a $12,450 limit, so $4,038 of the credits cannot pay costs, and 10% down would raise the limit to $24,900](images/concessions.png)
 
 ### The results
 

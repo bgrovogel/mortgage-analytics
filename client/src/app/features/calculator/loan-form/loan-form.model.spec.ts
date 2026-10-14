@@ -23,7 +23,7 @@ describe('loan form model', () => {
         firstPaymentDate: firstOfMonthFromNext(0),
         localHomesteadExemptionPercent: 0, mudHomesteadExemptionPercent: 0, homesteadAssessmentCap: 10,
         isOver65: false, over65Year: 1, over65LocalExemption: 0, transferredCeilingPercent: null,
-        pidAnnual: 0, pidYears: null, pmiCancellation: 'BorrowerRequested', closingCredits: 0,
+        pidAnnual: 0, pidYears: null, pmiCancellation: 'BorrowerRequested', closingCredits: 0, lenderCredits: 0,
         annualExtra: 0, annualFirstPayment: 12, usePoints: false, rateWithoutPoints: 6.5, buydownPaidBy: 'Seller',
       }));
     });
@@ -39,6 +39,7 @@ describe('loan form model', () => {
       ['over65LocalExemption', -1],
       ['pidAnnual', -1],
       ['closingCredits', -1],
+      ['lenderCredits', -1],
       ['annualExtra', -1],
       ['annualFirstPayment', 0],
       ['rateWithoutPoints', -1],
@@ -217,7 +218,7 @@ describe('loan form model', () => {
         isOver65: true, over65Year: 3, over65SchoolExemption: 10_000, over65LocalExemption: 5_000, over65LocalCeiling: true,
         transferredCeilingPercent: 62.5, homeValueGrowthRate: 3, insuranceIncreaseRate: 5, hoaIncreaseRate: 2,
         pidAnnual: 900, pidYears: 12, annualInsurance: 2_000, monthlyHoa: 75, pmiCancellation: 'BorrowerRequested',
-        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500,
+        loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250,
         monthlyExtra: 150, annualExtra: 1_200, annualFirstPayment: 6, buydownPaidBy: 'Borrower',
         loanProgram: 'Fha', financeUpfrontFee: false, creditScore: 600, countyFips: '48491',
         usePoints: true, points: 1.5, rateWithoutPoints: 6.5,

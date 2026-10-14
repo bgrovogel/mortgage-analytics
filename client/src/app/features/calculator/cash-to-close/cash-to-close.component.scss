@@ -24,6 +24,13 @@ h2 {
   line-height: 1.5;
 }
 
+// An offer the lender will not allow.
+.warn {
+  color: var(--text-primary);
+  border-left: 3px solid var(--warning-border);
+  padding-left: 0.6rem;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

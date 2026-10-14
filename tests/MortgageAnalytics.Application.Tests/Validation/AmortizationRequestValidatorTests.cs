@@ -268,6 +268,8 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         yield return Case("PrepaidInterestDays", A.Request.WithClosingCosts(prepaidInterestDays: 32));
         yield return Case("EscrowMonths", A.Request.WithClosingCosts(escrowMonths: -1));
         yield return Case("Credits", A.Request.WithClosingCosts(credits: -0.01m));
+        yield return Case("LenderCredits", A.Request.WithClosingCosts(lenderCredits: -0.01m));
+        yield return Case("LenderCredits", A.Request.WithClosingCosts(lenderCredits: 0.001m));
     }
 
     [TestCaseSource(nameof(InvalidClosingCosts))]
@@ -332,7 +334,7 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     [Test]
     public void ClosingCosts_AtTheirLimits_AreValid()
     {
-        AssertValid(A.Request.WithClosingCosts(0m, 1_000_000m, prepaidInterestDays: 31, escrowMonths: 14, credits: 1_000_000m),
+        AssertValid(A.Request.WithClosingCosts(0m, 1_000_000m, prepaidInterestDays: 31, escrowMonths: 14, credits: 1_000_000m, lenderCredits: 1_000_000m),
             "a month of interest, 14 months of escrow and large fees and credits are all possible");
     }
 

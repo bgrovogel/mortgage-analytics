@@ -284,8 +284,12 @@ monthly escrow  = round((year-1 taxes + year-1 insurance) ÷ 12)   (7,150 + 2,40
 
 closing costs   = loan costs + other fees + daily interest × days + year-1 insurance
                   + monthly escrow × months + (a buydown the buyer pays for) + (discount points)
-credits used    = min(credits, closing costs)
-cash to close   = down payment + closing costs − credits used
+lender credits  = min(lender's offer, closing costs)
+seller room     = min(seller's offer, closing costs − lender credits)
+concessions     = seller's buydown + seller room − (for VA: the part of it paying fees, prepaid interest and points)
+over the limit  = max(0, concessions − limit)
+seller credits  = seller room − min(over the limit, the part of seller room that counts)
+cash to close   = down payment + closing costs − lender credits − seller credits
 ```
 
 | Reference purchase | |
@@ -303,7 +307,15 @@ cash to close   = down payment + closing costs − credits used
   $0.88 a day).
 - **Credits never pay the down payment.** Seller and lender credits may pay closing costs and prepaids, not the
   buyer's own down payment, so any beyond the costs are reported as unused rather than taken off.
-- The domain is `ClosingCosts` and `CashToClose` (`Domain/Closing`); the Python model in `tools/calculator-check`
+- **The seller's are limited** (Fannie Mae's "interested party contributions"): a conventional loan allows 3% of the
+  price with a loan above 90% of it, 6% from 75.01% to 90%, 9% at 75% or less (Selling Guide B3-4.1-02); FHA 6%;
+  VA 4%, besides the normal closing costs and points. A buydown the seller pays for counts. Lenders take anything
+  beyond the limit off the price instead, so here it is taken off the seller's credits and reported. With 5% down on
+  the reference purchase the limit is 3%, **$11,250**; a $9,000 seller buydown and the $3,000 of credits is $750
+  over it, so $2,250 of the credits are used and the cash to close is **$27,239.09**.
+- The limit is on the price, as lenders figure it on the lower of the price and the appraised value; the next
+  conventional tier is the down payment that leaves a loan of exactly 90% (or 75%), rounded up to the cent.
+- The domain is `ClosingCosts`, `CashToClose` and `ConcessionLimit` (`Domain/Closing`); the Python model in `tools/calculator-check`
   prices the same lines independently, and 300 random purchases match it to the cent.
 
 ---

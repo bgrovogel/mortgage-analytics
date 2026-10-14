@@ -215,8 +215,36 @@ export interface ClosingCostsInput {
   prepaidInterestDays: number;
   /** Months of taxes and insurance that start the escrow account. */
   escrowMonths: number;
-  /** What the seller and lender pay toward closing costs. */
+  /** What the seller or builder pays toward closing costs, within the loan's limit. */
   credits: number;
+  /** What the lender pays toward closing costs. */
+  lenderCredits: number;
+}
+
+/** A higher conventional limit on what the seller may pay, and the down payment that reaches it. */
+export interface ConcessionTier {
+  downPayment: number;
+  limitPercent: number;
+  limit: number;
+}
+
+/**
+ * What the seller or builder pays toward the buyer's costs, against the most the loan allows: conventional 3% of the
+ * price with less than 10% down, 6% to 25% down, 9% from 25%; FHA 6%; VA 4%, besides the normal closing costs.
+ */
+export interface Concessions {
+  limitPercent: number;
+  limit: number;
+  /** A buydown the seller pays for, which counts against the limit. */
+  sellerBuydown: number;
+  /** Everything the seller pays that counts against the limit. */
+  total: number;
+  /** How far that goes beyond the limit; the seller's credits are cut by as much. */
+  overLimit: number;
+  /** True for VA, whose limit leaves out the normal closing costs and points. */
+  normalClosingCostsExcluded: boolean;
+  /** For a conventional loan below 25% down, the down payment that raises the limit. */
+  nextTier: ConcessionTier | null;
 }
 
 /** The cash the buyer brings to closing, line by line, as the API works it out. */
@@ -242,11 +270,16 @@ export interface CashToClose {
   upfrontMortgageFee: number;
   /** Everything besides the down payment, before credits. */
   closingCosts: number;
-  /** The credits used: never more than the closing costs. */
+  /** The seller's credits used: within the closing costs the lender's leave, and the limit. */
+  sellerCredits: number;
+  /** The lender's credits used, before the seller's. */
+  lenderCredits: number;
+  /** All the credits used: never more than the closing costs. */
   credits: number;
   /** Credits beyond the closing costs, which cannot pay the down payment. */
   unusedCredits: number;
   total: number;
+  concessions: Concessions;
 }
 
 /**

@@ -97,6 +97,29 @@ test.describe('Mortgage calculator', () => {
     await expect(total, 'a 2-1 buydown you pay for is paid at closing: $7,898.76 more').toHaveText('$34,313.15');
   });
 
+  test("a builder's offer against the most they may pay, which more down raises", async ({ calculator, page }) => {
+    // The same $375,000 home with 5% down: on a conventional loan the seller may pay 3% of the price, $11,250. A 2-1
+    // buydown they pay for ($7,898.76) and $5,000 of credits is $1,648.76 more, so only $3,351.24 of the credits count.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.set('closing-credits', 5_000);
+    await calculator.chooseRateType('buydown');
+    await calculator.calculate();
+
+    await expect(page.getByTestId('concession-limit'), 'the limit, why, and what the builder offers')
+      .toHaveText('A seller or builder may pay up to $11,250 of your costs: 3% of the price, with less than 10% down. Here they pay $12,899, with the buydown.');
+    await expect(page.getByTestId('concessions-over'), 'what is over it')
+      .toHaveText("That is $1,649 over the limit, which can't pay your costs: ask for it off the price instead.");
+    await expect(page.getByTestId('cash-to-close-total'), '29,414.39 − 3,351.24 of credits').toHaveText('$26,063.15');
+    await expect(page.getByTestId('concession-next'), 'what 10% down would allow').toHaveText('With $37,500 down (10%), it would be 6%: $22,500.');
+
+    await calculator.set('down-payment', 37_500);
+    await calculator.calculate();
+    await expect(page.getByTestId('concessions-over'), 'with 10% down, the whole offer is allowed').toBeHidden();
+  });
+
   test('an FHA loan: the upfront MIP borrowed, the annual MIP instead of PMI, and its end with the loan', async ({ calculator, page }) => {
     // $300,000 with FHA's 3.5% minimum down at 6.5%: $5,066.25 of upfront MIP makes the loan $294,566.25, and the
     // annual MIP is 0.55% for the whole term, $134.33 a month in year 1 (tools/calculator-check).

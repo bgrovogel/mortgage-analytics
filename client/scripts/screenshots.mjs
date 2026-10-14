@@ -30,10 +30,21 @@ const shots = {
   'compare.png': async (b) => {
     const page = await open(b, '/calculator/compare');
     await page.getByTestId('edit-home-b').check();
+    await settled(page); // Home B's form fills in before it can be changed
     await page.getByTestId('home-price').fill('450000');
     await page.getByTestId('down-payment').fill('90000');
     await settled(page);
     return page;
+  },
+  // Just the cash to close: a builder's 2-1 buydown and $8,000 of credits, more than 3% of the price allows.
+  'concessions.png': async (b) => {
+    const page = await open(b, '/calculator/overview', { scale: 2 });
+    await page.getByText('Closing costs').first().click();
+    await page.getByTestId('closing-credits').fill('8000');
+    await page.getByText('Rate type').first().click();
+    await page.getByTestId('rate-type-buydown').check();
+    await settled(page);
+    return page.locator('app-cash-to-close');
   },
   'refinance.png': async (b) => open(b, '/refinance'),
   'pay-off-or-invest-dark.png': async (b) => open(b, '/strategy', { scheme: 'dark' }),

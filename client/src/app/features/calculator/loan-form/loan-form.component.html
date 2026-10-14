@@ -359,8 +359,14 @@
         insurance above. The first year of insurance is always paid at closing.
       </p>
 
-      <app-number-field [control]="form.controls.closingCredits" [rule]="rules.closingCredits" testId="closing-credits" />
-      <p class="hint">Credits from the seller or lender pay closing costs, never the down payment.</p>
+      <div class="row">
+        <app-number-field [control]="form.controls.closingCredits" [rule]="rules.closingCredits" testId="closing-credits" />
+        <app-number-field [control]="form.controls.lenderCredits" [rule]="rules.lenderCredits" testId="lender-credits" />
+      </div>
+      <p class="hint">
+        Credits pay closing costs, never the down payment. A seller or builder may pay only so much, a buydown they pay
+        for included: 3% to 9% of the price on a conventional loan, 6% on FHA, 4% on VA. The cash to close says how much.
+      </p>
     </div>
   </details>
 

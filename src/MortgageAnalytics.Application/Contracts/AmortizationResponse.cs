@@ -116,9 +116,12 @@ public sealed record DiscountPointsResponse(
 /// <param name="DiscountPoints">What discount points cost; zero without them.</param>
 /// <param name="UpfrontMortgageFee">An FHA upfront MIP or VA funding fee paid at closing rather than financed; zero otherwise.</param>
 /// <param name="ClosingCosts">Everything paid at closing besides the down payment, before credits.</param>
-/// <param name="Credits">The seller's and lender's credits used: never more than the closing costs.</param>
+/// <param name="SellerCredits">The seller's credits used: within the closing costs left after the lender's, and the limit.</param>
+/// <param name="LenderCredits">The lender's credits used, before the seller's: never more than the closing costs.</param>
+/// <param name="Credits">All the credits used.</param>
 /// <param name="UnusedCredits">Credits beyond the closing costs, which cannot pay the down payment.</param>
 /// <param name="Total">The cash to close: the down payment plus closing costs, less credits.</param>
+/// <param name="Concessions">What the seller or builder pays toward the buyer's costs, against the most the loan allows.</param>
 public sealed record CashToCloseResponse(
     decimal DownPayment,
     decimal LoanCosts,
@@ -134,9 +137,38 @@ public sealed record CashToCloseResponse(
     decimal DiscountPoints,
     decimal UpfrontMortgageFee,
     decimal ClosingCosts,
+    decimal SellerCredits,
+    decimal LenderCredits,
     decimal Credits,
     decimal UnusedCredits,
-    decimal Total);
+    decimal Total,
+    ConcessionsResponse Concessions);
+
+/// <summary>
+/// What the seller or builder pays toward the buyer's closing costs, prepaids, points and buydowns, against the most the
+/// loan allows: for a conventional loan 3% of the price above 90% loan-to-value, 6% to 75%, 9% below; FHA 6%; VA 4%.
+/// </summary>
+/// <param name="LimitPercent">The limit, as a percentage of the price.</param>
+/// <param name="Limit">The limit in dollars.</param>
+/// <param name="SellerBuydown">A temporary buydown the seller pays for: it counts against the limit.</param>
+/// <param name="Total">Everything the seller pays that counts against the limit: the buydown and the credits the costs can take.</param>
+/// <param name="OverLimit">How far that goes beyond the limit; the credits are cut by as much, and the buyer could ask for it off the price instead.</param>
+/// <param name="NormalClosingCostsExcluded">True for VA, whose limit leaves out the normal closing costs and points the seller pays.</param>
+/// <param name="NextTier">For a conventional loan below 25% down, the down payment that raises the limit; otherwise null.</param>
+public sealed record ConcessionsResponse(
+    decimal LimitPercent,
+    decimal Limit,
+    decimal SellerBuydown,
+    decimal Total,
+    decimal OverLimit,
+    bool NormalClosingCostsExcluded,
+    ConcessionTierResponse? NextTier);
+
+/// <summary>A higher conventional limit on what the seller may pay, and the down payment that reaches it.</summary>
+/// <param name="DownPayment">The least down payment for it.</param>
+/// <param name="LimitPercent">Its limit, as a percentage of the price.</param>
+/// <param name="Limit">Its limit in dollars.</param>
+public sealed record ConcessionTierResponse(decimal DownPayment, decimal LimitPercent, decimal Limit);
 
 /// <summary>A temporary buydown: each bought-down year's rate and payment, and what the subsidy costs.</summary>
 /// <param name="NoteRate">The loan's actual rate, paid from the year after the buydown.</param>

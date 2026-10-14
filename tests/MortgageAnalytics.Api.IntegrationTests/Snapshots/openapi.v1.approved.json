@@ -1047,6 +1047,14 @@
             "type": "number",
             "format": "double"
           },
+          "sellerCredits": {
+            "type": "number",
+            "format": "double"
+          },
+          "lenderCredits": {
+            "type": "number",
+            "format": "double"
+          },
           "credits": {
             "type": "number",
             "format": "double"
@@ -1058,6 +1066,9 @@
           "total": {
             "type": "number",
             "format": "double"
+          },
+          "concessions": {
+            "$ref": "#/components/schemas/ConcessionsResponse"
           }
         },
         "additionalProperties": false
@@ -1098,6 +1109,60 @@
           "credits": {
             "type": "number",
             "format": "double"
+          },
+          "lenderCredits": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConcessionTierResponse": {
+        "type": "object",
+        "properties": {
+          "downPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "limitPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "limit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConcessionsResponse": {
+        "type": "object",
+        "properties": {
+          "limitPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "limit": {
+            "type": "number",
+            "format": "double"
+          },
+          "sellerBuydown": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "overLimit": {
+            "type": "number",
+            "format": "double"
+          },
+          "normalClosingCostsExcluded": {
+            "type": "boolean"
+          },
+          "nextTier": {
+            "$ref": "#/components/schemas/ConcessionTierResponse"
           }
         },
         "additionalProperties": false

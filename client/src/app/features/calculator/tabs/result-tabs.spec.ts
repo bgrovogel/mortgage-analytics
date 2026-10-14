@@ -49,7 +49,8 @@ describe('result tabs', () => {
       response = aResponse({ cashToClose: {
         downPayment: 18_750, loanCosts: 4_000, otherFees: 1_000, dailyInterest: 63.44, prepaidInterestDays: 15, prepaidInterest: 951.6,
         homeownersInsurance: 2_400, monthlyEscrow: 795.83, escrowMonths: 3, escrowDeposit: 2_387.49, buydownCost: 0, discountPoints: 0, upfrontMortgageFee: 0,
-        closingCosts: 10_739.09, credits: 0, unusedCredits: 0, total: 29_489.09,
+        closingCosts: 10_739.09, sellerCredits: 0, lenderCredits: 0, credits: 0, unusedCredits: 0, total: 29_489.09,
+        concessions: { limitPercent: 3, limit: 11_250, sellerBuydown: 0, total: 0, overLimit: 0, normalClosingCostsExcluded: false, nextTier: null },
       } });
       store.send({ homePrice: 1 } as AmortizationRequest);
       jest.advanceTimersByTime(RECALCULATE_DELAY_MS);

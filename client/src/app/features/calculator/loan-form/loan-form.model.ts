@@ -100,6 +100,7 @@ export function loanForm(fb: NonNullableFormBuilder) {
     prepaidInterestDays: [15, validatorsFor(rules.prepaidInterestDays)],
     escrowMonths: [3, validatorsFor(rules.escrowMonths)],
     closingCredits: [0, validatorsFor(rules.closingCredits)],
+    lenderCredits: [0, validatorsFor(rules.lenderCredits)],
 
     monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
     annualExtra: [0, validatorsFor(rules.annualExtra)],
@@ -303,6 +304,7 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       prepaidInterestDays: v.prepaidInterestDays || 0,
       escrowMonths: v.escrowMonths || 0,
       credits: v.closingCredits || 0,
+      lenderCredits: v.lenderCredits || 0,
     },
   };
 }
@@ -381,6 +383,7 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     otherFees: closing?.otherFees ?? 0,
     ...(closing && { prepaidInterestDays: closing.prepaidInterestDays, escrowMonths: closing.escrowMonths }),
     closingCredits: closing?.credits ?? 0,
+    lenderCredits: closing?.lenderCredits ?? 0,
   });
   setRateOptions(form.controls.rate, r.buydown, r.adjustableRate);
   syncTaxMode(form);

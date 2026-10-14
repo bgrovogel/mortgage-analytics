@@ -225,6 +225,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(c => c.PrepaidInterestDays).InclusiveBetween(0, ClosingCosts.MaxPrepaidInterestDays).WithName("Days of prepaid interest");
             RuleFor(c => c.EscrowMonths).InclusiveBetween(0, ClosingCosts.MaxEscrowMonths).WithName("Months of escrow");
             RuleFor(c => c.Credits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Credits");
+            RuleFor(c => c.LenderCredits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Lender credits");
         }
     }
 

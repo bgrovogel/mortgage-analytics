@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 555 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 574 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -149,6 +149,14 @@ a generic 500 that leaks nothing.
 The mapping makes business decisions: a zero amount means "none", "Recast" becomes a recast policy, and PMI applies
 only below 20% down. As explicit code, each decision can be read and unit-tested. AutoMapper would hide them in
 configuration, and mistakes would only show up at runtime.
+
+**How did you add what a builder may pay?**
+As a rule in the domain, written from its source: Fannie Mae's Selling Guide B3-4.1-02 for a conventional loan (3%
+of the price with a loan above 90%, 6% to 75%, 9% below), 6% for FHA, and 4% for VA besides the normal closing costs.
+`ConcessionLimit.For` picks the tier, and `CashToClose` counts the seller's buydown and credits against it. The
+lender's credits are used first and don't count, and any excess comes off the seller's credits, as a lender would
+take it. The cash to close says what the limit is and why, what 10% down would raise it to, and to ask for the rest
+off the price. The Python model implements the rule separately, and its random purchases include offers over it.
 
 ### C# and .NET
 
@@ -328,7 +336,7 @@ classic assert is used. Code review standards become automatic.
 Coverage only shows what *isn't* executed. It can't show that the assertions are right. The gate stops untested
 code from arriving; correctness comes from the independent reference values. The actual figures are ~99% backend
 and ~99% Angular lines. Assertion strength is measured separately, by mutation testing: Stryker.NET changes the
-domain code about 1,150 ways and checks a test fails each time. It scores 98.3%, and CI fails below 95%; the
+domain code about 1,190 ways and checks a test fails each time. It scores 98.2%, and CI fails below 95%; the
 Application layer scores 97.8% and the Angular logic (StrykerJS) 97.9%, both run locally. The domain's first run
 (87%) found guard limits nobody tested and guards that could be deleted unnoticed, which coverage could never show.
 
@@ -453,7 +461,8 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | + $200 a month | **108** payments sooner, **$79,800.86** less interest |
 | Recast boundary | $9,999.99 doesn't recast; $10,000 does |
 | Refinance trap | 7% → 6% saves $321.69 a month, but costs **$17,415.28 more** (60 payments added) |
-| Tests | 1,042 .NET · 768 Jest · 107 Playwright (18 axe scans); 85% coverage gate |
+| Builder limit | The example, 9% down: **$12,450** (3%); with **$41,500** down (10%), **$24,900** (6%) |
+| Tests | 1,069 .NET · 778 Jest · 108 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

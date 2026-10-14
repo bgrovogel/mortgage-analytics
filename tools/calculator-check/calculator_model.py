@@ -430,7 +430,9 @@ def analyze(request, today, other_choice=True):
     out['cashToClose'] = cash_to_close(closing, down, loan, rate, projection[0]['costs'],
                                        base['buydownSubsidy'] if paid_by == 'Borrower' else D(0),
                                        out['discountPoints']['cost'] if points else D(0),
-                                       program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0)) if closing else None
+                                       program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0),
+                                       base['buydownSubsidy'] if buydown and paid_by == 'Seller' else D(0),
+                                       program['type'] if program else 'Conventional', price) if closing else None
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
@@ -484,11 +486,36 @@ def discount_points(points, loan, term, first, with_points):
     }
 
 
-def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost, upfront_fee):
+def concession_limit(program, price, down):
+    """
+    The most a seller or builder may pay toward the buyer's costs, as a percentage of the price: Fannie Mae's Selling
+    Guide B3-4.1-02 for a conventional loan (3% with a loan above 90% of the price, 6% above 75%, 9% at 75% or less),
+    6% for FHA, 4% for VA (whose normal closing costs and points are left out). For a conventional loan, also the next
+    tier: the down payment that leaves a loan of exactly the tier's edge, rounded up to the cent.
+    """
+    def amount(percent):
+        return money(price * percent / 100)
+    if program != 'Conventional':
+        percent = D(6) if program == 'Fha' else D(4)
+        return percent, amount(percent), None
+    loan_share = (price - down) / price
+    if loan_share > D('0.90'):
+        percent, edge, nxt = D(3), D('0.90'), D(6)
+    elif loan_share > D('0.75'):
+        percent, edge, nxt = D(6), D('0.75'), D(9)
+    else:
+        return D(9), amount(D(9)), None
+    needed = (price * (1 - edge) * 100).to_integral_value(rounding='ROUND_CEILING') / 100
+    return percent, amount(percent), {'downPayment': needed, 'limitPercent': nxt, 'limit': amount(nxt)}
+
+
+def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost, upfront_fee, seller_buydown, program, price):
     """
     The Loan Estimate's way: fees as entered; prepaid interest at a day's interest (a 365-day year, to the cent) for the
     days given; the first year's insurance premium; and months of the first year's taxes and insurance into escrow, a
-    month being a twelfth of the year to the cent. Credits pay closing costs, never the down payment.
+    month being a twelfth of the year to the cent. Credits pay closing costs, never the down payment: the lender's
+    first, then the seller's. What the seller pays (a buydown, and credits; for VA, not those paying the fees, prepaid
+    interest and points) may not pass the loan's limit, and their credits are cut by any excess.
     """
     days = closing.get('prepaidInterestDays', 15)
     months = closing.get('escrowMonths', 3)
@@ -498,14 +525,25 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost
     monthly = money((taxes + insurance) / 12)
     loan_costs, other = D(str(closing.get('loanCosts', 0))), D(str(closing.get('otherFees', 0)))
     costs = loan_costs + other + daily * days + insurance + monthly * months + buydown_cost + points_cost + upfront_fee
-    offered = D(str(closing.get('credits', 0)))
-    credits = min(offered, costs)
+    seller_offered, lender_offered = D(str(closing.get('credits', 0))), D(str(closing.get('lenderCredits', 0)))
+    lender = min(lender_offered, costs)
+    seller_room = min(seller_offered, costs - lender)
+    exempt = min(seller_room, loan_costs + other + daily * days + points_cost) if program == 'Va' else D(0)
+    percent, limit, next_tier = concession_limit(program, price, down)
+    counted = seller_buydown + seller_room - exempt
+    over = max(D(0), counted - limit)
+    seller = seller_room - min(over, seller_room - exempt)
+    credits = lender + seller
     return {
         'downPayment': down, 'loanCosts': loan_costs, 'otherFees': other,
         'dailyInterest': daily, 'prepaidInterestDays': days, 'prepaidInterest': daily * days,
         'homeownersInsurance': insurance, 'monthlyEscrow': monthly, 'escrowMonths': months, 'escrowDeposit': monthly * months,
-        'buydownCost': buydown_cost, 'discountPoints': points_cost, 'upfrontMortgageFee': upfront_fee, 'closingCosts': costs, 'credits': credits, 'unusedCredits': offered - credits,
+        'buydownCost': buydown_cost, 'discountPoints': points_cost, 'upfrontMortgageFee': upfront_fee, 'closingCosts': costs,
+        'sellerCredits': seller, 'lenderCredits': lender, 'credits': credits,
+        'unusedCredits': lender_offered - lender + seller_offered - seller_room,
         'total': down + costs - credits,
+        'concessions': {'limitPercent': percent, 'limit': limit, 'sellerBuydown': seller_buydown, 'total': counted, 'overLimit': over,
+                        'normalClosingCostsExcluded': program == 'Va', 'nextTier': next_tier},
     }
 
 

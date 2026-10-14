@@ -7,7 +7,8 @@ namespace MortgageAnalytics.Application.Tests.Services;
 /// <summary>
 /// Sociable scenarios for cash to close: the closing costs priced from the loan and its first year of costs. The
 /// purchase is <see cref="FivePercentDown"/>: $250,000 with $12,500 down, so $237,500 at 6.5%. Expected values were
-/// worked by hand and checked in Python <c>Decimal</c>.
+/// worked by hand and checked in Python <c>Decimal</c>. With 5% down on a conventional loan, the seller may pay up to 3%
+/// of the price, $7,500.
 /// </summary>
 [TestFixture]
 public class ClosingCostScenarioTests : SociableAnalysisTestBase
@@ -64,6 +65,87 @@ public class ClosingCostScenarioTests : SociableAnalysisTestBase
         var cash = Service.Analyze(TexasPurchase().WithBuydown(2, 1).WithClosingCosts()).CashToClose!;
 
         Assert.That(cash.DailyInterest, Is.EqualTo(42.29m), "interest before the first payment accrues at the note rate, 6.5%");
+    }
+
+    [Test]
+    public void TheSellersCredits_AreMeasuredAgainstTheLimit()
+    {
+        var cash = Service.Analyze(TexasPurchase().WithClosingCosts(credits: 3_000m)).CashToClose!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.SellerCredits, Is.EqualTo(3_000m), "the seller's credits are used");
+            Assert.That(cash.Concessions.LimitPercent, Is.EqualTo(3m), "a conventional loan above 90% of the price");
+            Assert.That(cash.Concessions.Limit, Is.EqualTo(7_500m), "3% of $250,000");
+            Assert.That(cash.Concessions.Total, Is.EqualTo(3_000m), "the seller pays $3,000 of it");
+            Assert.That(cash.Concessions.OverLimit, Is.Zero, "within the limit");
+            Assert.That(cash.Concessions.NormalClosingCostsExcluded, Is.False, "all of it counts on a conventional loan");
+            Assert.That(cash.Concessions.NextTier, Is.EqualTo(new ConcessionTierResponse(25_000m, 6m, 15_000m)), "10% down would make it 6%");
+        });
+    }
+
+    [Test]
+    public void TheLendersCredits_AreNotTheSellers()
+    {
+        var cash = Service.Analyze(TexasPurchase().WithClosingCosts(credits: 3_000m, lenderCredits: 1_000m)).CashToClose!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.LenderCredits, Is.EqualTo(1_000m), "the lender's credit is used");
+            Assert.That(cash.Credits, Is.EqualTo(4_000m), "with the seller's");
+            Assert.That(cash.Concessions.Total, Is.EqualTo(3_000m), "only the seller's count toward the limit");
+            Assert.That(cash.Total, Is.EqualTo(18_978.09m), "12,500 + 10,478.09 − 4,000");
+        });
+    }
+
+    [Test]
+    public void ABuydownTheSellerPaysFor_CountsAgainstTheLimit_AndCreditsOverItAreNotAllowed()
+    {
+        var response = Service.Analyze(TexasPurchase().WithBuydown(2, 1).WithBuydownPaidBy(BuydownFunding.Seller).WithClosingCosts(credits: 3_000m));
+        var (cash, subsidy) = (response.CashToClose!, response.Buydown!.TotalSubsidy);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.Concessions.SellerBuydown, Is.EqualTo(subsidy), "the seller's buydown is a concession");
+            Assert.That(cash.Concessions.Total, Is.EqualTo(subsidy + 3_000m), "with the credits");
+            Assert.That(cash.Concessions.OverLimit, Is.EqualTo(subsidy + 3_000m - 7_500m), "a 2-1 buydown and $3,000 is more than $7,500");
+            Assert.That(cash.SellerCredits, Is.EqualTo(7_500m - subsidy), "so the credits are allowed only up to the limit");
+        });
+    }
+
+    [Test]
+    public void ABuydownTheBuyerPaysFor_IsNotAConcession()
+    {
+        var cash = Service.Analyze(TexasPurchase().WithBuydown(2, 1).WithBuydownPaidBy(BuydownFunding.Borrower).WithClosingCosts()).CashToClose!;
+
+        Assert.That(cash.Concessions.Total, Is.Zero, "the buyer's own money");
+    }
+
+    [Test]
+    public void AnFhaLoan_Allows6Percent()
+    {
+        var cash = Service.Analyze(TexasPurchase().WithProgram(LoanProgramType.Fha).WithClosingCosts()).CashToClose!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.Concessions.Limit, Is.EqualTo(15_000m), "6% of $250,000");
+            Assert.That(cash.Concessions.NextTier, Is.Null, "putting more down does not change it");
+        });
+    }
+
+    [Test]
+    public void AVaLoan_Allows4Percent_BesidesTheNormalClosingCosts()
+    {
+        var cash = Service.Analyze(TexasPurchase().WithProgram(LoanProgramType.Va).WithClosingCosts(credits: 10_000m)).CashToClose!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.Concessions.Limit, Is.EqualTo(10_000m), "4% of $250,000");
+            Assert.That(cash.Concessions.NormalClosingCostsExcluded, Is.True, "the seller may pay the normal closing costs besides");
+            // The 1.5% funding fee is financed, so a day of interest is on $241,062.50: $42.93. The fees and 15 days of interest
+            // (5,643.95) are normal closing costs; the rest of the $10,000 counts.
+            Assert.That(cash.Concessions.Total, Is.EqualTo(4_356.05m), "only what pays the insurance and escrow counts");
+        });
     }
 
     [Test]

@@ -159,9 +159,16 @@ public sealed record ClosingCostsRequest
     /// <example>3</example>
     public int EscrowMonths { get; init; } = 3;
 
-    /// <summary>What the seller and lender pay toward closing costs. Credits never pay the down payment.</summary>
+    /// <summary>
+    /// What the seller or builder pays toward closing costs. Credits never pay the down payment, and the seller's are
+    /// limited by the loan (3% to 9% conventional, 6% FHA, 4% VA, of the price), with a buydown they pay for.
+    /// </summary>
     /// <example>0</example>
     public decimal Credits { get; init; }
+
+    /// <summary>What the lender pays toward closing costs, usually for a higher rate. Not limited as the seller's are.</summary>
+    /// <example>0</example>
+    public decimal LenderCredits { get; init; }
 }
 
 /// <summary>

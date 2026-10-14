@@ -108,11 +108,13 @@ def random_purchase(rng):
         },
         'buydown': None,
         'adjustableRate': None,
-        # Sometimes none, sometimes credits larger than the costs, so unused credits are checked too.
+        # Sometimes none, sometimes credits larger than the costs, so unused credits are checked too; the seller's large
+        # enough at times to pass the limit, with or without a buydown they pay for.
         'closingCosts': None if rng.random() < 0.2 else {
             'loanCosts': money(rng, 0, 12_000, 25), 'otherFees': money(rng, 0, 5_000, 25),
             'prepaidInterestDays': rng.randint(0, 31), 'escrowMonths': rng.randint(0, 14),
-            'credits': rng.choice([0, 0, money(rng, 500, 10_000, 100), 50_000]),
+            'credits': rng.choice([0, 0, money(rng, 500, 10_000, 100), money(rng, 10_000, 30_000, 100), 50_000]),
+            'lenderCredits': rng.choice([0, 0, 0, money(rng, 500, 5_000, 100)]),
         },
     }
     # FHA (at least 3.5% down) or VA (any down payment), neither with PMI; the fee financed or paid at closing.

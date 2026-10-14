@@ -28,9 +28,10 @@ public sealed record ClosingCosts
     /// <param name="otherFees">Recording fees and transfer taxes, an owner's title policy, HOA transfer fees (sections E and H).</param>
     /// <param name="prepaidInterestDays">Days of interest from closing to the end of that month.</param>
     /// <param name="escrowMonths">Months of property taxes and insurance that start the escrow account.</param>
-    /// <param name="credits">What the seller and lender pay toward closing costs.</param>
+    /// <param name="sellerCredits">What the seller or builder pays toward closing costs.</param>
+    /// <param name="lenderCredits">What the lender pays toward closing costs.</param>
     /// <exception cref="DomainValidationException">An amount is negative, or a count is beyond its limit.</exception>
-    public ClosingCosts(decimal loanCosts, decimal otherFees, int prepaidInterestDays, int escrowMonths, decimal credits)
+    public ClosingCosts(decimal loanCosts, decimal otherFees, int prepaidInterestDays, int escrowMonths, decimal sellerCredits, decimal lenderCredits = 0m)
     {
         if (loanCosts < 0)
             throw new DomainValidationException("Loan costs cannot be negative.");
@@ -40,14 +41,17 @@ public sealed record ClosingCosts
             throw new DomainValidationException($"Prepaid interest is for 0 to {MaxPrepaidInterestDays} days.");
         if (escrowMonths is < 0 or > MaxEscrowMonths)
             throw new DomainValidationException($"Escrow is collected for 0 to {MaxEscrowMonths} months.");
-        if (credits < 0)
-            throw new DomainValidationException("Credits cannot be negative.");
+        if (sellerCredits < 0)
+            throw new DomainValidationException("Seller credits cannot be negative.");
+        if (lenderCredits < 0)
+            throw new DomainValidationException("Lender credits cannot be negative.");
 
         LoanCosts = loanCosts;
         OtherFees = otherFees;
         PrepaidInterestDays = prepaidInterestDays;
         EscrowMonths = escrowMonths;
-        Credits = credits;
+        SellerCredits = sellerCredits;
+        LenderCredits = lenderCredits;
     }
 
     /// <summary>The lender's and its services' charges (Loan Estimate section D).</summary>
@@ -62,13 +66,16 @@ public sealed record ClosingCosts
     /// <summary>Months of property taxes and insurance paid into escrow at closing.</summary>
     public int EscrowMonths { get; }
 
-    /// <summary>What the seller and lender pay toward closing costs.</summary>
-    public decimal Credits { get; }
+    /// <summary>What the seller or builder pays toward closing costs.</summary>
+    public decimal SellerCredits { get; }
+
+    /// <summary>What the lender pays toward closing costs.</summary>
+    public decimal LenderCredits { get; }
 
     /// <summary>
     /// The cash the buyer brings to closing. Each daily and monthly amount is rounded to the cent before it is
     /// multiplied, as a Loan Estimate shows it ("$63.44 per day for 15 days"). Credits pay closing costs only, never
-    /// the down payment, so any beyond them go unused.
+    /// the down payment, so any beyond them go unused; and the seller's are allowed only up to the loan's limit.
     /// </summary>
     /// <param name="purchase">The price and down payment.</param>
     /// <param name="loan">The loan: its amount (with any financed upfront fee) and note rate (an adjustable rate's starting rate).</param>
@@ -77,9 +84,11 @@ public sealed record ClosingCosts
     /// <param name="buydownCost">A temporary buydown's subsidy, when the buyer pays for it; otherwise zero.</param>
     /// <param name="discountPoints">What discount points cost; otherwise zero.</param>
     /// <param name="upfrontMortgageFee">An FHA upfront MIP or VA funding fee paid at closing; otherwise zero.</param>
+    /// <param name="sellerBuydown">A temporary buydown's subsidy, when the seller or builder pays for it; otherwise zero.</param>
+    /// <param name="program">The loan's program, which sets the limit on what the seller may pay.</param>
     public CashToClose CashToClose(
         PropertyPurchase purchase, LoanTerms loan, decimal yearOneTaxes, decimal yearOneInsurance, decimal buydownCost = 0m,
-        decimal discountPoints = 0m, decimal upfrontMortgageFee = 0m)
+        decimal discountPoints = 0m, decimal upfrontMortgageFee = 0m, decimal sellerBuydown = 0m, LoanProgram program = LoanProgram.Conventional)
     {
         var dailyInterest = Money.Round(loan.Principal * loan.AnnualInterestRate / 100m / DaysInYear);
         var monthlyEscrow = Money.Round((yearOneTaxes + yearOneInsurance) / 12m);
@@ -96,6 +105,9 @@ public sealed record ClosingCosts
             buydownCost,
             discountPoints,
             upfrontMortgageFee,
-            Credits);
+            SellerCredits,
+            LenderCredits,
+            sellerBuydown,
+            ConcessionLimit.For(program, purchase));
     }
 }
