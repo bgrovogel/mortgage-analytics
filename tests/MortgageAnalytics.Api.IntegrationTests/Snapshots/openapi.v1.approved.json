@@ -889,6 +889,13 @@
           },
           "mostAllowed": {
             "$ref": "#/components/schemas/AffordabilityLimitResponse"
+          },
+          "qualifyingRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "qualifyingRateBasis": {
+            "$ref": "#/components/schemas/QualifyingRateBasis"
           }
         },
         "additionalProperties": false
@@ -2027,6 +2034,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "QualifyingRateBasis": {
+        "enum": [
+          "NoteRate",
+          "MostInFirstFiveYears",
+          "FirstResetOrFullyIndexed",
+          "StartPlusOnePoint"
+        ],
+        "type": "string"
       },
       "RateChangeResponse": {
         "type": "object",

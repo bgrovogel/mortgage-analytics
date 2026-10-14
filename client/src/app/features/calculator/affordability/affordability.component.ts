@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { decimal, usd } from '../../../core/formatting/format';
-import { Affordability, AffordabilityLimit, LoanProgramType } from '../../../core/models/amortization.models';
+import { Affordability, AffordabilityLimit, LoanProgramType, QualifyingRateBasis } from '../../../core/models/amortization.models';
 
 /** How a sentence names each program's loan. */
 const LOAN: Record<LoanProgramType, string> = { Conventional: 'a conventional loan', Fha: 'an FHA loan', Va: 'a VA loan' };
@@ -10,6 +10,13 @@ const STRETCH: Record<LoanProgramType, string> = {
   Conventional: 'Fannie Mae allows 45% with good credit and reserves, and up to 50% through its automated underwriting.',
   Fha: 'HUD allows up to 40% and 50% with compensating factors, such as cash reserves.',
   Va: 'Past 41%, VA asks for 20% more residual income than its guideline.',
+};
+
+/** Why an adjustable rate is qualified above where it starts, after its qualifying rate. */
+const ABOVE_START: Record<Exclude<QualifyingRateBasis, 'NoteRate'>, string> = {
+  MostInFirstFiveYears: 'the most it can reach in its first five years',
+  FirstResetOrFullyIndexed: 'the higher of its rate after the first change at the cap and the rate it is expected to reset to',
+  StartPlusOnePoint: 'a point above its starting rate, since it can change every year and less than 5% is down',
 };
 
 /** "28% and 36%", or "45%" when only the total is limited. */
@@ -50,8 +57,7 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
       </tbody>
     </table>
     <p class="note" data-testid="afford-note">
-      The highest price keeps this home’s {{ downPercent() }}% down, rate, taxes and insurance. {{ stretch() }} Lenders count
-      the payment at the note rate, even with a buydown.
+      The highest price keeps this home’s {{ downPercent() }}% down, rate, taxes and insurance. {{ stretch() }} {{ rateNote() }}
     </p>
   `,
   styleUrl: './affordability.component.scss',
@@ -69,6 +75,14 @@ export class AffordabilityComponent {
 
   protected readonly downPercent = computed(() => decimal(this.downPaymentPercent(), 1));
   protected readonly stretch = computed(() => STRETCH[this.program()]);
+
+  /** The rate the payment is counted at: the note rate, or an adjustable rate's qualifying rate and why. */
+  protected readonly rateNote = computed(() => {
+    const { qualifyingRate, qualifyingRateBasis } = this.affordability();
+    return qualifyingRateBasis === 'NoteRate'
+      ? 'Lenders count the payment at the note rate, even with a buydown.'
+      : `Lenders count this adjustable rate’s payment at ${decimal(qualifyingRate, 3)}%, ${ABOVE_START[qualifyingRateBasis]}.`;
+  });
 
   readonly intro = computed(() => {
     const a = this.affordability();

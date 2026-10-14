@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 629 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 639 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -167,8 +167,10 @@ home, $2,700 a month breaks even in 4 years, and $2,100 never does in 30. The ch
 two net worths, because those grow so large that the gap, which is the answer, disappears.
 
 **How does the calculator say what someone can afford?**
-The way a lender does: debt-to-income. The housing payment, at the note rate with every escrowed cost, as a share
-of gross income, alone and with the other debts. It's held to two limits, the comfortable 28/36 and the program's
+The way a lender does: debt-to-income. The housing payment, at the qualifying rate with every escrowed cost, as a share
+of gross income, alone and with the other debts. The qualifying rate is the note rate unless it's an ARM: then it's
+each program's rule (Fannie Mae's B3-6-04 qualifies a 3/1 ARM at the most its caps allow in five years), found once
+and held at every price searched. It's held to two limits, the comfortable 28/36 and the program's
 maximum (conventional 45%, FHA 31/43, VA 41%). The interesting part is the highest price. The payment depends on the
 price through taxes after exemptions, PMI and FHA's upfront fee, so there's no formula to invert, and I search
 instead: double until the budget is passed, then bisect to the dollar. My first version reran the whole 30-year
@@ -514,7 +516,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,178 .NET · 842 Jest · 112 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,191 .NET · 843 Jest · 112 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

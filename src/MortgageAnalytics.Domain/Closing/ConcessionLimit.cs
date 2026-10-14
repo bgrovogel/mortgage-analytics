@@ -6,7 +6,7 @@ namespace MortgageAnalytics.Domain.Closing;
 /// The most a seller, builder or other party to the sale may pay toward the buyer's closing costs, prepaids, discount
 /// points and buydowns (Fannie Mae's "interested party contributions"), as a percentage of the price. A conventional
 /// loan's depends on the loan-to-value (Selling Guide B3-4.1-02, for a home lived in or a second home): 3% above 90%,
-/// 6% from 75.01% to 90%, 9% at 75% or less. FHA's is 6%. VA's is 4%, and the seller may pay the buyer's normal
+/// 6% from 75.01% to 90%, 9% at 75% or less. FHA's is 6% (HUD Handbook 4000.1 II.A.4). VA's is 4%, and the seller may pay the buyer's normal
 /// closing costs and discount points besides. More than the limit cannot pay the buyer's costs: lenders take it off
 /// the price instead.
 /// </summary>

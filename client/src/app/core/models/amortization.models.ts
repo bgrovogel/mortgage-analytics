@@ -187,7 +187,7 @@ export interface AffordabilityLimit {
 export interface Affordability {
   monthlyIncome: number;
   monthlyDebts: number;
-  /** This home's payment as a lender counts it: at the note rate, with every housing cost. */
+  /** This home's payment as a lender counts it: at the qualifying rate, with every housing cost. */
   housingPayment: number;
   housingPercent: number;
   totalPercent: number;
@@ -195,7 +195,18 @@ export interface Affordability {
   comfortable: AffordabilityLimit;
   /** The program's: conventional 45% in all, FHA 31% and 43%, VA 41% in all. */
   mostAllowed: AffordabilityLimit;
+  /** The rate the principal and interest are qualified at, here and at every highest price. */
+  qualifyingRate: number;
+  /** Why: the note rate, or an adjustable rate's program rule. */
+  qualifyingRateBasis: QualifyingRateBasis;
 }
+
+/**
+ * Why a loan is qualified at its rate: the note rate; a conventional ARM fixed three years or less, at the most it
+ * reaches in five years; one fixed five years, at its first change's cap or the fully indexed rate; an FHA 1-year ARM
+ * with under 5% down, a point above its start.
+ */
+export type QualifyingRateBasis = 'NoteRate' | 'MostInFirstFiveYears' | 'FirstResetOrFullyIndexed' | 'StartPlusOnePoint';
 
 /** How to weigh the ways to take the seller's or builder's money. */
 export interface SellerOfferInput {

@@ -309,7 +309,7 @@ cash to close   = down payment + closing costs − lender credits − seller cre
   buyer's own down payment, so any beyond the costs are reported as unused rather than taken off.
 - **The seller's are limited** (Fannie Mae's "interested party contributions"): a conventional loan allows 3% of the
   price with a loan above 90% of it, 6% from 75.01% to 90%, 9% at 75% or less (Selling Guide B3-4.1-02); FHA 6% (HUD Handbook
-  4000.1, as HUD's FHA answers site states it); VA 4% of the reasonable value, besides the normal closing costs and
+  4000.1 II.A.4: toward origination fees, other closing costs, prepaid items and discount points); VA 4% of the reasonable value, besides the normal closing costs and
   discount points (VA Pamphlet 26-7, chapter 8, and VA.gov's funding fee and closing costs page). A buydown the seller pays for counts. Lenders take anything
   beyond the limit off the price instead, so here it is taken off the seller's credits and reported. With 5% down on
   the reference purchase the limit is 3%, **$11,250**; a $9,000 seller buydown and the $3,000 of credits is $750
@@ -326,7 +326,7 @@ ratio), and it with the other monthly debts (the "back-end").
 
 ```
 monthly income   = income a year ÷ 12, to the cent
-housing payment  = principal and interest at the note rate + the first month's taxes, insurance, PMI or MIP, dues, PID
+housing payment  = principal and interest at the qualifying rate + the first month's taxes, insurance, PMI or MIP, dues, PID
 housing %        = housing payment ÷ monthly income × 100, to two decimals
 total %          = (housing payment + other debts) ÷ monthly income × 100
 most for housing = min(income × total limit − debts, income × housing limit), rounded down to the cent, never below 0
@@ -338,6 +338,20 @@ most for housing = min(income × total limit − debts, income × housing limit)
   rule in the Federal Register, and Mortgagee Letter 2014-02, which lets compensating factors raise them to 37%/47% and
   40%/50%). VA is 41% in all (38 CFR 36.4340); past it, VA asks for residual income 20% over its guideline.
 - **A temporary buydown is qualified at the note rate**, as Fannie Mae requires, so its first years do not help.
+- **The qualifying rate** is the note rate, except for an adjustable rate, where each program has its rule:
+
+  | Loan | Qualified at |
+  |---|---|
+  | Conventional ARM fixed 3 years or less | the most the caps let the rate reach in the first five years (payments 1 to 60) |
+  | Conventional ARM fixed 5 years | the note rate plus the first change's cap (within the lifetime cap), or the fully indexed rate (here, the expected rate) if higher |
+  | Conventional ARM fixed longer | the note rate |
+  | FHA 1-year ARM with a loan of 95% or more | the starting rate plus 1 point |
+  | Any other FHA or VA ARM | the starting rate |
+
+  The conventional rules are Fannie Mae's Selling Guide B3-6-04; FHA's is HUD Handbook 4000.1's Section 251
+  adjustable rate. VA's own rule is not modelled. The rate is found once, from this home's loan-to-value, and held at
+  every price searched, since the share of the price borrowed stays the same. On the reference purchase, a 5/1 ARM at
+  6.5% with a 2-point first cap and an expected 7% is qualified at **8.5%**.
 - **The highest price** keeps the down payment's share of the price (rounded up to the cent, so a program's minimum
   is never missed), the rate and every cost, and changes only the price. The payment rises with the price, but through
   taxes after exemptions and mortgage insurance that no formula inverts, so the price is searched: doubling from this
@@ -347,9 +361,10 @@ most for housing = min(income × total limit − debts, income × housing limit)
   about 10 ms to a calculation. FHA's MIP still needs the original schedule.
 - On the reference purchase ($250,000, 5% down, 6.5%, Texas taxes) with $90,000 a year and $400 of debts, the
   comfortable limit allows **$2,100** for housing (28% of $7,500; 36% less the debts would be $2,300).
-- The domain is `DebtToIncome`, `DebtToIncomeLimit` and `MostAffordable` (`Domain/Affordability`), and
-  `AffordabilityAnalysis` (`Application/Services`). The Python model finds every price its own way, from its own
-  first-month costs, and the random purchases include incomes from $40,000 to $400,000.
+- The domain is `DebtToIncome`, `DebtToIncomeLimit`, `QualifyingRate` and `MostAffordable` (`Domain/Affordability`),
+  and `AffordabilityAnalysis` (`Application/Services`). The Python model checks every price at its edge, from its own
+  first-month costs, and finds the qualifying rate its own way, counting the cap steps rather than following the rate
+  path. The random purchases include incomes from $40,000 to $400,000, and ARMs fixed 1, 3, 5, 7 and 10 years.
 
 ### Rent or buy
 

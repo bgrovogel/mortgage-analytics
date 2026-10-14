@@ -130,7 +130,7 @@ their credits; the lender's credits do not:
 | Loan | Most the seller or builder may pay |
 |---|---|
 | **Conventional** | **3%** with less than 10% down · **6%** with 10% to 25% down · **9%** with 25% or more (Fannie Mae's Selling Guide B3-4.1-02, for a home you live in or a second home; an investment property is 2%, not modelled here) |
-| **FHA** | **6%** |
+| **FHA** | **6%** (HUD Handbook 4000.1 II.A.4) |
 | **VA** | **4%**, and the seller may also pay your normal closing costs and discount points (the fees and prepaid interest here) |
 
 The cash to close says what the limit is and why, and what the seller pays of it. When the offer is more than the
@@ -145,7 +145,10 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
 measures the home the way a lender does; the Overview's tile answers in a word (Yes, A stretch, Too much). Until an
 income is given, the tile and the tab offer **Add your income**, which opens that section with the cursor in the field. The housing payment counts principal and interest at the note rate (a buydown's cheaper
-first years are not qualified on), taxes, insurance, mortgage insurance, dues and PID. It is shown as a share of gross
+first years are not qualified on), taxes, insurance, mortgage insurance, dues and PID. An adjustable rate is counted
+as its program says: a conventional ARM fixed 3 years or less at the most it can reach in five years, one fixed 5
+years at its first change's cap or the rate it is expected to reset to, and an FHA 1-year ARM with less than 5% down a
+point above where it starts. The tab says which rate it used and why. It is shown as a share of gross
 monthly income, alone and with the other debts. Each limit then says what it allows for housing, the highest price
 it reaches with the same down payment share, rate and costs, and whether this home fits:
 

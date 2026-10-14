@@ -175,7 +175,8 @@ def random_purchase(rng):
         request['buydown'] = {'yearlyReductions': rng.choice([[1], [2, 1], [3, 2, 1], [1, 1]])}
         request['buydownPaidBy'] = rng.choice(['Seller', 'Borrower'])
     elif kind < 0.45 and 'discountPoints' not in request:
-        fixed = rng.choice([60, 84, 120])
+        # 1- and 3-year ARMs too, which a lender qualifies at the most they reach in five years (FHA's 1-year, a point up).
+        fixed = rng.choice([12, 36, 60, 84, 120])
         if fixed < term:
             caps = rng.choice([(2, 1, 5), (5, 2, 5), (2, 2, 5), (5, 1, 5)])
             margin = rng.choice([None, 2.75, 2.0])
@@ -185,6 +186,9 @@ def random_purchase(rng):
                 'initialCap': caps[0], 'periodicCap': caps[1], 'lifetimeCap': caps[2],
                 'margin': margin if margin is None or margin <= rate else None,
             }
+            # More ARMs with an income than the rest, so each program's qualifying rate is checked.
+            if not request.get('affordability') and rng.random() < 0.6:
+                request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 250, 600])}
     return request
 
 

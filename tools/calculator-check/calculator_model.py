@@ -499,10 +499,40 @@ COMFORTABLE = (D(28), D(36))
 MOST_ALLOWED = {'Conventional': (None, D(45)), 'Fha': (D(31), D(43)), 'Va': (None, D(41))}
 
 
-def qualifying_payment(request, today):
+def qualifying_rate(request):
+    """
+    The rate a lender qualifies the loan at, and why. Fixed: the note rate. An ARM, by program: conventional (Fannie Mae
+    B3-6-04) fixed 3 years or less, the highest rate the caps allow by payment 60, rising as fast as they let it;
+    fixed 5 years or less, the note rate plus the first cap (within the lifetime cap) or the expected rate, whichever is
+    higher; longer, the note rate. FHA (HUD 4000.1): a 1-year ARM with a loan of 95% or more, a point above the start.
+    VA: the note rate.
+    """
+    rate, arm = D(str(request['annualInterestRate'])), request.get('adjustableRate')
+    if not arm:
+        return rate, 'NoteRate'
+    kind = (request.get('program') or {}).get('type', 'Conventional')
+    fixed, interval = arm['initialFixedMonths'], arm['adjustmentIntervalMonths']
+    first, each, life = D(str(arm['initialCap'])), D(str(arm['periodicCap'])), D(str(arm['lifetimeCap']))
+    ceiling = min(D(30), rate + life)
+    if kind == 'Fha':
+        price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
+        if fixed <= 12 and (price - down) * 100 >= price * 95:
+            return min(D(30), rate + 1), 'StartPlusOnePoint'
+        return rate, 'NoteRate'
+    if kind == 'Va' or fixed > 60:
+        return rate, 'NoteRate'
+    if fixed > 36:
+        return max(min(ceiling, rate + first), D(str(arm['expectedRate']))), 'FirstResetOrFullyIndexed'
+    # The first change after the fixed months, then one each interval, while it is still within the first 60 payments.
+    later_changes = (60 - (fixed + 1)) // interval
+    return min(ceiling, rate + first + each * later_changes), 'MostInFirstFiveYears'
+
+
+def qualifying_payment(request, today, qualifying=None):
     """
     The first month's payment as a lender qualifies it, or None when no loan can be had (an FHA loan past its county's
-    limit): principal and interest at the note rate, and every housing cost charged with the first payment.
+    limit): principal and interest at the qualifying rate (this request's, unless given), and every housing cost
+    charged with the first payment.
     """
     price, down = D(str(request['homePrice'])), D(str(request['downPayment']))
     rate, term = D(str(request['annualInterestRate'])), request['termInMonths']
@@ -511,14 +541,18 @@ def qualifying_payment(request, today):
     if program and program['countyLoanLimit'] is not None and price - down > program['countyLoanLimit']:
         return None
     costs = Costs(request, (term + 11) // 12, fha_mip if program else None)
-    return payment(loan, rate, term) + sum(costs.for_payment(1, loan, loan).values(), D(0))
+    at = qualifying if qualifying is not None else qualifying_rate(request)[0]
+    return payment(loan, at, term) + sum(costs.for_payment(1, loan, loan).values(), D(0))
 
 
 def payment_at_price(request, today, price):
-    """The qualifying payment at another price, with the same down payment share rounded up to the cent."""
+    """
+    The qualifying payment at another price, with the same down payment share rounded up to the cent, at this home's
+    qualifying rate: the share borrowed is the same, so the rate is too.
+    """
     share = D(str(request['downPayment'])) / D(str(request['homePrice']))
     down = (price * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100
-    return qualifying_payment(dict(request, homePrice=price, downPayment=down), today)
+    return qualifying_payment(dict(request, homePrice=price, downPayment=down), today, qualifying_rate(request)[0])
 
 
 def affordability(request, today):
@@ -542,9 +576,11 @@ def affordability(request, today):
         return {'housingPercent': housing_percent, 'totalPercent': total_percent, 'maxHousingPayment': most, 'fits': housing <= most}
 
     kind = (request.get('program') or {}).get('type', 'Conventional')
+    qualifying, basis = qualifying_rate(request)
     return {'monthlyIncome': income, 'monthlyDebts': debts, 'housingPayment': housing,
             'housingPercent': percent(housing), 'totalPercent': percent(housing + debts),
-            'comfortable': limit(*COMFORTABLE), 'mostAllowed': limit(*MOST_ALLOWED[kind])}
+            'comfortable': limit(*COMFORTABLE), 'mostAllowed': limit(*MOST_ALLOWED[kind]),
+            'qualifyingRate': qualifying, 'qualifyingRateBasis': basis}
 
 
 def price_edge_problems(request, today, affordability_response, cap=D(100_000_000)):

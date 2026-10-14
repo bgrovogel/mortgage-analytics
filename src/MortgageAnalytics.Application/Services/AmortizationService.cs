@@ -89,13 +89,13 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     }
 
     /// <summary>
-    /// The first month's payment as a lender qualifies it: principal and interest at the note rate (a temporary
+    /// The first month's payment as a lender qualifies it: principal and interest at the qualifying rate (a temporary
     /// buydown's subsidy left out), and every housing cost. No schedule is needed, so searching prices stays quick.
     /// </summary>
-    private decimal QualifyingPayment(AmortizationRequest request)
+    private decimal QualifyingPayment(AmortizationRequest request, decimal annualRate)
     {
         var (_, _, loan, _, plan) = Prepare(request);
-        return PaymentFormula.MonthlyPayment(loan.Principal, loan.MonthlyRate, loan.TermInMonths) + plan.FirstMonth(loan.Principal).Total;
+        return PaymentFormula.MonthlyPayment(loan.Principal, annualRate / 100m / 12m, loan.TermInMonths) + plan.FirstMonth(loan.Principal).Total;
     }
 
     /// <summary>

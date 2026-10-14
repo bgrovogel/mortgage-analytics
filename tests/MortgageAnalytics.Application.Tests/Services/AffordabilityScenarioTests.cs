@@ -58,6 +58,44 @@ public class AffordabilityScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void AFixedRate_IsQualifiedAtTheNoteRate()
+    {
+        var a = AffordabilityOf(TexasPurchase());
+
+        Assert.That((a.QualifyingRate, a.QualifyingRateBasis), Is.EqualTo((6.5m, QualifyingRateBasis.NoteRate)), "the 6.5% note rate");
+    }
+
+    [Test]
+    public void AFiveYearArm_IsQualifiedAtItsFirstResetsCap_AsIfFixedThere()
+    {
+        // A 5/1 ARM at 6.5% whose first change may add 2 points: 8.5%, above the 7% it is expected to reset to.
+        var arm = TexasPurchase().WithAdjustableRate(7m, initialFixedMonths: 60, initialCap: 2m);
+        var a = AffordabilityOf(arm);
+        var fixedThere = AffordabilityOf(TexasPurchase().WithRate(8.5m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That((a.QualifyingRate, a.QualifyingRateBasis), Is.EqualTo((8.5m, QualifyingRateBasis.FirstResetOrFullyIndexed)),
+                "Fannie Mae qualifies a 5-year ARM at the note rate plus its first cap, or the fully indexed rate if higher");
+            Assert.That(a.HousingPayment, Is.EqualTo(fixedThere.HousingPayment), "the payment as if fixed at 8.5%");
+            Assert.That(a.Comfortable.MaxHomePrice, Is.EqualTo(fixedThere.Comfortable.MaxHomePrice), "and so is every price searched");
+            Assert.That(a.HousingPayment, Is.GreaterThan(Service.Analyze(arm).Baseline.TotalMonthlyPayment), "more than the first payment");
+        });
+    }
+
+    [Test]
+    public void AnFhaOneYearArm_WithThreeAndAHalfPercentDown_IsQualifiedAPointHigher()
+    {
+        var request = A.Request.WithHomePrice(300_000m).WithDownPayment(10_500m).WithProgram(LoanProgramType.Fha)
+            .WithAdjustableRate(7m, initialFixedMonths: 12, initialCap: 1m, periodicCap: 1m);
+
+        var a = AffordabilityOf(request);
+
+        Assert.That((a.QualifyingRate, a.QualifyingRateBasis), Is.EqualTo((7m, QualifyingRateBasis.StartPlusOnePoint)),
+            "HUD: a 1-year ARM with a loan of 95% or more is qualified at the starting 6% plus a point");
+    }
+
+    [Test]
     public void TheComfortableLimit_Is28And36_AndThePriceIsTheMostItReaches()
     {
         var comfortable = AffordabilityOf(TexasPurchase()).Comfortable;

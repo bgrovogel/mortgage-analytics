@@ -8,6 +8,7 @@ describe('AffordabilityComponent', () => {
     monthlyIncome: 12_500, monthlyDebts: 600, housingPayment: 3_460.11, housingPercent: 27.68, totalPercent: 32.48,
     comfortable: { housingPercent: 28, totalPercent: 36, maxHousingPayment: 3_500, maxHomePrice: 420_104, fits: true },
     mostAllowed: { housingPercent: null, totalPercent: 45, maxHousingPayment: 5_025, maxHomePrice: 615_229, fits: true },
+    qualifyingRate: 6.5, qualifyingRateBasis: 'NoteRate',
   };
 
   const render = (affordability: Affordability, program: LoanProgramType = 'Conventional', downPaymentPercent = 9) => {
@@ -79,5 +80,20 @@ describe('AffordabilityComponent', () => {
     );
     expect(render(typical, 'Fha').text('afford-note')).toContain('HUD allows up to 40% and 50% with compensating factors, such as cash reserves.');
     expect(render(typical, 'Va').text('afford-note')).toContain('Past 41%, VA asks for 20% more residual income than its guideline.');
+  });
+
+  it('says what rate an adjustable rate is qualified at, and why', () => {
+    const at = (qualifyingRate: number, qualifyingRateBasis: Affordability['qualifyingRateBasis']) =>
+      render({ ...typical, qualifyingRate, qualifyingRateBasis }).text('afford-note');
+
+    expect(at(10, 'MostInFirstFiveYears'))
+      .toContain('Lenders count this adjustable rate’s payment at 10%, the most it can reach in its first five years.');
+    expect(at(8.5, 'FirstResetOrFullyIndexed')).toContain(
+      'Lenders count this adjustable rate’s payment at 8.5%, the higher of its rate after the first change at the cap and the rate it is expected to reset to.',
+    );
+    expect(at(7, 'StartPlusOnePoint')).toContain(
+      'Lenders count this adjustable rate’s payment at 7%, a point above its starting rate, since it can change every year and less than 5% is down.',
+    );
+    expect(at(6.5, 'NoteRate')).toContain('Lenders count the payment at the note rate, even with a buydown.');
   });
 });

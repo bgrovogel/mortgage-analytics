@@ -75,12 +75,14 @@ public sealed record RentOrBuyYearResponse(
 /// </summary>
 /// <param name="MonthlyIncome">Gross income a month: the year's divided by 12, to the cent.</param>
 /// <param name="MonthlyDebts">The other debts a month.</param>
-/// <param name="HousingPayment">This home's payment as a lender counts it: principal and interest at the note rate (a
-/// buydown's lower years are not qualified on), taxes, insurance, mortgage insurance, dues and PID, in the first month.</param>
+/// <param name="HousingPayment">This home's payment as a lender counts it: principal and interest at the qualifying
+/// rate (a buydown's lower years are not qualified on), taxes, insurance, mortgage insurance, dues and PID, in the first month.</param>
 /// <param name="HousingPercent">The housing payment as a percentage of income.</param>
 /// <param name="TotalPercent">It and the debts as a percentage of income.</param>
 /// <param name="Comfortable">The classic rule of thumb: 28% for housing, 36% in all.</param>
 /// <param name="MostAllowed">The loan program's limit: conventional 45% in all, FHA 31% and 43%, VA 41% in all.</param>
+/// <param name="QualifyingRate">The rate the principal and interest are qualified at, here and at every price searched.</param>
+/// <param name="QualifyingRateBasis">Why it is that rate: the note rate, or an adjustable rate's program rule.</param>
 public sealed record AffordabilityResponse(
     decimal MonthlyIncome,
     decimal MonthlyDebts,
@@ -88,7 +90,25 @@ public sealed record AffordabilityResponse(
     decimal HousingPercent,
     decimal TotalPercent,
     AffordabilityLimitResponse Comfortable,
-    AffordabilityLimitResponse MostAllowed);
+    AffordabilityLimitResponse MostAllowed,
+    decimal QualifyingRate,
+    QualifyingRateBasis QualifyingRateBasis);
+
+/// <summary>Why a loan is qualified at the rate it is.</summary>
+public enum QualifyingRateBasis
+{
+    /// <summary>The note rate: a fixed rate, an ARM fixed longer than five years, or one whose program asks no more.</summary>
+    NoteRate,
+
+    /// <summary>A conventional ARM fixed three years or less: the most its rate can reach in the first five years.</summary>
+    MostInFirstFiveYears,
+
+    /// <summary>A conventional ARM fixed five years: the note rate plus its first cap, or the fully indexed rate if higher.</summary>
+    FirstResetOrFullyIndexed,
+
+    /// <summary>An FHA 1-year ARM with a loan of 95% or more: the starting rate plus a point.</summary>
+    StartPlusOnePoint,
+}
 
 /// <summary>One debt-to-income limit, and what it allows.</summary>
 /// <param name="HousingPercent">The most of income for housing; null when only the total is limited.</param>

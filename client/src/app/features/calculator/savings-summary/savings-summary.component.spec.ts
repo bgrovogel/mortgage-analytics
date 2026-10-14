@@ -363,6 +363,7 @@ describe('SavingsSummaryComponent', () => {
       monthlyIncome: 12_500, monthlyDebts: 600, housingPayment: 3_102.19, housingPercent: 24.82, totalPercent: 29.62,
       comfortable: { housingPercent: 28, totalPercent: 36, maxHousingPayment: 3_500, maxHomePrice: 474_091, fits: comfortable },
       mostAllowed: { housingPercent: null, totalPercent: 45, maxHousingPayment: 5_025, maxHomePrice: 700_615, fits: allowed },
+      qualifyingRate: 6.25, qualifyingRateBasis: 'NoteRate',
     });
 
     it('answers in a word, says why, and links to how lenders see it', () => {
