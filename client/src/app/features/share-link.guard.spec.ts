@@ -63,4 +63,18 @@ describe('openShareLink', () => {
     expect(stores().of('Refinance').linkProblem()).toBe('This link could not be opened. It may have been cut short when it was copied.');
     expect(result.toString()).toBe('/refinance');
   });
+
+  it('says so on the calculator, the home page, for a broken link to the site itself', () => {
+    const result = visit('/', 'share=garbled') as UrlTree;
+
+    expect(stores().of('Purchase').linkProblem()).not.toBeNull();
+    expect(result.toString()).toBe('/');
+  });
+
+  it('clears what was said about an earlier broken link once a link opens', () => {
+    visit('/refinance', 'share=garbled');
+    visit('/refinance', shareFragment('Refinance', refinance));
+
+    expect(stores().of('Refinance').linkProblem()).toBeNull();
+  });
 });

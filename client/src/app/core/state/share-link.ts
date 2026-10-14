@@ -36,7 +36,7 @@ export function readShareLink(fragment: string | null): SharedInputs | 'broken' 
   try {
     const base64 = fragment.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
     const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const payload: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    const payload: unknown = JSON.parse(new TextDecoder().decode(bytes));
     if (!isObject(payload) || payload['v'] !== VERSION) return 'broken';
     const { kind, request } = payload;
     if (!KINDS.includes(kind as SavedCalculationKind) || !isObject(request)) return 'broken';

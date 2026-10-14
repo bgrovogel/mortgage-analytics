@@ -50,7 +50,7 @@ describe('ShareLinkComponent', () => {
   });
 
   it('shows the link to copy by hand when the clipboard cannot be used', async () => {
-    writeText.mockRejectedValue(new Error('denied'));
+    writeText.mockImplementationOnce(async () => { throw new Error('denied'); });
     create();
     await copy();
 
@@ -59,9 +59,37 @@ describe('ShareLinkComponent', () => {
     expect(find('share-status')).toBeNull();
   });
 
-  it('cannot copy before there are inputs', () => {
+  it('selects the link to copy by hand', async () => {
+    writeText.mockImplementationOnce(async () => { throw new Error('denied'); });
+    create();
+    await copy();
+    const box = find<HTMLInputElement>('share-url')!;
+
+    expect([box.selectionStart, box.selectionEnd]).toEqual([0, box.value.length]);
+  });
+
+  it('shows only what the last attempt did', async () => {
+    writeText.mockImplementationOnce(async () => { throw new Error('denied'); });
+    create();
+    await copy();
+    await copy();
+
+    expect(find('share-manual')).toBeNull();
+    expect(find('share-status')).not.toBeNull();
+
+    writeText.mockImplementationOnce(async () => { throw new Error('denied'); });
+    await copy();
+    expect(find('share-status')).toBeNull();
+    expect(find('share-manual')).not.toBeNull();
+  });
+
+  it('cannot copy before there are inputs', async () => {
     create(null);
 
     expect(find<HTMLButtonElement>('share-copy')!.disabled).toBe(true);
+    await fixture.componentInstance.copy();
+    fixture.detectChanges();
+    expect(writeText).not.toHaveBeenCalled();
+    expect(find('share-status')).toBeNull();
   });
 });

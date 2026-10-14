@@ -21,7 +21,7 @@ export const openShareLink: CanActivateFn = (route, state) => {
   const router = inject(Router);
   const stores = inject(CalculationStores);
   const here = withoutFragment(router.parseUrl(state.url));
-  const page = KIND_OF[here.root.children['primary']?.segments[0]?.path ?? ''] ?? 'Purchase';
+  const page = KIND_OF[here.root.children['primary']?.segments[0].path ?? ''] ?? 'Purchase';
 
   if (link === 'broken') {
     stores.of(page).linkProblem.set('This link could not be opened. It may have been cut short when it was copied.');
