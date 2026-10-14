@@ -19,7 +19,7 @@ import urllib.request
 from datetime import date
 from decimal import Decimal as D
 
-from calculator_model import FHA_LIMITS, analyze, refinance
+from calculator_model import FHA_LIMITS, analyze, price_edge_problems, refinance
 
 API = 'http://localhost:5080/api/v1'
 
@@ -229,6 +229,8 @@ def main(count=300):
             failures.append((f'purchase {i}: rejected {response["__error__"]}', [response['body']], request))
             continue
         problems = list(differences(analyze(request, today), response))
+        if response.get('affordability'):
+            problems += list(price_edge_problems(request, today, response['affordability']))
         if problems:
             failures.append((f'purchase {i}', problems, request))
         else:

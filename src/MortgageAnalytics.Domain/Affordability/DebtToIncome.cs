@@ -35,8 +35,9 @@ public sealed record DebtToIncomeLimit(decimal? HousingPercent, decimal TotalPer
     /// <summary>
     /// The most a loan program allows on a manually underwritten loan. Conventional: 45% in all, for a borrower with
     /// the credit score and reserves Fannie Mae asks (Selling Guide B3-6-02; its automated underwriting may go to 50%).
-    /// FHA: 31% for housing and 43% in all (HUD, without compensating factors, which can raise them to 40%/50%). VA:
-    /// 41% in all; above it, VA asks for 20% more residual income than its guideline.
+    /// FHA: 31% for housing and 43% in all (HUD's manual underwriting rule; Mortgagee Letter 2014-02 lets compensating
+    /// factors raise them to 37%/47% and 40%/50%). VA: 41% in all (38 CFR 36.4340); above it, VA asks for 20% more
+    /// residual income than its guideline.
     /// </summary>
     /// <param name="program">The loan's program.</param>
     public static DebtToIncomeLimit MostAllowed(LoanProgram program) => program switch

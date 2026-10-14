@@ -471,11 +471,18 @@ def qualifying_payment(request, today):
     return payment(loan, rate, term) + sum(costs.for_payment(1, loan, loan).values(), D(0))
 
 
+def payment_at_price(request, today, price):
+    """The qualifying payment at another price, with the same down payment share rounded up to the cent."""
+    share = D(str(request['downPayment'])) / D(str(request['homePrice']))
+    down = (price * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100
+    return qualifying_payment(dict(request, homePrice=price, downPayment=down), today)
+
+
 def affordability(request, today):
     """
     The home against a household's income and debts: its debt-to-income ratios, and for each limit the most the housing
-    payment may be and the highest whole-dollar price whose payment fits, with the same down payment share (rounded up
-    to the cent) and nothing else changed. The price is found by doubling from the home's price, then halving the gap.
+    payment may be and whether this home fits. The highest price is not worked out here: the API's is checked at its
+    edge instead (price_edge_problems), so a search written the same way twice cannot hide a mistake in both.
     """
     household = request.get('affordability')
     if not household:
@@ -483,39 +490,36 @@ def affordability(request, today):
     income, debts = money(D(str(household['annualIncome'])) / 12), D(str(household['monthlyDebts']))
     housing = qualifying_payment(request, today)
     percent = lambda x: (x / income * 100).quantize(CENT, rounding=ROUND_HALF_UP)  # noqa: E731
-    price0, share = D(str(request['homePrice'])), D(str(request['downPayment'])) / D(str(request['homePrice']))
-    cache = {}
-
-    def payment_at(price):
-        if price not in cache:
-            down = (price * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100
-            cache[price] = qualifying_payment(dict(request, homePrice=price, downPayment=down), today)
-        return cache[price]
-
-    def most_price(budget, cap=D(100_000_000)):
-        fits = lambda p: (lambda pay: pay is not None and pay <= budget)(payment_at(p))  # noqa: E731
-        low, high = D(0), min(max(D(1), price0.to_integral_value(rounding='ROUND_FLOOR')), cap)
-        while fits(high):
-            if high == cap:
-                return cap
-            low, high = high, min(high * 2, cap)
-        while high - low > 1:
-            middle = ((low + high) / 2).to_integral_value(rounding='ROUND_FLOOR')
-            low, high = (middle, high) if fits(middle) else (low, middle)
-        return low
 
     def limit(housing_percent, total_percent):
         most = income * total_percent / 100 - debts
         if housing_percent is not None:
             most = min(most, income * housing_percent / 100)
         most = max(D(0), (most * 100).to_integral_value(rounding='ROUND_FLOOR') / 100)
-        return {'housingPercent': housing_percent, 'totalPercent': total_percent, 'maxHousingPayment': most,
-                'maxHomePrice': most_price(most), 'fits': housing <= most}
+        return {'housingPercent': housing_percent, 'totalPercent': total_percent, 'maxHousingPayment': most, 'fits': housing <= most}
 
     kind = (request.get('program') or {}).get('type', 'Conventional')
     return {'monthlyIncome': income, 'monthlyDebts': debts, 'housingPayment': housing,
             'housingPercent': percent(housing), 'totalPercent': percent(housing + debts),
             'comfortable': limit(*COMFORTABLE), 'mostAllowed': limit(*MOST_ALLOWED[kind])}
+
+
+def price_edge_problems(request, today, affordability_response, cap=D(100_000_000)):
+    """
+    Checks each highest price the API found by its edge: the payment there fits the limit's budget (or the price is 0),
+    and a dollar more does not (or is past what any loan can have, or the price is the cap).
+    """
+    for name in ('comfortable', 'mostAllowed'):
+        a = affordability_response[name]
+        price, budget = D(a['maxHomePrice']), D(a['maxHousingPayment'])
+        at = payment_at_price(request, today, price) if price > 0 else None
+        if price > 0 and (at is None or at > budget):
+            yield f'$.affordability.{name}.maxHomePrice: {price} costs {at}, past the budget {budget}'
+        if price < cap:
+            above = payment_at_price(request, today, price + 1)
+            if above is not None and above <= budget:
+                yield f'$.affordability.{name}.maxHomePrice: {price + 1} costs {above}, within the budget {budget}, so {price} is not the highest'
+
 
 
 def seller_offer(request, today, out):

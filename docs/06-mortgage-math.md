@@ -308,8 +308,9 @@ cash to close   = down payment + closing costs − lender credits − seller cre
 - **Credits never pay the down payment.** Seller and lender credits may pay closing costs and prepaids, not the
   buyer's own down payment, so any beyond the costs are reported as unused rather than taken off.
 - **The seller's are limited** (Fannie Mae's "interested party contributions"): a conventional loan allows 3% of the
-  price with a loan above 90% of it, 6% from 75.01% to 90%, 9% at 75% or less (Selling Guide B3-4.1-02); FHA 6%;
-  VA 4%, besides the normal closing costs and points. A buydown the seller pays for counts. Lenders take anything
+  price with a loan above 90% of it, 6% from 75.01% to 90%, 9% at 75% or less (Selling Guide B3-4.1-02); FHA 6% (HUD Handbook
+  4000.1, as HUD's FHA answers site states it); VA 4% of the reasonable value, besides the normal closing costs and
+  discount points (VA Pamphlet 26-7, chapter 8, and VA.gov's funding fee and closing costs page). A buydown the seller pays for counts. Lenders take anything
   beyond the limit off the price instead, so here it is taken off the seller's credits and reported. With 5% down on
   the reference purchase the limit is 3%, **$11,250**; a $9,000 seller buydown and the $3,000 of credits is $750
   over it, so $2,250 of the credits are used and the cash to close is **$27,239.09**.
@@ -333,8 +334,9 @@ most for housing = min(income × total limit − debts, income × housing limit)
 
 - **The limits:** comfortable is 28% and 36%. The most allowed is the program's: conventional 45% in all (Fannie
   Mae's Selling Guide B3-6-02, for a manually underwritten loan with the credit score and reserves its matrix asks;
-  its automated underwriting goes to 50%). FHA is 31% and 43% (HUD, without compensating factors, which can raise
-  them to 40% and 50%). VA is 41% in all; past it, VA asks for residual income 20% over its guideline.
+  its automated underwriting goes to 50%). FHA is 31% and 43% (HUD's 2013 manual underwriting
+  rule in the Federal Register, and Mortgagee Letter 2014-02, which lets compensating factors raise them to 37%/47% and
+  40%/50%). VA is 41% in all (38 CFR 36.4340); past it, VA asks for residual income 20% over its guideline.
 - **A temporary buydown is qualified at the note rate**, as Fannie Mae requires, so its first years do not help.
 - **The highest price** keeps the down payment's share of the price (rounded up to the cent, so a program's minimum
   is never missed), the rate and every cost, and changes only the price. The payment rises with the price, but through
