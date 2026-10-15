@@ -145,6 +145,17 @@ describe('CalculatorPageComponent', () => {
       expect(bar).toContain('Interest $454,379');
     });
 
+    it('says the answer to the question open instead of the savings, on the views that ask another one', async () => {
+      const rentOrBuy = { monthlyRent: 2_700, cashToClose: 48_128.79, breakEvenYear: 4, years: [{ year: 1, advantage: -27_228 }] };
+      calculate.mockReturnValue(of(aResponse({ rentOrBuy: rentOrBuy as never })));
+
+      await open('/calculator/rent-or-buy');
+
+      const bar = el('[data-testid="summary-bar"]')!.textContent!.replace(/\s+/g, ' ');
+      expect(el('[data-testid="summary-lead"]')!.textContent).toBe('Buy, if you stay 4 years or more');
+      expect(bar).not.toContain('Net savings');
+    });
+
     it('hides while the headline numbers are on screen, so they are not shown twice', async () => {
       await open('/calculator');
 

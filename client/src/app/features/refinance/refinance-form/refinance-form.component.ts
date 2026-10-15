@@ -7,6 +7,7 @@ import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
+import { usd as usdWhole } from '../../../core/formatting/format';
 import { PAID_OFF_ALREADY, balanceAfter, firstOfMonthFromNext, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
@@ -105,6 +106,13 @@ export class RefinanceFormComponent implements OnInit {
   /** One line for each loan's closed rate section. */
   readonly currentRateSummary = computed(() => rateSummary(this.form.controls.currentRate, 'reset', this.values().currentAnnualInterestRate ?? 0));
   readonly newRateSummary = computed(() => rateSummary(this.form.controls.newRate, 'type', this.values().newAnnualInterestRate ?? 0));
+
+  /** The closed "Cash out and PMI" section's line: what is taken out, and the new loan's PMI rate. */
+  readonly extrasSummary = computed(() => {
+    const v = this.values();
+    const cash = v.cashOut ? `Cash out ${usdWhole(v.cashOut)}` : 'No cash out';
+    return v.newPmiRate ? `${cash} · PMI ${v.newPmiRate}%` : cash;
+  });
 
   /** True while the loan is described as it was taken out. */
   readonly byOriginalLoan = computed(() => this.values().loanEntry === 'original');

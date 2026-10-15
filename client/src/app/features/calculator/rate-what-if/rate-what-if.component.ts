@@ -18,7 +18,7 @@ const signed = (value: number, format: (amount: number) => string) => `${value <
   template: `
     @if (loan(); as l) {
       @let w = scenario();
-      <section class="panel" data-testid="rate-what-if">
+      <section class="panel" [class.bare]="bare()" data-testid="rate-what-if">
         <h3>What if the rate were different?</h3>
         <div class="control">
           <label for="what-if-slider">Rate</label>
@@ -53,6 +53,9 @@ const signed = (value: number, format: (amount: number) => string) => `${value <
 export class RateWhatIfComponent {
   /** The loan to price at other rates; null where one rate does not describe it, which leaves this out. */
   readonly loan = input.required<RateWhatIfLoan | null>();
+
+  /** True inside a panel that is already a card (a tab): no card of its own, so it is not a card in a card. */
+  readonly bare = input(false);
 
   /** Percentage points added to (or taken off) the loan's rate. */
   protected readonly delta = signal(0);

@@ -1,4 +1,4 @@
-import type { ScheduleColumn, ScheduleRow } from './schedule-table.component';
+import type { ScheduleColumn, ScheduleRow } from './schedule-model';
 
 /** A field as CSV writes it: quoted when it holds a comma, a quote or a line break, with quotes doubled. */
 const field = (text: string) => (/[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text);

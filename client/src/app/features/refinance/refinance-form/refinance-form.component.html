@@ -93,9 +93,6 @@
       </div>
     </details>
 
-    <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
-    <p class="hint" data-testid="cash-out-hint">Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow.</p>
-
     <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
     <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>
 
@@ -104,8 +101,20 @@
       <span><strong>Add them to the loan</strong> instead of paying at closing</span>
     </label>
 
-    <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
-    <p class="hint" data-testid="new-pmi-hint">A yearly share of the new loan, charged only while it is more than 80% of the home's value.</p>
+    <!-- Not every refinance takes cash out or carries PMI: one line says where each stands, and opens to change it. -->
+    <details class="section" data-testid="section-new-extras">
+      <summary>
+        <span class="section-title">Cash out and PMI</span>
+        <span class="section-summary" data-testid="new-extras-summary">{{ extrasSummary() }}</span>
+      </summary>
+      <div class="section-body">
+        <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
+        <p class="hint" data-testid="cash-out-hint">Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow.</p>
+
+        <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
+        <p class="hint" data-testid="new-pmi-hint">A yearly share of the new loan, charged only while it is more than 80% of the home's value.</p>
+      </div>
+    </details>
   </fieldset>
 
 </form>

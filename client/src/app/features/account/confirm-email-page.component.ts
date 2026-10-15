@@ -10,15 +10,15 @@ import { AuthService } from '../../core/auth/auth.service';
     <section class="card" aria-live="polite" data-testid="confirm-email">
       @switch (status()) {
         @case ('working') {
-          <h2>Confirming your email…</h2>
+          <h1>Confirming your email…</h1>
         }
         @case ('done') {
-          <h2>Your email is confirmed</h2>
+          <h1>Your email is confirmed</h1>
           <p class="intro">Your account is ready. Sign in to save calculations and see your history.</p>
           <a class="primary" routerLink="/sign-in">Sign in</a>
         }
         @case ('failed') {
-          <h2>That link did not work</h2>
+          <h1>That link did not work</h1>
           <p class="intro">
             It may be incomplete or out of date. Try signing in: if your email still needs confirming, you can ask
             for a new link there.

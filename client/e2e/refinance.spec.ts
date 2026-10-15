@@ -39,6 +39,7 @@ test.describe('Refinance', () => {
 
   test('taking cash out: what is in hand, and a warning when the new loan is above what lenders allow', async ({ page }) => {
     await reference(page);
+    await page.getByTestId('section-new-extras').locator('summary').click(); // cash out is one step in, with PMI
 
     await page.getByTestId('cash-out').fill('50000');
 

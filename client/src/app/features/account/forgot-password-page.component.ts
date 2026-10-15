@@ -14,7 +14,7 @@ import { DevMailboxHintComponent } from './dev-mailbox-hint.component';
   imports: [ReactiveFormsModule, RouterLink, DevMailboxHintComponent],
   template: `
     <section class="card" aria-labelledby="forgot-title">
-      <h2 id="forgot-title">Forgot your password?</h2>
+      <h1 id="forgot-title">Forgot your password?</h1>
       @if (sentTo(); as email) {
         <p class="note" role="status" data-testid="forgot-sent">
           If there is an account for {{ email }}, a link to choose a new password is on its way.

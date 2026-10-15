@@ -114,71 +114,79 @@
   </section>
 }
 
-@if (rateLoan(); as loan) {
-  <app-rate-what-if [loan]="loan" />
-}
-
-<div class="panel">
-  <app-refinance-chart [result]="r" />
-</div>
-
-<div class="panel">
-  <div class="table-wrap" tabindex="0" aria-label="The options side by side">
-    <table data-testid="refi-table">
-      <thead>
-        <tr>
-          <td></td>
-          @for (column of columns(); track column.label) {
-            <th scope="col">{{ column.label }}</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th scope="row">Monthly payment</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal + column.option.monthlyPmi) }}</td>
-          }
-        </tr>
-        <tr>
-          <th scope="row">Payments</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ column.option.numberOfPayments }}</td>
-          }
-        </tr>
-        <tr>
-          <th scope="row">Paid off</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ date(column.option.payoffDate) }}</td>
-          }
-        </tr>
-        <tr>
-          <th scope="row">Total interest</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ dollars(column.option.totalInterest) }}</td>
-          }
-        </tr>
-        @if (hasPmi()) {
-          <tr data-testid="refi-pmi">
-            <th scope="row">PMI</th>
-            @for (column of columns(); track column.label) {
-              <td>{{ column.option.pmiEndDate ? dollars(column.option.totalPmi) + ' to ' + date(column.option.pmiEndDate) : '$0' }}</td>
-            }
-          </tr>
+<section class="panel details" aria-label="Details">
+  <app-detail-tabs label="Details" [tabs]="tabs()" [(selected)]="tab">
+    @switch (tab()) {
+      @case ('table') {
+        <div class="panel">
+          <div class="table-wrap" tabindex="0" aria-label="The options side by side">
+            <table data-testid="refi-table">
+              <thead>
+                <tr>
+                  <td></td>
+                  @for (column of columns(); track column.label) {
+                    <th scope="col">{{ column.label }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Monthly payment</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal + column.option.monthlyPmi) }}</td>
+                  }
+                </tr>
+                <tr>
+                  <th scope="row">Payments</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ column.option.numberOfPayments }}</td>
+                  }
+                </tr>
+                <tr>
+                  <th scope="row">Paid off</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ date(column.option.payoffDate) }}</td>
+                  }
+                </tr>
+                <tr>
+                  <th scope="row">Total interest</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ dollars(column.option.totalInterest) }}</td>
+                  }
+                </tr>
+                @if (hasPmi()) {
+                  <tr data-testid="refi-pmi">
+                    <th scope="row">PMI</th>
+                    @for (column of columns(); track column.label) {
+                      <td>{{ column.option.pmiEndDate ? dollars(column.option.totalPmi) + ' to ' + date(column.option.pmiEndDate) : '$0' }}</td>
+                    }
+                  </tr>
+                }
+                <tr>
+                  <th scope="row">{{ r.buydownCost > 0 ? 'Closing costs + buydown' : 'Closing costs' }}</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ column.closing }}</td>
+                  }
+                </tr>
+                <tr class="total" data-testid="refi-total-cost">
+                  <th scope="row">Total cost</th>
+                  @for (column of columns(); track column.label) {
+                    <td>{{ dollars(column.totalCost) }}</td>
+                  }
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      @case ('time') {
+        <app-refinance-chart [result]="r" />
+      }
+      @case ('rate') {
+        @if (rateLoan(); as loan) {
+          <app-rate-what-if [loan]="loan" [bare]="true" />
         }
-        <tr>
-          <th scope="row">{{ r.buydownCost > 0 ? 'Closing costs + buydown' : 'Closing costs' }}</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ column.closing }}</td>
-          }
-        </tr>
-        <tr class="total" data-testid="refi-total-cost">
-          <th scope="row">Total cost</th>
-          @for (column of columns(); track column.label) {
-            <td>{{ dollars(column.totalCost) }}</td>
-          }
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+      }
+    }
+  </app-detail-tabs>
+</section>

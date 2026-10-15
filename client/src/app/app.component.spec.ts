@@ -49,7 +49,8 @@ describe('AppComponent', () => {
   it('renders the title and the page navigation, and the API docs in the footer, apart from the pages', () => {
     const { root } = render();
 
-    expect(root.querySelector('h1')?.textContent).toBe('Mortgage Analytics');
+    expect(root.querySelector('a.brand .brand-name')?.textContent).toBe('Mortgage Analytics');
+    expect(root.querySelector('h1')).toBeNull(); // the title of the page is the heading, not the brand
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
       .toEqual(['Buy a home', 'Refinance', 'Pay off or invest', 'Saved']);
     expect(root.querySelector('footer a[href="/swagger"]')?.textContent?.trim()).toBe('Developer API docs ↗');
@@ -70,6 +71,43 @@ describe('AppComponent', () => {
     expect(document.activeElement).toBe(main);
     root.remove();
     fixture.destroy();
+  });
+
+  describe('after a keyboard or screen-reader user follows a link', () => {
+    const open = async (...urls: string[]) => {
+      const { fixture, root } = render();
+      document.body.appendChild(root); // focus only lands on what is in the document
+      const router = TestBed.inject(Router);
+      for (const url of urls) {
+        await router.navigateByUrl(url);
+        fixture.detectChanges();
+      }
+      return { fixture, root, main: root.querySelector('main') as HTMLElement };
+    };
+    afterEach(() => document.body.replaceChildren());
+
+    it('puts focus on the new page, so the one before it is not what is read next', async () => {
+      const { main } = await open('/privacy', '/glossary');
+
+      expect(document.activeElement).toBe(main);
+    });
+
+    it('leaves focus where it is when only a view of the same page changed, so the tabs keep it', async () => {
+      const { root, main } = await open('/calculator/overview');
+      (root.querySelector('a, button') as HTMLElement).focus();
+      const was = document.activeElement;
+
+      await TestBed.inject(Router).navigateByUrl('/calculator/closing');
+
+      expect(document.activeElement).toBe(was);
+      expect(document.activeElement).not.toBe(main);
+    });
+
+    it('does not take focus on the first page, where the visitor has not moved yet', async () => {
+      const { main } = await open('/privacy');
+
+      expect(document.activeElement).not.toBe(main);
+    });
   });
 
   it('puts the page in the theme chosen on an earlier visit, and offers the choice in the footer', () => {

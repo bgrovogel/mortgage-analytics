@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
 import { money, monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
+import { DetailTab, DetailTabsComponent } from '../../../core/layout/detail-tabs.component';
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RateWhatIfComponent } from '../../calculator/rate-what-if/rate-what-if.component';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
@@ -22,7 +23,7 @@ interface TableColumn {
  */
 @Component({
   selector: 'app-refinance-results',
-  imports: [RateWhatIfComponent, RefinanceChartComponent],
+  imports: [DetailTabsComponent, RateWhatIfComponent, RefinanceChartComponent],
   templateUrl: './refinance-results.component.html',
   styleUrl: './refinance-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +42,16 @@ export class RefinanceResultsComponent {
     if (rate === null || r.newBuydown || r.refinanced.rateChanges.length > 0 || r.refinanced.loanAmount <= 0) return null;
     return { amount: r.refinanced.loanAmount, rate, termMonths: r.refinanced.numberOfPayments };
   });
+
+  /** The detail view shown: the options side by side, the balances over time, or the new loan at other rates. */
+  protected readonly tab = signal<string>('table');
+
+  /** The views the details have; the rate what-if only when the new loan has one rate to vary. */
+  protected readonly tabs = computed<readonly DetailTab[]>(() => [
+    { value: 'table', label: 'Side by side' },
+    { value: 'time', label: 'Over time' },
+    ...(this.rateLoan() ? [{ value: 'rate', label: 'If the rate changes' }] : []),
+  ]);
 
   protected readonly dollars = usd;
   protected readonly cents = usdCents;

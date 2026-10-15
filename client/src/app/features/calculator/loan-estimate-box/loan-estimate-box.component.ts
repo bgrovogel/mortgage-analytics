@@ -13,25 +13,24 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
   imports: [CurrencyPipe, TermComponent],
   template: `
     @let r = result();
-    <h2>Comparing offers</h2>
     <p class="intro">The figures a lender's Loan Estimate lists to compare one loan with another.</p>
     <dl>
       @if (r.annualPercentageRate !== null && r.annualPercentageRate !== undefined) {
         <div>
-          <dt data-testid="le-apr"><app-term of="APR">APR</app-term> {{ percent(r.annualPercentageRate) }}%</dt>
+          <dt data-testid="le-apr"><span class="label"><app-term of="APR">APR</app-term></span>&ngsp;<span class="value">{{ percent(r.annualPercentageRate) }}%</span></dt>
           <dd data-testid="le-apr-note">The yearly rate counting the lender’s fees as well as the interest, so offers with different fees compare fairly.</dd>
         </div>
       }
       @if (r.inFiveYears; as five) {
         <div>
-          <dt data-testid="le-paid">In 5 years, you will have paid {{ five.totalPaid | currency }}</dt>
+          <dt data-testid="le-paid"><span class="label">In 5 years, you will have paid</span>&ngsp;<span class="value">{{ five.totalPaid | currency }}</span></dt>
           <dd data-testid="le-paid-note">The first 60 payments of principal, interest, mortgage insurance and the lender’s loan costs, without extra payments.</dd>
-          <dt data-testid="le-principal">and paid off {{ five.principalPaidOff | currency }} of the principal</dt>
+          <dt data-testid="le-principal"><span class="label">and paid off</span>&ngsp;<span class="value">{{ five.principalPaidOff | currency }}</span>&ngsp;<span class="label">of the principal</span></dt>
         </div>
       }
       @if (r.totalInterestPercentage !== null && r.totalInterestPercentage !== undefined) {
         <div>
-          <dt data-testid="le-tip">Total interest percentage {{ percent(r.totalInterestPercentage) }}%</dt>
+          <dt data-testid="le-tip"><span class="label">Total interest percentage</span>&ngsp;<span class="value">{{ percent(r.totalInterestPercentage) }}%</span></dt>
           <dd data-testid="le-tip-note">The interest over the whole loan as a share of the amount borrowed: how much you pay for the loan for each dollar of it.</dd>
         </div>
       }
@@ -42,30 +41,51 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
       display: block;
     }
 
-    h2 {
-      margin: 0 0 0.25rem;
-      font-size: 1.1rem;
-    }
-
     .intro {
       margin: 0 0 1rem;
       color: var(--text-secondary);
     }
 
+    // One tile for each figure the estimate lists, the figure large and what it is above it.
     dl {
       display: grid;
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      gap: 0.75rem;
       margin: 0;
     }
 
-    dt {
-      font-weight: 600;
+    dl > div {
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+    }
+
+    .label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .value {
+      display: block;
+      margin: 0.1rem 0 0.2rem;
+      font-size: 1.5rem;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    dt + dd + dt {
+      margin-top: 0.6rem;
     }
 
     dd {
-      margin: 0.15rem 0 0.5rem;
+      margin: 0.15rem 0 0;
       color: var(--text-secondary);
-      font-size: 0.92rem;
+      font-size: 0.85rem;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

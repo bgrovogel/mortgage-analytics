@@ -1,5 +1,6 @@
 import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { aResponse } from '../../../../testing/builders';
 import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
@@ -25,7 +26,7 @@ describe('result tabs', () => {
     response = aResponse();
     jest.useFakeTimers();
     charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(response) } }] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(response) } }] });
     store = TestBed.inject(CalculatorStore);
     store.send({} as AmortizationRequest);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -193,6 +194,24 @@ describe('result tabs', () => {
 
       expect(fixture.nativeElement.querySelector('[data-testid="seller-offer"]')).not.toBeNull();
       expect(store.offerSettings()).toEqual({ yearsKept: 10, rateCutPerPoint: 0.25 });
+    });
+
+    it('keeps the loan estimate and the seller’s money one step away, each in a dialog opened from a line saying what it holds', () => {
+      answer({ cashToClose: cash, sellerOffer: offer, annualPercentageRate: 6.722, inFiveYears: { totalPaid: 79_848.4, principalPaidOff: 12_778.36 } });
+      const root = render(ClosingTabComponent).nativeElement as HTMLElement;
+      const dialogOf = (title: string) => [...root.querySelectorAll('app-dialog dialog')]
+        .find((d) => d.querySelector('h2')!.textContent!.trim() === title) as HTMLDialogElement;
+      const estimate = dialogOf('Comparing offers');
+      const seller = dialogOf('The seller’s money, taken four ways');
+
+      expect(root.querySelector('[data-testid="loan-estimate-summary"]')!.textContent).toBe("The figures a lender's Loan Estimate lists: APR 6.722%, $79,848 paid in 5 years.");
+      expect([estimate.open, seller.open]).toEqual([false, false]);
+
+      (root.querySelector('[data-testid="open-seller-offer"]') as HTMLButtonElement).click();
+
+      expect([estimate.open, seller.open]).toEqual([false, true]);
+      expect(seller.querySelector('[data-testid="seller-offer"]')).not.toBeNull();
+      expect(seller.getAttribute('aria-labelledby')).toBe(seller.querySelector('h2')!.id);
     });
 
     it('without an offer, says what it would show, and opens the seller credits', () => {

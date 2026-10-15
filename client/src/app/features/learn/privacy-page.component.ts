@@ -13,7 +13,7 @@ import { ReadingNavComponent } from './reading-nav.component';
     <section class="reading" aria-labelledby="privacy-title">
       <app-reading-nav />
       <header>
-        <h2 id="privacy-title">Privacy</h2>
+        <h1 id="privacy-title">Privacy</h1>
         <p>What happens to the numbers you type, and to your account if you make one. How each answer is worked out is
           in <a routerLink="/how-it-works">How it's calculated</a>.</p>
       </header>

@@ -5,39 +5,14 @@ import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName
 import { monthOf } from '../../../core/formatting/format';
 import { nextPayment } from '../answer-sentence';
 import { scheduleCsv } from './schedule-csv';
+import type { CostKey, ScheduleColumn, ScheduleRow } from './schedule-model';
+import { SchedulePagerComponent, SchedulePage } from './schedule-pager.component';
+import { ScheduleTotalsComponent } from './schedule-totals.component';
+
+export type { ScheduleColumn, ScheduleRow } from './schedule-model';
 
 type View = 'accelerated' | 'baseline';
 type Period = 'monthly' | 'yearly';
-type CostKey = CostCategory['key'];
-
-/** One table row: a single payment, or a loan year's payments added together. */
-export interface ScheduleRow {
-  /** Payment number, or loan year number. */
-  number: number;
-  /** "Jan 2026" for a payment, "2026" for a year (the calendar year it starts in). */
-  when: string;
-  scheduledPayment: number;
-  principal: number;
-  interest: number;
-  extraPrincipal: number;
-  /** Housing costs, by category. */
-  costs: Record<CostKey, number>;
-  housingCosts: number;
-  totalOutlay: number;
-  /** The balance after the row's last payment. */
-  remainingBalance: number;
-  /** True when the row holds the last payment with PMI: from the next one, it is gone. */
-  pmiEnds: boolean;
-  /** True when a recast followed this payment (monthly rows only). */
-  recast: boolean;
-}
-
-/** A money column the user can show or hide. */
-export interface ScheduleColumn {
-  key: string;
-  label: string;
-  value: (row: ScheduleRow) => number;
-}
 
 /** Where the chosen columns are remembered, per browser. */
 export const COLUMNS_STORAGE_KEY = 'schedule-columns';
@@ -68,7 +43,7 @@ const DEFAULT_HIDDEN: readonly string[] = COST_CATEGORIES.map((c) => c.key);
  */
 @Component({
   selector: 'app-schedule-table',
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, SchedulePagerComponent, ScheduleTotalsComponent],
   templateUrl: './schedule-table.component.html',
   styleUrl: './schedule-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -164,17 +139,9 @@ export class ScheduleTableComponent {
     return `Payments ${(page - 1) * 12 + 1}–${last} of ${count}, loan year ${page}`;
   });
 
-  /** Moves to the previous or next loan year. */
-  protected step(by: number): void {
-    const page = this.page();
-    if (page !== 'all') this.chosen.set(page + by);
-  }
-
-  /** Shows the loan year (or all of them) picked in the list; anything else is ignored. */
-  protected choose(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    if (value === 'all') this.chosen.set('all');
-    else if (/^\d+$/.test(value)) this.chosen.set(Number(value));
+  /** Shows the loan year (or all of them) the pager asked for. */
+  protected show(page: SchedulePage): void {
+    this.chosen.set(page);
   }
 
   /** The loan year a row is in: its own number in the yearly view, payment 1 to 12 being year 1 in the monthly one. */
@@ -184,16 +151,6 @@ export class ScheduleTableComponent {
 
   /** The whole schedule added up as one row: the source of the footer and the lifetime summary. */
   readonly totals = computed(() => this.toRow(0, '', this.schedule().payments));
-
-  /**
-   * What a column's lifetime total is called. "Principal" alone reads as the loan, but it leaves out the extra
-   * payments, which the "Loan repaid" total beside it adds back.
-   */
-  protected totalLabel(column: ScheduleColumn): string {
-    if (column.key === 'principal') return 'Principal, as scheduled';
-    if (column.key === 'extraPrincipal') return 'Extra principal';
-    return column.label;
-  }
 
   /**
    * Saves the schedule shown as a spreadsheet: every payment (or year), with every column the schedule has, whichever

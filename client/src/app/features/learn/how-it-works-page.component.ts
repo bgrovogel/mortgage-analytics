@@ -14,7 +14,7 @@ import { ReadingNavComponent } from './reading-nav.component';
     <section class="reading" aria-labelledby="how-title">
       <app-reading-nav />
       <header>
-        <h2 id="how-title">How it's calculated</h2>
+        <h1 id="how-title">How it's calculated</h1>
         <p>Every number comes from a formula or a rule you can read here, worked through with the example loan. Words you
           may not know are in the <a routerLink="/glossary">glossary</a>.</p>
       </header>

@@ -30,7 +30,7 @@ async function openView(page: Page, id: string) {
 async function settled(page: Page) {
   // The start page and the reading pages have no results to wait for: their heading is the finished page.
   if (['/', '/how-it-works', '/glossary', '/privacy'].includes(new URL(page.url()).pathname)) {
-    await expect(page.locator('main h2').first(), 'the page has arrived').toBeVisible();
+    await expect(page.locator('main h1').first(), 'the page has arrived').toBeVisible();
     return;
   }
   await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
@@ -88,8 +88,12 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByTestId('afford-tile-answer'), 'the Overview answers whether it is affordable').toBeVisible();
       expect(await violations(page), 'the buydown, year by year, breaks no accessibility rule').toEqual([]);
       await openView(page, 'closing');
-      await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money').toBeVisible();
-      expect(await violations(page), 'the cash to close and the seller’s money each way break no accessibility rule').toEqual([]);
+      expect(await violations(page), 'the cash to close and the lines to more break no accessibility rule').toEqual([]);
+      await page.getByTestId('open-seller-offer').click();
+      await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money, in a dialog').toBeVisible();
+      expect(await violations(page), 'the dialog with the seller’s money each way breaks no accessibility rule').toEqual([]);
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('seller-offer'), 'Escape closes it').toBeHidden();
       await openView(page, 'affordability');
       await expect(page.getByTestId('affordability'), 'whether it is affordable').toBeVisible();
       expect(await violations(page), 'affordability breaks no accessibility rule').toEqual([]);

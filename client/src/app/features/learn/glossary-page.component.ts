@@ -10,7 +10,7 @@ import { ReadingNavComponent } from './reading-nav.component';
     <section class="reading" aria-labelledby="glossary-title">
       <app-reading-nav />
       <header>
-        <h2 id="glossary-title">Glossary</h2>
+        <h1 id="glossary-title">Glossary</h1>
         <p>The words you will meet, in plain language.</p>
       </header>
       <dl class="terms" data-testid="glossary">

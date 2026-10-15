@@ -1,4 +1,4 @@
-import { ScheduleColumn, ScheduleRow } from './schedule-table.component';
+import { ScheduleColumn, ScheduleRow } from './schedule-model';
 import { scheduleCsv } from './schedule-csv';
 
 describe('scheduleCsv', () => {

@@ -36,7 +36,7 @@ interface Row {
   selector: 'app-seller-offer',
   imports: [NumberFieldComponent],
   template: `
-    <h2 id="seller-offer-title">Best use of the seller’s money</h2>
+    <h2 id="seller-offer-title" class="visually-hidden">Best use of the seller’s money</h2>
     <p class="intro" data-testid="offer-intro">
       The seller’s {{ amount() }}, taken each way it can be, over the {{ years() }} you keep the loan: what you bring to
       closing, pay each month, and still owe after.

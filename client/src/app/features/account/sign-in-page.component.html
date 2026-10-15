@@ -4,7 +4,7 @@
     <button type="button" [attr.aria-pressed]="mode() === 'create'" (click)="setMode('create')" data-testid="account-mode-create">Create account</button>
   </div>
 
-  <h2 id="account-title">{{ mode() === 'create' ? 'Create your account' : 'Welcome back' }}</h2>
+  <h1 id="account-title">{{ mode() === 'create' ? 'Create your account' : 'Welcome back' }}</h1>
   <p class="intro">
     {{ mode() === 'create'
       ? 'An account keeps your saved calculations and refinance comparisons private, and lets you find them again.'

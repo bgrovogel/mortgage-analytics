@@ -1,0 +1,64 @@
+@use 'scroll-hint';
+
+:host {
+  display: block;
+}
+
+// The details: one view at a time.
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  @include scroll-hint.fade-edge;
+
+  button {
+    flex: none;
+    min-height: 44px;
+    padding: 0 0.85rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &[aria-selected='true'] {
+      color: var(--accent-text);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+}
+
+// On a phone, tabs that do not fit one row are two to a row, so none hides past the edge.
+@media (max-width: 520px) {
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: visible;
+    animation: none;
+    mask-image: none;
+
+    button {
+      min-height: 40px;
+    }
+  }
+}
+
+.tab-body {
+  padding: 1.1rem 1.25rem 1.25rem;
+}

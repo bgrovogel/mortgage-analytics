@@ -12,7 +12,7 @@ import { DevMailboxService, OutboxEmail } from '../../core/dev/dev-mailbox.servi
   template: `
     <section class="card wide" aria-labelledby="mailbox-title">
       <div class="title-row">
-        <h2 id="mailbox-title">Dev mailbox</h2>
+        <h1 id="mailbox-title">Dev mailbox</h1>
         <div class="buttons">
           <button type="button" class="secondary" (click)="load()" data-testid="mailbox-refresh">Refresh</button>
           @if (emails()?.length) {

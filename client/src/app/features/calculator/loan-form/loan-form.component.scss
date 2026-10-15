@@ -57,6 +57,26 @@
   }
 }
 
+// The offer to pay every two weeks: a quiet tip with the action beside it, not a paragraph of the form's text.
+.biweekly {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 0.75rem;
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+
+  .link-button {
+    font-weight: 600;
+  }
+}
+
 .link-button {
   align-self: flex-start;
   background: none;

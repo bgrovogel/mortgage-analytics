@@ -171,6 +171,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.set('closing-credits', 10_000);
     await calculator.calculate();
     await calculator.showResults('closing');
+    await page.getByTestId('open-seller-offer').click(); // the ways to take it are one step away, in a dialog
 
     const offer = page.getByTestId('seller-offer');
     await expect(offer.locator('thead th'), 'a column for each way, the cheapest marked')

@@ -101,54 +101,6 @@ h2 {
   }
 }
 
-// What the totals below cover.
-.lifetime-scope {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-// Lifetime totals: every cost over the whole schedule, as compact label/value pairs.
-.lifetime {
-  // A grid of figures, each label above its amount, so eight totals scan at a glance instead of running together.
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 0.6rem 1rem;
-  margin: 0 0 1rem;
-
-  div {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-  }
-
-  dt {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-  }
-
-  dd {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
-  }
-
-  // The total of everything, picked out from the parts.
-  .all {
-    padding: 0.35rem 0.6rem;
-    margin: -0.35rem -0.6rem;
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
-
-    dd {
-      color: var(--accent-text);
-    }
-  }
-}
-
 // As tall as the window allows on a wide screen, so the schedule uses the room beside the long form (at least the
 // 420px it has on a phone, where a taller box would trap the page's own scrolling).
 .table-wrap {
@@ -324,61 +276,4 @@ tbody tr:nth-child(even) .pinned {
   @media print {
     display: none;
   }
-}
-
-// The monthly rows a loan year at a time: back and forward, the year to show, and which payments those are.
-.pager {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-
-  button {
-    font: inherit;
-    font-size: 0.85rem;
-    min-height: 36px;
-    padding: 0 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-1);
-    color: var(--text-primary);
-    cursor: pointer;
-
-    &:disabled {
-      color: var(--text-muted);
-      cursor: default;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-  }
-
-  .caption {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.jump select {
-  min-height: 36px;
-  padding: 0 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-1);
-  color: var(--text-primary);
-  font: inherit;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }

@@ -9,7 +9,7 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="card" aria-labelledby="reset-title" aria-live="polite">
-      <h2 id="reset-title">Choose a new password</h2>
+      <h1 id="reset-title">Choose a new password</h1>
       @switch (status()) {
         @case ('done') {
           <p class="note" role="status" data-testid="reset-done">Your password is changed. Sign in with the new one.</p>

@@ -42,6 +42,13 @@ export class CalculatorPageComponent {
     return result ? viewAnswer(result, this.view(), nextPayment(result), this.store.affordStart()) : null;
   });
 
+  /**
+   * What the pinned summary says beside the payment on the views that ask something other than the cost: the answer
+   * (Yes, comfortably; Buy, if you stay 4 years or more). Null on the cost views, which say what paying extra saves.
+   */
+  protected readonly questionLead = computed(() =>
+    this.view() === 'affordability' || this.view() === 'rent-or-buy' ? (this.answered()?.lead ?? null) : null);
+
   /** The page's question: the view's once there is a result, the first view's until then. */
   protected readonly heading = computed(() => this.answered()?.heading ?? 'What will this home cost?');
 

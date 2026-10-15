@@ -23,6 +23,12 @@
   }
 }
 
+// The details behind tabs: the card holds the tab list edge to edge.
+.details {
+  padding: 0;
+  overflow: hidden;
+}
+
 // The verdict: green when refinancing saves, amber when it costs more.
 .hero {
   @include surfaces.verdict;

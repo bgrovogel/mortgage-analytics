@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { filter, map, pairwise } from 'rxjs';
 import { BrandMarkComponent } from './core/layout/brand-mark.component';
 import { printInLightTheme } from './core/layout/print';
 import { applyTheme, loadTheme } from './core/layout/theme';
@@ -30,14 +30,14 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
       <header class="app-header focused">
         <div class="app-bar">
-          <a class="brand" routerLink="/"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
+          <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
           <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
         </div>
       </header>
     } @else {
       <header class="app-header">
         <div class="app-bar">
-        <a class="brand" routerLink="/"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
+        <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
         <div class="header-actions">
           <nav class="app-nav" aria-label="Pages">
             @for (page of pages; track page.path) {
@@ -94,6 +94,24 @@ export class AppComponent {
     applyTheme(window, loadTheme());
     // Every page prints in the light theme (core/layout/print.ts).
     inject(DestroyRef).onDestroy(printInLightTheme(window));
+    this.moveFocusToNewPages();
+  }
+
+  /**
+   * A new page replaces the old one without a page load, so without this keyboard focus stays on a link that is gone
+   * and a screen reader says nothing of the change. Focus goes to the page's own region when the page changes (not for
+   * the views of one page, where the tabs the visitor is using should keep it, nor on the first load).
+   */
+  private moveFocusToNewPages(): void {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        map((event) => event.urlAfterRedirects.split(/[?#]/)[0].split('/')[1] ?? ''),
+        pairwise(),
+        filter(([before, after]) => before !== after),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => document.getElementById('main')?.focus({ preventScroll: true }));
   }
 
   /** The URL of the page shown. */

@@ -13,7 +13,7 @@ describe('StartPageComponent', () => {
   };
 
   it('asks what the visitor wants to figure out', () => {
-    expect(render().querySelector('h2')?.textContent?.trim()).toBe('What do you want to figure out?');
+    expect(render().querySelector('h1')?.textContent?.trim()).toBe('What do you want to figure out?');
   });
 
   it('offers each question, each leading to the page that answers it', () => {

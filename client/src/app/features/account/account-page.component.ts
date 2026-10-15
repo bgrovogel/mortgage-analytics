@@ -16,7 +16,7 @@ import { CalculationStores } from '../calculation-stores';
   imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="card" aria-labelledby="account-page-title" aria-live="polite">
-      <h2 id="account-page-title">Your account</h2>
+      <h1 id="account-page-title">Your account</h1>
       @if (status() === 'done') {
         <p class="note" role="status" data-testid="delete-done">
           Your account is deleted, with every calculation saved in it. The calculators still work without one.

@@ -44,16 +44,7 @@
 </div>
 
 <section class="panel details" aria-label="Details">
-  <div class="tabs" role="tablist" aria-label="Details">
-    @for (option of tabs; track option.value) {
-      <button type="button" role="tab" [attr.aria-selected]="tab() === option.value" [attr.data-testid]="'tab-' + option.value"
-              (click)="tab.set(option.value)">
-        {{ option.label }}
-      </button>
-    }
-  </div>
-
-  <div class="tab-body" role="tabpanel">
+  <app-detail-tabs label="Details" [tabs]="tabs" [(selected)]="tab">
     @switch (tab()) {
       @case ('overTime') {
         <div class="tools">
@@ -128,5 +119,5 @@
         </p>
       }
     }
-  </div>
+  </app-detail-tabs>
 </section>

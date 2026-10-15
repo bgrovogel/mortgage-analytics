@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, signal } from '@angular/core';
 import { MarketScenario, PayoffStrategy, STRATEGIES, StrategyComparison } from '../../../core/models/strategy.models';
+import { DetailTabsComponent } from '../../../core/layout/detail-tabs.component';
 import { CrossoverChartComponent } from '../strategy-charts/crossover-chart.component';
 import { NetWorthChartComponent, NetWorthView } from '../strategy-charts/net-worth-chart.component';
 import { monthOf, pct, signedUsd, usd } from '../../../core/formatting/format';
@@ -27,7 +28,7 @@ export const DETAIL_TABS: readonly { value: DetailTab; label: string }[] = [
  */
 @Component({
   selector: 'app-strategy-results',
-  imports: [NetWorthChartComponent, CrossoverChartComponent],
+  imports: [NetWorthChartComponent, CrossoverChartComponent, DetailTabsComponent],
   templateUrl: './strategy-results.component.html',
   styleUrl: './strategy-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,7 +41,7 @@ export class StrategyResultsComponent {
   readonly scenario = signal<MarketScenario>('riskAdjusted');
 
   /** The detail view shown. */
-  readonly tab = signal<DetailTab>('overTime');
+  readonly tab = signal<string>('overTime');
 
   /** True to show net worth in today's dollars, everywhere below the scenario picker. */
   readonly todaysDollars = signal(false);

@@ -5,7 +5,9 @@
          payments, the interest over the loan). -->
     <!-- A buydown's first payment rises after year 1: say so, as the tile does. -->
     <span><strong>{{ firstMonthlyPayment(r) | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong>@if (r.buydown) {&ngsp;in year 1}</span>
-    @if (r.savings.netSavings > 0) {
+    @if (questionLead(); as lead) {
+      <span data-testid="summary-lead"><strong>{{ lead }}</strong></span>
+    } @else if (r.savings.netSavings > 0) {
       <span>Net savings <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
     } @else {
       <span>Interest <strong>{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>

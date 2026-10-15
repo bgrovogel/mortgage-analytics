@@ -38,9 +38,27 @@ describe('RefinanceResultsComponent', () => {
       fixture.componentRef.setInput('result', aRefinanceResponse());
       fixture.componentRef.setInput('newRate', 6);
       fixture.detectChanges();
+      expect(text('rate-what-if')).toBeUndefined(); // one step away, in its own tab
+
+      (fixture.nativeElement.querySelector('[data-testid="tab-rate"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
 
       expect(text('rate-what-if')).toContain('6%');
       expect(text('what-if-payment')).toContain('/mo');
+    });
+
+    it('opens on the options side by side, with the balances over time one tab away', () => {
+      render(aRefinanceResponse());
+      const tabs = () => [...fixture.nativeElement.querySelectorAll('[role="tab"]')].map((t: Element) => [t.textContent!.trim(), t.getAttribute('aria-selected')]);
+
+      expect(tabs()).toEqual([['Side by side', 'true'], ['Over time', 'false']]);
+      expect(text('refi-table')).toBeDefined();
+
+      (fixture.nativeElement.querySelector('[data-testid="tab-time"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(text('refi-table')).toBeUndefined();
+      expect(fixture.nativeElement.querySelector('app-refinance-chart')).not.toBeNull();
     });
 
     it('is left out until the rate is known, and for a loan whose rate changes', () => {

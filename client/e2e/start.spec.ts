@@ -55,4 +55,16 @@ test.describe('Start page', () => {
 
     await expect(page.locator('main'), 'focus moves to the page, past the navigation').toBeFocused();
   });
+
+  test('names every page by one heading, its own title, so a screen reader can find where it is', async ({ page }) => {
+    const paths = ['/', '/calculator/overview', '/calculator/affordability', '/calculator/rent-or-buy', '/calculator/schedule',
+      '/compare', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/sign-in', '/forgot-password'];
+
+    for (const path of paths) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 }), `${path} has exactly one level-1 heading`).toHaveCount(1);
+    }
+    await page.goto('/privacy');
+    await expect(page.getByRole('heading', { level: 1 }), 'and it is the page, not the brand').toHaveText('Privacy');
+  });
 });

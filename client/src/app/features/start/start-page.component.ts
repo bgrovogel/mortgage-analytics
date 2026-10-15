@@ -35,7 +35,7 @@ const QUESTIONS: readonly Question[] = [
         </p>
       }
       <header>
-        <h2 id="start-title">What do you want to figure out?</h2>
+        <h1 id="start-title">What do you want to figure out?</h1>
         <p>Pick a question. You start with example numbers and replace them with yours; every answer updates as you type.</p>
       </header>
       <div class="questions" data-testid="start-questions">
