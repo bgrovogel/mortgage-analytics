@@ -82,6 +82,33 @@ describe('HistoryPageComponent', () => {
       expect(items()[1].textContent).toContain('Updated Oct 12, 2026');
     });
 
+    it('groups what is shown by the page each opens on, newest first within a group, with how many there are', () => {
+      api.list.mockReturnValue(of([oak, refi, maple, payOff]));
+      create();
+
+      const groups = [...root().querySelectorAll('[data-testid="history-group"]')].map((g) => ({
+        title: g.querySelector('h3.group-title')!.textContent!.replace(/\s+/g, ' ').trim(),
+        names: [...g.querySelectorAll('[data-testid="history-item"] h3')].map((h) => h.textContent!.trim()),
+      }));
+
+      expect(groups).toEqual([
+        { title: 'Calculator 2', names: ['Oak St, 20% down', 'Maple Ave'] },
+        { title: 'Refinance 1', names: ['Refi at 6%'] },
+        { title: 'Pay off or invest 1', names: ['Pay off or invest?'] },
+      ]);
+    });
+
+    it('shows one group, without a title of its own, when a kind is chosen', () => {
+      api.list.mockReturnValue(of([oak, refi, maple, payOff]));
+      create();
+
+      click(root().querySelector('[data-testid="kind-filter-Refinance"]') as HTMLElement);
+
+      expect(root().querySelectorAll('[data-testid="history-group"]')).toHaveLength(1);
+      expect(root().querySelector('h3.group-title')).toBeNull();
+      expect(names()).toEqual(['Refi at 6%']);
+    });
+
     it('searches by name after a pause in typing', () => {
       create();
       api.list.mockReturnValue(of([maple]));

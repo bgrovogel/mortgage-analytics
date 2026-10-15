@@ -227,3 +227,28 @@ button {
     width: 100%;
   }
 }
+
+// One group for each page a saved calculation opens on.
+.group + .group {
+  margin-top: 1.5rem;
+}
+
+.group-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+
+  .count {
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    font-size: 0.75rem;
+    letter-spacing: 0;
+  }
+}

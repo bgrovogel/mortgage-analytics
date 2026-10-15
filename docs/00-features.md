@@ -452,7 +452,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Sign up** with an email and a password, and confirm the email from the link sent to it. A forgotten password is
   reset by email.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
-- **History** lists them newest first, filtered by kind or searched by name. Open one on its own page (every number
+- **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
+  or searched by name. Open one on its own page (every number
   is restored), rename it, or delete it. Each person sees only their own.
 
 ---

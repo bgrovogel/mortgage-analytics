@@ -34,8 +34,13 @@
     } @else if (shown().length === 0) {
       <div class="empty" data-testid="history-empty">Nothing of that kind{{ searched() ? ' matches “' + searched() + '”' : ' saved yet' }}.</div>
     } @else {
+      @for (group of groups(); track group.kind) {
+      <section class="group" data-testid="history-group">
+        @if (group.title) {
+          <h3 class="group-title">{{ group.title }} <span class="count">{{ group.items.length }}</span></h3>
+        }
       <ul class="list">
-        @for (c of shown(); track c.id) {
+        @for (c of group.items; track c.id) {
           <li class="item" data-testid="history-item">
             @if (renaming()?.id === c.id) {
               <form class="rename" (submit)="$event.preventDefault(); saveRename(c)">
@@ -71,6 +76,8 @@
           </li>
         }
       </ul>
+      </section>
+      }
     }
   }
 </section>

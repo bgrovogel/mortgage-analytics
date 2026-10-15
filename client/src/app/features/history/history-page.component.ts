@@ -57,6 +57,15 @@ export class HistoryPageComponent {
     return kind === 'all' ? this.calculations() : this.calculations().filter((c) => c.kind === kind);
   });
 
+  /** What is shown, in a group for each page it opens on (the order the pages are in); one untitled group for a chosen kind. */
+  readonly groups = computed(() => {
+    const shown = this.shown();
+    if (this.kindFilter() !== 'all') return [{ kind: null, title: null, items: shown }];
+    return this.stores.pages()
+      .map(({ kind, pageName }) => ({ kind, title: pageName, items: shown.filter((c) => c.kind === kind) }))
+      .filter((group) => group.items.length > 0);
+  });
+
   /** The filter's choices: all, then each kind by the name of the page it opens on. */
   protected readonly kinds: { value: SavedCalculationKind | 'all'; label: string }[] = [
     { value: 'all', label: 'All' },
