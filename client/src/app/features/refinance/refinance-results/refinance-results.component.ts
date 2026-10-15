@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { formatMonths } from '../../../core/formatting/duration';
 import { money, monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
+import { RateWhatIfComponent } from '../../calculator/rate-what-if/rate-what-if.component';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 
 /** One column of the comparison table. */
@@ -21,7 +22,7 @@ interface TableColumn {
  */
 @Component({
   selector: 'app-refinance-results',
-  imports: [RefinanceChartComponent],
+  imports: [RateWhatIfComponent, RefinanceChartComponent],
   templateUrl: './refinance-results.component.html',
   styleUrl: './refinance-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +30,17 @@ interface TableColumn {
 export class RefinanceResultsComponent {
   /** The comparison to show. */
   readonly result = input.required<RefinanceResponse>();
+
+  /** The rate the new loan was asked at, for the what-if; null leaves the what-if out. */
+  readonly newRate = input<number | null>(null);
+
+  /** The new loan, priced at other rates: none for an adjustable rate or a buydown, whose rate is not one number. */
+  protected readonly rateLoan = computed(() => {
+    const r = this.result();
+    const rate = this.newRate();
+    if (rate === null || r.newBuydown || r.refinanced.rateChanges.length > 0 || r.refinanced.loanAmount <= 0) return null;
+    return { amount: r.refinanced.loanAmount, rate, termMonths: r.refinanced.numberOfPayments };
+  });
 
   protected readonly dollars = usd;
   protected readonly cents = usdCents;

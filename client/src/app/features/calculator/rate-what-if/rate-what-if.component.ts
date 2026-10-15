@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { pct, usd, usdCents } from '../../../core/formatting/format';
-import { AmortizationResponse } from '../../../core/models/amortization.models';
-import { rateWhatIfLoan, whatIf } from './rate-what-if';
+import { RateWhatIfLoan, whatIf } from './rate-what-if';
 
 /** How far the slider reaches either way, and how finely: eighths of a point, as lenders quote rates. */
 const REACH = 1.5;
@@ -52,13 +51,12 @@ const signed = (value: number, format: (amount: number) => string) => `${value <
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RateWhatIfComponent {
-  /** The analysis, which has the loan to price. */
-  readonly result = input.required<AmortizationResponse>();
+  /** The loan to price at other rates; null where one rate does not describe it, which leaves this out. */
+  readonly loan = input.required<RateWhatIfLoan | null>();
 
   /** Percentage points added to (or taken off) the loan's rate. */
   protected readonly delta = signal(0);
 
-  protected readonly loan = computed(() => rateWhatIfLoan(this.result()));
   protected readonly scenario = computed(() => whatIf(this.loan()!, this.delta()));
   protected readonly quarterPoint = computed(() => whatIf(this.loan()!, 0.25).paymentChange);
 

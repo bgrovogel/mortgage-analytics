@@ -361,6 +361,9 @@ The rest of the current loan against a new one, with closing costs paid at closi
   closing costs. That counts financed costs too, unlike the usual "costs ÷ monthly savings".
 - **PMI on either loan,** from the home's value: today's PMI until the loan is down to 80% of it, and PMI on the new
   loan if it is above 80%. It counts in the payment, the totals and the break-even.
+- **What if the new rate were different?** The same slider as on the calculator's Cost view, on the new loan: the
+  payment and the interest over the loan a point and a half either side of the rate asked. Left out for an adjustable
+  rate or a buydown.
 - **Cash out.** Enter cash to take out of the home's equity and it is borrowed on top of what you owe. The verdict
   becomes what the cash costs over the life of the loan, with the cash counted as money in hand; the break-even gives
   way to the cash in hand after closing costs. $50,000 out on the reference loan, at 6% for 30 years, makes a $350,000

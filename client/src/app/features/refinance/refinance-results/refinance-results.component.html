@@ -114,6 +114,10 @@
   </section>
 }
 
+@if (rateLoan(); as loan) {
+  <app-rate-what-if [loan]="loan" />
+}
+
 <div class="panel">
   <app-refinance-chart [result]="r" />
 </div>

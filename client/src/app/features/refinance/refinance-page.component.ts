@@ -15,7 +15,7 @@ import { RefinanceStore } from './refinance.store';
                           placeholder="Comparing your loans…" errorTitle="We could not compare those loans.">
       <app-refinance-form form [initial]="startFrom" [loan]="loan" (analyze)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
-        <app-refinance-results [result]="result" />
+        <app-refinance-results [result]="result" [newRate]="store.request()?.newAnnualInterestRate ?? null" />
       }
     </app-calculation-page>
   `,

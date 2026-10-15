@@ -7,6 +7,7 @@ import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdow
 import { PointsSummaryComponent } from '../points-summary/points-summary.component';
 import { ProgramSummaryComponent } from '../program-summary/program-summary.component';
 import { RatePlanComponent } from '../rate-plan/rate-plan.component';
+import { rateWhatIfLoan } from '../rate-what-if/rate-what-if';
 import { RateWhatIfComponent } from '../rate-what-if/rate-what-if.component';
 import { SavingsSummaryComponent } from '../savings-summary/savings-summary.component';
 
@@ -23,7 +24,7 @@ import { SavingsSummaryComponent } from '../savings-summary/savings-summary.comp
     <app-program-summary [result]="result()" />
     <app-rate-plan [result]="result()" />
     <app-points-summary [result]="result()" />
-    <app-rate-what-if [result]="result()" />
+    <app-rate-what-if [loan]="rateLoan()" />
     <div class="charts">
       <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" [current]="nextPayment()" [program]="result().program ?? null" /></div>
       <div class="panel"><app-balance-chart [result]="result()" /></div>
@@ -43,6 +44,9 @@ export class OverviewTabComponent {
    * null for a new loan, or one already paid off.
    */
   readonly nextPayment = computed(() => nextPayment(this.result()));
+
+  /** The loan the rate what-if prices; none for a rate that changes. */
+  protected readonly rateLoan = computed(() => rateWhatIfLoan(this.result()));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.store.headlineVisible.set(false));

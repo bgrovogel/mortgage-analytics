@@ -32,6 +32,31 @@ describe('RefinanceResultsComponent', () => {
     });
   });
 
+  describe('what if the new rate were different', () => {
+    it('prices the new loan at other rates, from the rate it was asked at', () => {
+      fixture = TestBed.createComponent(RefinanceResultsComponent);
+      fixture.componentRef.setInput('result', aRefinanceResponse());
+      fixture.componentRef.setInput('newRate', 6);
+      fixture.detectChanges();
+
+      expect(text('rate-what-if')).toContain('6%');
+      expect(text('what-if-payment')).toContain('/mo');
+    });
+
+    it('is left out until the rate is known, and for a loan whose rate changes', () => {
+      render(aRefinanceResponse());
+      expect(text('rate-what-if')).toBeUndefined();
+
+      fixture = TestBed.createComponent(RefinanceResultsComponent);
+      fixture.componentRef.setInput('result', aRefinanceResponse({ refinanced: aRefinanceOption({
+        rateChanges: [{ paymentNumber: 61, effectiveDate: '2031-01-01', previousRate: 6, newRate: 8, previousPayment: 1_800, newPayment: 2_000 }],
+      }) }));
+      fixture.componentRef.setInput('newRate', 6);
+      fixture.detectChanges();
+      expect(text('rate-what-if')).toBeUndefined();
+    });
+  });
+
   describe('taking cash out', () => {
     /** $50,000 out on the reference refinance: a $350,000 loan, $44,000 in hand after the $6,000 closing costs. */
     const cashOut = (overrides: Partial<RefinanceResponse> = {}) => aRefinanceResponse({

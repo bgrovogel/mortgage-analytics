@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { aPayment, aResponse, aSchedule } from '../../../../testing/builders';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { rateWhatIfLoan } from './rate-what-if';
 import { RateWhatIfComponent } from './rate-what-if.component';
 
 describe('RateWhatIfComponent', () => {
@@ -13,7 +14,7 @@ describe('RateWhatIfComponent', () => {
 
   const render = (result: AmortizationResponse) => {
     const fixture = TestBed.createComponent(RateWhatIfComponent);
-    fixture.componentRef.setInput('result', result);
+    fixture.componentRef.setInput('loan', rateWhatIfLoan(result));
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     const find = (id: string) => root.querySelector<HTMLElement>(`[data-testid="${id}"]`);
