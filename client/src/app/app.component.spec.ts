@@ -57,6 +57,17 @@ describe('AppComponent', () => {
       .toEqual([['How it’s calculated', '/how-it-works'], ['Glossary', '/glossary']]);
   });
 
+  it('puts the page in the theme chosen on an earlier visit, and offers the choice in the footer', () => {
+    localStorage.setItem('theme', 'dark');
+
+    const { root } = render();
+
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    expect(root.querySelector('footer app-theme-switch button[aria-pressed="true"]')?.textContent?.trim()).toBe('Dark');
+    delete document.documentElement.dataset['theme'];
+    localStorage.clear();
+  });
+
   it('leaves what each page answers to the page, rather than one line repeated on every page', () => {
     expect(render().root.querySelector('.tagline')).toBeNull();
   });

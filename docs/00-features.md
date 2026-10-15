@@ -401,7 +401,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   increases.
 - **Bookmarkable.** The calculator's Overview, Affordability, Closing, Rent or buy, Projection and Schedule tabs have their own
   URLs, and so does Compare homes (an old link to the Compare tab lands there); the back button works.
-- **Light and dark mode,** following the system.
+- **Light and dark mode,** following the system until you choose System, Light or Dark in the footer, which is
+  remembered in the browser.
 
 <br clear="right" />
 

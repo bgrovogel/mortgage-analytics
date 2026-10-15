@@ -4,6 +4,8 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterOutlet
 import { filter, map } from 'rxjs';
 import { BrandMarkComponent } from './core/layout/brand-mark.component';
 import { printInLightTheme } from './core/layout/print';
+import { applyTheme, loadTheme } from './core/layout/theme';
+import { ThemeSwitchComponent } from './core/layout/theme-switch.component';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 
@@ -21,7 +23,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
 /** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet, BrandMarkComponent],
+  imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent],
   template: `
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
@@ -73,6 +75,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
           <a routerLink="/glossary">Glossary</a>
         </nav>
         <a href="/swagger" target="_blank" rel="noopener">Developer API docs ↗</a>
+        <app-theme-switch />
         <span>Mortgage Analytics: a .NET 10 API and an Angular 22 app</span>
       </footer>
     }
@@ -85,6 +88,8 @@ export class AppComponent {
   protected readonly auth = inject(AuthService);
 
   constructor() {
+    // The theme chosen on an earlier visit, on every page including the account pages that have no footer.
+    applyTheme(window, loadTheme());
     // Every page prints in the light theme (core/layout/print.ts).
     inject(DestroyRef).onDestroy(printInLightTheme(window));
   }

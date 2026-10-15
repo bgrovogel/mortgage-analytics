@@ -236,6 +236,9 @@ A calm fintech look, built from shared parts so every page stays consistent:
 - **Tokens** (`styles.scss`): colours by role (`--surface-1`, `--text-secondary`, `--positive`), defined once for light
   and once for dark mode, plus shape and depth (`--radius-md`, `--shadow-card`, `--focus-ring`). Components never use a
   raw hex value. Every text colour meets WCAG AA on its surfaces; the axe scans check it in both modes.
+- **A theme choice:** `<app-theme-switch>` in the footer sets `data-theme` on the page (`core/layout/theme.ts`),
+  remembered in `localStorage`; with none, `prefers-color-scheme` decides. The app applies it at start, charts redraw on
+  the same `themechange` event printing uses, and printing still goes light whatever was chosen.
 - **Colour carries meaning, the same way everywhere:** blue for action and plain facts, green only for a good outcome
   (money saved, time saved), amber only for "look again" (a refinance that costs more, a recommendation a bad decade
   would reverse), red only for errors.
