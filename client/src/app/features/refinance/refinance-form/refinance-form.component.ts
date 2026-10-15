@@ -58,6 +58,12 @@ export class RefinanceFormComponent implements OnInit {
   /** The page the loan was filled in from, when starting from the shared loan changed anything. */
   readonly sharedFrom = signal<string | null>(null);
 
+  /** On a phone the sheet asks one question at a time: the loan as it stands, then the new one. */
+  protected readonly step = signal<'today' | 'new'>('today');
+
+  /** The verdict as it stands, in a line, to dock beside the new loan's fields: what the page's answer says now. */
+  readonly verdict = input<string | null>(null);
+
   private readonly destroyRef = inject(DestroyRef);
 
   /** True while the form shows its worked example, until the visitor's first edit (see exampleUntilEdited). */

@@ -18,7 +18,7 @@
 | Infrastructure | 43 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 113 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 1,209 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 1,212 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 144 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { aPayment, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
-import { BalanceChartComponent } from './balance-chart.component';
+import { BalanceChartComponent, GHOST_MS } from './balance-chart.component';
 
 /** A 120-payment loan of $120,000 paying $1,000 of principal and $400 of interest a month. */
 const loan = (months = 120, extra = 0) => aSchedule({
@@ -90,6 +90,62 @@ describe('BalanceChartComponent', () => {
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true }));
     fixture.detectChanges();
     expect(text('scrub-date')).toBe('Oct 2027 · payment 12');
+  });
+
+  describe('the ghost of the result before an edit', () => {
+    /** The same loan at another rate: a faster payoff and a different first-payment rate. */
+    const withRate = (schedule: ReturnType<typeof loan>, rate: number) => ({ ...schedule, payments: schedule.payments.map((p) => ({ ...p, annualInterestRate: rate })) });
+    const edited = () => aResponse({
+      baseline: withRate(loan(120), 5.75),
+      accelerated: aSchedule({
+        payments: loan(70, 600).payments.map((p) => ({ ...p, annualInterestRate: 5.75 })),
+        totalInterest: 20_000,
+      }),
+      savings: aSavings({ paymentsSaved: 50 }),
+    });
+    const first = () => aResponse({
+      baseline: withRate(loan(120), 6.25),
+      accelerated: aSchedule({
+        payments: loan(80, 500).payments.map((p) => ({ ...p, annualInterestRate: 6.25 })),
+        totalInterest: 24_000,
+      }),
+      savings: aSavings({ paymentsSaved: 40 }),
+    });
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('keeps the previous curve faintly, with what the edit changed in a chip, then lets it go', () => {
+      const { fixture, root, text } = render(first());
+      expect(root.querySelector('[data-testid="balance-ghost"]')).toBeNull();
+
+      fixture.componentRef.setInput('result', edited());
+      fixture.detectChanges();
+
+      expect(root.querySelector('[data-testid="balance-ghost"]')).not.toBeNull();
+      expect(text('ghost-chip')).toBe('6.25% → 5.75% · −$4,000 interest Pin');
+
+      jest.advanceTimersByTime(GHOST_MS);
+      fixture.detectChanges();
+      expect(root.querySelector('[data-testid="balance-ghost"]')).toBeNull();
+      expect(root.querySelector('[data-testid="ghost-chip"]')).toBeNull();
+    });
+
+    it('keeps it for good when pinned, until it is unpinned', () => {
+      const { fixture, root, text } = render(first());
+      fixture.componentRef.setInput('result', edited());
+      fixture.detectChanges();
+
+      (root.querySelector('[data-testid="ghost-chip"]') as HTMLButtonElement).click();
+      jest.advanceTimersByTime(GHOST_MS * 3);
+      fixture.detectChanges();
+      expect(root.querySelector('[data-testid="balance-ghost"]')).not.toBeNull();
+      expect(text('ghost-chip')).toContain('Pinned · Unpin');
+
+      (root.querySelector('[data-testid="ghost-chip"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(root.querySelector('[data-testid="balance-ghost"]')).toBeNull();
+    });
   });
 
   it('lists the payments from the month scrubbed to, in the ledger beneath', () => {

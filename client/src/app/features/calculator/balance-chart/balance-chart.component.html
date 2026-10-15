@@ -6,6 +6,11 @@
     <div class="titles">
       <h2 id="balance-title">What you owe, month by month</h2>
       <p id="balance-summary" data-testid="balance-summary">{{ summary() }}</p>
+      @if (delta(); as change) {
+        <button type="button" class="delta" [attr.aria-pressed]="pinned()" data-testid="ghost-chip" (click)="togglePin()">
+          <span>{{ change }}</span>&ngsp;<span class="pin">{{ pinned() ? 'Pinned · Unpin' : 'Pin' }}</span>
+        </button>
+      }
     </div>
     @if (frames().length > 1) {
       <div class="frames" role="group" aria-label="Time frame" data-testid="frames">
@@ -28,6 +33,9 @@
         </g>
         <line class="floor" x1="0" [attr.y1]="height" [attr.x2]="width" [attr.y2]="height" />
         <path class="area" [attr.d]="paths().area" />
+        @if (ghost()) {
+          <path class="ghost" [class.pinned]="pinned()" data-testid="balance-ghost" [attr.d]="ghostPath()" />
+        }
         @if (series().hasExtra) {
           <path class="scheduled" data-testid="balance-scheduled" [attr.d]="paths().scheduled" />
         }

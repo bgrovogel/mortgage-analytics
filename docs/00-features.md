@@ -328,7 +328,8 @@ all of it.
   **what you owe month by month**: the balance with extra payments against the standard schedule as a ghost, in time
   frames (5Y, 10Y, to payoff, the full term), with a **scrubber** (arrow keys a month, Page Up and Page Down a year)
   whose month a tooltip and a ledger of the next six payments follow. Closing costs, year by year and every payment
-  are one step down, as links under the four views.
+  are one step down, as links under the four views. Edit the loan and the previous curve stays behind as a faint ghost
+  with a chip saying what changed ("6.25% → 5.75% · −$4,000 interest"); **Pin** keeps it, or it fades after four seconds.
 - **Can I afford it?** three figures of equal weight (the payment's share of income, with the debts, and the most you
   could pay), a bar placing this home against the comfortable and the most a lender allows, and each limit in a
   table (below).

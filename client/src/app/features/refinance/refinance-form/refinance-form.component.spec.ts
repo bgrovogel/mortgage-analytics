@@ -19,6 +19,26 @@ describe('RefinanceFormComponent', () => {
   const controls = () => component.form.controls;
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
 
+  it('asks one question at a time on a phone: the loan today, then the new loan, with the verdict beside it', () => {
+    create();
+    expect(el('step-today')!.classList).not.toContain('step-off');
+    expect(el('step-new')!.classList).toContain('step-off');
+    expect(el('refi-steps')!.textContent).toContain('Step 1 of 2');
+
+    (el('refi-next') as HTMLButtonElement).click();
+    fixture.componentRef.setInput('verdict', 'Saves $14,067 · break-even Jul 2029');
+    fixture.detectChanges();
+
+    expect(el('step-today')!.classList).toContain('step-off');
+    expect(el('step-new')!.classList).not.toContain('step-off');
+    expect(el('refi-steps')!.textContent).toContain('Step 2 of 2');
+    expect(el('refi-live-verdict')!.textContent).toContain('Saves $14,067 · break-even Jul 2029');
+
+    (el('refi-back') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el('step-today')!.classList).not.toContain('step-off');
+  });
+
   it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
     create();
 

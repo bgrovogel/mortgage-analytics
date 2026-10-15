@@ -1,5 +1,11 @@
 <form [formGroup]="form" novalidate data-testid="refinance-form">
-  <fieldset>
+  <!-- Only on a phone, where the form is a sheet: one question at a time, the verdict in view from the second. -->
+  <div class="steps" data-testid="refi-steps">
+    <p class="step-label">Step {{ step() === 'today' ? 1 : 2 }} of 2</p>
+    <div class="progress" aria-hidden="true"><span class="on"></span><span [class.on]="step() === 'new'"></span></div>
+  </div>
+
+  <fieldset [class.step-off]="step() !== 'today'" data-testid="step-today">
     <legend class="title">Your numbers <span class="shared-tag" data-testid="shared-tag">Shared with the other pages</span></legend>
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
@@ -62,7 +68,7 @@
     </details>
   </fieldset>
 
-  <fieldset>
+  <fieldset [class.step-off]="step() !== 'new'" data-testid="step-new">
     <legend class="title">The new loan</legend>
 
     <div class="row">
@@ -117,4 +123,14 @@
     </details>
   </fieldset>
 
+  <div class="step-actions" data-testid="refi-step-actions">
+    @if (step() === 'today') {
+      <button type="button" class="next" data-testid="refi-next" (click)="step.set('new')">The new loan</button>
+    } @else {
+      @if (verdict(); as verdict) {
+        <p class="verdict" role="status" data-testid="refi-live-verdict"><span>Live verdict</span><strong>{{ verdict }}</strong></p>
+      }
+      <button type="button" class="back" data-testid="refi-back" (click)="step.set('today')">Back to your loan</button>
+    }
+  </div>
 </form>

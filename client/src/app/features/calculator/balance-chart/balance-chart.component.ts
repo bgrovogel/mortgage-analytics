@@ -1,9 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { formatMonths } from '../../../core/formatting/duration';
-import { monthOf, usd } from '../../../core/formatting/format';
+import { decimal, monthOf, usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { balanceFrames, balanceSeries, pathThrough, resample } from './balance-series';
 import { PaymentLedgerComponent } from './payment-ledger.component';
+
+/** How long the ghost of the previous result stays before it fades away, unless it is pinned. */
+export const GHOST_MS = 4000;
+
+/** What a result drew, kept so the next result can show it as a ghost. */
+interface Drawn {
+  extra: number[];
+  rate: number;
+  interest: number;
+}
 
 /** The chart is drawn in a 1000 x 320 box and scaled to its width; curves are read at this many points. */
 const WIDTH = 1000;
@@ -27,6 +37,31 @@ export class BalanceChartComponent {
   readonly result = input.required<AmortizationResponse>();
 
   protected readonly series = computed(() => balanceSeries(this.result()));
+
+  /** What the result being shown draws, to become the ghost when the next one differs from it. */
+  private readonly drawn = computed<Drawn>(() => {
+    const r = this.result();
+    return { extra: this.series().extra, rate: r.baseline.payments[0]?.annualInterestRate ?? 0, interest: r.accelerated.totalInterest };
+  });
+
+  private last: Drawn | null = null;
+  private fade: ReturnType<typeof setTimeout> | undefined;
+
+  /** The result before the last change, drawn faintly so what the edit moved can be seen; null once it has faded. */
+  protected readonly ghost = signal<Drawn | null>(null);
+
+  /** True once the ghost is pinned: it stays until it is unpinned. */
+  protected readonly pinned = signal(false);
+
+  /** What changed between the ghost and now, in a chip: the rate (when it moved) and what it did to the interest. */
+  protected readonly delta = computed(() => {
+    const ghost = this.ghost();
+    if (!ghost) return null;
+    const now = this.drawn();
+    const interest = now.interest - ghost.interest;
+    const rate = ghost.rate !== now.rate ? `${decimal(ghost.rate)}% → ${decimal(now.rate)}% · ` : '';
+    return `${rate}${interest <= 0 ? '−' : '+'}${usd(Math.abs(interest))} interest`;
+  });
   private readonly term = computed(() => this.result().baseline.payments.length);
 
   /** The time frames that fit the loan; "to payoff" only when extra payments move the payoff. */
@@ -114,7 +149,41 @@ export class BalanceChartComponent {
       : `Payment ${a.month}, ${a.date}: you owe ${usd(a.extra)}`;
   });
 
+  /** The ghost's path, on the same scale as the curve it is a ghost of. */
+  protected readonly ghostPath = computed(() => {
+    const ghost = this.ghost();
+    return ghost ? pathThrough(resample(ghost.extra, this.domain(), POINTS), WIDTH, HEIGHT, this.series().scheduled[0]) : '';
+  });
+
   protected readonly usd = usd;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.fade));
+    // Every result that differs from the one before it leaves that one behind as a ghost, for a few seconds.
+    effect(() => {
+      const now = this.drawn();
+      const before = this.last;
+      this.last = now;
+      if (!before || before.extra.every((v, i) => v === now.extra[i])) return;
+      untracked(() => {
+        if (this.pinned()) return;
+        this.ghost.set(before);
+        clearTimeout(this.fade);
+        this.fade = setTimeout(() => this.ghost.set(null), GHOST_MS);
+      });
+    });
+  }
+
+  /** Keeps the ghost on the chart, or lets it go. */
+  protected togglePin(): void {
+    if (this.pinned()) {
+      this.pinned.set(false);
+      this.ghost.set(null);
+      return;
+    }
+    clearTimeout(this.fade);
+    this.pinned.set(true);
+  }
 
   protected pick(frame: string): void {
     this.chosenFrame.set(frame);

@@ -3,6 +3,97 @@
 
 @include fields.styles;
 
+// The steps are only a phone's: on a wide screen both questions are in view at once.
+.steps,
+.step-actions {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .steps {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .step-label {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .progress {
+    display: flex;
+    gap: 4px;
+
+    span {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+
+      &.on {
+        background: var(--accent);
+      }
+    }
+  }
+
+  .step-off {
+    display: none;
+  }
+
+  .step-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .next,
+  .back {
+    min-height: 52px;
+    border-radius: var(--radius-lg);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .next {
+    border: 0;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .back {
+    border: 1px solid var(--border-control);
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .verdict {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+
+    span {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    strong {
+      font-size: 1.125rem;
+      color: var(--positive);
+    }
+  }
+}
+
 .segmented {
   @include segmented.styles(2);
 }
