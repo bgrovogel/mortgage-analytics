@@ -87,8 +87,31 @@ export class RefinanceResultsComponent {
   /** True when either loan carries PMI, which then counts in the payments, the totals and the break-even. */
   readonly hasPmi = computed(() => this.result().current.totalPmi > 0 || this.result().refinanced.totalPmi > 0);
 
-  /** True when refinancing costs more over the life of the loan, closing costs included. */
-  readonly costsMore = computed(() => this.result().lifetimeSavings < 0);
+  /** True while the verdict shows the refinance with today's payment kept (the switch in "Keep paying"). */
+  readonly keeping = signal(false);
+
+  /** The new loan as the verdict shows it: as asked, or with today's payment kept, when that is on. */
+  protected readonly option = computed(() => {
+    const r = this.result();
+    return this.keeping() && r.keepingCurrentPayment ? r.keepingCurrentPayment : r.refinanced;
+  });
+
+  /** What the verdict says it saves over the life of the loan: of the new loan, or with today's payment kept. */
+  protected readonly lifetime = computed(() => {
+    const r = this.result();
+    return this.keeping() && r.keepingCurrentPayment ? (r.keepingCurrentPaymentLifetimeSavings ?? 0) : r.lifetimeSavings;
+  });
+
+  /** The switch in "Keep paying": the verdict shows the refinance with today's payment kept, or as asked. */
+  protected setKeeping(event: Event): void {
+    this.keeping.set((event.target as HTMLInputElement).checked);
+  }
+
+  /** True when the verdict is that refinancing costs more over the life of the loan, closing costs included. */
+  readonly costsMore = computed(() => this.lifetime() < 0);
+
+  /** True when today's payment is kept in the verdict, so the payment is the one paid now. */
+  protected readonly keepsPayment = computed(() => this.keeping() && !!this.result().keepingCurrentPayment);
 
   /** What the cash in hand is made of: the cash out, less what is paid at closing. */
   readonly cashDetail = computed(() => {
@@ -111,6 +134,10 @@ export class RefinanceResultsComponent {
   /** One sentence on the payment and the term, e.g. "The payment drops $321.69 a month, but the loan runs 5 yr longer." */
   readonly paymentSentence = computed(() => {
     const r = this.result();
+    if (this.keepsPayment()) {
+      const keep = r.keepingCurrentPayment!;
+      return `The payment stays at ${usdCents(r.current.monthlyPayment + r.current.monthlyPmi)}, and the extra ${usdCents(keep.extraMonthlyPrincipal)} a month goes to principal, so it is paid off ${formatMonths(this.keepingMonthsSooner())} sooner.`;
+    }
     const change = r.monthlySavings >= 0
       ? `The payment drops ${usdCents(r.monthlySavings)} a month`
       : `The payment rises ${usdCents(-r.monthlySavings)} a month`;
@@ -120,6 +147,7 @@ export class RefinanceResultsComponent {
   /** "5 yr later than now (Dec 2050)", "1 yr 2 mo sooner than now", or "same as now". */
   readonly payoffChange = computed(() => {
     const r = this.result();
+    if (this.keepsPayment()) return `${formatMonths(this.keepingMonthsSooner())} sooner than now`;
     if (r.monthsAdded > 0) return `${formatMonths(r.monthsAdded)} later than now (${monthOf(r.current.payoffDate)})`;
     if (r.monthsAdded < 0) return `${formatMonths(-r.monthsAdded)} sooner than now`;
     return 'same as now';

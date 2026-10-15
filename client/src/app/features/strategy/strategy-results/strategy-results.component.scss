@@ -19,10 +19,10 @@
   line-height: 1.5;
 }
 
-// The recommended path: blue when a bad decade would not change it, amber when it would.
+// The recommended path as the page's one large figure: a quiet eyebrow, the strategy in serif, the sentence behind it,
+// and, in brass, what a bad decade would do. No card around it.
 .hero {
-  @include surfaces.verdict;
-  padding: 1.1rem 1.4rem;
+  padding: 0.25rem 0;
 
   p {
     margin: 0;
@@ -33,29 +33,39 @@
     @include surfaces.eyebrow;
   }
 
+  &.warning .eyebrow {
+    color: var(--warning-text);
+  }
+
   .headline {
-    margin: 0.1rem 0 0.3rem;
-    font-size: clamp(1.5rem, 3vw, 2.1rem);
-    font-weight: 700;
+    margin: 0.3rem 0 0.5rem;
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    font-weight: 400;
+    line-height: 1.02;
     letter-spacing: -0.02em;
     color: var(--text-primary);
+    text-wrap: balance;
   }
 
   .detail {
+    max-width: 62ch;
     color: var(--text-secondary);
   }
 
   .downside {
-    margin-top: 0.35rem;
+    margin-top: 0.5rem;
+    max-width: 62ch;
     font-weight: 500;
     color: var(--text-primary);
 
     &.warning {
-      margin-top: 0.6rem;
-      padding: 0.55rem 0.8rem;
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.9rem;
       border: 1px solid var(--warning-border);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-md);
       background: var(--warning-soft);
+      color: var(--warning-text);
     }
   }
 }

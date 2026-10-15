@@ -5,14 +5,14 @@
     <!-- The lifetime figure counts the cash as money in hand, so it is what the cash and the restart cost together. -->
     <p class="eyebrow">Cash-out refinance</p>
     <p class="headline">
-      Taking out {{ dollars(r.cashOut) }} {{ costsMore() ? 'costs ' + dollars(-r.lifetimeSavings) + ' more' : 'saves ' + dollars(r.lifetimeSavings) }} over the life of the loan
+      Taking out {{ dollars(r.cashOut) }} {{ costsMore() ? 'costs ' + dollars(-lifetime()) + ' more' : 'saves ' + dollars(lifetime()) }} over the life of the loan
     </p>
   } @else if (costsMore()) {
     <p class="eyebrow">Over the life of the loan</p>
-    <p class="headline">Refinancing costs {{ dollars(-r.lifetimeSavings) }} more</p>
+    <p class="headline">Refinancing costs {{ dollars(-lifetime()) }} more</p>
   } @else {
     <p class="eyebrow">Over the life of the loan</p>
-    <p class="headline">Refinancing saves {{ dollars(r.lifetimeSavings) }}</p>
+    <p class="headline">Refinancing saves {{ dollars(lifetime()) }}</p>
   }
   <p class="detail">{{ paymentSentence() }} Closing costs are included.</p>
 </section>
@@ -20,10 +20,15 @@
 <div class="tiles">
   <div class="tile" data-testid="refi-payment">
     <span class="label">New monthly payment</span>
-    <strong>{{ cents(r.refinanced.monthlyPayment + r.refinanced.monthlyPmi) }}</strong>
-    <small>
-      {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
-    </small>
+    @if (keepsPayment()) {
+      <strong>{{ cents(r.current.monthlyPayment + r.current.monthlyPmi) }}</strong>
+      <small>same as now, with {{ cents(r.keepingCurrentPayment!.extraMonthlyPrincipal) }} of it going to principal</small>
+    } @else {
+      <strong>{{ cents(r.refinanced.monthlyPayment + r.refinanced.monthlyPmi) }}</strong>
+      <small>
+        {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
+      </small>
+    }
     @if (r.refinanced.pmiEndDate; as end) {
       <small data-testid="refi-new-pmi">with {{ cents(r.refinanced.monthlyPmi) }} PMI, until {{ date(end) }}</small>
     }
@@ -51,14 +56,14 @@
       }
     </div>
   }
-  <div class="tile" [class.warning]="r.monthsAdded > 0" data-testid="refi-payoff">
+  <div class="tile" [class.warning]="r.monthsAdded > 0 && !keepsPayment()" data-testid="refi-payoff">
     <span class="label">Paid off</span>
-    <strong>{{ date(r.refinanced.payoffDate) }}</strong>
+    <strong>{{ date(option().payoffDate) }}</strong>
     <small>{{ payoffChange() }}</small>
   </div>
   <div class="tile" data-testid="refi-interest">
     <span class="label">Total interest</span>
-    <strong>{{ dollars(r.refinanced.totalInterest) }}</strong>
+    <strong>{{ dollars(option().totalInterest) }}</strong>
     <small>vs {{ dollars(r.current.totalInterest) }} left on your loan</small>
   </div>
 </div>
@@ -94,6 +99,11 @@
         though it still costs {{ dollars(-(r.keepingCurrentPaymentLifetimeSavings ?? 0)) }} more overall.
       }
     </p>
+    <!-- The better move, one tap away: the verdict above and its figures show it instead. -->
+    <label class="switch" data-testid="refi-keep-switch">
+      <span>Show this in the verdict</span>
+      <input type="checkbox" role="switch" [checked]="keeping()" (change)="setKeeping($event)" />
+    </label>
   </section>
 }
 

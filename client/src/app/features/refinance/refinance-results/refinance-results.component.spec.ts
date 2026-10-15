@@ -25,6 +25,20 @@ describe('RefinanceResultsComponent', () => {
       expect(text('refi-verdict')).toContain('The payment drops $321.69 a month, but the loan runs 5 yr longer.');
     });
 
+    it('shows the better move in the same verdict when asked: the payment kept, the extra going to principal', () => {
+      render(aRefinanceResponse());
+      expect(text('refi-verdict')).toContain('Refinancing costs $17,415 more');
+
+      (fixture.nativeElement.querySelector('[data-testid="refi-keep-switch"] input') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      expect(text('refi-verdict')).toContain('Refinancing saves $107,590');
+      expect(text('refi-verdict')).toContain('The payment stays at $2,120.34, and the extra $321.69 a month goes to principal');
+      expect(text('refi-payment')).toContain('same as now');
+      expect(text('refi-payoff')).toContain('Jul 2046');
+      expect(text('refi-interest')).toContain('$222,510');
+    });
+
     it('says how much a refinance saves when it does', () => {
       render(aRefinanceResponse({ lifetimeSavings: 42_000, monthsAdded: 0 }));
 
