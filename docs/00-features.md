@@ -180,12 +180,13 @@ example). **Use it** fills the monthly extra with that amount, and the rest of t
 
 The Schedule tab's **Download (CSV)** saves the schedule shown (monthly or yearly, with or without extra payments) as a
 spreadsheet: every payment or year, with every column the schedule has, whichever are hidden from the table, in plain
-numbers a spreadsheet can add up.
+numbers a spreadsheet can add up. **Jump to year** brings the first row of a loan year into view in a long schedule.
 
 #### Comparing offers
 
 **+ Add a home or another offer** (on Compare) adds a copy of Home A to change whatever differs: its price, or the
-same home from another lender, with that lender's rate and fees. Up to four sit side by side.
+same home from another lender, with that lender's rate and fees. Up to four sit side by side, and **Only the rows that
+differ** leaves out every row the homes share.
 
 The Closing tab has the figures a lender's Loan Estimate lists to compare one loan with another: the **APR**, what you
 will have paid in 5 years (the first 60 payments of principal, interest, mortgage insurance and the lender's loan costs,

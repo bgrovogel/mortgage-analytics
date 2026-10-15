@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { formatMonths } from '../../core/formatting/duration';
 import { decimal, money, monthOf, pct } from '../../core/formatting/format';
 import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
@@ -110,6 +110,10 @@ interface Row {
             }
           </ul>
         }
+        <label class="only-differences">
+          <input type="checkbox" data-testid="only-differences" [checked]="onlyDifferences()" (change)="onlyDifferences.set(!onlyDifferences())" />
+          Only the rows that differ
+        </label>
         <div class="table-wrap" tabindex="0" aria-label="The homes side by side">
           <table data-testid="compare-table" [class]="'homes-' + homes.length" [style.--homes]="homes.length">
             <thead>
@@ -172,8 +176,16 @@ export class CompareResultsComponent {
     return others.map((f, i) => comparisonHeadline(a, f, homeName(i + 1)));
   });
 
+  /** True to leave out the rows where every home has the same figure, so only what sets them apart is left. */
+  protected readonly onlyDifferences = signal(false);
+
   protected readonly rows = computed<Row[]>(() => {
     const homes = this.figures() ?? [];
+    const rows = this.allRows(homes);
+    return this.onlyDifferences() ? rows.filter((row) => row.cells.some((cell) => cell.value !== row.cells[0].value)) : rows;
+  });
+
+  private allRows(homes: HomeFigures[]): Row[] {
     return LINES.filter((line) => line.when?.(homes) ?? true).map((line) => {
       const amounts = homes.map((f) => line.amount?.(f) ?? null);
       const best = bestOf(amounts, line.better);
@@ -186,7 +198,7 @@ export class CompareResultsComponent {
         })),
       };
     });
-  });
+  }
 }
 
 /** The best amount on a line where lower or higher is better, or null when there is no better or every home is level. */

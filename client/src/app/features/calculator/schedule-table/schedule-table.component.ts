@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { monthOf } from '../../../core/formatting/format';
@@ -126,6 +126,23 @@ export class ScheduleTableComponent {
       ? payments.map((p) => this.toRow(p.paymentNumber, monthOf(p.dueDate), [p]))
       : this.byYear(payments);
   });
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** The loan years the schedule runs through, for jumping to one. */
+  readonly loanYears = computed(() => Array.from({ length: Math.ceil(this.schedule().payments.length / 12) }, (_, i) => i + 1));
+
+  /** The loan year a row is in: its own number in the yearly view, payment 1 to 12 being year 1 in the monthly one. */
+  protected yearOf(row: ScheduleRow): number {
+    return this.period() === 'monthly' ? Math.ceil(row.number / 12) : row.number;
+  }
+
+  /** Brings the first row of a year into view, in the table's own scroll. */
+  protected jumpTo(event: Event): void {
+    const year = (event.target as HTMLSelectElement).value;
+    if (!year) return;
+    this.host.nativeElement.querySelector<HTMLElement>(`tbody tr[data-year="${year}"]`)?.scrollIntoView({ block: 'center' });
+  }
 
   /** The whole schedule added up as one row: the source of the footer and the lifetime summary. */
   readonly totals = computed(() => this.toRow(0, '', this.schedule().payments));

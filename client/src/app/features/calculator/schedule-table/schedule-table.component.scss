@@ -325,3 +325,23 @@ tbody tr:nth-child(even) .pinned {
     display: none;
   }
 }
+
+// The way to a year of a long schedule, beside the other controls.
+.jump select {
+  min-height: 36px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

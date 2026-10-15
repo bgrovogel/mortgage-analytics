@@ -276,6 +276,44 @@ describe('ScheduleTableComponent', () => {
       expect(totals).toContain('Everything paid $2,300.00');
     });
 
+    describe('jump to year', () => {
+      const years = (n: number) => aSchedule({ payments: Array.from({ length: n * 12 }, (_, i) => aPayment(i + 1)) }, n * 12);
+      const jumpTo = (year: string) => {
+        const select = fixture.nativeElement.querySelector('[data-testid="jump-year"]') as HTMLSelectElement;
+        select.value = year;
+        select.dispatchEvent(new Event('change'));
+      };
+
+      it('lists each year of the schedule, and brings its first row into view', () => {
+        render(aResponse({ accelerated: years(3) }));
+        const first = fixture.nativeElement.querySelector('tbody tr[data-year="2"]') as HTMLElement;
+        first.scrollIntoView = jest.fn();
+        const options = [...fixture.nativeElement.querySelectorAll('[data-testid="jump-year"] option')].map((o: Element) => o.textContent!.trim());
+
+        jumpTo('2');
+
+        expect(options).toEqual(['Jump to year…', 'Year 1', 'Year 2', 'Year 3']);
+        expect(first.scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+      });
+
+      it('marks each monthly row with the loan year it is in, and each yearly row with its own', () => {
+        render(aResponse({ accelerated: years(2) }));
+        const monthly = [...fixture.nativeElement.querySelectorAll('tbody tr')].map((r: Element) => r.getAttribute('data-year'));
+        expect([monthly[0], monthly[11], monthly[12], monthly[23]]).toEqual(['1', '1', '2', '2']);
+
+        (fixture.nativeElement.querySelector('[data-testid="view-yearly"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const yearly = [...fixture.nativeElement.querySelectorAll('tbody tr')].map((r: Element) => r.getAttribute('data-year'));
+        expect(yearly).toEqual(['1', '2']);
+      });
+
+      it('does nothing for the choice that is only the prompt', () => {
+        render(aResponse({ accelerated: years(2) }));
+
+        expect(() => jumpTo('')).not.toThrow();
+      });
+    });
+
     it('says the totals run until the loan is paid off, taxes included', () => {
       render(withCosts());
 

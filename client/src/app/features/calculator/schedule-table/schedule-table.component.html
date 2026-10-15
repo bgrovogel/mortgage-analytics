@@ -13,6 +13,15 @@
       <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
               data-testid="view-baseline">Standard</button>
     </div>
+    <label class="jump">
+      <span class="sr-only">Jump to a year</span>
+      <select data-testid="jump-year" (change)="jumpTo($event)">
+        <option value="">Jump to year…</option>
+        @for (year of loanYears(); track year) {
+          <option [value]="year">Year {{ year }}</option>
+        }
+      </select>
+    </label>
     <button type="button" class="download" data-testid="download-csv" (click)="download()">Download (CSV)</button>
     <details class="column-picker" data-testid="column-picker">
       <summary>Columns</summary>
@@ -61,7 +70,7 @@
       </thead>
       <tbody>
         @for (row of rows(); track row.number) {
-          <tr [class.has-extra]="row.extraPrincipal > 0">
+          <tr [class.has-extra]="row.extraPrincipal > 0" [attr.data-year]="yearOf(row)">
             <td class="pinned first">{{ row.number }}</td>
             <td class="pinned second">{{ row.when }}</td>
             <td>{{ row.scheduledPayment | currency }}</td>

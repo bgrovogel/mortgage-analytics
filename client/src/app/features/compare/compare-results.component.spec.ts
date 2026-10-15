@@ -48,8 +48,38 @@ describe('CompareResultsComponent', () => {
     const differences = (label: string) => [...row(label)!.querySelectorAll('td')].slice(1).map((cell) => cell.querySelector('small')?.textContent ?? '');
     /** The homes marked best on a row, by column. */
     const best = (label: string) => [...row(label)!.querySelectorAll('td')].map((cell, i) => (cell.classList.contains('best') ? i : -1)).filter((i) => i >= 0);
-    return { page, text, figures, differences, best };
+    return { page, text, figures, differences, best, fixture };
   }
+
+  describe('only the rows that differ', () => {
+    const rowsOf = (page: HTMLElement) => [...page.querySelectorAll('tbody tr th')].map((th) => th.firstChild?.textContent?.trim());
+
+    it('shows every row until asked, then only those where the homes are not the same', () => {
+      const { page, fixture } = render(400_000, 450_000);
+      expect(rowsOf(page)).toContain('Paid off'); // the same in both homes
+
+      const toggle = page.querySelector<HTMLInputElement>('[data-testid="only-differences"]')!;
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(rowsOf(page)).not.toContain('Paid off');
+      expect(rowsOf(page)).not.toContain('Rate'); // the same rate in both
+      expect(rowsOf(page)).toContain('Home price');
+      expect(rowsOf(page)).toContain('Monthly payment');
+    });
+
+    it('brings every row back when it is turned off again', () => {
+      const { page, fixture } = render(400_000, 450_000);
+      const toggle = page.querySelector<HTMLInputElement>('[data-testid="only-differences"]')!;
+
+      toggle.click();
+      fixture.detectChanges();
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(rowsOf(page)).toContain('Paid off');
+    });
+  });
 
   describe('two homes', () => {
     it('sums up what Home B costs more or less', () => {

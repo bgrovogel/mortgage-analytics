@@ -193,3 +193,14 @@ thead td {
     }
   }
 }
+
+// The way to leave out what the homes share, above the table.
+.only-differences {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
