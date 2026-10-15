@@ -453,6 +453,7 @@ select {
     margin: 12mm;
   }
 
+  html,
   body {
     background: #fff !important;
   }
@@ -481,10 +482,31 @@ select {
     print-color-adjust: exact;
   }
 
-  .panel,
-  table,
+  // Rows, charts and list items are not split across pages, and a heading stays with what follows it. A whole card
+  // is left free to break: kept whole, one taller than a page would leave the page before it blank.
+  tr,
   canvas,
-  figure {
+  figure,
+  li {
     break-inside: avoid;
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  // Whatever scrolls on the screen prints in full: the schedule, and wide tables.
+  .table-wrap,
+  .table-frame {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  // Charts are drawn for the screen's width: on paper they take the page's.
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }

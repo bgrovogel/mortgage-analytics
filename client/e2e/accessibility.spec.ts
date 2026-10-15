@@ -32,6 +32,9 @@ async function openSections(page: Page) {
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`Accessibility, ${scheme} mode`, () => {
     test.use({ colorScheme: scheme });
+    // Each test scans the whole page several times (nine in the calculator's), which takes most of the default 30
+    // seconds alone; with the suite running in parallel it can take longer. A slow test has three times as long.
+    test.slow();
 
     test('the calculator: every results tab, and every form section open', async ({ page }) => {
       await page.goto('/calculator/overview');

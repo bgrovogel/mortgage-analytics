@@ -16,6 +16,8 @@ export interface HomeFigures {
   rate: number;
   /** The first payment due, with housing costs: with a buydown, year 1's reduced payment. */
   monthlyPayment: number;
+  /** The extra principal paid with the first payment: 0 for none, or one that starts later. */
+  extraPrincipal: number;
   principalAndInterest: number;
   housingCosts: number;
   /** Null for a loan already being paid, which closed long ago. */
@@ -51,6 +53,7 @@ export function figuresOf(r: AmortizationResponse): HomeFigures {
     loanAmount: r.purchase.loanAmount,
     rate: r.baseline.payments[0]?.annualInterestRate ?? 0,
     monthlyPayment: firstYear ? principalAndInterest + housingCosts : r.baseline.totalMonthlyPayment,
+    extraPrincipal: r.accelerated.payments[0]?.extraPrincipal ?? 0,
     principalAndInterest,
     housingCosts,
     cashToClose: cash ? cash.total : null,
@@ -78,7 +81,9 @@ export function comparisonHeadline(a: HomeFigures, b: HomeFigures, name = homeNa
 
 /** "Home C costs the least over the first 5 years: $7,250 less than Home B, the next.": the cheapest of several homes. */
 export function cheapestHome(homes: HomeFigures[]): string {
-  const [best, next] = homes.map((f, i) => ({ name: homeName(i), cost: f.fiveYearCost })).sort((x, y) => x.cost - y.cost);
+  const ranked = homes.map((f, i) => ({ name: homeName(i), cost: f.fiveYearCost })).sort((x, y) => x.cost - y.cost);
+  if (Math.round(ranked[ranked.length - 1].cost - ranked[0].cost) === 0) return `All ${homes.length} homes cost the same over the first ${FIRST_YEARS} years.`;
+  const [best, next] = ranked;
   const gap = Math.round(next.cost - best.cost);
   const [first, second] = [best, next].map((h) => h.name).sort();
   return gap === 0

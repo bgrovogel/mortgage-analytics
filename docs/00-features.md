@@ -249,16 +249,19 @@ all of it.
   calculator's loan; **Home B** starts as a copy of it, and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
   input can differ: price, down payment, rate, loan type, taxes, closing costs. **Remove** takes out the home being
   edited, down to two. A table shows each home's price, down payment, loan, rate, first payment (principal and
-  interest, and housing costs), cash to close, when mortgage insurance ends, when it is paid off, the interest over
+  interest, and housing costs; with extra principal too, once any home pays extra), cash to close, when mortgage
+  insurance ends, when it is paid off, the interest over
   the loan, the **cost of the first 5 years** (interest, taxes, insurance, mortgage insurance and dues, plus the
   closing costs: what builds no equity), and the equity after 5 years.
-  - **Differences:** under each figure is its difference from Home A.
+  - **Differences:** under each figure is its difference from Home A; under a date, how much sooner or later it is
+    ("2 yr 5 mo sooner").
   - **The best home on each line is shaded:** on the lines where less is better (the payment, cash to close,
-    interest, the 5-year cost) or more is (equity).
+    interest, the 5-year cost), sooner is (mortgage insurance ending, the payoff), or more is (equity).
   - **The summary:** with two homes, one line says what Home B costs more or less each month, at closing and over
     the first 5 years. With more, it names the home that costs the least over the first 5 years, then has the same
-    line for each home against Home A.
-  - **On a phone,** three or four homes scroll sideways under the row names, which stay put.
+    line for each home against Home A, unless every home costs the same.
+  - **On a narrow screen** nothing scrolls sideways: with three or four homes, each line's name goes above its
+    figures, and on a phone the homes go two to a row, each named.
 
   Only Home A is the shared loan.
 

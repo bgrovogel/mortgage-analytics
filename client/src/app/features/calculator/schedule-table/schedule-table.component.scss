@@ -282,3 +282,19 @@ tbody tr:nth-child(even) .pinned {
     background: linear-gradient(to right, transparent, var(--surface-1));
   }
 }
+
+// On paper: every row and column, in smaller type, without the controls that change what the screen shows.
+@media print {
+  .toggles {
+    display: none;
+  }
+
+  table {
+    font-size: 7.5pt;
+  }
+
+  th,
+  td {
+    padding: 0.15rem 0.3rem !important;
+  }
+}

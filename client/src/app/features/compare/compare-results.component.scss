@@ -9,6 +9,8 @@
 .panel {
   @include surfaces.card;
   padding: 1.25rem;
+  // The table changes shape by the card's own width, not the window's (container queries below).
+  container-type: inline-size;
 }
 
 .headline {
@@ -93,7 +95,86 @@ thead td {
   color: var(--text-muted);
 }
 
-// On a phone, two or three homes fit once the padding is tighter and the row names may wrap; four scroll sideways.
+// Three or four homes on a narrow card: each line's name goes above its figures, which share the full width, so
+// nothing scrolls sideways. On a phone they go two to a row, each named (data-home), as the heading row would not
+// line up with them.
+@mixin stacked {
+  &,
+  thead,
+  tbody {
+    display: block;
+  }
+
+  tr {
+    display: grid;
+    grid-template-columns: repeat(var(--homes), minmax(0, 1fr));
+    border-bottom: 1px solid var(--border);
+  }
+
+  thead td {
+    display: none;
+  }
+
+  th,
+  td {
+    border-bottom: none;
+    white-space: normal;
+  }
+
+  tbody th {
+    grid-column: 1 / -1;
+    position: static;
+    padding-bottom: 0;
+    background: none;
+
+    small {
+      display: inline;
+      margin-left: 0.35rem;
+    }
+  }
+}
+
+@mixin two-to-a-row {
+  tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  thead {
+    display: none;
+  }
+
+  td {
+    text-align: left;
+
+    &::before {
+      content: attr(data-home);
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+  }
+}
+
+@container (max-width: 760px) {
+  .homes-4 {
+    @include stacked;
+  }
+}
+
+@container (max-width: 580px) {
+  .homes-3 {
+    @include stacked;
+  }
+}
+
+@container (max-width: 460px) {
+  .homes-3,
+  .homes-4 {
+    @include two-to-a-row;
+  }
+}
+
+// On a phone, two homes fit once the padding is tighter and the row names may wrap.
 @media (max-width: 560px) {
   table {
     font-size: 0.82rem;

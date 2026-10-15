@@ -97,4 +97,9 @@ describe('the cheapest of several homes', () => {
     expect(cheapestHome([costing(120_000), costing(110_000), costing(110_000.2)]))
       .toBe('Home B and Home C cost the least over the first 5 years, the same.');
   });
+
+  it('says when every home costs the same', () => {
+    expect(cheapestHome([costing(110_000), costing(110_000), costing(110_000.4), costing(110_000)]))
+      .toBe('All 4 homes cost the same over the first 5 years.');
+  });
 });

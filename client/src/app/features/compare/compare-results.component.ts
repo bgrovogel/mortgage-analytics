@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { formatMonths } from '../../core/formatting/duration';
 import { money, monthOf, pct } from '../../core/formatting/format';
 import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
 import { ComparisonStore } from './comparison.store';
@@ -14,7 +15,18 @@ interface Line {
   amount?: (f: HomeFigures) => number | null;
   /** Whether less or more of the amount is better, for the lines where one is: the best home is marked. */
   better?: 'lower' | 'higher';
+  /** How a difference from Home A reads: in dollars unless said otherwise. */
+  difference?: (difference: number) => string;
+  /** Whether the line is shown for these homes: always, unless said otherwise. */
+  when?: (homes: HomeFigures[]) => boolean;
 }
+
+/** A date as a count of months, so two dates' difference is in months. */
+const monthIndex = (date: string) => Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7));
+
+/** "2 yr 5 mo sooner", "3 mo later", or nothing on the same month. */
+const monthsApart = (difference: number) =>
+  difference === 0 ? '' : `${formatMonths(Math.abs(difference))} ${difference < 0 ? 'sooner' : 'later'}`;
 
 const LINES: readonly Line[] = [
   { label: 'Home price', show: (f) => money(f.homePrice), amount: (f) => f.homePrice },
@@ -25,14 +37,25 @@ const LINES: readonly Line[] = [
     label: 'Monthly payment', note: 'the first, with housing costs',
     show: (f) => money(f.monthlyPayment), amount: (f) => f.monthlyPayment, better: 'lower',
   },
+  {
+    label: 'With extra principal', note: 'the first payment, and what is paid ahead',
+    show: (f) => money(f.monthlyPayment + f.extraPrincipal), amount: (f) => f.monthlyPayment + f.extraPrincipal,
+    when: (homes) => homes.some((f) => f.extraPrincipal > 0),
+  },
   { label: 'Principal & interest', show: (f) => money(f.principalAndInterest), amount: (f) => f.principalAndInterest, better: 'lower' },
   {
     label: 'Housing costs', note: 'taxes, insurance, mortgage insurance, dues',
     show: (f) => money(f.housingCosts), amount: (f) => f.housingCosts, better: 'lower',
   },
   { label: 'Cash to close', show: (f) => (f.cashToClose === null ? '—' : money(f.cashToClose)), amount: (f) => f.cashToClose, better: 'lower' },
-  { label: 'Mortgage insurance ends', show: (f) => (f.insuranceEnds ? monthOf(f.insuranceEnds) : 'None') },
-  { label: 'Paid off', note: 'with extra payments', show: (f) => monthOf(f.paidOff) },
+  {
+    label: 'Mortgage insurance ends', show: (f) => (f.insuranceEnds ? monthOf(f.insuranceEnds) : 'None'),
+    amount: (f) => (f.insuranceEnds ? monthIndex(f.insuranceEnds) : null), better: 'lower', difference: monthsApart,
+  },
+  {
+    label: 'Paid off', note: 'with extra payments', show: (f) => monthOf(f.paidOff),
+    amount: (f) => monthIndex(f.paidOff), better: 'lower', difference: monthsApart,
+  },
   {
     label: 'Interest over the loan', note: 'with extra payments',
     show: (f) => money(Math.round(f.interest)), amount: (f) => Math.round(f.interest), better: 'lower',
@@ -70,7 +93,7 @@ interface Row {
     @if (figures(); as homes) {
       <section class="panel compare">
         <p class="headline" data-testid="compare-headline">{{ headline() }}</p>
-        @if (homes.length > 2) {
+        @if (homes.length > 2 && !allTheSame()) {
           <ul class="each" data-testid="compare-each">
             @for (sentence of eachAgainstA(); track $index) {
               <li>{{ sentence }}</li>
@@ -78,7 +101,7 @@ interface Row {
           </ul>
         }
         <div class="table-wrap" tabindex="0" aria-label="The homes side by side">
-          <table data-testid="compare-table">
+          <table data-testid="compare-table" [class]="'homes-' + homes.length" [style.--homes]="homes.length">
             <thead>
               <tr>
                 <td></td>
@@ -92,7 +115,7 @@ interface Row {
                 <tr>
                   <th scope="row">{{ row.line.label }}@if (row.line.note) {<small>{{ row.line.note }}</small>}</th>
                   @for (cell of row.cells; track $index) {
-                    <td [class.best]="cell.best">{{ cell.value }} @if (cell.difference) {<small class="under">{{ cell.difference }}</small>}</td>
+                    <td [class.best]="cell.best" [attr.data-home]="nameOf($index)">{{ cell.value }} @if (cell.difference) {<small class="under">{{ cell.difference }}</small>}</td>
                   }
                 </tr>
               }
@@ -127,6 +150,12 @@ export class CompareResultsComponent {
     return homes.length === 2 ? comparisonHeadline(homes[0], homes[1]) : cheapestHome(homes);
   });
 
+  /** True when every home costs the same over the first years: then a line each would only repeat it. */
+  protected readonly allTheSame = computed(() => {
+    const costs = (this.figures() ?? []).map((f) => Math.round(f.fiveYearCost));
+    return costs.every((c) => c === costs[0]);
+  });
+
   /** Each home after Home A, measured against it. */
   protected readonly eachAgainstA = computed(() => {
     const [a, ...others] = this.figures() ?? [];
@@ -135,14 +164,14 @@ export class CompareResultsComponent {
 
   protected readonly rows = computed<Row[]>(() => {
     const homes = this.figures() ?? [];
-    return LINES.map((line) => {
+    return LINES.filter((line) => line.when?.(homes) ?? true).map((line) => {
       const amounts = homes.map((f) => line.amount?.(f) ?? null);
       const best = bestOf(amounts, line.better);
       return {
         line,
         cells: homes.map((f, i) => ({
           value: line.show(f),
-          difference: i === 0 || amounts[0] === null || amounts[i] === null ? '' : signedMoney(amounts[i]! - amounts[0]),
+          difference: i === 0 || amounts[0] === null || amounts[i] === null ? '' : (line.difference ?? signedMoney)(amounts[i]! - amounts[0]),
           best: best !== null && amounts[i] === best,
         })),
       };
