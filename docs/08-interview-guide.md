@@ -383,7 +383,7 @@ found into usability problems and polish.
   (and keyboard focus) straight to it. Nothing told a newcomer the numbers were an example, so each form now says so
   until the first edit. A long form looked cut off, so its edge fades while there is more below.
 - **Then one visual language:** role-based tokens (light and dark defined once), shared card, tile and verdict
-  styles, one control style for every input, self-hosted Inter with tabular figures, a brand mark.
+  styles, one control style for every input, self-hosted Instrument Sans, Serif and Plex Mono with tabular figures, a brand mark.
 - **Colour means one thing everywhere:** green only for a good outcome, amber only for "look again", blue for plain
   facts. A refinance that saves is green; one that costs more is amber.
 - **Kept honest by tests:** the axe scans check contrast in both modes on every page, and a browser test pins even

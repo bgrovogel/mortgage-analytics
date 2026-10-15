@@ -176,7 +176,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 | Layer | Built with |
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite or PostgreSQL (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
-| **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Inter |
+| **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Instrument Sans, Serif and IBM Plex Mono |
 | **Tests** | NUnit + NSubstitute: 1,268 backend tests · Jest: 1,169 Angular unit tests · Playwright: 142 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 

@@ -1,43 +1,96 @@
 @use 'app/core/forms/form-fields' as fields;
 
 /*
- * Design tokens. Components reference roles (--text-secondary, --positive, --series-1, ...), never raw hex, so light
- * and dark mode are each defined exactly once, here.
+ * Design tokens: the "Precision Instrument" system of docs/mockups (UI Blueprint, pillar 1). A dark-first ledger look:
+ * ink grounds, paper-white figures, one periwinkle for what can be pressed or is selected. Components reference roles
+ * (--text-secondary, --accent, --positive, ...), never raw hex, so each theme is defined exactly once, here.
  *
- * The look is a calm fintech one: white cards with a soft shadow on a cool grey page, one blue for action, green only
- * for a good outcome, amber only for "be careful", red only for errors. Every text colour is at least 4.5:1 on the
- * surfaces it sits on (checked by the axe scans in both modes).
+ *   dark (the default, and for a visitor whose system prefers it) is on :root; light, on warm paper, follows
+ *   a light system preference or an explicit choice (`data-theme='light'`).
+ *   text   --text-primary is warm paper, never pure white; secondary and muted stay at 4.5:1 or more on --surface-1.
+ *   lines  --border divides content; --border-control (3:1) outlines inputs and the controls a finger meets.
+ *   action --accent only for things that can be pressed or are selected, never decoration.
+ *   money  gain (--positive) and loss (--critical) differ in lightness and always carry a sign and a word;
+ *          --warning (brass) means careful: "the clock restarts", "PMI is not removed automatically".
  * Series colors are the validated categorical palette, in its fixed slot order (CVD-safe in both modes).
  */
-:root {
+@mixin dark-tokens {
+  color-scheme: dark;
+  --page: #0a0d13;
+  --surface-1: #11151e;
+  --surface-2: #171c27;
+  --surface-3: #1e2431;
+  // The well an input sits in: the ground itself in dark, so a field reads as cut into its panel.
+  --input: #0a0d13;
+  --row-alt: #141923;
+  --border: #262d3b;
+  --border-strong: #37404f;
+  --border-control: #5e687b;
+  --grid: #1e2431;
+  --text-primary: #eeece6;
+  --text-secondary: #a9afbb;
+  --text-muted: #868d9a;
+  --accent: #8ea2ff;
+  --accent-hover: #b4c1ff;
+  --accent-text: #8ea2ff;
+  --on-accent: #0a0d13;
+  --accent-soft: #1a2036;
+  --accent-soft-border: #2e3a6b;
+  --positive: #5bd6a4;
+  --positive-soft: #0f2a22;
+  --positive-border: #1d6b50;
+  --critical: #ff8a73;
+  --on-critical: #1a0a06;
+  --critical-soft: #32180f;
+  --warning-text: #e8b95a;
+  --warning-soft: #2a2312;
+  --warning-border: #7a5e1a;
+  --series-1: #8ea2ff;
+  --series-2: #e3c98e;
+  --series-3: #5bd6a4;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #3fae7b;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  // Dark surfaces rise by luminance, not shadow; only an overlay (dialog, menu, tooltip) casts one.
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 5%);
+  --shadow-overlay: inset 0 1px 0 rgb(255 255 255 / 6%), 0 24px 48px -12px rgb(0 0 0 / 60%);
+  --backdrop: rgb(4 6 10 / 70%);
+}
+
+@mixin light-tokens {
   color-scheme: light;
-  --page: #f5f7fa;
+  --page: #f4f2ee;
   --surface-1: #ffffff;
-  --surface-2: #f8fafc;
-  --row-alt: #f8fafc;
-  --border: #e4e7ec;
-  --border-strong: #d0d5dd;
-  --grid: #eaecf0;
-  --text-primary: #101828;
-  --text-secondary: #475467;
-  --text-muted: #5d6679;
-  // In light mode one blue does both jobs; in dark mode text needs a lighter blue than a fill behind white text.
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-text: #2563eb;
+  --surface-2: #faf9f6;
+  --surface-3: #f1efe9;
+  --input: #ffffff;
+  --row-alt: #faf9f6;
+  --border: #e3e0d9;
+  --border-strong: #cfcbc2;
+  --border-control: #8a857b;
+  --grid: #ece9e2;
+  --text-primary: #12141a;
+  --text-secondary: #4a4f5c;
+  --text-muted: #5f6573;
+  --accent: #3b4bd4;
+  --accent-hover: #2f3db8;
+  --accent-text: #3b4bd4;
   --on-accent: #ffffff;
-  --accent-soft: #eef4ff;
-  --accent-soft-border: #c7d7fe;
-  --positive: #067647;
-  --positive-soft: #ecfdf3;
-  --positive-border: #abefc6;
-  --critical: #c8302f;
+  --accent-soft: #eef0ff;
+  --accent-soft-border: #c9cff7;
+  --positive: #0b7450;
+  --positive-soft: #e8f5ef;
+  --positive-border: #a7d8c4;
+  --critical: #b83a27;
   --on-critical: #ffffff;
-  --critical-soft: #fef3f2;
-  --warning-text: #93370d;
-  --warning-soft: #fffaeb;
-  --warning-border: #f5b83d;
-  --series-1: #2a78d6;
+  --critical-soft: #fbedea;
+  --warning-text: #875800;
+  --warning-soft: #fbf3e1;
+  --warning-border: #e0b85a;
+  --series-1: #3b4bd4;
   --series-2: #eb6834;
   --series-3: #1baf7a;
   --series-4: #eda100;
@@ -45,63 +98,45 @@
   --series-6: #008300;
   --series-7: #4a3aa7;
   --series-8: #e34948;
-
-  // Shape and depth, shared by every card, tile and control.
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
-  --shadow-raised: 0 4px 8px -2px rgb(16 24 40 / 8%), 0 2px 4px -2px rgb(16 24 40 / 5%);
-  --focus-ring: 0 0 0 3px rgb(37 99 235 / 25%);
-
-  // The typeface, self-hosted (the CSP allows fonts only from the app itself). The charts read it too.
-  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shadow-card: 0 1px 2px rgb(18 20 26 / 5%);
+  --shadow-raised: 0 6px 16px -6px rgb(18 20 26 / 12%);
+  --shadow-overlay: 0 24px 48px -16px rgb(18 20 26 / 20%);
+  --backdrop: rgb(18 20 26 / 45%);
 }
 
-@mixin dark-tokens {
-  color-scheme: dark;
-  --page: #0c111d;
-  --surface-1: #141b2b;
-  --surface-2: #1a2235;
-  --row-alt: #182031;
-  --border: #283246;
-  --border-strong: #3a465c;
-  --grid: #222b3d;
-  --text-primary: #f5f7fa;
-  --text-secondary: #c2c9d6;
-  --text-muted: #9aa4b6;
-  --accent: #2f6be0;
-  --accent-hover: #3f7bf0;
-  --accent-text: #84aaff;
-  --on-accent: #ffffff;
-  --accent-soft: #16233f;
-  --accent-soft-border: #2b4c8c;
-  --positive: #5fd59a;
-  --positive-soft: #0f2a1f;
-  --positive-border: #1d6644;
-  --critical: #f47a70;
-  --on-critical: #1f0806;
-  --critical-soft: #3a1915;
-  --warning-text: #fdcf6f;
-  --warning-soft: #2a2111;
-  --warning-border: #8a6514;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
-  --series-6: #008300;
-  --series-7: #9085e9;
-  --series-8: #e66767;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow-raised: 0 4px 12px rgb(0 0 0 / 35%);
-  --focus-ring: 0 0 0 3px rgb(132 170 255 / 35%);
+:root {
+  @include dark-tokens;
+
+  // Shape: radius.sm 6, md 10, lg 14, xl 20.
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  // Focus: a 2px action ring a 2px gap off the control, visible on either ground and never clipped by its own box.
+  --focus-ring: 0 0 0 2px var(--page), 0 0 0 4px var(--accent);
+
+  // Motion: fast, physical, purposeful. Reduced motion shortens all of it (see the media query below).
+  --dur-instant: 90ms;
+  --dur-quick: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  // Type, self-hosted (the CSP allows fonts only from the app itself). The charts read --font-sans too.
+  //   sans   the interface; serif money you read first (hero figures); mono the ledger (every payment).
+  --font-sans: 'Instrument Sans Variable', 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    @include dark-tokens;
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    @include light-tokens;
   }
+}
+
+:root[data-theme='light'] {
+  @include light-tokens;
 }
 
 :root[data-theme='dark'] {

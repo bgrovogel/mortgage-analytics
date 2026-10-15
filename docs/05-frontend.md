@@ -239,19 +239,23 @@ A calm fintech look, built from shared parts so every page stays consistent:
 - **A theme choice:** `<app-theme-switch>` in the footer sets `data-theme` on the page (`core/layout/theme.ts`),
   remembered in `localStorage`; with none, `prefers-color-scheme` decides. The app applies it at start, charts redraw on
   the same `themechange` event printing uses, and printing still goes light whatever was chosen.
-- **Colour carries meaning, the same way everywhere:** blue for action and plain facts, green only for a good outcome
-  (money saved, time saved), amber only for "look again" (a refinance that costs more, a recommendation a bad decade
-  would reverse), red only for errors.
+- **The look is the "Precision Instrument" system** (`docs/mockups/`, the UI Blueprint): a dark-first ledger style, ink
+  grounds with paper-white figures and one periwinkle for what can be pressed. Dark is the default (a visitor whose
+  system prefers light, or who chose it, gets warm paper); every colour is a role token on `:root` in `styles.scss`.
+- **Colour carries meaning, the same way everywhere:** periwinkle for action and the selected state only, mint only for a
+  good outcome (money saved, time saved), brass only for "look again" (a refinance that costs more, a recommendation a
+  bad decade would reverse), coral only for errors. Gain and loss always carry a sign and a word.
 - **Surfaces** (`core/layout/_surfaces.scss`): `card`, `tile` and `verdict` mixins, so panels, figures and each page's
   headline answer look alike on every page.
 - **Controls:** one `control` mixin (`core/forms/_form-fields.scss`), applied once globally to every number box, date,
-  drop-down, email and password field: same size, a firm border, a soft focus ring.
-- **Type:** Inter, self-hosted (`@fontsource-variable/inter`; the CSP allows fonts only from the app itself), with
-  tabular figures everywhere, so amounts line up in tables and do not jitter while they update.
+  drop-down, email and password field: an input well 48px tall, a 3:1 control border, the action focus ring.
+- **Type:** Instrument Sans for the interface, Instrument Serif for the money you read first and IBM Plex Mono for the
+  ledger, all self-hosted (`@fontsource*`; the CSP allows fonts only from the app itself), with tabular figures
+  everywhere, so amounts line up in tables and do not jitter while they update.
 - **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar; the same mark
   is the browser-tab icon (`public/favicon.svg`, with a PNG for iOS home screens), and the toolbar colour follows the bar.
 - **Charts in the same type:** `buildLineChart` reads `--font-sans` like its colours, so Chart.js draws its legend, axes
-  and tooltips in Inter rather than its default Helvetica or Arial.
+  and tooltips in Instrument Sans rather than its default Helvetica or Arial.
 
 The flows are designed around the people using it:
 

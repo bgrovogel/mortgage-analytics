@@ -56,7 +56,7 @@ How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-syste
 | **RxJS 7.8** | `core/state/latest-request.ts`, forms | `debounceTime` + `switchMap` give "results as you type" without stale responses. Signals hold state; RxJS handles time. |
 | **Angular Router** | `app.routes.ts` | Pages and the calculator's result tabs each have a URL (bookmarkable, back button works). A functional guard protects History. |
 | **HttpClient** (`withFetch`) | `core/services/*-api.service.ts` | One thin service per API area; components never touch `HttpClient` directly. |
-| **Inter (`@fontsource-variable/inter` 5.2)** | `styles.scss`, via `angular.json` | The typeface, self-hosted because the CSP allows fonts only from the app; tabular figures keep amounts aligned. |
+| **Instrument Sans, Instrument Serif, IBM Plex Mono (`@fontsource*` 5.3)** | `styles.scss`, via `angular.json` | The typefaces of the UI Blueprint (interface, money you read first, ledger), self-hosted because the CSP allows fonts only from the app; tabular figures keep amounts aligned. |
 | **Chart.js 4.5** | `core/charts/` | Line and stacked charts. Wrapped once (`buildLineChart`, `hostChart`) and injected through a factory, so tests use a fake. |
 | **SCSS** | `*.component.scss`, `core/forms/_*.scss` | Shared partials for form fields, segmented controls and scroll hints; CSS grid for the two-column layout; light and dark themes. |
 

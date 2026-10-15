@@ -3,21 +3,22 @@
 //   @use 'core/forms/form-fields' as fields;   @include fields.styles;
 // A component that is only one field (NumberFieldComponent) includes just `fields.field`.
 
-// The look of every text box, date and drop-down in the app: white, a firm border, a soft blue ring when focused.
+// The look of every text box, date and drop-down in the app: an input well, a 3:1 control border, the action ring
+// when focused, 48px tall so a thumb finds it (UI blueprint, pillar 1 and 4).
 // Applied once, globally, in styles.scss (every form uses it, so a copy per component would only add weight).
 @mixin control {
   font: inherit;
-  font-size: 0.95rem;
-  min-height: 40px;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  font-size: 1.05rem;
+  font-weight: 500;
+  min-height: 48px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--input);
   color: var(--text-primary);
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
 
   &:hover {
     border-color: var(--text-muted);
