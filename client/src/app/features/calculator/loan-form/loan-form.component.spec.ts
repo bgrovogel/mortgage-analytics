@@ -815,6 +815,56 @@ describe('LoanFormComponent', () => {
       expect(text('occupancy-error')).toBe('FHA and VA loans are only for a home you will live in.');
     });
 
+    it('says nothing about it for a home you live in, on any loan', () => {
+      controls().downPayment.setValue(14_525);
+      controls().loanProgram.setValue('Fha');
+      fixture.detectChanges();
+
+      expect(el('occupancy-hint')).toBeNull();
+      expect(el('occupancy-error')).toBeNull();
+    });
+
+    it('holds an adjustable rate to 95% of a home you live in', () => {
+      controls().downPayment.setValue(16_600); // 4%
+      controls().rate.controls.rateType.setValue('arm');
+      fixture.detectChanges();
+
+      expect(text('down-payment-error'))
+        .toBe('A conventional loan with an adjustable rate can be at most 95% of the price of a home you live in: put at least 5% down.');
+    });
+
+    it('lets a VA loan, or a conventional loan already being paid, have nothing down', () => {
+      controls().downPayment.setValue(0);
+      controls().loanProgram.setValue('Va');
+      fixture.detectChanges();
+      expect(el('down-payment-error')).toBeNull();
+      expect(last()).toEqual(expect.objectContaining({ downPayment: 0, program: expect.objectContaining({ type: 'Va' }) }));
+
+      controls().loanProgram.setValue('Conventional');
+      controls().firstPaymentDate.setValue('2020-01-01');
+      fixture.detectChanges();
+      expect(el('down-payment-error')).toBeNull();
+      expect(last()).toEqual(expect.objectContaining({ downPayment: 0, program: null, firstPaymentDate: '2020-01-01' }));
+    });
+
+    it('says only that there is nothing to borrow when the price is gone', () => {
+      controls().homePrice.setValue(0);
+      fixture.detectChanges();
+
+      expect(el('down-payment-error')).toBeNull();
+    });
+
+    it('comes back with a saved investment property, its homestead off', () => {
+      controls().downPayment.setValue(62_250);
+      use('InvestmentProperty');
+      const restored = TestBed.createComponent(LoanFormComponent);
+      restored.componentRef.setInput('initial', last());
+      restored.detectChanges();
+
+      expect(restored.componentInstance.form.controls.occupancy.value).toBe('InvestmentProperty');
+      expect(restored.componentInstance.form.controls.isHomestead.disabled).toBe(true);
+    });
+
     it('offers a homestead only for a home you live in', () => {
       const homestead = () => el('is-homestead') as HTMLInputElement;
       controls().downPayment.setValue(62_250);

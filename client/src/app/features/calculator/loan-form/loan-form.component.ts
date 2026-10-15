@@ -281,8 +281,7 @@ export class LoanFormComponent implements OnInit {
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
     keepArmFieldsInStep(this.form.controls.rate);
 
-    // A homestead is only offered for the home the buyer lives in.
-    syncOccupancy(this.form);
+    // A homestead is only offered for the home the buyer lives in (the form starts as one, with it on).
     this.form.controls.occupancy.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => syncOccupancy(this.form));
 
     // The points' fields are only checked (and sent) while points apply.
