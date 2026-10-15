@@ -2047,6 +2047,13 @@
           },
           "mortgageInsuranceRequired": {
             "type": "boolean"
+          },
+          "conformingLoanLimit": {
+            "type": "number",
+            "format": "double"
+          },
+          "isJumbo": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

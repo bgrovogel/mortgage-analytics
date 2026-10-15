@@ -26,6 +26,13 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
   imports: [CurrencyPipe, DatePipe, RouterLink],
   template: `
     @let r = result();
+    @if (r.purchase.isJumbo) {
+      <p class="notice" data-testid="jumbo-notice">
+        This is a jumbo loan: above the {{ r.purchase.conformingLoanLimit | currency: 'USD' : 'symbol' : '1.0-0' }} conforming limit.
+        Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can
+        differ more than usual.
+      </p>
+    }
     <!-- The four answers: what it costs each month, what it takes to close, whether you can afford it, what paying
          extra saves. Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt
          and dd). -->

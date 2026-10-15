@@ -155,6 +155,18 @@ buy, refinancing, pay off or invest), worked through with the example loan, then
 names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
 loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term.
 
+#### A spreadsheet of every payment
+
+The Schedule tab's **Download (CSV)** saves the schedule shown (monthly or yearly, with or without extra payments) as a
+spreadsheet: every payment or year, with every column the schedule has, whichever are hidden from the table, in plain
+numbers a spreadsheet can add up.
+
+#### A jumbo loan
+
+A conventional loan above FHFA's conforming limit for the year it closes ($832,750 in 2026) is flagged above the answers:
+jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own. FHA and VA have limits
+of their own and are never flagged.
+
 #### The APR
 
 The Cost view shows the **APR** beside the rate: the yearly cost of the loan once its fees are counted, **6.376%**

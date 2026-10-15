@@ -13,6 +13,7 @@
       <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
               data-testid="view-baseline">Standard</button>
     </div>
+    <button type="button" class="download" data-testid="download-csv" (click)="download()">Download (CSV)</button>
     <details class="column-picker" data-testid="column-picker">
       <summary>Columns</summary>
       <fieldset>

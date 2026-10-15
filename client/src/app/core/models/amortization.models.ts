@@ -435,6 +435,10 @@ export interface Purchase {
   loanAmount: number;
   loanToValuePercent: number;
   mortgageInsuranceRequired: boolean;
+  /** FHFA's conforming loan limit for the year the loan closes. */
+  conformingLoanLimit: number;
+  /** A conventional loan above that limit: stricter rules and its own rates. */
+  isJumbo: boolean;
 }
 
 export interface HousingCosts {

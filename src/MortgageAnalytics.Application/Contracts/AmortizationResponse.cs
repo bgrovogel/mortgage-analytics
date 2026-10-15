@@ -389,13 +389,17 @@ public sealed record YearProjectionResponse(
 /// <param name="LoanAmount">The amount borrowed.</param>
 /// <param name="LoanToValuePercent">The loan as a percentage of the price.</param>
 /// <param name="MortgageInsuranceRequired">True when a conventional loan needs PMI: less than 20% down. FHA and VA loans have no PMI.</param>
+/// <param name="ConformingLoanLimit">FHFA's conforming loan limit for the year the loan closes (the month before the first payment).</param>
+/// <param name="IsJumbo">True for a conventional loan above that limit, which has stricter rules and its own rates. FHA and VA have limits of their own.</param>
 public sealed record PurchaseResponse(
     decimal HomePrice,
     decimal DownPayment,
     decimal DownPaymentPercent,
     decimal LoanAmount,
     decimal LoanToValuePercent,
-    bool MortgageInsuranceRequired);
+    bool MortgageInsuranceRequired,
+    decimal ConformingLoanLimit,
+    bool IsJumbo);
 
 /// <summary>One complete repayment schedule and its totals.</summary>
 /// <param name="MonthlyPayment">Principal and interest at origination.</param>

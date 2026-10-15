@@ -106,6 +106,8 @@ export function aPurchase(overrides: Partial<Purchase> = {}): Purchase {
     loanAmount: 200_000,
     loanToValuePercent: 80,
     mortgageInsuranceRequired: false,
+    conformingLoanLimit: 832_750,
+    isJumbo: false,
     ...overrides,
   };
 }

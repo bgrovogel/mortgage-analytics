@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { monthOf } from '../../../core/formatting/format';
+import { scheduleCsv } from './schedule-csv';
 
 type View = 'accelerated' | 'baseline';
 type Period = 'monthly' | 'yearly';
@@ -128,6 +129,21 @@ export class ScheduleTableComponent {
 
   /** The whole schedule added up as one row: the source of the footer and the lifetime summary. */
   readonly totals = computed(() => this.toRow(0, '', this.schedule().payments));
+
+  /**
+   * Saves the schedule shown as a spreadsheet: every payment (or year), with every column the schedule has, whichever
+   * are hidden from the table, since a spreadsheet can hide its own.
+   */
+  download(): void {
+    const csv = scheduleCsv(this.rows(), this.available(), this.period());
+    const name = `payment-schedule-${this.period()}-${this.view() === 'accelerated' ? 'with-extra-payments' : 'standard'}.csv`;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   /** Shows or hides a money column, and remembers the choice. */
   toggle(key: string): void {

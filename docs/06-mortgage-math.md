@@ -300,6 +300,15 @@ standard schedule (extra payments left out, so the answer is about the points al
 
 ---
 
+## Jumbo loans
+
+FHFA sets a conforming loan limit each year (the baseline for a one-unit home: $726,200 in 2023, $766,550 in 2024,
+$806,500 in 2025, $832,750 in 2026). A conventional loan above it is a **jumbo** loan. The year is the one the loan
+closes in, the month before its first payment, so the same $820,000 loan is jumbo for a first payment in January 2026
+(closing in December 2025, limit $806,500) and conforming for February (closing in 2026, limit $832,750). An FHA or VA loan
+is never flagged: FHA has county limits and VA has none. The limit is the same table FHA's annual MIP uses
+(`ConformingLoanLimit`).
+
 ## APR
 
 The note rate is what the loan charges; the **APR** is what it costs once the fees paid up front are counted, so two

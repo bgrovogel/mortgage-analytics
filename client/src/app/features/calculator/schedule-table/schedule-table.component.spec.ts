@@ -70,6 +70,69 @@ describe('ScheduleTableComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="pmi-ends-tag"]').textContent.trim()).toBe('MIP ends');
   });
 
+  describe('downloading as a spreadsheet', () => {
+    let blobs: Blob[];
+    let clicked: HTMLAnchorElement[];
+
+    beforeEach(() => {
+      blobs = [];
+      clicked = [];
+      URL.createObjectURL = jest.fn((blob: Blob) => {
+        blobs.push(blob);
+        return 'blob:schedule';
+      });
+      URL.revokeObjectURL = jest.fn();
+      jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+        clicked.push(this);
+      });
+    });
+    afterEach(() => jest.restoreAllMocks());
+
+    const textOf = (blob: Blob) =>
+      new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsText(blob);
+      });
+
+    it('saves every payment of the schedule shown, with the columns it has, as a file named for it', async () => {
+      render(response);
+
+      click('download-csv');
+
+      expect(clicked).toHaveLength(1);
+      expect(clicked[0].download).toBe('payment-schedule-monthly-with-extra-payments.csv');
+      expect(clicked[0].href).toBe('blob:schedule');
+      expect(blobs[0].type).toBe('text/csv;charset=utf-8');
+      const lines = (await textOf(blobs[0])).split('\r\n');
+      expect(lines[0]).toBe('#,Date,Payment,Principal,Interest,Extra,Balance');
+      expect(lines).toHaveLength(3 + 2);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:schedule');
+    });
+
+    it('follows the rows and the schedule chosen, and names the file for them', async () => {
+      render(response);
+      click('view-yearly');
+      click('view-baseline');
+
+      click('download-csv');
+
+      expect(clicked[0].download).toBe('payment-schedule-yearly-standard.csv');
+      expect((await textOf(blobs[0])).split('\r\n')[0]).toBe('Year,Starts,Payment,Principal,Interest,Extra,Balance');
+    });
+
+    it('includes the columns that are hidden from the table: a spreadsheet can hide its own', async () => {
+      const component = render(response);
+      component.toggle('interest');
+      fixture.detectChanges();
+      expect(headers()).not.toContain('Interest');
+
+      click('download-csv');
+
+      expect((await textOf(blobs[0])).split('\r\n')[0]).toContain('Interest');
+    });
+  });
+
   describe('yearly view', () => {
     /** Two loan years: 24 payments of $1,000 ($600 principal, $400 interest), $100 extra on payment 13. */
     const twoYears = () => aResponse({

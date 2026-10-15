@@ -298,3 +298,23 @@ tbody tr:nth-child(even) .pinned {
     padding: 0.15rem 0.3rem !important;
   }
 }
+
+.download {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media print {
+    display: none;
+  }
+}

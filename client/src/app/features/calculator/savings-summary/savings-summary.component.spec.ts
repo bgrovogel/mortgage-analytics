@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { aHousingCosts, aPayment, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
+import { aHousingCosts, aPayment, aPurchase, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { Affordability, AmortizationResponse, CashToClose } from '../../../core/models/amortization.models';
 import { SavingsSummaryComponent } from './savings-summary.component';
@@ -25,6 +25,20 @@ describe('SavingsSummaryComponent', () => {
     expect(text('total-monthly-payment')).toBe('$1,711.60');
     expect(text('monthly-payment')).toBe('$1,199.10');
     expect(text('housing-costs-label')).toBe('county/city tax');
+  });
+
+  it('warns of a jumbo loan, with the limit it is above', () => {
+    render(aResponse({ purchase: aPurchase({ loanAmount: 900_000, conformingLoanLimit: 832_750, isJumbo: true }) }));
+
+    expect(text('jumbo-notice')).toBe(
+      'This is a jumbo loan: above the $832,750 conforming limit. Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can differ more than usual.',
+    );
+  });
+
+  it('says nothing of the limit for a conforming loan', () => {
+    render(aResponse());
+
+    expect(text('jumbo-notice')).toBeUndefined();
   });
 
   it('shows the APR, the rate counting the fees, spelled out on hover', () => {

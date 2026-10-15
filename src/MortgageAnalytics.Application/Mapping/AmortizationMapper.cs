@@ -191,7 +191,9 @@ internal static class AmortizationMapper
                 purchase.DownPaymentPercent,
                 purchase.LoanAmount,
                 purchase.LoanToValuePercent,
-                rates.Program is null && purchase.RequiresMortgageInsurance),
+                rates.Program is null && purchase.RequiresMortgageInsurance,
+                ConformingLoanLimit.For(rates.Loan.FirstPaymentDate.AddMonths(-1).Year),
+                rates.Program is null && purchase.LoanAmount > ConformingLoanLimit.For(rates.Loan.FirstPaymentDate.AddMonths(-1).Year)),
             ToResponse(comparison.Baseline, comparison.BaselineCosts, rates),
             ToResponse(comparison.Accelerated, comparison.AcceleratedCosts, rates),
             new SavingsResponse(

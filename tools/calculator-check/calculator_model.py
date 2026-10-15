@@ -403,7 +403,9 @@ def analyze(request, today, other_choice=True):
     out = {
         'purchase': {'homePrice': price, 'downPayment': down, 'downPaymentPercent': dp_percent, 'loanAmount': price - down,
                      'loanToValuePercent': 100 - dp_percent,
-                     'mortgageInsuranceRequired': program is None and price - down > price * 80 / 100},
+                     'mortgageInsuranceRequired': program is None and price - down > price * 80 / 100,
+                     'conformingLoanLimit': conforming_limit(add_months(first, -1).year),
+                     'isJumbo': program is None and price - down > conforming_limit(add_months(first, -1).year)},
         'baseline': base, 'accelerated': acc,
         'savings': {'interestSaved': interest_saved, 'mortgageInsuranceSaved': pmi_saved, 'recastFees': fees,
                     'netSavings': interest_saved + pmi_saved - fees,
