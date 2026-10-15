@@ -85,6 +85,8 @@ describe('hostChart', () => {
 
     expect(chart.destroy).toHaveBeenCalled();
     expect(removeListener).toHaveBeenCalled();
+    window.dispatchEvent(new Event(THEME_CHANGE));
+    expect(createChart).toHaveBeenCalledTimes(1); // no longer redrawn for printing
   });
 });
 

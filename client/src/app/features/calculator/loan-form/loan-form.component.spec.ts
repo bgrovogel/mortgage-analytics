@@ -825,9 +825,15 @@ describe('LoanFormComponent', () => {
     });
 
     it('holds an adjustable rate to 95% of a home you live in', () => {
+      const reports: string[][] = [];
+      component.problems.subscribe((p) => reports.push(p));
       controls().downPayment.setValue(16_600); // 4%
+      expect(reports.at(-1)).toEqual([]); // 4% is enough at a fixed rate
       controls().rate.controls.rateType.setValue('arm');
       fixture.detectChanges();
+
+      expect(reports.at(-1)).toEqual(
+        ['A conventional loan with an adjustable rate can be at most 95% of the price of a home you live in: put at least 5% down.']);
 
       expect(text('down-payment-error'))
         .toBe('A conventional loan with an adjustable rate can be at most 95% of the price of a home you live in: put at least 5% down.');

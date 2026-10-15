@@ -44,6 +44,33 @@ describe('printInLightTheme', () => {
     expect(root.dataset['theme']).toBeUndefined();
   });
 
+  it('changes nothing when the browser says it has printed without saying it would', () => {
+    root.dataset['theme'] = 'dark';
+
+    window.dispatchEvent(new Event('afterprint'));
+
+    expect(root.dataset['theme']).toBe('dark');
+    expect(changes).toBe(0);
+  });
+
+  it('prints in the light theme every time', () => {
+    for (const time of [1, 2]) {
+      window.dispatchEvent(new Event('beforeprint'));
+      expect(root.dataset['theme']).toBe('light');
+      window.dispatchEvent(new Event('afterprint'));
+      expect(root.dataset['theme']).toBeUndefined();
+      expect(changes).toBe(time * 2);
+    }
+  });
+
+  it('stops listening for both, even mid-print', () => {
+    window.dispatchEvent(new Event('beforeprint'));
+    stop();
+    window.dispatchEvent(new Event('afterprint'));
+
+    expect(root.dataset['theme']).toBe('light'); // left as it was when stopped
+  });
+
   it('stops when asked', () => {
     stop();
     window.dispatchEvent(new Event('beforeprint'));

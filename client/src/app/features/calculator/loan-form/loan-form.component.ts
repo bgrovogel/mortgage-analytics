@@ -73,7 +73,7 @@ function downProblemOf(v: ReturnType<LoanForm['getRawValue']>, adjustableRate: b
   const down = downPaymentAmountOf(v);
   const price = v.homePrice;
   if (v.loanProgram === 'Fha') return fhaDownProblem(down, price, v.creditScore);
-  if (v.loanProgram === 'Va' || price <= 0 || paymentsMade(v.firstPaymentDate, new Date()) > 0) return null;
+  if (v.loanProgram === 'Va' || paymentsMade(v.firstPaymentDate, new Date()) > 0) return null;
   return conventionalDownProblem(down, price, v.occupancy, adjustableRate);
 }
 
