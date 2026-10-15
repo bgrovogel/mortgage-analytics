@@ -1,7 +1,7 @@
 # One image, one process: the ASP.NET Core API also serves the compiled Angular app.
 
 # ---- 1. Build the Angular client ------------------------------------------------------
-FROM node:22-alpine AS client
+FROM node:24-alpine AS client
 WORKDIR /client
 COPY client/package.json client/package-lock.json ./
 RUN npm ci

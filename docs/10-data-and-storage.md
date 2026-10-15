@@ -248,7 +248,7 @@ balancer picks, so the user is signed out at random. In the shared database ever
 runs two instances on one database and proves both sides: shared keys keep the session; each instance's own folder
 loses it.
 
-**Try it:** `docker compose --profile cluster up --build`, then http://localhost:8090. That starts PostgreSQL 17, two
+**Try it:** `docker compose --profile cluster up --build`, then http://localhost:8090. That starts PostgreSQL 18, two
 instances of the app (`app-1`, `app-2`) and Caddy taking turns between them (`caddy/Cluster.Caddyfile`); each
 response names its instance in `X-Served-By`. Sign up, confirm from Mailpit and sign in: the requests alternate
 between the two, and the session holds on both. Both instances migrate the database at startup, and EF Core's
@@ -274,7 +274,7 @@ unencrypted, as they are on disk. A production deployment would encrypt them at 
 | `SavedCalculationRepositoryTests` | Each kind round-trips with every input; each owner sees only their own; newest first; search ignores case and takes `%` and `_` literally; update writes; delete reports whether anything was there; deleting a user deletes their saves and no one else's; the migrations match the model |
 | `StoredFormatTests` | A save of each kind in today's JSON still loads, with every value |
 | `DatabaseProviderTests` | SQLite is the default; `Postgres` picks the PostgreSQL context and its migrations, which match the model; the keys table works; backups are off on PostgreSQL |
-| `PostgresTests` | On a real PostgreSQL 17 in a container (Testcontainers): the migrations build the schema, a save round-trips, each owner sees only their own, deleting a user cascades, search ignores case, and a saved second home moves into the list of other homes and back. Run locally, as they need Docker: `dotnet test --filter TestCategory=Postgres` |
+| `PostgresTests` | On a real PostgreSQL 18 in a container (Testcontainers): the migrations build the schema, a save round-trips, each owner sees only their own, deleting a user cascades, search ignores case, and a saved second home moves into the list of other homes and back. Run locally, as they need Docker: `dotnet test --filter TestCategory=Postgres` |
 | `DatabaseHealthCheckTests` | `/health` is Healthy for the database the app created, and Unhealthy when the database is missing (a broken Docker volume shows up there) |
 | API integration tests | Through HTTP: 201 with `Location`, 401 when signed out, another user's item is a 404, sign-up, confirmation and reset through the captured emails, lockout at its limit (four wrong passwords still sign in with the right one; five lock the account), and deleting an account: it needs the password, takes the saves, frees the email and ends every session |
 | Playwright History tests | Saving each kind, finding it by name, reopening it with every value, renaming and deleting, in a real browser |

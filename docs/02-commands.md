@@ -55,9 +55,11 @@ from Caddy's own local authority, so the browser warns once. The app believes Ca
 Caddy's (its fixed address is `ForwardedHeaders__KnownProxies__0`), so over HTTPS the session cookie is `Secure`. Emailed
 links still point at http://localhost:8080.
 
-The `cluster` profile runs the app as it would scale out: PostgreSQL 17, two instances sharing it and the keys that
+The `cluster` profile runs the app as it would scale out: PostgreSQL 18, two instances sharing it and the keys that
 sign sessions, and Caddy taking turns between them (`caddy/Cluster.Caddyfile`). Each response names its instance in
 `X-Served-By`. [Data and storage](10-data-and-storage.md#postgresql-and-several-instances) has the details.
+A volume left by an older PostgreSQL (the demo data only) stops 18 from starting: `docker volume rm mortgage-analytics_postgres`
+and start it again.
 
 | URL | What |
 |---|---|

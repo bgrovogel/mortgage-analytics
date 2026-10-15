@@ -23,7 +23,7 @@ public class PostgresTests
     [OneTimeSetUp]
     public async Task StartServer()
     {
-        _server = new PostgreSqlBuilder("postgres:17-alpine").Build();
+        _server = new PostgreSqlBuilder("postgres:18-alpine").Build();
         await _server.StartAsync();
         await using var context = NewContext();
         await context.Database.MigrateAsync();

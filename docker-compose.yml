@@ -30,7 +30,7 @@ services:
   # session cookie is marked Secure. HSTS is sent too, under any real host name: ASP.NET Core leaves it off for
   # localhost, so a browser is never held to HTTPS on a developer's machine.
   https:
-    image: caddy:2.10.0
+    image: caddy:2.11.7
     profiles: [https]
     ports:
       - "8443:8443"
@@ -46,7 +46,7 @@ services:
   # instances on one PostgreSQL database, behind a load balancer that takes turns between them. They keep the keys
   # that sign sessions in that database, so a session started on one is signed in on the other.
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     profiles: [cluster]
     environment:
       POSTGRES_DB: calculations
@@ -54,7 +54,7 @@ services:
       # A demo password on a database no port leads to; a real deployment takes it from a secret store.
       POSTGRES_PASSWORD: mortgage
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "mortgage", "-d", "calculations"]
       interval: 2s
@@ -81,7 +81,7 @@ services:
   app-2: *cluster-app
 
   balancer:
-    image: caddy:2.10.0
+    image: caddy:2.11.7
     profiles: [cluster]
     ports:
       - "8090:8090"

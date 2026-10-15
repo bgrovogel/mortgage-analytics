@@ -300,7 +300,8 @@ export class CalculatorPage {
     // The monthly rows come a loan year at a time: open the year the payment is in, and count from its first row.
     const pager = this.page.getByTestId('page-year');
     if (await pager.count() === 0) return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(index);
-    await pager.selectOption(String(Math.ceil(paymentNumber / 12)));
+    const year = String(Math.ceil(paymentNumber / 12));
+    if ((await pager.inputValue()) !== year) await pager.selectOption(year);
     return this.scheduleRows.nth((paymentNumber - 1) % 12).locator('td').nth(index);
   }
 

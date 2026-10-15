@@ -85,7 +85,7 @@ How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-syste
 
 | Technology | Where | Why |
 |---|---|---|
-| **Docker (multi-stage)** | `Dockerfile` | Stage 1 builds Angular (Node 22 Alpine), stage 2 publishes the API (.NET SDK), stage 3 is the small ASP.NET runtime image holding both. Runs as the non-root `app` user; data on a `/data` volume. |
+| **Docker (multi-stage)** | `Dockerfile` | Stage 1 builds Angular (Node 24 Alpine), stage 2 publishes the API (.NET SDK), stage 3 is the small ASP.NET runtime image holding both. Runs as the non-root `app` user; data on a `/data` volume. |
 | **docker compose** | `docker-compose.yml` | The app on :8080 plus **Mailpit** (a local mail catcher, :8025) so sign-up emails can be read. |
 | **GitHub Actions** | `.github/workflows/ci.yml` | Six jobs on every push and pull request: backend, frontend, e2e, docker, docs and mutation ([the pipeline](07-testing.md#the-ci-pipeline-githubworkflowsciyml)). |
 | **dotnet local tools** | `.config/dotnet-tools.json` | `dotnet-ef` 10.0 (migrations), ReportGenerator 5.5 (coverage reports) and Stryker.NET 5.0 (mutation testing), restored with `dotnet tool restore`. |
