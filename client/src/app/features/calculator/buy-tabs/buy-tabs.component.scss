@@ -47,6 +47,10 @@
       justify-content: center;
       padding-inline: 0.25rem;
       font-size: 0.9rem;
+      // "Can I afford it?" is wider than a quarter of a phone: it takes two lines rather than running into its neighbour.
+      white-space: normal;
+      text-align: center;
+      line-height: 1.2;
     }
   }
 

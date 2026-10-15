@@ -11,6 +11,7 @@ const phone = { width: 390, height: 844 };
 /** Opens a page and waits for its first results, so no screenshot catches it mid-update. */
 async function open(browser, path, { viewport = desktop, scale = 1, scheme = 'light' } = {}) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: scale, colorScheme: scheme });
+  await page.addInitScript(() => localStorage.setItem('first-visit-hints', '1')); // a reader's first-visit hints are not the app
   await page.goto(`${app}${path}`);
   await page.getByTestId('results').and(page.locator('[aria-busy="false"]')).waitFor();
   return page;
@@ -62,8 +63,7 @@ const shots = {
   // Just the affordability panel: the example against $150,000 a year and $600 of other debts.
   'affordability.png': async (b) => {
     const page = await open(b, '/calculator/affordability', { scale: 2 });
-    await page.getByTestId('section-income').locator('summary').click();
-    await page.getByTestId('annual-income').fill('150000');
+    await page.getByTestId('annual-income').fill('150000'); // in the form's "For this question" block on this view
     await page.getByTestId('monthly-debts').fill('600');
     await settled(page);
     return page.locator('app-affordability');
