@@ -125,7 +125,7 @@ What you bring to closing besides the monthly payment, laid out as page 2 of a L
 
 | Line | How it works |
 |---|---|
-| **Loan costs** and **other fees** | Typed in from the Loan Estimate: its total D (origination, appraisal, title), then sections E and H (recording fees, transfer taxes, an owner's title policy). |
+| **Loan costs** and **other fees** | Typed in from the Loan Estimate: its total D (origination, appraisal, title), then sections E and H (recording fees, transfer taxes, an owner's title policy). **Itemize by Loan Estimate section** replaces the two boxes with a line for each of A, B, C, E and H, which add up to the same two totals. |
 | **Prepaid interest** | A day's interest at the note rate (loan × rate ÷ 365, to the cent), for the days from closing to the end of that month: $377,650 at 6.25% is $64.67 a day, so 15 days is $970.05. |
 | **Homeowners insurance** | The first year's premium, always paid at closing. |
 | **Escrow deposit** | Months of the first year's property taxes and insurance, a month being a twelfth of the year to the cent: (3,735 + 3,100) ÷ 12 = $569.58, so 3 months is $1,708.74. PID, HOA dues and PMI are not escrowed here. |

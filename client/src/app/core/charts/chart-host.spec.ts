@@ -88,6 +88,24 @@ describe('hostChart', () => {
     window.dispatchEvent(new Event(THEME_CHANGE));
     expect(createChart).toHaveBeenCalledTimes(1); // no longer redrawn for printing
   });
+
+  it('listens for the OS colour scheme by its own name, and stops by the same one', () => {
+    const add = jest.fn();
+    window.matchMedia = jest.fn().mockReturnValue({ addEventListener: add, removeEventListener: removeListener });
+
+    const fixture = render();
+    fixture.destroy();
+
+    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
+    expect(add).toHaveBeenCalledWith('change', expect.any(Function));
+    expect(removeListener).toHaveBeenCalledWith('change', add.mock.calls[0][1]);
+  });
+
+  it('is destroyed cleanly before it has drawn anything', () => {
+    const fixture = TestBed.createComponent(ChartHostComponent);
+
+    expect(() => fixture.destroy()).not.toThrow();
+  });
 });
 
 describe('CHART_FACTORY (default)', () => {
@@ -100,4 +118,5 @@ describe('CHART_FACTORY (default)', () => {
     expect(chart).toBeInstanceOf(Chart);
     chart.destroy();
   });
+
 });

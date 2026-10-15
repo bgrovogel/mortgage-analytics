@@ -33,3 +33,9 @@
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
+
+// The lines of a Loan Estimate's closing costs, one to a row.
+.items {
+  display: grid;
+  gap: 0.5rem;
+}

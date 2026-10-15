@@ -173,6 +173,16 @@ describe('CalculationPageComponent', () => {
       expect(document.body.classList.contains('sheet-open')).toBe(false);
     });
 
+    it('focuses the sheet, once it is drawn', () => {
+      const { fixture, panel, press } = open();
+      press('edit-inputs');
+      TestBed.inject(ApplicationRef).tick();
+
+      expect(document.activeElement).toBe(panel);
+      fixture.destroy();
+      expect(document.body.classList.contains('sheet-open')).toBe(false); // the page behind is given back with the page
+    });
+
     it('closes on Escape', () => {
       const { fixture, panel, press } = open();
       press('edit-inputs');

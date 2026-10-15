@@ -37,6 +37,56 @@ describe('LoanFormComponent', () => {
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
 
+  describe('itemized closing costs', () => {
+    const type = (id: string, value: string) => {
+      const input = el(id) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    const itemize = () => {
+      (el('section-closing') as HTMLDetailsElement).open = true;
+      (el('itemize-closing') as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+
+    it('starts from the two totals, with the loan costs in the first line and the other fees in the recording line', () => {
+      controls().loanCosts.setValue(4_200);
+      controls().otherFees.setValue(900);
+
+      itemize();
+
+      expect((el('item-origination') as HTMLInputElement).value).toBe('4,200');
+      expect((el('item-recording') as HTMLInputElement).value).toBe('900');
+      expect((el('item-cannot-shop') as HTMLInputElement).value).toBe('0');
+    });
+
+    it('adds the lines of each Loan Estimate section into the two totals the loan is figured on', () => {
+      itemize();
+
+      type('item-origination', '2000');
+      type('item-cannot-shop', '900');
+      type('item-can-shop', '1100');
+      type('item-recording', '300');
+      type('item-other', '450');
+
+      expect(controls().loanCosts.value).toBe(4_000);
+      expect(controls().otherFees.value).toBe(750);
+      expect(text('item-totals')).toBe('Loan costs $4,000 · Other fees $750');
+    });
+
+    it('hides the two lump boxes while itemizing, and brings them back with the totals as they were', () => {
+      itemize();
+      type('item-origination', '3000');
+      expect(el('loan-costs')).toBeNull();
+
+      (el('stop-itemizing') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect((el('loan-costs') as HTMLInputElement).value).toBe('3,000');
+    });
+  });
+
   describe('undo', () => {
     afterEach(() => jest.useRealTimers());
 

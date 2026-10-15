@@ -4,14 +4,30 @@
     <span class="section-summary"><span data-testid="closing-summary">{{ f.closingSummary() }}</span></span>
   </summary>
   <div class="section-body">
-      <div class="row">
-        <app-number-field [control]="f.form.controls.loanCosts" [rule]="f.rules.loanCosts" testId="loan-costs" />
-        <app-number-field [control]="f.form.controls.otherFees" [rule]="f.rules.otherFees" testId="other-fees" />
-      </div>
-      <p class="hint">
-        From page 2 of your Loan Estimate: loan costs are its total D (origination, appraisal, title); other fees are
-        sections E and H (recording fees, transfer taxes, an owner's title policy).
-      </p>
+      @if (itemizing()) {
+        <!-- The lines of page 2 of a Loan Estimate: they add up to the two totals the loan is figured on. -->
+        <div class="items" data-testid="closing-items">
+          <app-number-field [control]="items.controls.origination" [rule]="itemRules.origination" testId="item-origination" />
+          <app-number-field [control]="items.controls.cannotShop" [rule]="itemRules.cannotShop" testId="item-cannot-shop" />
+          <app-number-field [control]="items.controls.canShop" [rule]="itemRules.canShop" testId="item-can-shop" />
+          <app-number-field [control]="items.controls.recording" [rule]="itemRules.recording" testId="item-recording" />
+          <app-number-field [control]="items.controls.other" [rule]="itemRules.other" testId="item-other" />
+        </div>
+        <p class="hint" data-testid="item-totals">
+          Loan costs {{ totals().loanCosts | currency: 'USD' : 'symbol' : '1.0-2' }} · Other fees {{ totals().otherFees | currency: 'USD' : 'symbol' : '1.0-2' }}
+        </p>
+        <button type="button" class="link-button" data-testid="stop-itemizing" (click)="stopItemizing()">Back to two totals</button>
+      } @else {
+        <div class="row">
+          <app-number-field [control]="f.form.controls.loanCosts" [rule]="f.rules.loanCosts" testId="loan-costs" />
+          <app-number-field [control]="f.form.controls.otherFees" [rule]="f.rules.otherFees" testId="other-fees" />
+        </div>
+        <p class="hint">
+          From page 2 of your Loan Estimate: loan costs are its total D (origination, appraisal, title); other fees are
+          sections E and H (recording fees, transfer taxes, an owner's title policy).
+        </p>
+        <button type="button" class="link-button" data-testid="itemize-closing" (click)="itemize()">Itemize by Loan Estimate section</button>
+      }
 
       <div class="row">
         <app-number-field [control]="f.form.controls.prepaidInterestDays" [rule]="f.rules.prepaidInterestDays" testId="prepaid-interest-days" label="Days of interest" />
