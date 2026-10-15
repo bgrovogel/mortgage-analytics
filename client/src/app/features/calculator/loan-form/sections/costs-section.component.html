@@ -12,6 +12,19 @@
       @if (f.taxMode() === 'single') {
         <app-number-field [control]="f.form.controls.propertyTaxRate" [rule]="f.rules.propertyTaxRate" testId="property-tax-rate" label="Property tax rate (all taxes)" />
         <p class="hint">Your total yearly rate, as on your tax bill. A rate of "$2.20 per $100 of value" is entered as 2.2.</p>
+        <label class="state-rate">
+          <span>No bill yet? Start from a state's typical rate</span>
+          <select data-testid="state-tax-rate" (change)="useState($event)">
+            <option value="">Choose a state…</option>
+            @for (state of states; track state.name) {
+              <option [value]="state.name">{{ state.name }}: {{ state.rate }}%</option>
+            }
+          </select>
+        </label>
+        <p class="hint">
+          The median tax paid over the median home value in each state (Census Bureau, 2024 American Community Survey).
+          Your county, city and school district each set their own, so a tax bill, or a listing's tax, is better.
+        </p>
       } @else {
         <div class="row three">
           <app-number-field [control]="f.form.controls.schoolTaxRate" [rule]="f.rules.schoolTaxRate" testId="school-tax-rate" label="School" />

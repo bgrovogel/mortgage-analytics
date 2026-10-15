@@ -25,3 +25,11 @@
 :host > .section[open] {
   background: var(--surface-2);
 }
+
+// A way to start a rate from a state's typical one: the question above its list.
+.state-rate {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}

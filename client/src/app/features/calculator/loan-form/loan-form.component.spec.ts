@@ -29,6 +29,29 @@ describe('LoanFormComponent', () => {
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
 
+  describe('typical property tax rate by state', () => {
+    const choose = (name: string) => {
+      const select = el('state-tax-rate') as HTMLSelectElement;
+      select.value = name;
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+
+    it('fills the property tax rate, and goes back to asking, so the same state can be chosen again', () => {
+      choose('Texas');
+
+      expect(controls().propertyTaxRate.value).toBe(1.49);
+      expect((el('state-tax-rate') as HTMLSelectElement).value).toBe('');
+    });
+
+    it('is a way to start, not a lock: the rate can still be typed over', () => {
+      choose('Hawaii');
+      controls().propertyTaxRate.setValue(0.31);
+
+      expect(controls().propertyTaxRate.value).toBe(0.31);
+    });
+  });
+
   describe('on load', () => {
     it('submits the default example once, so results appear without any input', () => {
       expect(emitted).toHaveLength(1);
