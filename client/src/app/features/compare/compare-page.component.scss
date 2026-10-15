@@ -38,3 +38,11 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+// Which home the form is editing, and how many of the most there are.
+.editing {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}

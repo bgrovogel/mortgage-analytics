@@ -39,7 +39,7 @@ export class CalculatorPageComponent {
   /** The question and the answer for the view open: what it costs, whether it can be afforded, rent against buy. */
   protected readonly answered = computed(() => {
     const result = this.store.result();
-    return result ? viewAnswer(result, this.view(), nextPayment(result)) : null;
+    return result ? viewAnswer(result, this.view(), nextPayment(result), this.store.affordStart()) : null;
   });
 
   /** The page's question: the view's once there is a result, the first view's until then. */

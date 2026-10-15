@@ -2,8 +2,8 @@ import { AmortizationRequest } from '../models/amortization.models';
 import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
 import {
-  describeComparison, describeInputs, describeRefinance, describeStrategy, suggestComparisonName, suggestName, suggestRefinanceName,
-  suggestStrategyName,
+  describeComparison, describeInputs, describeRefinance, describeStrategy, purchaseFigure, refinanceFigure, suggestComparisonName, suggestName,
+  suggestRefinanceName, suggestStrategyName,
 } from './describe-inputs';
 
 describe('describeInputs', () => {
@@ -58,6 +58,38 @@ describe('suggestName', () => {
   it('suggests a short name from the price, down payment and rate', () => {
     expect(suggestName({ homePrice: 375_000, downPayment: 75_000, annualInterestRate: 6.25 } as AmortizationRequest))
       .toBe('$375,000 home, 20% down at 6.25%');
+  });
+});
+
+describe('the figure on a saved card', () => {
+  const purchase = { homePrice: 415_000, downPayment: 37_350, annualInterestRate: 6.25, termInMonths: 360 } as AmortizationRequest;
+  const refinance: RefinanceRequest = {
+    currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+    newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false,
+  };
+
+  it('is the principal and interest of a purchase, from its own numbers', () => {
+    expect(purchaseFigure(purchase)).toBe('$2,325.26 a month, principal and interest');
+  });
+
+  it('adds the upfront premium an FHA or VA loan borrows, which these numbers cannot know, by leaving the figure out', () => {
+    expect(purchaseFigure({ ...purchase, program: { type: 'Fha', vaUse: null, financeUpfrontFee: true } })).toBeNull();
+    expect(purchaseFigure({ ...purchase, program: { type: 'Va', vaUse: 'FirstUse', financeUpfrontFee: true } })).toBeNull();
+  });
+
+  it('leaves out a purchase with an adjustable rate or a buydown, whose first payment is not one number', () => {
+    expect(purchaseFigure({ ...purchase, adjustableRate: { initialFixedMonths: 60 } as never })).toBeNull();
+    expect(purchaseFigure({ ...purchase, buydown: { yearlyReductions: [2, 1] } as never })).toBeNull();
+  });
+
+  it('is the new payment of a refinance, with financed costs and cash out borrowed too', () => {
+    expect(refinanceFigure(refinance)).toBe('$1,798.65 a month on the new loan, principal and interest');
+    expect(refinanceFigure({ ...refinance, financeClosingCosts: true })).toBe('$1,834.62 a month on the new loan, principal and interest');
+    expect(refinanceFigure({ ...refinance, cashOut: 50_000 })).toBe('$2,098.43 a month on the new loan, principal and interest');
+  });
+
+  it('is left out for a refinance that starts from the original loan, whose balance the server works out', () => {
+    expect(refinanceFigure({ ...refinance, originalLoan: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' } })).toBeNull();
   });
 });
 

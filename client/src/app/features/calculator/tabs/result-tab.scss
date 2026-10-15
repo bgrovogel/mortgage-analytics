@@ -78,3 +78,36 @@
     @include surfaces.action;
   }
 }
+
+// Where the affordability question starts from: a home in mind, or a budget.
+.start {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 0 1rem;
+
+  label {
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    &:has(input:checked) {
+      background: var(--accent);
+      color: var(--on-accent, #fff);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+}

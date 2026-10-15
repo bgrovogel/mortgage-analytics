@@ -95,6 +95,7 @@ describe('ComparePageComponent', () => {
     expect(el('[data-testid="loan-heading"]')!.textContent).toBe('Home D');
     expect(el('[data-testid="edit-home-d"]')).not.toBeNull();
     expect(el('[data-testid="add-home"]')).toBeNull();
+    expect(el('[data-testid="editing-note"]')!.textContent!.trim()).toBe('Editing Home D · 4 of 4 homes');
   });
 
   it('removes the home being edited, never Home A, and keeps at least two', async () => {

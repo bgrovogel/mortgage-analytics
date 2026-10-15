@@ -252,3 +252,10 @@ button {
     letter-spacing: 0;
   }
 }
+
+// What the saved numbers come to, the first thing on a card after its name.
+.figure {
+  margin: 0.1rem 0 0.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

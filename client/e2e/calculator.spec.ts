@@ -290,6 +290,23 @@ test.describe('Mortgage calculator', () => {
       .toContainText('within the comfortable 28% and 36%');
   });
 
+  test('starting from a budget: the most that could be bought, then switching back to a home in mind', async ({ calculator, page }) => {
+    await calculator.set('annual-income', 150_000);
+    await calculator.set('monthly-debts', 600);
+    await calculator.calculate();
+    await calculator.showResults('affordability');
+
+    await expect(page.getByTestId('page-lead'), 'a home in mind: does it fit').toHaveText('Yes, comfortably');
+
+    await page.getByText('My budget', { exact: true }).click();
+
+    await expect(page.getByTestId('page-lead'), 'a budget: the most that could be bought').toHaveText(/\$[\d,]+ comfortably/);
+    await expect(page.getByRole('heading', { name: 'How much house can you afford?' }), 'under its own question').toBeVisible();
+
+    await page.getByText('A home in mind', { exact: true }).click();
+    await expect(page.getByTestId('page-lead'), 'and back').toHaveText('Yes, comfortably');
+  });
+
   test('undo takes back the last change to the numbers', async ({ calculator, page }) => {
     await calculator.set('home-price', 500_000);
     await expect(page.getByTestId('undo'), 'once the typing pauses, there is a change to take back').toBeVisible();

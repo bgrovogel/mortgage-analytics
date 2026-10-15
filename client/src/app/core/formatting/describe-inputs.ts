@@ -2,7 +2,8 @@ import { AmortizationRequest } from '../models/amortization.models';
 import { HomeComparisonRequest } from '../models/home-comparison.models';
 import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
-import { decimal, usd } from './format';
+import { monthlyPayment } from '../loans/loan-progress';
+import { decimal, usd, usdCents } from './format';
 
 const downPaymentPercent = (r: AmortizationRequest) => (r.homePrice > 0 ? (r.downPayment / r.homePrice) * 100 : 0);
 
@@ -18,6 +19,25 @@ export function describeInputs(r: AmortizationRequest): string {
     rateTypeOf(r),
     extra,
   ].filter(Boolean).join(' · ');
+}
+
+/**
+ * The figure a saved purchase's card leads with: the principal and interest it comes to, from its own numbers. Null where
+ * they do not say it: an FHA or VA loan borrows an upfront premium the numbers do not hold, and an adjustable rate or a
+ * buydown has no one payment.
+ */
+export function purchaseFigure(r: AmortizationRequest): string | null {
+  if ((r.program && r.program.type !== 'Conventional') || r.adjustableRate || r.buydown) return null;
+  const payment = monthlyPayment(r.homePrice - r.downPayment, r.annualInterestRate, r.termInMonths);
+  return payment > 0 ? `${usdCents(payment)} a month, principal and interest` : null;
+}
+
+/** The new payment of a saved refinance, on the balance plus any cash out and financed costs; null from an original loan. */
+export function refinanceFigure(r: RefinanceRequest): string | null {
+  if (r.originalLoan || r.newAdjustableRate || r.newBuydown) return null;
+  const borrowed = r.currentBalance + (r.cashOut ?? 0) + (r.financeClosingCosts ? r.closingCosts : 0);
+  const payment = monthlyPayment(borrowed, r.newAnnualInterestRate, r.newTermInMonths);
+  return payment > 0 ? `${usdCents(payment)} a month on the new loan, principal and interest` : null;
 }
 
 /** A starting name for a new saved calculation, e.g. "$375,000 home, 20% down at 6.25%". */

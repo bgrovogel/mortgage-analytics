@@ -13,6 +13,10 @@ import { CalculatorStore } from '../calculator.store';
   selector: 'app-affordability-tab',
   imports: [AffordabilityComponent],
   template: `
+    <div class="start" role="radiogroup" aria-label="Start from" data-testid="afford-start">
+      <label><input type="radio" name="afford-start" value="home" [checked]="store.affordStart() === 'home'" (change)="store.affordStart.set('home')" data-testid="start-home" /> A home in mind</label>
+      <label><input type="radio" name="afford-start" value="budget" [checked]="store.affordStart() === 'budget'" (change)="store.affordStart.set('budget')" data-testid="start-budget" /> My budget</label>
+    </div>
     @if (result().budget; as budget) {
       <div class="panel budget-answer">
         <p data-testid="budget-answer">{{ budgetSentence(budget) }}</p>
@@ -47,7 +51,7 @@ import { CalculatorStore } from '../calculator.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AffordabilityTabComponent {
-  private readonly store = inject(CalculatorStore);
+  protected readonly store = inject(CalculatorStore);
   private readonly navigator = inject(FormNavigator);
 
   /** The page only shows the tabs once there is a result. */

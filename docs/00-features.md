@@ -250,6 +250,10 @@ income and **29.62%** with the debts: within the comfortable limit, which reache
 45% reaches **$700,615**. An FHA loan's 31% for housing alone can fail a home that conventional allows: its MIP adds
 to the payment.
 
+**A home in mind, or my budget.** A switch at the top of the tab chooses what the question starts from. With a home in
+mind the answer is whether it fits ("Yes, comfortably"). With a budget it is the most you could buy ("$474,091
+comfortably", or "$412,345 for $3,000 a month" from a monthly budget), under "How much house can you afford?".
+
 **A monthly budget** answers the question the other way round, with no income at all: say what you want to pay each
 month, all in (the **Income & debts** section's last field), and the tab says the highest price that reaches, at the
 same down payment share, rate, taxes and insurance, and what is down at that price. It counts the payment at the note
@@ -459,7 +463,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   reset by email.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
-  or searched by name. Open one on its own page (every number
+  or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). Open one on its own page (every number
   is restored), rename it, or delete it. Each person sees only their own.
 
 ---

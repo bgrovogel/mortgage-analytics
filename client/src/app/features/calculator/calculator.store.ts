@@ -21,6 +21,9 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   readonly route = ['/calculator', 'overview'];
   readonly pageName = 'Calculator';
 
+  /** What the affordability question starts from: a home in mind, or the budget (the most that could be bought). */
+  readonly affordStart = signal<'home' | 'budget'>('home');
+
   /** Whether the headline numbers are on screen; when they are not, phones show a compact summary bar. */
   readonly headlineVisible = signal(false);
 

@@ -82,6 +82,15 @@ describe('HistoryPageComponent', () => {
       expect(items()[1].textContent).toContain('Updated Oct 12, 2026');
     });
 
+    it('leads each purchase and refinance with the payment it comes to', () => {
+      api.list.mockReturnValue(of([oak, refi, payOff]));
+      create();
+
+      expect(items()[0].textContent).toContain('$2,251.74 a month, principal and interest');
+      expect(items()[1].textContent).toContain('$1,798.65 a month on the new loan, principal and interest');
+      expect(items()[2].querySelector('[data-testid="history-figure"]')).toBeNull(); // a strategy has no one payment
+    });
+
     it('groups what is shown by the page each opens on, newest first within a group, with how many there are', () => {
       api.list.mockReturnValue(of([oak, refi, maple, payOff]));
       create();

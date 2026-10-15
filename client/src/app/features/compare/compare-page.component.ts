@@ -31,6 +31,7 @@ import { ComparisonStore } from './comparison.store';
             </label>
           }
         </div>
+        <p class="editing" data-testid="editing-note">Editing {{ nameOf(editing()) }} · {{ homeIndexes().length }} of {{ maxHomes }} homes</p>
         <div class="house-actions">
           @if (homeIndexes().length < maxHomes) {
             <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home or another offer</button>

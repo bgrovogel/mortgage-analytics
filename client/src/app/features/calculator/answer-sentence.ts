@@ -64,10 +64,38 @@ export interface ViewAnswer {
 }
 
 /** The answer a view of buying a home leads with: what it costs, whether it can be afforded, or rent against buy. */
-export function viewAnswer(result: AmortizationResponse, view: string, due: Payment | null): ViewAnswer {
-  if (view === 'affordability') return affordAnswer(result);
+export function viewAnswer(result: AmortizationResponse, view: string, due: Payment | null, start: AffordStart = 'home'): ViewAnswer {
+  if (view === 'affordability') return start === 'budget' ? budgetAnswer(result) : affordAnswer(result);
   if (view === 'rent-or-buy') return rentAnswer(result);
   return { heading: 'What will this home cost?', lead: paymentLead(result, due), detail: answerSentence(result, due) };
+}
+
+/** What the affordability question starts from: a home in mind, or the budget (the most that could be bought). */
+export type AffordStart = 'home' | 'budget';
+
+/** "How much house can you afford?": the most that can be bought, from the income and debts or from a monthly budget. */
+function budgetAnswer(result: AmortizationResponse): ViewAnswer {
+  const heading = 'How much house can you afford?';
+  const a = result.affordability;
+  if (a) {
+    const stretch = a.mostAllowed.maxHomePrice > 0 ? ` A lender may stretch to ${usd(a.mostAllowed.maxHomePrice)}.` : '';
+    if (a.comfortable.maxHomePrice <= 0) {
+      return { heading, lead: 'Not comfortably', detail: `Your debts leave no room at the comfortable limits.${stretch}` };
+    }
+    return {
+      heading, lead: `${usd(a.comfortable.maxHomePrice)} comfortably`,
+      detail: `Housing can be ${usd(a.comfortable.maxHousingPayment)} a month, ${decimal(a.comfortable.housingPercent ?? 0)}% of your ${usd(a.monthlyIncome)} monthly income, `
+        + `and ${decimal(a.comfortable.totalPercent)}% once your ${usd(a.monthlyDebts)} of debts is counted.${stretch}`,
+    };
+  }
+  const b = result.budget;
+  if (b && b.maxHomePrice > 0) {
+    return {
+      heading, lead: `${usd(b.maxHomePrice)} for ${usd(b.monthlyBudget)} a month`,
+      detail: `That keeps your down payment share of ${decimal(result.purchase.downPaymentPercent, 1)}%: ${usd(b.downPayment)} down, with taxes and insurance counted in the payment.`,
+    };
+  }
+  return { heading, lead: null, detail: 'Add your household’s income and debts, or what you want to pay a month, to see the most you could buy.' };
 }
 
 function affordAnswer(result: AmortizationResponse): ViewAnswer {

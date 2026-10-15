@@ -109,6 +109,43 @@ describe('the answer in a sentence', () => {
       expect([answer.lead, answer.detail]).toEqual([null, 'Add your household’s income and debts to see whether this home fits and the most you could pay.']);
     });
 
+    describe('starting from a budget', () => {
+      it('leads with the most that can be bought comfortably, whatever home is in the form', () => {
+        const answer = viewAnswer(example({ affordability: affordability(true, true) }), 'affordability', null, 'budget');
+
+        expect(answer.heading).toBe('How much house can you afford?');
+        expect(answer.lead).toBe('$474,091 comfortably');
+        expect(answer.detail).toBe(
+          'Housing can be $3,500 a month, 28% of your $12,500 monthly income, and 36% once your $600 of debts is counted. A lender may stretch to $700,615.');
+      });
+
+      it('says when the debts leave no room at the comfortable limits', () => {
+        const none = affordability(false, true);
+        none.comfortable.maxHomePrice = 0;
+        const answer = viewAnswer(example({ affordability: none }), 'affordability', null, 'budget');
+
+        expect(answer.lead).toBe('Not comfortably');
+        expect(answer.detail).toContain('$700,615');
+      });
+
+      it('answers from a monthly budget when there is no income', () => {
+        const answer = viewAnswer(example({ budget: { monthlyBudget: 3_000, maxHomePrice: 412_345, downPayment: 37_111.05 } }), 'affordability', null, 'budget');
+
+        expect(answer.lead).toBe('$412,345 for $3,000 a month');
+        expect(answer.detail).toBe('That keeps your down payment share of 20%: $37,111 down, with taxes and insurance counted in the payment.');
+      });
+
+      it('asks for an income, debts or a monthly budget before answering', () => {
+        const answer = viewAnswer(example(), 'affordability', null, 'budget');
+
+        expect([answer.lead, answer.detail]).toEqual([null, 'Add your household’s income and debts, or what you want to pay a month, to see the most you could buy.']);
+      });
+
+      it('leaves the other views alone', () => {
+        expect(viewAnswer(example(), 'overview', null, 'budget').lead).toBe('$3,102 a month');
+      });
+    });
+
     it('answers rent or buy with how long to stay', () => {
       const answer = viewAnswer(example({ rentOrBuy: rentOrBuy(4) }), 'rent-or-buy', null);
 

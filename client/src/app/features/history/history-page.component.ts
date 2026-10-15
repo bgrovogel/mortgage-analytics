@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
+import { purchaseFigure, refinanceFigure } from '../../core/formatting/describe-inputs';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculationStores } from '../calculation-stores';
@@ -112,6 +113,13 @@ export class HistoryPageComponent {
   /** One line that tells saved items apart, in the terms of their kind. */
   describe(calculation: SavedCalculation): string {
     return this.stores.describe(calculation);
+  }
+
+  /** The payment a saved purchase or refinance comes to, to lead its card, or null when its numbers do not say. */
+  figure(calculation: SavedCalculation): string | null {
+    if (calculation.kind === 'Purchase' && calculation.inputs) return purchaseFigure(calculation.inputs);
+    if (calculation.kind === 'Refinance' && calculation.refinance) return refinanceFigure(calculation.refinance);
+    return null;
   }
 
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */
