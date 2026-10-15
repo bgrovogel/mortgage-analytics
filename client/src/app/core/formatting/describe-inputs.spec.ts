@@ -82,6 +82,17 @@ describe('the figure on a saved card', () => {
     expect(purchaseFigure({ ...purchase, buydown: { yearlyReductions: [2, 1] } as never })).toBeNull();
   });
 
+  it('is there for a conventional loan named as such, and has nothing for a loan with nothing borrowed', () => {
+    expect(purchaseFigure({ ...purchase, program: { type: 'Conventional', vaUse: null, financeUpfrontFee: false } })).toBe('$2,325.26 a month, principal and interest');
+    expect(purchaseFigure({ ...purchase, downPayment: 415_000 })).toBeNull();
+    expect(refinanceFigure({ ...refinance, currentBalance: 0 })).toBeNull();
+  });
+
+  it('is left out for a refinance to an adjustable rate or with a buydown', () => {
+    expect(refinanceFigure({ ...refinance, newAdjustableRate: { initialFixedMonths: 60 } as never })).toBeNull();
+    expect(refinanceFigure({ ...refinance, newBuydown: { yearlyReductions: [2, 1] } as never })).toBeNull();
+  });
+
   it('is the new payment of a refinance, with financed costs and cash out borrowed too', () => {
     expect(refinanceFigure(refinance)).toBe('$1,798.65 a month on the new loan, principal and interest');
     expect(refinanceFigure({ ...refinance, financeClosingCosts: true })).toBe('$1,834.62 a month on the new loan, principal and interest');

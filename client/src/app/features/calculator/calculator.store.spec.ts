@@ -26,6 +26,16 @@ describe('CalculatorStore', () => {
   });
   afterEach(() => jest.useRealTimers());
 
+  describe('what the affordability question starts from', () => {
+    it('is a home in mind, until the visitor chooses a budget', () => {
+      expect(store.affordStart()).toBe('home');
+
+      store.affordStart.set('budget');
+
+      expect(store.affordStart()).toBe('budget');
+    });
+  });
+
   describe('results', () => {
     it('keeps the latest result and the request it answers', () => {
       const response = aResponse({ savings: aSavings({ netSavings: 1_234 }) });
