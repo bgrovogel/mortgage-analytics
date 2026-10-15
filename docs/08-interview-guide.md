@@ -289,7 +289,7 @@ URLs are versioned too (`/api/v1`).
 I stopped and reviewed the page as a first-time buyer would. Every feature had added a panel to the Overview and a
 section to the form. Seven panels stacked up, and the headline answered the wrong question (savings from paying extra,
 on a page titled "What will this home really cost?"). The fix was to organize by the buyer's questions. The Overview
-leads with four answer tiles: the payment, the cash to close, can you afford it, and what paying extra saves. Each
+led with four answer tiles: the payment, the cash to close, can you afford it, and what paying extra saves (it has six now, three answers and three behind them). Each
 links to a tab with its details, so the page is short and the depth is one click away. Comparing homes became its
 own page, because it changed what the form edits. The form went from nine sections in the order they were built to
 six in the order a buyer thinks, each its own component. Features that need an input now say so: **Add your income**

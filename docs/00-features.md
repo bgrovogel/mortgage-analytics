@@ -20,11 +20,11 @@
 ## The calculator
 
 What a purchase costs each month and to close, whether you can afford it, and what paying extra saves. The page
-answers in that order: **Cost** leads with the payment and four answer tiles, then **Can I afford it?**, **Rent or
+answers in that order: **Cost** leads with the payment and six answer tiles, then **Can I afford it?**, **Rent or
 buy?** and **Compare**, each with its own answer; under Cost, one step down, are the **closing costs**, **year by
 year** and **every payment**.
 
-![The calculator's Overview: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with four answer tiles (the monthly payment, the cash to close, can you afford it, and the net savings), when the loan and PMI end, the payment broken down, and the balance over time](images/calculator.png)
+![The calculator's Cost view: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with the answer set large under the question ($3,102 a month), six tiles (the monthly payment, the cash to close, when it is paid off, can you afford it, the net savings, and when PMI ends), the form beside them, and the rate what-if below](images/calculator.png)
 
 ### The loan
 
@@ -70,7 +70,7 @@ the home's value, is shown as it is.
     principal and interest under it), and what the buydown pays that year and each month ($5,218 then $2,680 on
     that loan), then its whole cost. The payment tile shows year 1 and where the payment ends up.
 
-    ![A 2-1 buydown year by year: what you pay each month with that year's taxes and insurance, the principal and interest under it, and what the buydown pays that year and each month, then $8,108 in all](images/buydown.png)
+    ![A 2-1 buydown year by year: what you pay each month with that year's taxes and insurance, the principal and interest under it, and what the buydown pays that year and each month, then $8,488 in all](images/buydown.png)
   - **Who pays decides what it saves.** Paid by the seller or builder, the subsidy pays part of your early interest,
     so you pay that much less ($403,950 of that loan's $411,848, and a 3-2-1 saves more). Paid by you at closing, it
     only moves your money earlier. The headline and the rate plan say which.
