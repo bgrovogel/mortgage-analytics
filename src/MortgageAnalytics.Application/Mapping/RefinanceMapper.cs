@@ -27,7 +27,7 @@ public static class RefinanceMapper
     /// <param name="request">A validated request.</param>
     /// <param name="worstCase">True to take an adjustable rate at the worst its caps allow.</param>
     public static RefinanceOffer ToOffer(this RefinanceRequest request, bool worstCase = false) =>
-        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts)
+        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts, request.CashOut)
         {
             AdjustableRate = request.NewAdjustableRate.ToDomain(request.NewAnnualInterestRate, worstCase),
             Buydown = request.NewBuydown.ToDomain(),
@@ -41,7 +41,8 @@ public static class RefinanceMapper
     /// <summary>Maps the analysis to the response contract.</summary>
     /// <param name="analysis">The domain result.</param>
     /// <param name="worstCaseLifetimeSavings">The lifetime savings if rates rise as far as the caps allow, when either loan adjusts.</param>
-    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, decimal? worstCaseLifetimeSavings = null) =>
+    /// <param name="homeValue">What the home is worth today, to measure the new loan against; null for none.</param>
+    public static RefinanceResponse ToResponse(this RefinanceAnalysis analysis, decimal? worstCaseLifetimeSavings = null, decimal? homeValue = null) =>
         new(
             ToResponse(analysis.Current, analysis.CurrentPmi),
             ToResponse(analysis.Refinanced, analysis.NewPmi),
@@ -56,7 +57,11 @@ public static class RefinanceMapper
             analysis.BreakEvenDate,
             analysis.BuydownCost,
             analysis.Offer.Buydown is { } buydown ? ToResponse(buydown, analysis.NewLoan, analysis.Refinanced, analysis.BuydownCost) : null,
-            worstCaseLifetimeSavings);
+            worstCaseLifetimeSavings,
+            analysis.CashOut,
+            analysis.NetCash,
+            homeValue is { } value ? analysis.LoanToValuePercent(value) : null,
+            homeValue is { } home && analysis.ExceedsCashOutLimit(home));
 
     /// <summary>
     /// The new loan's bought-down years, then the first at its note rate, and what the buydown costs. On a refinance the

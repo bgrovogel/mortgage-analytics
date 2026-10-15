@@ -525,6 +525,11 @@ Key ideas:
 - The loan today can be entered as **what's owed now**, or as **the original loan** (amount, term, first
   payment), from which the server works out the balance on that loan's own schedule.
 - A buydown on the new loan is paid at closing, so it changes **when** you pay, not how much.
+- **Cash out** is borrowed on top of the balance, so the new loan is balance + cash (+ financed costs). The cash is
+  money in hand, so lifetime savings add it: 636,100.16 − (755,431.84 + 6,000) + 50,000 = **−$75,331.68** for $50,000
+  out at 6% for 30 years, a $350,000 loan at $2,098.43. The break-even stops being the question, so the page shows the
+  cash in hand ($50,000 less closing costs paid up front). A conventional cash-out refinance may borrow at most 80% of
+  the home's value, so the response says what share of the value the new loan is and whether it is over.
 
 ---
 

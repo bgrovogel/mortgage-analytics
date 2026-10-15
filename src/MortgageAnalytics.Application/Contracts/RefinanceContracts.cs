@@ -47,6 +47,14 @@ public sealed record RefinanceRequest
     public bool FinanceClosingCosts { get; init; }
 
     /// <summary>
+    /// Cash to take out of the home's equity at closing, borrowed on top of the balance. 0 for a refinance that only
+    /// changes the rate or term. With <see cref="HomeValue"/>, the response says whether the new loan is above the 80%
+    /// of the value a cash-out refinance allows.
+    /// </summary>
+    /// <example>0</example>
+    public decimal CashOut { get; init; }
+
+    /// <summary>
     /// The current loan's rate adjusts. Its fixed period counts payments from the next one (or, with
     /// <see cref="OriginalLoan"/>, from the original first payment, and <see cref="CurrentAnnualInterestRate"/> is then
     /// its starting rate). Omit for a fixed rate.
@@ -106,6 +114,10 @@ public sealed record OriginalLoanRequest
 /// <param name="BuydownCost">What a buydown on the new loan costs at closing (included in <paramref name="UpfrontCosts"/>); it comes back as lower payments.</param>
 /// <param name="NewBuydown">The new loan's buydown years and payments, or null without one.</param>
 /// <param name="WorstCaseLifetimeSavings">When either loan adjusts: the lifetime savings if rates rise as far as the caps allow. Null when neither does.</param>
+/// <param name="CashOut">The cash taken out at closing, borrowed on top of the balance; 0 for none. Counted in <paramref name="LifetimeSavings"/> as money in hand.</param>
+/// <param name="NetCash">The cash in hand after closing: <paramref name="CashOut"/> less what is paid at closing. Negative when more is paid than received.</param>
+/// <param name="NewLoanToValuePercent">The new loan as a percentage of the home's value; null without a home value.</param>
+/// <param name="ExceedsCashOutLimit">True when cash is taken out and the new loan is above 80% of the home's value.</param>
 public sealed record RefinanceResponse(
     RefinanceOptionResponse Current,
     RefinanceOptionResponse Refinanced,
@@ -120,7 +132,11 @@ public sealed record RefinanceResponse(
     DateOnly? BreakEvenDate,
     decimal BuydownCost,
     BuydownResponse? NewBuydown,
-    decimal? WorstCaseLifetimeSavings);
+    decimal? WorstCaseLifetimeSavings,
+    decimal CashOut = 0m,
+    decimal NetCash = 0m,
+    decimal? NewLoanToValuePercent = null,
+    bool ExceedsCashOutLimit = false);
 
 /// <summary>One way of repaying: its loan, payment and totals, and (optionally) every payment.</summary>
 /// <param name="LoanAmount">The amount being repaid.</param>

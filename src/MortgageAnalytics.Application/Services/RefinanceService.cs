@@ -34,7 +34,7 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
         var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
         var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true), pmi).LifetimeSavings : (decimal?)null;
 
-        return analysis.ToResponse(worst);
+        return analysis.ToResponse(worst, request.HomeValue);
     }
 
     /// <summary>

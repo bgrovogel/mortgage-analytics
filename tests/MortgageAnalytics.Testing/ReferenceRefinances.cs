@@ -100,4 +100,42 @@ public static class ReferenceRefinances
         /// <summary>Financed costs still count: the interest saved covers them by this payment.</summary>
         public const int BreakEvenPaymentNumber = 29;
     }
+
+    /// <summary>
+    /// The same refinance to 6% for 30 years, taking $50,000 of cash out and paying the $6,000 closing costs up
+    /// front. The loan is $350,000: the payment is still a little lower than today's, but a third of the loan is
+    /// new, and the clock restarts.
+    /// </summary>
+    public static class ToSixPercentTakingFiftyThousandOut
+    {
+        /// <summary>The new rate.</summary>
+        public const decimal AnnualInterestRate = 6m;
+
+        /// <summary>The new term.</summary>
+        public const int TermInMonths = 360;
+
+        /// <summary>Closing costs, paid up front.</summary>
+        public const decimal ClosingCosts = 6_000m;
+
+        /// <summary>The cash received.</summary>
+        public const decimal CashOut = 50_000m;
+
+        /// <summary>The new loan amount: the balance plus the cash.</summary>
+        public const decimal LoanAmount = 350_000m;
+
+        /// <summary>The new principal-and-interest payment.</summary>
+        public const decimal MonthlyPayment = 2_098.43m;
+
+        /// <summary>How much lower the payment is than today's.</summary>
+        public const decimal MonthlySavings = 21.91m;
+
+        /// <summary>All interest on the new loan.</summary>
+        public const decimal TotalInterest = 405_431.84m;
+
+        /// <summary>
+        /// Current total paid minus (new total paid + closing costs), plus the cash received:
+        /// 636,100.16 - (755,431.84 + 6,000) + 50,000.
+        /// </summary>
+        public const decimal LifetimeSavings = -75_331.68m;
+    }
 }

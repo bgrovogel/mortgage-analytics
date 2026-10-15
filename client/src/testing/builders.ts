@@ -194,6 +194,10 @@ export function aRefinanceResponse(overrides: Partial<RefinanceResponse> = {}): 
     buydownCost: 0,
     newBuydown: null,
     worstCaseLifetimeSavings: null,
+    cashOut: 0,
+    netCash: -6_000,
+    newLoanToValuePercent: null,
+    exceedsCashOutLimit: false,
     ...overrides,
   };
 }

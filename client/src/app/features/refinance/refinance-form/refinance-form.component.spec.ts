@@ -50,6 +50,7 @@ describe('RefinanceFormComponent', () => {
       newTermInMonths: 360,
       closingCosts: 6_000,
       financeClosingCosts: false,
+      cashOut: 0,
       originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
       homeValue: 400_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
     }]);
@@ -183,7 +184,7 @@ describe('RefinanceFormComponent', () => {
     it('reopens a comparison saved with its original loan, described the same way', () => {
       const saved: RefinanceRequest = {
         currentBalance: 186_108.71, currentAnnualInterestRate: 6, remainingTermInMonths: 300, nextPaymentDate: null,
-        newAnnualInterestRate: 5, newTermInMonths: 360, closingCosts: 4_000, financeClosingCosts: false,
+        newAnnualInterestRate: 5, newTermInMonths: 360, closingCosts: 4_000, financeClosingCosts: false, cashOut: 0,
         originalLoan: { amount: 200_000, termInMonths: 360, firstPaymentDate: '2021-11-01' },
         currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
         homeValue: 260_000, currentMonthlyPmi: 95, newPmiRate: 0.6,
@@ -218,7 +219,7 @@ describe('RefinanceFormComponent', () => {
   it('restores a previous comparison instead of the example', () => {
     const previous: RefinanceRequest = {
       currentBalance: 250_000, currentAnnualInterestRate: 7.5, remainingTermInMonths: 240, nextPaymentDate: null,
-      newAnnualInterestRate: 5.75, newTermInMonths: 240, closingCosts: 4_500, financeClosingCosts: true, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+      newAnnualInterestRate: 5.75, newTermInMonths: 240, closingCosts: 4_500, financeClosingCosts: true, cashOut: 0, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
       homeValue: 300_000, currentMonthlyPmi: 110, newPmiRate: 0.5,
     };
 

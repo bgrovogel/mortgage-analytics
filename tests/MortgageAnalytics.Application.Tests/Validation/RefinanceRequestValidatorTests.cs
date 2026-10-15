@@ -106,6 +106,22 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
             "the new loan amount includes the financed costs");
 
     [Test]
+    public void NegativeCashOut_IsRejected() =>
+        AssertInvalid(Valid with { CashOut = -1 }, "CashOut", "cash out cannot be negative");
+
+    [Test]
+    public void CashOut_CannotPushTheNewLoanOverTheLimit() =>
+        AssertErrorMessage(
+            Valid with { CurrentBalance = 99_999_000m, CashOut = 5_000m },
+            "CashOut",
+            "The new loan (balance plus cash out and any financed closing costs) cannot exceed 100,000,000.",
+            "the new loan borrows the cash too");
+
+    [Test]
+    public void CashOutWithinTheLimit_IsAccepted() =>
+        AssertValid(Valid with { CashOut = 50_000m }, "a cash-out refinance is an ordinary request");
+
+    [Test]
     public void ClosingCostsPaidUpFront_DoNotCountTowardTheLoanLimit() =>
         AssertNoErrorFor(Valid with { CurrentBalance = 99_999_000m, ClosingCosts = 5_000m }, "ClosingCosts", "cash at closing is not borrowed");
 

@@ -93,6 +93,17 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .WholeCents()
             .WithName("Closing costs");
 
+        RuleFor(r => r.CashOut)
+            .GreaterThanOrEqualTo(0)
+            .WholeCents()
+            .WithName("Cash out");
+
+        RuleFor(r => (r.OriginalLoan == null ? r.CurrentBalance : r.OriginalLoan.Amount) + r.CashOut + (r.FinanceClosingCosts ? r.ClosingCosts : 0m))
+            .LessThanOrEqualTo(LoanTerms.MaxPrincipal)
+            .WithMessage($"The new loan (balance plus cash out and any financed closing costs) cannot exceed {LoanTerms.MaxPrincipal:N0}.")
+            .OverridePropertyName(nameof(RefinanceRequest.CashOut))
+            .When(r => r.CashOut > 0);
+
         // With an original loan, what is owed today is at most what was first borrowed, so that is the bound used.
         RuleFor(r => (r.OriginalLoan == null ? r.CurrentBalance : r.OriginalLoan.Amount) + r.ClosingCosts)
             .LessThanOrEqualTo(LoanTerms.MaxPrincipal)

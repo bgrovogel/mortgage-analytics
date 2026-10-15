@@ -93,6 +93,9 @@
       </div>
     </details>
 
+    <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
+    <p class="hint" data-testid="cash-out-hint">Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow.</p>
+
     <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
     <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>
 

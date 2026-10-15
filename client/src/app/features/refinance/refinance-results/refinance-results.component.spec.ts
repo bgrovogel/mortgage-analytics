@@ -32,6 +32,56 @@ describe('RefinanceResultsComponent', () => {
     });
   });
 
+  describe('taking cash out', () => {
+    /** $50,000 out on the reference refinance: a $350,000 loan, $44,000 in hand after the $6,000 closing costs. */
+    const cashOut = (overrides: Partial<RefinanceResponse> = {}) => aRefinanceResponse({
+      cashOut: 50_000, netCash: 44_000, lifetimeSavings: -75_331.68, breakEvenPaymentNumber: null, breakEvenDate: null,
+      refinanced: aRefinanceOption({ loanAmount: 350_000, monthlyPayment: 2_098.43, numberOfPayments: 360, payoffDate: '2055-12-01' }),
+      ...overrides,
+    });
+
+    it('says what the cash costs over the life of the loan, with the cash counted in hand', () => {
+      render(cashOut());
+
+      expect(text('refi-verdict')).toContain('Taking out $50,000 costs $75,332 more over the life of the loan');
+    });
+
+    it('shows the cash in hand after closing costs, where the break-even would be', () => {
+      render(cashOut());
+
+      expect(text('refi-cash')).toContain('$44,000');
+      expect(text('refi-cash')).toContain('$50,000 out, less $6,000 paid at closing');
+      expect(text('refi-break-even')).toBeUndefined();
+    });
+
+    it('says the cash arrives with closing costs financed too', () => {
+      render(cashOut({ upfrontCosts: 0, netCash: 50_000 }));
+
+      expect(text('refi-cash')).toContain('$50,000');
+      expect(text('refi-cash')).toContain('nothing paid at closing');
+    });
+
+    it('warns when the new loan is above what a cash-out refinance allows', () => {
+      render(cashOut({ newLoanToValuePercent: 87.5, exceedsCashOutLimit: true }));
+
+      expect(text('refi-cash-limit')).toBe(
+        "The new loan is 87.5% of the home's value. Lenders cap a cash-out refinance at 80%, so this one may not be offered.");
+    });
+
+    it('says how much of the value the new loan is, when it is within the limit', () => {
+      render(cashOut({ newLoanToValuePercent: 70 }));
+
+      expect(text('refi-cash-limit')).toBe("The new loan is 70% of the home's value, within the 80% a cash-out refinance allows.");
+    });
+
+    it('leaves all of it out when no cash is taken', () => {
+      render(aRefinanceResponse());
+
+      expect(text('refi-cash')).toBeUndefined();
+      expect(text('refi-break-even')).toBeDefined();
+    });
+  });
+
   describe('the tiles', () => {
     it('shows the new payment against today\'s', () => {
       render(aRefinanceResponse());

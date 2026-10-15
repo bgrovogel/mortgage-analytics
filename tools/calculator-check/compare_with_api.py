@@ -212,6 +212,9 @@ def random_refinance(rng):
         'closingCosts': money(rng, 0, 15_000, 250),
         'financeClosingCosts': rng.random() < 0.4,
     }
+    # A third take cash out, on top of the balance.
+    if rng.random() < 0.33:
+        request['cashOut'] = money(rng, 5_000, 150_000, 1_000)
     # Half with a home value, so PMI on either loan: from well under 80% of it to well over.
     if rng.random() < 0.5:
         request['homeValue'] = int(request['currentBalance'] / rng.choice([0.6, 0.75, 0.79, 0.82, 0.9, 0.97]))
@@ -231,6 +234,8 @@ def refinance_view(r):
         'currentPmi': r['current']['totalPmi'], 'newPmi': r['refinanced']['totalPmi'],
         'monthlySavings': r['monthlySavings'], 'lifetimeSavings': r['lifetimeSavings'], 'monthsAdded': r['monthsAdded'],
         'breakEvenPaymentNumber': r['breakEvenPaymentNumber'],
+        'cashOut': r['cashOut'], 'netCash': r['netCash'],
+        'newLoanToValuePercent': r['newLoanToValuePercent'], 'exceedsCashOutLimit': r['exceedsCashOutLimit'],
         'keepPayment': keep and {'numberOfPayments': keep['numberOfPayments'], 'totalInterest': keep['totalInterest'],
                                  'lifetimeSavings': r['keepingCurrentPaymentLifetimeSavings']},
     }

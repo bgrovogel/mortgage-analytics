@@ -75,6 +75,50 @@ public class RefinanceServiceTests
     }
 
     [Test]
+    public void Analyze_WithCashOut_BorrowsItAndCountsItAsMoneyInHand()
+    {
+        var response = _service.Analyze(Request() with { CashOut = ToSixPercentTakingFiftyThousandOut.CashOut });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Refinanced.LoanAmount, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.LoanAmount), "the balance plus the cash");
+            Assert.That(response.Refinanced.MonthlyPayment, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.MonthlyPayment), "its payment");
+            Assert.That(response.CashOut, Is.EqualTo(50_000m), "the cash received");
+            Assert.That(response.NetCash, Is.EqualTo(44_000m), "less the closing costs paid up front");
+            Assert.That(response.LifetimeSavings, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.LifetimeSavings), "the cost in all, net of the cash");
+        });
+    }
+
+    [Test]
+    public void Analyze_WithCashOutAndAHomeValue_SaysWhetherTheLoanIsWithinTheCashOutLimit()
+    {
+        var within = _service.Analyze(Request() with { CashOut = 50_000m, HomeValue = 500_000m });
+        var over = _service.Analyze(Request() with { CashOut = 50_000m, HomeValue = 400_000m });
+        var plain = _service.Analyze(Request() with { HomeValue = 300_000m });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(within.NewLoanToValuePercent, Is.EqualTo(70m), "$350,000 of a $500,000 home");
+            Assert.That(within.ExceedsCashOutLimit, Is.False, "within 80%");
+            Assert.That(over.NewLoanToValuePercent, Is.EqualTo(87.5m), "$350,000 of a $400,000 home");
+            Assert.That(over.ExceedsCashOutLimit, Is.True, "over the 80% a cash-out refinance allows");
+            Assert.That(plain.ExceedsCashOutLimit, Is.False, "the limit is for taking cash out: a plain refinance is not held to it");
+        });
+    }
+
+    [Test]
+    public void Analyze_WithoutAHomeValue_SaysNothingOfLoanToValue()
+    {
+        var response = _service.Analyze(Request() with { CashOut = 50_000m });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.NewLoanToValuePercent, Is.Null, "there is no value to measure it against");
+            Assert.That(response.ExceedsCashOutLimit, Is.False, "and so no limit to exceed");
+        });
+    }
+
+    [Test]
     public void Analyze_DescribesKeepingTodaysPayment_AsExtraPrincipalOnTheNewLoan()
     {
         var keeping = _service.Analyze(Request()).KeepingCurrentPayment;

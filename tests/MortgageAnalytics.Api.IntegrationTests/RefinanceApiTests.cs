@@ -42,6 +42,32 @@ public class RefinanceApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Analyze_WithCashOut_ReturnsTheCashAndWhatItCosts()
+    {
+        var body = await ReadJsonAsync(await Client.PostAsJsonAsync(AnalyzeUrl, new
+        {
+            currentBalance = Current.Balance,
+            currentAnnualInterestRate = Current.AnnualInterestRate,
+            remainingTermInMonths = Current.RemainingTermInMonths,
+            nextPaymentDate = "2026-01-01",
+            newAnnualInterestRate = ToSixPercentTakingFiftyThousandOut.AnnualInterestRate,
+            newTermInMonths = ToSixPercentTakingFiftyThousandOut.TermInMonths,
+            closingCosts = ToSixPercentTakingFiftyThousandOut.ClosingCosts,
+            cashOut = ToSixPercentTakingFiftyThousandOut.CashOut,
+            homeValue = 400_000,
+        }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(body.GetProperty("cashOut").GetDecimal(), Is.EqualTo(50_000m), "the cash taken out");
+            Assert.That(body.GetProperty("netCash").GetDecimal(), Is.EqualTo(44_000m), "less the closing costs");
+            Assert.That(body.GetProperty("refinanced").GetProperty("loanAmount").GetDecimal(), Is.EqualTo(350_000m), "is borrowed on the new loan");
+            Assert.That(body.GetProperty("newLoanToValuePercent").GetDecimal(), Is.EqualTo(87.5m), "$350,000 of a $400,000 home");
+            Assert.That(body.GetProperty("exceedsCashOutLimit").GetBoolean(), Is.True, "above the 80% a cash-out refinance allows");
+        });
+    }
+
+    [Test]
     public async Task Analyze_CanLeaveOutThePaymentRows()
     {
         var body = await ReadJsonAsync(await Client.PostAsJsonAsync($"{AnalyzeUrl}?includePayments=false", ReferenceBody));

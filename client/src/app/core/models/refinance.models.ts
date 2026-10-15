@@ -18,6 +18,8 @@ export interface RefinanceRequest {
   newTermInMonths: number;
   closingCosts: number;
   financeClosingCosts: boolean;
+  /** Cash taken out of the home's equity at closing, borrowed on top of the balance; 0 or left out for none. */
+  cashOut?: number;
   /** The current loan as it was taken out, when known. */
   originalLoan?: OriginalLoan | null;
   /** The current loan's rate adjusts (its fixed period counts from the next payment, or from the original first one). */
@@ -80,4 +82,12 @@ export interface RefinanceResponse {
   newBuydown: BuydownSummary | null;
   /** When either loan adjusts: the lifetime savings if rates rise as far as the caps allow. */
   worstCaseLifetimeSavings: number | null;
+  /** The cash taken out at closing; 0 for none. The lifetime savings count it as money in hand. */
+  cashOut: number;
+  /** The cash in hand after closing: the cash out less what is paid at closing. */
+  netCash: number;
+  /** The new loan as a percentage of the home's value; null without a home value. */
+  newLoanToValuePercent: number | null;
+  /** Cash is taken out and the new loan is above the 80% of the home's value that a cash-out refinance allows. */
+  exceedsCashOutLimit: boolean;
 }

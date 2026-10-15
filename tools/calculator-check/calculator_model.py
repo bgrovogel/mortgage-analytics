@@ -11,7 +11,7 @@ import sys
 import json
 import pathlib
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal as D, getcontext
+from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal as D, getcontext
 
 # More precision than the engine's decimal: if the two disagree at the cent, it is the rules that differ.
 getcontext().prec = 40
@@ -826,7 +826,8 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost
 def refinance(request):
     """
     Keep the current loan, or refinance it: the rest of the current loan, the new loan (closing costs financed or
-    paid up front), the new loan at today's payment when that is higher, lifetime savings and the break-even payment.
+    paid up front, and any cash taken out borrowed with it), the new loan at today's payment when that is higher,
+    lifetime savings (cash received counted as money in hand) and the break-even payment.
     For the plain case: fixed rates, the loan given by what is owed now. With a home value, PMI on each loan: today's
     premium on the current one, and the new rate on the new one if it is above 80% of the value; each until its
     balance is 80% of the value, the new one by law not past its midpoint.
@@ -834,8 +835,9 @@ def refinance(request):
     bal, cur_rate, left = D(str(request['currentBalance'])), D(str(request['currentAnnualInterestRate'])), request['remainingTermInMonths']
     new_rate, new_term, closing = D(str(request['newAnnualInterestRate'])), request['newTermInMonths'], D(str(request['closingCosts']))
     financed = request['financeClosingCosts']
+    cash_out = D(str(request.get('cashOut', 0)))
     current = amortize(bal, cur_rate, left)
-    principal = bal + closing if financed else bal
+    principal = bal + cash_out + (closing if financed else D(0))
     new = amortize(principal, new_rate, new_term)
     upfront = D(0) if financed else closing
     total = lambda s: sum((r['scheduled'] + r['extra'] for r in s['rows']), D(0))  # noqa: E731
@@ -871,14 +873,18 @@ def refinance(request):
     if monthly > 0:
         k = amortize(principal, new_rate, new_term, extra=lambda p: (monthly, monthly))
         keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k),
-                'lifetimeSavings': current_all - (total(k) + pmi_total(new_pmi, k) + upfront)}
+                'lifetimeSavings': current_all - (total(k) + pmi_total(new_pmi, k) + upfront) + cash_out}
     return {
         'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),
         'newPayment': new['initial'], 'newInterest': interest(new), 'newPayments': len(new['rows']),
         'currentPmi': pmi_total(cur_pmi, current), 'newPmi': pmi_total(new_pmi, new),
         'monthlySavings': monthly,
-        'lifetimeSavings': current_all - (total(new) + pmi_total(new_pmi, new) + upfront),
+        'lifetimeSavings': current_all - (total(new) + pmi_total(new_pmi, new) + upfront) + cash_out,
         'monthsAdded': len(new['rows']) - len(current['rows']),
         'breakEvenPaymentNumber': break_even,
         'keepPayment': keep,
+        # Cash taken out is in hand, less what is paid at closing; a cash-out loan above 80% of the value is over the limit.
+        'cashOut': cash_out, 'netCash': cash_out - upfront,
+        'newLoanToValuePercent': (principal / value * 100).quantize(D('0.01'), rounding=ROUND_HALF_EVEN) if value is not None else None,
+        'exceedsCashOutLimit': value is not None and cash_out > 0 and principal > value * D('0.8'),
     }

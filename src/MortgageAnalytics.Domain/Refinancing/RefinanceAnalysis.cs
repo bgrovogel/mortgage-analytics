@@ -55,6 +55,23 @@ public sealed record RefinanceAnalysis(
     /// <summary>Cash due at closing: the closing costs unless they are financed, plus any buydown.</summary>
     public decimal CashAtClosing => Offer.UpfrontCosts + BuydownCost;
 
+    /// <summary>The most a lender allows a cash-out refinance to borrow, as a share of the home's value (a conventional primary residence).</summary>
+    public const decimal MaxCashOutLoanToValue = 0.80m;
+
+    /// <summary>The new loan as a percentage of the home's value, to a hundredth.</summary>
+    /// <param name="homeValue">What the home is worth today.</param>
+    public decimal LoanToValuePercent(decimal homeValue) => Math.Round(NewLoan.Principal / homeValue * 100m, 2);
+
+    /// <summary>True when cash is taken out and the new loan is above the share of the home's value that allows.</summary>
+    /// <param name="homeValue">What the home is worth today.</param>
+    public bool ExceedsCashOutLimit(decimal homeValue) => CashOut > 0m && NewLoan.Principal > homeValue * MaxCashOutLoanToValue;
+
+    /// <summary>The cash received at closing, borrowed on top of the balance; 0 for a refinance that takes none.</summary>
+    public decimal CashOut => Offer.CashOut;
+
+    /// <summary>The cash that ends up in hand: what is taken out, less what is paid at closing. Negative when more is paid than received.</summary>
+    public decimal NetCash => Offer.CashOut - CashAtClosing;
+
     /// <summary>How much lower the new payment is, PMI included. Negative when it is higher.</summary>
     public decimal MonthlySavings =>
         Current.InitialMonthlyPayment + CurrentPmi.FirstOn(Current) - (Refinanced.InitialMonthlyPayment + NewPmi.FirstOn(Refinanced));
@@ -64,7 +81,8 @@ public sealed record RefinanceAnalysis(
 
     /// <summary>
     /// Everything still to pay on the current loan, PMI included, minus everything the refinance costs (payments, PMI
-    /// and up-front closing costs). Negative when refinancing costs more over the life of the loan.
+    /// and up-front closing costs), plus any cash taken out, which is money in hand. Negative when refinancing costs
+    /// more over the life of the loan.
     /// </summary>
     public decimal LifetimeSavings => LifetimeSavingsOf(Refinanced);
 
@@ -86,5 +104,5 @@ public sealed record RefinanceAnalysis(
     public DateOnly? BreakEvenDate => BreakEvenPaymentNumber is { } number ? Refinanced.Payments[number - 1].DueDate : null;
 
     private decimal LifetimeSavingsOf(AmortizationSchedule refinanced) =>
-        Current.TotalPaid + CurrentPmiTotal - (refinanced.TotalPaid + NewPmi.TotalOn(refinanced) + Offer.UpfrontCosts);
+        Current.TotalPaid + CurrentPmiTotal - (refinanced.TotalPaid + NewPmi.TotalOn(refinanced) + Offer.UpfrontCosts) + Offer.CashOut;
 }

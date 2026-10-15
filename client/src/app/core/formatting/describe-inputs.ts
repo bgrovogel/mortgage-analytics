@@ -36,12 +36,13 @@ export function suggestComparisonName(r: HomeComparisonRequest): string {
   return `${prices.slice(0, -1).join(', ')} or ${prices[prices.length - 1]} home`;
 }
 
-/** "$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs". */
+/** "$300,000 left at 7% → 6% · 30 yr · $6,000 closing costs", with "· $50,000 cash out" before the costs when cash is taken. */
 export function describeRefinance(r: RefinanceRequest): string {
   const closing = `${usd(r.closingCosts)} closing costs${r.financeClosingCosts ? ' in the loan' : ''}`;
   return [
     `${usd(r.currentBalance)} left at ${decimal(r.currentAnnualInterestRate)}% → ${decimal(r.newAnnualInterestRate)}%`,
     termOf(r.newTermInMonths),
+    ...(r.cashOut ? [`${usd(r.cashOut)} cash out`] : []),
     closing,
   ].join(' · ');
 }

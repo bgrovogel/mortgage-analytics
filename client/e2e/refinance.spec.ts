@@ -37,6 +37,24 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-keep-payment'), 'keeping the current payment turns it into a saving').toContainText('saving $107,590 overall');
   });
 
+  test('taking cash out: what is in hand, and a warning when the new loan is above what lenders allow', async ({ page }) => {
+    await reference(page);
+
+    await page.getByTestId('cash-out').fill('50000');
+
+    await expect(verdict(page), 'the verdict is about the cash').toContainText('Taking out $50,000 costs');
+    await expect(page.getByTestId('refi-cash'), 'the cash in hand is the cash less the closing costs').toContainText('$44,000');
+    await expect(page.getByTestId('refi-break-even'), 'a break-even is not the question when cash is taken').toHaveCount(0);
+    await expect(page.getByTestId('refi-cash-limit'), '$350,000 against the $400,000 home is over the 80% limit')
+      .toContainText('87.5% of the home');
+    await expect(page.getByTestId('refi-cash-limit'), 'and says it may not be offered').toContainText('may not be offered');
+
+    await page.getByTestId('cash-out').fill('0');
+
+    await expect(page.getByTestId('refi-cash'), 'no cash, no cash tile').toHaveCount(0);
+    await expect(page.getByTestId('refi-break-even'), 'the break-even is back').toBeVisible();
+  });
+
   test('keeping the payoff date stops the clock restarting', async ({ page }) => {
     await reference(page);
     await page.getByTestId('new-term').selectOption('keep');

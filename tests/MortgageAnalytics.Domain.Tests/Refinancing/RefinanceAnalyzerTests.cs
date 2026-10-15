@@ -92,6 +92,39 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
     }
 
     [Test]
+    public void CashOut_IsBorrowedOnTheNewLoan_AndCountedAsMoneyInHand()
+    {
+        var analysis = Analyze(new RefinanceOffer(6m, 360, 6_000m, financeClosingCosts: false, cashOut: ToSixPercentTakingFiftyThousandOut.CashOut));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.Refinanced.TotalPrincipal, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.LoanAmount), "the balance plus the cash");
+            Assert.That(analysis.Refinanced.InitialMonthlyPayment, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.MonthlyPayment), "on the larger loan");
+            Assert.That(analysis.MonthlySavings, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.MonthlySavings), "still a little lower than today's");
+            Assert.That(analysis.Refinanced.TotalInterest, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.TotalInterest), "with far more interest");
+            Assert.That(analysis.CashOut, Is.EqualTo(50_000m), "the cash received");
+            Assert.That(analysis.NetCash, Is.EqualTo(44_000m), "less the closing costs paid up front");
+            Assert.That(analysis.LifetimeSavings, Is.EqualTo(ToSixPercentTakingFiftyThousandOut.LifetimeSavings), "what it costs in all, net of the cash received");
+        });
+    }
+
+    [Test]
+    public void CashOut_WithFinancedCosts_BorrowsBothOnTheNewLoan()
+    {
+        var analysis = Analyze(new RefinanceOffer(6m, 360, 6_000m, financeClosingCosts: true, cashOut: 50_000m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.Refinanced.TotalPrincipal, Is.EqualTo(356_000m), "balance, cash and costs");
+            Assert.That(analysis.NetCash, Is.EqualTo(50_000m), "nothing is paid up front, so all the cash is yours");
+        });
+    }
+
+    [Test]
+    public void WithoutCashOut_NothingIsReceived() =>
+        Assert.That(Analyze(SixPercentUpfront).CashOut, Is.Zero, "a rate-and-term refinance takes no cash");
+
+    [Test]
     public void AHigherRate_NeverBreaksEven_AndHasNoKeepThePaymentOption()
     {
         var analysis = Analyze(new RefinanceOffer(8m, 300, 3_000m, financeClosingCosts: false));
@@ -122,6 +155,13 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
     public void AnOfferOutsideTheSupportedRange_IsRejected(decimal rate, int term, decimal closingCosts)
     {
         Assert.That(() => new RefinanceOffer(rate, term, closingCosts, financeClosingCosts: false), Throws.TypeOf<DomainValidationException>(),
+            "an offer the engine cannot model must not be constructed");
+    }
+
+    [Test]
+    public void CashOutBelowNothing_IsRejected()
+    {
+        Assert.That(() => new RefinanceOffer(6m, 360, 0m, financeClosingCosts: false, cashOut: -1m), Throws.TypeOf<DomainValidationException>(),
             "an offer the engine cannot model must not be constructed");
     }
 

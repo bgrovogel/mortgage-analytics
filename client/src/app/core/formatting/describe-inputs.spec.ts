@@ -75,6 +75,10 @@ describe('describeRefinance', () => {
     expect(describeRefinance({ ...refinance, financeClosingCosts: true })).toContain('$6,000 closing costs in the loan');
   });
 
+  it('says how much cash is taken out, when any is', () => {
+    expect(describeRefinance({ ...refinance, cashOut: 50_000 })).toBe('$300,000 left at 7% → 6% · 30 yr · $50,000 cash out · $6,000 closing costs');
+  });
+
   it('suggests a name from the two rates', () => {
     expect(suggestRefinanceName(refinance)).toBe('Refinance 7% → 6%, 30 yr');
   });

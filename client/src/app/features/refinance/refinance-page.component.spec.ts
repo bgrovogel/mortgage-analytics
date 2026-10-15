@@ -66,7 +66,7 @@ describe('RefinancePageComponent', () => {
   it('starts from the last comparison, so leaving the page and coming back keeps it', () => {
     const previous: RefinanceRequest = {
       currentBalance: 123_000, currentAnnualInterestRate: 7, remainingTermInMonths: 120, nextPaymentDate: null,
-      newAnnualInterestRate: 6, newTermInMonths: 120, closingCosts: 0, financeClosingCosts: false, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+      newAnnualInterestRate: 6, newTermInMonths: 120, closingCosts: 0, financeClosingCosts: false, cashOut: 0, originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
       homeValue: 400_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
     };
     TestBed.inject(RefinanceStore).send(previous);

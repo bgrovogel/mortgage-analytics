@@ -85,6 +85,7 @@ export class RefinanceFormComponent implements OnInit {
     newAnnualInterestRate: [6.25, validatorsFor(rules.newAnnualInterestRate)],
     newTerm: this.fb.control<NewTerm>('30'),
     closingCosts: [6_000, validatorsFor(rules.closingCosts)],
+    cashOut: [0, validatorsFor(rules.cashOut)],
     financeClosingCosts: [false],
     // The home's value sets whether each loan carries PMI: while it is above 80% of it.
     homeValue: [400_000, validatorsFor(rules.homeValue)],
@@ -170,6 +171,7 @@ export class RefinanceFormComponent implements OnInit {
           newAnnualInterestRate: initial.newAnnualInterestRate,
           newTerm: initial.newTermInMonths === initial.remainingTermInMonths ? 'keep' : (`${initial.newTermInMonths / 12}` as NewTerm),
           closingCosts: initial.closingCosts,
+          cashOut: initial.cashOut ?? 0,
           financeClosingCosts: initial.financeClosingCosts,
           ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
           currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
@@ -278,6 +280,7 @@ export class RefinanceFormComponent implements OnInit {
       newTermInMonths: v.newTerm === 'keep' ? remaining : Number(v.newTerm) * 12,
       closingCosts: v.closingCosts,
       financeClosingCosts: v.financeClosingCosts,
+      cashOut: v.cashOut,
       originalLoan: today
         ? { amount: v.originalAmount, termInMonths: Math.round(v.originalTermYears * 12), firstPaymentDate: v.firstPaymentDate }
         : null,

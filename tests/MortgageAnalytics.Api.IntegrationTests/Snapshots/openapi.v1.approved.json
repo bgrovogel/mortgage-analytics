@@ -2258,6 +2258,10 @@
           "financeClosingCosts": {
             "type": "boolean"
           },
+          "cashOut": {
+            "type": "number",
+            "format": "double"
+          },
           "currentAdjustableRate": {
             "$ref": "#/components/schemas/AdjustableRateRequest"
           },
@@ -2341,6 +2345,22 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "cashOut": {
+            "type": "number",
+            "format": "double"
+          },
+          "netCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "newLoanToValuePercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "exceedsCashOutLimit": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

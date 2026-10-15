@@ -89,6 +89,16 @@
   border-left: 4px solid var(--warning-border);
 }
 
+// Where the new loan stands against what a cash-out refinance may borrow.
+.limit {
+  margin: 0;
+  border-left: 4px solid var(--accent);
+
+  &.warning {
+    border-left-color: var(--warning-border);
+  }
+}
+
 .keep {
   border-left: 4px solid var(--accent);
 }

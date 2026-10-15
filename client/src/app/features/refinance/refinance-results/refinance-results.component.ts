@@ -67,6 +67,24 @@ export class RefinanceResultsComponent {
   /** True when refinancing costs more over the life of the loan, closing costs included. */
   readonly costsMore = computed(() => this.result().lifetimeSavings < 0);
 
+  /** What the cash in hand is made of: the cash out, less what is paid at closing. */
+  readonly cashDetail = computed(() => {
+    const r = this.result();
+    return r.upfrontCosts > 0
+      ? `${usd(r.cashOut)} out, less ${usd(r.upfrontCosts)} paid at closing`
+      : `${usd(r.cashOut)} out, nothing paid at closing`;
+  });
+
+  /** Where the new loan stands against the most a cash-out refinance may borrow; null without cash out or a home value. */
+  readonly cashLimit = computed(() => {
+    const r = this.result();
+    if (r.cashOut <= 0 || r.newLoanToValuePercent === null) return null;
+    const share = `The new loan is ${pct(r.newLoanToValuePercent)} of the home's value`;
+    return r.exceedsCashOutLimit
+      ? `${share}. Lenders cap a cash-out refinance at 80%, so this one may not be offered.`
+      : `${share}, within the 80% a cash-out refinance allows.`;
+  });
+
   /** One sentence on the payment and the term, e.g. "The payment drops $321.69 a month, but the loan runs 5 yr longer." */
   readonly paymentSentence = computed(() => {
     const r = this.result();
@@ -96,7 +114,7 @@ export class RefinanceResultsComponent {
   /** The options side by side; the keep-payment column only when it applies. */
   readonly columns = computed<TableColumn[]>(() => {
     const r = this.result();
-    const financed = r.refinanced.loanAmount - r.current.loanAmount;
+    const financed = r.refinanced.loanAmount - r.current.loanAmount - r.cashOut;
     const closing = r.upfrontCosts > 0 ? usd(r.upfrontCosts) : financed > 0 ? `${usd(financed)} in the loan` : '$0';
     const columns: TableColumn[] = [
       { label: 'Keep current loan', option: r.current, closing: '—', totalCost: r.current.totalPaid + r.current.totalPmi },

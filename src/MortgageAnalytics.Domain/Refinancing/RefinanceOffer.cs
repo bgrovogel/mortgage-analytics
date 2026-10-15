@@ -10,8 +10,9 @@ public sealed record RefinanceOffer
     /// <param name="termInMonths">The new loan's term, in months.</param>
     /// <param name="closingCosts">Fees, points and other costs to close the new loan.</param>
     /// <param name="financeClosingCosts">True to add the closing costs to the new loan instead of paying them up front.</param>
+    /// <param name="cashOut">Cash taken out of the home's equity at closing, borrowed on top of the balance; 0 for none.</param>
     /// <exception cref="DomainValidationException">A value is out of range.</exception>
-    public RefinanceOffer(decimal annualInterestRate, int termInMonths, decimal closingCosts, bool financeClosingCosts)
+    public RefinanceOffer(decimal annualInterestRate, int termInMonths, decimal closingCosts, bool financeClosingCosts, decimal cashOut = 0m)
     {
         if (annualInterestRate is < 0 or > LoanTerms.MaxAnnualInterestRate)
             throw new DomainValidationException($"Annual interest rate must be between 0 and {LoanTerms.MaxAnnualInterestRate}%.");
@@ -19,11 +20,14 @@ public sealed record RefinanceOffer
             throw new DomainValidationException($"Term must be between 1 and {LoanTerms.MaxTermInMonths} months.");
         if (closingCosts is < 0 or > LoanTerms.MaxPrincipal)
             throw new DomainValidationException($"Closing costs must be between 0 and {LoanTerms.MaxPrincipal:N0}.");
+        if (cashOut is < 0 or > LoanTerms.MaxPrincipal)
+            throw new DomainValidationException($"Cash out must be between 0 and {LoanTerms.MaxPrincipal:N0}.");
 
         AnnualInterestRate = annualInterestRate;
         TermInMonths = termInMonths;
         ClosingCosts = closingCosts;
         FinanceClosingCosts = financeClosingCosts;
+        CashOut = cashOut;
     }
 
     /// <summary>The new nominal annual rate as a percentage.</summary>
@@ -38,6 +42,9 @@ public sealed record RefinanceOffer
     /// <summary>True when the closing costs are added to the new loan rather than paid up front.</summary>
     public bool FinanceClosingCosts { get; }
 
+    /// <summary>Cash received at closing, borrowed on top of the balance; 0 for a refinance that only changes the rate or term.</summary>
+    public decimal CashOut { get; }
+
     /// <summary>What is paid in cash at closing: the closing costs, unless they are financed.</summary>
     public decimal UpfrontCosts => FinanceClosingCosts ? 0m : ClosingCosts;
 
@@ -50,7 +57,7 @@ public sealed record RefinanceOffer
     /// </summary>
     public TemporaryBuydown? Buydown { get; init; }
 
-    /// <summary>The new loan amount: the balance being paid off, plus the closing costs when they are financed.</summary>
+    /// <summary>The new loan amount: the balance being paid off, plus any cash out, plus the closing costs when they are financed.</summary>
     /// <param name="balance">The balance of the loan being replaced.</param>
-    public decimal NewLoanAmount(decimal balance) => FinanceClosingCosts ? balance + ClosingCosts : balance;
+    public decimal NewLoanAmount(decimal balance) => balance + CashOut + (FinanceClosingCosts ? ClosingCosts : 0m);
 }
