@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TermComponent } from '../../../core/glossary/term.component';
 import { FormNavigator } from '../../../core/forms/form-navigator';
@@ -7,7 +7,9 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { decimal, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
+import { DialogComponent } from '../../../core/layout/dialog.component';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
+import { KPI_LABELS, KpiKey, KpiPreferences } from './kpi-preferences';
 import { ProvenanceChipsComponent } from '../provenance/provenance-chips.component';
 import { buydownYears } from '../rate-plan/buydown-years';
 
@@ -26,7 +28,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
  */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe, PaymentBreakdownComponent, ProvenanceChipsComponent, RouterLink, TermComponent],
+  imports: [CurrencyPipe, DatePipe, DialogComponent, PaymentBreakdownComponent, ProvenanceChipsComponent, RouterLink, TermComponent],
   template: `
     @let r = result();
     @if (r.purchase.isJumbo) {
@@ -62,94 +64,130 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
     <!-- What it takes to close, when it is paid off, what paying extra saves and when the insurance ends, in one rail
          (a dl allows only dt and dd, so a figure's notes are more dd elements). -->
     <dl class="rail">
-      <!-- Closing and affordability are for a purchase still ahead: a loan already being paid closed long ago. -->
-      @if (cash(); as cash) {
-        <div class="tile" data-testid="cash-tile">
-          <dt>Cash to close</dt>
-          <dd data-testid="cash-tile-total">{{ cash.total | currency }}</dd>
-          <dd class="note">
-            {{ cash.downPayment | currency }} down + {{ cash.closingCosts | currency }} closing costs
-            @if (cash.credits > 0) {
-              − {{ cash.credits | currency }} credits
+      <!-- In the reader's order, and only the figures they keep (Arrange). Each applies when the loan has it. -->
+      @for (key of figures(); track key) {
+        @switch (key) {
+          @case ('cash') {
+          @if (cash(); as cash) {
+            <div class="tile" data-testid="cash-tile">
+              <dt>Cash to close</dt>
+              <dd data-testid="cash-tile-total">{{ cash.total | currency }}</dd>
+              <dd class="note">
+                {{ cash.downPayment | currency }} down + {{ cash.closingCosts | currency }} closing costs
+                @if (cash.credits > 0) {
+                  − {{ cash.credits | currency }} credits
+                }
+              </dd>
+              <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
+            </div>
+          }
+          }
+          @case ('payoff') {
+          <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
+          <div class="tile">
+            <dt>Paid off</dt>
+            <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
+            @if (r.savings.paymentsSaved > 0) {
+              <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
+            } @else if (r.accelerated.recasts.length > 0) {
+              <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
             }
-          </dd>
-          <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
-        </div>
-      }
-      <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
-      <div class="tile">
-        <dt>Paid off</dt>
-        <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
-        @if (r.savings.paymentsSaved > 0) {
-          <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
-        } @else if (r.accelerated.recasts.length > 0) {
-          <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
-        }
-      </div>
-
-      @if (!current()) {
-        <div class="tile" data-testid="afford-tile">
-          <dt>Can you afford it?</dt>
-          @if (afford(); as a) {
-            <dd [class.gain]="a.answer === 'Yes'" data-testid="afford-tile-answer">{{ a.answer }}</dd>
-            <dd class="note" data-testid="afford-tile-note">{{ a.note }}</dd>
-            <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">How lenders see it →</a></dd>
-          } @else {
-            <dd class="note">Your income and debts tell whether this home fits, and the most you could pay.</dd>
-            <dd class="link"><button type="button" (click)="addIncome()" data-testid="afford-tile-add">Add income</button></dd>
+          </div>
           }
-        </div>
-      }
-      @if (hasSavings()) {
-        <div class="tile savings positive" data-testid="savings-tile">
-          <dt>Net savings from paying extra</dt>
-          <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-          @if (savingsDetail(); as detail) {
-            <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
-          }
-          <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
-          <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
-          @if (buydownNote(); as note) {
-            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
-          }
-        </div>
-      } @else {
-        <!-- Nothing extra is paid, so a $0 saving would say nothing: say what the loan costs instead. -->
-        <div class="tile savings" data-testid="savings-tile">
-          <dt>Total interest over the loan</dt>
-          <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-          <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
-          @if (buydownNote(); as note) {
-            <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
-          }
-        </div>
-      }
-      @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
-        <div class="tile">
-          <dt>{{ insuranceName() }} ends</dt>
-          <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
-          <!-- Kept for the life of the loan (FHA MIP with under 10% down), it ends with the payoff tile's date. -->
-          @if (pmiEnd.slice(0, 7) === r.savings.acceleratedPayoffDate.slice(0, 7)) {
-            <dd class="note" data-testid="pmi-with-loan">Lasts as long as the loan, so paying it off sooner ends it too</dd>
-          } @else if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
-            <dd class="note gain" data-testid="pmi-sooner">{{ pmiSooner() }} sooner, instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
-          } @else {
-            <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
-          }
-          <!-- Automatic removal keeps to the original schedule, whatever is paid extra; asking at 80% does not. -->
-          @if (r.pmiOtherChoice; as other) {
-            <dd class="note ask" data-testid="pmi-other-choice">
-              @if (other.removal === 'BorrowerRequested') {
-                Ask your lender at 80%: ends {{ other.endDate | date: 'MMM yyyy' }}, saving {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }}
+          @case ('afford') {
+          @if (!current()) {
+            <div class="tile" data-testid="afford-tile">
+              <dt>Can you afford it?</dt>
+              @if (afford(); as a) {
+                <dd [class.gain]="a.answer === 'Yes'" data-testid="afford-tile-answer">{{ a.answer }}</dd>
+                <dd class="note" data-testid="afford-tile-note">{{ a.note }}</dd>
+                <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">How lenders see it →</a></dd>
               } @else {
-                <!-- Automatic removal is the latest the law requires; some servicers drop it sooner, but none has to. -->
-                If you don't ask, your servicer only has to remove it in {{ other.endDate | date: 'MMM yyyy' }}, costing {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }} more
+                <dd class="note">Your income and debts tell whether this home fits, and the most you could pay.</dd>
+                <dd class="link"><button type="button" (click)="addIncome()" data-testid="afford-tile-add">Add income</button></dd>
               }
-            </dd>
+            </div>
           }
-        </div>
+          }
+          @case ('savings') {
+          @if (hasSavings()) {
+            <div class="tile savings positive" data-testid="savings-tile">
+              <dt>Net savings from paying extra</dt>
+              <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+              @if (savingsDetail(); as detail) {
+                <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
+              }
+              <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
+              <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
+              @if (buydownNote(); as note) {
+                <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+              }
+            </div>
+          } @else {
+            <!-- Nothing extra is paid, so a $0 saving would say nothing: say what the loan costs instead. -->
+            <div class="tile savings" data-testid="savings-tile">
+              <dt>Total interest over the loan</dt>
+              <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+              <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
+              @if (buydownNote(); as note) {
+                <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
+              }
+            </div>
+          }
+          }
+          @case ('pmi') {
+          @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
+            <div class="tile">
+              <dt>{{ insuranceName() }} ends</dt>
+              <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
+              <!-- Kept for the life of the loan (FHA MIP with under 10% down), it ends with the payoff tile's date. -->
+              @if (pmiEnd.slice(0, 7) === r.savings.acceleratedPayoffDate.slice(0, 7)) {
+                <dd class="note" data-testid="pmi-with-loan">Lasts as long as the loan, so paying it off sooner ends it too</dd>
+              } @else if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
+                <dd class="note gain" data-testid="pmi-sooner">{{ pmiSooner() }} sooner, instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
+              } @else {
+                <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
+              }
+              <!-- Automatic removal keeps to the original schedule, whatever is paid extra; asking at 80% does not. -->
+              @if (r.pmiOtherChoice; as other) {
+                <dd class="note ask" data-testid="pmi-other-choice">
+                  @if (other.removal === 'BorrowerRequested') {
+                    Ask your lender at 80%: ends {{ other.endDate | date: 'MMM yyyy' }}, saving {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }}
+                  } @else {
+                    <!-- Automatic removal is the latest the law requires; some servicers drop it sooner, but none has to. -->
+                    If you don't ask, your servicer only has to remove it in {{ other.endDate | date: 'MMM yyyy' }}, costing {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }} more
+                  }
+                </dd>
+              }
+            </div>
+          }
+          }
+        }
       }
     </dl>
+
+    <div class="arrange">
+      <button type="button" data-testid="arrange-rail" (click)="arranging.open()">Arrange these figures</button>
+    </div>
+    <app-dialog #arranging heading="Your key figures">
+      <p class="arrange-hint">Put them in the order you read them, and put away the ones you do not need. This browser remembers it.</p>
+      <ul class="arrange-list" data-testid="arrange-list">
+        @for (key of preferences.order(); track key; let first = $first; let last = $last) {
+          <li>
+            <label>
+              <input type="checkbox" [checked]="!preferences.hidden().has(key)" (change)="preferences.toggle(key)" [attr.data-testid]="'kpi-show-' + key" />
+              {{ labels[key] }}
+            </label>
+            <span class="moves">
+              <button type="button" [disabled]="first" [attr.aria-label]="'Move ' + labels[key] + ' earlier'" (click)="moved(key, -1)">↑</button>
+              <button type="button" [disabled]="last" [attr.aria-label]="'Move ' + labels[key] + ' later'" (click)="moved(key, 1)">↓</button>
+            </span>
+          </li>
+        }
+      </ul>
+      <p class="visually-hidden" role="status" aria-live="polite" data-testid="arrange-status">{{ arrangeStatus() }}</p>
+      <button type="button" class="reset" data-testid="arrange-reset" (click)="preferences.reset()">Back to the default</button>
+    </app-dialog>
 
     @if (r.accelerated.recasts.length > 0) {
       <ul class="recasts" data-testid="recasts">
@@ -177,6 +215,21 @@ export class SavingsSummaryComponent {
   readonly result = input.required<AmortizationResponse>();
 
   private readonly navigator = inject(FormNavigator);
+  protected readonly preferences = inject(KpiPreferences);
+  protected readonly labels = KPI_LABELS;
+
+  /** The figures of the rail, in the reader's order, without the ones they have put away. */
+  protected readonly figures = computed(() => this.preferences.visible());
+
+  /** What the arranging dialog just did, said for a screen reader: where a figure now stands. */
+  protected readonly arrangeStatus = signal('');
+
+  /** Moves a figure earlier or later, and says where it stands now. */
+  protected moved(key: KpiKey, by: -1 | 1): void {
+    this.preferences.move(key, by);
+    const order = this.preferences.order();
+    this.arrangeStatus.set(`${KPI_LABELS[key]} is now ${order.indexOf(key) + 1} of ${order.length}.`);
+  }
 
   /** The cash to close, for a purchase still ahead; null for a loan already being paid, or without closing costs. */
   readonly cash = computed(() => (this.current() ? null : this.result().cashToClose ?? null));

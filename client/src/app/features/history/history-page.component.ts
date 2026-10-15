@@ -10,6 +10,7 @@ import { monthlyPayment } from '../../core/loans/loan-progress';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculationStores } from '../calculation-stores';
+import { ScenarioCoverComponent, coverShares } from './scenario-cover.component';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -37,7 +38,7 @@ const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', y
  */
 @Component({
   selector: 'app-history-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ScenarioCoverComponent],
   templateUrl: './history-page.component.html',
   styleUrl: './history-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -247,6 +248,16 @@ export class HistoryPageComponent {
     if (calculation.kind === 'Purchase' && calculation.inputs) return purchaseFigure(calculation.inputs);
     if (calculation.kind === 'Refinance' && calculation.refinance) return refinanceFigure(calculation.refinance);
     return null;
+  }
+
+  /** The bars of an item's cover, from its own figures: what is put down against borrowed, or the old rate against the new. */
+  coverOf(calculation: SavedCalculation): number[] {
+    const { inputs, refinance } = calculation;
+    if (calculation.kind === 'Purchase' && inputs) return coverShares({ kind: 'Purchase', price: inputs.homePrice, down: inputs.downPayment });
+    if (calculation.kind === 'Refinance' && refinance) {
+      return coverShares({ kind: 'Refinance', currentRate: refinance.currentAnnualInterestRate, newRate: refinance.newAnnualInterestRate });
+    }
+    return [];
   }
 
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */

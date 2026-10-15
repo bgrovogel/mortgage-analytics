@@ -6,6 +6,20 @@ import { RateWhatIfLoan, whatIf } from './rate-what-if';
 const REACH = 1.5;
 const STEP = 0.125;
 
+/**
+ * A short pulse as the slider crosses a step, on a phone that can (never on a desktop, and not for anyone who has asked
+ * for less motion). It is felt, not announced: nothing depends on it.
+ */
+export function detent(): void {
+  try {
+    const touch = window.matchMedia('(pointer: coarse)').matches;
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (touch && !calm && typeof navigator.vibrate === 'function') navigator.vibrate(8);
+  } catch {
+    // No vibration here; the slider still works.
+  }
+}
+
 const signed = (value: number, format: (amount: number) => string) => `${value < 0 ? '−' : '+'}${format(Math.abs(value))}`;
 
 /**
@@ -81,5 +95,6 @@ export class RateWhatIfComponent {
 
   protected move(event: Event): void {
     this.delta.set(Number((event.target as HTMLInputElement).value));
+    detent();
   }
 }

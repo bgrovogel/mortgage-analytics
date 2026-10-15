@@ -58,6 +58,26 @@ describe('RateWhatIfComponent', () => {
     expect(text('what-if-interest-change')).toMatch(/^−\$[\d,]+ over the loan$/);
   });
 
+  it('gives a short pulse at each step on a touch screen, and none on a desktop or with reduced motion', () => {
+    const vibrate = jest.fn();
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
+    const match = (matches: Record<string, boolean>) =>
+      jest.spyOn(window, 'matchMedia').mockImplementation(((query: string) => ({ matches: matches[query] ?? false })) as never);
+    const { slideTo } = render(referenceLoan());
+
+    match({ '(pointer: coarse)': true });
+    slideTo(0.125);
+    expect(vibrate).toHaveBeenCalledWith(8);
+
+    vibrate.mockClear();
+    match({ '(pointer: coarse)': true, '(prefers-reduced-motion: reduce)': true });
+    slideTo(0.25);
+    match({});
+    slideTo(0.375);
+    expect(vibrate).not.toHaveBeenCalled();
+    jest.restoreAllMocks();
+  });
+
   it('says what a quarter point is worth on this loan', () => {
     expect(render(referenceLoan()).text('what-if-note')).toBe(
       'Each quarter of a point on this loan is about $32.33 a month. Principal and interest only, paid on schedule.');

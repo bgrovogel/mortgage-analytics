@@ -69,6 +69,9 @@
               </form>
             } @else {
               <div class="info">
+                @if (coverOf(c).length > 0) {
+                  <app-scenario-cover class="cover" [shares]="coverOf(c)" [figure]="figure(c) ? masked(c, figure(c)!) : null" />
+                }
                 <h3>{{ c.name }}</h3>
                 @if (figure(c); as figure) {
                   <p class="figure" data-testid="history-figure">{{ masked(c, figure) }}</p>

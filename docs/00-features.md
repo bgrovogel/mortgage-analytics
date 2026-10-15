@@ -187,6 +187,16 @@ year (twelve payments) at a time**, with Previous and Next, a list of the years,
 shown; a loan already being paid opens on the year of its next payment. **All payments** shows the whole schedule at once,
 and the download always has every payment.
 
+#### Arranging the key figures, covers and key dates
+
+The rail of key figures is the reader's: **Arrange these figures** opens a list where each can be put away and moved
+earlier or later (buttons, so the keyboard and a screen reader work; where a figure now stands is announced), and this
+browser remembers it. A saved item has a small **cover** drawn from its own figures (what is put down against borrowed,
+or the old rate against the new) with its payment in serif. **Key dates** (a chip under the payment) lists the dates to
+act on, each a payment on the schedule: when to ask for the mortgage insurance to come off (and what waiting costs),
+when half the loan is paid, and when it is free and clear; **Add all to calendar** saves them as an `.ics` file. On a
+phone, the rate slider gives a short pulse at each step (never on a desktop, nor with reduced motion).
+
 #### Show the math, and privacy
 
 Under the payment, a chip says the schedule is **exact to the cent and ends at $0.00**, and **Show the math** opens the

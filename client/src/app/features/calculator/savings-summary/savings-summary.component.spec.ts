@@ -3,12 +3,17 @@ import { provideRouter } from '@angular/router';
 import { aHousingCosts, aPayment, aPurchase, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { Affordability, AmortizationResponse, CashToClose } from '../../../core/models/amortization.models';
+import { KPI_STORAGE_KEY, KpiPreferences } from './kpi-preferences';
 import { SavingsSummaryComponent } from './savings-summary.component';
 
 describe('SavingsSummaryComponent', () => {
   let fixture: ComponentFixture<SavingsSummaryComponent>;
 
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+  beforeEach(() => {
+    localStorage.removeItem(KPI_STORAGE_KEY);
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+  afterEach(() => localStorage.removeItem(KPI_STORAGE_KEY));
 
   const render = (response: AmortizationResponse) => {
     fixture = TestBed.createComponent(SavingsSummaryComponent);
@@ -86,6 +91,37 @@ describe('SavingsSummaryComponent', () => {
 
     expect(root.querySelector('[data-testid="payment-parts"] app-payment-breakdown')).not.toBeNull();
     expect(text('breakdown-total')).toBe('$3,102.19');
+  });
+
+  describe('arranging the rail', () => {
+    const order = () => [...fixture.nativeElement.querySelectorAll('.rail > .tile dt')].map((dt: Element) => dt.textContent!.trim());
+
+    it('shows the figures in the order the reader chose, and without the ones put away', () => {
+      const prefs = TestBed.inject(KpiPreferences);
+      prefs.move('savings', -1);
+      prefs.move('savings', -1);
+      prefs.toggle('afford');
+
+      render(aResponse());
+
+      expect(order()).toEqual(['Total interest over the loan', 'Paid off']); // with nothing extra paid, the interest is the figure
+    });
+
+    it('changes the order from the dialog, saying where a figure now stands', () => {
+      render(aResponse());
+      const click = (testId: string) => {
+        (fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement).click();
+        fixture.detectChanges();
+      };
+      const first = fixture.nativeElement.querySelector('[data-testid="arrange-list"] li:nth-child(2) .moves button') as HTMLButtonElement;
+
+      first.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="arrange-status"]').textContent).toBe('Paid off is now 1 of 5.');
+      click('arrange-reset');
+      expect(TestBed.inject(KpiPreferences).order()[0]).toBe('cash');
+    });
   });
 
   it('shows what the first payment comes to with the extra principal', () => {
