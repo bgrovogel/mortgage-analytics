@@ -13,15 +13,6 @@
       <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
               data-testid="view-baseline">Standard</button>
     </div>
-    <label class="jump">
-      <span class="sr-only">Jump to a year</span>
-      <select data-testid="jump-year" (change)="jumpTo($event)">
-        <option value="">Jump to year…</option>
-        @for (year of loanYears(); track year) {
-          <option [value]="year">Year {{ year }}</option>
-        }
-      </select>
-    </label>
     <button type="button" class="download" data-testid="download-csv" (click)="download()">Download (CSV)</button>
     <details class="column-picker" data-testid="column-picker">
       <summary>Columns</summary>
@@ -37,6 +28,24 @@
     </details>
   </div>
 </div>
+
+@if (paged()) {
+  <!-- A loan year at a time on the monthly rows; "All payments" is there for anyone who would rather scroll. -->
+  <div class="pager" data-testid="pager">
+    <button type="button" data-testid="page-previous" aria-label="Previous year" [disabled]="page() === 'all' || page() === 1" (click)="step(-1)">‹ Previous</button>
+    <label class="jump">
+      <span class="sr-only">Loan year to show</span>
+      <select data-testid="page-year" (change)="choose($event)">
+        @for (year of loanYears(); track year) {
+          <option [value]="year" [selected]="page() === year">Year {{ year }}</option>
+        }
+        <option value="all" [selected]="page() === 'all'">All payments</option>
+      </select>
+    </label>
+    <button type="button" data-testid="page-next" aria-label="Next year" [disabled]="page() === 'all' || page() === loanYears().length" (click)="step(1)">Next ›</button>
+    <p class="caption" data-testid="page-caption" aria-live="polite">{{ pageCaption() }}</p>
+  </div>
+}
 
 @let t = totals();
 <!-- Everything this schedule costs, whichever columns are showing. -->
@@ -69,7 +78,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (row of rows(); track row.number) {
+        @for (row of shownRows(); track row.number) {
           <tr [class.has-extra]="row.extraPrincipal > 0" [attr.data-year]="yearOf(row)">
             <td class="pinned first">{{ row.number }}</td>
             <td class="pinned second">{{ row.when }}</td>

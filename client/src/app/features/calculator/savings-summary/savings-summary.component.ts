@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TermComponent } from '../../../core/glossary/term.component';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { formatMonths } from '../../../core/formatting/duration';
 import { decimal, usd, usdCents } from '../../../core/formatting/format';
@@ -23,7 +24,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
  */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, RouterLink, TermComponent],
   template: `
     @let r = result();
     @if (r.purchase.isJumbo) {
@@ -47,7 +48,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           }
         </dd>
         @if (r.annualPercentageRate; as apr) {
-          <dd class="note" data-testid="apr"><abbr title="annual percentage rate: the rate counting the lender’s fees">APR</abbr> {{ percent(apr) }}%</dd>
+          <dd class="note" data-testid="apr"><app-term of="APR">APR</app-term> {{ percent(apr) }}%</dd>
         }
         @if (r.buydown) {
           <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</dd>

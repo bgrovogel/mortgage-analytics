@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { aResponse } from '../../../../testing/builders';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { LoanEstimateBoxComponent } from './loan-estimate-box.component';
 
 describe('LoanEstimateBoxComponent', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+
   const render = (response: AmortizationResponse) => {
     const fixture = TestBed.createComponent(LoanEstimateBoxComponent);
     fixture.componentRef.setInput('result', response);

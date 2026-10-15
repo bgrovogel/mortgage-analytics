@@ -45,7 +45,9 @@ describe('SavingsSummaryComponent', () => {
     render(aResponse({ annualPercentageRate: 6.376 }));
 
     expect(text('apr')).toBe('APR 6.376%');
-    expect(fixture.nativeElement.querySelector('[data-testid="apr"] abbr').getAttribute('title')).toBe('annual percentage rate: the rate counting the lender’s fees');
+    const term = fixture.nativeElement.querySelector('[data-testid="apr"] a.term') as HTMLAnchorElement;
+    expect(term.getAttribute('href')).toBe('/glossary#term-apr');
+    expect(term.title).toContain('the yearly cost of the loan counting its fees');
   });
 
   it('drops trailing zeros from the APR, and shows none when there is no rate to speak of', () => {

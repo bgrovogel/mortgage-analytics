@@ -110,6 +110,16 @@ describe('ScheduleTableComponent', () => {
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:schedule');
     });
 
+    it('has every payment, though the table shows a loan year of them', async () => {
+      const payments = Array.from({ length: 36 }, (_, i) => aPayment(i + 1));
+      render(aResponse({ accelerated: aSchedule({ payments }, 36) }));
+      expect(rows()).toHaveLength(12);
+
+      click('download-csv');
+
+      expect((await textOf(blobs[0])).split('\r\n').filter(Boolean)).toHaveLength(1 + 36);
+    });
+
     it('follows the rows and the schedule chosen, and names the file for them', async () => {
       render(response);
       click('view-yearly');
@@ -143,10 +153,10 @@ describe('ScheduleTableComponent', () => {
       }),
     });
 
-    it('shows monthly rows by default', () => {
+    it('shows monthly rows, one loan year at a time', () => {
       render(twoYears());
 
-      expect(rows()).toHaveLength(24);
+      expect([rows().length, rows()[0].querySelector('td')!.textContent]).toEqual([12, '1']);
     });
 
     it('rolls the payments up into one row per loan year', () => {
@@ -164,7 +174,7 @@ describe('ScheduleTableComponent', () => {
       click('view-yearly');
       click('view-monthly');
 
-      expect(rows()).toHaveLength(24);
+      expect(rows()).toHaveLength(12);
     });
   });
 
@@ -276,28 +286,104 @@ describe('ScheduleTableComponent', () => {
       expect(totals).toContain('Everything paid $2,300.00');
     });
 
-    describe('jump to year', () => {
-      const years = (n: number) => aSchedule({ payments: Array.from({ length: n * 12 }, (_, i) => aPayment(i + 1)) }, n * 12);
-      const jumpTo = (year: string) => {
-        const select = fixture.nativeElement.querySelector('[data-testid="jump-year"]') as HTMLSelectElement;
-        select.value = year;
-        select.dispatchEvent(new Event('change'));
+    describe('paging by loan year', () => {
+      const years = (n: number, firstDue = '2099-01-15') => aSchedule({
+        payments: Array.from({ length: n * 12 }, (_, i) => aPayment(i + 1, { dueDate: addMonths(firstDue, i) })),
+      }, n * 12);
+      /** An ISO date `months` after another, on the same day of the month. */
+      const addMonths = (iso: string, months: number) => {
+        const [y, m, d] = iso.split('-').map(Number);
+        const index = (m - 1) + months;
+        return `${y + Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       };
+      const choose = (value: string) => {
+        const select = fixture.nativeElement.querySelector('[data-testid="page-year"]') as HTMLSelectElement;
+        select.value = value;
+        select.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+      };
+      const numbers = () => [...rows()].map((r) => r.querySelector('td')!.textContent!.trim());
+      const caption = () => fixture.nativeElement.querySelector('[data-testid="page-caption"]').textContent.replace(/\s+/g, ' ').trim();
+      const pager = () => fixture.nativeElement.querySelector('[data-testid="pager"]');
 
-      it('lists each year of the schedule, and brings its first row into view', () => {
+      it('starts at year 1 of a loan that has not begun, and says which payments are shown', () => {
         render(aResponse({ accelerated: years(3) }));
-        const first = fixture.nativeElement.querySelector('tbody tr[data-year="2"]') as HTMLElement;
-        first.scrollIntoView = jest.fn();
-        const options = [...fixture.nativeElement.querySelectorAll('[data-testid="jump-year"] option')].map((o: Element) => o.textContent!.trim());
 
-        jumpTo('2');
+        expect(numbers()).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
+        expect(caption()).toBe('Payments 1–12 of 36, loan year 1');
+      });
 
-        expect(options).toEqual(['Jump to year…', 'Year 1', 'Year 2', 'Year 3']);
-        expect(first.scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+      it('lists each year of the schedule, then all of it', () => {
+        render(aResponse({ accelerated: years(3) }));
+        const options = [...fixture.nativeElement.querySelectorAll('[data-testid="page-year"] option')].map((o: Element) => o.textContent!.trim());
+
+        expect(options).toEqual(['Year 1', 'Year 2', 'Year 3', 'All payments']);
+      });
+
+      it('shows the year chosen, and moves a year at a time with the buttons', () => {
+        render(aResponse({ accelerated: years(3) }));
+
+        choose('2');
+        expect([numbers()[0], numbers()[11], rows().length, caption()]).toEqual(['13', '24', 12, 'Payments 13–24 of 36, loan year 2']);
+
+        click('page-next');
+        expect(numbers()[0]).toBe('25');
+        click('page-previous');
+        click('page-previous');
+        expect(numbers()[0]).toBe('1');
+      });
+
+      it('stops at the ends: there is no year before the first or after the last', () => {
+        render(aResponse({ accelerated: years(2) }));
+        const disabled = (id: string) => (fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLButtonElement).disabled;
+
+        expect([disabled('page-previous'), disabled('page-next')]).toEqual([true, false]);
+        click('page-next');
+        expect([disabled('page-previous'), disabled('page-next')]).toEqual([false, true]);
+      });
+
+      it('shows every payment when asked, and has no year to step from then', () => {
+        render(aResponse({ accelerated: years(3) }));
+
+        choose('all');
+
+        expect(rows()).toHaveLength(36);
+        expect(caption()).toBe('All 36 payments');
+        expect((fixture.nativeElement.querySelector('[data-testid="page-next"]') as HTMLButtonElement).disabled).toBe(true);
+      });
+
+      it('opens on the year of the next payment, on a loan already being paid', () => {
+        render(aResponse({ accelerated: years(30, '2020-01-15'), baseline: years(30, '2020-01-15') }));
+
+        expect(Number(numbers()[0])).toBeGreaterThan(12);
+      });
+
+      it('keeps the year when the schedule is switched, or goes to the last one the other has', () => {
+        render(aResponse({ accelerated: years(2), baseline: years(3) }));
+        choose('2');
+        click('view-baseline');
+        expect(numbers()[0]).toBe('13'); // the same year of the longer schedule
+
+        choose('3');
+        expect(numbers()[0]).toBe('25');
+        click('view-accelerated');
+        expect(numbers()[0]).toBe('13'); // it has no third year, so its last
+      });
+
+      it('has no pager for a single year, or on the yearly rows', () => {
+        render(aResponse({ accelerated: years(1) }));
+        expect(pager()).toBeNull();
+
+        render(aResponse({ accelerated: years(3) }));
+        expect(pager()).not.toBeNull();
+        click('view-yearly');
+        expect(pager()).toBeNull();
+        expect(rows()).toHaveLength(3);
       });
 
       it('marks each monthly row with the loan year it is in, and each yearly row with its own', () => {
         render(aResponse({ accelerated: years(2) }));
+        choose('all');
         const monthly = [...fixture.nativeElement.querySelectorAll('tbody tr')].map((r: Element) => r.getAttribute('data-year'));
         expect([monthly[0], monthly[11], monthly[12], monthly[23]]).toEqual(['1', '1', '2', '2']);
 
@@ -307,10 +393,11 @@ describe('ScheduleTableComponent', () => {
         expect(yearly).toEqual(['1', '2']);
       });
 
-      it('does nothing for the choice that is only the prompt', () => {
+      it('does nothing for a choice that is not a year', () => {
         render(aResponse({ accelerated: years(2) }));
 
-        expect(() => jumpTo('')).not.toThrow();
+        expect(() => choose('x')).not.toThrow();
+        expect(numbers()[0]).toBe('1');
       });
     });
 

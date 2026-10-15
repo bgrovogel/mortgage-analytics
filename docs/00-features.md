@@ -165,7 +165,9 @@ Two pages in the footer of every page explain the numbers. **How it's calculated
 buyer meets it (the payment, taxes and insurance, mortgage insurance, cash to close, the APR, what you can afford, rent or
 buy, refinancing, pay off or invest), worked through with the example loan, then says how the numbers are checked and
 names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
-loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term. **Privacy**, in the same
+loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term, and words in running text
+(the APR on the tiles, PMI and escrow on How it's calculated) link there themselves, with the meaning on hover.
+**Privacy**, in the same
 footer, says what happens to what you type: nothing is saved without an account, a share link keeps the numbers after
 its `#`, an account holds an email address, a scrambled password and what you save (all deleted with the account), and
 the browser keeps only your column choice and theme. There is no analytics, advertising or tracking.
@@ -180,7 +182,10 @@ example). **Use it** fills the monthly extra with that amount, and the rest of t
 
 The Schedule tab's **Download (CSV)** saves the schedule shown (monthly or yearly, with or without extra payments) as a
 spreadsheet: every payment or year, with every column the schedule has, whichever are hidden from the table, in plain
-numbers a spreadsheet can add up. **Jump to year** brings the first row of a loan year into view in a long schedule.
+numbers a spreadsheet can add up. The monthly rows come **a loan
+year (twelve payments) at a time**, with Previous and Next, a list of the years, and a caption saying which payments are
+shown; a loan already being paid opens on the year of its next payment. **All payments** shows the whole schedule at once,
+and the download always has every payment.
 
 #### Comparing offers
 

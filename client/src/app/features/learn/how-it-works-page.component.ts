@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TermComponent } from '../../core/glossary/term.component';
 import { ReadingNavComponent } from './reading-nav.component';
 
 /**
@@ -8,7 +9,7 @@ import { ReadingNavComponent } from './reading-nav.component';
  */
 @Component({
   selector: 'app-how-it-works-page',
-  imports: [ReadingNavComponent, RouterLink],
+  imports: [ReadingNavComponent, RouterLink, TermComponent],
   template: `
     <section class="reading" aria-labelledby="how-title">
       <app-reading-nav />
@@ -42,20 +43,21 @@ import { ReadingNavComponent } from './reading-nav.component';
         <section id="taxes">
           <h3>Taxes and insurance</h3>
           <p>Property tax is the taxable value times the rate, less any exemption, and the value grows by the yearly
-            increase you set (a homestead's can rise only so fast). Homeowners insurance and HOA dues are what you enter,
-            rising at the rates you give them. They are collected with each payment into escrow, so the first month's
+            increase you set (a <app-term of="Homestead">homestead</app-term>'s can rise only so fast). Homeowners insurance and
+            <app-term of="HOA">HOA</app-term> dues are what you enter,
+            rising at the rates you give them. They are collected with each payment into <app-term of="Escrow">escrow</app-term>, so the first month's
             total is the loan's payment plus a twelfth of each.</p>
         </section>
 
         <section id="insurance">
           <h3>Mortgage insurance</h3>
-          <p>A conventional loan with less than 20% down carries <strong>PMI</strong>: its yearly rate on the amount
+          <p>A conventional loan with less than 20% down carries <strong><app-term of="PMI">PMI</app-term></strong>: its yearly rate on the amount
             borrowed, a twelfth each month. It ends when the balance reaches 80% of the home's value if you ask, or 78% of
             the original value on the original schedule, automatically. Extra payments bring the first date forward but not
             the second, and the app shows both.</p>
-          <p>An <strong>FHA</strong> loan has an upfront premium of 1.75% of the loan (added to it, unless you pay it at
+          <p>An <strong><app-term of="FHA loan">FHA</app-term></strong> loan has an upfront premium of 1.75% of the loan (added to it, unless you pay it at
             closing) and a yearly premium from HUD's table, which lasts 11 years with 10% or more down and otherwise the
-            whole loan. A <strong>VA</strong> loan has no mortgage insurance but a one-time funding fee, from 1.25% to 3.3%
+            whole loan. A <strong><app-term of="VA loan">VA</app-term></strong> loan has no mortgage insurance but a one-time funding fee, from 1.25% to 3.3%
             of the loan by down payment and prior use.</p>
         </section>
 
@@ -64,7 +66,7 @@ import { ReadingNavComponent } from './reading-nav.component';
           <p>The down payment, plus the lender's costs and other fees, plus prepaid interest (a day's interest at the note
             rate, over a 365-day year, for the days from closing to month end), the first year's insurance and a few months
             of taxes and insurance into escrow, less credits. Credits can pay costs but never the down payment.</p>
-          <p>A seller or builder may pay only so much: for a conventional loan 3% of the price above 90% loan-to-value, 6%
+          <p>A seller or builder may pay only so much: for a conventional loan 3% of the price above 90% <app-term of="Loan-to-value">loan-to-value</app-term>, 6%
             to 75% and 9% below (2% on an investment property); for FHA 6%; for VA 4%, besides the normal closing costs.</p>
         </section>
 

@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TermComponent } from '../../../core/glossary/term.component';
 import { decimal } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 
@@ -9,7 +10,7 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-loan-estimate-box',
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, TermComponent],
   template: `
     @let r = result();
     <h2>Comparing offers</h2>
@@ -17,7 +18,7 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
     <dl>
       @if (r.annualPercentageRate !== null && r.annualPercentageRate !== undefined) {
         <div>
-          <dt data-testid="le-apr"><abbr title="annual percentage rate">APR</abbr> {{ percent(r.annualPercentageRate) }}%</dt>
+          <dt data-testid="le-apr"><app-term of="APR">APR</app-term> {{ percent(r.annualPercentageRate) }}%</dt>
           <dd data-testid="le-apr-note">The yearly rate counting the lender’s fees as well as the interest, so offers with different fees compare fairly.</dd>
         </div>
       }

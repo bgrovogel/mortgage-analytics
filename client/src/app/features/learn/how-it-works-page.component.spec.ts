@@ -20,6 +20,14 @@ describe('HowItWorksPageComponent', () => {
     ]);
   });
 
+  it('links the words the glossary defines to their entries, each to a term that exists', () => {
+    const hrefs = [...render().querySelectorAll<HTMLAnchorElement>('article a.term')].map((a) => a.getAttribute('href'));
+
+    expect(hrefs).toEqual(expect.arrayContaining([
+      '/glossary#term-pmi', '/glossary#term-escrow', '/glossary#term-hoa', '/glossary#term-fha-loan', '/glossary#term-va-loan',
+    ]));
+  });
+
   it('lists its sections at the top, each a link to its place on the page', () => {
     const root = render();
     const sections = [...root.querySelectorAll('article section[id]')].map((s) => s.id);

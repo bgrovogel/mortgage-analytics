@@ -513,7 +513,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.timeSaved, '108 payments sooner').toHaveText('9 yr');
     await expect(calculator.payoffDate, 'payment 252').toHaveText('Dec 2056');
     await expect(calculator.totalInterest, 'the new total interest').toHaveText('$151,876');
-    await calculator.showResults('schedule');
+    await calculator.showAllPayments();
     await expect(calculator.scheduleRows, 'one row per payment').toHaveCount(252);
   });
 
@@ -749,7 +749,7 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.recasts, 're-amortized over the remaining 348 months').toContainText('payment drops from $1,199.10 to $895.60');
     await expect(calculator.recasts, 'the lender fee is shown').toContainText('$250 fee');
     await expect(calculator.samePayoff, 'a recast keeps the payoff date').toHaveText('Same date: a recast lowers the payment instead');
-    await calculator.showResults('schedule');
+    await calculator.showAllPayments();
     await expect(calculator.scheduleRows, 'all 360 payments remain').toHaveCount(360);
     await expect(await calculator.cell(12, 'Extra'), 'the triggering payment is tagged').toContainText('recast');
     await expect(await calculator.cell(13, 'Payment'), 'the next payment is the new amount').toHaveText('$895.60');
@@ -766,6 +766,7 @@ test.describe('Mortgage calculator', () => {
 
     await expect(calculator.recasts, '$9,000 is below the $10,000 minimum').toBeHidden();
     await expect(await calculator.cell(13, 'Payment'), 'the payment is unchanged').toHaveText('$1,199.10');
+    await calculator.showAllPayments();
     await expect(calculator.scheduleRows, 'the lump sum shortens the term instead').not.toHaveCount(360);
   });
 
@@ -819,8 +820,21 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'and the choice is remembered').toBeVisible();
   });
 
+  test('shows the payments a loan year at a time, and steps through the years', async ({ calculator, page }) => {
+    await calculator.showResults('schedule');
+
+    await expect(calculator.scheduleRows, 'a loan year is twelve payments').toHaveCount(12);
+    await expect(page.getByTestId('page-caption'), 'says which payments these are').toContainText('Payments 1–12 of 291, loan year 1');
+
+    await page.getByTestId('page-next').click();
+
+    await expect(page.getByTestId('page-caption'), 'the next year').toContainText('Payments 13–24 of 291, loan year 2');
+    await expect(await calculator.cell(13, 'Payment'), 'its first row is payment 13').toBeVisible();
+  });
+
   test('can switch the table to the standard schedule', async ({ calculator }) => {
     await calculator.showStandardSchedule();
+    await calculator.showAllPayments();
 
     await expect(calculator.scheduleRows, 'the standard schedule runs the full term').toHaveCount(360);
   });

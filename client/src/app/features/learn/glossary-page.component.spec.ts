@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { GLOSSARY, GlossaryPageComponent } from './glossary-page.component';
+import { GLOSSARY } from '../../core/glossary/glossary';
+import { GlossaryPageComponent } from './glossary-page.component';
 
 describe('GlossaryPageComponent', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));

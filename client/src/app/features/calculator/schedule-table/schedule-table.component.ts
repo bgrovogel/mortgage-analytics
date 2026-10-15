@@ -1,8 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { monthOf } from '../../../core/formatting/format';
+import { nextPayment } from '../answer-sentence';
 import { scheduleCsv } from './schedule-csv';
 
 type View = 'accelerated' | 'baseline';
@@ -127,21 +128,58 @@ export class ScheduleTableComponent {
       : this.byYear(payments);
   });
 
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-
-  /** The loan years the schedule runs through, for jumping to one. */
+  /** The loan years the schedule runs through, for paging through them. */
   readonly loanYears = computed(() => Array.from({ length: Math.ceil(this.schedule().payments.length / 12) }, (_, i) => i + 1));
+
+  /** What the reader chose to see: a loan year, or all of it; null until they choose. */
+  private readonly chosen = signal<number | 'all' | null>(null);
+
+  /** The loan year the table opens on: the one with the next payment on a loan being paid, else the first. */
+  private readonly openingYear = computed(() => {
+    const next = nextPayment(this.result());
+    return next ? Math.ceil(next.paymentNumber / 12) : 1;
+  });
+
+  /** The loan year shown, kept within the schedule (the other schedule may be a shorter one), or 'all'. */
+  readonly page = computed(() => {
+    const wanted = this.chosen() ?? this.openingYear();
+    return wanted === 'all' ? wanted : Math.min(Math.max(wanted, 1), this.loanYears().length);
+  });
+
+  /** Whether the monthly rows come a loan year at a time: not for a single year, nor the yearly rows. */
+  readonly paged = computed(() => this.period() === 'monthly' && this.loanYears().length > 1);
+
+  /** The rows on the table: a loan year of payments, or every row. (The spreadsheet always has them all.) */
+  readonly shownRows = computed(() => {
+    const page = this.page();
+    return this.paged() && page !== 'all' ? this.rows().slice((page - 1) * 12, page * 12) : this.rows();
+  });
+
+  /** Which payments are on show, said in words. */
+  readonly pageCaption = computed(() => {
+    const page = this.page();
+    const count = this.schedule().payments.length;
+    if (page === 'all') return `All ${count} payments`;
+    const last = Math.min(page * 12, count);
+    return `Payments ${(page - 1) * 12 + 1}–${last} of ${count}, loan year ${page}`;
+  });
+
+  /** Moves to the previous or next loan year. */
+  protected step(by: number): void {
+    const page = this.page();
+    if (page !== 'all') this.chosen.set(page + by);
+  }
+
+  /** Shows the loan year (or all of them) picked in the list; anything else is ignored. */
+  protected choose(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === 'all') this.chosen.set('all');
+    else if (/^\d+$/.test(value)) this.chosen.set(Number(value));
+  }
 
   /** The loan year a row is in: its own number in the yearly view, payment 1 to 12 being year 1 in the monthly one. */
   protected yearOf(row: ScheduleRow): number {
     return this.period() === 'monthly' ? Math.ceil(row.number / 12) : row.number;
-  }
-
-  /** Brings the first row of a year into view, in the table's own scroll. */
-  protected jumpTo(event: Event): void {
-    const year = (event.target as HTMLSelectElement).value;
-    if (!year) return;
-    this.host.nativeElement.querySelector<HTMLElement>(`tbody tr[data-year="${year}"]`)?.scrollIntoView({ block: 'center' });
   }
 
   /** The whole schedule added up as one row: the source of the footer and the lifetime summary. */

@@ -297,7 +297,17 @@ export class CalculatorPage {
     const headers = (await headerCells.allTextContents()).map((h) => h.trim());
     const index = headers.indexOf(column);
     expect(index, `the schedule table should have a "${column}" column`).toBeGreaterThanOrEqual(0);
-    return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(index);
+    // The monthly rows come a loan year at a time: open the year the payment is in, and count from its first row.
+    const pager = this.page.getByTestId('page-year');
+    if (await pager.count() === 0) return this.scheduleRows.nth(paymentNumber - 1).locator('td').nth(index);
+    await pager.selectOption(String(Math.ceil(paymentNumber / 12)));
+    return this.scheduleRows.nth((paymentNumber - 1) % 12).locator('td').nth(index);
+  }
+
+  /** Shows every payment of the schedule at once, instead of a loan year of them. */
+  async showAllPayments(): Promise<void> {
+    await this.showResults('schedule');
+    await this.page.getByTestId('page-year').selectOption('all');
   }
 
   /** Returns the element, first opening the collapsed section that contains it (if any). */
