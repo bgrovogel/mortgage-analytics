@@ -57,6 +57,21 @@ describe('AppComponent', () => {
       .toEqual([['How it’s calculated', '/how-it-works'], ['Glossary', '/glossary'], ['Privacy', '/privacy']]);
   });
 
+  it('starts with a link past the header, which moves focus to the page rather than leaving it in the navigation', () => {
+    const { fixture, root } = render();
+    document.body.appendChild(root); // focus only lands on what is in the document
+    const skip = root.querySelector('a.skip-link') as HTMLAnchorElement;
+    const main = root.querySelector('main') as HTMLElement;
+
+    skip.click();
+
+    expect(skip.textContent!.trim()).toBe('Skip to the page');
+    expect(skip === root.querySelector('a, button')).toBe(true); // the first thing a keyboard reaches
+    expect(document.activeElement).toBe(main);
+    root.remove();
+    fixture.destroy();
+  });
+
   it('puts the page in the theme chosen on an earlier visit, and offers the choice in the footer', () => {
     localStorage.setItem('theme', 'dark');
 

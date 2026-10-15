@@ -218,8 +218,12 @@ button {
 
     button {
       flex: 1 1 auto;
+      min-width: 0;
       padding-inline: 0.5rem;
-      white-space: nowrap;
+      // Five filters are wider than a phone on one line: "Pay off or invest" takes two lines rather than the page a
+      // sideways scroll.
+      white-space: normal;
+      line-height: 1.2;
     }
   }
 

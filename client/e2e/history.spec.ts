@@ -163,4 +163,15 @@ test.describe('History', () => {
     await calculator.editHome('C');
     await expect(calculator.field('home-price'), 'and Home C').toHaveValue('380,000');
   });
+
+  test('fits a phone: five filters wrap rather than push the page sideways', async ({ signedIn: calculator, page }) => {
+    await calculator.saveAs(`Phone ${tag}`);
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await new HistoryPage(page).openFromNav();
+
+    await expect(page.getByRole('heading', { name: 'Saved calculations' }), 'the list is open').toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(0);
+  });
 });

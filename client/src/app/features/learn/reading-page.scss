@@ -4,6 +4,8 @@
 
 .reading {
   display: grid;
+  // minmax(0, ...): the column may be narrower than its widest child (a formula scrolls inside its own box).
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   max-width: 760px;
   margin: 0 auto;
@@ -23,6 +25,7 @@ header p {
 
 article {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 

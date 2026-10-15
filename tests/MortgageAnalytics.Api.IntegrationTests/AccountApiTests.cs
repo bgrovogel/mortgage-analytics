@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using MortgageAnalytics.Api.IntegrationTests.Infrastructure;
 
 namespace MortgageAnalytics.Api.IntegrationTests;
@@ -23,6 +24,25 @@ public class AccountApiTests : ApiTestBase
             Assert.That(me.GetProperty("email").GetString(), Is.EqualTo(email), "the session knows who is signed in");
             Assert.That(signOut.StatusCode, Is.EqualTo(HttpStatusCode.NoContent), "signing out succeeds");
             Assert.That(afterwards.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), "and ends the session");
+        });
+    }
+
+    [Test]
+    public async Task TheSessionEndpoint_NamesWhoIsSignedIn_AndAnswersOkWhenNobodyIs()
+    {
+        using var visitor = ApiFixture.Factory.CreateClient();
+        var email = UniqueEmail();
+        using var member = await SignUpAsync(email);
+
+        var nobody = await visitor.GetAsync($"{AccountUrl}/session");
+        var nobodyBody = await ReadJsonAsync(nobody);
+        var someone = await ReadJsonAsync(await member.GetAsync($"{AccountUrl}/session"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(nobody.StatusCode, Is.EqualTo(HttpStatusCode.OK), "asking who is signed in is not an error for a visitor, so a page load logs none");
+            Assert.That(nobodyBody.GetProperty("email").ValueKind, Is.EqualTo(JsonValueKind.Null), "and says nobody is");
+            Assert.That(someone.GetProperty("email").GetString(), Is.EqualTo(email), "a signed-in session names its account");
         });
     }
 

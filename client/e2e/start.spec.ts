@@ -34,4 +34,25 @@ test.describe('Start page', () => {
     await expect(page.getByTestId('not-found'), 'it says so').toContainText('That address is not a page here');
     await expect(page.getByTestId('start-questions').locator('a'), 'and offers the six questions').toHaveCount(6);
   });
+
+  test('logs no error on a first visit: asking who is signed in is not a failed request', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    page.on('pageerror', (error) => errors.push(String(error)));
+
+    await page.goto('/calculator/overview');
+    await expect(page.getByTestId('results'), 'the page loaded').toBeVisible();
+
+    expect(errors, 'the console stays empty for a visitor who is not signed in').toEqual([]);
+  });
+
+  test('has a first link that skips the header and puts focus on the page', async ({ page }) => {
+    await page.goto('/privacy');
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Skip to the page' }), 'the first stop for a keyboard').toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('main'), 'focus moves to the page, past the navigation').toBeFocused();
+  });
 });

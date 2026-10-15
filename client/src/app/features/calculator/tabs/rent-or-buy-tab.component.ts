@@ -13,13 +13,14 @@ import { RentOrBuyComponent } from '../rent-or-buy/rent-or-buy.component';
   imports: [CurrencyPipe, RentOrBuyComponent],
   template: `
     <div class="panel rent-or-buy">
-      <h2>Should you rent or buy?</h2>
-      <p class="intro">Buying this home against renting a similar one: what each would leave you, year by year. The rent and what is assumed are with your numbers, on the left.</p>
       @if (result().rentOrBuy; as comparison) {
+        <h2>Should you rent or buy?</h2>
+        <p class="intro">Buying this home against renting a similar one: what each would leave you, year by year. The rent and what is assumed are with your numbers, on the left.</p>
         <app-rent-or-buy [comparison]="comparison" />
       } @else {
+        <!-- The answer above already asks for the rent; this offers one to try. -->
         <p class="prompt" data-testid="rent-or-buy-empty">
-          Enter the rent for a similar home to see when buying comes out ahead, or
+          Buying this home against renting a similar one, year by year. Put the rent in the form. No rent in mind?
           <button type="button" class="try" (click)="tryRent()" data-testid="try-rent">Try {{ suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0' }} a month</button>
           (about 0.65% of the price, a common rule of thumb).
         </p>

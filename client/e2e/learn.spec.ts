@@ -29,4 +29,14 @@ test.describe('How it is calculated and the glossary', () => {
     await expect(page.locator('#term-pmi'), 'the term is on the page').toContainText('Private mortgage insurance');
     await expect(page.locator('#term-pmi'), 'and in view').toBeInViewport();
   });
+
+  test('fits a phone: no page scrolls sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    for (const path of ['/how-it-works', '/glossary', '/privacy']) {
+      await page.goto(path);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${path} fits the screen`).toBeLessThanOrEqual(0);
+    }
+  });
 });

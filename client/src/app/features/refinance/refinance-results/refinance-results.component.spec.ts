@@ -190,7 +190,7 @@ describe('RefinanceResultsComponent', () => {
   describe('the comparison table', () => {
     it('lines up every option, closing costs included in the total cost', () => {
       render(aRefinanceResponse());
-      const headers = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-table"] thead th')].map((th) => (th as HTMLElement).textContent!.trim());
+      const headers = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-table"] thead th, [data-testid="refi-table"] thead td')].map((th) => (th as HTMLElement).textContent!.trim());
       const totalCost = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-total-cost"] td')].map((td) => (td as HTMLElement).textContent!.trim());
 
       expect(headers).toEqual(['', 'Keep current loan', 'Refinance', 'Refinance, keep payment']);
@@ -199,7 +199,7 @@ describe('RefinanceResultsComponent', () => {
 
     it('drops the keep-payment column when that option does not apply', () => {
       render(aRefinanceResponse({ keepingCurrentPayment: null, keepingCurrentPaymentLifetimeSavings: null, current: aRefinanceOption() }));
-      const headers = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-table"] thead th')].map((th) => (th as HTMLElement).textContent!.trim());
+      const headers = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-table"] thead th, [data-testid="refi-table"] thead td')].map((th) => (th as HTMLElement).textContent!.trim());
 
       expect(headers).toEqual(['', 'Keep current loan', 'Refinance']);
     });

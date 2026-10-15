@@ -120,6 +120,11 @@ public static class AccountEndpoints
 
         group.MapIdentityApi<IdentityUser>().Add(ServeOnlyWhatTheAppUses);
 
+        group.MapGet("/session", GetSession)
+            .AllowAnonymous()
+            .WithName("GetSession")
+            .WithSummary("Who the session cookie belongs to. Answers 200 with a null email when nobody is signed in, so a page can ask on load without an error.");
+
         group.MapPost("/logout", SignOut)
             .WithName("SignOut")
             .WithSummary("Sign out, ending the session cookie.");
@@ -179,6 +184,16 @@ public static class AccountEndpoints
     public static string OwnerId(this ClaimsPrincipal user) =>
         user.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("The user has no id claim; the endpoint must require authorization.");
+
+    /// <summary>
+    /// Who is signed in, answered 200 either way. Identity's <c>manage/info</c> answers 401 to a visitor, which the
+    /// browser logs as a failed request on every first page load; this says the same without the error.
+    /// </summary>
+    private static async Task<Ok<SessionResponse>> GetSession(ClaimsPrincipal principal, UserManager<IdentityUser> users)
+    {
+        var user = principal.Identity?.IsAuthenticated == true ? await users.GetUserAsync(principal) : null;
+        return TypedResults.Ok(new SessionResponse(user?.Email));
+    }
 
     private static async Task<NoContent> SignOut(SignInManager<IdentityUser> signInManager)
     {
@@ -243,6 +258,10 @@ public static class AccountEndpoints
         return TypedResults.NoContent();
     }
 }
+
+/// <summary>Who the session belongs to.</summary>
+/// <param name="Email">The signed-in account's email address, or null when nobody is signed in.</param>
+public sealed record SessionResponse(string? Email);
 
 /// <summary>What changing the password needs: the current one, so an open session alone cannot change it.</summary>
 /// <param name="CurrentPassword">The account's current password.</param>

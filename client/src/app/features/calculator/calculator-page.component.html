@@ -24,11 +24,12 @@
                       [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
-                 (calculate)="store.send($event)" (problems)="problems.set($event)" />
-
-  @if (view() === 'rent-or-buy') {
-    <app-rent-settings form />
-  }
+                 (calculate)="store.send($event)" (problems)="problems.set($event)">
+    <!-- What the question asks for sits with the five numbers, above the optional details. -->
+    @if (view() === 'rent-or-buy') {
+      <app-rent-settings question />
+    }
+  </app-loan-form>
 
   <app-buy-tabs tabs />
 

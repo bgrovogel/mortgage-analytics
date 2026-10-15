@@ -15,9 +15,7 @@ describe('AuthService', () => {
   afterEach(() => http.verify());
 
   const answerWhoAmI = (email: string | null) => {
-    const call = http.expectOne('/api/v1/account/manage/info');
-    if (email) call.flush({ email, isEmailConfirmed: false });
-    else call.flush(null, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne('/api/v1/account/session').flush({ email });
   };
 
   it('finds out who is signed in from the session', () => {
@@ -27,7 +25,7 @@ describe('AuthService', () => {
     expect(auth.user()).toEqual({ email: 'alice@example.com' });
   });
 
-  it('treats a 401 as signed out, not as an error', () => {
+  it('treats a null email as signed out, not as an error', () => {
     let failed = false;
     auth.load().subscribe({ error: () => (failed = true) });
     answerWhoAmI(null);

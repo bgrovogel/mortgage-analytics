@@ -25,6 +25,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
   selector: 'app-root',
   imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent],
   template: `
+    <a class="skip-link" href="#main" (click)="skipToPage($event)">Skip to the page</a>
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
       <header class="app-header focused">
@@ -64,7 +65,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
         </div>
       </header>
     }
-    <main>
+    <main id="main" tabindex="-1">
       <router-outlet />
     </main>
     @if (!focused()) {
@@ -128,6 +129,12 @@ export class AppComponent {
     { initialValue: false },
   );
   private readonly stores = inject(CalculationStores);
+
+  /** Moves focus past the header to the page. A plain `#main` link would be taken by the router as a navigation. */
+  protected skipToPage(event: Event): void {
+    event.preventDefault();
+    (document.getElementById('main') as HTMLElement | null)?.focus();
+  }
 
   /** Signs out. The pages stop pointing at saved items, which belonged to the account. */
   signOut(): void {

@@ -38,11 +38,8 @@ import { CalculatorStore } from '../calculator.store';
       </div>
     } @else {
       <div class="panel empty" data-testid="affordability-empty">
-        <h2>Can you afford it?</h2>
-        <p>
-          Add your household's income and your other monthly debts, and this tab measures the home the way a lender
-          would: the share of your income it takes, and the most you could pay.
-        </p>
+        <!-- The answer above already asks the question and says what is needed; this says what the tab will show. -->
+        <p>This tab measures the home the way a lender would: the share of your income it takes, and the most you could pay.</p>
         <button type="button" (click)="addIncome()" data-testid="add-income">Add your income</button>
       </div>
     }

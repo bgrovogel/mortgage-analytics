@@ -221,6 +221,38 @@ main {
   }
 }
 
+// The first stop for a keyboard: out of sight until it has focus, then at the top left over the page.
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: none;
+  }
+}
+
+main:focus {
+  outline: none; // focus lands here from the skip link; the page itself is not a control
+}
+
+// Links that stand on their own line, not in a sentence, are at least 24px tall to hit (WCAG 2.2, target size).
+.app-footer a,
+.app-header.focused .back,
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
 .app-header.focused .back {
   color: var(--accent-text);
   text-decoration: none;

@@ -41,6 +41,14 @@ describe('CalculatorPageComponent', () => {
     expect(el('[data-testid="result-tab-overview"]')!.getAttribute('aria-current')).toBe('page');
   });
 
+  it('puts the rent, for the rent or buy question, above the optional details, as the income is on the afford view', async () => {
+    await open('/calculator/rent-or-buy');
+
+    const rent = el('[data-testid="rent-settings"]')!;
+    const more = el('[data-testid="more-details"]')!;
+    expect(rent.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('sends an old link to the Compare tab to the Compare page', async () => {
     await open('/calculator/compare');
 

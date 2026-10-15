@@ -32,7 +32,7 @@ import { ReadingNavComponent } from './reading-nav.component';
           <p>The principal-and-interest part is the same every month, chosen so the loan is exactly repaid on the last
             payment. With a loan of <strong>P</strong>, a monthly rate <strong>i</strong> (the yearly rate divided by 12)
             and <strong>n</strong> payments:</p>
-          <pre class="formula">payment = P × i ÷ (1 − (1 + i)^−n)</pre>
+          <pre class="formula" tabindex="0">payment = P × i ÷ (1 − (1 + i)^−n)</pre>
           <p>On the example, P is $377,650, i is 0.0052083 (6.25% ÷ 12) and n is 360, so the payment is
             <strong>$2,325.26</strong>. Each month, interest is the balance times i, rounded to the cent; what is left of
             the payment pays principal. The first month's interest is $1,966.93, so $358.33 goes to principal.</p>

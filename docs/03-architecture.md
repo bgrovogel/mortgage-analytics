@@ -186,7 +186,7 @@ ones the app uses (`ServeOnlyWhatTheAppUses`): sign-in is with a session cookie 
    `GET /confirmEmail`.
 3. **Sign in** (`login?useCookies=true`): the response sets an **HttpOnly, SameSite=Strict** cookie. Scripts can't
    read it, and other sites can't make the browser send it. There's no token in `localStorage`.
-4. On startup, `AuthService.load()` (an app initializer) asks `/manage/info` who is signed in, so the header and
+4. On startup, `AuthService.load()` (an app initializer) asks `/session` who is signed in, so the header and
    the History guard know at once.
 5. **Forgot password** answers the same whether or not the address exists, so it can't be used to find accounts.
 6. **Change the password** on **Your account** (`POST /password`, with the current one): a wrong one counts toward

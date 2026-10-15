@@ -229,6 +229,25 @@
         }
       }
     },
+    "/api/v1/account/session": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/logout": {
       "post": {
         "tags": [
@@ -2849,6 +2868,16 @@
           "DiscountPoints"
         ],
         "type": "string"
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "StrategyComparisonResponse": {
         "type": "object",

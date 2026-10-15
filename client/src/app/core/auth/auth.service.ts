@@ -1,6 +1,6 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
+import { Observable, map, switchMap, tap } from 'rxjs';
 
 /** The signed-in user, as far as the app needs to know. */
 export interface User {
@@ -9,7 +9,7 @@ export interface User {
 
 /**
  * Who is signed in. The API keeps the session in an HttpOnly cookie that scripts cannot read, so the
- * app asks the API ("manage/info") instead of looking for a token. Uses ASP.NET Core Identity's
+ * app asks the API ("session") instead of looking for a token. Uses ASP.NET Core Identity's
  * built-in endpoints under /api/v1/account.
  */
 @Injectable({ providedIn: 'root' })
@@ -22,17 +22,10 @@ export class AuthService {
   /** The signed-in user, or null when signed out. */
   readonly user = this.current.asReadonly();
 
-  /** Asks the API who the session belongs to. A 401 simply means nobody is signed in. */
+  /** Asks the API who the session belongs to. It answers 200 either way: a null email means nobody is signed in. */
   load(): Observable<void> {
-    return this.http.get<User>(`${this.baseUrl}/manage/info`).pipe(
-      map(({ email }) => this.current.set({ email })),
-      catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && error.status === 401) {
-          this.current.set(null);
-          return of(undefined);
-        }
-        return throwError(() => error);
-      }),
+    return this.http.get<{ email: string | null }>(`${this.baseUrl}/session`).pipe(
+      map(({ email }) => this.current.set(email ? { email } : null)),
     );
   }
 
