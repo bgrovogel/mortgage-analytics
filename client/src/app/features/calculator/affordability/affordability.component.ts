@@ -32,6 +32,7 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
   selector: 'app-affordability',
   template: `
     <h2 id="affordability-title">Can you afford it?</h2>
+    <p class="budget" data-testid="afford-budget">{{ budget() }}</p>
     <p class="intro" data-testid="afford-intro">{{ intro() }}</p>
     <p class="verdict" [class.warn]="!affordability().mostAllowed.fits" data-testid="afford-verdict">{{ verdict() }}</p>
     <table aria-labelledby="affordability-title" data-testid="affordability">
@@ -82,6 +83,20 @@ export class AffordabilityComponent {
     return qualifyingRateBasis === 'NoteRate'
       ? 'Lenders count the payment at the note rate, even with a buydown.'
       : `Lenders count this adjustable rate’s payment at ${decimal(qualifyingRate, 3)}%, ${ABOVE_START[qualifyingRateBasis]}.`;
+  });
+
+  /** What the household could buy at all, before this home: the answer to "how much house can I afford?". */
+  readonly budget = computed(() => {
+    const { comfortable, mostAllowed } = this.affordability();
+    const loan = LOAN[this.program()];
+    const most = `the most ${loan} allows`;
+    if (comfortable.maxHomePrice > 0 && mostAllowed.maxHomePrice > 0) {
+      return `You could buy a home up to ${usd(comfortable.maxHomePrice)} and stay within the comfortable limits, or up to ${usd(mostAllowed.maxHomePrice)} at ${most}.`;
+    }
+    if (mostAllowed.maxHomePrice > 0) {
+      return `Your debts leave no room for a home within the comfortable limits; ${most} is ${usd(mostAllowed.maxHomePrice)}.`;
+    }
+    return 'Your debts leave no room for a mortgage at these limits.';
   });
 
   readonly intro = computed(() => {

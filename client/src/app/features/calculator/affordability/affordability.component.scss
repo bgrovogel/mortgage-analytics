@@ -90,3 +90,12 @@ tbody th {
     padding: 0.4rem 0.3rem;
   }
 }
+
+// The answer to "how much house can I afford?": the most, said before this home's own measure.
+.budget {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}

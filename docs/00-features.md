@@ -189,6 +189,10 @@ it reaches with the same down payment share, rate and costs, and whether this ho
 | **Most an FHA loan allows** | **31%** | **43%** (HUD; up to 40% and 50% with compensating factors) |
 | **Most a VA loan allows** | (none) | **41%** (past it, VA asks for 20% more residual income) |
 
+The tab leads with the answer to "how much house can I afford?": the most you could pay for a home, comfortably and
+at the most the loan allows, before it measures the home in the form. The start page's question of the same name
+opens it.
+
 On the example with **$150,000** a year and **$600** of debts, the $3,102 payment is **24.82%** of the $12,500 monthly
 income and **29.62%** with the debts: within the comfortable limit, which reaches **$474,091**. A conventional loan's
 45% reaches **$700,615**. An FHA loan's 31% for housing alone can fail a home that conventional allows: its MIP adds

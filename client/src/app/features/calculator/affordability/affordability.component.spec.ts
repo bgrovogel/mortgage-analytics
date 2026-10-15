@@ -25,6 +25,34 @@ describe('AffordabilityComponent', () => {
     return { text, rows };
   };
 
+  it('leads with the most the household could pay for a home, whatever home is in the form', () => {
+    expect(render(typical).text('afford-budget')).toBe(
+      'You could buy a home up to $420,104 and stay within the comfortable limits, or up to $615,229 at the most a conventional loan allows.',
+    );
+  });
+
+  it('says so when the debts leave no room for a home at a limit', () => {
+    const none = { ...typical, comfortable: { ...typical.comfortable, maxHomePrice: 0, maxHousingPayment: 0, fits: false } };
+
+    expect(render(none).text('afford-budget')).toBe(
+      'Your debts leave no room for a home within the comfortable limits; the most a conventional loan allows is $615,229.',
+    );
+  });
+
+  it('says so when no limit leaves room for a home', () => {
+    const none = {
+      ...typical,
+      comfortable: { ...typical.comfortable, maxHomePrice: 0, maxHousingPayment: 0, fits: false },
+      mostAllowed: { ...typical.mostAllowed, maxHomePrice: 0, maxHousingPayment: 0, fits: false },
+    };
+
+    expect(render(none).text('afford-budget')).toBe('Your debts leave no room for a mortgage at these limits.');
+  });
+
+  it('names the program’s limit in the sentence', () => {
+    expect(render(typical, 'Va').text('afford-budget')).toContain('or up to $615,229 at the most a VA loan allows.');
+  });
+
   it('measures this home’s payment against income, and with the other debts', () => {
     expect(render(typical).text('afford-intro')).toBe(
       'This home’s payment, $3,460 a month with taxes, insurance and mortgage insurance, is 27.68% of your $12,500 monthly '

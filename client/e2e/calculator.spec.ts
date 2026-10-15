@@ -237,6 +237,8 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
     await calculator.showResults('affordability');
 
+    await expect(page.getByTestId('afford-budget'), 'the most first, whatever home is in the form')
+      .toHaveText('You could buy a home up to $333,595 and stay within the comfortable limits, or up to $485,133 at the most a conventional loan allows.');
     await expect(page.getByTestId('afford-intro'), 'the payment as a share of $10,000 a month')
       .toHaveText('This home’s payment, $3,128 a month with taxes, insurance and mortgage insurance, is 31.28% of your $10,000 monthly income, and 36.28% with your $500 of other debts.');
     await expect(page.getByTestId('afford-verdict'), 'past 28/36, within 45%')

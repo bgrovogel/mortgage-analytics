@@ -20,7 +20,7 @@ describe('StartPageComponent', () => {
 
     expect(cards.map((a) => [a.querySelector('h3')?.textContent?.trim(), a.getAttribute('href')])).toEqual([
       ['What will this home cost?', '/calculator/overview'],
-      ['Can I afford it?', '/calculator/affordability'],
+      ['How much house can I afford?', '/calculator/affordability'],
       ['Should I rent or buy?', '/calculator/rent-or-buy'],
       ['Which home is better?', '/compare'],
       ['Should I refinance?', '/refinance'],

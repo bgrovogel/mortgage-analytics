@@ -11,7 +11,7 @@ interface Question {
 /** Ordered as a buyer meets them: what it costs, whether they can afford it, then the choices around it. */
 const QUESTIONS: readonly Question[] = [
   { title: 'What will this home cost?', detail: 'Your monthly payment, the cash you need at closing, and when it is paid off.', link: '/calculator/overview' },
-  { title: 'Can I afford it?', detail: 'Your income and debts against the home, and the most you could pay for one.', link: '/calculator/affordability' },
+  { title: 'How much house can I afford?', detail: 'Start from your income and debts: the most you could pay for a home, and whether this one fits.', link: '/calculator/affordability' },
   { title: 'Should I rent or buy?', detail: 'How long you would need to stay for buying to come out ahead of renting.', link: '/calculator/rent-or-buy' },
   { title: 'Which home is better?', detail: 'Up to four homes, or one home from different lenders, side by side.', link: '/compare' },
   { title: 'Should I refinance?', detail: 'Your payment, your break-even and the total cost against the loan you have.', link: '/refinance' },
