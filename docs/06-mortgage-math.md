@@ -115,11 +115,14 @@ decides:
 | Homestead exemption | Yes | No | No |
 | Seller's limit, conventional | 3% / 6% / 9% by loan-to-value | 3% / 6% / 9% | 2% |
 
-- The loan-to-value limits are Fannie Mae's Eligibility Matrix for a one-unit purchase (April 2026). Above 95% on a
-  home lived in, at least one borrower must be a first-time homebuyer; the calculator does not ask, so it allows 97%.
-- FHA insures a principal residence: a borrower must live there within 60 days (HUD Handbook 4000.1). VA asks the
-  veteran to certify they will live there (38 U.S.C. 3704(c)). Texas's homestead is the owner's principal residence
-  (Tax Code 11.13(j)).
+- The loan-to-value limits are Fannie Mae's Eligibility Matrix for a one-unit purchase (August 5, 2026, Desktop
+  Underwriter 12.1). Above 95% on a home lived in, its note (1) asks that at least one borrower be a first-time
+  homebuyer; the calculator does not ask, so it allows 97%.
+- FHA insures a principal residence: at least one borrower must live there within 60 days of signing (HUD Handbook
+  4000.1 II.A.1.b.iii). The same section allows a secondary residence only with HUD's written approval, never a
+  vacation home, and no investment property but a few nonprofit and HUD-owned-home cases; the calculator allows
+  neither. VA asks the veteran to certify they will live there (38 U.S.C. 3704(c)). Texas's homestead is a home
+  "occupied as the individual's principal residence by an owner" (Tax Code 11.13(j)(1)(D)).
 - The limits are on a loan being made: a first payment today or later. A loan already being paid can be owed above
   the home's value, and is shown as it is.
 - Not modelled: the higher rates lenders charge for a second home or an investment property (the rate is what you

@@ -14,12 +14,14 @@ public enum Occupancy
 }
 
 /// <summary>
-/// What a home's use allows. A conventional loan's most is Fannie Mae's Eligibility Matrix for a one-unit purchase:
-/// 97% of the price for a principal residence with a fixed rate (above 95%, at least one borrower must be a
-/// first-time homebuyer, which is not asked here) or 95% with an adjustable one, 90% for a second home and 85% for an
-/// investment property. FHA and VA are only for a home the borrower lives in: HUD insures a principal residence
-/// (Handbook 4000.1), and VA asks the veteran to certify they will live there (38 U.S.C. 3704(c)). Texas's homestead
-/// exemptions are only for the owner's principal residence (Tax Code 11.13(j)).
+/// What a home's use allows. A conventional loan's most is Fannie Mae's Eligibility Matrix for a one-unit purchase
+/// (August 5, 2026): 97% of the price for a principal residence with a fixed rate (above 95%, at least one borrower
+/// must be a first-time homebuyer, which is not asked here) or 95% with an adjustable one, 90% for a second home and
+/// 85% for an investment property. FHA and VA are only for a home the borrower lives in: HUD insures a principal
+/// residence a borrower moves into within 60 days (Handbook 4000.1 II.A.1.b.iii, which allows a secondary residence
+/// only with its written approval, not modelled), and VA asks the veteran to certify they will live there
+/// (38 U.S.C. 3704(c)). Texas's homestead exemptions are only for the owner's principal residence (Tax Code
+/// 11.13(j)(1)(D)).
 /// </summary>
 public static class OccupancyRules
 {
