@@ -436,6 +436,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **A first visit.** The start page offers six questions, each with what it comes to on the example numbers ("With
   the example: $3,102 a month"); each form says its numbers are an example until the first edit. An address that is
   not a page keeps its address and shows the same six questions, with a note that it is not one.
+- **Undo.** Once the numbers have been changed, **Undo** beside Reset takes back the last change (a run of typing
+  is one), back through the last twenty. The first visit to Buy a home shows three short hints, dismissed for good.
 - **Reading pages.** How it's calculated (with its sections listed at the top), Glossary and Privacy sit in one row, so
   a reader moves between them without going back.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:

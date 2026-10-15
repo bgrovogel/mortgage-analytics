@@ -191,3 +191,10 @@
     color: var(--text-secondary);
   }
 }
+
+// Reset and Undo side by side, under the heading once the numbers are the visitor's own.
+.reset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}

@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { nextPayment, viewAnswer } from './answer-sentence';
 import { BuyTabsComponent, currentBuyView } from './buy-tabs/buy-tabs.component';
 import { CalculatorStore } from './calculator.store';
+import { FirstVisitHintsComponent } from './first-visit/first-visit-hints.component';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { RentSettingsComponent } from './rent-settings/rent-settings.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
@@ -16,7 +17,7 @@ import { AmortizationResponse } from '../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, LoanFormComponent, RentSettingsComponent, RouterOutlet],
+  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, FirstVisitHintsComponent, LoanFormComponent, RentSettingsComponent, RouterOutlet],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

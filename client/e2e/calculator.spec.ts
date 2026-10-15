@@ -290,6 +290,16 @@ test.describe('Mortgage calculator', () => {
       .toContainText('within the comfortable 28% and 36%');
   });
 
+  test('undo takes back the last change to the numbers', async ({ calculator, page }) => {
+    await calculator.set('home-price', 500_000);
+    await expect(page.getByTestId('undo'), 'once the typing pauses, there is a change to take back').toBeVisible();
+
+    await page.getByTestId('undo').click();
+
+    await expect(calculator.field('home-price'), 'the price before it').toHaveValue('415,000');
+    await expect(page.getByTestId('undo'), 'and nothing further to undo').toBeHidden();
+  });
+
   test('saving up the cash to close: how long it takes at what you can put away', async ({ calculator, page }) => {
     await calculator.showResults('closing');
 

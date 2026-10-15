@@ -21,6 +21,8 @@ export const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36)
  * - `account`: a new user, registered, confirmed (with the link from the dev mailbox) and signed in through
  *   the API. `page.request` shares the browser's cookies, so the browser is signed in too.
  * - `signedIn`: the calculator, opened after signing in.
+ * - `showHints` (option, off): the first-visit hints are dismissed before each page loads, so they do not sit above
+ *   every test's page; a test of the hints turns it on with `test.use({ showHints: true })`.
  * - `withinContentSecurityPolicy` (automatic): fails any test in which the browser blocked something under the
  *   app's Content-Security-Policy, so a change that only works without the policy cannot pass.
  */
@@ -29,7 +31,18 @@ export const test = base.extend<{
   account: Account;
   signedIn: CalculatorPage;
   withinContentSecurityPolicy: void;
+  showHints: boolean;
+  dismissHints: void;
 }>({
+  showHints: [false, { option: true }],
+  dismissHints: [
+    async ({ page, showHints }, use) => {
+      if (!showHints) await page.addInitScript(() => localStorage.setItem('first-visit-hints', '1'));
+      await use();
+    },
+    { auto: true },
+  ],
+
   withinContentSecurityPolicy: [
     async ({ page }, use) => {
       const violations: string[] = [];

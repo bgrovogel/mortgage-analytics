@@ -5,7 +5,12 @@
     @if (example()) {
       <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
     } @else {
-      <button type="button" class="reset" data-testid="reset-example" (click)="resetToExample()">Reset to the example numbers</button>
+      <div class="reset-row">
+        <button type="button" class="reset" data-testid="reset-example" (click)="resetToExample()">Reset to the example numbers</button>
+        @if (canUndo()) {
+          <button type="button" class="reset" data-testid="undo" (click)="undo()">Undo</button>
+        }
+      </div>
     }
     @if (sharedFrom(); as shared) {
       <p class="hint" data-testid="loan-shared">

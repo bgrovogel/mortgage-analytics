@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { FhaLimitsService } from '../../../core/services/fha-limits.service';
 import { FHA_LIMITS as LIMITS } from '../../../../testing/builders';
 import { FormNavigator } from '../../../core/forms/form-navigator';
+import { UNDO_PAUSE_MS } from '../../../core/forms/undo-history';
 import { LoanFormComponent } from './loan-form.component';
 
 @Component({ template: '' })
@@ -35,6 +36,27 @@ describe('LoanFormComponent', () => {
   };
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
+
+  describe('undo', () => {
+    afterEach(() => jest.useRealTimers());
+
+    it('goes back to the numbers before the last change, once there is one', () => {
+      jest.useFakeTimers();
+      expect(el('undo')).toBeNull();
+
+      controls().homePrice.setValue(500_000);
+      jest.advanceTimersByTime(UNDO_PAUSE_MS);
+      fixture.detectChanges();
+      expect(el('undo')).not.toBeNull();
+
+      (el('undo') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(controls().homePrice.value).toBe(415_000);
+      expect(el('undo')).toBeNull();
+      expect(last().homePrice).toBe(415_000); // and the results follow
+    });
+  });
 
   describe('for the question being asked', () => {
     const openView = async (url: string) => {

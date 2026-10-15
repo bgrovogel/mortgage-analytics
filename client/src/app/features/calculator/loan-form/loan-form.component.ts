@@ -9,6 +9,7 @@ import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
+import { UndoHistory } from '../../../core/forms/undo-history';
 import { formatMonths } from '../../../core/formatting/duration';
 import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
@@ -143,6 +144,12 @@ export class LoanFormComponent implements OnInit {
 
   /** True while a request is being loaded into the form, so its many changes do not each emit. */
   private restoring = false;
+
+  /** What the numbers were before each change the visitor made, for Undo. */
+  private readonly undoHistory = new UndoHistory<AmortizationRequest | null>(null);
+
+  /** True when there is a change to take back. */
+  readonly canUndo = this.undoHistory.canUndo;
 
   readonly rules = rules;
   readonly lumpSumRules = LUMP_SUM_RULES;
@@ -325,7 +332,11 @@ export class LoanFormComponent implements OnInit {
 
     // Recalculate as the user types: every change that leaves the form valid produces a request.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      if (!this.restoring && this.canSend()) this.calculate.emit(this.toRequest());
+      if (!this.restoring && this.canSend()) {
+        const request = this.toRequest();
+        this.undoHistory.note(request);
+        this.calculate.emit(request);
+      }
     });
 
     // A result asking for one of the loan's inputs ("Add your income") opens its section and puts the cursor in it.
@@ -368,6 +379,7 @@ export class LoanFormComponent implements OnInit {
     if (initial) this.restore(initial);
     this.startFromSharedLoan();
     this.example = exampleUntilEdited(this.form, !initial && !this.sharedFrom(), this.destroyRef);
+    this.undoHistory.reset(this.canSend() ? this.toRequest() : null);
     this.submit();
   }
 
@@ -379,6 +391,16 @@ export class LoanFormComponent implements OnInit {
     this.restore(toLoanRequest(loanForm(this.fb), 1));
     this.sharedFrom.set(null);
     this.example = exampleUntilEdited(this.form, true, this.destroyRef);
+    // Starting over is a step like any other: it can be undone.
+    this.undoHistory.note(this.canSend() ? this.toRequest() : null);
+    this.submit();
+  }
+
+  /** Takes back the last change: the numbers before it, calculated again. */
+  undo(): void {
+    const previous = this.undoHistory.undo();
+    if (!previous) return;
+    this.restore(previous);
     this.submit();
   }
 
