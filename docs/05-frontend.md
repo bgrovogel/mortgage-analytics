@@ -204,7 +204,7 @@ Fixed, temporary buydown (1-0, 2-1, 3-2-1, 1-1), or ARM (5/1, 7/1, 10/1, 5/6, 7/
 
 `<app-calculation-page>` gives every calculator page the same structure through **content projection**: the
 form goes in the `form` slot, results in the default slot. It opens with the page's question and one line on how it
-answers it (`heading`, `intro`), then handles Save, API errors, the "results are for your last valid inputs" notice
+answers it (`heading`, `intro`), then handles Save and the Share menu (`<app-share-menu>`: Copy link and Print, one button that follows the menu-button keyboard pattern), API errors, the "results are for your last valid inputs" notice
 (the results fade beneath it, so old numbers aren't read as current), and the placeholder before the first result.
 The form is part of the page and scrolls with it: an earlier version kept it in view in a box that scrolled on its
 own, which hid its last sections.

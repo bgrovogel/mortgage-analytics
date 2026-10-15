@@ -75,23 +75,6 @@
   gap: 0.5rem;
 }
 
-// The same look as Copy link and Save beside it.
-.print {
-  font: inherit;
-  min-height: 36px;
-  padding: 0 0.9rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--text-primary);
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-}
-
 // Shown only on paper (styles.scss hides the rest of the page's controls there).
 .print-summary {
   display: none;

@@ -14,6 +14,7 @@ test.describe('Share links', () => {
     await calculator.calculate();
     await calculator.showResults('closing');
 
+    await page.getByTestId('share-menu').click();
     await page.getByTestId('share-copy').click();
     await expect(page.getByTestId('share-status'), 'the link is copied, and says what it leaves out')
       .toHaveText('Link copied. Anyone with it sees these numbers. Your income and debts are left out.');

@@ -16,15 +16,16 @@ test.describe('Print', () => {
       window.print = () => { (window as unknown as { printed: number }).printed++; };
     });
 
+    await page.getByTestId('share-menu').click();
     await page.getByTestId('print').click();
-    expect(await page.evaluate(() => (window as unknown as { printed: number }).printed), 'the Print button opens the print dialog').toBe(1);
+    expect(await page.evaluate(() => (window as unknown as { printed: number }).printed), 'the Print choice opens the print dialog').toBe(1);
 
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
     await page.emulateMedia({ media: 'print' });
     await expect(page.locator('html'), 'printed in the light theme, though the screen is dark').toHaveAttribute('data-theme', 'light');
     await expect(page.getByTestId('print-summary'), 'what the printout is for').toContainText('Mortgage Analytics · Calculator: $432,100 home');
     await expect(page.getByTestId('form-panel'), 'no form on paper').toBeHidden();
-    await expect(page.getByTestId('print'), 'nor the page’s controls').toBeHidden();
+    await expect(page.getByTestId('share-menu'), 'nor the page’s controls').toBeHidden();
     await expect(calculator.totalMonthlyPayment, 'but the results').toBeVisible();
 
     await page.emulateMedia({ media: 'screen' });

@@ -10,7 +10,9 @@ import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, computed, eff
     @if (copied()) {
       <p class="status" role="status" data-testid="share-status">Link copied. Anyone with it sees these numbers.{{ noteAfter() }}</p>
     }
-    <button type="button" data-testid="share-copy" [disabled]="!fragment()" (click)="copy()">Copy link</button>
+    @if (showButton()) {
+      <button type="button" data-testid="share-copy" [disabled]="!fragment()" (click)="copy()">Copy link</button>
+    }
     @if (manual(); as url) {
       <div class="manual" data-testid="share-manual">
         <label for="share-url">Copy this link: anyone with it sees these numbers.{{ noteAfter() }}</label>
@@ -30,6 +32,9 @@ export class ShareLinkComponent {
 
   /** What the link leaves out, or includes that someone might not expect. */
   readonly note = input<string | null>(null);
+
+  /** False when something else holds the Copy link button (a menu) and this says what copying did. */
+  readonly showButton = input(true);
 
   /** The fragment last copied: the status holds only while the inputs are still the ones copied. */
   private readonly copiedFragment = signal<string | null>(null);

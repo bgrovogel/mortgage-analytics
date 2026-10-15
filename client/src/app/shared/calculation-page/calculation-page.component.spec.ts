@@ -76,29 +76,36 @@ describe('CalculationPageComponent', () => {
     expect(text('results')).not.toContain('Working…');
   });
 
-  it('offers a link to the inputs beside Save, once there are inputs', () => {
+  /** Opens the Share menu, which holds Copy link and Print. */
+  const openShare = (fixture: { nativeElement: HTMLElement; detectChanges: () => void }) => {
+    fixture.nativeElement.querySelector<HTMLButtonElement>('[data-testid="share-menu"]')!.click();
+    fixture.detectChanges();
+  };
+  const item = (fixture: { nativeElement: HTMLElement }, id: string) => fixture.nativeElement.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!;
+
+  it('offers a link to the inputs in the Share menu, once there are inputs', () => {
     const { host, fixture } = render();
-    const copy = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="share-copy"]')!;
-    expect(copy().disabled).toBe(true);
+    openShare(fixture);
+    expect(item(fixture, 'share-copy').disabled).toBe(true);
 
     host.store.send(1);
     fixture.detectChanges();
 
-    expect(copy().disabled).toBe(false);
+    expect(item(fixture, 'share-copy').disabled).toBe(false);
   });
 
   it('prints the results under a line saying what they are for', () => {
     jest.setSystemTime(new Date(2026, 9, 14));
     const print = jest.spyOn(window, 'print').mockImplementation(() => undefined);
     const { host, fixture, text } = render();
-    const button = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="print"]')!;
-    expect(button().disabled).toBe(true); // nothing to print yet
+    openShare(fixture);
+    expect(item(fixture, 'print').disabled).toBe(true); // nothing to print yet
 
     host.store.send(375_000);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
     host.store.responses.next('done');
     fixture.detectChanges();
-    button().click();
+    item(fixture, 'print').click();
 
     expect(print).toHaveBeenCalled();
     expect(text('print-summary')).toBe('Mortgage Analytics · Test: 375000 · Oct 14, 2026');

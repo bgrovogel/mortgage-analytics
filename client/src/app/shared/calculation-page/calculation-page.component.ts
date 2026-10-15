@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
-import { ShareLinkComponent } from '../share-link/share-link.component';
+import { ShareMenuComponent } from '../share-menu/share-menu.component';
 
 /** The date a printout was made, as people write it: "Oct 14, 2026". */
 const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
@@ -22,7 +22,7 @@ const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
  */
 @Component({
   selector: 'app-calculation-page',
-  imports: [SaveCalculationComponent, ShareLinkComponent],
+  imports: [SaveCalculationComponent, ShareMenuComponent],
   templateUrl: './calculation-page.component.html',
   styleUrl: './calculation-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
