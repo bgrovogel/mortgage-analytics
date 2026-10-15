@@ -65,12 +65,12 @@ on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the por
 
 | # | Do this | Say, and point at |
 |---|---|---|
-| 1 | **Calculator**, with the example numbers: an average US purchase, a $415,000 home, 9% down, today's average 6.25%, 30 years, 0.9% property tax, $3,100 of insurance, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. Four answer tiles lead: the payment, the cash to close ($48,129), can you afford it (Add income), and the savings. $108,039 net savings ($103,476 less interest plus $4,563 of PMI), paid off 5 years 9 months sooner. PMI ends in July 2032, 2 years 5 months sooner, because asking at 80% is the default; the tile says that without asking, the servicer only has to remove it in February 2036, costing $6,766 more. The required payment is $3,102.19. Dates follow the first-payment date, so they move if the default has. |
+| 1 | **Buy a home**, with the example numbers: an average US purchase, a $415,000 home, 9% down, today's average 6.25%, 30 years, 0.9% property tax, $3,100 of insurance, $200 a month extra. Change the price and let it update. | Results follow as you type, with no button. Four answer tiles lead: the payment, the cash to close ($48,128.79), can you afford it (Add income), and the savings. $108,039 net savings ($103,476 less interest plus $4,563 of PMI), paid off 5 years 9 months sooner. PMI ends in July 2032, 2 years 5 months sooner, because asking at 80% is the default; the tile says that without asking, the servicer only has to remove it in February 2036, costing $6,766 more. The required payment is $3,102.19. Dates follow the first-payment date, so they move if the default has. |
 | 2 | Switch the loan type to **FHA**, pick a county, then raise the price past its limit. | The limit is HUD's, by county; over it the app warns. The county list comes from `GET /api/v1/fha/loan-limits`. |
 | 3 | The **Projection** tab, then the equity chart. | Every cost of owning it over the life of the loan, not just principal and interest. |
 | 4 | **Refinance**: a 2024 loan, $300,000 at 7% with 28 years left, into today's 6.25% for 30 years, with $6,000 of closing costs. Then change the years left to 25 and the new rate to 6%. | The payment drops $191.68 a month and refinancing saves **$14,067**, less than the rate alone would because the clock restarts two years; break-even is July 2029, and "keep paying $2,038.83 a month" saves $108,377. With 25 years left into 6%, it costs **$17,415 more**: a lower payment that loses money. |
 | 5 | **Pay off or invest**: $300,000 at 6.5%, 28 years left, $1,000 a month. Switch to **Bad decade first**. | "Invest the difference" is recommended, $16,791 ahead of the hybrid, but not guaranteed: after a lost decade, paying the mortgage off first wins by $20,915. The household's 17% tax rate is the 12% federal bracket plus a 5% state, as the hint under it shows. |
-| 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **History** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
+| 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **Saved** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
 | 7 | Open **/swagger** and try `POST /api/v1/amortization/calculate`. | The same API the calculator uses, documented from the code's own comments. |
 
 Then, if there is time, the offer the deck closes on: *name a feature and I'll show the rule, the test that pins
@@ -542,7 +542,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,234 .NET · 966 Jest · 124 Playwright (21 axe scans); 85% coverage gate |
+| Tests | 1,234 .NET · 979 Jest · 125 Playwright (21 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

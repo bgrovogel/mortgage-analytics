@@ -86,6 +86,12 @@ the home's value, is shown as it is.
     allow, with the peak payment and total interest.
   - Extra payments lower the payment at each reset, as lenders re-amortize the smaller balance.
 
+**What if the rate were different?** On a fixed-rate loan the Overview has a slider from a point and a half below the
+rate to a point and a half above it, in eighths of a point. It prices the principal and interest at that rate and what
+it does to the interest over the loan: on $377,650 at 6.25%, half a point more is $2,449.43 a month, $124.17 more. It
+says what a quarter of a point is worth on this loan. It is left out for a buydown or an adjustable rate, which have
+no single rate to move.
+
 ### Extra payments and recasting
 
 - **Extra payments:** monthly, yearly and one-time lump sums, in any combination. An extra payment larger than the

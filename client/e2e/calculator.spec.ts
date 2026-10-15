@@ -23,6 +23,21 @@ test.describe('Mortgage calculator', () => {
     await expect(calculator.scheduleRows.first(), 'the schedule table has rows').toBeVisible();
   });
 
+  test('prices a half point more on the rate, and goes back to the rate as it is', async ({ calculator, page }) => {
+    await expect(page.getByTestId('what-if-payment'), 'it starts at the example loan: $377,650 at 6.25%').toHaveText('$2,325.26/mo');
+
+    await page.getByTestId('what-if-slider').fill('0.5');
+
+    await expect(page.getByTestId('what-if-rate'), 'a half point above 6.25%').toHaveText('6.75%');
+    await expect(page.getByTestId('what-if-payment'), 'the payment at that rate').toHaveText('$2,449.43/mo');
+    await expect(page.getByTestId('what-if-payment-change'), 'and what it adds each month').toHaveText('+$124.17 a month');
+    await expect(calculator.monthlyPayment, 'the loan itself is unchanged').toHaveText('$2,325.26');
+
+    await page.getByTestId('what-if-reset').click();
+
+    await expect(page.getByTestId('what-if-rate'), 'back to the loan as it is').toHaveText('6.25%');
+  });
+
   test('keeps advanced options collapsed, each summarized in one line', async ({ calculator }) => {
     for (const id of ['section-loan', 'section-costs', 'section-closing', 'section-income', 'section-options', 'section-growth']) {
       await expect(calculator.section(id), `${id} should start closed`).not.toHaveAttribute('open');
@@ -826,9 +841,12 @@ test.describe('On a phone', () => {
 
 test('spaces the overview evenly: no empty row adds a second gap above the charts', async ({ calculator, page }) => {
   const headline = await calculator.headline.boundingBox();
+  const whatIf = await page.getByTestId('rate-what-if').boundingBox();
   const charts = await page.locator('app-overview-tab .charts').boundingBox();
 
-  expect(charts!.y - (headline!.y + headline!.height), 'one 1.25rem gap between the headline and the charts, for a fixed-rate loan')
+  expect(whatIf!.y - (headline!.y + headline!.height), 'one 1.25rem gap between the headline and the rate slider, for a fixed-rate loan')
+    .toBeLessThanOrEqual(21);
+  expect(charts!.y - (whatIf!.y + whatIf!.height), 'and one more between the slider and the charts, with no empty row in between')
     .toBeLessThanOrEqual(21);
 });
 
