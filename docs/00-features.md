@@ -134,6 +134,11 @@ What you bring to closing besides the monthly payment, laid out as page 2 of a L
 The Closing tab lists each line with how it was worked out, and the total. The example's $5,000 of fees, 15 days of
 interest and 3 months of escrow on the $415,000 home come to **$10,778.79** on top of the $37,350 down payment.
 
+**How long to save it.** Under the lines, the tab asks what you have saved, what you can put away each month and
+what it earns (a savings account's 4% to start), and says how long until you would have the cash to close:
+$1,000 a month from nothing at 4% reaches the example's $48,128.79 in 3 yr 9 mo. These three figures are the
+panel's own and are not part of the loan.
+
 #### What a seller or builder may pay
 
 Builders often offer money toward closing, or a buydown, as an incentive, but the loan limits how much of it can pay

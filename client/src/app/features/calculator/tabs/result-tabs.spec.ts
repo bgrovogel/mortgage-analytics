@@ -151,6 +151,13 @@ describe('result tabs', () => {
       expect(render(ClosingTabComponent).nativeElement.querySelector('[data-testid="cash-to-close-total"]')?.textContent).toBe('$29,489.09');
     });
 
+    it('asks how long it would take to save the cash to close', () => {
+      answer({ cashToClose: cash });
+      const root = render(ClosingTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="saving-up-answer"]')?.textContent).toContain('you would have $29,489 in');
+    });
+
     it('weighs the seller’s offer, and weighs it again when its settings change', () => {
       answer({ cashToClose: cash, sellerOffer: offer });
       const fixture = render(ClosingTabComponent);

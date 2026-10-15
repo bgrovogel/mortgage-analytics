@@ -272,6 +272,18 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('saving up the cash to close: how long it takes at what you can put away', async ({ calculator, page }) => {
+    await calculator.showResults('closing');
+
+    await expect(page.getByTestId('saving-up-answer'), 'starts from $1,000 a month at 4%')
+      .toContainText('At $1,000 a month, earning 4%, you would have $48,129 in 3 yr 9 mo.');
+
+    await page.getByTestId('saved-so-far').fill('30000');
+
+    await expect(page.getByTestId('saving-up-answer'), 'sooner with $30,000 already saved')
+      .toContainText('you would have $48,129 in 1 yr');
+  });
+
   test('a monthly budget: the highest price it reaches, with no income given', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
     await calculator.set('monthly-budget', 2_500);

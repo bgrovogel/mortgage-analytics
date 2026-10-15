@@ -3,6 +3,7 @@ import { FormNavigator } from '../../../core/forms/form-navigator';
 import { CalculatorStore } from '../calculator.store';
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { LoanEstimateBoxComponent } from '../loan-estimate-box/loan-estimate-box.component';
+import { SavingUpComponent } from '../saving-up/saving-up.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 
 /**
@@ -11,10 +12,11 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
  */
 @Component({
   selector: 'app-closing-tab',
-  imports: [CashToCloseComponent, LoanEstimateBoxComponent, SellerOfferComponent],
+  imports: [CashToCloseComponent, LoanEstimateBoxComponent, SavingUpComponent, SellerOfferComponent],
   template: `
     @if (result().cashToClose; as cash) {
       <div class="panel"><app-cash-to-close [cash]="cash" [program]="result().program" /></div>
+      <div class="panel" data-testid="saving-up"><app-saving-up [target]="cash.total" /></div>
     }
     <div class="panel" data-testid="loan-estimate-box"><app-loan-estimate-box [result]="result()" /></div>
     @if (result().sellerOffer; as offer) {
