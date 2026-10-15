@@ -87,7 +87,7 @@ test.describe('Accounts', () => {
 
   test('saving while signed out asks you to sign in, then brings you back to save', async ({ account, page }) => {
     await page.request.post('/api/v1/account/logout');
-    await page.goto('/');
+    await page.goto('/calculator');
     await page.getByTestId('home-price').fill('410000');
     await page.getByTestId('save-open').click();
     await expect(page.getByTestId('save-sign-in'), 'signed out, Save explains what it needs').toContainText('Sign in to save');

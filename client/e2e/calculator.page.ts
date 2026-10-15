@@ -83,7 +83,7 @@ export class CalculatorPage {
 
   /** Opens the app and waits for the first (automatic) calculation to render. */
   async open(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto('/calculator');
     await expect(this.monthlyPayment, 'the default example should calculate on load').toBeVisible();
     await this.calculate();
   }
@@ -254,7 +254,7 @@ export class CalculatorPage {
 
   /** Goes to Compare homes from the page links, where Home A is the calculator's loan. */
   async compareHomes(): Promise<void> {
-    await this.page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Compare homes' }).click();
+    await this.page.getByTestId('result-tab-compare').click();
     await expect(this.page, 'the Compare homes page').toHaveURL(/\/compare$/);
   }
 

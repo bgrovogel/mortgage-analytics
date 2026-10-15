@@ -67,7 +67,7 @@ test.describe('One loan across the pages', () => {
     await box(page, 'balance').fill('280000');
     await box(page, 'years-left').fill('22.5');
 
-    await go(page, 'Calculator');
+    await go(page, 'Buy a home');
     await expect(box(page, 'home-price'), "the home's value").toHaveValue('400,000');
     await expect(box(page, 'down-payment'), 'what is not owed').toHaveValue('120,000');
     await expect(box(page, 'term-years'), 'the years left, to the nearest whole year').toHaveValue('23');
@@ -128,7 +128,7 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'refi-table').locator('tr', { hasText: 'Payments' }).locator('td').first(),
       "the API worked out the payments left from the loan's own schedule").toHaveText(String(360 - made));
 
-    await go(page, 'Calculator');
+    await go(page, 'Buy a home');
     await expect(box(page, 'first-payment-date'), 'the real start').toHaveValue(firstPayment);
     await expect(box(page, 'term-years'), 'the original term').toHaveValue('30');
     await expect(box(page, 'existing-loan'), 'the same loan, as far along').toContainText(`payment ${made + 1} of 360 is next`);
@@ -146,7 +146,7 @@ test.describe('One loan across the pages', () => {
     await expect(box(page, 'current-rate-summary'), "the current loan is the same ARM, its reset 60 payments away")
       .toHaveText('Adjustable: 6.5% for 60 more payments, then toward 8.5% (caps 5/2/5, floor 2.75%)');
 
-    await go(page, 'Calculator');
+    await go(page, 'Buy a home');
     await expect(box(page, 'rate-summary'), 'a new loan fixed for 60 payments, then yearly: a 5/1 ARM')
       .toHaveText('5/1 ARM: 6.5% for 5 yr, then toward 8.5% (caps 5/2/5, floor 2.75%)');
   });
@@ -155,7 +155,7 @@ test.describe('One loan across the pages', () => {
     await page.goto('/refinance');
     await box(page, 'current-balance').fill('123000');
 
-    await go(page, 'Calculator'); // opens with its own example, unchanged
+    await go(page, 'Buy a home'); // opens with its own example, unchanged
     await go(page, 'Pay off or invest');
 
     await expect(box(page, 'balance'), 'the loan typed on Refinance, not the calculator example').toHaveValue('123,000');

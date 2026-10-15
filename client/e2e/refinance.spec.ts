@@ -15,7 +15,7 @@ test.describe('Refinance', () => {
   };
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/calculator');
     await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Refinance' }).click();
     await expect(page, 'the Refinance page has its own URL').toHaveURL(/\/refinance$/);
     await expect(page.getByTestId('results'), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');

@@ -51,7 +51,7 @@ describe('AppComponent', () => {
 
     expect(root.querySelector('h1')?.textContent).toBe('Mortgage Analytics');
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
-      .toEqual(['Calculator', 'Compare homes', 'Refinance', 'Pay off or invest', 'History']);
+      .toEqual(['Buy a home', 'Refinance', 'Pay off or invest', 'Saved']);
     expect(root.querySelector('footer a[href="/swagger"]')?.textContent?.trim()).toBe('API docs ↗');
   });
 
@@ -63,7 +63,7 @@ describe('AppComponent', () => {
     const { root } = render();
     const brand = root.querySelector('a.brand')!;
 
-    expect(brand.getAttribute('href')).toBe('/calculator');
+    expect(brand.getAttribute('href')).toBe('/');
     expect(brand.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
     expect(brand.textContent?.trim()).toBe('Mortgage Analytics');
   });
@@ -95,10 +95,37 @@ describe('AppComponent', () => {
     expect(root.querySelector('[data-testid="sign-in-link"]')).not.toBeNull();
   });
 
-  it.each(['/', '/no-such-page', '/calculator'])('sends %s to the calculator overview', async (url) => {
-    await RouterTestingHarness.create(url);
+  it('opens on a question, not on a form', async () => {
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="start-questions"]')).not.toBeNull();
+  });
+
+  it('sends an address that is not a page to the start page', async () => {
+    await RouterTestingHarness.create('/no-such-page');
+
+    expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  it('sends the calculator to its overview', async () => {
+    await RouterTestingHarness.create('/calculator');
 
     expect(TestBed.inject(Router).url).toBe('/calculator/overview');
+  });
+
+  it.each([
+    ['/calculator/overview', 'Buy a home'], ['/calculator/closing', 'Buy a home'], ['/compare', 'Buy a home'],
+    ['/refinance', 'Refinance'], ['/strategy', 'Pay off or invest'],
+  ])('marks the page for %s as %s, and only that one', async (url, current) => {
+    const fixture = TestBed.createComponent(AppComponent);
+    await RouterTestingHarness.create(url);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const marked = [...(fixture.nativeElement as HTMLElement).querySelectorAll('nav[aria-label="Pages"] a[aria-current="page"]')];
+    expect(marked.map((a) => a.textContent!.trim())).toEqual([current]);
   });
 
   it('has a Refinance page', async () => {

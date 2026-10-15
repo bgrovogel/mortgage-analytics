@@ -27,7 +27,7 @@ rich enough to show real engineering judgment, and the code is small enough to r
 | **Calculator** | *What will this home cost me, month by month and year by year?* Principal and interest; property taxes (one rate, or Texas school, county/city and MUD taxes with homestead exemptions, the over-65 ceiling and the appraisal cap); insurance, HOA dues, PID and PMI; conventional, FHA or VA loans, on a home you live in, a second home or an investment property; extra payments and lender recasts; buydowns, discount points and ARMs; a projection of every cost over the loan, and of your equity; the cash to close, line by line as a Loan Estimate shows it; whether your income affords it, and the most it would; whether to rent or buy, year by year; and up to four homes compared side by side, each any loan. |
 | **Refinance** | *Should I refinance?* The rest of today's loan against the new one, closing costs included, with the break-even. It catches the trap most calculators hide: a lower payment can cost more overall, because a new 30-year loan restarts the clock. |
 | **Pay off or invest** | *Should spare cash pay down the mortgage, or be invested?* Three strategies played out month by month for 30 years, with the 401(k) match, IRA, RSUs, ESOP, ESPP, the standard deduction and taxes, in three markets, ranked on a risk-adjusted return. |
-| **History** | Save any result under a name with a free account, and reopen it exactly as it was. The calculators need no account: any page can also copy a link that opens the same numbers, or print them (or save a PDF). From **Your account** you can change your password, or delete the account with everything in it. |
+| **Saved** | Save any result under a name with a free account, and reopen it exactly as it was. The calculators need no account: any page can also copy a link that opens the same numbers, or print them (or save a PDF). From **Your account** you can change your password, or delete the account with everything in it. |
 
 A loan typed on one page is carried to the others. **Every rule, in detail: [What it does](docs/00-features.md).**
 
@@ -43,7 +43,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 - **Money math you can trust.** `decimal` throughout, every schedule ends at exactly $0.00, and the expected values
   in the tests come from independent Python models, not from this code. Scripts compare 300 random purchases, 300
   refinances and 300 households with the live API, field by field. They have caught real bugs.
-- **Tested from the domain to the browser.** 1,212 .NET, 905 Jest and 116 Playwright tests, written test-first. An 85%
+- **Tested from the domain to the browser.** 1,212 .NET, 915 Jest and 120 Playwright tests, written test-first. An 85%
   coverage gate, a mutation-score gate on the domain (Stryker.NET, and StrykerJS locally on the Angular logic), a snapshot of the whole API contract, and
   assertion standards enforced at build time with Roslyn.
 - **Built like it will be attacked.** Cookie-only sessions, account attempt limits, a Content-Security-Policy that
@@ -104,9 +104,9 @@ dotnet test                       # 1,212 NUnit tests, including the convention 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
 npm run typecheck                 # tsc over the test code, which Jest and Playwright run without checking types
-npm test                          # 905 Jest unit tests; fails below 85% coverage
+npm test                          # 915 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 116 Playwright tests (18 are axe accessibility scans); builds the app and serves it from the API, as in production
+npm run e2e                       # 120 Playwright tests (19 are axe accessibility scans); builds the app and serves it from the API, as in production
 ```
 
 How each layer is tested, the standards the build enforces, coverage and mutation testing:
@@ -177,7 +177,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite or PostgreSQL (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · Chart.js · self-hosted Inter |
-| **Tests** | NUnit + NSubstitute: 1,212 backend tests · Jest: 905 Angular unit tests · Playwright: 116 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 1,212 backend tests · Jest: 915 Angular unit tests · Playwright: 120 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 
 Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).

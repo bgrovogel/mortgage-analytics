@@ -10,7 +10,7 @@ test.describe('Pay off or invest', () => {
   const results = (page: Page) => page.getByTestId('results');
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/calculator');
     await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Pay off or invest' }).click();
     await expect(page, 'the page has its own URL').toHaveURL(/\/strategy$/);
     await expect(results(page), 'the first comparison has arrived').toHaveAttribute('aria-busy', 'false');

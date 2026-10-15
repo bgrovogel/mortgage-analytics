@@ -12,7 +12,7 @@ export class HistoryPage {
 
   /** Goes to History through the top navigation, as a user would. */
   async openFromNav(): Promise<void> {
-    await this.page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'History' }).click();
+    await this.page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Saved' }).click();
     await expect(this.page, 'the History page has its own URL').toHaveURL(/\/history$/);
   }
 

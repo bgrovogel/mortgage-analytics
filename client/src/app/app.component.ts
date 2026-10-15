@@ -1,42 +1,44 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { BrandMarkComponent } from './core/layout/brand-mark.component';
 import { printInLightTheme } from './core/layout/print';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 
-/** The pages in the top navigation. */
-const PAGES = [
-  { path: '/calculator', label: 'Calculator' },
-  { path: '/compare', label: 'Compare homes' },
+/**
+ * The pages in the top navigation: one for each thing a buyer is deciding. Buying a home also holds Compare, which is
+ * a view of it, so that link stays marked while Compare is open.
+ */
+const PAGES: readonly { path: string; label: string; also?: readonly string[] }[] = [
+  { path: '/calculator', label: 'Buy a home', also: ['/compare'] },
   { path: '/refinance', label: 'Refinance' },
   { path: '/strategy', label: 'Pay off or invest' },
-  { path: '/history', label: 'History' },
-] as const;
+  { path: '/history', label: 'Saved' },
+];
 
 /** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, BrandMarkComponent],
+  imports: [RouterLink, RouterOutlet, BrandMarkComponent],
   template: `
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
       <header class="app-header focused">
         <div class="app-bar">
-          <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
+          <a class="brand" routerLink="/"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
           <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
         </div>
       </header>
     } @else {
       <header class="app-header">
         <div class="app-bar">
-        <a class="brand" routerLink="/calculator"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
+        <a class="brand" routerLink="/"><app-brand-mark /><h1>Mortgage Analytics</h1></a>
         <div class="header-actions">
           <nav class="app-nav" aria-label="Pages">
             @for (page of pages; track page.path) {
-              <a [routerLink]="page.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ page.label }}</a>
+              <a [routerLink]="page.path" [class.active]="isCurrent(page)" [attr.aria-current]="isCurrent(page) ? 'page' : null">{{ page.label }}</a>
             }
           </nav>
           <div class="account">
@@ -88,6 +90,12 @@ export class AppComponent {
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd), map(() => this.router.url)),
     { initialValue: this.router.url },
   );
+
+  /** True for the page the visitor is on, or one of the views it holds (`/calculator/closing`, `/compare`). */
+  protected isCurrent(page: (typeof PAGES)[number]): boolean {
+    const path = this.url().split(/[?#]/)[0];
+    return [page.path, ...(page.also ?? [])].some((p) => path === p || path.startsWith(`${p}/`));
+  }
 
   /**
    * Where an account page's way back leads: the page the visitor came from (`?returnUrl=`), by name. History is left

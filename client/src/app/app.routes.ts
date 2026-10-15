@@ -15,7 +15,7 @@ const title = (page: string) => `${page} · Mortgage Analytics`;
 
 export const routes: Routes = [
   // A share link (`#share=…`) opens its inputs before the page does (features/share-link.guard.ts).
-  { path: '', pathMatch: 'full', redirectTo: 'calculator' },
+  { path: '', pathMatch: 'full', loadComponent: () => import('./features/start/start-page.component').then((m) => m.StartPageComponent), title: title('What do you want to figure out?') },
   {
     path: 'calculator',
     component: CalculatorPageComponent,
@@ -45,5 +45,5 @@ export const routes: Routes = [
   { path: 'reset-password', loadComponent: () => import('./features/account/reset-password-page.component').then((m) => m.ResetPasswordPageComponent), title: title('Reset password'), data: FOCUSED },
   // Local demos: the emails the app "sent" (the API serves them only in Development).
   { path: 'dev/mailbox', loadComponent: () => import('./features/account/dev-mailbox-page.component').then((m) => m.DevMailboxPageComponent), title: title('Dev mailbox'), data: FOCUSED },
-  { path: '**', redirectTo: 'calculator' },
+  { path: '**', redirectTo: '' },
 ];

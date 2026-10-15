@@ -1,20 +1,11 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+import { BuyTabsComponent } from './buy-tabs/buy-tabs.component';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 import { AmortizationResponse } from '../../core/models/amortization.models';
-
-/** The result tabs, each its own URL so it can be bookmarked, shared and reached with the back button. */
-const RESULT_TABS = [
-  { path: 'overview', label: 'Overview' },
-  { path: 'affordability', label: 'Affordability' },
-  { path: 'closing', label: 'Closing' },
-  { path: 'rent-or-buy', label: 'Rent or buy' },
-  { path: 'projection', label: 'Projection' },
-  { path: 'schedule', label: 'Schedule' },
-] as const;
 
 /**
  * The calculator: the form on the left, the routed result tabs on the right. The page wires the form
@@ -23,14 +14,13 @@ const RESULT_TABS = [
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [CalculationPageComponent, CurrencyPipe, LoanFormComponent, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, LoanFormComponent, RouterOutlet],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalculatorPageComponent {
   protected readonly store = inject(CalculatorStore);
-  protected readonly tabs = RESULT_TABS;
 
   /** The calculation to resume when the page opens, read once: the form owns its values from then on. */
   protected readonly startFrom = this.store.request();

@@ -58,6 +58,7 @@ describe('CalculatorPageComponent', () => {
       ['Rent or buy', '/calculator/rent-or-buy'],
       ['Projection', '/calculator/projection'],
       ['Schedule', '/calculator/schedule'],
+      ['Compare', '/compare'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();
     expect(el('app-overview-tab')).toBeNull();

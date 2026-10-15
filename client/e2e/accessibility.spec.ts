@@ -19,8 +19,12 @@ async function violations(page: Page): Promise<string[]> {
   return results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
 }
 
-/** Waits until a calculator page shows its first results, so the scan sees the finished page. */
+/** Waits until a calculator page shows its first results, so the scan sees the finished page (the start page has none). */
 async function settled(page: Page) {
+  if (new URL(page.url()).pathname === '/') {
+    await expect(page.getByTestId('start-questions'), 'the questions have arrived').toBeVisible();
+    return;
+  }
   await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
 }
 
@@ -48,7 +52,7 @@ for (const scheme of ['light', 'dark'] as const) {
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);
       }
       // Compare homes, and its second form, in the same place as the first.
-      await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Compare homes' }).click();
+      await page.getByTestId('result-tab-compare').click();
       await settled(page);
       expect(await violations(page), 'Compare homes breaks no accessibility rule').toEqual([]);
       await page.getByTestId('edit-home-b').check();
@@ -145,7 +149,7 @@ for (const scheme of ['light', 'dark'] as const) {
 test.describe('Accessibility on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  for (const path of ['/calculator/overview', '/refinance', '/strategy']) {
+  for (const path of ['/', '/calculator/overview', '/refinance', '/strategy']) {
     test(`${path}`, async ({ page }) => {
       await page.goto(path);
       await settled(page);

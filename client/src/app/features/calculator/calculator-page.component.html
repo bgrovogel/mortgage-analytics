@@ -23,12 +23,7 @@
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
                  (calculate)="store.send($event)" (problems)="problems.set($event)" />
 
-  <nav tabs class="result-tabs" aria-label="Results">
-    @for (tab of tabs; track tab.path) {
-      <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page"
-         [attr.data-testid]="'result-tab-' + tab.path">{{ tab.label }}</a>
-    }
-  </nav>
+  <app-buy-tabs tabs />
 
   @if (store.result()) {
     <router-outlet />

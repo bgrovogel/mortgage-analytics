@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, u
 import { AmortizationRequest } from '../../core/models/amortization.models';
 import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
+import { BuyTabsComponent } from '../calculator/buy-tabs/buy-tabs.component';
 import { CalculatorStore } from '../calculator/calculator.store';
 import { LoanFormComponent } from '../calculator/loan-form/loan-form.component';
 import { CompareResultsComponent } from './compare-results.component';
@@ -15,11 +16,12 @@ import { ComparisonStore } from './comparison.store';
  */
 @Component({
   selector: 'app-compare-page',
-  imports: [CalculationPageComponent, LoanFormComponent, CompareResultsComponent],
+  imports: [BuyTabsComponent, CalculationPageComponent, LoanFormComponent, CompareResultsComponent],
   template: `
     <app-calculation-page [store]="comparison" heading="Which home costs less?" label="Homes compared"
                           intro="Up to four homes side by side, each any loan: what each costs a month, to close, and over the first years."
                           [problems]="problems()" placeholder="Comparing your homes…" errorTitle="We couldn't compare those homes.">
+      <app-buy-tabs tabs />
       <div form>
         <div class="segmented house-switch" role="radiogroup" aria-label="Which home to edit" data-testid="house-switch">
           @for (home of homeIndexes(); track home) {
