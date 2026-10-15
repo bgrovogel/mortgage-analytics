@@ -46,3 +46,35 @@
     @include surfaces.action;
   }
 }
+
+// The answer to a budget, with the way to price a home at it.
+.budget-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  p {
+    margin: 0;
+  }
+
+  button {
+    @include surfaces.action;
+  }
+}
+
+// "Price a home at $474,091": carries what could be afforded into the form.
+.carry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+
+  button {
+    @include surfaces.action;
+  }
+}

@@ -33,12 +33,17 @@ import { ComparisonStore } from './comparison.store';
         </div>
         <div class="house-actions">
           @if (homeIndexes().length < maxHomes) {
-            <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home</button>
+            <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home or another offer</button>
           }
           @if (editing() > 0 && homeIndexes().length > 2) {
             <button type="button" class="link-button" (click)="removeHome()" data-testid="remove-home">Remove {{ nameOf(editing()) }}</button>
           }
         </div>
+        @if (homeIndexes().length < maxHomes) {
+          <p class="hint" data-testid="add-home-hint">
+            A copy of Home A to change whatever differs: its price, or the same home from another lender, with that lender's rate and fees.
+          </p>
+        }
         @if (editing() === 0) {
           <app-loan-form heading="Home A" [initial]="startFrom()" [loan]="loan()" [firstYear]="calculator.result()?.projection?.[0] ?? null"
                          (calculate)="calculator.send($event)" (problems)="problems.set($event)" />

@@ -273,6 +273,23 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('price a home at the most that stays comfortable: the home price follows, with the same share down', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.set('annual-income', 120_000);
+    await calculator.set('monthly-debts', 500);
+    await calculator.calculate();
+    await calculator.showResults('affordability');
+
+    await page.getByTestId('price-at-comfortable').click();
+
+    await expect(calculator.field('home-price'), 'the most that stays comfortable, from the lender view').toHaveValue('333,595');
+    await expect(page.getByTestId('afford-verdict'), 'and that home is within the comfortable limits')
+      .toContainText('within the comfortable 28% and 36%');
+  });
+
   test('saving up the cash to close: how long it takes at what you can put away', async ({ calculator, page }) => {
     await calculator.showResults('closing');
 

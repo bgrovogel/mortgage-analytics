@@ -29,6 +29,26 @@ describe('LoanFormComponent', () => {
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
 
+  describe('pricing the home at an amount asked for elsewhere', () => {
+    it('sets the price and keeps the share put down, to the cent', () => {
+      TestBed.inject(FormNavigator).priceAt(474_091);
+      fixture.detectChanges();
+
+      expect(controls().homePrice.value).toBe(474_091);
+      expect(controls().downPayment.value).toBe(42_668.19); // 9% of it, as 9% of $415,000 was $37,350
+    });
+
+    it('keeps the percentage when the down payment is entered as one', () => {
+      controls().downPaymentMode.setValue('percent');
+      controls().downPayment.setValue(10);
+
+      TestBed.inject(FormNavigator).priceAt(500_000);
+      fixture.detectChanges();
+
+      expect([controls().homePrice.value, controls().downPayment.value]).toEqual([500_000, 10]);
+    });
+  });
+
   describe('typical property tax rate by state', () => {
     const choose = (name: string) => {
       const select = el('state-tax-rate') as HTMLSelectElement;

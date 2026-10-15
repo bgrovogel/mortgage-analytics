@@ -95,8 +95,8 @@ export class LoanFormComponent implements OnInit {
   /** A request to start from (the last calculation, or a saved one) instead of the worked example. */
   readonly initial = input<AmortizationRequest | null>(null);
 
-  /** The form's heading: "Your loan", or which home it is when two are compared. */
-  readonly heading = input('Your loan');
+  /** The form's heading: "Your numbers", or which home it is when two are compared. */
+  readonly heading = input('Your numbers');
 
   /** False for a compared home: only the calculator's own loan is shared with the other pages. */
   readonly shared = input(true);
@@ -329,6 +329,12 @@ export class LoanFormComponent implements OnInit {
     const navigator = inject(FormNavigator);
     const host: HTMLElement = inject(ElementRef).nativeElement;
     const before = navigator.requested();
+    const pricedBefore = navigator.pricing();
+    effect(() => {
+      const priced = navigator.pricing();
+      if (!priced || priced === pricedBefore || !untracked(this.shared)) return;
+      this.priceHomeAt(priced.price);
+    });
     effect(() => {
       const to = navigator.requested();
       if (!to || to === before || !untracked(this.shared)) return;
@@ -338,6 +344,13 @@ export class LoanFormComponent implements OnInit {
       field?.scrollIntoView({ block: 'center' });
       field?.focus({ preventScroll: true });
     });
+  }
+
+  /** Prices the home at `price` and keeps the share of it put down, as a lender's "most you could buy" assumes. */
+  private priceHomeAt(price: number): void {
+    const { homePrice, downPayment, downPaymentMode } = this.form.getRawValue();
+    const down = downPaymentMode === 'percent' || homePrice <= 0 ? downPayment : Math.ceil(((price * downPayment) / homePrice) * 100) / 100;
+    this.form.patchValue({ homePrice: price, downPayment: down });
   }
 
   /** The lump-sum rows, typed for the template. */

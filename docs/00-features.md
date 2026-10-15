@@ -20,8 +20,9 @@
 ## The calculator
 
 What a purchase costs each month and to close, whether you can afford it, and what paying extra saves. The page
-answers in that order: the **Overview** leads with four answer tiles, and each answer's details have a tab of their
-own (**Affordability**, **Closing**), then **Rent or buy**, **Projection** and **Schedule**. Comparing homes is a page of its own.
+answers in that order: **Cost** leads with the payment and four answer tiles, then **Can I afford it?**, **Rent or
+buy?** and **Compare**, each with its own answer; under Cost, one step down, are the **closing costs**, **year by
+year** and **every payment**.
 
 ![The calculator's Overview: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with four answer tiles (the monthly payment, the cash to close, can you afford it, and the net savings), when the loan and PMI end, the payment broken down, and the balance over time](images/calculator.png)
 
@@ -183,6 +184,9 @@ numbers a spreadsheet can add up.
 
 #### Comparing offers
 
+**+ Add a home or another offer** (on Compare) adds a copy of Home A to change whatever differs: its price, or the
+same home from another lender, with that lender's rate and fees. Up to four sit side by side.
+
 The Closing tab has the figures a lender's Loan Estimate lists to compare one loan with another: the **APR**, what you
 will have paid in 5 years (the first 60 payments of principal, interest, mortgage insurance and the lender's loan costs,
 without extra payments) and the principal it pays off, and the **total interest percentage**: the interest over the whole
@@ -248,13 +252,16 @@ to the payment.
 **A monthly budget** answers the question the other way round, with no income at all: say what you want to pay each
 month, all in (the **Income & debts** section's last field), and the tab says the highest price that reaches, at the
 same down payment share, rate, taxes and insurance, and what is down at that price. It counts the payment at the note
-rate, since a budget is what will be paid.
+rate, since a budget is what will be paid. **Price a home at $X** (under a budget's answer, and under the lender's
+view of what is comfortable) fills the form's home price with it, keeping your down payment share, so the rest of
+the views show what that home would really cost.
 
 ![Can you afford it: the example's $3,102 payment is 24.82% of $12,500 a month and 29.62% with $600 of debts; the comfortable limit reaches $474,091 and a conventional loan's 45% reaches $700,615](images/affordability.png)
 
 #### Rent or buy
 
-The **Rent or buy** tab weighs buying this home against renting a similar one. Type the rent; the rest has usual
+The **Rent or buy** tab weighs buying this home against renting a similar one. Type the rent (or **Try** a rent of about
+0.65% of the price a month, to the nearest $25, a common rule of thumb); the rest has usual
 values to change beside it: rent rising **3.5%** a year, investments earning **7%**, upkeep of **1%** of the home's
 value a year, and **6%** to sell. The two households spend the same each month: whichever of owning and renting
 costs less invests the difference, and the renter also invests what buying takes to close. Year by year, the buyer

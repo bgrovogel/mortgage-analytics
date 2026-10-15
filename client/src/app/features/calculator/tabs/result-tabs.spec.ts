@@ -110,6 +110,30 @@ describe('result tabs', () => {
       expect(root.querySelector('[data-testid="affordability-empty"]')).not.toBeNull(); // the income prompt is still there
     });
 
+    it('offers to price a home at the most the budget reaches, in the form', () => {
+      answer({ budget: { monthlyBudget: 3_000, maxHomePrice: 412_345, downPayment: 37_111.05 } });
+      const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
+
+      (root.querySelector('[data-testid="price-at-budget"]') as HTMLButtonElement).click();
+
+      expect(TestBed.inject(FormNavigator).pricing()?.price).toBe(412_345);
+    });
+
+    it('offers to price a home at the most that stays comfortable, once there is an income', () => {
+      answer({ affordability: {
+        monthlyIncome: 12_500, monthlyDebts: 600, housingPayment: 3_102.19, housingPercent: 24.82, totalPercent: 29.62,
+        comfortable: { housingPercent: 28, totalPercent: 36, maxHousingPayment: 3_500, maxHomePrice: 474_091, fits: true },
+        mostAllowed: { housingPercent: null, totalPercent: 45, maxHousingPayment: 5_025, maxHomePrice: 700_615, fits: true },
+      } as Affordability });
+      const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
+
+      const button = root.querySelector('[data-testid="price-at-comfortable"]') as HTMLButtonElement;
+      expect(button.textContent!.trim()).toBe('Price a home at $474,091');
+      button.click();
+
+      expect(TestBed.inject(FormNavigator).pricing()?.price).toBe(474_091);
+    });
+
     it('says when no home has a payment as low as the budget', () => {
       answer({ budget: { monthlyBudget: 50, maxHomePrice: 0, downPayment: 0 } });
       const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
@@ -195,6 +219,17 @@ describe('result tabs', () => {
       expect((root.querySelector('[data-testid="monthly-rent"]') as HTMLInputElement).value).toBe('');
       expect((root.querySelector('[data-testid="rent-increase"]') as HTMLInputElement).value).toBe('3.5');
       expect((root.querySelector('[data-testid="selling-costs"]') as HTMLInputElement).value).toBe('6');
+    });
+
+    it('offers a rent to try, about 0.65% of the price a month, to the nearest $25', () => {
+      // answer() builds the default purchase: $250,000 gives $1,625 a month.
+      const fixture = render(RentOrBuyTabComponent);
+      const button = fixture.nativeElement.querySelector('[data-testid="try-rent"]') as HTMLButtonElement;
+      expect(button.textContent!.trim()).toBe('Try $1,625 a month');
+
+      button.click();
+
+      expect(store.rentSettings()?.monthlyRent).toBe(1_625);
     });
 
     it('weighs buying against renting once a rent is given, and stops when it is cleared', () => {

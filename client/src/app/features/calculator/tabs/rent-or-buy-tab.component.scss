@@ -42,3 +42,14 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+// A rent to try, in the sentence that asks for one.
+.try {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  text-decoration: underline;
+  cursor: pointer;
+}

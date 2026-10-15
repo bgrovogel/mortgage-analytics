@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder } from '@angular/forms';
@@ -24,7 +25,7 @@ const DEFAULTS = { rentIncreasePercent: 3.5, investmentReturnPercent: 7, mainten
  */
 @Component({
   selector: 'app-rent-or-buy-tab',
-  imports: [NumberFieldComponent, RentOrBuyComponent],
+  imports: [CurrencyPipe, NumberFieldComponent, RentOrBuyComponent],
   template: `
     <div class="panel rent-or-buy">
       <h2>Should you rent or buy?</h2>
@@ -43,7 +44,11 @@ const DEFAULTS = { rentIncreasePercent: 3.5, investmentReturnPercent: 7, mainten
       @if (result().rentOrBuy; as comparison) {
         <app-rent-or-buy [comparison]="comparison" />
       } @else {
-        <p class="prompt" data-testid="rent-or-buy-empty">Enter the rent for a similar home to see when buying comes out ahead.</p>
+        <p class="prompt" data-testid="rent-or-buy-empty">
+          Enter the rent for a similar home to see when buying comes out ahead, or
+          <button type="button" class="try" (click)="tryRent()" data-testid="try-rent">Try {{ suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0' }} a month</button>
+          (about 0.65% of the price, a common rule of thumb).
+        </p>
       }
     </div>
   `,
@@ -57,6 +62,13 @@ export class RentOrBuyTabComponent {
   protected readonly result = computed(() => this.store.result()!);
 
   protected readonly rules = RENT_RULES;
+
+  /** A rent to try before the buyer knows one: about 0.65% of the price a month, to the nearest $25. */
+  protected readonly suggestedRent = computed(() => Math.max(25, Math.round((this.result().purchase.homePrice * 0.0065) / 25) * 25));
+
+  protected tryRent(): void {
+    this.form.controls.monthlyRent.setValue(this.suggestedRent());
+  }
 
   /** Starts from what the calculator weighs now (a saved calculation's rent), or the usual assumptions and no rent. */
   protected readonly form = inject(NonNullableFormBuilder).group({

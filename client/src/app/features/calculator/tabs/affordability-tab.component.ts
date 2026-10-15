@@ -14,12 +14,23 @@ import { CalculatorStore } from '../calculator.store';
   imports: [AffordabilityComponent],
   template: `
     @if (result().budget; as budget) {
-      <p class="panel budget-answer" data-testid="budget-answer">{{ budgetSentence(budget) }}</p>
+      <div class="panel budget-answer">
+        <p data-testid="budget-answer">{{ budgetSentence(budget) }}</p>
+        @if (budget.maxHomePrice > 0) {
+          <button type="button" (click)="priceAt(budget.maxHomePrice)" data-testid="price-at-budget">Price a home at {{ money(budget.maxHomePrice) }}</button>
+        }
+      </div>
     }
     @if (result().affordability; as affordability) {
       <div class="panel">
         <app-affordability [affordability]="affordability" [program]="result().program?.type ?? 'Conventional'"
                            [downPaymentPercent]="result().purchase.downPaymentPercent" />
+        @if (affordability.comfortable.maxHomePrice > 0) {
+          <p class="carry">
+            <button type="button" (click)="priceAt(affordability.comfortable.maxHomePrice)" data-testid="price-at-comfortable">Price a home at {{ money(affordability.comfortable.maxHomePrice) }}</button>
+            <span>Fills the home price in the form, keeping your down payment share, to see what it would really cost.</span>
+          </p>
+        }
       </div>
     } @else {
       <div class="panel empty" data-testid="affordability-empty">
@@ -41,6 +52,13 @@ export class AffordabilityTabComponent {
 
   /** The page only shows the tabs once there is a result. */
   protected readonly result = computed(() => this.store.result()!);
+
+  protected readonly money = usd;
+
+  /** Prices the home in the form at an amount: what the buyer could afford, carried over to see what it costs. */
+  protected priceAt(price: number): void {
+    this.navigator.priceAt(price);
+  }
 
   /** What the monthly budget reaches, in a sentence. */
   protected budgetSentence(budget: BudgetAnswer): string {
