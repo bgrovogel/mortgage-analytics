@@ -409,10 +409,13 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Answer first.** On a phone the results come first and the form follows, with **Edit your numbers** to jump to it;
   a sticky bar keeps the payment and savings in view, and the four pages are a bar along the bottom of the screen,
   where a thumb reaches. On a wider screen the form sits in its own column.
-- **The answer in a sentence.** Under the Buy a home page's question, once there is a result, one line says it the way
-  a person would: "Your payment is $3,102 a month: $2,325 for the loan and $777 for taxes, insurance and the rest. You
-  would bring $48,129 to closing." It adds what paying extra does (how much sooner, and what it saves), and says "in
-  year 1" with a buydown.
+- **Each view answers its own question.** Buy a home has four views in a row: **Cost**, **Can I afford it?**, **Rent or
+  buy?** and **Compare**; the closing costs, the year-by-year costs and every payment are one step down from Cost,
+  as a quieter row of links. Under each view's question, once there is a result, the answer is set large with a
+  sentence behind it: "$3,102 a month" with "$2,325 goes to the loan and $777 to taxes, insurance and the rest. You
+  would bring $48,129 to closing. Paying extra pays it off 5 years 9 months sooner and saves $108,039"; or "Yes,
+  comfortably" (or "Yes, but a stretch", "Not at this income") with the shares of income; or "Buy, if you stay 4 years
+  or more" with the rent it was weighed against. Without an income or a rent, it says what to enter.
 - **A first visit.** Each form says its numbers are an example until the first edit.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
   Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future

@@ -263,10 +263,11 @@ The flows are designed around the people using it:
   (instantly for anyone who prefers reduced motion) and moves focus there. Once the headline scrolls away, a bar
   keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after. The
   four page links become a bar fixed to the bottom of the screen (`styles.scss`, `max-width: 640px`), and the
-  calculator's seven views are two even rows of four.
-- **The answer sentence:** `app-calculation-page` takes an optional `answer`, which replaces its intro line once
-  there is a result. The calculator's is `answerSentence` (`features/calculator/answer-sentence.ts`), a pure function
-  of the response and the payment due next.
+  calculator's four views fill the row, and the three under Cost are a second row of links (`buy-tabs`).
+- **The answer:** `app-calculation-page` takes an optional `lead` (the answer in a line, set large) and `answer` (the
+  sentence behind it), which replace its intro line once there is a result. The calculator's come from `viewAnswer`
+  (`features/calculator/answer-sentence.ts`), a pure function of the response, the open view and the payment due next;
+  the heading follows the view too.
 - **Help a few people need:** each loan program says what it asks for in one line, with the details under "More
   about…", a `details.help` toggle, so the form stays short.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.

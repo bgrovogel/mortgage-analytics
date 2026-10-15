@@ -7,6 +7,9 @@
     <p class="print-summary" data-testid="print-summary">{{ summary }}</p>
   }
   <h2 data-testid="page-heading">{{ heading() }}</h2>
+  @if (lead(); as lead) {
+    <p class="lead" data-testid="page-lead">{{ lead }}</p>
+  }
   @if (answer(); as answer) {
     <p class="answer" data-testid="page-answer">{{ answer }}</p>
   } @else {

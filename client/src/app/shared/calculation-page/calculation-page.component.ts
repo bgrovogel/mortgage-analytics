@@ -37,6 +37,9 @@ export class CalculationPageComponent {
   /** One line under the heading on how the page answers it. */
   readonly intro = input.required<string>();
 
+  /** The answer in a line, once there is one, set large under the question: "$3,102 a month", "Yes, comfortably". */
+  readonly lead = input<string | null>(null);
+
   /** The answer in a sentence, once there is one: it takes the intro's place under the heading. */
   readonly answer = input<string | null>(null);
 

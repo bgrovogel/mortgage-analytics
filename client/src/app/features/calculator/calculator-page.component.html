@@ -16,9 +16,9 @@
   </div>
 }
 
-<app-calculation-page [store]="store" heading="What will this home really cost?"
+<app-calculation-page [store]="store" [heading]="heading()"
                       intro="What it costs each month and to close, whether you can afford it, and what paying extra saves."
-                      [answer]="answer()"
+                      [lead]="answered()?.lead ?? null" [answer]="answered()?.detail ?? null"
                       [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
                       errorTitle="We couldn't run that calculation.">
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"

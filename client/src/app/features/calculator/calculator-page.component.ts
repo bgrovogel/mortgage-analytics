@@ -1,8 +1,8 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { answerSentence, nextPayment } from './answer-sentence';
-import { BuyTabsComponent } from './buy-tabs/buy-tabs.component';
+import { nextPayment, viewAnswer } from './answer-sentence';
+import { BuyTabsComponent, currentBuyView } from './buy-tabs/buy-tabs.component';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
@@ -32,11 +32,16 @@ export class CalculatorPageComponent {
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);
 
-  /** The answer in a sentence, once there is a result. */
-  protected readonly answer = computed(() => {
+  private readonly view = currentBuyView();
+
+  /** The question and the answer for the view open: what it costs, whether it can be afforded, rent against buy. */
+  protected readonly answered = computed(() => {
     const result = this.store.result();
-    return result ? answerSentence(result, nextPayment(result)) : null;
+    return result ? viewAnswer(result, this.view(), nextPayment(result)) : null;
   });
+
+  /** The page's question: the view's once there is a result, the first view's until then. */
+  protected readonly heading = computed(() => this.answered()?.heading ?? 'What will this home cost?');
 
   /** The first payment due, with housing costs: with a buydown, year 1's reduced payment, as the headline tile shows. */
   protected firstMonthlyPayment(r: AmortizationResponse): number {

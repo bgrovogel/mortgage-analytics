@@ -28,7 +28,7 @@ class TestStore extends CalculationStore<number, string> {
 @Component({
   imports: [CalculationPageComponent],
   template: `
-    <app-calculation-page [store]="store" heading="A question?" intro="What the page answers." [answer]="answer()" [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
+    <app-calculation-page [store]="store" heading="A question?" intro="What the page answers." [lead]="lead()" [answer]="answer()" [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
       <p form data-testid="the-form">form</p>
       @if (store.result(); as result) {
         <p data-testid="the-result">{{ result }}</p>
@@ -40,6 +40,7 @@ class HostComponent {
   readonly store = TestBed.runInInjectionContext(() => new TestStore());
   readonly problems = signal<string[]>([]);
   readonly answer = signal<string | null>(null);
+  readonly lead = signal<string | null>(null);
 }
 
 describe('CalculationPageComponent', () => {
@@ -64,8 +65,10 @@ describe('CalculationPageComponent', () => {
     expect(text('page-intro')).toBe('What the page answers.');
     expect(text('page-answer')).toBeUndefined();
 
+    host.lead.set('$3,102 a month');
     host.answer.set('Your payment is $3,102 a month.');
     fixture.detectChanges();
+    expect(text('page-lead')).toBe('$3,102 a month');
 
     expect(text('page-answer')).toBe('Your payment is $3,102 a month.');
     expect(text('page-intro')).toBeUndefined();

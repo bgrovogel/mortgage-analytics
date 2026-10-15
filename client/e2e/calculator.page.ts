@@ -248,7 +248,10 @@ export class CalculatorPage {
 
   /** Opens a result tab: Overview, Affordability, Closing, Rent or buy, Projection or Schedule. Each has its own URL. */
   async showResults(tab: 'overview' | 'affordability' | 'closing' | 'rent-or-buy' | 'projection' | 'schedule'): Promise<void> {
-    await this.page.getByTestId(`result-tab-${tab}`).click();
+    // The views under Cost are one step down: from another question, go through Cost first.
+    const link = this.page.getByTestId(`result-tab-${tab}`);
+    if (!(await link.isVisible())) await this.page.getByTestId('result-tab-overview').click();
+    await link.click();
     await expect(this.page, `the URL names the ${tab} tab`).toHaveURL(new RegExp(`/calculator/${tab}$`));
   }
 

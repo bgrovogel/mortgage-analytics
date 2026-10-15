@@ -50,15 +50,18 @@ describe('CalculatorPageComponent', () => {
   it('links to each result tab, and shows the one for the URL', async () => {
     await open('/calculator/schedule');
 
-    const links = [...harness.routeNativeElement!.querySelectorAll('nav[aria-label="Results"] a')] as HTMLAnchorElement[];
-    expect(links.map((a) => [a.textContent!.trim(), a.getAttribute('href')])).toEqual([
-      ['Overview', '/calculator/overview'],
-      ['Affordability', '/calculator/affordability'],
-      ['Closing', '/calculator/closing'],
-      ['Rent or buy', '/calculator/rent-or-buy'],
-      ['Projection', '/calculator/projection'],
-      ['Schedule', '/calculator/schedule'],
+    const names = (label: string) => [...harness.routeNativeElement!.querySelectorAll(`nav[aria-label="${label}"] a`)]
+      .map((a) => [a.textContent!.trim(), a.getAttribute('href')]);
+    expect(names('Results')).toEqual([
+      ['Cost', '/calculator/overview'],
+      ['Can I afford it?', '/calculator/affordability'],
+      ['Rent or buy?', '/calculator/rent-or-buy'],
       ['Compare', '/compare'],
+    ]);
+    expect(names('Go deeper')).toEqual([
+      ['Closing costs', '/calculator/closing'],
+      ['Year by year', '/calculator/projection'],
+      ['Every payment', '/calculator/schedule'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();
     expect(el('app-overview-tab')).toBeNull();

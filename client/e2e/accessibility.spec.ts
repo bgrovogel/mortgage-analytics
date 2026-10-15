@@ -19,6 +19,13 @@ async function violations(page: Page): Promise<string[]> {
   return results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
 }
 
+/** Opens a view of buying a home by its link; the views under Cost are reached through Cost, one step down. */
+async function openView(page: Page, id: string) {
+  const link = page.getByTestId(`result-tab-${id}`);
+  if (!(await link.isVisible())) await page.getByTestId('result-tab-overview').click();
+  await link.click();
+}
+
 /** Waits until a calculator page shows its first results, so the scan sees the finished page (the start page has none). */
 async function settled(page: Page) {
   // The start page and the reading pages have no results to wait for: their heading is the finished page.
@@ -48,7 +55,7 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await violations(page), 'the Overview tab and the open form break no accessibility rule').toEqual([]);
 
       for (const tab of ['affordability', 'closing', 'rent-or-buy', 'projection', 'schedule'] as const) {
-        await page.getByTestId(`result-tab-${tab}`).click();
+        await openView(page, tab);
         await settled(page);
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);
       }
@@ -80,13 +87,13 @@ for (const scheme of ['light', 'dark'] as const) {
       await settled(page);
       await expect(page.getByTestId('afford-tile-answer'), 'the Overview answers whether it is affordable').toBeVisible();
       expect(await violations(page), 'the buydown, year by year, breaks no accessibility rule').toEqual([]);
-      await page.getByTestId('result-tab-closing').click();
+      await openView(page, 'closing');
       await expect(page.getByTestId('seller-offer'), 'the ways to take the seller’s money').toBeVisible();
       expect(await violations(page), 'the cash to close and the seller’s money each way break no accessibility rule').toEqual([]);
-      await page.getByTestId('result-tab-affordability').click();
+      await openView(page, 'affordability');
       await expect(page.getByTestId('affordability'), 'whether it is affordable').toBeVisible();
       expect(await violations(page), 'affordability breaks no accessibility rule').toEqual([]);
-      await page.getByTestId('result-tab-rent-or-buy').click();
+      await openView(page, 'rent-or-buy');
       await page.getByTestId('monthly-rent').fill('2400');
       await expect(page.getByTestId('rent-or-buy-verdict'), 'buying against renting').toBeVisible();
       await settled(page);

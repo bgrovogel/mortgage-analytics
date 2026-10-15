@@ -1,5 +1,6 @@
 import { aHousingCosts, aPayment, aResponse, aSavings, aSchedule } from '../../../testing/builders';
-import { answerSentence, nextPayment } from './answer-sentence';
+import { Affordability, RentOrBuyComparison } from '../../core/models/amortization.models';
+import { answerSentence, nextPayment, paymentLead, viewAnswer } from './answer-sentence';
 
 describe('the answer in a sentence', () => {
   /** The default example: $2,325.26 of principal and interest, $776.93 more of taxes, insurance, PMI and dues. */
@@ -9,14 +10,14 @@ describe('the answer in a sentence', () => {
     ...overrides,
   });
 
-  it('says the monthly payment, and what it is made of', () => {
-    expect(answerSentence(example(), null)).toBe('Your payment is $3,102 a month: $2,325 for the loan and $777 for taxes, insurance and the rest.');
+  it('says what the monthly payment is made of', () => {
+    expect(answerSentence(example(), null)).toBe('$2,325 goes to the loan and $777 to taxes, insurance and the rest.');
   });
 
   it('leaves out the rest when the loan is all there is to pay', () => {
     const bare = example({ baseline: aSchedule({ monthlyPayment: 2_325.26, totalMonthlyPayment: 2_325.26, monthlyHousingCosts: aHousingCosts({ total: 0 }) }) });
 
-    expect(answerSentence(bare, null)).toBe('Your payment is $2,325 a month, all of it for the loan.');
+    expect(answerSentence(bare, null)).toBe('All of it goes to the loan.');
   });
 
   it('adds what it takes to close', () => {
@@ -41,13 +42,98 @@ describe('the answer in a sentence', () => {
       buydown: { noteRate: 6, years: [{ year: 1, annualInterestRate: 4, monthlyPayment: 1_700, subsidy: 5_000 }], totalSubsidy: 5_000, paidBy: 'Seller' as never },
     });
 
-    expect(answerSentence(buydown, null)).toBe('Your payment is $2,477 a month in year 1: $1,700 for the loan and $777 for taxes, insurance and the rest.');
+    expect(answerSentence(buydown, null)).toBe('$1,700 goes to the loan and $777 to taxes, insurance and the rest.');
+    expect(paymentLead(buydown, null)).toBe('$2,477 a month in year 1');
   });
 
   it('counts the payment due next on a loan already being paid', () => {
     const due = aPayment(61, { scheduledPayment: 2_325.26, housingCosts: 928.94 });
 
-    expect(answerSentence(example(), due)).toContain('Your payment is $3,254 a month: $2,325 for the loan and $929 for taxes');
+    expect(paymentLead(example(), due)).toBe('$3,254 a month');
+    expect(answerSentence(example(), due)).toContain('$2,325 goes to the loan and $929 to taxes');
+  });
+
+  describe('the lead', () => {
+    it('is the monthly payment', () => {
+      expect(paymentLead(example(), null)).toBe('$3,102 a month');
+    });
+  });
+
+  describe('viewAnswer', () => {
+    const affordability = (comfortableFits: boolean, mostFits: boolean) => ({
+      monthlyIncome: 12_500, monthlyDebts: 600, housingPayment: 3_102.19, housingPercent: 24.82, totalPercent: 29.62,
+      comfortable: { housingPercent: 28, totalPercent: 36, maxHousingPayment: 3_500, maxHomePrice: 474_091, fits: comfortableFits },
+      mostAllowed: { housingPercent: null, totalPercent: 45, maxHousingPayment: 5_025, maxHomePrice: 700_615, fits: mostFits },
+    } as Affordability);
+    const rentOrBuy = (breakEvenYear: number | null, advantage = 91_429) => ({
+      monthlyRent: 2_700, cashToClose: 48_128.79, breakEvenYear,
+      years: [{ year: 1, advantage: -27_228 }, { year: 30, advantage }],
+    } as unknown as RentOrBuyComparison);
+
+    it('asks what the home costs on every view under Cost, with the payment as the answer', () => {
+      for (const view of ['overview', 'closing', 'projection', 'schedule']) {
+        const answer = viewAnswer(example(), view, null);
+
+        expect([answer.heading, answer.lead]).toEqual(['What will this home cost?', '$3,102 a month']);
+        expect(answer.detail).toBe('$2,325 goes to the loan and $777 to taxes, insurance and the rest.');
+      }
+    });
+
+    it('answers "can you afford it" yes, comfortably, within the comfortable limits', () => {
+      const answer = viewAnswer(example({ affordability: affordability(true, true) }), 'affordability', null);
+
+      expect(answer.heading).toBe('Can you afford it?');
+      expect(answer.lead).toBe('Yes, comfortably');
+      expect(answer.detail).toBe(
+        '$3,102 a month is 24.82% of your $12,500 monthly income, and 29.62% with your $600 of other debts. You could spend up to $474,091 and stay within the comfortable limits.');
+    });
+
+    it('answers yes, but a stretch, past the comfortable limits and within the most the loan allows', () => {
+      const answer = viewAnswer(example({ affordability: affordability(false, true) }), 'affordability', null);
+
+      expect(answer.lead).toBe('Yes, but a stretch');
+      expect(answer.detail).toContain('past the comfortable limits');
+      expect(answer.detail).toContain('up to $700,615');
+    });
+
+    it('answers no, past what a lender allows', () => {
+      const answer = viewAnswer(example({ affordability: affordability(false, false) }), 'affordability', null);
+
+      expect(answer.lead).toBe('Not at this income');
+      expect(answer.detail).toContain('past what a lender would allow');
+    });
+
+    it('asks for an income before answering whether it can be afforded', () => {
+      const answer = viewAnswer(example(), 'affordability', null);
+
+      expect([answer.lead, answer.detail]).toEqual([null, 'Add your household’s income and debts to see whether this home fits and the most you could pay.']);
+    });
+
+    it('answers rent or buy with how long to stay', () => {
+      const answer = viewAnswer(example({ rentOrBuy: rentOrBuy(4) }), 'rent-or-buy', null);
+
+      expect(answer.heading).toBe('Should you rent or buy?');
+      expect(answer.lead).toBe('Buy, if you stay 4 years or more');
+      expect(answer.detail).toBe(
+        'Against renting a similar home at $2,700 a month, buying comes out ahead from year 4. Before that, renting leaves you better off: you pay $48,129 to close that a renter invests instead.');
+    });
+
+    it('says buying is ahead from the first year', () => {
+      expect(viewAnswer(example({ rentOrBuy: rentOrBuy(1) }), 'rent-or-buy', null).lead).toBe('Buy, from the first year');
+    });
+
+    it('says renting stays ahead when buying never catches up', () => {
+      const answer = viewAnswer(example({ rentOrBuy: rentOrBuy(null, -50_000) }), 'rent-or-buy', null);
+
+      expect(answer.lead).toBe('Rent: it stays ahead for all 2 years');
+      expect(answer.detail).toContain('renting leaves you $50,000 better off');
+    });
+
+    it('asks for a rent before answering rent or buy', () => {
+      const answer = viewAnswer(example(), 'rent-or-buy', null);
+
+      expect([answer.lead, answer.detail]).toEqual([null, 'Enter the rent for a similar home to see when buying comes out ahead.']);
+    });
   });
 
   describe('nextPayment', () => {
