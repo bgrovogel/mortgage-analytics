@@ -302,6 +302,9 @@ export class CalculatorPage {
 
   /** Returns the element, first opening the collapsed section that contains it (if any). */
   private async reveal(testId: string): Promise<Locator> {
+    // On a phone the form is a sheet that opens from the results: open it first, as a user would.
+    const edit = this.page.getByTestId('edit-inputs');
+    if ((await edit.isVisible()) && !(await this.formPanel.isVisible())) await edit.click();
     const element = this.page.getByTestId(testId);
     const section = element.locator('xpath=ancestor::details');
     if ((await section.count()) > 0 && !(await section.evaluate((d: HTMLDetailsElement) => d.open))) {

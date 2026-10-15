@@ -1,4 +1,6 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { AmortizationRequest } from '../../../core/models/amortization.models';
 import { of } from 'rxjs';
 import { FhaLimitsService } from '../../../core/services/fha-limits.service';
@@ -6,13 +8,18 @@ import { FHA_LIMITS as LIMITS } from '../../../../testing/builders';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { LoanFormComponent } from './loan-form.component';
 
+@Component({ template: '' })
+class BlankComponent {}
+
 describe('LoanFormComponent', () => {
   let fixture: ComponentFixture<LoanFormComponent>;
   let component: LoanFormComponent;
   let emitted: AmortizationRequest[];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [{ provide: FhaLimitsService, useValue: { limits: () => of(LIMITS) } }] });
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: '**', component: BlankComponent }]), { provide: FhaLimitsService, useValue: { limits: () => of(LIMITS) } }],
+    });
     fixture = TestBed.createComponent(LoanFormComponent);
     component = fixture.componentInstance;
     emitted = [];
@@ -28,6 +35,36 @@ describe('LoanFormComponent', () => {
   };
   const el = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => el(testId)?.textContent?.replace(/\s+/g, ' ').trim();
+
+  describe('for the question being asked', () => {
+    const openView = async (url: string) => {
+      await TestBed.inject(Router).navigateByUrl(url);
+      fixture.detectChanges();
+    };
+
+    it('keeps income and debts in the Income & debts section, on the views that do not ask for them', () => {
+      expect(el('section-income')).not.toBeNull();
+      expect(el('question-income')).toBeNull();
+    });
+
+    it('brings income, debts and a budget up beside the five numbers when the question is whether it can be afforded', async () => {
+      await openView('/calculator/affordability');
+
+      expect(el('question-income')).not.toBeNull();
+      expect(el('section-income')).toBeNull();
+      for (const id of ['annual-income', 'monthly-debts', 'monthly-budget']) expect(el(id)).not.toBeNull();
+    });
+
+    it('has the same fields either way, so a value typed in one place is the one asked about', async () => {
+      await openView('/calculator/affordability');
+      const income = el('annual-income') as HTMLInputElement;
+
+      income.value = '150000';
+      income.dispatchEvent(new Event('input'));
+
+      expect(controls().annualIncome.value).toBe(150_000);
+    });
+  });
 
   describe('pricing the home at an amount asked for elsewhere', () => {
     it('sets the price and keeps the share put down, to the cent', () => {

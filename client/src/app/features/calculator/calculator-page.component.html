@@ -24,6 +24,10 @@
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
                  (calculate)="store.send($event)" (problems)="problems.set($event)" />
 
+  @if (view() === 'rent-or-buy') {
+    <app-rent-settings form />
+  }
+
   <app-buy-tabs tabs />
 
   @if (store.result()) {

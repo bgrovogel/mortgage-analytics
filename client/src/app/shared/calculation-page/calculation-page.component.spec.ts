@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
@@ -81,7 +81,7 @@ describe('CalculationPageComponent', () => {
 
     expect(text('page-heading')).toBe('A question?');
     expect(text('page-intro')).toBe('What the page answers.');
-    expect(text('form-panel')).toBe('form');
+    expect(text('form-panel')).toContain('form');
     expect(text('results')).toContain('Working…');
 
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -140,30 +140,48 @@ describe('CalculationPageComponent', () => {
     expect(host.store.linkProblem()).toBeNull();
   });
 
-  it('takes you from the results to the form, which a phone puts after them, and moves focus there', () => {
-    const { fixture } = render();
-    const root = fixture.nativeElement as HTMLElement;
-    const panel = root.querySelector<HTMLElement>('[data-testid="form-panel"]')!;
-    panel.scrollIntoView = jest.fn();
+  describe('the form as a sheet on a phone', () => {
+    const open = () => {
+      const { fixture } = render();
+      const root = fixture.nativeElement as HTMLElement;
+      const panel = root.querySelector<HTMLElement>('[data-testid="form-panel"]')!;
+      return { fixture, root, panel, press: (id: string) => { root.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!.click(); fixture.detectChanges(); } };
+    };
 
-    root.querySelector<HTMLButtonElement>('[data-testid="edit-inputs"]')!.click();
+    it('is out of the way until asked for, then opens over the results with focus on it', () => {
+      const { panel, press } = open();
+      expect(panel.classList.contains('sheet-open')).toBe(false);
 
-    expect(panel.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
-    expect(document.activeElement).toBe(panel);
-  });
+      press('edit-inputs');
+      TestBed.inject(ApplicationRef).tick();
 
-  it('jumps without animating for someone who prefers reduced motion', () => {
-    window.matchMedia = jest.fn().mockReturnValue({ matches: true });
-    const { fixture } = render();
-    const root = fixture.nativeElement as HTMLElement;
-    const panel = root.querySelector<HTMLElement>('[data-testid="form-panel"]')!;
-    panel.scrollIntoView = jest.fn();
+      expect(panel.classList.contains('sheet-open')).toBe(true);
+      expect(panel.getAttribute('role')).toBe('dialog');
+      expect(panel.getAttribute('aria-modal')).toBe('true');
+      expect(document.activeElement).toBe(panel);
+      expect(document.body.classList.contains('sheet-open')).toBe(true); // the page behind does not scroll
+    });
 
-    root.querySelector<HTMLButtonElement>('[data-testid="edit-inputs"]')!.click();
+    it('closes with Done, and gives the page back', () => {
+      const { panel, press } = open();
+      press('edit-inputs');
 
-    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
-    expect(panel.scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
-    delete (window as { matchMedia?: unknown }).matchMedia;
+      press('close-sheet');
+
+      expect(panel.classList.contains('sheet-open')).toBe(false);
+      expect(panel.getAttribute('role')).toBeNull();
+      expect(document.body.classList.contains('sheet-open')).toBe(false);
+    });
+
+    it('closes on Escape', () => {
+      const { fixture, panel, press } = open();
+      press('edit-inputs');
+
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(panel.classList.contains('sheet-open')).toBe(false);
+    });
   });
 
   it('says the results are for the last valid inputs while the form has problems', () => {

@@ -5,6 +5,7 @@ import { nextPayment, viewAnswer } from './answer-sentence';
 import { BuyTabsComponent, currentBuyView } from './buy-tabs/buy-tabs.component';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
+import { RentSettingsComponent } from './rent-settings/rent-settings.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 import { AmortizationResponse } from '../../core/models/amortization.models';
 
@@ -15,7 +16,7 @@ import { AmortizationResponse } from '../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, LoanFormComponent, RouterOutlet],
+  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, LoanFormComponent, RentSettingsComponent, RouterOutlet],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +33,7 @@ export class CalculatorPageComponent {
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);
 
-  private readonly view = currentBuyView();
+  protected readonly view = currentBuyView();
 
   /** The question and the answer for the view open: what it costs, whether it can be afforded, rent against buy. */
   protected readonly answered = computed(() => {

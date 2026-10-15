@@ -417,9 +417,12 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   open, is shared: a page's own example never overwrites yours.
 - **Results as you type.** There is no Calculate button: every valid change is sent after a short pause, and a newer
   change replaces an older one in flight.
-- **Answer first.** On a phone the results come first and the form follows, with **Edit your numbers** to jump to it;
-  a sticky bar keeps the payment and savings in view, and the four pages are a bar along the bottom of the screen,
-  where a thumb reaches. On a wider screen the form sits in its own column.
+- **Answer first.** On a phone the results come first and the form stays out of the way: **Edit your numbers** opens
+  it as a sheet over the answer, with the payment kept at the top of the sheet and **Done** to give the answer back.
+  A sticky bar keeps the payment and savings in view once the answer has scrolled away, and the four pages are a bar
+  along the bottom of the screen, where a thumb reaches. On a wider screen the form sits in its own column.
+- **For this question.** What a view needs sits with the five numbers, in a soft block, not further down a list:
+  income, debts and a monthly budget on Can I afford it?, the rent and what is assumed on Rent or buy?.
 - **Each view answers its own question.** Buy a home has four views in a row: **Cost**, **Can I afford it?**, **Rent or
   buy?** and **Compare**; the closing costs, the year-by-year costs and every payment are one step down from Cost,
   as a quieter row of links. Under each view's question, once there is a result, the answer is set large with a

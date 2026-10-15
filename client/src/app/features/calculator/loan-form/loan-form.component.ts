@@ -15,6 +15,7 @@ import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, OccupancyType, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, biweeklyExtra, monthlyPayment, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
+import { currentBuyView } from '../buy-tabs/buy-tabs.component';
 import { LOAN_FORM } from './loan-form.token';
 import { ClosingSectionComponent } from './sections/closing-section.component';
 import { CostsSectionComponent } from './sections/costs-section.component';
@@ -97,6 +98,9 @@ export class LoanFormComponent implements OnInit {
 
   /** The form's heading: "Your numbers", or which home it is when two are compared. */
   readonly heading = input('Your numbers');
+
+  /** The view of buying open: income and debts come up beside the five numbers when it asks whether a home can be afforded. */
+  readonly view = currentBuyView();
 
   /** False for a compared home: only the calculator's own loan is shared with the other pages. */
   readonly shared = input(true);

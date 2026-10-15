@@ -841,21 +841,25 @@ test.describe('Mortgage calculator', () => {
 test.describe('On a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('shows the answer first, above the form', async ({ calculator }) => {
+  test('shows the answer first, with the form out of the way until asked for', async ({ calculator }) => {
     await expect(calculator.headline, 'the headline numbers are on screen without scrolling').toBeInViewport();
-
-    const headline = await calculator.headline.boundingBox();
-    const form = await calculator.formPanel.boundingBox();
-    expect(headline!.y, 'the headline sits above the form').toBeLessThan(form!.y);
+    await expect(calculator.formPanel, 'the form is not in the way').toBeHidden();
   });
 
-  test('one tap takes you from the answer to the form below it', async ({ calculator, page }) => {
-    await expect(calculator.formPanel, 'the form starts below the results').not.toBeInViewport();
-
+  test('one tap opens the form as a sheet over the answer, and Done gives the answer back', async ({ calculator, page }) => {
     await page.getByTestId('edit-inputs').click();
 
     await expect(calculator.formPanel, 'the form is brought into view').toBeInViewport();
     await expect(calculator.formPanel, 'and focus goes with it, for keyboard and screen-reader users').toBeFocused();
+    await expect(page.getByTestId('sheet-lead'), 'the payment stays in view while editing').toContainText('a month');
+
+    await calculator.set('home-price', 500_000);
+    await expect(page.getByTestId('sheet-lead'), 'and follows what is typed').toContainText('$');
+
+    await page.getByTestId('close-sheet').click();
+
+    await expect(calculator.formPanel, 'the sheet closes').toBeHidden();
+    await expect(calculator.headline, 'on the answer').toBeInViewport();
   });
 
   test('shows every page link, wrapping onto a second row rather than hiding past the edge', async ({ calculator, page }) => {
@@ -875,9 +879,8 @@ test.describe('On a phone', () => {
     await expect(calculator.summaryBar, 'so the bar would only repeat it').toBeHidden();
   });
 
-  test('keeps the payment and savings in view while editing', async ({ calculator }) => {
-    await calculator.set('monthly-extra', 500);
-    await calculator.calculate();
+  test('keeps the payment and savings in view once the answer has scrolled away', async ({ calculator, page }) => {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
     await expect(calculator.summaryBar, 'the summary bar shows on small screens').toBeVisible();
     await expect(calculator.summaryBar, 'it shows the monthly payment').toContainText('/mo');

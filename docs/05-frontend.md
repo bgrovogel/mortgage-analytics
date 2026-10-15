@@ -259,8 +259,9 @@ The flows are designed around the people using it:
 
 - **A first visit:** each form opens on a worked example and says so ("These are example numbers"), until the first
   edit (`exampleUntilEdited`). A form restored from a saved item, or filled in from another page, never says it.
-- **A phone:** results come first, so `app-calculation-page` offers "Edit your numbers", which scrolls to the form
-  (instantly for anyone who prefers reduced motion) and moves focus there. Once the headline scrolls away, a bar
+- **A phone:** results come first, and the form is a sheet: `app-calculation-page` offers "Edit your numbers", which
+  opens it over the results (`sheetOpen`; `role="dialog"`, Escape or Done to close, the page behind locked) and moves
+  focus there once it is drawn (`afterRenderEffect`). Once the headline scrolls away, a bar
   keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after. The
   four page links become a bar fixed to the bottom of the screen (`styles.scss`, `max-width: 640px`), and the
   calculator's four views fill the row, and the three under Cost are a second row of links (`buy-tabs`).

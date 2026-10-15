@@ -181,8 +181,54 @@
   box-shadow: var(--focus-ring);
 }
 
-// One column on a phone: the answer first, then the form.
+// The bar at the top of the form's sheet: only a phone has a sheet.
+.sheet-bar {
+  display: none;
+}
+
+// One column on a phone: the answer first, and the form a sheet that opens over it.
 @media (max-width: 860px) {
+  .form-panel {
+    display: none;
+
+    &.sheet-open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      overflow-y: auto;
+      border-radius: 0;
+      border: 0;
+      padding: 0 1rem 2rem;
+      background: var(--surface-1);
+    }
+  }
+
+  .sheet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0 -1rem 0.75rem;
+    padding: 0.7rem 1rem;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+
+    button {
+      min-height: 40px;
+      padding: 0 1.1rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: var(--on-accent, #fff);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+
   .edit-inputs {
     display: inline-flex;
     align-items: center;
@@ -194,5 +240,17 @@
     grid-template-areas:
       'results'
       'form';
+  }
+}
+
+// The payment, beside the title of the sheet: what the numbers being typed come to, in view while editing.
+.sheet-bar .title {
+  display: flex;
+  flex-direction: column;
+
+  .live {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
   }
 }

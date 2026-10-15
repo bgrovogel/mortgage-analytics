@@ -206,19 +206,11 @@ describe('result tabs', () => {
   });
 
   describe('Rent or buy', () => {
-    const type = (root: HTMLElement, testId: string, value: string) => {
-      const field = root.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
-      field.value = value;
-      field.dispatchEvent(new Event('input'));
-    };
-
-    it('asks for the rent of a similar home, with the usual assumptions filled in', () => {
+    it('says what it would show without a rent, and offers a rent to try', () => {
       const root = render(RentOrBuyTabComponent).nativeElement as HTMLElement;
 
       expect(root.querySelector('[data-testid="rent-or-buy-empty"]')).not.toBeNull();
-      expect((root.querySelector('[data-testid="monthly-rent"]') as HTMLInputElement).value).toBe('');
-      expect((root.querySelector('[data-testid="rent-increase"]') as HTMLInputElement).value).toBe('3.5');
-      expect((root.querySelector('[data-testid="selling-costs"]') as HTMLInputElement).value).toBe('6');
+      expect(root.querySelector('[data-testid="monthly-rent"]')).toBeNull(); // the rent is asked for in the form
     });
 
     it('offers a rent to try, about 0.65% of the price a month, to the nearest $25', () => {
@@ -229,17 +221,7 @@ describe('result tabs', () => {
 
       button.click();
 
-      expect(store.rentSettings()?.monthlyRent).toBe(1_625);
-    });
-
-    it('weighs buying against renting once a rent is given, and stops when it is cleared', () => {
-      const fixture = render(RentOrBuyTabComponent);
-      type(fixture.nativeElement, 'monthly-rent', '2100');
-
-      expect(store.rentSettings()).toEqual({ monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 });
-
-      type(fixture.nativeElement, 'monthly-rent', '');
-      expect(store.rentSettings()).toBeNull();
+      expect(store.rentSettings()).toEqual({ monthlyRent: 1_625, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 });
     });
 
     it('shows the comparison once it arrives', () => {

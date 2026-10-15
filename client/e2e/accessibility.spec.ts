@@ -169,8 +169,11 @@ test.describe('Accessibility on a phone', () => {
   test('the calculator with a buydown', async ({ page }) => {
     await page.goto('/calculator/overview');
     await settled(page);
+    // The form is a sheet on a phone: open it, as a visitor would, to choose the rate type.
+    await page.getByTestId('edit-inputs').click();
     await openSections(page);
     await page.getByTestId('rate-type-buydown').check();
+    await page.getByTestId('close-sheet').click();
     await expect(page.getByTestId('buydown-years'), 'the buydown table has arrived').toBeVisible();
     await settled(page);
 

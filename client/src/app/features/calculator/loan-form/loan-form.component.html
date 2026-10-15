@@ -76,12 +76,28 @@
     }
   </fieldset>
 
+  @if (view() === 'affordability') {
+    <!-- What this question needs, with the five numbers rather than a section down the list. -->
+    <fieldset class="question" data-testid="question-income">
+      <legend>For this question</legend>
+      <div class="row">
+        <app-number-field [control]="form.controls.annualIncome" [rule]="rules.annualIncome" testId="annual-income" label="Income a year" />
+        <app-number-field [control]="form.controls.monthlyDebts" [rule]="rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
+      </div>
+      <p class="hint">Your household's income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities.</p>
+      <app-number-field [control]="form.controls.monthlyBudget" [rule]="rules.monthlyBudget" testId="monthly-budget" label="Or what you want to pay a month" />
+      <p class="hint">No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the highest price that reaches is answered here.</p>
+    </fieldset>
+  }
+
   <section class="more-details" aria-labelledby="loan-more-details" data-testid="more-details">
   <h3 id="loan-more-details">More details</h3>
   <app-loan-type-section class="first" />
   <app-costs-section />
   <app-closing-section />
-  <app-income-section />
+  @if (view() !== 'affordability') {
+    <app-income-section />
+  }
   <app-extra-payments-section />
   <app-growth-section class="last" />
   </section>

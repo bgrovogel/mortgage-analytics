@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
@@ -70,13 +70,28 @@ export class CalculationPageComponent {
     window.print();
   }
 
-  /**
-   * Brings the form into view and puts focus on it, so keyboard and screen-reader users land there too. Scrolls
-   * smoothly, unless the visitor prefers reduced motion.
-   */
-  editInputs(formPanel: HTMLElement): void {
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    formPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    formPanel.focus({ preventScroll: true });
+  /** On a phone the form is a sheet over the results: open while the visitor edits, out of the way otherwise. */
+  protected readonly sheetOpen = signal(false);
+
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('formPanel');
+
+  constructor() {
+    // The page behind a sheet does not scroll while it is open.
+    effect(() => document.body.classList.toggle('sheet-open', this.sheetOpen()));
+    inject(DestroyRef).onDestroy(() => document.body.classList.remove('sheet-open'));
+    // Once the sheet is drawn (a hidden element cannot take focus), focus goes to it, for keyboard and screen-reader users.
+    afterRenderEffect(() => {
+      if (this.sheetOpen()) this.panel()?.nativeElement.focus({ preventScroll: true });
+    });
+  }
+
+  /** Opens the form (a sheet on a phone); focus follows once it is drawn. */
+  editInputs(): void {
+    this.sheetOpen.set(true);
+  }
+
+  /** Closes the sheet, giving the results back. */
+  protected closeSheet(): void {
+    this.sheetOpen.set(false);
   }
 }
