@@ -215,10 +215,10 @@ independent models do that job.
 
 ## Mutation testing
 
-**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,350 small changes
+**Stryker.NET** measures the domain tests' strength rather than their reach. It makes about 1,400 small changes
 (mutants) to `MortgageAnalytics.Domain` (`<` to `<=`, `+` to `-`, `Sum` to `Max`, an emptied message, a deleted
 statement) and runs the tests against each. A mutant no test notices *survives*, and points at an assertion that is
-missing. **The score is 98.4%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
+missing. **The score is 98.3%; CI fails below 95%** (`tests/MortgageAnalytics.Domain.Tests/stryker-config.json`), and
 uploads the HTML report.
 
 <details>
@@ -246,7 +246,7 @@ Its first run scored 88.7%: rules no test reached (a VA funding-fee type, a year
 each tax's rate-change message), refinance boundaries (a loan whose last payment is today), mapped fields nobody
 asserted (an FHA response's loan type, a rate reset's date), and code that could not matter, now removed (a first
 payment date resolved twice, a cap of 50 rate changes that one-a-year in a 50-year loan never reaches). It now scores
-**98.2%**: of the 14 left, 8 are messages on `switch` arms that validation makes unreachable, and the rest are
+**97.8%**: of the 19 left, 9 are messages on `switch` arms and data lookups that validation makes unreachable, and the rest are
 equivalent ("empty list → None" shortcuts, `Append` against `Prepend` before a `Max`) or boundaries another rule
 already covers.
 

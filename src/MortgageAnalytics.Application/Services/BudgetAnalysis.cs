@@ -23,7 +23,6 @@ internal static class BudgetAnalysis
         // early years are not a budget the loan can keep, so its payment is the note rate's too.
         var paymentAt = PricedPayments.At(request, analysis.Rates.Loan.AnnualInterestRate, qualifyingPayment);
         var price = MostAffordable.Price(paymentAt, budget, request.HomePrice);
-        var down = price == 0m ? 0m : PricedPayments.DownPaymentAt(price, request.DownPayment / request.HomePrice);
-        return new BudgetResponse(budget, price, down);
+        return new BudgetResponse(budget, price, PricedPayments.DownPaymentAt(price, request.DownPayment / request.HomePrice));
     }
 }
