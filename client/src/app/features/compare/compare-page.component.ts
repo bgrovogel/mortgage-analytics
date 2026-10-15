@@ -18,8 +18,8 @@ import { ComparisonStore } from './comparison.store';
   selector: 'app-compare-page',
   imports: [BuyTabsComponent, CalculationPageComponent, LoanFormComponent, CompareResultsComponent],
   template: `
-    <app-calculation-page [store]="comparison" heading="Which home costs less?" label="Homes compared"
-                          intro="Up to four homes side by side, each any loan: what each costs a month, to close, and over the first years."
+    <app-calculation-page [store]="comparison" heading="Which home, or which offer, costs less?" label="Homes compared"
+                          intro="Up to four homes, or one home from different lenders, side by side: what each costs a month, to close, and over the first years."
                           [problems]="problems()" placeholder="Comparing your homes…" errorTitle="We couldn't compare those homes.">
       <app-buy-tabs tabs />
       <div form>
