@@ -432,7 +432,8 @@ def analyze(request, today, other_choice=True):
                                        out['discountPoints']['cost'] if points else D(0),
                                        program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0),
                                        base['buydownSubsidy'] if buydown and paid_by == 'Seller' else D(0),
-                                       program['type'] if program else 'Conventional', price) if closing else None
+                                       program['type'] if program else 'Conventional', price,
+                                       request.get('occupancy', 'PrimaryResidence')) if closing else None
     if arm:
         worst_rate = min(D(30), rate + D(str(arm['lifetimeCap'])))
         worst_changes = arm_path(rate, term, arm['initialFixedMonths'], arm['adjustmentIntervalMonths'], worst_rate,
@@ -620,6 +621,7 @@ def seller_offer(request, today, out):
     years, cut = weigh['yearsKept'], D(str(weigh['rateCutPerPoint']))
     price, down, rate = D(str(request['homePrice'])), D(str(request['downPayment'])), D(str(request['annualInterestRate']))
     kind = (request.get('program') or {}).get('type', 'Conventional')
+    occupancy = request.get('occupancy', 'PrimaryResidence')
     plain = dict(request, extraPayments=None, buydown=None, sellerOffer=None, closingCosts=dict(closing, credits=0))
     credited = lambda r, c: dict(r, closingCosts=dict(closing, credits=c))  # noqa: E731
     loan_of = lambda a: a['program']['loanAmount'] if a['program'] else a['purchase']['loanAmount']  # noqa: E731
@@ -629,11 +631,11 @@ def seller_offer(request, today, out):
         cash = a['cashToClose']
         if split:
             subsidy = a['buydown']['totalSubsidy']
-            share = min(offer, subsidy, concession_limit(kind, a['purchase']['homePrice'], down)[1])
+            share = min(offer, subsidy, concession_limit(kind, a['purchase']['homePrice'], down, occupancy)[1])
             program = a['program']
             cash = cash_to_close(dict(closing, credits=offer - share), down, loan_of(a), rate, a['projection'][0]['costs'],
                                  subsidy - share, D(0), program['upfrontFee'] if program and not program['upfrontFeeFinanced'] else D(0),
-                                 share, kind, a['purchase']['homePrice'])
+                                 share, kind, a['purchase']['homePrice'], occupancy)
         kept = a['baseline']['payments'][:years * 12]
         first = kept[0]
         payments = sum((p['totalOutlay'] for p in kept), D(0))
@@ -652,7 +654,7 @@ def seller_offer(request, today, out):
         ways.append(way('PriceCut', dict(plain, homePrice=price - offer)))
     ways.append(way('ClosingCosts', credited(plain, offer)))
     ways.append(way('TemporaryBuydown', dict(plain, buydown={'yearlyReductions': [2, 1]}, buydownPaidBy='Seller'), split=True))
-    limit = concession_limit(kind, price, down)[1]
+    limit = concession_limit(kind, price, down, occupancy)[1]
     budget = offer if kind == 'Va' else min(offer, limit)
     points = min(D(5), (budget / loan_of(out) * 100_000).to_integral_value(rounding='ROUND_FLOOR') / 1000)
     if points > 0:
@@ -701,18 +703,21 @@ def discount_points(points, loan, term, first, with_points):
     }
 
 
-def concession_limit(program, price, down):
+def concession_limit(program, price, down, occupancy='PrimaryResidence'):
     """
     The most a seller or builder may pay toward the buyer's costs, as a percentage of the price: Fannie Mae's Selling
     Guide B3-4.1-02 for a conventional loan (3% with a loan above 90% of the price, 6% above 75%, 9% at 75% or less),
     6% for FHA, 4% for VA (whose normal closing costs and points are left out). For a conventional loan, also the next
-    tier: the down payment that leaves a loan of exactly the tier's edge, rounded up to the cent.
+    tier: the down payment that leaves a loan of exactly the tier's edge, rounded up to the cent. An investment
+    property's conventional loan is held to 2%, whatever is put down.
     """
     def amount(percent):
         return money(price * percent / 100)
     if program != 'Conventional':
         percent = D(6) if program == 'Fha' else D(4)
         return percent, amount(percent), None
+    if occupancy == 'InvestmentProperty':
+        return D(2), amount(D(2)), None
     loan_share = (price - down) / price
     if loan_share > D('0.90'):
         percent, edge, nxt = D(3), D('0.90'), D(6)
@@ -724,7 +729,8 @@ def concession_limit(program, price, down):
     return percent, amount(percent), {'downPayment': needed, 'limitPercent': nxt, 'limit': amount(nxt)}
 
 
-def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost, upfront_fee, seller_buydown, program, price):
+def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost, upfront_fee, seller_buydown, program, price,
+                  occupancy='PrimaryResidence'):
     """
     The Loan Estimate's way: fees as entered; prepaid interest at a day's interest (a 365-day year, to the cent) for the
     days given; the first year's insurance premium; and months of the first year's taxes and insurance into escrow, a
@@ -744,7 +750,7 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost
     lender = min(lender_offered, costs)
     seller_room = min(seller_offered, costs - lender)
     exempt = min(seller_room, loan_costs + other + daily * days + points_cost) if program == 'Va' else D(0)
-    percent, limit, next_tier = concession_limit(program, price, down)
+    percent, limit, next_tier = concession_limit(program, price, down, occupancy)
     counted = seller_buydown + seller_room - exempt
     over = max(D(0), counted - limit)
     seller = seller_room - min(over, seller_room - exempt)

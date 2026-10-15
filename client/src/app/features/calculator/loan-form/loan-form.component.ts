@@ -12,7 +12,7 @@ import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { AmortizationRequest, YearProjection } from '../../../core/models/amortization.models';
+import { AmortizationRequest, OccupancyType, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { LOAN_FORM } from './loan-form.token';
@@ -24,7 +24,7 @@ import { IncomeSectionComponent } from './sections/income-section.component';
 import { LoanTypeSectionComponent } from './sections/loan-type-section.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
-  LumpSumForm, RateChangeForm, chargedTaxes, fhaDownProblem, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+  LoanForm, LumpSumForm, RateChangeForm, chargedTaxes, conventionalDownProblem, fhaDownProblem, occupancyProblem, syncOccupancy, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
@@ -62,6 +62,21 @@ const SECTION_CONTROLS = {
  * Only the five main fields are always visible. Everything else lives in collapsible sections,
  * each summarized in one line while closed.
  */
+/** How the loan's summary names a home not lived in. */
+const USE_SUFFIX: Record<OccupancyType, string> = { PrimaryResidence: '', SecondHome: ' · second home', InvestmentProperty: ' · investment property' };
+
+/**
+ * An FHA loan's down-payment problem by credit score, or a conventional loan's by the home's use; null for VA, and
+ * for a conventional loan already being paid, whose limits were for when it was made.
+ */
+function downProblemOf(v: ReturnType<LoanForm['getRawValue']>, adjustableRate: boolean): string | null {
+  const down = downPaymentAmountOf(v);
+  const price = v.homePrice;
+  if (v.loanProgram === 'Fha') return fhaDownProblem(down, price, v.creditScore);
+  if (v.loanProgram === 'Va' || price <= 0 || paymentsMade(v.firstPaymentDate, new Date()) > 0) return null;
+  return conventionalDownProblem(down, price, v.occupancy, adjustableRate);
+}
+
 @Component({
   selector: 'app-loan-form',
   imports: [
@@ -160,16 +175,27 @@ export class LoanFormComponent implements OnInit {
   /** The kind of loan chosen. */
   readonly loanProgram = computed(() => this.values().loanProgram ?? 'Conventional');
 
-  /** What stops an FHA loan from being sent, by its credit score and down payment, or null. */
-  readonly fhaDownProblem = computed(() =>
-    this.loanProgram() === 'Fha' ? fhaDownProblem(this.downPaymentAmount(), this.values().homePrice ?? 0, this.values().creditScore) : null);
+  /** How the buyer will use the home. */
+  readonly occupancy = computed(() => this.values().occupancy ?? 'PrimaryResidence');
+
+  /**
+   * What stops the down payment from being sent, or null: an FHA loan's minimum by credit score, or a conventional
+   * loan's by the home's use and whether the rate is adjustable.
+   */
+  readonly downProblem = computed(() => {
+    const v = this.values(); // read for its changes; the raw value also has the fields disabled for now
+    return downProblemOf(this.form.getRawValue(), v.rate?.rateType === 'arm');
+  });
+
+  /** What stops the loan type for this home's use, or null: FHA and VA are only for a home lived in. */
+  readonly occupancyProblem = computed(() => occupancyProblem(this.loanProgram(), this.occupancy()));
 
   /** One-line summary of the loan type, and for FHA or VA how its fee is paid. */
   readonly programSummary = computed(() => {
     const v = this.values();
     const paid = v.financeUpfrontFee === false ? 'paid at closing' : 'added to the loan';
     if (v.loanProgram === 'Fha') return `FHA · upfront MIP ${paid}`;
-    if (v.loanProgram !== 'Va') return 'Conventional';
+    if (v.loanProgram !== 'Va') return `Conventional${USE_SUFFIX[v.occupancy ?? 'PrimaryResidence']}`;
     if (v.vaUse === 'Exempt') return 'VA · exempt from the funding fee';
     return `VA · ${v.vaUse === 'SubsequentUse' ? 'used before' : 'first use'} · funding fee ${paid}`;
   });
@@ -254,6 +280,10 @@ export class LoanFormComponent implements OnInit {
 
     // The adjustable rate's numbers are only checked (and sent) while the rate is adjustable.
     keepArmFieldsInStep(this.form.controls.rate);
+
+    // A homestead is only offered for the home the buyer lives in.
+    syncOccupancy(this.form);
+    this.form.controls.occupancy.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => syncOccupancy(this.form));
 
     // The points' fields are only checked (and sent) while points apply.
     syncPoints(this.form);
@@ -407,8 +437,9 @@ export class LoanFormComponent implements OnInit {
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
         ? [NOTHING_TO_BORROW] : []),
       ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
-      ...(v.loanProgram === 'Fha' && this.form.controls.homePrice.valid && this.form.controls.downPayment.valid
-        && fhaDownProblem(downPaymentAmountOf(v), v.homePrice, v.creditScore) ? [fhaDownProblem(downPaymentAmountOf(v), v.homePrice, v.creditScore)!] : []),
+      ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) > 0
+        ? [downProblemOf(v, v.rate.rateType === 'arm')].filter((p): p is string => p !== null) : []),
+      ...[occupancyProblem(v.loanProgram, v.occupancy)].filter((p): p is string => p !== null),
       ...(pointsApply(v) && this.form.controls.rateWithoutPoints.valid && this.form.controls.annualInterestRate.valid
         && v.rateWithoutPoints <= v.annualInterestRate ? [POINTS_RATE_TOO_LOW] : []),
       ...(existing && !existing.paidOff

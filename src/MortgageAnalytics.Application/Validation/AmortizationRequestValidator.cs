@@ -1,6 +1,8 @@
 using FluentValidation;
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Data;
+using MortgageAnalytics.Application.Mapping;
+using MortgageAnalytics.Application.Services;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.RentOrBuy;
@@ -22,6 +24,23 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// <summary>Whole dollars as people read them, "$557,750", whatever the server's culture.</summary>
     private static string Dollars(decimal amount) => "$" + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
+    /// <summary>The most a conventional loan may be on this home, as a percentage of the price.</summary>
+    private static decimal MaxConventionalLoanToValue(AmortizationRequest r) =>
+        r.Occupancy.ToDomain().MaxConventionalLoanToValuePercent(adjustableRate: r.AdjustableRate is not null);
+
+    /// <summary>"A conventional loan can be at most 90% of the price of a second home: put at least 10% down."</summary>
+    private static string ConventionalLimitMessage(AmortizationRequest r)
+    {
+        var most = MaxConventionalLoanToValue(r);
+        var (loan, home) = r.Occupancy switch
+        {
+            OccupancyType.SecondHome => ("A conventional loan", "a second home"),
+            OccupancyType.InvestmentProperty => ("A conventional loan", "an investment property"),
+            _ => (r.AdjustableRate is null ? "A conventional loan" : "A conventional loan with an adjustable rate", "a home you live in"),
+        };
+        return $"{loan} can be at most {most:0}% of the price of {home}: put at least {100m - most:0}% down.";
+    }
+
     /// <summary>The most lump sums one request may contain.</summary>
     public const int MaxLumpSums = 120;
 
@@ -38,8 +57,14 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     internal static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
     internal static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
 
+    /// <summary>Defines every rule for an <see cref="AmortizationRequest"/>, with today from the system clock.</summary>
+    public AmortizationRequestValidator() : this(TimeProvider.System)
+    {
+    }
+
     /// <summary>Defines every rule for an <see cref="AmortizationRequest"/>.</summary>
-    public AmortizationRequestValidator()
+    /// <param name="clock">Today, which tells a loan still to be made from one already being paid.</param>
+    public AmortizationRequestValidator(TimeProvider clock)
     {
         RuleFor(r => r.HomePrice)
             .GreaterThan(0)
@@ -56,6 +81,24 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .LessThanOrEqualTo(LoanTerms.MaxPrincipal)
             .WithMessage($"The loan amount (home price minus down payment) cannot exceed {LoanTerms.MaxPrincipal:N0}.")
             .OverridePropertyName(nameof(AmortizationRequest.DownPayment));
+
+        // How the home is used: the most a conventional loan may be, FHA and VA, and a homestead (Domain/Loans/Occupancy.cs).
+        RuleFor(r => r.Occupancy).IsInEnum().WithName("Occupancy");
+        RuleFor(r => r.HomePrice - r.DownPayment)
+            .Must((r, loan) => loan * 100m <= r.HomePrice * MaxConventionalLoanToValue(r))
+            .WithMessage(r => ConventionalLimitMessage(r))
+            .OverridePropertyName(nameof(AmortizationRequest.DownPayment))
+            .When(r => r.Program is null or { Type: LoanProgramType.Conventional } && Enum.IsDefined(r.Occupancy)
+                && (r.FirstPaymentDate is not { } first || first >= clock.Today())); // a loan being made (a payment due today is not yet made), not one being paid
+        RuleFor(r => r.Occupancy)
+            .Must(o => o.ToDomain().AllowsGovernmentLoan())
+            .WithMessage("FHA and VA loans are only for a home you will live in.")
+            .When(r => r.Program is { Type: LoanProgramType.Fha or LoanProgramType.Va } && Enum.IsDefined(r.Occupancy));
+        RuleFor(r => r.HousingCosts!.IsHomestead)
+            .Equal(false)
+            .WithMessage("A homestead exemption is only for the home you live in.")
+            .OverridePropertyName("HousingCosts.IsHomestead")
+            .When(r => r.HousingCosts is not null && Enum.IsDefined(r.Occupancy) && !r.Occupancy.ToDomain().AllowsHomestead());
 
         RuleFor(r => r.AnnualInterestRate)
             .Percentage(max: LoanTerms.MaxAnnualInterestRate)

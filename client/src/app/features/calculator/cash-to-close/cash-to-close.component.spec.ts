@@ -109,6 +109,8 @@ describe('CashToCloseComponent', () => {
       expect(render(concessions({ limitPercent: 6, limit: 22_500 })).text('concession-limit')).toContain('6% of the price, with 10% to 25% down.');
       expect(render(concessions({ limitPercent: 9, limit: 33_750, nextTier: null })).text('concession-limit'))
         .toContain('9% of the price, with 25% or more down.');
+      expect(render(concessions({ limitPercent: 2, limit: 7_500, nextTier: null })).text('concession-limit'))
+        .toContain('2% of the price, for an investment property.');
     });
 
     it("names FHA's and VA's, VA's leaving out the normal closing costs", () => {

@@ -189,6 +189,16 @@ def random_purchase(rng):
             # More ARMs with an income than the rest, so each program's qualifying rate is checked.
             if not request.get('affordability') and rng.random() < 0.6:
                 request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 250, 600])}
+    # Some conventional loans are on a second home or an investment property: no homestead, and a smaller loan.
+    if not request.get('program') and rng.random() < 0.3:
+        request['occupancy'] = rng.choice(['SecondHome', 'InvestmentProperty'])
+        request['housingCosts']['isHomestead'] = False
+    # A conventional loan still to be made is held to the most its home's use allows (97%, 95% with an ARM, 90%, 85%);
+    # one already being paid (its first payment past) is not, so those keep whatever they were given.
+    if not request.get('program') and (first is None or first >= date.today().isoformat()):
+        use = request.get('occupancy', 'PrimaryResidence')
+        most = {'SecondHome': 90, 'InvestmentProperty': 85}.get(use, 95 if request['adjustableRate'] else 97)
+        request['downPayment'] = max(request['downPayment'], price * (100 - most) // 100)
     return request
 
 

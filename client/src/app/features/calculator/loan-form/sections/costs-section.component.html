@@ -31,6 +31,9 @@
         <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
         <span><strong>Homestead</strong> (primary residence): exemptions and the appraisal cap</span>
       </label>
+      @if (f.occupancy() !== 'PrimaryResidence') {
+        <p class="hint" data-testid="homestead-hint">Only for the home you live in.</p>
+      }
 
       @if (f.isHomestead() && f.taxMode() === 'single') {
         <div class="row">

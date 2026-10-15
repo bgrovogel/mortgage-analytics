@@ -85,6 +85,24 @@ public class ClosingCostScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void AnInvestmentProperty_HoldsTheSellerTo2Percent()
+    {
+        // 15% down, the least an investment property's conventional loan allows; $5,500 of credits is past 2%.
+        var request = A.Request.WithHomePrice(250_000m).WithDownPayment(37_500m).WithOccupancy(OccupancyType.InvestmentProperty)
+            .WithClosingCosts(credits: 5_500m);
+
+        var cash = Service.Analyze(request).CashToClose!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cash.Concessions.LimitPercent, Is.EqualTo(2m), "Fannie Mae's limit for an investment property");
+            Assert.That(cash.Concessions.Limit, Is.EqualTo(5_000m), "2% of $250,000");
+            Assert.That(cash.Concessions.OverLimit, Is.EqualTo(500m), "$500 of the credits cannot pay costs");
+            Assert.That(cash.Concessions.NextTier, Is.Null, "more down does not raise it");
+        });
+    }
+
+    [Test]
     public void TheLendersCredits_AreNotTheSellers()
     {
         var cash = Service.Analyze(TexasPurchase().WithClosingCosts(credits: 3_000m, lenderCredits: 1_000m)).CashToClose!;

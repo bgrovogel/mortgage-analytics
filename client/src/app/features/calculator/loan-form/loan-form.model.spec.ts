@@ -2,7 +2,8 @@ import { FormBuilder } from '@angular/forms';
 import { firstOfMonthFromNext } from '../../../core/loans/loan-progress';
 import { AmortizationRequest } from '../../../core/models/amortization.models';
 import {
-  FHA_DOWN_TOO_LOW, FHA_LOW_SCORE_DOWN_TOO_LOW, FHA_SCORE_TOO_LOW, chargedTaxes, fhaDownProblem, loanForm, lumpSumGroup, pointsApply,
+  FHA_DOWN_TOO_LOW, FHA_LOW_SCORE_DOWN_TOO_LOW, FHA_SCORE_TOO_LOW, GOVERNMENT_LOAN_NOT_LIVED_IN, chargedTaxes, conventionalDownProblem, fhaDownProblem,
+  occupancyProblem, loanForm, lumpSumGroup, pointsApply,
   rateChangeGroup, rateChangesOf, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 
@@ -110,6 +111,55 @@ describe('loan form model', () => {
       [undefined, 17_499, FHA_DOWN_TOO_LOW],
     ])('a score of %s with $%s down on $500,000 → %s', (score, down, problem) => {
       expect(fhaDownProblem(down, 500_000, score)).toBe(problem);
+    });
+  });
+
+  describe('how the home is used', () => {
+    it.each([
+      [12_000, 'PrimaryResidence', false, null],
+      [11_999, 'PrimaryResidence', false, 'A conventional loan can be at most 97% of the price of a home you live in: put at least 3% down.'],
+      [19_999, 'PrimaryResidence', true, 'A conventional loan with an adjustable rate can be at most 95% of the price of a home you live in: put at least 5% down.'],
+      [20_000, 'PrimaryResidence', true, null],
+      [39_999, 'SecondHome', false, 'A conventional loan can be at most 90% of the price of a second home: put at least 10% down.'],
+      [40_000, 'SecondHome', true, null],
+      [59_999, 'InvestmentProperty', false, 'A conventional loan can be at most 85% of the price of an investment property: put at least 15% down.'],
+      [60_000, 'InvestmentProperty', false, null],
+    ] as const)('$%s down on $400,000 for a %s home (adjustable: %s) → %s', (down, occupancy, adjustable, problem) => {
+      expect(conventionalDownProblem(down, 400_000, occupancy, adjustable)).toBe(problem);
+    });
+
+    it('allows FHA and VA only for a home lived in', () => {
+      expect(occupancyProblem('Fha', 'SecondHome')).toBe(GOVERNMENT_LOAN_NOT_LIVED_IN);
+      expect(occupancyProblem('Va', 'InvestmentProperty')).toBe(GOVERNMENT_LOAN_NOT_LIVED_IN);
+      expect(occupancyProblem('Fha', 'PrimaryResidence')).toBeNull();
+      expect(occupancyProblem('Conventional', 'InvestmentProperty')).toBeNull();
+      expect(GOVERNMENT_LOAN_NOT_LIVED_IN).toBe('FHA and VA loans are only for a home you will live in.');
+    });
+
+    it('is a home lived in unless chosen, and sends no homestead for another', () => {
+      const form = newForm();
+      expect(toLoanRequest(form, 1).occupancy).toBe('PrimaryResidence');
+
+      form.controls.taxMode.setValue('separate');
+      syncTaxMode(form);
+      form.controls.isOver65.setValue(true);
+      form.controls.occupancy.setValue('SecondHome');
+      const request = toLoanRequest(form, 1);
+
+      expect(request.occupancy).toBe('SecondHome');
+      expect(request.housingCosts?.isHomestead).toBe(false);
+      expect(request.housingCosts?.over65OrDisabled).toBeNull();
+    });
+
+    it('comes back as it was sent, and as a home lived in from a request made before it was asked', () => {
+      const form = newForm();
+      const request = { ...toLoanRequest(form, 1), occupancy: 'InvestmentProperty' } as AmortizationRequest;
+
+      restoreLoanForm(form, fb, request);
+      expect(form.controls.occupancy.value).toBe('InvestmentProperty');
+
+      restoreLoanForm(form, fb, { ...request, occupancy: undefined });
+      expect(form.controls.occupancy.value).toBe('PrimaryResidence');
     });
   });
 

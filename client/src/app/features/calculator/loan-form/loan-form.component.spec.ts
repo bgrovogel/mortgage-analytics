@@ -779,6 +779,57 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('how the home is used', () => {
+    const use = (occupancy: 'PrimaryResidence' | 'SecondHome' | 'InvestmentProperty') => {
+      el(`occupancy-${occupancy}`)!.click();
+      fixture.detectChanges();
+    };
+
+    it('is a home you live in unless chosen', () => {
+      expect(last().occupancy).toBe('PrimaryResidence');
+      expect(text('program-summary')).toBe('Conventional');
+    });
+
+    it('holds a second home to 90% of the price, and sends nothing below 10% down', () => {
+      const sent = emitted.length;
+      use('SecondHome'); // the example's 9% down
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('down-payment-error')).toBe('A conventional loan can be at most 90% of the price of a second home: put at least 10% down.');
+
+      controls().downPayment.setValue(41_500);
+      fixture.detectChanges();
+      expect(last().occupancy).toBe('SecondHome');
+      expect(text('program-summary')).toBe('Conventional · second home');
+    });
+
+    it('allows no FHA or VA loan on an investment property', () => {
+      controls().downPayment.setValue(62_250);
+      use('InvestmentProperty');
+      const sent = emitted.length;
+
+      controls().loanProgram.setValue('Fha');
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(sent);
+      expect(text('occupancy-error')).toBe('FHA and VA loans are only for a home you will live in.');
+    });
+
+    it('offers a homestead only for a home you live in', () => {
+      const homestead = () => el('is-homestead') as HTMLInputElement;
+      controls().downPayment.setValue(62_250);
+      use('InvestmentProperty');
+
+      expect(homestead().disabled).toBe(true);
+      expect(text('homestead-hint')).toBe('Only for the home you live in.');
+      expect(last().housingCosts?.isHomestead).toBe(false);
+
+      use('PrimaryResidence');
+      expect(homestead().disabled).toBe(false);
+      expect(last().housingCosts?.isHomestead).toBe(true);
+    });
+  });
+
   describe('FHA and VA loans', () => {
     const choose = (type: 'Conventional' | 'Fha' | 'Va') => {
       controls().loanProgram.setValue(type);
@@ -824,7 +875,7 @@ describe('LoanFormComponent', () => {
       choose('Fha');
 
       expect(emitted).toHaveLength(sent);
-      expect(text('fha-down-error')).toBe('An FHA loan needs at least 3.5% down.');
+      expect(text('down-payment-error')).toBe('An FHA loan needs at least 3.5% down.');
     });
 
     it('send an FHA loan with its credit score and county', () => {
@@ -845,7 +896,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(sent);
-      expect(text('fha-down-error')).toBe('With a credit score below 580, an FHA loan needs at least 10% down.');
+      expect(text('down-payment-error')).toBe('With a credit score below 580, an FHA loan needs at least 10% down.');
     });
 
     it('refuse FHA below a credit score of 500', () => {
@@ -857,7 +908,7 @@ describe('LoanFormComponent', () => {
       fixture.detectChanges();
 
       expect(emitted).toHaveLength(sent);
-      expect(text('fha-down-error')).toBe('FHA insures loans only for credit scores of 500 or more.');
+      expect(text('down-payment-error')).toBe('FHA insures loans only for credit scores of 500 or more.');
     });
 
     it('send a VA loan with its funding-fee use, which can be paid at closing', () => {
@@ -974,8 +1025,10 @@ describe('LoanFormComponent', () => {
     it('keeps its own price when the loan has no home value, and never goes below a $0 down payment', () => {
       expect(startFrom({ balance: 300_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: null }))
         .toEqual(expect.objectContaining({ homePrice: 415_000, downPayment: 115_000 }));
-      expect(startFrom({ balance: 420_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: 400_000 }))
-        .toEqual(expect.objectContaining({ homePrice: 420_000, downPayment: 0 }));
+      // Owing more than the home is worth: filled in at $0 down, which no conventional loan being made allows.
+      expect(startFrom({ balance: 420_000, annualInterestRate: 7, remainingTermInMonths: 300, homeValue: 400_000 })).toBeUndefined();
+      expect([controls().homePrice.value, controls().downPayment.value]).toEqual([420_000, 0]);
+      expect(text('down-payment-error')).toBe('A conventional loan can be at most 97% of the price of a home you live in: put at least 3% down.');
     });
   });
 

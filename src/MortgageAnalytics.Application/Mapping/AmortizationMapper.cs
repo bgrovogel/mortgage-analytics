@@ -16,7 +16,7 @@ internal static class AmortizationMapper
 {
     /// <summary>Builds the purchase (price and down payment) from the request.</summary>
     public static PropertyPurchase ToPurchase(this AmortizationRequest request) =>
-        new(request.HomePrice, request.DownPayment);
+        new(request.HomePrice, request.DownPayment) { Occupancy = request.Occupancy.ToDomain() };
 
     /// <summary>
     /// The FHA or VA loan, or null for a conventional one. The year the loan closes, which picks FHA's loan-size limit,
@@ -316,6 +316,15 @@ internal static class AmortizationMapper
         BuydownFunding.Seller => BuydownPayer.Seller,
         BuydownFunding.Borrower => BuydownPayer.Borrower,
         _ => throw new ArgumentOutOfRangeException(nameof(paidBy), paidBy, "Validated before mapping."),
+    };
+
+    /// <summary>How the home is used, in the domain's terms.</summary>
+    internal static Occupancy ToDomain(this OccupancyType occupancy) => occupancy switch
+    {
+        OccupancyType.PrimaryResidence => Occupancy.PrimaryResidence,
+        OccupancyType.SecondHome => Occupancy.SecondHome,
+        OccupancyType.InvestmentProperty => Occupancy.InvestmentProperty,
+        _ => throw new ArgumentOutOfRangeException(nameof(occupancy), occupancy, "Validated before mapping."),
     };
 
     /// <summary>The worst case of an adjustable rate: its resets, the highest payment, and the interest.</summary>

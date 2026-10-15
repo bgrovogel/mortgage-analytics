@@ -32,6 +32,9 @@ public sealed record PropertyPurchase
     /// <summary>Cash paid up front, in dollars.</summary>
     public decimal DownPayment { get; }
 
+    /// <summary>How the buyer will use the home: a principal residence unless said otherwise.</summary>
+    public Occupancy Occupancy { get; init; } = Occupancy.PrimaryResidence;
+
     /// <summary>The amount borrowed: price minus down payment.</summary>
     public decimal LoanAmount => HomePrice - DownPayment;
 

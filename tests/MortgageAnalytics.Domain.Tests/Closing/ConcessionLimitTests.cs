@@ -96,6 +96,31 @@ public class ConcessionLimitTests
         });
     }
 
+    [TestCase(62_250, TestName = "AnInvestmentProperty_Is2Percent_With15PercentDown")]
+    [TestCase(207_500, TestName = "AnInvestmentProperty_Is2Percent_WithHalfDown")]
+    public void AnInvestmentProperty_Is2Percent_WhateverIsPutDown(decimal downPayment)
+    {
+        var purchase = new PropertyPurchase(Price, downPayment) { Occupancy = Occupancy.InvestmentProperty };
+
+        var limit = ConcessionLimit.For(LoanProgram.Conventional, purchase);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(limit.Percent, Is.EqualTo(2m), "Fannie Mae: 2% at every loan-to-value for an investment property");
+            Assert.That(limit.Amount, Is.EqualTo(8_300m), "2% of $415,000");
+            Assert.That(limit.NextTier, Is.Null, "putting more down does not raise it");
+        });
+    }
+
+    [Test]
+    public void ASecondHome_HasTheTiersOfAHomeLivedIn()
+    {
+        var purchase = new PropertyPurchase(Price, 41_500m) { Occupancy = Occupancy.SecondHome };
+
+        Assert.That(ConcessionLimit.For(LoanProgram.Conventional, purchase), Is.EqualTo(ConventionalWith(41_500m)),
+            "Fannie Mae's tiers cover a principal residence or a second home alike");
+    }
+
     [Test]
     public void Conventional_CountsTheNormalClosingCosts()
     {

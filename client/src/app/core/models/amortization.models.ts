@@ -101,6 +101,8 @@ export interface AdjustableRateInput {
 export interface AmortizationRequest {
   homePrice: number;
   downPayment: number;
+  /** How the buyer will use the home; a home they live in when left out (requests saved before it was asked). */
+  occupancy?: OccupancyType;
   /** The note rate with a buydown; the starting rate with an adjustable rate. */
   annualInterestRate: number;
   termInMonths: number;
@@ -255,6 +257,12 @@ export interface SellerOfferComparison {
 
 /** The kind of loan. */
 export type LoanProgramType = 'Conventional' | 'Fha' | 'Va';
+
+/**
+ * How the buyer will use the home. A second home or an investment property allows a smaller conventional loan (90%
+ * or 85% of the price), no FHA or VA loan and no homestead; an investment property also a 2% seller contribution.
+ */
+export type OccupancyType = 'PrimaryResidence' | 'SecondHome' | 'InvestmentProperty';
 
 /** Which VA funding fee applies. */
 export type VaFundingFeeType = 'FirstUse' | 'SubsequentUse' | 'Exempt';

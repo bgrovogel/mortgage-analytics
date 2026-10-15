@@ -4,11 +4,27 @@
     <span class="section-summary"><span data-testid="program-summary">{{ f.programSummary() }}</span> · <span data-testid="rate-summary">{{ f.rateSummary() }}</span></span>
   </summary>
   <div class="section-body">
+      <div class="field">
+        <span id="occupancy-label">This home is</span>
+        <div class="segmented three" role="radiogroup" aria-labelledby="occupancy-label">
+          <label><input type="radio" formControlName="occupancy" value="PrimaryResidence" data-testid="occupancy-PrimaryResidence" /> Your home</label>
+          <label><input type="radio" formControlName="occupancy" value="SecondHome" data-testid="occupancy-SecondHome" /> Second home</label>
+          <label><input type="radio" formControlName="occupancy" value="InvestmentProperty" data-testid="occupancy-InvestmentProperty" /> Investment</label>
+        </div>
+      </div>
+      @if (f.occupancy() !== 'PrimaryResidence') {
+        <p class="hint" data-testid="occupancy-hint">
+          {{ f.occupancy() === 'SecondHome' ? 'At least 10% down' : 'At least 15% down, a seller may pay only 2%,' }} and no FHA, VA or homestead.
+        </p>
+      }
       <div class="segmented three" role="radiogroup" aria-label="Loan type">
         <label><input type="radio" formControlName="loanProgram" value="Conventional" data-testid="program-conventional" /> Conventional</label>
         <label><input type="radio" formControlName="loanProgram" value="Fha" data-testid="program-fha" /> <abbr title="Federal Housing Administration">FHA</abbr></label>
         <label><input type="radio" formControlName="loanProgram" value="Va" data-testid="program-va" /> <abbr title="Department of Veterans Affairs">VA</abbr></label>
       </div>
+      @if (f.occupancyProblem(); as problem) {
+        <small class="error" data-testid="occupancy-error">{{ problem }}</small>
+      }
       @switch (f.loanProgram()) {
         @case ('Fha') {
           <p class="hint" data-testid="program-hint">At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.</p>

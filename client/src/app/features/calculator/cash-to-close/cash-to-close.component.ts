@@ -6,8 +6,10 @@ import { CashToClose, LoanProgramType } from '../../../core/models/amortization.
 /** The down payment that reaches each higher conventional limit, by that limit's percentage. */
 const DOWN_FOR_LIMIT: Record<number, number> = { 6: 10, 9: 25 };
 
-/** Why a conventional loan's limit is what it is, by its percentage. */
-const CONVENTIONAL_TIER: Record<number, string> = { 3: ', with less than 10% down', 6: ', with 10% to 25% down', 9: ', with 25% or more down' };
+/** Why a conventional loan's limit is what it is, by its percentage: 2% is only ever an investment property's. */
+const CONVENTIONAL_TIER: Record<number, string> = {
+  2: ', for an investment property', 3: ', with less than 10% down', 6: ', with 10% to 25% down', 9: ', with 25% or more down',
+};
 
 /** One line of the cash to close: what it is, how it was worked out (when that helps), and the amount. */
 interface Line {

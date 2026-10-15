@@ -12,6 +12,13 @@ public sealed record AmortizationRequest
     public decimal DownPayment { get; init; }
 
     /// <summary>
+    /// How the buyer will use the home. A second home or an investment property allows a smaller conventional loan, no
+    /// FHA or VA loan and no homestead exemption; an investment property also a smaller seller contribution.
+    /// </summary>
+    /// <example>PrimaryResidence</example>
+    public OccupancyType Occupancy { get; init; } = OccupancyType.PrimaryResidence;
+
+    /// <summary>
     /// Nominal annual interest rate as a percentage (6.5 means 6.5%). With a <see cref="Buydown"/> it is the note
     /// rate, the one the loan amortizes at; with an <see cref="AdjustableRate"/>, the starting rate.
     /// </summary>
@@ -164,6 +171,19 @@ public sealed record LoanProgramRequest
     /// </summary>
     /// <example>48029</example>
     public string? CountyFips { get; init; }
+}
+
+/// <summary>How the buyer will use the home.</summary>
+public enum OccupancyType
+{
+    /// <summary>The home the buyer lives in for most of the year.</summary>
+    PrimaryResidence,
+
+    /// <summary>A home the buyer lives in part of the year, and does not rent out.</summary>
+    SecondHome,
+
+    /// <summary>A home the buyer does not live in: to rent out, or hold.</summary>
+    InvestmentProperty,
 }
 
 /// <summary>The kind of loan.</summary>

@@ -43,9 +43,15 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     }
 
     [Test]
-    public void ZeroDownPayment_IsAllowed()
+    public void ZeroDownPayment_IsAllowed_ForAVaLoan()
     {
-        AssertNoErrorFor(A.Request.WithDownPayment(0m), nameof(AmortizationRequest.DownPayment), "100% financing is a real product");
+        Assert.Multiple(() =>
+        {
+            AssertNoErrorFor(A.Request.WithDownPayment(0m).WithProgram(LoanProgramType.Va), nameof(AmortizationRequest.DownPayment),
+                "VA's 100% financing is a real product");
+            AssertInvalid(A.Request.WithDownPayment(0m).WithFirstPaymentDate(null), nameof(AmortizationRequest.DownPayment),
+                "a conventional loan needs at least 3% down");
+        });
     }
 
     // ---------------------------------------------------------------------------------------
@@ -596,6 +602,93 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
             : h with { PropertyTaxHomesteadExemption = -1m }));
 
         AssertInvalid(request, $"HousingCosts.{field}", "each exemption has its range");
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // How the home is used: the most a conventional loan may be, FHA and VA, and a homestead.
+    // ---------------------------------------------------------------------------------------
+
+    /// <summary>$400,000 with the given down payment, used as said: a loan still to be made (its first payment next month).</summary>
+    private static AmortizationRequestBuilder Used(OccupancyType occupancy, decimal down) =>
+        A.Request.WithHomePrice(400_000m).WithDownPayment(down).WithOccupancy(occupancy).WithFirstPaymentDate(null);
+
+    [Test]
+    public void AConventionalLoan_IsAtMost97PercentOfAHomeLivedIn_Or95WithAnAdjustableRate()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertNoErrorFor(Used(OccupancyType.PrimaryResidence, 12_000m), "DownPayment", "3% down: a 97% loan");
+            AssertErrorMessage(Used(OccupancyType.PrimaryResidence, 11_999.99m), "DownPayment",
+                "A conventional loan can be at most 97% of the price of a home you live in: put at least 3% down.", "a cent less is past 97%");
+            AssertErrorMessage(Used(OccupancyType.PrimaryResidence, 12_000m).WithAdjustableRate(7m), "DownPayment",
+                "A conventional loan with an adjustable rate can be at most 95% of the price of a home you live in: put at least 5% down.",
+                "an ARM is held to 95%");
+            AssertNoErrorFor(Used(OccupancyType.PrimaryResidence, 20_000m).WithAdjustableRate(7m), "DownPayment", "5% down with an ARM");
+        });
+    }
+
+    [Test]
+    public void AConventionalLoan_IsAtMost90PercentOfASecondHome_And85OfAnInvestmentProperty()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertNoErrorFor(Used(OccupancyType.SecondHome, 40_000m), "DownPayment", "10% down on a second home");
+            AssertErrorMessage(Used(OccupancyType.SecondHome, 39_999.99m), "DownPayment",
+                "A conventional loan can be at most 90% of the price of a second home: put at least 10% down.", "past 90%");
+            AssertNoErrorFor(Used(OccupancyType.InvestmentProperty, 60_000m), "DownPayment", "15% down on an investment property");
+            AssertErrorMessage(Used(OccupancyType.InvestmentProperty, 59_999.99m), "DownPayment",
+                "A conventional loan can be at most 85% of the price of an investment property: put at least 15% down.", "past 85%");
+        });
+    }
+
+    [Test]
+    public void FhaAndVa_AreOnlyForAHomeLivedIn()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertErrorMessage(Used(OccupancyType.SecondHome, 100_000m).WithProgram(LoanProgramType.Fha), "Occupancy",
+                "FHA and VA loans are only for a home you will live in.", "FHA insures a principal residence");
+            AssertErrorMessage(Used(OccupancyType.InvestmentProperty, 100_000m).WithProgram(LoanProgramType.Va), "Occupancy",
+                "FHA and VA loans are only for a home you will live in.", "VA asks the veteran to live there");
+            AssertNoErrorFor(Used(OccupancyType.PrimaryResidence, 14_000m).WithProgram(LoanProgramType.Fha), "Occupancy", "a home lived in");
+            AssertNoErrorFor(Used(OccupancyType.InvestmentProperty, 60_000m), "Occupancy", "a conventional loan can be on any home");
+            AssertNoErrorFor(Used(OccupancyType.SecondHome, 0m).WithProgram(LoanProgramType.Va), "DownPayment",
+                "the conventional limits are not FHA's or VA's");
+        });
+    }
+
+    [Test]
+    public void AHomesteadExemption_IsOnlyForAHomeLivedIn()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertErrorMessage(Used(OccupancyType.InvestmentProperty, 100_000m).WithHousingCosts(c => c.WithSchoolTax(1m).AsHomestead()),
+                "HousingCosts.IsHomestead", "A homestead exemption is only for the home you live in.", "Texas: the owner's principal residence");
+            AssertNoErrorFor(Used(OccupancyType.SecondHome, 100_000m).WithHousingCosts(c => c.WithSchoolTax(1m)), "HousingCosts.IsHomestead",
+                "a second home taxed in full");
+            AssertNoErrorFor(Used(OccupancyType.PrimaryResidence, 100_000m).WithHousingCosts(c => c.WithSchoolTax(1m).AsHomestead()),
+                "HousingCosts.IsHomestead", "a home lived in");
+        });
+    }
+
+    [Test]
+    public void ALoanAlreadyBeingPaid_IsNotHeldToTheLimitsOfOneBeingMade()
+    {
+        // Its first payment was in January 2026: what is owed now can be more than the home is worth.
+        var paying = A.Request.WithHomePrice(420_000m).WithDownPayment(0m).WithFirstPaymentDate(new DateOnly(2026, 1, 1));
+
+        Assert.Multiple(() =>
+        {
+            AssertNoErrorFor(paying, "DownPayment", "the limits are for a loan being made");
+            AssertInvalid(paying.WithFirstPaymentDate(DateOnly.FromDateTime(DateTime.Today)), "DownPayment",
+                "a first payment due today is not yet made: a loan being made");
+        });
+    }
+
+    [Test]
+    public void AnOccupancyOutsideTheList_IsRejected()
+    {
+        AssertInvalid(Used((OccupancyType)7, 100_000m), "Occupancy", "only the three uses");
     }
 
     // ---------------------------------------------------------------------------------------

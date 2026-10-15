@@ -103,6 +103,30 @@ reference loan with 3% growth, year 2 starts owing $197,543.99 of a home worth $
 
 ---
 
+## How the home is used
+
+The buyer says whether the home is theirs to live in (the default), a second home or an investment property. It
+decides:
+
+| | Home you live in | Second home | Investment property |
+|---|---|---|---|
+| Most a conventional loan may be | 97% of the price (95% with an ARM) | 90% | 85% |
+| FHA or VA | Yes | No | No |
+| Homestead exemption | Yes | No | No |
+| Seller's limit, conventional | 3% / 6% / 9% by loan-to-value | 3% / 6% / 9% | 2% |
+
+- The loan-to-value limits are Fannie Mae's Eligibility Matrix for a one-unit purchase (April 2026). Above 95% on a
+  home lived in, at least one borrower must be a first-time homebuyer; the calculator does not ask, so it allows 97%.
+- FHA insures a principal residence: a borrower must live there within 60 days (HUD Handbook 4000.1). VA asks the
+  veteran to certify they will live there (38 U.S.C. 3704(c)). Texas's homestead is the owner's principal residence
+  (Tax Code 11.13(j)).
+- The limits are on a loan being made: a first payment today or later. A loan already being paid can be owed above
+  the home's value, and is shown as it is.
+- Not modelled: the higher rates lenders charge for a second home or an investment property (the rate is what you
+  enter), Fannie Mae's rule that a second home not be rented out, and rental income for qualifying.
+- The domain is `Occupancy` and `OccupancyRules` (`Domain/Loans`); the validator holds a loan being made to them, and
+  the Python model's random purchases include second homes and investment properties.
+
 ## FHA and VA loans
 
 Neither has PMI. Each has an **upfront fee** on the base loan (the price less the down payment), usually added to
@@ -314,6 +338,8 @@ cash to close   = down payment + closing costs − lender credits − seller cre
   beyond the limit off the price instead, so here it is taken off the seller's credits and reported. With 5% down on
   the reference purchase the limit is 3%, **$11,250**; a $9,000 seller buydown and the $3,000 of credits is $750
   over it, so $2,250 of the credits are used and the cash to close is **$27,239.09**.
+- An **investment property**'s conventional limit is **2%** at any loan-to-value (the same topic, dated 05/07/2025),
+  so it has no next tier. A second home has a home lived in's tiers.
 - The limit is on the price, as lenders figure it on the lower of the price and the appraised value; the next
   conventional tier is the down payment that leaves a loan of exactly 90% (or 75%), rounded up to the cent.
 - The domain is `ClosingCosts`, `CashToClose` and `ConcessionLimit` (`Domain/Closing`); the Python model in `tools/calculator-check`

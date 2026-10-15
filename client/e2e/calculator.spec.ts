@@ -122,6 +122,26 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('concessions-over'), 'with 10% down, the whole offer is allowed').toBeHidden();
   });
 
+  test('an investment property: 15% down, a 2% seller limit, and no FHA, VA or homestead', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 37_500, rate: 6.75, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('closing-credits', 10_000);
+    await calculator.setChecked('occupancy-InvestmentProperty', true);
+
+    await expect(page.getByTestId('down-payment-error'), '10% down is not enough')
+      .toHaveText('A conventional loan can be at most 85% of the price of an investment property: put at least 15% down.');
+    await calculator.set('down-payment', 56_250);
+    await calculator.calculate();
+    await calculator.showResults('closing');
+    await expect(page.getByTestId('concession-limit'), '2% of $375,000')
+      .toContainText('A seller or builder may pay up to $7,500 of your costs: 2% of the price, for an investment property.');
+    await expect(page.getByTestId('concession-next'), 'more down does not raise it').toBeHidden();
+
+    await calculator.setChecked('program-fha', true);
+    await expect(page.getByTestId('occupancy-error'), 'FHA is for a home you live in')
+      .toHaveText('FHA and VA loans are only for a home you will live in.');
+    await expect(calculator.field('is-homestead'), 'and so is a homestead').toBeDisabled();
+  });
+
   test("the best use of a builder's money: off the price, toward closing, a 2-1 buydown or points", async ({ calculator, page }) => {
     // The same $375,000 home with 5% down at 5.99%, and a builder offering $10,000: within the 3% ($11,250) limit and
     // the closing costs, so every way can use all of it. Each is costed over the seven years the loan is kept

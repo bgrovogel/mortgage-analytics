@@ -2,7 +2,7 @@ import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { validatorsFor } from '../../../core/forms/field-rules';
 import { firstOfMonthFromNext, toCents } from '../../../core/loans/loan-progress';
 import {
-  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, TaxRateChange, VaFundingFeeType,
+  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, OccupancyType, TaxRateChange, VaFundingFeeType,
 } from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { LOAN_RULES as rules, LUMP_SUM_RULES, RATE_CHANGE_RULES } from './loan-fields';
@@ -44,6 +44,8 @@ const TAX_MODE_CONTROLS = {
 export function loanForm(fb: NonNullableFormBuilder) {
   return fb.group({
     homePrice: [415_000, validatorsFor(rules.homePrice)],
+    // A home the buyer lives in unless chosen: a second home or an investment property limits the loan.
+    occupancy: fb.control<OccupancyType>('PrimaryResidence'),
     // Conventional unless chosen. FHA and VA have their own fees and no PMI.
     loanProgram: fb.control<LoanProgramType>('Conventional'),
     vaUse: fb.control<VaFundingFeeType>('FirstUse'),
@@ -203,6 +205,37 @@ export function fhaDownProblem(down: number, price: number, creditScore: number 
   return belowFhaMinimum(down, price) ? FHA_DOWN_TOO_LOW : null;
 }
 
+/** The most a conventional loan may be, as a percentage of the price: Fannie Mae's Eligibility Matrix (Domain/Loans/Occupancy.cs). */
+export function maxConventionalLoanToValue(occupancy: OccupancyType, adjustableRate: boolean): number {
+  if (occupancy === 'SecondHome') return 90;
+  if (occupancy === 'InvestmentProperty') return 85;
+  return adjustableRate ? 95 : 97;
+}
+
+/** How each use names the home in a sentence. */
+const HOME: Record<OccupancyType, string> = {
+  PrimaryResidence: 'a home you live in', SecondHome: 'a second home', InvestmentProperty: 'an investment property',
+};
+
+/**
+ * What stops a conventional loan from being sent: a loan past the most the home's use allows, as the API words it.
+ * Compared in cents, so an exact limit is never refused by floating point. Null when it is within it.
+ */
+export function conventionalDownProblem(down: number, price: number, occupancy: OccupancyType, adjustableRate: boolean): string | null {
+  const most = maxConventionalLoanToValue(occupancy, adjustableRate);
+  if (Math.round((price - down) * 100) * 100 <= Math.round(price * 100) * most) return null;
+  const loan = occupancy === 'PrimaryResidence' && adjustableRate ? 'A conventional loan with an adjustable rate' : 'A conventional loan';
+  return `${loan} can be at most ${most}% of the price of ${HOME[occupancy]}: put at least ${100 - most}% down.`;
+}
+
+/** Shown for an FHA or VA loan on a home the buyer will not live in. */
+export const GOVERNMENT_LOAN_NOT_LIVED_IN = 'FHA and VA loans are only for a home you will live in.';
+
+/** What stops the loan's program for this home's use: FHA and VA are only for a home lived in. Null otherwise. */
+export function occupancyProblem(program: LoanProgramType, occupancy: OccupancyType): string | null {
+  return program !== 'Conventional' && occupancy !== 'PrimaryResidence' ? GOVERNMENT_LOAN_NOT_LIVED_IN : null;
+}
+
 /** True when discount points are chosen, on a rate they can be compared on (not an adjustable one). */
 export function pointsApply(v: { usePoints?: boolean; rate?: { rateType?: string } }): boolean {
   return !!v.usePoints && v.rate?.rateType !== 'arm';
@@ -227,6 +260,12 @@ export function syncPoints(form: LoanForm): void {
   }
 }
 
+/** Offers the homestead only for the home the buyer lives in: disabled (and so not sent as one) for any other. */
+export function syncOccupancy(form: LoanForm): void {
+  if (form.controls.occupancy.value === 'PrimaryResidence') form.controls.isHomestead.enable({ emitEvent: false });
+  else form.controls.isHomestead.disable({ emitEvent: false });
+}
+
 /** Enables the controls of the chosen way of entering taxes, and disables the other's. */
 export function syncTaxMode(form: LoanForm): void {
   const mode = form.controls.taxMode.value;
@@ -241,12 +280,15 @@ export function syncTaxMode(form: LoanForm): void {
 export function toLoanRequest(form: LoanForm, nextPayment: number): AmortizationRequest {
   const v = form.getRawValue();
   const single = v.taxMode === 'single';
+  // A homestead is only the home the buyer lives in.
+  const homestead = v.isHomestead && v.occupancy === 'PrimaryResidence';
   const annualFirst = v.annualFirstPayment < nextPayment
     ? v.annualFirstPayment + Math.ceil((nextPayment - v.annualFirstPayment) / 12) * 12
     : v.annualFirstPayment;
   return {
     homePrice: v.homePrice,
     downPayment: downPaymentAmountOf(v),
+    occupancy: v.occupancy,
     annualInterestRate: v.annualInterestRate,
     termInMonths: v.termYears * 12,
     firstPaymentDate: v.firstPaymentDate || null,
@@ -264,12 +306,12 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       schoolTaxRate: single ? 0 : v.schoolTaxRate || 0,
       localTaxRate: single ? 0 : v.localTaxRate || 0,
       mudTaxRate: single ? 0 : v.mudTaxRate || 0,
-      isHomestead: v.isHomestead,
+      isHomestead: homestead,
       schoolHomesteadExemption: v.schoolHomesteadExemption || 0,
       localHomesteadExemptionPercent: v.localHomesteadExemptionPercent || 0,
       mudHomesteadExemptionPercent: v.mudHomesteadExemptionPercent || 0,
       homesteadAssessmentCap: v.homesteadAssessmentCap || 0,
-      over65OrDisabled: !single && v.isHomestead && v.isOver65
+      over65OrDisabled: !single && homestead && v.isOver65
         ? {
             qualifiesInYear: v.over65Year || 1,
             schoolExemption: v.over65SchoolExemption || 0,
@@ -376,6 +418,7 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     pmiRate: costs?.pmiRate ?? 0,
     ...(costs && { pmiCancellation: costs.pmiCancellation }),
     buydownPaidBy: r.buydownPaidBy ?? 'Seller',
+    occupancy: r.occupancy ?? 'PrimaryResidence',
     loanProgram: r.program?.type ?? 'Conventional',
     ...(r.program && { financeUpfrontFee: r.program.financeUpfrontFee }),
     ...(r.program?.vaUse && { vaUse: r.program.vaUse }),

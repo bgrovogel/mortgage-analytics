@@ -36,8 +36,8 @@
     } @else {
       <small class="error">The down payment must be less than the home price.</small>
     }
-    @if (fhaDownProblem(); as problem) {
-      <small class="error" data-testid="fha-down-error">{{ problem }}</small>
+    @if (downProblem(); as problem) {
+      <small class="error" data-testid="down-payment-error">{{ problem }}</small>
     }
 
     <div class="row">

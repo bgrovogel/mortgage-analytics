@@ -40,7 +40,7 @@ own (**Affordability**, **Closing**), then **Rent or buy**, **Projection** and *
 
 | Loan | Down payment | Mortgage insurance and fees |
 |---|---|---|
-| **Conventional** | Any | PMI below 20% down (see the costs below) |
+| **Conventional** | At least 3% (5% with an adjustable rate); 10% on a second home, 15% on an investment property | PMI below 20% down (see the costs below) |
 | **FHA** | At least 3.5% (10% with a credit score from 500 to 579; none below 500) | A **1.75% upfront MIP**, and an **annual MIP** from HUD's table: 0.55% of the balance for most 30-year loans with less than 5% down, 0.50% with 5% or more; lower on 15-year loans, higher above the national conforming limit ($832,750 in 2026). It lasts **11 years** at 90% LTV or less, otherwise the **whole loan**. The loan must be within **the county's limit**: pick the state and county, and the form shows HUD's 2026 limit there ($541,287 in most counties, up to $1,249,125) |
 | **VA** | None needed | A **funding fee**: 2.15% with less than 5% down (3.3% when used before), 1.5% with 5%, 1.25% with 10%; none for veterans compensated for a service-connected disability. **No mortgage insurance** |
 
@@ -49,6 +49,13 @@ the payment, interest and equity are on the whole amount borrowed. FHA's MIP is 
 loan year's average balance on the original schedule, as HUD figures it; paying the loan off ends it, so extra
 payments save it, and the results call it MIP, not PMI. $300,000 with 3.5% down borrows $294,566.25 with the upfront
 MIP, and the first year's MIP is $134.33 a month.
+
+**This home is** your home (the default), a second home or an investment property. A conventional loan can be at
+most 97% of the price of a home you live in (95% with an adjustable rate), 90% of a second home and 85% of an
+investment property, from Fannie Mae's Eligibility Matrix for a one-unit purchase; the form says how much more to put
+down. FHA and VA are only for a home you will live in, and so is a homestead exemption. A seller may pay only 2% of an
+investment property's price. The limits are on a loan being made: a loan already being paid, which can be owed above
+the home's value, is shown as it is.
 
 ### Rate types
 
@@ -129,7 +136,7 @@ their credits; the lender's credits do not:
 
 | Loan | Most the seller or builder may pay |
 |---|---|
-| **Conventional** | **3%** with less than 10% down · **6%** with 10% to 25% down · **9%** with 25% or more (Fannie Mae's Selling Guide B3-4.1-02, for a home you live in or a second home; an investment property is 2%, not modelled here) |
+| **Conventional** | **3%** with less than 10% down · **6%** with 10% to 25% down · **9%** with 25% or more (Fannie Mae's Selling Guide B3-4.1-02, for a home you live in or a second home) · **2%** for an investment property, whatever is put down |
 | **FHA** | **6%** (HUD Handbook 4000.1 II.A.4) |
 | **VA** | **4%**, and the seller may also pay your normal closing costs and discount points (the fees and prepaid interest here) |
 

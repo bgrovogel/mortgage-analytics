@@ -35,6 +35,9 @@ public sealed class AmortizationRequestBuilder
     /// <summary>Sets the down payment.</summary>
     public AmortizationRequestBuilder WithDownPayment(decimal downPayment) => With(r => r with { DownPayment = downPayment });
 
+    /// <summary>Sets how the buyer will use the home.</summary>
+    public AmortizationRequestBuilder WithOccupancy(OccupancyType occupancy) => With(r => r with { Occupancy = occupancy });
+
     /// <summary>Sets the annual interest rate, as a percentage.</summary>
     public AmortizationRequestBuilder WithRate(decimal annualInterestRate) => With(r => r with { AnnualInterestRate = annualInterestRate });
 

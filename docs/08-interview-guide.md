@@ -19,7 +19,7 @@
 > "Mortgage Analytics is a full-stack mortgage calculator: a .NET 10 API and an Angular 22 app in one Docker
 > container. It answers three questions: what a home really costs to own, with taxes, PMI and extra payments;
 > whether refinancing actually saves money; and whether spare cash should pay down the mortgage or be invested.
-> The math is exact to the cent and checked against independent Python models, and over 2,100 tests run in CI."
+> The math is exact to the cent and checked against independent Python models, and over 2,200 tests run in CI."
 
 **In 2 minutes, add:**
 1. **Architecture:** Clean Architecture in four projects. The domain has no dependencies at all, so the money
@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 639 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 652 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -158,6 +158,15 @@ every log on the way. A route guard reads the link before the page opens, so the
 then drops the fragment from the address. A link is untrusted input, so it's checked to be the right shape, and the
 API validates the numbers as it does any request. A purchase link leaves out income and debts; Pay off or invest
 can't work without them, so its message says the link includes them.
+
+**How did you add second homes and investment properties?**
+As one input that changes several rules, each written from its source and tested at its edge: Fannie Mae's
+Eligibility Matrix caps a conventional loan at 97% of a home you live in (95% with an ARM), 90% of a second home and
+85% of an investment property; its seller limit drops to 2% for an investment property; and FHA, VA and a Texas
+homestead are only for a home you live in. The interesting part was a case the rule would have broken: a loan
+already being paid can be underwater, and the calculator fills in a shared loan as a price with nothing down. Those
+limits are for when a loan is made, so the validator takes a clock and applies them only when the first payment is
+still ahead. Rates are what you enter, so the pricing adjustments lenders make for investment properties aren't modelled.
 
 **How did you add what a builder may pay?**
 As a rule in the domain, written from its source: Fannie Mae's Selling Guide B3-4.1-02 for a conventional loan (3%
@@ -525,7 +534,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,192 .NET · 869 Jest · 114 Playwright (18 axe scans); 85% coverage gate |
+| Tests | 1,212 .NET · 884 Jest · 115 Playwright (18 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---
