@@ -310,3 +310,33 @@ button {
   color: var(--text-secondary);
   cursor: pointer;
 }
+
+// Privacy mode: a switch beside the filters, with the key that does the same.
+.privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+  }
+
+  kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+}
+
+.reveal {
+  min-width: 4.5rem;
+}

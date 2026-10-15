@@ -8,6 +8,7 @@ import { decimal, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
+import { ProvenanceChipsComponent } from '../provenance/provenance-chips.component';
 import { buydownYears } from '../rate-plan/buydown-years';
 
 /** Each tax, as the payment tile names it when it is the only one. */
@@ -25,7 +26,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
  */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe, PaymentBreakdownComponent, RouterLink, TermComponent],
+  imports: [CurrencyPipe, DatePipe, PaymentBreakdownComponent, ProvenanceChipsComponent, RouterLink, TermComponent],
   template: `
     @let r = result();
     @if (r.purchase.isJumbo) {
@@ -46,6 +47,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           &ngsp;· <span data-testid="apr"><app-term of="APR">APR</app-term> {{ percent(apr) }}%</span>
         }
       </p>
+      <app-provenance-chips [result]="r" />
       @if (r.buydown) {
         <p class="extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</p>
       }

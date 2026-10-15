@@ -24,6 +24,8 @@
       @if (printSummary(); as summary) {
         <p class="print-summary" data-testid="print-summary">{{ summary }}</p>
       }
+      <!-- Announced to screen readers once the answer has held still; the figure itself is not live, so typing is quiet. -->
+      <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-testid="live-announcement">{{ announcement() }}</p>
       <div class="question-row">
         <h1 data-testid="page-heading">{{ heading() }}</h1>
         <app-calc-status [store]="state" />

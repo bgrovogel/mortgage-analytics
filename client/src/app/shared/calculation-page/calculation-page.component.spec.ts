@@ -60,6 +60,29 @@ describe('CalculationPageComponent', () => {
     return { fixture, host: fixture.componentInstance, text };
   };
 
+  it('announces the answer once, 600ms after it stops changing, rather than at every keystroke', () => {
+    jest.useFakeTimers();
+    try {
+      const { host, fixture, text } = render();
+      expect(text('live-announcement')).toBe('');
+
+      host.lead.set('$3,100.00 a month');
+      fixture.detectChanges();
+      jest.advanceTimersByTime(400);
+      host.lead.set('$3,102.19 a month');
+      fixture.detectChanges();
+      jest.advanceTimersByTime(500);
+      fixture.detectChanges();
+      expect(text('live-announcement')).toBe(''); // still moving: nothing yet, and never the stale figure
+
+      jest.advanceTimersByTime(200);
+      fixture.detectChanges();
+      expect(text('live-announcement')).toContain('$3,102.19 a month');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('says the answer under the heading once there is one, in place of what the page answers', () => {
     const { host, fixture, text } = render();
     expect(text('page-intro')).toBe('What the page answers.');

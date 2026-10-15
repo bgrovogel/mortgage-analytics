@@ -174,4 +174,20 @@ test.describe('History', () => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(0);
   });
+
+  test('hides the amounts on request, one saved item shown at a time', async ({ signedIn: calculator, page }) => {
+    await calculator.saveAs(`Private ${tag}`);
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    const figure = page.getByTestId('history-figure').first();
+    await expect(figure, 'the payment is shown').toContainText('$');
+    await expect(figure, 'with its digits').toContainText(/\d/);
+
+    await page.getByTestId('hide-amounts').getByRole('switch').check();
+
+    await expect(figure, 'in privacy mode the digits are hidden, the shape kept').toHaveText(/^\$[•,.]+ a month/);
+    await page.getByTestId('reveal').first().click();
+    await expect(figure, 'one item can be shown').toContainText(/\d/);
+  });
 });

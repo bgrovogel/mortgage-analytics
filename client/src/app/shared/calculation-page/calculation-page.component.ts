@@ -1,8 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { CalcStatusComponent } from './calc-status.component';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
+
+/** How long the answer holds still before it is announced. */
+export const ANNOUNCE_AFTER_MS = 600;
 
 /** The date a printout was made, as people write it: "Oct 14, 2026". */
 const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
@@ -71,6 +76,15 @@ export class CalculationPageComponent {
       ? { money: true as const, dollars: money[1], cents: money[2] ?? '', unit: money[3] ?? '', text: lead }
       : { money: false as const, dollars: '', cents: '', unit: '', text: lead };
   });
+
+  /**
+   * What a screen reader hears when the answer changes: one polite message, 600ms after the answer stops moving, so
+   * typing a price is not read out digit by digit ("What will this home cost? $3,102.19 a month").
+   */
+  protected readonly announcement = toSignal(
+    toObservable(computed(() => (this.lead() ? `${this.heading()} ${this.lead()}` : ''))).pipe(debounceTime(ANNOUNCE_AFTER_MS)),
+    { initialValue: '' },
+  );
 
   /** What a printout is for, e.g. "Mortgage Analytics · Calculator: $415,000 home, 9% down at 6.25% · Oct 14, 2026". */
   protected readonly printSummary = computed(() => {

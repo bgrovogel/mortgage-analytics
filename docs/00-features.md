@@ -187,6 +187,15 @@ year (twelve payments) at a time**, with Previous and Next, a list of the years,
 shown; a loan already being paid opens on the year of its next payment. **All payments** shows the whole schedule at once,
 and the download always has every payment.
 
+#### Show the math, and privacy
+
+Under the payment, a chip says the schedule is **exact to the cent and ends at $0.00**, and **Show the math** opens the
+arithmetic behind the payment with the loan's own numbers: the formula, the balance, the monthly rate and the number of
+payments, and how the first month splits into interest and principal. (A loan whose rate changes has no single formula,
+so it offers none.) On **Saved**, **Hide amounts** (or Shift+H) masks every dollar amount, keeping its shape
+(`$•,•••.••`); one item can be shown at a time and is masked again after 30 seconds or when the tab loses focus.
+The Share menu says, before anything is copied, that a link holds these numbers only, never your name, email or saved list.
+
 #### Comparing offers
 
 **+ Add a home or another offer** (on Compare) adds a copy of Home A to change whatever differs: its price, or the

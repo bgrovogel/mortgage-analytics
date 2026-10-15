@@ -13,7 +13,7 @@ import { RefinanceRequest } from '../../core/models/refinance.models';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { StrategyRequest } from '../../core/models/strategy.models';
 import { StrategyStore } from '../strategy/strategy.store';
-import { HistoryPageComponent, SEARCH_DELAY_MS } from './history-page.component';
+import { HIDE_AMOUNTS_KEY, HistoryPageComponent, SEARCH_DELAY_MS } from './history-page.component';
 
 describe('HistoryPageComponent', () => {
   let fixture: ComponentFixture<HistoryPageComponent>;
@@ -91,7 +91,77 @@ describe('HistoryPageComponent', () => {
       expect(items()[2].querySelector('[data-testid="history-figure"]')).toBeNull(); // a strategy has no one payment
     });
 
-    describe('two side by side', () => {
+    describe('privacy mode', () => {
+    beforeEach(() => localStorage.removeItem(HIDE_AMOUNTS_KEY));
+    afterEach(() => localStorage.removeItem(HIDE_AMOUNTS_KEY));
+    const figure = (i: number) => items()[i].querySelector('[data-testid="history-figure"]')!.textContent!.trim();
+    const hide = () => {
+      (root().querySelector('[data-testid="hide-amounts"] input') as HTMLInputElement).click();
+      fixture.detectChanges();
+    };
+
+    it('masks every dollar amount, keeping its shape, until it is asked for', () => {
+      create();
+      expect(figure(0)).toContain('$2,251.74');
+
+      hide();
+
+      expect(figure(0)).toBe('$•,•••.•• a month, principal and interest');
+      expect(items()[0].querySelector('.summary')!.textContent).toContain('$•••,••• home');
+      expect(items()[0].querySelector('.summary')!.textContent).toContain('5% down'); // not money
+    });
+
+    it('shows one items amounts on its own button, and masks them again after 30 seconds', () => {
+      create();
+      hide();
+      const reveal = () => items()[0].querySelector('[data-testid="reveal"]') as HTMLButtonElement;
+
+      reveal().click();
+      fixture.detectChanges();
+      expect(figure(0)).toContain('$2,251.74');
+      expect(reveal().getAttribute('aria-label')).toBe('Hide amount for Oak St, 20% down');
+      expect(figure(1)).toContain('•'); // the other one stays masked
+
+      jest.advanceTimersByTime(30_000);
+      fixture.detectChanges();
+      expect(figure(0)).toBe('$•,•••.•• a month, principal and interest');
+    });
+
+    it('masks again when the tab loses focus', () => {
+      create();
+      hide();
+      (items()[0].querySelector('[data-testid="reveal"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(figure(0)).toContain('$2,251.74');
+
+      window.dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(figure(0)).toContain('•');
+    });
+
+    it('switches with Shift+H, and is remembered', () => {
+      create();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'H', shiftKey: true, bubbles: true }));
+      fixture.detectChanges();
+
+      expect(figure(0)).toContain('•');
+      expect(localStorage.getItem(HIDE_AMOUNTS_KEY)).toBe('1');
+    });
+
+    it('does not take the key while a field has it', () => {
+      create();
+      const search = root().querySelector('[data-testid="history-search"]') as HTMLInputElement;
+
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'H', shiftKey: true, bubbles: true }));
+      fixture.detectChanges();
+
+      expect(figure(0)).toContain('$2,251.74');
+    });
+  });
+
+  describe('two side by side', () => {
       const other = aSaved('5', 'Elm Ct', { inputs: { ...inputs, homePrice: 425_000, downPayment: 85_000, annualInterestRate: 6, termInMonths: 180 } });
       const pick = (id: string) => {
         (root().querySelector(`[data-testid="pick-${id}"]`) as HTMLInputElement).click();

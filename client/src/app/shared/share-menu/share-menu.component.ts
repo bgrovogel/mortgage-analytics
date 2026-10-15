@@ -18,9 +18,13 @@ import { ShareLinkComponent } from '../share-link/share-link.component';
       <button #trigger type="button" class="trigger" data-testid="share-menu" aria-haspopup="menu"
               [attr.aria-expanded]="open()" (click)="toggle()">Share <span aria-hidden="true">▾</span></button>
       @if (open()) {
-        <div class="menu" role="menu" aria-label="Share" tabindex="-1" (keydown)="onKeydown($event)">
-          <button #item type="button" role="menuitem" data-testid="share-copy" [disabled]="!fragment()" (click)="copyLink()">Copy link</button>
-          <button #item type="button" role="menuitem" data-testid="print" [disabled]="!canPrint()" (click)="printPage()">Print or save as PDF</button>
+        <div class="menu">
+          <div class="items" role="menu" aria-label="Share" aria-describedby="share-scope" tabindex="-1" (keydown)="onKeydown($event)">
+            <button #item type="button" role="menuitem" data-testid="share-copy" [disabled]="!fragment()" (click)="copyLink()">Copy link</button>
+            <button #item type="button" role="menuitem" data-testid="print" [disabled]="!canPrint()" (click)="printPage()">Print or save as PDF</button>
+          </div>
+          <!-- Said before anything is copied: what a link carries, and what it never does. -->
+          <p class="scope" id="share-scope" data-testid="share-scope">A link holds these numbers only, never your name, email or saved list.</p>
         </div>
       }
     </div>

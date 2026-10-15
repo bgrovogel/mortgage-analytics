@@ -952,3 +952,17 @@ test('serves interactive API documentation', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Mortgage Analytics API/ }), 'Swagger UI loads').toBeVisible();
   await expect(page.getByText('/api/v1/amortization/calculate'), 'the endpoint is listed').toBeVisible();
 });
+
+test('shows the arithmetic behind the payment, with the loan itself', async ({ calculator, page }) => {
+  await expect(page.getByTestId('exact-chip'), 'the schedule is exact to the cent').toContainText('ends at $0.00');
+
+  await page.getByTestId('show-math').click();
+
+  const math = page.getByTestId('math');
+  await expect(math, 'the formula').toContainText('payment = balance × r ÷ (1 − (1 + r)');
+  await expect(math, 'with the example loan balance').toContainText('$377,650');
+  await expect(math, 'and its payment').toContainText('$2,325.26');
+  await page.keyboard.press('Escape');
+  await expect(math, 'Escape closes it').toBeHidden();
+  await expect(calculator.headline, 'back on the page').toBeVisible();
+});

@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { purchaseFigure, refinanceFigure } from '../../core/formatting/describe-inputs';
 import { decimal, usd, usdCents } from '../../core/formatting/format';
+import { maskAmounts } from '../../core/formatting/mask-amounts';
 import { monthlyPayment } from '../../core/loans/loan-progress';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
@@ -12,6 +13,20 @@ import { CalculationStores } from '../calculation-stores';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
+
+/** How long an amount stays shown once it is revealed in privacy mode. */
+export const REVEAL_MS = 30_000;
+
+/** Where privacy mode is remembered, per browser. */
+export const HIDE_AMOUNTS_KEY = 'hide-amounts';
+
+const loadHidden = (): boolean => {
+  try {
+    return localStorage.getItem(HIDE_AMOUNTS_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -81,6 +96,7 @@ export class HistoryPageComponent {
   }
 
   constructor() {
+    this.listenForPrivacy();
     // The first list loads at once; later searches wait for a pause in typing. switchMap drops the
     // results of a search that a newer one has replaced, and errors are caught per search.
     this.searches
@@ -105,6 +121,79 @@ export class HistoryPageComponent {
         this.error.set(null);
         this.loaded.set(true);
       });
+  }
+
+  /** Privacy mode: dollar amounts are masked (their digits hidden, their shape kept) until revealed one by one. */
+  readonly amountsHidden = signal(loadHidden());
+
+  /** The saved items whose amounts are shown for now; they are masked again after 30 seconds, and when the tab loses focus. */
+  private readonly revealed = signal<ReadonlySet<string>>(new Set());
+  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  /** Privacy mode's two listeners: the tab losing focus masks everything again, and Shift+H switches the mode. */
+  private listenForPrivacy(): void {
+    const mask = () => this.maskAll();
+    const key = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = !!target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+      if (event.shiftKey && event.key.toLowerCase() === 'h' && !typing && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        this.setAmountsHidden(!this.amountsHidden());
+      }
+    };
+    window.addEventListener('blur', mask);
+    document.addEventListener('keydown', key);
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('blur', mask);
+      document.removeEventListener('keydown', key);
+      this.timers.forEach((timer) => clearTimeout(timer));
+    });
+  }
+
+  /** Turns privacy mode on or off, and remembers it. Turning it on masks everything again. */
+  setAmountsHidden(hidden: boolean): void {
+    this.amountsHidden.set(hidden);
+    this.maskAll();
+    try {
+      localStorage.setItem(HIDE_AMOUNTS_KEY, hidden ? '1' : '0');
+    } catch {
+      // Not remembered this time; the page still works.
+    }
+  }
+
+  /** True while an item's amounts are masked. */
+  isMasked(calculation: SavedCalculation): boolean {
+    return this.amountsHidden() && !this.revealed().has(calculation.id);
+  }
+
+  /** A text of an item's, with its amounts masked when privacy mode hides them. */
+  masked(calculation: SavedCalculation, text: string): string {
+    return this.isMasked(calculation) ? maskAmounts(text) : text;
+  }
+
+  /** Shows an item's amounts for 30 seconds, or hides them again. */
+  toggleReveal(calculation: SavedCalculation): void {
+    const id = calculation.id;
+    if (this.revealed().has(id)) {
+      this.mask(id);
+      return;
+    }
+    this.revealed.update((ids) => new Set(ids).add(id));
+    this.timers.set(id, setTimeout(() => this.mask(id), REVEAL_MS));
+  }
+
+  private mask(id: string): void {
+    clearTimeout(this.timers.get(id));
+    this.timers.delete(id);
+    this.revealed.update((ids) => {
+      const next = new Set(ids);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  private maskAll(): void {
+    [...this.revealed()].forEach((id) => this.mask(id));
   }
 
   /** Queues a search for names containing `text`. */

@@ -5,6 +5,11 @@
       <p class="intro">Open one to pick up where you left off.</p>
     </div>
     <div class="filters">
+      <!-- Privacy mode: for a screen that others can see. Shift+H does the same. -->
+      <label class="privacy" data-testid="hide-amounts">
+        <input type="checkbox" role="switch" [checked]="amountsHidden()" (change)="setAmountsHidden($any($event.target).checked)" />
+        Hide amounts <kbd>⇧H</kbd>
+      </label>
       <div class="toggle" role="group" aria-label="Show">
         @for (kind of kinds; track kind.value) {
           <button type="button" [attr.aria-pressed]="kindFilter() === kind.value" (click)="kindFilter.set(kind.value)"
@@ -66,12 +71,12 @@
               <div class="info">
                 <h3>{{ c.name }}</h3>
                 @if (figure(c); as figure) {
-                  <p class="figure" data-testid="history-figure">{{ figure }}</p>
+                  <p class="figure" data-testid="history-figure">{{ masked(c, figure) }}</p>
                 }
                 <p class="summary">
                   <!-- Every item names its kind, the same words as the filter above. -->
                   <span class="badge" [attr.data-kind]="c.kind" data-testid="kind-badge">{{ kindLabel(c.kind) }}</span>
-                  {{ describe(c) }}
+                  {{ masked(c, describe(c)) }}
                 </p>
                 <p class="when">{{ when(c) }}</p>
                 @if (c.kind === 'Purchase' && c.inputs) {
@@ -93,6 +98,11 @@
                   <button type="button" class="primary" [attr.aria-label]="'Open ' + c.name" (click)="open(c)">Open</button>
                   <button type="button" [attr.aria-label]="'Rename ' + c.name" (click)="startRename(c)">Rename</button>
                   <button type="button" [attr.aria-label]="'Delete ' + c.name" (click)="askToDelete(c)">Delete</button>
+                  @if (amountsHidden()) {
+                    <button type="button" class="reveal" [attr.aria-pressed]="!isMasked(c)"
+                            [attr.aria-label]="(isMasked(c) ? 'Show amount for ' : 'Hide amount for ') + c.name" (click)="toggleReveal(c)"
+                            data-testid="reveal">{{ isMasked(c) ? 'Show' : 'Hide' }}</button>
+                  }
                 </div>
               }
             }
