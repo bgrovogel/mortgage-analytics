@@ -13,6 +13,32 @@ test.describe('History', () => {
     tag = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   });
 
+  test('sets two saved purchases side by side, with the payment each comes to', async ({ signedIn: calculator, page }) => {
+    const first = `Oak St ${tag}`;
+    const second = `Elm Ct ${tag}`;
+    await calculator.set('home-price', 400_000);
+    await calculator.set('down-payment', 80_000);
+    await calculator.calculate();
+    await calculator.saveAs(first);
+    await calculator.set('home-price', 450_000);
+    await calculator.set('down-payment', 90_000);
+    await calculator.calculate();
+    await calculator.saveAs(second);
+
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    const picks = page.locator('[data-testid^="pick-"]');
+    await expect(picks, 'each purchase can be picked').toHaveCount(2);
+    await picks.nth(0).check();
+    await picks.nth(1).check();
+
+    const pair = page.getByTestId('saved-pair');
+    await expect(pair, 'two picked are set side by side').toBeVisible();
+    await expect(pair.getByRole('row', { name: /Home price/ }), 'with the price of each and the difference').toContainText(/[+−]\$50,000/);
+    await expect(pair.getByRole('row', { name: /Principal and interest/ }), 'and the payment each comes to').toContainText('$');
+  });
+
   test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ signedIn: calculator, page }) => {
     const name = `Oak St ${tag}`;
     await calculator.set('home-price', 432_100);

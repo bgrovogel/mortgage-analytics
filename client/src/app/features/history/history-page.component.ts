@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { purchaseFigure, refinanceFigure } from '../../core/formatting/describe-inputs';
+import { decimal, usd, usdCents } from '../../core/formatting/format';
+import { monthlyPayment } from '../../core/loans/loan-progress';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculationStores } from '../calculation-stores';
@@ -114,6 +116,42 @@ export class HistoryPageComponent {
   describe(calculation: SavedCalculation): string {
     return this.stores.describe(calculation);
   }
+
+  /** The ids of the saved purchases picked to set side by side: at most two. */
+  readonly picked = signal<string[]>([]);
+
+  /** Picks a purchase, or puts it back. */
+  togglePick(id: string): void {
+    this.picked.update((ids) => (ids.includes(id) ? ids.filter((i) => i !== id) : ids.length < 2 ? [...ids, id] : ids));
+  }
+
+  /** The two picked purchases' numbers in rows, each with the second's difference from the first; null until there are two. */
+  readonly pair = computed(() => {
+    const [first, second] = this.picked().map((id) => this.calculations().find((c) => c.id === id));
+    const a = first?.inputs;
+    const b = second?.inputs;
+    if (!first || !second || !a || !b) return null;
+    const money = (n: number) => `${n < 0 ? '−' : '+'}${usd(Math.abs(n))}`;
+    const payment = (r: typeof a) => monthlyPayment(r.homePrice - r.downPayment, r.annualInterestRate, r.termInMonths);
+    const points = (n: number) => `${n < 0 ? '−' : '+'}${decimal(Math.abs(n), 3)} pt`;
+    const rows = [
+      { label: 'Home price', a: usd(a.homePrice), b: usd(b.homePrice), difference: a.homePrice === b.homePrice ? '' : money(b.homePrice - a.homePrice) },
+      { label: 'Down payment', a: usd(a.downPayment), b: usd(b.downPayment), difference: a.downPayment === b.downPayment ? '' : money(b.downPayment - a.downPayment) },
+      {
+        label: 'Rate', a: `${decimal(a.annualInterestRate)}%`, b: `${decimal(b.annualInterestRate)}%`,
+        difference: a.annualInterestRate === b.annualInterestRate ? '' : points(b.annualInterestRate - a.annualInterestRate),
+      },
+      {
+        label: 'Term', a: `${a.termInMonths / 12} yr`, b: `${b.termInMonths / 12} yr`,
+        difference: a.termInMonths === b.termInMonths ? '' : `${b.termInMonths < a.termInMonths ? '−' : '+'}${Math.abs(b.termInMonths - a.termInMonths) / 12} yr`,
+      },
+      {
+        label: 'Principal and interest', a: usdCents(payment(a)), b: usdCents(payment(b)),
+        difference: payment(a) === payment(b) ? '' : `${payment(b) < payment(a) ? '−' : '+'}${usdCents(Math.abs(payment(b) - payment(a)))}`,
+      },
+    ];
+    return { names: [first.name, second.name], rows };
+  });
 
   /** The payment a saved purchase or refinance comes to, to lead its card, or null when its numbers do not say. */
   figure(calculation: SavedCalculation): string | null {

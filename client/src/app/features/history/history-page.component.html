@@ -20,6 +20,19 @@
     <div class="alert" role="alert">{{ message }}</div>
   }
 
+  @if (pair(); as pair) {
+    <section class="pair" data-testid="saved-pair" aria-label="Two saved purchases side by side">
+      <table>
+        <thead><tr><td></td><th scope="col">{{ pair.names[0] }}</th><th scope="col">{{ pair.names[1] }}</th><th scope="col">Difference</th></tr></thead>
+        <tbody>
+          @for (row of pair.rows; track row.label) {
+            <tr><th scope="row">{{ row.label }}</th><td>{{ row.a }}</td><td>{{ row.b }}</td><td>{{ row.difference }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
   @if (loaded()) {
     @if (calculations().length === 0) {
       @if (!error()) {
@@ -61,6 +74,13 @@
                   {{ describe(c) }}
                 </p>
                 <p class="when">{{ when(c) }}</p>
+                @if (c.kind === 'Purchase' && c.inputs) {
+                  <label class="pick">
+                    <input type="checkbox" [attr.data-testid]="'pick-' + c.id" [checked]="picked().includes(c.id)"
+                           [disabled]="!picked().includes(c.id) && picked().length >= 2" (change)="togglePick(c.id)" />
+                    Set side by side
+                  </label>
+                }
               </div>
               @if (confirmingDelete() === c.id) {
                 <div class="confirm" role="group" [attr.aria-label]="'Confirm deleting ' + c.name">

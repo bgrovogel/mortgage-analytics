@@ -52,7 +52,11 @@ export function currentBuyView(): Signal<string> {
     </nav>
     @if (showDepth()) {
       <nav class="depth" aria-label="Go deeper" data-testid="depth-views">
-        <span class="lead">Go deeper</span>
+        @if (current() === 'overview') {
+          <span class="lead">Go deeper</span>
+        } @else {
+          <a class="back" routerLink="/calculator/overview" data-testid="back-to-cost">← Back to Cost</a>
+        }
         @for (view of depth; track view.id) {
           <a [routerLink]="view.link" [class.active]="view.id === current()" [attr.aria-current]="view.id === current() ? 'page' : null"
              [attr.data-testid]="'result-tab-' + view.id">{{ view.label }}</a>

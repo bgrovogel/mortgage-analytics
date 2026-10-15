@@ -59,6 +59,7 @@ describe('CalculatorPageComponent', () => {
       ['Compare', '/compare'],
     ]);
     expect(names('Go deeper')).toEqual([
+      ['← Back to Cost', '/calculator/overview'], // on a view under Cost, the way back comes first
       ['Closing costs', '/calculator/closing'],
       ['Year by year', '/calculator/projection'],
       ['Every payment', '/calculator/schedule'],

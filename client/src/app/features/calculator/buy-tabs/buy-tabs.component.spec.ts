@@ -38,6 +38,7 @@ describe('BuyTabsComponent', () => {
       ['Cost', '/calculator/overview'], ['Can I afford it?', '/calculator/affordability'],
       ['Rent or buy?', '/calculator/rent-or-buy'], ['Compare', '/compare'],
     ]);
+    expect(root.querySelector('[data-testid="back-to-cost"]')).toBeNull(); // on Cost itself, there is no way back
     expect(named('nav[aria-label="Go deeper"] a')).toEqual([
       ['Closing costs', '/calculator/closing'], ['Year by year', '/calculator/projection'], ['Every payment', '/calculator/schedule'],
     ]);
@@ -55,6 +56,7 @@ describe('BuyTabsComponent', () => {
     expect(root.querySelector('[data-testid="result-tab-overview"]')?.classList.contains('active')).toBe(true);
     expect(root.querySelector('[data-testid="result-tab-schedule"]')?.getAttribute('aria-current')).toBe('page');
     expect(root.querySelector('[data-testid="result-tab-closing"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="back-to-cost"]')?.getAttribute('href')).toBe('/calculator/overview');
   });
 
   it('leaves the second row out on the other questions, where there is nothing under them', async () => {

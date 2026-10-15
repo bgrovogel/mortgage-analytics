@@ -91,6 +91,54 @@ describe('HistoryPageComponent', () => {
       expect(items()[2].querySelector('[data-testid="history-figure"]')).toBeNull(); // a strategy has no one payment
     });
 
+    describe('two side by side', () => {
+      const other = aSaved('5', 'Elm Ct', { inputs: { ...inputs, homePrice: 425_000, downPayment: 85_000, annualInterestRate: 6, termInMonths: 180 } });
+      const pick = (id: string) => {
+        (root().querySelector(`[data-testid="pick-${id}"]`) as HTMLInputElement).click();
+        fixture.detectChanges();
+      };
+      const table = () => [...root().querySelectorAll('[data-testid="saved-pair"] tbody tr')]
+        .map((tr) => [...tr.querySelectorAll('th, td')].map((c) => c.textContent!.replace(/\s+/g, ' ').trim()));
+
+      it('puts the numbers of two purchases in one table, with the difference between them', () => {
+        api.list.mockReturnValue(of([oak, other]));
+        create();
+
+        pick('1');
+        expect(root().querySelector('[data-testid="saved-pair"]')).toBeNull(); // one is not a pair
+        pick('5');
+
+        expect(table()).toEqual([
+          ['Home price', '$375,000', '$425,000', '+$50,000'],
+          ['Down payment', '$18,750', '$85,000', '+$66,250'],
+          ['Rate', '6.5%', '6%', '−0.5 pt'],
+          ['Term', '30 yr', '15 yr', '−15 yr'],
+          ['Principal and interest', '$2,251.74', '$2,869.11', '+$617.37'],
+        ]);
+      });
+
+      it('only offers a pick for purchases, and holds it to two', () => {
+        api.list.mockReturnValue(of([oak, maple, other, refi]));
+        create();
+
+        pick('1');
+        pick('2');
+        expect(root().querySelector('[data-testid="pick-5"]')!.hasAttribute('disabled')).toBe(true); // a third waits
+        expect(root().querySelector('[data-testid="pick-3"]')).toBeNull(); // a refinance has none
+      });
+
+      it('goes away when one of the two is put back', () => {
+        api.list.mockReturnValue(of([oak, other]));
+        create();
+        pick('1');
+        pick('5');
+
+        pick('1');
+
+        expect(root().querySelector('[data-testid="saved-pair"]')).toBeNull();
+      });
+    });
+
     it('groups what is shown by the page each opens on, newest first within a group, with how many there are', () => {
       api.list.mockReturnValue(of([oak, refi, maple, payOff]));
       create();
@@ -204,7 +252,7 @@ describe('HistoryPageComponent', () => {
       click(button(items()[0], 'Rename'));
       click(button(items()[0], 'Cancel'));
 
-      expect(items()[0].querySelector('input')).toBeNull();
+      expect(items()[0].querySelector('input[type="text"]')).toBeNull();
       expect(api.update).not.toHaveBeenCalled();
     });
   });

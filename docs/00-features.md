@@ -433,7 +433,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   income, debts and a monthly budget on Can I afford it?, the rent and what is assumed on Rent or buy?.
 - **Each view answers its own question.** Buy a home has four views in a row: **Cost**, **Can I afford it?**, **Rent or
   buy?** and **Compare**; the closing costs, the year-by-year costs and every payment are one step down from Cost,
-  as a quieter row of links. Under each view's question, once there is a result, the answer is set large with a
+  as a quieter row of links, with **Back to Cost** on each of them. Under each view's question, once there is a result, the answer is set large with a
   sentence behind it: "$3,102 a month" with "$2,325 goes to the loan and $777 to taxes, insurance and the rest. You
   would bring $48,129 to closing. Paying extra pays it off 5 years 9 months sooner and saves $108,039"; or "Yes,
   comfortably" (or "Yes, but a stretch", "Not at this income") with the shares of income; or "Buy, if you stay 4 years
@@ -463,7 +463,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   reset by email.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
-  or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). Open one on its own page (every number
+  or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved
+  purchases puts their price, down payment, rate, term and payment in one table with the difference. Open one on its own page (every number
   is restored), rename it, or delete it. Each person sees only their own.
 
 ---
