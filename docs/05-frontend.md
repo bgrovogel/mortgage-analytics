@@ -283,7 +283,8 @@ The flows are designed around the people using it:
 
 `app.routes.ts`: `/` (the start page: a question first, six cards that each open the page answering it),
 `/calculator` (with child routes `overview`, `affordability`, `closing`, `rent-or-buy`, `projection`, `schedule`),
-`/compare`, `/refinance`, `/strategy`, `/history` and `/account` (both behind `signedInGuard`), and the account pages (a focused layout
+`/compare`, `/refinance`, `/strategy`, `/how-it-works` and `/glossary` (reading pages, linked from the footer; the router
+scrolls to a `#fragment` so a link can land on one term), `/history` and `/account` (both behind `signedInGuard`), and the account pages (a focused layout
 without page tabs, which `/account` uses too). An app initializer asks the API who is signed in before the first navigation, so the guard already knows. The
 guard redirects to `/sign-in?returnUrl=…`, and only same-site paths are accepted as return URLs (no open
 redirect). The header's Sign in and account links carry the page they were clicked on the same way, so signing in

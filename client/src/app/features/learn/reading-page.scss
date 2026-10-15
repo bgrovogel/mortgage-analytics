@@ -1,0 +1,110 @@
+:host {
+  display: block;
+}
+
+.reading {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-block: 1.5rem 2.5rem;
+  line-height: 1.6;
+}
+
+h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+}
+
+header p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+article {
+  display: grid;
+  gap: 1rem;
+}
+
+article section {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formula {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+
+.checked,
+.sources {
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  p,
+  ul {
+    margin: 0;
+  }
+
+  ul {
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+}
+
+.terms {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.term {
+  padding: 1rem 1.25rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  dt {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  // A link to a term lands on it with a visible mark.
+  &:target {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+}

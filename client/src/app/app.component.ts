@@ -68,6 +68,10 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
     @if (!focused()) {
       <!-- For developers, apart from the pages: the API every page is built on. -->
       <footer class="app-footer">
+        <nav class="footer-links" aria-label="About">
+          <a routerLink="/how-it-works">How it’s calculated</a>
+          <a routerLink="/glossary">Glossary</a>
+        </nav>
         <a href="/swagger" target="_blank" rel="noopener">API docs ↗</a>
         <span>Mortgage Analytics: a .NET 10 API and an Angular 22 app</span>
       </footer>

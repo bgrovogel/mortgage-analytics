@@ -35,6 +35,8 @@ export const routes: Routes = [
   { path: 'compare', loadComponent: () => import('./features/compare/compare-page.component').then((m) => m.ComparePageComponent), title: title('Compare homes'), canActivate: [openShareLink] },
   { path: 'refinance', loadComponent: () => import('./features/refinance/refinance-page.component').then((m) => m.RefinancePageComponent), title: title('Refinance'), canActivate: [openShareLink] },
   { path: 'strategy', loadComponent: () => import('./features/strategy/strategy-page.component').then((m) => m.StrategyPageComponent), title: title('Pay off or invest'), canActivate: [openShareLink] },
+  { path: 'how-it-works', loadComponent: () => import('./features/learn/how-it-works-page.component').then((m) => m.HowItWorksPageComponent), title: title('How it’s calculated') },
+  { path: 'glossary', loadComponent: () => import('./features/learn/glossary-page.component').then((m) => m.GlossaryPageComponent), title: title('Glossary') },
   { path: 'history', loadComponent: () => import('./features/history/history-page.component').then((m) => m.HistoryPageComponent), canActivate: [signedInGuard], title: title('History') },
   // The account pages use a focused layout: no page tabs or account controls, just a way back.
   { path: 'sign-in', loadComponent: () => import('./features/account/sign-in-page.component').then((m) => m.SignInPageComponent), title: title('Sign in'), data: FOCUSED },

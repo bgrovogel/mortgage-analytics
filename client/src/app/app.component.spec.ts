@@ -53,6 +53,8 @@ describe('AppComponent', () => {
     expect([...root.querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.textContent!.trim()))
       .toEqual(['Buy a home', 'Refinance', 'Pay off or invest', 'Saved']);
     expect(root.querySelector('footer a[href="/swagger"]')?.textContent?.trim()).toBe('API docs ↗');
+    expect([...root.querySelectorAll('footer nav[aria-label="About"] a')].map((a) => [a.textContent!.trim(), a.getAttribute('href')]))
+      .toEqual([['How it’s calculated', '/how-it-works'], ['Glossary', '/glossary']]);
   });
 
   it('leaves what each page answers to the page, rather than one line repeated on every page', () => {
