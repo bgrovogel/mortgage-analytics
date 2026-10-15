@@ -20,6 +20,19 @@ describe('HowItWorksPageComponent', () => {
     ]);
   });
 
+  it('lists its sections at the top, each a link to its place on the page', () => {
+    const root = render();
+    const sections = [...root.querySelectorAll('article section[id]')].map((s) => s.id);
+    const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-testid="contents"] a')];
+
+    expect(links.map((a) => a.textContent!.trim())).toEqual([
+      'Your monthly payment', 'Taxes and insurance', 'Mortgage insurance', 'Cash to close', 'The APR',
+      'What you can afford', 'Rent or buy', 'Refinancing', 'Pay off or invest',
+    ]);
+    expect(sections).toHaveLength(links.length);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(sections.map((id) => `/#${id}`));
+  });
+
   it('works the payment through with the example loan', () => {
     const text = render().querySelector('#payment')!.textContent!.replace(/\s+/g, ' ');
 

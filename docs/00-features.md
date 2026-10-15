@@ -427,7 +427,11 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   would bring $48,129 to closing. Paying extra pays it off 5 years 9 months sooner and saves $108,039"; or "Yes,
   comfortably" (or "Yes, but a stretch", "Not at this income") with the shares of income; or "Buy, if you stay 4 years
   or more" with the rent it was weighed against. Without an income or a rent, it says what to enter.
-- **A first visit.** Each form says its numbers are an example until the first edit.
+- **A first visit.** The start page offers six questions, each with what it comes to on the example numbers ("With
+  the example: $3,102 a month"); each form says its numbers are an example until the first edit. An address that is
+  not a page keeps its address and shows the same six questions, with a note that it is not one.
+- **Reading pages.** How it's calculated (with its sections listed at the top), Glossary and Privacy sit in one row, so
+  a reader moves between them without going back.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
   Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future
   increases.

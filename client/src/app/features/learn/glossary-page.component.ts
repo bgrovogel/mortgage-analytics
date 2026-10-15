@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ReadingNavComponent } from './reading-nav.component';
 
 /** A term the app uses, and what it means in a sentence or two. */
 export interface GlossaryEntry {
@@ -37,8 +38,10 @@ const slug = (term: string) => `term-${term.toLowerCase().replace(/[^a-z0-9]+/g,
 /** The words the app uses, in plain language, each with an anchor so a link can land on it. */
 @Component({
   selector: 'app-glossary-page',
+  imports: [ReadingNavComponent],
   template: `
     <section class="reading" aria-labelledby="glossary-title">
+      <app-reading-nav />
       <header>
         <h2 id="glossary-title">Glossary</h2>
         <p>The words you will meet, in plain language.</p>

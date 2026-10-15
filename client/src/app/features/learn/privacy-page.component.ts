@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ReadingNavComponent } from './reading-nav.component';
 
 /**
  * What happens to the numbers someone types and to their account, in plain words, by what they have done: used it
@@ -7,9 +8,10 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-privacy-page',
-  imports: [RouterLink],
+  imports: [ReadingNavComponent, RouterLink],
   template: `
     <section class="reading" aria-labelledby="privacy-title">
+      <app-reading-nav />
       <header>
         <h2 id="privacy-title">Privacy</h2>
         <p>What happens to the numbers you type, and to your account if you make one. How each answer is worked out is

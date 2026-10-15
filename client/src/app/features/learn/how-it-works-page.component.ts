@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ReadingNavComponent } from './reading-nav.component';
 
 /**
  * How each answer is worked out, in the order a buyer meets them, with the example loan ($415,000, 9% down, 6.25%,
@@ -7,14 +8,22 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-how-it-works-page',
-  imports: [RouterLink],
+  imports: [ReadingNavComponent, RouterLink],
   template: `
     <section class="reading" aria-labelledby="how-title">
+      <app-reading-nav />
       <header>
         <h2 id="how-title">How it's calculated</h2>
         <p>Every number comes from a formula or a rule you can read here, worked through with the example loan. Words you
           may not know are in the <a routerLink="/glossary">glossary</a>.</p>
       </header>
+
+      <nav class="contents" aria-label="On this page" data-testid="contents">
+        <span class="lead">On this page</span>
+        @for (item of contents; track item.id) {
+          <a [routerLink]="[]" [fragment]="item.id">{{ item.label }}</a>
+        }
+      </nav>
 
       <article>
         <section id="payment">
@@ -120,4 +129,17 @@ import { RouterLink } from '@angular/router';
   styleUrl: './reading-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HowItWorksPageComponent {}
+export class HowItWorksPageComponent {
+  /** The sections, in the order they are written, for the contents at the top. */
+  protected readonly contents = [
+    { id: 'payment', label: 'Your monthly payment' },
+    { id: 'taxes', label: 'Taxes and insurance' },
+    { id: 'insurance', label: 'Mortgage insurance' },
+    { id: 'closing', label: 'Cash to close' },
+    { id: 'apr', label: 'The APR' },
+    { id: 'afford', label: 'What you can afford' },
+    { id: 'rent', label: 'Rent or buy' },
+    { id: 'refinance', label: 'Refinancing' },
+    { id: 'invest', label: 'Pay off or invest' },
+  ];
+}

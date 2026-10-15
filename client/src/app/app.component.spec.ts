@@ -115,10 +115,11 @@ describe('AppComponent', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="start-questions"]')).not.toBeNull();
   });
 
-  it('sends an address that is not a page to the start page', async () => {
-    await RouterTestingHarness.create('/no-such-page');
+  it('keeps an address that is not a page, and shows the questions with a note that it is not one', async () => {
+    const harness = await RouterTestingHarness.create('/no-such-page');
 
-    expect(TestBed.inject(Router).url).toBe('/');
+    expect(TestBed.inject(Router).url).toBe('/no-such-page');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="not-found"]')).not.toBeNull();
   });
 
   it('sends the calculator to its overview', async () => {

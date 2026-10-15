@@ -48,5 +48,6 @@ export const routes: Routes = [
   { path: 'reset-password', loadComponent: () => import('./features/account/reset-password-page.component').then((m) => m.ResetPasswordPageComponent), title: title('Reset password'), data: FOCUSED },
   // Local demos: the emails the app "sent" (the API serves them only in Development).
   { path: 'dev/mailbox', loadComponent: () => import('./features/account/dev-mailbox-page.component').then((m) => m.DevMailboxPageComponent), title: title('Dev mailbox'), data: FOCUSED },
-  { path: '**', redirectTo: '' },
+  // An address that is not a page shows the questions, and says so: the address stays, so a typo can be seen and fixed.
+  { path: '**', loadComponent: () => import('./features/start/start-page.component').then((m) => m.StartPageComponent), title: title('Page not found'), data: { notFound: true } },
 ];

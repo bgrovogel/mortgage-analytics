@@ -77,3 +77,22 @@ header p {
     color: var(--text-primary);
   }
 }
+
+// What the question comes to on the example numbers, under its description.
+.question .example {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  font-size: 0.85rem;
+}
+
+// Where an address that is not a page leads: said above the questions.
+.not-found {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--warning-border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}

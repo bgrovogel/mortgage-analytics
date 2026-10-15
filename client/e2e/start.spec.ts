@@ -28,9 +28,10 @@ test.describe('Start page', () => {
     await expect(page, 'a view of buying leads back to the calculator').toHaveURL(/\/calculator\/overview$/);
   });
 
-  test('sends an address that is not a page back to the questions', async ({ page }) => {
+  test('says when an address is not a page, and offers the questions', async ({ page }) => {
     await page.goto('/no-such-page');
 
-    await expect(page, 'an address that is not a page leads to the questions').toHaveURL(/\/$/);
+    await expect(page.getByTestId('not-found'), 'it says so').toContainText('That address is not a page here');
+    await expect(page.getByTestId('start-questions').locator('a'), 'and offers the six questions').toHaveCount(6);
   });
 });
