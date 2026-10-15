@@ -22,6 +22,8 @@ namespace MortgageAnalytics.Application.Contracts;
 /// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
 /// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
 /// </param>
+/// <param name="InFiveYears">A Loan Estimate's "in 5 years": what the first 60 payments come to and the principal they pay off, on the standard schedule.</param>
+/// <param name="TotalInterestPercentage">A Loan Estimate's total interest percentage: the interest over the whole loan as a percentage of the amount borrowed, to a thousandth.</param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -37,7 +39,14 @@ public sealed record AmortizationResponse(
     SellerOfferResponse? SellerOffer = null,
     AffordabilityResponse? Affordability = null,
     RentOrBuyResponse? RentOrBuy = null,
-    decimal? AnnualPercentageRate = null);
+    decimal? AnnualPercentageRate = null,
+    InFiveYearsResponse? InFiveYears = null,
+    decimal? TotalInterestPercentage = null);
+
+/// <summary>What a Loan Estimate lists as "in 5 years" for the standard schedule, with no extra payments.</summary>
+/// <param name="TotalPaid">The first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs.</param>
+/// <param name="PrincipalPaidOff">The principal those payments pay off.</param>
+public sealed record InFiveYearsResponse(decimal TotalPaid, decimal PrincipalPaidOff);
 
 /// <summary>
 /// Buying the home against renting a similar one, for households that spend the same each month: whichever of owning

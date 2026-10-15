@@ -34,6 +34,8 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
         return response with
         {
             AnnualPercentageRate = AprAnalysis.For(response),
+            InFiveYears = LoanEstimateFigures.InFiveYears(response),
+            TotalInterestPercentage = LoanEstimateFigures.TotalInterestPercentage(response),
             PmiOtherChoice = rates.Program is null ? PmiOtherChoice(request, purchase, valuation, rates.Loan, comparison) : null,
             SellerOffer = SellerOfferComparison.For(request, analysis, Run),
             Affordability = AffordabilityAnalysis.For(request, analysis, QualifyingPayment),

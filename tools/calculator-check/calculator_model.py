@@ -452,7 +452,22 @@ def analyze(request, today, other_choice=True):
     out['affordability'] = affordability(request, today)
     out['rentOrBuy'] = rent_or_buy(request, out)
     out['annualPercentageRate'] = annual_percentage_rate(out)
+    out['inFiveYears'], out['totalInterestPercentage'] = loan_estimate_figures(out)
     return out
+
+
+def loan_estimate_figures(out):
+    """
+    A Loan Estimate's comparison box, from the standard schedule: "in 5 years" is the first 60 payments with their
+    mortgage insurance, plus the lender's loan costs, and the principal they pay off; the total interest percentage is
+    the interest over the whole loan as a percentage of the amount borrowed, to a thousandth.
+    """
+    payments = out['baseline']['payments'][:60]
+    cash, program = out['cashToClose'], out['program']
+    paid = sum((p['scheduledPayment'] + p['costs']['mortgageInsurance'] for p in payments), D(0)) + (cash['loanCosts'] if cash else D(0))
+    borrowed = program['loanAmount'] if program else out['purchase']['loanAmount']
+    tip = (out['baseline']['totalInterest'] / borrowed * 100).quantize(D('0.001'), rounding=ROUND_HALF_UP) if borrowed > 0 else None
+    return {'totalPaid': paid, 'principalPaidOff': sum((p['principal'] for p in payments), D(0))}, tip
 
 
 def annual_percentage_rate(out):

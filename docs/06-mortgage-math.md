@@ -300,6 +300,21 @@ standard schedule (extra payments left out, so the answer is about the points al
 
 ---
 
+## The Loan Estimate's comparison box
+
+Beside the APR, a Loan Estimate lists two more figures, both on the standard schedule (an estimate leaves extra payments
+out):
+
+- **In 5 years:** the first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs (not
+  the other fees, which are government charges and services the borrower may shop for), and the principal those
+  payments pay off. For $200,000 at 6.5% over 30 years with $4,000 of loan costs: **$79,848.40** paid, **$12,778.36**
+  of principal.
+- **Total interest percentage (TIP):** the interest over the whole loan as a percentage of the amount borrowed, to a
+  thousandth: $255,085.82 on $200,000 is **127.543%**.
+
+The domain figures come from the schedule (`LoanEstimateFigures`, `Application/Services`); the Python model sums them
+from its own schedule, and the random purchases match.
+
 ## Jumbo loans
 
 FHFA sets a conforming loan limit each year (the baseline for a one-unit home: $726,200 in 2023, $766,550 in 2024,

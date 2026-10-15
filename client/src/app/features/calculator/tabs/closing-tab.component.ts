@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { CalculatorStore } from '../calculator.store';
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
+import { LoanEstimateBoxComponent } from '../loan-estimate-box/loan-estimate-box.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 
 /**
@@ -10,11 +11,12 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
  */
 @Component({
   selector: 'app-closing-tab',
-  imports: [CashToCloseComponent, SellerOfferComponent],
+  imports: [CashToCloseComponent, LoanEstimateBoxComponent, SellerOfferComponent],
   template: `
     @if (result().cashToClose; as cash) {
       <div class="panel"><app-cash-to-close [cash]="cash" [program]="result().program" /></div>
     }
+    <div class="panel" data-testid="loan-estimate-box"><app-loan-estimate-box [result]="result()" /></div>
     @if (result().sellerOffer; as offer) {
       <div class="panel">
         <app-seller-offer [offer]="offer" [settings]="store.offerSettings()" (settingsChange)="store.setOfferSettings($event)" />

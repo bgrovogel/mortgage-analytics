@@ -161,6 +161,13 @@ The Schedule tab's **Download (CSV)** saves the schedule shown (monthly or yearl
 spreadsheet: every payment or year, with every column the schedule has, whichever are hidden from the table, in plain
 numbers a spreadsheet can add up.
 
+#### Comparing offers
+
+The Closing tab has the figures a lender's Loan Estimate lists to compare one loan with another: the **APR**, what you
+will have paid in 5 years (the first 60 payments of principal, interest, mortgage insurance and the lender's loan costs,
+without extra payments) and the principal it pays off, and the **total interest percentage**: the interest over the whole
+loan as a share of the amount borrowed (**127.543%** on a $200,000 loan at 6.5%).
+
 #### A jumbo loan
 
 A conventional loan above FHFA's conforming limit for the year it closes ($832,750 in 2026) is flagged above the answers:

@@ -563,6 +563,10 @@ export interface AmortizationResponse {
   rentOrBuy?: RentOrBuyComparison | null;
   /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */
   annualPercentageRate?: number | null;
+  /** A Loan Estimate's "in 5 years" on the standard schedule: what the first 60 payments come to and the principal they pay off. */
+  inFiveYears?: { totalPaid: number; principalPaidOff: number } | null;
+  /** The interest over the whole loan as a percentage of the amount borrowed, to a thousandth. */
+  totalInterestPercentage?: number | null;
 }
 
 export interface BuydownSummary {

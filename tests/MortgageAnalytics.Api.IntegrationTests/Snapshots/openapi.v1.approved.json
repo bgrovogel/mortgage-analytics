@@ -1022,6 +1022,14 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "inFiveYears": {
+            "$ref": "#/components/schemas/InFiveYearsResponse"
+          },
+          "totalInterestPercentage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1605,6 +1613,20 @@
           }
         },
         "additionalProperties": {}
+      },
+      "InFiveYearsResponse": {
+        "type": "object",
+        "properties": {
+          "totalPaid": {
+            "type": "number",
+            "format": "double"
+          },
+          "principalPaidOff": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
       },
       "InfoResponse": {
         "required": [

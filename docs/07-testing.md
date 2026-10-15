@@ -14,11 +14,11 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 660 | NUnit | < 1 s |
-| Application | 410 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Application | 415 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
 | Infrastructure | 43 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 109 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 944 | Jest, jest-preset-angular | ~10 s |
+| Angular unit | 947 | Jest, jest-preset-angular | ~10 s |
 | End-to-end | 124 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
