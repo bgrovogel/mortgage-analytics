@@ -341,8 +341,9 @@ APR       = 12 × i × 100, to a thousandth of a point
 - **The payments** are the starting rate's payment every month, plus that month's mortgage insurance (PMI, or FHA's
   MIP): a later rate reset and a temporary buydown's cheaper years are not part of the rate a lender quotes.
 - **On the example** ($377,650 at 6.25%, $4,000 of loan costs, $970.05 of prepaid interest) the borrower receives
-  $372,679.95 for payments of $2,325.26, which is an APR of **6.376%**. With no fees and no mortgage insurance it is
-  the note rate; PMI for the first 100 payments would make it 6.692%.
+  $372,679.95 for payments of $2,325.26, which is an APR of **6.376%** counting the fees alone. The app also puts the
+  example's PMI ($157.35 a month until July 2032) in the payments, which makes it **6.687%**, the figure the Cost view
+  shows. With no fees and no mortgage insurance it is the note rate.
 - The domain is `AnnualPercentageRate` (`Domain/Loans`), and `AprAnalysis` (`Application/Services`) gathers what it
   counts. The Python model solves it its own way, and the random purchases match it.
 

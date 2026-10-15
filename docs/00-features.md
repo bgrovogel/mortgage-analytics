@@ -201,9 +201,9 @@ of their own and are never flagged.
 
 #### The APR
 
-The Cost view shows the **APR** beside the rate: the yearly cost of the loan once its fees are counted, **6.376%**
-against the example's 6.25%. It counts the lender's loan costs, prepaid interest, discount points, an FHA or VA upfront
-fee and mortgage insurance, and so compares offers with different fees. Compare shows each home's APR and marks the
+The Cost view shows the **APR** beside the rate: the yearly cost of the loan once its fees are counted, **6.687%**
+against the example's 6.25% (the fees alone make it 6.376%; the example's PMI adds the rest). It counts the lender's loan costs, prepaid
+interest, discount points, an FHA or VA upfront fee and mortgage insurance, and so compares offers with different fees. Compare shows each home's APR and marks the
 lowest. **Reset to the example numbers** puts every field and section back to the worked example.
 
 #### Share by link

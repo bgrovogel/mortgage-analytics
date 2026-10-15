@@ -72,7 +72,8 @@ import { ReadingNavComponent } from './reading-nav.component';
           <h3>The APR</h3>
           <p>The rate at which the payments, each discounted by a month's interest, add up to what you actually received:
             the loan less the lender's costs, prepaid interest, discount points and an FHA or VA upfront fee, with each
-            month's mortgage insurance in the payments. On the example it is <strong>6.376%</strong> against a 6.25% rate.</p>
+            month's mortgage insurance in the payments. On the example it is <strong>6.687%</strong> against a 6.25% rate: the
+            fees alone make it 6.376%, and the PMI paid for the first six years or so adds the rest.</p>
         </section>
 
         <section id="afford">
