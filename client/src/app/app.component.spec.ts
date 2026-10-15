@@ -54,7 +54,7 @@ describe('AppComponent', () => {
       .toEqual(['Buy a home', 'Refinance', 'Pay off or invest', 'Saved']);
     expect(root.querySelector('footer a[href="/swagger"]')?.textContent?.trim()).toBe('Developer API docs ↗');
     expect([...root.querySelectorAll('footer nav[aria-label="About"] a')].map((a) => [a.textContent!.trim(), a.getAttribute('href')]))
-      .toEqual([['How it’s calculated', '/how-it-works'], ['Glossary', '/glossary']]);
+      .toEqual([['How it’s calculated', '/how-it-works'], ['Glossary', '/glossary'], ['Privacy', '/privacy']]);
   });
 
   it('puts the page in the theme chosen on an earlier visit, and offers the choice in the footer', () => {

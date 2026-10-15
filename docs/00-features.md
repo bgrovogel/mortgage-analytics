@@ -159,7 +159,10 @@ Two pages in the footer of every page explain the numbers. **How it's calculated
 buyer meets it (the payment, taxes and insurance, mortgage insurance, cash to close, the APR, what you can afford, rent or
 buy, refinancing, pay off or invest), worked through with the example loan, then says how the numbers are checked and
 names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
-loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term.
+loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term. **Privacy**, in the same
+footer, says what happens to what you type: nothing is saved without an account, a share link keeps the numbers after
+its `#`, an account holds an email address, a scrambled password and what you save (all deleted with the account), and
+the browser keeps only your column choice and theme. There is no analytics, advertising or tracking.
 
 #### Paying every two weeks
 

@@ -14,6 +14,15 @@ test.describe('How it is calculated and the glossary', () => {
     await expect(page.getByTestId('glossary').locator('dt'), 'every term is listed').not.toHaveCount(0);
   });
 
+  test('the privacy page is one link away, and says what is kept', async ({ page }) => {
+    await page.goto('/strategy');
+
+    await page.getByRole('navigation', { name: 'About' }).getByRole('link', { name: 'Privacy' }).click();
+
+    await expect(page, 'privacy has its own address').toHaveURL(/\/privacy$/);
+    await expect(page.locator('#anonymous'), 'it says what happens without an account').toContainText('does not save them');
+  });
+
   test('a link can land on one term', async ({ page }) => {
     await page.goto('/glossary#term-pmi');
 

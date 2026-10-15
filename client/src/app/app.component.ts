@@ -73,6 +73,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
         <nav class="footer-links" aria-label="About">
           <a routerLink="/how-it-works">How it’s calculated</a>
           <a routerLink="/glossary">Glossary</a>
+          <a routerLink="/privacy">Privacy</a>
         </nav>
         <a href="/swagger" target="_blank" rel="noopener">Developer API docs ↗</a>
         <app-theme-switch />
