@@ -32,6 +32,39 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
   selector: 'app-affordability',
   template: `
     <h2 id="affordability-title">Can you afford it?</h2>
+    <div class="stats">
+      <div class="stat" data-testid="afford-stat-housing">
+        <span>Housing payment, as a share of income</span>
+        <strong>{{ pct(affordability().housingPercent) }}</strong>
+        <small [class.ok]="stats().housingFits">{{ stats().housingFits ? 'Under' : 'Past' }} the {{ pct(affordability().comfortable.housingPercent ?? 28) }} guideline</small>
+      </div>
+      <div class="stat" data-testid="afford-stat-total">
+        <span>With your other debts</span>
+        <strong>{{ pct(affordability().totalPercent) }}</strong>
+        <small [class.ok]="stats().totalFits">{{ stats().totalFits ? 'Under' : 'Past' }} the {{ pct(affordability().comfortable.totalPercent) }} guideline</small>
+      </div>
+      <div class="stat" data-testid="afford-stat-most">
+        <span>The most you could pay for a home</span>
+        <strong>{{ affordability().comfortable.maxHomePrice > 0 ? usd(affordability().comfortable.maxHomePrice) : 'None' }}</strong>
+        <small>Up to {{ usd(affordability().mostAllowed.maxHomePrice) }} if a lender stretches</small>
+      </div>
+    </div>
+    <div class="position" data-testid="afford-position" role="img" [attr.aria-label]="positionLabel()">
+      <div class="track">
+        <div class="comfortable" [style.width.%]="position().comfortable"></div>
+        <div class="stretch" [style.left.%]="position().comfortable" [style.width.%]="100 - position().comfortable"></div>
+        @if (position().home !== null) {
+          <div class="marker" [style.left.%]="position().home"></div>
+        }
+      </div>
+      <div class="labels">
+        @if (homePrice() !== null) {
+          <span class="here">This home {{ usd(homePrice()!) }}</span>
+        }
+        <span>Comfortable {{ usd(affordability().comfortable.maxHomePrice) }}</span>
+        <span>Most {{ usd(affordability().mostAllowed.maxHomePrice) }}</span>
+      </div>
+    </div>
     <p class="budget" data-testid="afford-budget">{{ budget() }}</p>
     <p class="intro" data-testid="afford-intro">{{ intro() }}</p>
     <p class="verdict" [class.warn]="!affordability().mostAllowed.fits" data-testid="afford-verdict">{{ verdict() }}</p>
@@ -73,6 +106,36 @@ export class AffordabilityComponent {
 
   /** The down payment as a percentage of the price, which the highest prices keep. */
   readonly downPaymentPercent = input.required<number>();
+
+  /** The home's price in the form, to mark against the limits; null for none. */
+  readonly homePrice = input<number | null>(null);
+
+  protected readonly usd = usd;
+  protected readonly pct = (value: number) => `${decimal(value)}%`;
+
+  /** Whether each share is within the comfortable guideline (28% for housing, 36% in all). */
+  protected readonly stats = computed(() => {
+    const a = this.affordability();
+    return {
+      housingFits: a.housingPercent <= (a.comfortable.housingPercent ?? 28),
+      totalFits: a.totalPercent <= a.comfortable.totalPercent,
+    };
+  });
+
+  /** Where on a bar from $0 to the most a lender allows the comfortable limit and this home sit, in percent. */
+  protected readonly position = computed(() => {
+    const { comfortable, mostAllowed } = this.affordability();
+    const home = this.homePrice();
+    const end = Math.max(mostAllowed.maxHomePrice, comfortable.maxHomePrice, home ?? 0, 1);
+    const at = (price: number) => Math.min(100, Math.max(0, (price / end) * 100));
+    return { comfortable: at(comfortable.maxHomePrice), home: home === null ? null : at(home) };
+  });
+
+  protected readonly positionLabel = computed(() => {
+    const { comfortable, mostAllowed } = this.affordability();
+    const home = this.homePrice();
+    return `${home === null ? '' : `This home ${usd(home)}. `}Comfortable up to ${usd(comfortable.maxHomePrice)}; most a lender allows ${usd(mostAllowed.maxHomePrice)}.`;
+  });
 
   protected readonly downPercent = computed(() => decimal(this.downPaymentPercent(), 1));
   protected readonly stretch = computed(() => STRETCH[this.program()]);

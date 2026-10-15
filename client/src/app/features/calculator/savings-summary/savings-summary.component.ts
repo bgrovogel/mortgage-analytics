@@ -70,6 +70,20 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
         </div>
       }
+      <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
+      <div class="tile">
+        <dt>Paid off</dt>
+        <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
+        @if (r.savings.paymentsSaved > 0) {
+          <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
+        } @else if (r.accelerated.recasts.length > 0) {
+          <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
+        }
+      </div>
+    </dl>
+
+    <!-- What backs the answers up: whether it can be afforded, what paying extra saves, and when the insurance ends. -->
+    <dl class="tiles more">
       @if (!current()) {
         <div class="tile" data-testid="afford-tile">
           <dt>Can you afford it?</dt>
@@ -107,20 +121,6 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           }
         </div>
       }
-    </dl>
-
-    <!-- When it ends: the payoff, and the mortgage insurance. -->
-    <dl class="tiles dates">
-      <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
-      <div class="tile">
-        <dt>Paid off</dt>
-        <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
-        @if (r.savings.paymentsSaved > 0) {
-          <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
-        } @else if (r.accelerated.recasts.length > 0) {
-          <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
-        }
-      </div>
       @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
         <div class="tile">
           <dt>{{ insuranceName() }} ends</dt>

@@ -24,7 +24,7 @@ import { CalculatorStore } from '../calculator.store';
     @if (result().affordability; as affordability) {
       <div class="panel">
         <app-affordability [affordability]="affordability" [program]="result().program?.type ?? 'Conventional'"
-                           [downPaymentPercent]="result().purchase.downPaymentPercent" />
+                           [downPaymentPercent]="result().purchase.downPaymentPercent" [homePrice]="result().purchase.homePrice" />
         @if (affordability.comfortable.maxHomePrice > 0) {
           <p class="carry">
             <button type="button" (click)="priceAt(affordability.comfortable.maxHomePrice)" data-testid="price-at-comfortable">Price a home at {{ money(affordability.comfortable.maxHomePrice) }}</button>

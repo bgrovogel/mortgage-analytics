@@ -11,8 +11,9 @@ describe('AffordabilityComponent', () => {
     qualifyingRate: 6.5, qualifyingRateBasis: 'NoteRate',
   };
 
-  const render = (affordability: Affordability, program: LoanProgramType = 'Conventional', downPaymentPercent = 9) => {
+  const render = (affordability: Affordability, program: LoanProgramType = 'Conventional', downPaymentPercent = 9, homePrice: number | null = null) => {
     const fixture = TestBed.createComponent(AffordabilityComponent);
+    fixture.componentRef.setInput('homePrice', homePrice);
     fixture.componentRef.setInput('affordability', affordability);
     fixture.componentRef.setInput('program', program);
     fixture.componentRef.setInput('downPaymentPercent', downPaymentPercent);
@@ -24,6 +25,42 @@ describe('AffordabilityComponent', () => {
       [tr.querySelector('th')!.firstChild!.textContent!.trim(), ...Array.from(tr.querySelectorAll('td'), (c) => c.textContent!.trim())].join(' | '));
     return { text, rows };
   };
+
+  describe('the three figures', () => {
+    it('shows the payment as a share of income, with the debts, and the most that could be paid', () => {
+      const { text } = render(typical);
+
+      expect(text('afford-stat-housing')).toBe('Housing payment, as a share of income27.68%Under the 28% guideline');
+      expect(text('afford-stat-total')).toBe('With your other debts32.48%Under the 36% guideline');
+      expect(text('afford-stat-most')).toBe('The most you could pay for a home$420,104Up to $615,229 if a lender stretches');
+    });
+
+    it('says when a share is past its guideline', () => {
+      const past = { ...typical, housingPercent: 31.2, totalPercent: 40.1 };
+      const { text } = render(past);
+
+      expect(text('afford-stat-housing')).toContain('Past the 28% guideline');
+      expect(text('afford-stat-total')).toContain('Past the 36% guideline');
+    });
+
+    it('says there is no price when no home fits the comfortable limits', () => {
+      const none = { ...typical, comfortable: { ...typical.comfortable, maxHomePrice: 0, fits: false } };
+
+      expect(render(none).text('afford-stat-most')).toContain('None');
+    });
+  });
+
+  describe('where this home sits', () => {
+    it('marks the home against the comfortable and the most the loan allows, in dollars', () => {
+      const { text } = render(typical, 'Conventional', 9, 415_000);
+
+      expect(text('afford-position')).toBe('This home $415,000Comfortable $420,104Most $615,229');
+    });
+
+    it('has no marker without a home price, and keeps the two limits', () => {
+      expect(render(typical).text('afford-position')).toBe('Comfortable $420,104Most $615,229');
+    });
+  });
 
   it('leads with the most the household could pay for a home, whatever home is in the form', () => {
     expect(render(typical).text('afford-budget')).toBe(

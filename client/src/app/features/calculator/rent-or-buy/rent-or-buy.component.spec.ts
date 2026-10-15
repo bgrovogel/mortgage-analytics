@@ -33,6 +33,30 @@ describe('RentOrBuyComponent', () => {
     return { text, rows };
   };
 
+  describe('the three figures', () => {
+    it('shows the year buying pulls ahead, and where each side stands after 10 years and at the end', () => {
+      const { text } = render(typical);
+
+      expect(text('rent-stat-year')).toBe('Buying pulls aheadYear 7And stays ahead every year after');
+      expect(text('rent-stat-ten')).toMatch(/^After 10 yearsBuy by \$[\d,]+\$[\d,]+ bought vs \$[\d,]+ rented$/);
+      expect(text('rent-stat-end')).toMatch(/^After 30 yearsBuy by \$[\d,]+\$[\d,]+ bought vs \$[\d,]+ rented$/);
+    });
+
+    it('says renting is ahead, when it is, and that buying never pulls ahead', () => {
+      const renting = comparison([...Array(30).keys()].map((i) => -(i + 1) * 1_000), null);
+      const { text } = render(renting);
+
+      expect(text('rent-stat-year')).toBe('Buying pulls aheadNeverRenting is ahead in all 30 years');
+      expect(text('rent-stat-ten')).toContain('Rent by $10,000');
+    });
+
+    it('leaves out the ten-year figure when the comparison is shorter than that', () => {
+      const short = comparison([-5_000, -2_000, 1_000], 3);
+
+      expect(render(short).text('rent-stat-ten')).toBeUndefined();
+    });
+  });
+
   it('says how long to stay for buying to come out ahead', () => {
     expect(render(typical).text('rent-or-buy-verdict')).toBe('Buying comes out ahead if you stay 7 years or more; before that, renting leaves you better off.');
   });

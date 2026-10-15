@@ -299,13 +299,17 @@ all of it.
 
 ### The results
 
-- **Overview:** four answer tiles, each linking to its details: the **monthly payment** (principal and interest, and
-  the housing costs; a buydown's year-1 payment), the **cash to close**, **can you afford it**, and what **paying
-  extra saves** (the net savings and the total interest, or without extra payments, the total interest over the loan,
-  never a $0 saving). Then when the loan is paid off and how much sooner, and when PMI ends; the payment breakdown;
-  and the balance over time, with the gap between the two payoffs shaded.
-- **Affordability:** the home against your income and debts (below).
-- **Rent or buy:** buying against renting a similar home, year by year (below).
+- **Cost (the Overview):** three equal answers: the **monthly payment** (principal and interest, and the housing
+  costs; a buydown's year-1 payment), the **cash to close**, and **when it is paid off** and how much sooner. Under
+  them, three that back them up: **can you afford it**, what **paying extra saves** (the net savings and the total
+  interest, or without extra payments, the total interest over the loan, never a $0 saving), and **when PMI ends**.
+  Then the rate what-if, the payment breakdown, and the balance over time with the gap between the two payoffs
+  shaded. Closing costs, year by year and every payment are one step down, as links under the four views.
+- **Can I afford it?** three figures of equal weight (the payment's share of income, with the debts, and the most you
+  could pay), a bar placing this home against the comfortable and the most a lender allows, and each limit in a
+  table (below).
+- **Rent or buy?** when buying pulls ahead and where each side stands after 10 years and at the end, then the chart and
+  the years (below).
 - **Closing:** the cash to close and what a seller may pay, then the best use of the seller's money, with how it is
   weighed (the years you keep the loan, the cut per point) set beside the table it changes.
 - **Projection:** the **quick numbers** for any year (each cost that year, through that year, and over the whole

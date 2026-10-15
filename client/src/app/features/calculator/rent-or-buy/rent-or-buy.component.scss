@@ -92,3 +92,40 @@ td.buy {
     padding: 0.4rem 0.35rem;
   }
 }
+
+// Three figures of equal weight above the verdict.
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+
+  span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  strong {
+    font-size: 1.4rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+
+    &.buy {
+      color: var(--positive);
+    }
+  }
+
+  small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+}

@@ -99,3 +99,95 @@ tbody th {
   line-height: 1.4;
   color: var(--text-primary);
 }
+
+// Three figures of equal weight, then where this home sits against the limits.
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+
+  span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  strong {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  small {
+    font-size: 0.8rem;
+    color: var(--warning-text);
+
+    &.ok {
+      color: var(--positive);
+    }
+  }
+}
+
+.position {
+  margin: 0 0 1.25rem;
+
+  .track {
+    position: relative;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--surface-2);
+  }
+
+  .comfortable,
+  .stretch {
+    position: absolute;
+    top: 0;
+    height: 100%;
+  }
+
+  .comfortable {
+    left: 0;
+    border-radius: 6px 0 0 6px;
+    background: var(--positive-border);
+  }
+
+  .stretch {
+    border-radius: 0 6px 6px 0;
+    background: var(--warning-border);
+  }
+
+  .marker {
+    position: absolute;
+    top: -6px;
+    width: 3px;
+    height: 24px;
+    border-radius: 2px;
+    background: var(--accent);
+    transform: translateX(-50%);
+  }
+
+  .labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+
+    .here {
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+  }
+}

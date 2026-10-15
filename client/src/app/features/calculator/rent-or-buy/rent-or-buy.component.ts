@@ -14,6 +14,27 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
 @Component({
   selector: 'app-rent-or-buy',
   template: `
+    <div class="stats">
+      <div class="stat" data-testid="rent-stat-year">
+        <span>Buying pulls ahead</span>
+        <strong>{{ stats().year }}</strong>
+        <small>{{ stats().yearNote }}</small>
+      </div>
+      @if (stats().ten; as ten) {
+        <div class="stat" data-testid="rent-stat-ten">
+          <span>After 10 years</span>
+          <strong [class.buy]="ten.advantage >= 0">{{ ten.lead }}</strong>
+          <small>{{ ten.detail }}</small>
+        </div>
+      }
+      @if (stats().end; as end) {
+        <div class="stat" data-testid="rent-stat-end">
+          <span>After {{ comparison().years.length }} years</span>
+          <strong [class.buy]="end.advantage >= 0">{{ end.lead }}</strong>
+          <small>{{ end.detail }}</small>
+        </div>
+      }
+    </div>
     <p class="verdict" data-testid="rent-or-buy-verdict">{{ verdict() }}</p>
     <figure>
       <figcaption id="rent-or-buy-chart-title">How far buying is ahead of renting (below zero, renting is ahead)</figcaption>
@@ -77,6 +98,26 @@ export class RentOrBuyComponent {
     }
     const last = years[years.length - 1];
     return `Renting stays ahead for all ${years.length} years: by the end, it leaves you ${usd(-last.advantage)} better off.`;
+  });
+
+  /** The three figures above the verdict: when buying pulls ahead, and where each side stands at 10 years and at the end. */
+  protected readonly stats = computed(() => {
+    const { breakEvenYear, years } = this.comparison();
+    const standing = (y: { advantage: number; buyerNetWorth: number; renterNetWorth: number }) => ({
+      advantage: y.advantage,
+      lead: `${y.advantage >= 0 ? 'Buy' : 'Rent'} by ${usd(Math.abs(y.advantage))}`,
+      detail: `${usd(y.buyerNetWorth)} bought vs ${usd(y.renterNetWorth)} rented`,
+    });
+    const ten = years.find((y) => y.year === 10);
+    const last = years[years.length - 1];
+    return {
+      year: breakEvenYear === null ? 'Never' : `Year ${breakEvenYear}`,
+      yearNote: breakEvenYear === null
+        ? `Renting is ahead in all ${years.length} years`
+        : breakEvenYear === 1 ? 'Ahead from the start' : 'And stays ahead every year after',
+      ten: ten ? standing(ten) : null,
+      end: last ? standing(last) : null,
+    };
   });
 
   /** The milestone years compared. */

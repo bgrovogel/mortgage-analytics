@@ -23,7 +23,6 @@ describe('BuyTabsComponent', () => {
     });
   });
 
-  const links = (root: HTMLElement) => [...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Results"] a')];
 
   it('lists four questions, each with its own address, and the three views under Cost one step down', async () => {
     await RouterTestingHarness.create('/calculator/overview');

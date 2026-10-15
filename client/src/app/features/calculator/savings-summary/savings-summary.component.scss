@@ -1,28 +1,23 @@
 @use '../../../core/layout/surfaces';
 
-// The four answers in one row of equal tiles; two to a row on a narrower screen.
-.answers {
+// The three answers in one row of equal tiles (the payment, the cash to close, when it is paid off), then the three
+// that back them up, the same width; two to a row on a narrower screen.
+.answers,
+.more {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 0;
 }
 
-@media (max-width: 1100px) {
-  .answers {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.more {
+  margin-top: 0.75rem;
 }
 
-// When the loan and its mortgage insurance end: a wrapping row of smaller tiles under the answers.
-.dates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0.75rem 0 0;
-
-  dd {
-    font-size: 1.3rem;
+@media (max-width: 900px) {
+  .answers,
+  .more {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
