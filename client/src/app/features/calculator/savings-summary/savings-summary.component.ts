@@ -39,6 +39,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
             + {{ firstPayment().costs.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
           }
         </dd>
+        @if (r.annualPercentageRate; as apr) {
+          <dd class="note" data-testid="apr"><abbr title="annual percentage rate: the rate counting the lender’s fees">APR</abbr> {{ percent(apr) }}%</dd>
+        }
         @if (r.buydown) {
           <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</dd>
         }
@@ -157,6 +160,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SavingsSummaryComponent {
+  /** A rate to three places without trailing zeros: 6.376, 6.5. */
+  protected readonly percent = (value: number) => decimal(value, 3);
+
   /** The analysis to summarize. */
   readonly result = input.required<AmortizationResponse>();
 

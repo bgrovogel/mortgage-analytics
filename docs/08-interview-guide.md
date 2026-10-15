@@ -86,7 +86,7 @@ hunting for one in front of people.
 
 **Why Clean Architecture for an app this size?**
 The domain is the valuable part, and it changes for business reasons, not technical ones. Keeping it free of
-ASP.NET and EF Core means its 652 tests run in under a second with no setup, and the storage or web framework can
+ASP.NET and EF Core means its 660 tests run in under a second with no setup, and the storage or web framework can
 change without touching it. I kept it light, though: no MediatR, no AutoMapper, no repository for things that
 don't need storage. The Infrastructure project only appeared when saved calculations needed a database.
 
@@ -149,6 +149,14 @@ a generic 500 that leaks nothing.
 The mapping makes business decisions: a zero amount means "none", "Recast" becomes a recast policy, and PMI applies
 only below 20% down. As explicit code, each decision can be read and unit-tested. AutoMapper would hide them in
 configuration, and mistakes would only show up at runtime.
+
+**What's the APR, and how do you calculate it?**
+The rate you'd be paying if the fees were folded into the interest. A loan at 6.25% with $5,000 of lender costs and
+prepaid interest is effectively a loan of $372,680 repaid with the same $2,325 payments, which is about 6.38%. I solve
+for the monthly rate at which the payments' present value equals what the borrower actually received, by bisection,
+as Regulation Z's actuarial method does. Which fees count is the interesting part: lender costs, prepaid interest,
+points and an FHA or VA upfront fee do; recording fees, title and escrow don't. Mortgage insurance goes in the
+payments until it ends. An independent Python model solves it separately and matches on every random purchase.
 
 **How does sharing a calculation by link work?**
 The inputs go in the URL's fragment, after `#share=`, as versioned JSON in URL-safe base64. A fragment never leaves
@@ -534,7 +542,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,212 .NET · 915 Jest · 120 Playwright (19 axe scans); 85% coverage gate |
+| Tests | 1,225 .NET · 922 Jest · 120 Playwright (19 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
 
 ---

@@ -300,6 +300,28 @@ standard schedule (extra payments left out, so the answer is about the points al
 
 ---
 
+## APR
+
+The note rate is what the loan charges; the **APR** is what it costs once the fees paid up front are counted, so two
+offers with different fees can be compared. It is the yearly rate at which the payments, each discounted by a month's
+interest, add up to what the borrower actually received (Regulation Z's actuarial method, with a monthly unit period):
+
+```
+received  = amount borrowed − finance charges paid up front
+received  = Σ payment[k] ÷ (1 + i)^k          for k = 1 … n
+APR       = 12 × i × 100, to a thousandth of a point
+```
+
+- **Finance charges counted:** the lender's loan costs, prepaid interest, discount points, and an FHA or VA upfront
+  fee (whether borrowed or paid at closing). Recording fees, transfer taxes, title and the escrow deposit are not.
+- **The payments** are the starting rate's payment every month, plus that month's mortgage insurance (PMI, or FHA's
+  MIP): a later rate reset and a temporary buydown's cheaper years are not part of the rate a lender quotes.
+- **On the example** ($377,650 at 6.25%, $4,000 of loan costs, $970.05 of prepaid interest) the borrower receives
+  $372,679.95 for payments of $2,325.26, which is an APR of **6.376%**. With no fees and no mortgage insurance it is
+  the note rate; PMI for the first 100 payments would make it 6.692%.
+- The domain is `AnnualPercentageRate` (`Domain/Loans`), and `AprAnalysis` (`Application/Services`) gathers what it
+  counts. The Python model solves it its own way, and the random purchases match it.
+
 ## Cash to close
 
 What the buyer brings to closing, as a Loan Estimate works it out. Each daily or monthly amount is rounded to the

@@ -147,6 +147,13 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 ![The cash to close with a builder's 2-1 buydown and $8,000 of credits: $16,488 against a $12,450 limit, so $4,038 of the credits cannot pay costs, and 10% down would raise the limit to $24,900](images/concessions.png)
 
+#### The APR
+
+The Cost view shows the **APR** beside the rate: the yearly cost of the loan once its fees are counted, **6.376%**
+against the example's 6.25%. It counts the lender's loan costs, prepaid interest, discount points, an FHA or VA upfront
+fee and mortgage insurance, and so compares offers with different fees. Compare shows each home's APR and marks the
+lowest. **Reset to the example numbers** puts every field and section back to the worked example.
+
 #### Share by link
 
 **Copy link**, beside Save on every page, copies a link that opens the same numbers (and tab) in any browser, signed

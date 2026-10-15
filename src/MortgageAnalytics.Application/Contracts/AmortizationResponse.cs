@@ -18,6 +18,10 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="SellerOffer">The seller's or builder's offer taken each way it can be. Null unless the request asks and there is an offer.</param>
 /// <param name="Affordability">The home against the household's income and debts. Null unless the request gives them.</param>
 /// <param name="RentOrBuy">Buying the home against renting a similar one, year by year. Null unless the request asks.</param>
+/// <param name="AnnualPercentageRate">
+/// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
+/// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
+/// </param>
 public sealed record AmortizationResponse(
     PurchaseResponse Purchase,
     ScheduleResponse Baseline,
@@ -32,7 +36,8 @@ public sealed record AmortizationResponse(
     PmiOtherChoiceResponse? PmiOtherChoice = null,
     SellerOfferResponse? SellerOffer = null,
     AffordabilityResponse? Affordability = null,
-    RentOrBuyResponse? RentOrBuy = null);
+    RentOrBuyResponse? RentOrBuy = null,
+    decimal? AnnualPercentageRate = null);
 
 /// <summary>
 /// Buying the home against renting a similar one, for households that spend the same each month: whichever of owning

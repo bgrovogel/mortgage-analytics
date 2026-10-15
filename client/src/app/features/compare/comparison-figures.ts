@@ -14,6 +14,8 @@ export interface HomeFigures {
   loanAmount: number;
   /** The rate on the first payment (a buydown's or an ARM's starting rate). */
   rate: number;
+  /** The rate counting the lender's costs and mortgage insurance; null when nothing was received. */
+  apr: number | null;
   /** The first payment due, with housing costs: with a buydown, year 1's reduced payment. */
   monthlyPayment: number;
   /** The extra principal paid with the first payment: 0 for none, or one that starts later. */
@@ -52,6 +54,7 @@ export function figuresOf(r: AmortizationResponse): HomeFigures {
     downPaymentPercent: r.purchase.downPaymentPercent,
     loanAmount: r.purchase.loanAmount,
     rate: r.baseline.payments[0]?.annualInterestRate ?? 0,
+    apr: r.annualPercentageRate ?? null,
     monthlyPayment: firstYear ? principalAndInterest + housingCosts : r.baseline.totalMonthlyPayment,
     extraPrincipal: r.accelerated.payments[0]?.extraPrincipal ?? 0,
     principalAndInterest,

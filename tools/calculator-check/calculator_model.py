@@ -449,7 +449,43 @@ def analyze(request, today, other_choice=True):
     out['sellerOffer'] = seller_offer(request, today, out)
     out['affordability'] = affordability(request, today)
     out['rentOrBuy'] = rent_or_buy(request, out)
+    out['annualPercentageRate'] = annual_percentage_rate(out)
     return out
+
+
+def annual_percentage_rate(out):
+    """
+    The APR (Regulation Z's actuarial method, a monthly unit period): the yearly rate at which the payments, each
+    discounted by a month's interest, add up to what the borrower received, which is the amount borrowed less the
+    finance charges paid up front: the lender's loan costs, prepaid interest, discount points and an FHA or VA upfront
+    fee (borrowed or paid at closing). Each payment is the starting rate's payment plus that month's mortgage
+    insurance. None when nothing was received or the payments return less than was.
+    """
+    program, cash, points = out['program'], out['cashToClose'], out['discountPoints']
+    borrowed = program['loanAmount'] if program else out['purchase']['loanAmount']
+    charges = D(0)
+    if cash:
+        charges += cash['loanCosts'] + cash['prepaidInterest']
+    if points:
+        charges += points['cost']
+    if program:
+        charges += program['upfrontFee']
+    amount = borrowed - charges
+    level = out['baseline']['monthlyPayment']
+    payments = [level + p['costs']['mortgageInsurance'] for p in out['baseline']['payments']]
+    if amount <= 0 or not payments or sum(payments, D(0)) < amount:
+        return None
+    if sum(payments, D(0)) == amount:
+        return D(0)
+    low, high = D(0), D(1)
+    for _ in range(200):
+        middle = (low + high) / 2
+        discount, factor, value = 1 / (1 + middle), D(1), D(0)
+        for payment in payments:
+            factor *= discount
+            value += payment * factor
+        low, high = (middle, high) if value > amount else (low, middle)
+    return ((low + high) / 2 * 12 * 100).quantize(D('0.001'), rounding=ROUND_HALF_UP)
 
 
 def rent_or_buy(request, out):

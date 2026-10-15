@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** The way in: a question first. Every card opens the page that answers it, and the brand leads back. */
 test.describe('Start page', () => {
@@ -31,6 +31,6 @@ test.describe('Start page', () => {
   test('sends an address that is not a page back to the questions', async ({ page }) => {
     await page.goto('/no-such-page');
 
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page, 'an address that is not a page leads to the questions').toHaveURL(/\/$/);
   });
 });

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { formatMonths } from '../../core/formatting/duration';
-import { money, monthOf, pct } from '../../core/formatting/format';
+import { decimal, money, monthOf, pct } from '../../core/formatting/format';
 import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
 import { ComparisonStore } from './comparison.store';
 import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
@@ -24,6 +24,12 @@ interface Line {
 /** A date as a count of months, so two dates' difference is in months. */
 const monthIndex = (date: string) => Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7));
 
+/** "+0.05 pt", "−0.02 pt": a difference between two rates, or nothing when they match to a thousandth. */
+const pointsApart = (difference: number) => {
+  const rounded = Math.round(difference * 1_000) / 1_000;
+  return rounded === 0 ? '' : `${rounded > 0 ? '+' : '−'}${decimal(Math.abs(rounded), 3)} pt`;
+};
+
 /** "2 yr 5 mo sooner", "3 mo later", or nothing on the same month. */
 const monthsApart = (difference: number) =>
   difference === 0 ? '' : `${formatMonths(Math.abs(difference))} ${difference < 0 ? 'sooner' : 'later'}`;
@@ -33,6 +39,10 @@ const LINES: readonly Line[] = [
   { label: 'Down payment', show: (f) => `${money(f.downPayment)} (${pct(f.downPaymentPercent, 1)})`, amount: (f) => f.downPayment },
   { label: 'Loan', show: (f) => money(f.loanAmount), amount: (f) => f.loanAmount },
   { label: 'Rate', show: (f) => pct(f.rate, 3) },
+  {
+    label: 'APR', note: 'the rate counting fees',
+    show: (f) => (f.apr === null ? '—' : pct(f.apr, 3)), amount: (f) => f.apr, better: 'lower', difference: pointsApart,
+  },
   {
     label: 'Monthly payment', note: 'the first, with housing costs',
     show: (f) => money(f.monthlyPayment), amount: (f) => f.monthlyPayment, better: 'lower',

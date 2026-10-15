@@ -557,6 +557,8 @@ export interface AmortizationResponse {
   affordability?: Affordability | null;
   /** Buying against renting; null unless asked. */
   rentOrBuy?: RentOrBuyComparison | null;
+  /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */
+  annualPercentageRate?: number | null;
 }
 
 export interface BuydownSummary {

@@ -27,6 +27,21 @@ describe('SavingsSummaryComponent', () => {
     expect(text('housing-costs-label')).toBe('county/city tax');
   });
 
+  it('shows the APR, the rate counting the fees, spelled out on hover', () => {
+    render(aResponse({ annualPercentageRate: 6.376 }));
+
+    expect(text('apr')).toBe('APR 6.376%');
+    expect(fixture.nativeElement.querySelector('[data-testid="apr"] abbr').getAttribute('title')).toBe('annual percentage rate: the rate counting the lender’s fees');
+  });
+
+  it('drops trailing zeros from the APR, and shows none when there is no rate to speak of', () => {
+    render(aResponse({ annualPercentageRate: 6.5 }));
+    expect(text('apr')).toBe('APR 6.5%');
+
+    render(aResponse({ annualPercentageRate: null }));
+    expect(text('apr')).toBeUndefined();
+  });
+
   it('names one or two housing costs, and calls more of them housing costs, which the breakdown below lists', () => {
     render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83, homeownersInsurance: 200 }) }) }));
     expect(text('housing-costs-label')).toBe('property tax & insurance');

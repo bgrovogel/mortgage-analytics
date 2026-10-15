@@ -779,6 +779,51 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('resetting to the example', () => {
+    const click = (testId: string) => {
+      el(testId)!.click();
+      fixture.detectChanges();
+    };
+
+    it('offers no reset while the numbers are the example', () => {
+      expect(el('reset-example')).toBeNull();
+    });
+
+    it('puts the example back after edits, with its note, and calculates it', () => {
+      const example = emitted[0];
+      controls().homePrice.setValue(512_000);
+      controls().monthlyExtra.setValue(0);
+      controls().annualIncome.setValue(150_000);
+      fixture.detectChanges();
+      expect(el('example-note')).toBeNull();
+      const sent = emitted.length;
+
+      click('reset-example');
+
+      expect(controls().homePrice.value).toBe(415_000);
+      expect(controls().monthlyExtra.value).toBe(200);
+      expect(controls().annualIncome.value).toBeNull();
+      expect(el('example-note')).not.toBeNull();
+      expect(el('reset-example')).toBeNull();
+      expect(emitted.length).toBeGreaterThan(sent);
+      expect(last()).toEqual(example);
+    });
+
+    it('also clears lump sums and the choices made in the sections', () => {
+      component.addLumpSum();
+      controls().loanProgram.setValue('Va');
+      controls().homePrice.setValue(512_000);
+      fixture.detectChanges();
+
+      click('reset-example');
+
+      expect(component.form.controls.lumpSums.length).toBe(0);
+      expect(controls().loanProgram.value).toBe('Conventional');
+      expect(last().extraPayments?.lumpSums).toEqual([]);
+      expect(last().program).toBeNull();
+    });
+  });
+
   describe('how the home is used', () => {
     const use = (occupancy: 'PrimaryResidence' | 'SecondHome' | 'InvestmentProperty') => {
       el(`occupancy-${occupancy}`)!.click();

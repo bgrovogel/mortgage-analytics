@@ -18,6 +18,8 @@ describe('CompareResultsComponent', () => {
         payments: [aPayment(1, { interest: price / 1_000, housingCosts: 500, extraPrincipal: extra.monthly })],
       }),
       savings: aSavings({ acceleratedPayoffDate: extra.paidOff }),
+      // The APR rises with the price here (fees spread over a bigger loan would lower it; it is only a figure to compare).
+      annualPercentageRate: Math.round((6 + price / 1_000_000) * 1_000) / 1_000,
     });
   const responses: Record<number, AmortizationResponse> = {
     400_000: home(400_000, 3_000), 450_000: home(450_000, 3_350.5), 380_000: home(380_000, 2_900), 500_000: home(500_000, 3_700),
@@ -76,6 +78,20 @@ describe('CompareResultsComponent', () => {
 
     expect(text('compare-headline')).toBe('');
     expect(figures('Home price')).toEqual(['$400,000']);
+  });
+
+  describe('the APR', () => {
+    it('shows each home’s APR, with the difference from Home A in points, and marks the lowest', () => {
+      const { figures, differences, best } = render(400_000, 450_000, 380_000);
+
+      expect(figures('APR')).toEqual(['6.4%', '6.45%', '6.38%']);
+      expect(differences('APR')).toEqual(['+0.05 pt', '−0.02 pt']);
+      expect(best('APR')).toEqual([2]);
+    });
+
+    it('is level when the homes are', () => {
+      expect(render(400_000, 400_000).differences('APR')).toEqual(['']);
+    });
   });
 
   describe('paying extra', () => {

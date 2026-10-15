@@ -335,6 +335,17 @@ export class LoanFormComponent implements OnInit {
   }
 
   /**
+   * Puts the worked example back, every section included, and calculates it: the way out after a few edits that
+   * leaves nothing to clear field by field. It is the example again, so its note comes back too.
+   */
+  resetToExample(): void {
+    this.restore(toLoanRequest(loanForm(this.fb), 1));
+    this.sharedFrom.set(null);
+    this.example = exampleUntilEdited(this.form, true, this.destroyRef);
+    this.submit();
+  }
+
+  /**
    * Fills in the loan changed on another page: the price is the home's value (or stays, when that page did not
    * ask), the down payment is what is not owed, and the term is the years left, to the nearest whole year.
    */

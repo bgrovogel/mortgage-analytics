@@ -1017,6 +1017,11 @@
           },
           "rentOrBuy": {
             "$ref": "#/components/schemas/RentOrBuyResponse"
+          },
+          "annualPercentageRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false

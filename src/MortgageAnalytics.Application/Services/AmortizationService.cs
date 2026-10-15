@@ -30,8 +30,10 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
     {
         var analysis = Run(request);
         var (purchase, valuation, plan, comparison, rates) = analysis;
-        return comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts()) with
+        var response = comparison.ToResponse(purchase, valuation, plan, rates, request.ToClosingCosts());
+        return response with
         {
+            AnnualPercentageRate = AprAnalysis.For(response),
             PmiOtherChoice = rates.Program is null ? PmiOtherChoice(request, purchase, valuation, rates.Loan, comparison) : null,
             SellerOffer = SellerOfferComparison.For(request, analysis, Run),
             Affordability = AffordabilityAnalysis.For(request, analysis, QualifyingPayment),
