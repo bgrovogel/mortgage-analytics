@@ -24,7 +24,7 @@ answers in that order: **Cost** leads with the payment and six answer tiles, the
 buy?** and **Compare**, each with its own answer; under Cost, one step down, are the **closing costs**, **year by
 year** and **every payment**.
 
-![The calculator's Cost view: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with the answer set large under the question ($3,102 a month), six tiles (the monthly payment, the cash to close, when it is paid off, can you afford it, the net savings, and when PMI ends), the form beside them, and the rate what-if below](images/calculator.png)
+![The calculator's Cost view: an average US purchase, a $415,000 home with 9% down and $200 a month extra, with the answer set large in serif ($3,102.19 a month), what the month is made of as a bar with each part's figure, a rail of the key figures (the cash to close, when it is paid off, can you afford it, the net savings, and when PMI ends) and the form beside them](images/calculator.png)
 
 ### The loan
 

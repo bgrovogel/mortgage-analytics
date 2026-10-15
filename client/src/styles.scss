@@ -613,3 +613,38 @@ select {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+// Targets a thumb finds (UI blueprint, pillar 4): WCAG 2.2 asks 24px, a finance app on a phone gets 44.
+@media (pointer: coarse), (max-width: 600px) {
+  button,
+  select,
+  summary,
+  [role='tab'],
+  .app-footer a,
+  .app-header a,
+  .depth a,
+  .back,
+  label:has(> input[type='checkbox']),
+  label:has(> input[type='radio']) {
+    min-height: 44px !important; // a floor for the platform: component styles must not undercut it
+  }
+
+  // Inline text buttons and links inside a sentence keep the line they are in.
+  p button.try,
+  .tile dd.link a {
+    min-height: 44px !important;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  input[type='range'] {
+    min-height: 44px !important; // a floor for the platform: component styles must not undercut it
+  }
+
+  label:has(> input[type='checkbox']),
+  label:has(> input[type='radio']) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

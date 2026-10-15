@@ -9,7 +9,7 @@ const desktop = { width: 1440, height: 900 };
 const phone = { width: 390, height: 844 };
 
 /** Opens a page and waits for its first results, so no screenshot catches it mid-update. */
-async function open(browser, path, { viewport = desktop, scale = 1, scheme = 'light' } = {}) {
+async function open(browser, path, { viewport = desktop, scale = 1, scheme = 'dark' } = {}) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: scale, colorScheme: scheme });
   await page.addInitScript(() => localStorage.setItem('first-visit-hints', '1')); // a reader's first-visit hints are not the app
   await page.goto(`${app}${path}`);
@@ -58,7 +58,8 @@ const shots = {
     await page.getByTestId('section-closing').locator('summary').click();
     await page.getByTestId('closing-credits').fill('8000');
     await settled(page);
-    return page.locator('app-seller-offer');
+    await page.getByTestId('open-seller-offer').click(); // the four ways are one step away, in a dialog
+    return page.locator('dialog[open]');
   },
   // Just the affordability panel: the example against $150,000 a year and $600 of other debts.
   'affordability.png': async (b) => {
@@ -70,7 +71,7 @@ const shots = {
   },
   // Just the Rent or buy tab: the example against renting a similar home for $2,700 a month.
   'rent-or-buy.png': async (b) => {
-    const page = await open(b, '/calculator/rent-or-buy', { scale: 2 });
+    const page = await open(b, '/calculator/rent-or-buy', { scale: 2, scheme: 'light' }); // one in the light theme (warm paper)
     await page.getByTestId('monthly-rent').fill('2700');
     await page.getByTestId('monthly-rent').blur(); // formatted, as it shows once typed
     await settled(page);

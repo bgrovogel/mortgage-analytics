@@ -36,13 +36,31 @@ describe('ProvenanceChipsComponent', () => {
     (root.querySelector('[data-testid="show-math"]') as HTMLButtonElement).click();
 
     const math = text('math')!;
-    expect(root.querySelector('dialog')!.open).toBe(true);
-    expect(root.querySelector('dialog h2')!.textContent).toBe('How $2,325.26 a month is worked out');
+    const dialog = [...root.querySelectorAll('dialog')].find((d) => d.querySelector('h2')!.textContent!.startsWith('How'))!;
+    expect(dialog.open).toBe(true);
+    expect(dialog.querySelector('h2')!.textContent).toBe('How $2,325.26 a month is worked out');
     expect(math).toContain('balance$377,650');
     expect(math).toContain('r6.25% ÷ 12 = 0.5208% a month');
     expect(math).toContain('n360 payments');
     expect(math).toContain('the interest is the balance times r, $1,966.93');
     expect(math).toContain('$358.33, pays the loan down');
+  });
+
+  it('lists the dates to act on in a dialog, and saves them as a calendar file', () => {
+    const blobs: Blob[] = [];
+    URL.createObjectURL = jest.fn((b: Blob) => { blobs.push(b); return 'blob:dates'; });
+    URL.revokeObjectURL = jest.fn();
+    const clicks = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const { root, text } = render(example());
+
+    (root.querySelector('[data-testid="key-dates"]') as HTMLButtonElement).click();
+    expect(text('dates')).toContain('Free and clear');
+
+    (root.querySelector('[data-testid="download-ics"]') as HTMLButtonElement).click();
+
+    expect(blobs[0].type).toBe('text/calendar;charset=utf-8');
+    expect(clicks).toHaveBeenCalled();
+    clicks.mockRestore();
   });
 
   it('offers no formula for a loan whose rate changes, which one formula would misstate', () => {

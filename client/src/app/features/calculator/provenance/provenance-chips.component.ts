@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { decimal, usd, usdCents } from '../../../core/formatting/format';
+import { decimal, monthOf, usd, usdCents } from '../../../core/formatting/format';
 import { DialogComponent } from '../../../core/layout/dialog.component';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { icsCalendar, milestones } from './milestones';
 import { paymentMath } from './payment-math';
 
 /**
@@ -21,6 +22,22 @@ import { paymentMath } from './payment-math';
           Exact to the cent · ends at $0.00
         </span>
       }
+      <button type="button" class="chip action" data-testid="key-dates" (click)="dates.open()">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M2 7h12M5.5 1.5v3M10.5 1.5v3" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+        Key dates
+      </button>
+      <app-dialog #dates heading="Dates you act on">
+        <ol class="dates" data-testid="dates">
+          @for (item of dateItems(); track item.id) {
+            <li>
+              <span class="mark" [attr.data-id]="item.id" aria-hidden="true"></span>
+              <div><span class="what">{{ item.title }}</span><span class="detail">{{ item.detail }}</span></div>
+              <span class="when">{{ monthOf(item.date) }}</span>
+            </li>
+          }
+        </ol>
+        <button type="button" class="download" data-testid="download-ics" (click)="download()">Add all to calendar (.ics)</button>
+      </app-dialog>
       @if (m) {
         <button type="button" class="chip action" data-testid="show-math" (click)="dialog.open()">
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><path d="M2 13 6 7l3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
@@ -54,6 +71,18 @@ export class ProvenanceChipsComponent {
   readonly result = input.required<AmortizationResponse>();
 
   protected readonly math = computed(() => paymentMath(this.result()));
+  protected readonly dateItems = computed(() => milestones(this.result()));
+  protected readonly monthOf = monthOf;
+
+  /** Saves the key dates as a calendar file, one all-day event for each. */
+  protected download(): void {
+    const url = URL.createObjectURL(new Blob([icsCalendar(this.dateItems(), 'mortgage-analytics')], { type: 'text/calendar;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'mortgage-key-dates.ics';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
   protected readonly cents = usdCents;
   protected readonly whole = usd;
   protected readonly pct = (value: number) => decimal(value, 3);
