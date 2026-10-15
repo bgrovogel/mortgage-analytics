@@ -261,9 +261,12 @@ dropped on the way back went unnoticed; `loan-form.model.spec.ts` now checks the
 every unusual value. It scored **97.9%** then; the survivors were almost all equivalent: caches that only save work,
 `emitEvent: false` on changes nothing listens to yet, and guards whose fallback gives the same answer (a balance after
 the last payment is 0 either way). After the makeover's first batch of new code (the Share menu, theme switch, answer
-sentence, what-if, state rates and the form's new fields) it scores **94.5%**: the weak files are the tax-bracket
-tables, the chart host, the calculation page's print and focus handling, and the loan form component, where several
-new branches are covered only by the browser tests. Closing that gap comes with the form's restructure.
+sentence, what-if, state rates and the form's new fields) it fell to **94.5%**: the weak files were the tax-bracket
+tables (built as module constants, so no test could reach their mutants: they are functions now, and the boundary of
+every bracket is tested), the chart host, and the strategy names. With those fixed it scores **97.0%** (2,420
+mutants, 15 survivors and 68 without coverage, most of them the strategy names and colours, a module-level table the
+runner cannot attribute to a test). The loan form component and the calculation page are not in the mutated set; they
+are covered by their own specs and the browser tests.
 
 ---
 
