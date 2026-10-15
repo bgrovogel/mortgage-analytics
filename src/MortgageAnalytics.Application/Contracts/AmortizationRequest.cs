@@ -86,6 +86,14 @@ public sealed record AmortizationRequest
 
     /// <summary>Weighs buying the home against renting a similar one, year by year. Omit for none.</summary>
     public RentOrBuyRequest? RentOrBuy { get; init; }
+
+    /// <summary>
+    /// What the household wants to pay each month, all in: principal and interest, taxes, insurance, mortgage insurance
+    /// and dues. The response says the highest price that fits it, at the same down payment share, rate and costs.
+    /// Needs no income. Omit for none.
+    /// </summary>
+    /// <example>3000</example>
+    public decimal? MonthlyBudget { get; init; }
 }
 
 /// <summary>What renting a similar home would cost, and what money does meanwhile.</summary>

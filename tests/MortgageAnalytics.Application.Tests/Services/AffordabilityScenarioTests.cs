@@ -26,6 +26,64 @@ public class AffordabilityScenarioTests : SociableAnalysisTestBase
         Service.Analyze((request ?? TexasPurchase()).WithHomePrice(price).WithDownPayment(price * 0.05m)).Baseline.TotalMonthlyPayment;
 
     [Test]
+    public void ThereIsNoBudgetAnswer_WithoutABudget()
+    {
+        Assert.That(Service.Analyze(TexasPurchase()).Budget, Is.Null, "nothing was asked");
+    }
+
+    [Test]
+    public void ABudget_ReachesTheHighestPriceWhosePaymentFits_AtTheSameDownPaymentShare()
+    {
+        var budget = Service.Analyze(TexasPurchase().WithMonthlyBudget(1_800m)).Budget!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(budget.MonthlyBudget, Is.EqualTo(1_800m), "the budget asked about");
+            Assert.That(PaymentAt(budget.MaxHomePrice), Is.LessThanOrEqualTo(1_800m), "the payment at that price fits");
+            Assert.That(PaymentAt(budget.MaxHomePrice + 1m), Is.GreaterThan(1_800m), "and a dollar more does not");
+            Assert.That(budget.DownPayment, Is.EqualTo(budget.MaxHomePrice * 0.05m), "keeping the 5% down");
+        });
+    }
+
+    [Test]
+    public void ABudget_DoesNotNeedAnIncome()
+    {
+        var response = Service.Analyze(TexasPurchase().WithMonthlyBudget(1_800m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Affordability, Is.Null, "no income was given");
+            Assert.That(response.Budget!.MaxHomePrice, Is.GreaterThan(0m), "but the budget is answered");
+        });
+    }
+
+    [Test]
+    public void ABiggerBudget_ReachesAMoreExpensiveHome()
+    {
+        var small = Service.Analyze(TexasPurchase().WithMonthlyBudget(1_500m)).Budget!;
+        var large = Service.Analyze(TexasPurchase().WithMonthlyBudget(2_500m)).Budget!;
+
+        Assert.That(large.MaxHomePrice, Is.GreaterThan(small.MaxHomePrice), "more a month buys more house");
+    }
+
+    [Test]
+    public void ABudgetBelowAnyLoansPayment_ReachesNoHome()
+    {
+        var budget = Service.Analyze(TexasPurchase().WithMonthlyBudget(1m)).Budget!;
+
+        Assert.That((budget.MaxHomePrice, budget.DownPayment), Is.EqualTo((0m, 0m)), "not even a $1 home has a payment this low");
+    }
+
+    [Test]
+    public void ABudget_IsCountedAtTheNoteRate_NotAtABuydownsFirstYear()
+    {
+        var plain = Service.Analyze(TexasPurchase().WithMonthlyBudget(1_800m)).Budget!;
+        var bought = Service.Analyze(TexasPurchase().WithBuydown(2, 1).WithMonthlyBudget(1_800m)).Budget!;
+
+        Assert.That(bought.MaxHomePrice, Is.EqualTo(plain.MaxHomePrice), "the buydown's early payments are not a budget the loan can keep");
+    }
+
+    [Test]
     public void ThereIsNone_WithoutIncome()
     {
         Assert.That(Service.Analyze(TexasPurchase()).Affordability, Is.Null, "nothing to measure the home against");

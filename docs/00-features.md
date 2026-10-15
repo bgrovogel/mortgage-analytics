@@ -240,6 +240,11 @@ income and **29.62%** with the debts: within the comfortable limit, which reache
 45% reaches **$700,615**. An FHA loan's 31% for housing alone can fail a home that conventional allows: its MIP adds
 to the payment.
 
+**A monthly budget** answers the question the other way round, with no income at all: say what you want to pay each
+month, all in (the **Income & debts** section's last field), and the tab says the highest price that reaches, at the
+same down payment share, rate, taxes and insurance, and what is down at that price. It counts the payment at the note
+rate, since a budget is what will be paid.
+
 ![Can you afford it: the example's $3,102 payment is 24.82% of $12,500 a month and 29.62% with $600 of debts; the comfortable limit reaches $474,091 and a conventional loan's 45% reaches $700,615](images/affordability.png)
 
 #### Rent or buy

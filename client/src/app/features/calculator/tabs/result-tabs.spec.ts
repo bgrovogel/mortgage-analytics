@@ -101,6 +101,29 @@ describe('result tabs', () => {
       expect(root.querySelector('[data-testid="affordability-empty"]')).toBeNull();
     });
 
+    it('says what a monthly budget buys, with or without an income', () => {
+      answer({ budget: { monthlyBudget: 3_000, maxHomePrice: 412_345, downPayment: 37_111.05 } });
+      const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="budget-answer"]')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'A payment of $3,000 a month, with taxes and insurance, reaches a home up to $412,345, with $37,111 down.');
+      expect(root.querySelector('[data-testid="affordability-empty"]')).not.toBeNull(); // the income prompt is still there
+    });
+
+    it('says when no home has a payment as low as the budget', () => {
+      answer({ budget: { monthlyBudget: 50, maxHomePrice: 0, downPayment: 0 } });
+      const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="budget-answer"]')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'A payment of $50 a month does not reach a home: the taxes and insurance alone come to more.');
+    });
+
+    it('has no budget answer when none was given', () => {
+      const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="budget-answer"]')).toBeNull();
+    });
+
     it('without an income, says what it would show, and opens the income field', () => {
       const root = render(AffordabilityTabComponent).nativeElement as HTMLElement;
       (root.querySelector('[data-testid="add-income"]') as HTMLButtonElement).click();

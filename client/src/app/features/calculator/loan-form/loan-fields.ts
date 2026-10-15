@@ -54,6 +54,7 @@ export const LOAN_RULES = {
   lenderCredits: { label: 'Lender credits', unit: '$', min: 0, max: 1_000_000, optional: true },
   annualIncome: { label: 'Household income a year', unit: '$', min: 0.01, max: 100_000_000, optional: true },
   monthlyDebts: { label: 'Other debts a month', unit: '$', min: 0, max: 8_333_333, optional: true },
+  monthlyBudget: { label: 'What you want to pay a month', unit: '$', min: 0.01, max: 1_000_000, optional: true },
 
   annualExtra: { label: 'Extra once a year', unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
   annualFirstPayment: { label: 'First yearly payment', unit: 'number', min: 1, max: MAX_YEARS * 12, whole: true, optional: true },

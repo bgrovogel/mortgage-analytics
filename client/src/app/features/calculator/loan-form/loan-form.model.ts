@@ -106,6 +106,8 @@ export function loanForm(fb: NonNullableFormBuilder) {
     // A household's income and debts, for what it can afford: left blank, there is no affordability panel.
     annualIncome: [null as number | null, validatorsFor(rules.annualIncome)],
     monthlyDebts: [null as number | null, validatorsFor(rules.monthlyDebts)],
+    // What the household wants to pay each month: left blank, there is no budget answer.
+    monthlyBudget: [null as number | null, validatorsFor(rules.monthlyBudget)],
 
     monthlyExtra: [200, validatorsFor(rules.monthlyExtra)],
     annualExtra: [0, validatorsFor(rules.annualExtra)],
@@ -352,6 +354,7 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       lenderCredits: v.lenderCredits || 0,
     },
     affordability: v.annualIncome ? { annualIncome: v.annualIncome, monthlyDebts: v.monthlyDebts || 0 } : null,
+    monthlyBudget: v.monthlyBudget || null,
   };
 }
 
@@ -433,6 +436,7 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
     lenderCredits: closing?.lenderCredits ?? 0,
     annualIncome: r.affordability?.annualIncome ?? null,
     monthlyDebts: r.affordability ? r.affordability.monthlyDebts || null : null,
+    monthlyBudget: r.monthlyBudget ?? null,
   });
   setRateOptions(form.controls.rate, r.buydown, r.adjustableRate);
   syncTaxMode(form);

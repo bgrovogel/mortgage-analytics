@@ -125,6 +125,8 @@ export interface AmortizationRequest {
   sellerOffer?: SellerOfferInput | null;
   /** A household's income and debts, to measure the home against; leave out for none. */
   affordability?: AffordabilityInput | null;
+  /** What the household wants to pay each month, all in; the response says the highest price it reaches. Needs no income. */
+  monthlyBudget?: number | null;
   /** Weighs buying the home against renting a similar one; leave out for none. */
   rentOrBuy?: RentOrBuyInput | null;
 }
@@ -164,6 +166,14 @@ export interface RentOrBuyComparison extends RentOrBuyInput {
   /** The first year from which buying is ahead for good; null when it never is. */
   breakEvenYear: number | null;
   years: RentOrBuyYear[];
+}
+
+/** What a monthly budget buys: the highest price whose payment fits it, keeping the down payment share, rate and costs. */
+export interface BudgetAnswer {
+  monthlyBudget: number;
+  /** The highest whole-dollar price within the budget; 0 when none is. */
+  maxHomePrice: number;
+  downPayment: number;
 }
 
 /** A household's gross income and other debts. */
@@ -559,6 +569,8 @@ export interface AmortizationResponse {
   sellerOffer?: SellerOfferComparison | null;
   /** The home against the household's income and debts; null unless they are given. */
   affordability?: Affordability | null;
+  /** The highest price a monthly budget reaches; null unless a budget was given. */
+  budget?: BudgetAnswer | null;
   /** Buying against renting; null unless asked. */
   rentOrBuy?: RentOrBuyComparison | null;
   /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */

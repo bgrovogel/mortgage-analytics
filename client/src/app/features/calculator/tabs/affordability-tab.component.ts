@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormNavigator } from '../../../core/forms/form-navigator';
+import { usd } from '../../../core/formatting/format';
+import { BudgetAnswer } from '../../../core/models/amortization.models';
 import { AffordabilityComponent } from '../affordability/affordability.component';
 import { CalculatorStore } from '../calculator.store';
 
@@ -11,6 +13,9 @@ import { CalculatorStore } from '../calculator.store';
   selector: 'app-affordability-tab',
   imports: [AffordabilityComponent],
   template: `
+    @if (result().budget; as budget) {
+      <p class="panel budget-answer" data-testid="budget-answer">{{ budgetSentence(budget) }}</p>
+    }
     @if (result().affordability; as affordability) {
       <div class="panel">
         <app-affordability [affordability]="affordability" [program]="result().program?.type ?? 'Conventional'"
@@ -36,6 +41,14 @@ export class AffordabilityTabComponent {
 
   /** The page only shows the tabs once there is a result. */
   protected readonly result = computed(() => this.store.result()!);
+
+  /** What the monthly budget reaches, in a sentence. */
+  protected budgetSentence(budget: BudgetAnswer): string {
+    const payment = `A payment of ${usd(budget.monthlyBudget)} a month`;
+    return budget.maxHomePrice > 0
+      ? `${payment}, with taxes and insurance, reaches a home up to ${usd(budget.maxHomePrice)}, with ${usd(budget.downPayment)} down.`
+      : `${payment} does not reach a home: the taxes and insurance alone come to more.`;
+  }
 
   /** Opens the form's income section with the cursor in the income field. */
   protected addIncome(): void {

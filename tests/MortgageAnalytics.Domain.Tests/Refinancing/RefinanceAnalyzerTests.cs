@@ -121,6 +121,49 @@ public class RefinanceAnalyzerTests : AmortizationTestBase
     }
 
     [Test]
+    public void TheNewLoan_IsMeasuredAgainstTheHomesValue()
+    {
+        // $350,000 of a $400,000 home.
+        var analysis = Analyze(new RefinanceOffer(6m, 360, 6_000m, financeClosingCosts: false, cashOut: 50_000m));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.LoanToValuePercent(400_000m), Is.EqualTo(87.5m), "a share of the value, to the hundredth");
+            Assert.That(analysis.LoanToValuePercent(300_000m), Is.EqualTo(116.67m), "rounded to the hundredth, and above 100% when it owes more than the home is worth");
+        });
+    }
+
+    [Test]
+    public void CashOut_IsAllowedUpToEightyPercentOfTheValue_AndNoFurther()
+    {
+        var analysis = Analyze(new RefinanceOffer(6m, 360, 6_000m, financeClosingCosts: false, cashOut: 50_000m)); // $350,000
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(analysis.ExceedsCashOutLimit(437_500m), Is.False, "exactly 80% is within the limit");
+            Assert.That(analysis.ExceedsCashOutLimit(437_499m), Is.True, "a dollar of value less and it is over");
+            Assert.That(analysis.ExceedsCashOutLimit(400_000m), Is.True, "87.5%");
+            Assert.That(analysis.ExceedsCashOutLimit(500_000m), Is.False, "70%");
+        });
+    }
+
+    [Test]
+    public void TheCashOutLimit_IsForTakingCashOut_NotForARateAndTermRefinance() =>
+        Assert.That(Analyze(SixPercentUpfront).ExceedsCashOutLimit(100_000m), Is.False,
+            "a plain refinance of $300,000 on a $100,000 home takes no cash, so the cash-out limit does not apply");
+
+    [Test]
+    public void CashOut_IsAcceptedUpToTheLargestLoan_AndNoFurther()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(() => new RefinanceOffer(6m, 360, 0m, financeClosingCosts: false, cashOut: LoanTerms.MaxPrincipal), Throws.Nothing, "the largest loan the engine takes");
+            Assert.That(() => new RefinanceOffer(6m, 360, 0m, financeClosingCosts: false, cashOut: LoanTerms.MaxPrincipal + 0.01m),
+                Throws.TypeOf<DomainValidationException>().With.Message.Contains("Cash out must be between 0 and"), "a cent more is rejected, and says why");
+        });
+    }
+
+    [Test]
     public void WithoutCashOut_NothingIsReceived() =>
         Assert.That(Analyze(SixPercentUpfront).CashOut, Is.Zero, "a rate-and-term refinance takes no cash");
 

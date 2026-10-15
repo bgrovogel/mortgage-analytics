@@ -272,6 +272,21 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('a monthly budget: the highest price it reaches, with no income given', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('monthly-budget', 2_500);
+    await calculator.calculate();
+    await calculator.showResults('affordability');
+
+    await expect(page.getByTestId('budget-answer'), 'what $2,500 a month reaches, keeping the 5% down')
+      .toContainText('A payment of $2,500 a month, with taxes and insurance, reaches a home up to $');
+    await expect(page.getByTestId('affordability-empty'), 'the lender view still asks for an income').toBeVisible();
+
+    await calculator.set('monthly-budget', 1);
+    await expect(page.getByTestId('budget-answer'), 'a budget no home can have a payment as low as')
+      .toContainText('does not reach a home');
+  });
+
   test('rent or buy: how long to stay for buying to come out ahead', async ({ calculator, page }) => {
     // $375,000 with 5% down at 5.99%, against renting a similar home for $2,400 a month, rising 3.5% a year.
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });

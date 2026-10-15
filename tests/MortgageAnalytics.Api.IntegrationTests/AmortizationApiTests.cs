@@ -33,6 +33,28 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_WithAMonthlyBudget_ReturnsTheHighestPriceItReaches()
+    {
+        var json = await ReadJsonAsync(await PostCalculateAsync(A.Request.WithMonthlyBudget(1_500m).Build()));
+
+        var budget = json.GetProperty("budget");
+        Assert.Multiple(() =>
+        {
+            Assert.That(budget.GetProperty("monthlyBudget").GetDecimal(), Is.EqualTo(1_500m), "the budget asked about");
+            Assert.That(budget.GetProperty("maxHomePrice").GetDecimal(), Is.GreaterThan(0m), "the price it reaches");
+            Assert.That(budget.GetProperty("downPayment").GetDecimal(), Is.GreaterThan(0m), "with its down payment");
+        });
+    }
+
+    [Test]
+    public async Task Calculate_WithoutAMonthlyBudget_HasNoBudgetAnswer()
+    {
+        var json = await ReadJsonAsync(await PostCalculateAsync(A.Request.Build()));
+
+        Assert.That(json.TryGetProperty("budget", out var budget) ? budget.ValueKind : JsonValueKind.Null, Is.EqualTo(JsonValueKind.Null), "nothing was asked");
+    }
+
+    [Test]
     public async Task Calculate_ABuydownOrAnAdjustableRate_RoundTripsAsJson()
     {
         var buydown = await ReadJsonAsync(await PostCalculateAsync(A.Request.WithBuydown(2m, 1m).Build()));

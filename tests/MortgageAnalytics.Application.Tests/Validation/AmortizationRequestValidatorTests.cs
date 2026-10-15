@@ -298,6 +298,22 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertInvalid(A.Request.WithRentOrBuy(rent, increase, investmentReturn, maintenance, selling), path, "assumptions a market could have");
     }
 
+    [TestCase(0, TestName = "A budget of nothing")]
+    [TestCase(-1, TestName = "A budget below zero")]
+    [TestCase(1_000_000.01, TestName = "A budget past a million a month")]
+    [TestCase(1_800.001, TestName = "A budget to a fraction of a cent")]
+    public void MonthlyBudget_OutOfRange_IsRejected(decimal budget)
+    {
+        AssertInvalid(A.Request.WithMonthlyBudget(budget), "MonthlyBudget", "a payment a month, in dollars and cents");
+    }
+
+    [TestCase(0.01)]
+    [TestCase(1_000_000)]
+    public void MonthlyBudget_AtTheEdgesOfItsRange_IsAccepted(decimal budget)
+    {
+        AssertValid(A.Request.WithMonthlyBudget(budget), "the edges are budgets");
+    }
+
     [TestCase(0, 0, "Affordability.AnnualIncome", TestName = "No income")]
     [TestCase(100_000_000.01, 0, "Affordability.AnnualIncome", TestName = "An income past $100 million")]
     [TestCase(90_000.001, 0, "Affordability.AnnualIncome", TestName = "An income to a fraction of a cent")]

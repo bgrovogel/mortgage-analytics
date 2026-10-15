@@ -655,6 +655,29 @@ def price_edge_problems(request, today, affordability_response, cap=D(100_000_00
 
 
 
+def budget_edge_problems(request, today, budget_response, cap=D(100_000_000)):
+    """
+    Checks the highest price a monthly budget reaches by its edge, as price_edge_problems does for the limits: the whole
+    payment at the note rate (not a lender's qualifying rate) fits the budget, a dollar more does not, and the down
+    payment keeps the request's share, rounded up to the cent.
+    """
+    price, budget = D(budget_response['maxHomePrice']), D(budget_response['monthlyBudget'])
+    note = D(str(request['annualInterestRate']))
+    share = D(str(request['downPayment'])) / D(str(request['homePrice']))
+    paying = lambda p: qualifying_payment(  # noqa: E731
+        dict(request, homePrice=p, downPayment=(p * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100), today, note)
+    if price > 0 and ((at := paying(price)) is None or at > budget):
+        yield f'$.budget.maxHomePrice: {price} costs {at}, past the budget {budget}'
+    if price < cap:
+        above = paying(price + 1)
+        if above is not None and above <= budget:
+            yield f'$.budget.maxHomePrice: {price + 1} costs {above}, within the budget {budget}, so {price} is not the highest'
+    expected_down = (price * share * 100).to_integral_value(rounding='ROUND_CEILING') / 100 if price > 0 else D(0)
+    if D(budget_response['downPayment']) != expected_down:
+        yield f'$.budget.downPayment: expected {expected_down}, got {budget_response["downPayment"]}'
+
+
+
 def seller_offer(request, today, out):
     """
     The seller's or builder's offer (their credits, and a buydown they pay for) taken each way it can be, each the

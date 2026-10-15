@@ -259,6 +259,27 @@ describe('loan form model', () => {
     });
   });
 
+  describe('a monthly budget', () => {
+    it('is asked for only when given, and not a budget of nothing', () => {
+      const form = newForm();
+      expect(toLoanRequest(form, 1).monthlyBudget).toBeNull();
+
+      form.patchValue({ monthlyBudget: 3_000 });
+      expect(toLoanRequest(form, 1).monthlyBudget).toBe(3_000);
+    });
+
+    it('is checked against its rule, and cleared by restoring a request without it', () => {
+      const form = newForm();
+      form.controls.monthlyBudget.setValue(0);
+      expect(form.controls.monthlyBudget.valid).toBe(false);
+
+      form.patchValue({ monthlyBudget: 3_000 });
+      restoreLoanForm(form, fb, toLoanRequest(newForm(), 1));
+
+      expect(form.controls.monthlyBudget.value).toBeNull();
+    });
+  });
+
   describe('affordability', () => {
     it('is asked for only with an income, a blank debt as none', () => {
       const form = newForm();
@@ -292,6 +313,7 @@ describe('loan form model', () => {
         transferredCeilingPercent: 62.5, homeValueGrowthRate: 3, insuranceIncreaseRate: 5, hoaIncreaseRate: 2,
         pidAnnual: 900, pidYears: 12, annualInsurance: 2_000, monthlyHoa: 75, pmiCancellation: 'BorrowerRequested',
         loanCosts: 3_000, otherFees: 700, prepaidInterestDays: 10, escrowMonths: 2, closingCredits: 500, lenderCredits: 250, annualIncome: 120_000, monthlyDebts: 450,
+        monthlyBudget: 3_200,
         monthlyExtra: 150, annualExtra: 1_200, annualFirstPayment: 6, buydownPaidBy: 'Borrower',
         loanProgram: 'Fha', financeUpfrontFee: false, creditScore: 600, countyFips: '48491',
         usePoints: true, points: 1.5, rateWithoutPoints: 6.5,

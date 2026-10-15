@@ -18,6 +18,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="SellerOffer">The seller's or builder's offer taken each way it can be. Null unless the request asks and there is an offer.</param>
 /// <param name="Affordability">The home against the household's income and debts. Null unless the request gives them.</param>
 /// <param name="RentOrBuy">Buying the home against renting a similar one, year by year. Null unless the request asks.</param>
+/// <param name="Budget">The highest price a monthly budget reaches. Null unless the request gives a budget.</param>
 /// <param name="AnnualPercentageRate">
 /// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
 /// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
@@ -41,7 +42,8 @@ public sealed record AmortizationResponse(
     RentOrBuyResponse? RentOrBuy = null,
     decimal? AnnualPercentageRate = null,
     InFiveYearsResponse? InFiveYears = null,
-    decimal? TotalInterestPercentage = null);
+    decimal? TotalInterestPercentage = null,
+    BudgetResponse? Budget = null);
 
 /// <summary>What a Loan Estimate lists as "in 5 years" for the standard schedule, with no extra payments.</summary>
 /// <param name="TotalPaid">The first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs.</param>
@@ -521,3 +523,9 @@ public sealed record SavingsResponse(
     decimal TotalExtraPrincipal,
     DateOnly OriginalPayoffDate,
     DateOnly AcceleratedPayoffDate);
+
+/// <summary>What a monthly budget buys: the highest price whose payment fits it, at the same down payment share, rate and costs.</summary>
+/// <param name="MonthlyBudget">The budget asked about: the whole payment, with taxes, insurance, mortgage insurance and dues.</param>
+/// <param name="MaxHomePrice">The highest whole-dollar price whose first month's payment is within the budget; 0 when none is.</param>
+/// <param name="DownPayment">The down payment at that price, keeping the home's down payment share.</param>
+public sealed record BudgetResponse(decimal MonthlyBudget, decimal MaxHomePrice, decimal DownPayment);

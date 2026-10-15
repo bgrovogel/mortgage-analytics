@@ -19,7 +19,7 @@ import urllib.request
 from datetime import date
 from decimal import Decimal as D
 
-from calculator_model import FHA_LIMITS, analyze, price_edge_problems, refinance
+from calculator_model import FHA_LIMITS, analyze, budget_edge_problems, price_edge_problems, refinance
 
 API = 'http://localhost:5080/api/v1'
 
@@ -163,6 +163,9 @@ def random_purchase(rng):
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}
+    # Some give a monthly budget, to be answered with the highest price it reaches.
+    if rng.random() < 0.3:
+        request['monthlyBudget'] = money(rng, 1_000, 9_000, 100)
     # Most ask for the ways to take the seller's offer, over a few years or the whole loan, at the usual cut per point or not.
     if rng.random() < 0.6:
         request['sellerOffer'] = {'yearsKept': rng.choice([1, 3, 7, 7, 10, 30]), 'rateCutPerPoint': rng.choice([0.25, 0.25, 0.125, 0.375])}
@@ -255,6 +258,8 @@ def main(count=300):
         problems = list(differences(analyze(request, today), response))
         if response.get('affordability'):
             problems += list(price_edge_problems(request, today, response['affordability']))
+        if response.get('budget'):
+            problems += list(budget_edge_problems(request, today, response['budget']))
         if problems:
             failures.append((f'purchase {i}', problems, request))
         else:

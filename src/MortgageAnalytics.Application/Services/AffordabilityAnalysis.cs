@@ -33,19 +33,8 @@ internal static class AffordabilityAnalysis
         var debts = household.MonthlyDebts;
         var ratios = new DebtToIncome(income, debts, qualifyingPayment(request, rate.Rate));
 
-        // Only the price changes: no extra payments, closing costs or other comparisons, which a lender does not qualify on.
-        var share = request.DownPayment / request.HomePrice;
-        var plain = request with { ExtraPayments = null, ClosingCosts = null, SellerOffer = null, Affordability = null };
-        decimal? Qualify(decimal price)
-        {
-            // The down payment rounded up to the cent, so it never falls below a program's minimum share.
-            var down = Math.Ceiling(price * share * 100m) / 100m;
-            try { return qualifyingPayment(plain with { HomePrice = price, DownPayment = down }, rate.Rate); }
-            catch (DomainValidationException) { return null; } // no loan at this price: past a county's FHA limit
-        }
-        var payments = new Dictionary<decimal, decimal?>();
-        decimal? PaymentAt(decimal price) =>
-            payments.TryGetValue(price, out var payment) ? payment : payments[price] = Qualify(price);
+        var paymentAt = PricedPayments.At(request, rate.Rate, qualifyingPayment);
+        decimal? PaymentAt(decimal price) => paymentAt(price);
 
         AffordabilityLimitResponse Measure(DebtToIncomeLimit limit)
         {

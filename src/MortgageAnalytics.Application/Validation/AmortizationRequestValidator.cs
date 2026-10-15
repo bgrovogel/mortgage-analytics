@@ -53,6 +53,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// <summary>The most household income accepted a year, well beyond any loan the calculator takes.</summary>
     public const decimal MaxIncome = 100_000_000m;
 
+    /// <summary>The most a monthly budget may be: a million dollars a month.</summary>
+    public const decimal MaxMonthlyBudget = 1_000_000m;
+
     // Keeps the last due date (up to 600 months out) well inside DateOnly's range. Shared with the refinance validator.
     internal static readonly DateOnly EarliestFirstPayment = new(1900, 1, 1);
     internal static readonly DateOnly LatestFirstPayment = new(2200, 12, 31);
@@ -220,6 +223,11 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .InclusiveBetween(0, MaxIncome / 12).WholeCents()
             .OverridePropertyName("Affordability.MonthlyDebts").WithName("Monthly debts")
             .When(r => r.Affordability is not null);
+
+        RuleFor(r => r.MonthlyBudget!.Value)
+            .GreaterThan(0).LessThanOrEqualTo(MaxMonthlyBudget).WholeCents()
+            .OverridePropertyName(nameof(AmortizationRequest.MonthlyBudget)).WithName("Monthly budget")
+            .When(r => r.MonthlyBudget is not null);
 
         RuleFor(r => r.RentOrBuy!).SetValidator(new RentOrBuyValidator()).When(r => r.RentOrBuy is not null);
 

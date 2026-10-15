@@ -965,6 +965,11 @@
           },
           "rentOrBuy": {
             "$ref": "#/components/schemas/RentOrBuyRequest"
+          },
+          "monthlyBudget": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1030,6 +1035,9 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "budget": {
+            "$ref": "#/components/schemas/BudgetResponse"
           }
         },
         "additionalProperties": false
@@ -1044,6 +1052,24 @@
           "firstPaymentNumber": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BudgetResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyBudget": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxHomePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPayment": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

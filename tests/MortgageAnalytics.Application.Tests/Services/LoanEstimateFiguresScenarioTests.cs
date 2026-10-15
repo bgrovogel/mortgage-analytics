@@ -54,6 +54,20 @@ public class LoanEstimateFiguresScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void TotalInterestPercentage_OnAnFhaLoan_IsMeasuredAgainstTheLoanWithItsFinancedUpfrontPremium()
+    {
+        var response = Service.Analyze(A.Request.WithHomePrice(300_000m).WithDownPayment(10_500m).WithProgram(LoanProgramType.Fha));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Program!.LoanAmount, Is.GreaterThan(response.Purchase.LoanAmount), "the upfront premium is borrowed too");
+            Assert.That(response.TotalInterestPercentage,
+                Is.EqualTo(Math.Round(response.Baseline.TotalInterest / response.Program.LoanAmount * 100m, 3, MidpointRounding.AwayFromZero)),
+                "the interest as a share of what is actually borrowed");
+        });
+    }
+
+    [Test]
     public void TotalInterestPercentage_IsTheInterestOverTheLoanAsAShareOfIt()
     {
         Assert.That(Service.Analyze(TwentyPercentDown()).TotalInterestPercentage, Is.EqualTo(127.543m),
