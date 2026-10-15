@@ -10,13 +10,15 @@ const TWENTY_PERCENT_DOWN = { homePrice: 250_000, downPayment: 50_000, rate: 6, 
 const FIVE_PERCENT_DOWN = { homePrice: 250_000, downPayment: 12_500, rate: 6.5, years: 30, firstPayment: '2036-01-01' };
 
 test.describe('Mortgage calculator', () => {
-  test('shows a worked example with taxes, insurance and PMI on first load', async ({ calculator }) => {
+  test('shows a worked example with taxes, insurance and PMI on first load', async ({ calculator, page }) => {
     await expect(calculator.breakdown, 'the breakdown starts with principal and interest').toContainText('Principal & interest');
     await expect(calculator.breakdown, 'the default example includes property tax, as one rate').toContainText('Property tax');
     await expect(calculator.breakdown, 'the default example has 9% down, so PMI').toContainText('PMI');
     // An average US purchase: $415,000 with 9% down at 6.25%, 0.9% property tax, $3,100 of insurance, $50 of HOA dues.
     // $377,650 borrowed: $2,325.26 of principal and interest, plus $311.25 + $258.33 + $157.35 + $50 = $3,102.19.
     await expect(calculator.totalMonthlyPayment, 'every cost of the average example, each month').toHaveText('$3,102.19');
+    await expect(page.getByTestId('page-answer'), 'and the page says it in a sentence under its question')
+      .toContainText('Your payment is $3,102 a month: $2,325 for the loan and $777 for taxes, insurance and the rest. You would bring $48,129 to closing.');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
     await expect(calculator.chart, 'the balance chart renders').toBeVisible();
     await calculator.showResults('schedule');

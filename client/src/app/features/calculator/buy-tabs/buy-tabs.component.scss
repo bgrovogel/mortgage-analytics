@@ -44,14 +44,18 @@
     }
 
     @media (max-width: 600px) {
-      padding-inline: 0.55rem;
+      justify-content: center;
+      padding-inline: 0.25rem;
+      font-size: 0.9rem;
     }
   }
 
-  // On a phone the six tabs wrap onto a second row rather than scroll: a tab out of sight is one nobody finds.
+  // On a phone the seven tabs are two even rows of four rather than a strip to scroll: a tab out of sight is one
+  // nobody finds.
   @media (max-width: 600px) {
-    flex-wrap: wrap;
-    row-gap: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
     overflow: visible;
     animation: none;
     mask-image: none;

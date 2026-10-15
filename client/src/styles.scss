@@ -372,17 +372,19 @@ select {
   }
 }
 
-// On a phone the bar is two compact rows: the brand with Sign in beside it, then the page links, wrapping onto a
-// second line rather than scrolling out of sight.
+// On a phone the top bar is the brand with Sign in beside it; the four pages are a bar along the bottom, where a
+// thumb reaches, with room left under the page so the footer is not behind it.
 @media (max-width: 640px) {
   .app-header:not(.focused) .app-bar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'brand account'
-      'nav nav';
+    grid-template-areas: 'brand account';
     gap: 0.35rem;
-    padding-block: 0.5rem 0.35rem;
+    padding-block: 0.5rem;
+  }
+
+  body {
+    padding-bottom: 4.25rem;
   }
 
   .app-header:not(.focused) .brand {
@@ -433,14 +435,26 @@ select {
     }
   }
 
-  // Every page link in sight: four short links fit two rows at most, so nothing hides past the edge.
+  // Every page link in sight, in four equal parts of a bar fixed to the bottom of the screen.
   .app-nav {
-    grid-area: nav;
-    margin-inline: -0.5rem;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    background: var(--surface-1);
+    border-top: 1px solid var(--border);
 
     a {
-      min-height: 36px;
-      padding: 0 0.6rem;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 0.25rem;
+      font-size: 0.8rem;
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
     }
   }
 }
@@ -456,6 +470,10 @@ select {
   html,
   body {
     background: #fff !important;
+  }
+
+  body {
+    padding-bottom: 0 !important;
   }
 
   .app-header,

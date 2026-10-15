@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { InViewDirective } from '../../../core/layout/in-view.directive';
-import { paymentsMade } from '../../../core/loans/loan-progress';
+import { nextPayment } from '../answer-sentence';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
 import { CalculatorStore } from '../calculator.store';
 import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
@@ -42,11 +42,7 @@ export class OverviewTabComponent {
    * On a loan already being paid (its first payment behind today), the payment due next, the one the form counts from;
    * null for a new loan, or one already paid off.
    */
-  readonly nextPayment = computed(() => {
-    const payments = this.result().baseline.payments;
-    const made = paymentsMade(payments[0]?.dueDate, new Date());
-    return made > 0 && made < payments.length ? payments[made] : null;
-  });
+  readonly nextPayment = computed(() => nextPayment(this.result()));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.store.headlineVisible.set(false));

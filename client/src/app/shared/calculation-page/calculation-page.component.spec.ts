@@ -28,7 +28,7 @@ class TestStore extends CalculationStore<number, string> {
 @Component({
   imports: [CalculationPageComponent],
   template: `
-    <app-calculation-page [store]="store" heading="A question?" intro="What the page answers." [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
+    <app-calculation-page [store]="store" heading="A question?" intro="What the page answers." [answer]="answer()" [problems]="problems()" placeholder="Working…" errorTitle="That failed.">
       <p form data-testid="the-form">form</p>
       @if (store.result(); as result) {
         <p data-testid="the-result">{{ result }}</p>
@@ -39,6 +39,7 @@ class TestStore extends CalculationStore<number, string> {
 class HostComponent {
   readonly store = TestBed.runInInjectionContext(() => new TestStore());
   readonly problems = signal<string[]>([]);
+  readonly answer = signal<string | null>(null);
 }
 
 describe('CalculationPageComponent', () => {
@@ -57,6 +58,18 @@ describe('CalculationPageComponent', () => {
     const text = (id: string) => root.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
     return { fixture, host: fixture.componentInstance, text };
   };
+
+  it('says the answer under the heading once there is one, in place of what the page answers', () => {
+    const { host, fixture, text } = render();
+    expect(text('page-intro')).toBe('What the page answers.');
+    expect(text('page-answer')).toBeUndefined();
+
+    host.answer.set('Your payment is $3,102 a month.');
+    fixture.detectChanges();
+
+    expect(text('page-answer')).toBe('Your payment is $3,102 a month.');
+    expect(text('page-intro')).toBeUndefined();
+  });
 
   it('puts the form beside the results, under the page\'s heading and what it answers, with a placeholder until the first result', () => {
     const { host, fixture, text } = render();

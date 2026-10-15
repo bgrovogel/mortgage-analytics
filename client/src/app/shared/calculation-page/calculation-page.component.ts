@@ -37,6 +37,9 @@ export class CalculationPageComponent {
   /** One line under the heading on how the page answers it. */
   readonly intro = input.required<string>();
 
+  /** The answer in a sentence, once there is one: it takes the intro's place under the heading. */
+  readonly answer = input<string | null>(null);
+
   /** What the results region is called, for screen readers. */
   readonly label = input('Results');
 

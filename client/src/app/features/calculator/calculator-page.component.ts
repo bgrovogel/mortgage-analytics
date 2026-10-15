@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { answerSentence, nextPayment } from './answer-sentence';
 import { BuyTabsComponent } from './buy-tabs/buy-tabs.component';
 import { CalculatorStore } from './calculator.store';
 import { LoanFormComponent } from './loan-form/loan-form.component';
@@ -30,6 +31,12 @@ export class CalculatorPageComponent {
 
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */
   protected readonly problems = signal<string[]>([]);
+
+  /** The answer in a sentence, once there is a result. */
+  protected readonly answer = computed(() => {
+    const result = this.store.result();
+    return result ? answerSentence(result, nextPayment(result)) : null;
+  });
 
   /** The first payment due, with housing costs: with a buydown, year 1's reduced payment, as the headline tile shows. */
   protected firstMonthlyPayment(r: AmortizationResponse): number {

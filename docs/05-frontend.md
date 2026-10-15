@@ -258,7 +258,12 @@ The flows are designed around the people using it:
   edit (`exampleUntilEdited`). A form restored from a saved item, or filled in from another page, never says it.
 - **A phone:** results come first, so `app-calculation-page` offers "Edit your numbers", which scrolls to the form
   (instantly for anyone who prefers reduced motion) and moves focus there. Once the headline scrolls away, a bar
-  keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after.
+  keeps the payment and the savings in view; with a buydown it says "in year 1", since the payment rises after. The
+  four page links become a bar fixed to the bottom of the screen (`styles.scss`, `max-width: 640px`), and the
+  calculator's seven views are two even rows of four.
+- **The answer sentence:** `app-calculation-page` takes an optional `answer`, which replaces its intro line once
+  there is a result. The calculator's is `answerSentence` (`features/calculator/answer-sentence.ts`), a pure function
+  of the response and the payment due next.
 - **Help a few people need:** each loan program says what it asks for in one line, with the details under "More
   about…", a `details.help` toggle, so the form stays short.
 - **Signing up:** the sign-in page lists what an account adds, and says the calculators never need one.

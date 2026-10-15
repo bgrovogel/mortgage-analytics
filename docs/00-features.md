@@ -389,7 +389,12 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Results as you type.** There is no Calculate button: every valid change is sent after a short pause, and a newer
   change replaces an older one in flight.
 - **Answer first.** On a phone the results come first and the form follows, with **Edit your numbers** to jump to it;
-  a sticky bar keeps the payment and savings in view. On a wider screen the form sits in its own column.
+  a sticky bar keeps the payment and savings in view, and the four pages are a bar along the bottom of the screen,
+  where a thumb reaches. On a wider screen the form sits in its own column.
+- **The answer in a sentence.** Under the Buy a home page's question, once there is a result, one line says it the way
+  a person would: "Your payment is $3,102 a month: $2,325 for the loan and $777 for taxes, insurance and the rest. You
+  would bring $48,129 to closing." It adds what paying extra does (how much sooner, and what it saves), and says "in
+  year 1" with a buydown.
 - **A first visit.** Each form says its numbers are an example until the first edit.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
   Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future
