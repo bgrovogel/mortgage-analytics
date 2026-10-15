@@ -131,6 +131,16 @@ export class ScheduleTableComponent {
   readonly totals = computed(() => this.toRow(0, '', this.schedule().payments));
 
   /**
+   * What a column's lifetime total is called. "Principal" alone reads as the loan, but it leaves out the extra
+   * payments, which the "Loan repaid" total beside it adds back.
+   */
+  protected totalLabel(column: ScheduleColumn): string {
+    if (column.key === 'principal') return 'Principal, as scheduled';
+    if (column.key === 'extraPrincipal') return 'Extra principal';
+    return column.label;
+  }
+
+  /**
    * Saves the schedule shown as a spreadsheet: every payment (or year), with every column the schedule has, whichever
    * are hidden from the table, since a spreadsheet can hide its own.
    */

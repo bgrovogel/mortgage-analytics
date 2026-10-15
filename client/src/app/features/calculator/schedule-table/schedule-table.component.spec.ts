@@ -275,5 +275,23 @@ describe('ScheduleTableComponent', () => {
       expect(totals).toContain('HOA dues $100.00');
       expect(totals).toContain('Everything paid $2,300.00');
     });
+
+    it('says the totals run until the loan is paid off, taxes included', () => {
+      render(withCosts());
+
+      expect(fixture.nativeElement.querySelector('[data-testid="lifetime-scope"]').textContent.replace(/\s+/g, ' ').trim())
+        .toBe('Totals until the loan is paid off, after 2 payments. Taxes and insurance are counted to that date only.');
+    });
+
+    it('says how much of the loan was repaid, which is the scheduled principal and the extra together', () => {
+      render(aResponse({
+        accelerated: aSchedule({ payments: [1, 2].map((n) => aPayment(n, { extraPrincipal: 150 })) }),
+      }));
+      const totals = fixture.nativeElement.querySelector('[data-testid="lifetime-totals"]').textContent.replace(/\s+/g, ' ');
+
+      expect(totals).toContain('Loan repaid $1,500.00');
+      expect(totals).toContain('Principal, as scheduled $1,200.00');
+      expect(totals).toContain('Extra principal $300.00');
+    });
   });
 });

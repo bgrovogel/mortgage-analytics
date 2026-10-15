@@ -364,9 +364,9 @@ describe('SavingsSummaryComponent', () => {
     it('says what it comes to, and from what, with a way to its details', () => {
       render(aResponse({ cashToClose: cash }));
 
-      expect(text('cash-tile-total')).toBe('$40,129');
+      expect(text('cash-tile-total')).toBe('$40,128.79'); // to the cent, as the Closing tab has it
       expect(fixture.nativeElement.querySelector('[data-testid="cash-tile"]').textContent.replace(/\s+/g, ' '))
-        .toContain('$37,350 down + $10,779 closing costs − $8,000 credits');
+        .toContain('$37,350.00 down + $10,778.79 closing costs − $8,000.00 credits');
       expect(fixture.nativeElement.querySelector('[data-testid="cash-tile-link"]').getAttribute('href')).toBe('/calculator/closing');
     });
 

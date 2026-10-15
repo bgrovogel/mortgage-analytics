@@ -101,6 +101,13 @@ h2 {
   }
 }
 
+// What the totals below cover.
+.lifetime-scope {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 // Lifetime totals: every cost over the whole schedule, as compact label/value pairs.
 .lifetime {
   // A grid of figures, each label above its amount, so eight totals scan at a glance instead of running together.

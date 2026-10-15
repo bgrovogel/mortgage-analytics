@@ -30,7 +30,7 @@ const DEFAULTS = { rentIncreasePercent: 3.5, investmentReturnPercent: 7, mainten
       <h2>Should you rent or buy?</h2>
       <p class="intro">Buying this home against renting a similar one: what each would leave you, year by year.</p>
       <div class="settings" data-testid="rent-settings">
-        <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="monthly-rent" placeholder="Similar home" />
+        <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="monthly-rent" placeholder="e.g. 2,200" />
         <app-number-field [control]="form.controls.rentIncreasePercent" [rule]="rules.rentIncreasePercent" testId="rent-increase" />
         <app-number-field [control]="form.controls.investmentReturnPercent" [rule]="rules.investmentReturnPercent" testId="investment-return" />
         <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="maintenance" />

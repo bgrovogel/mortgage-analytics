@@ -717,7 +717,8 @@ test.describe('Mortgage calculator', () => {
     await calculator.showResults('schedule');
     const totals = page.getByTestId('lifetime-totals');
     await expect(totals, 'the lifetime totals include the tax').toContainText('Property tax');
-    await expect(totals, 'and what everything adds up to').toContainText('Everything paid');
+    await expect(totals, 'what everything adds up to').toContainText('Everything paid');
+    await expect(totals, 'and how much of the loan was repaid, extra payments included').toContainText('Loan repaid');
     await expect(page.getByRole('columnheader', { name: 'Property tax' }), 'categories start rolled up into Housing costs').toHaveCount(0);
 
     await page.getByTestId('column-picker').locator('summary').click();

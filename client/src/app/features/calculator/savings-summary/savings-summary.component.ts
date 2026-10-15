@@ -60,11 +60,11 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
       @if (cash(); as cash) {
         <div class="tile" data-testid="cash-tile">
           <dt>Cash to close</dt>
-          <dd data-testid="cash-tile-total">{{ cash.total | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+          <dd data-testid="cash-tile-total">{{ cash.total | currency }}</dd>
           <dd class="note">
-            {{ cash.downPayment | currency: 'USD' : 'symbol' : '1.0-0' }} down + {{ cash.closingCosts | currency: 'USD' : 'symbol' : '1.0-0' }} closing costs
+            {{ cash.downPayment | currency }} down + {{ cash.closingCosts | currency }} closing costs
             @if (cash.credits > 0) {
-              − {{ cash.credits | currency: 'USD' : 'symbol' : '1.0-0' }} credits
+              − {{ cash.credits | currency }} credits
             }
           </dd>
           <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
