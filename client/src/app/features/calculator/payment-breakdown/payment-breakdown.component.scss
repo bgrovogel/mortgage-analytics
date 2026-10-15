@@ -1,24 +1,24 @@
-h2 {
-  font-size: 1rem;
-  margin: 0 0 0.9rem;
+:host {
+  display: block;
 }
 
+// The bar of the parts of a month (UI blueprint: composition bar), the legend giving each its exact figure.
 .bar {
   display: flex;
-  gap: 2px; // surface gap between segments
+  gap: 3px;
   height: 14px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
 
   span {
     flex-basis: 0;
-    min-width: 3px;
+    min-width: 6px;
+    border-radius: 3px;
   }
 }
 
 .legend {
   width: 100%;
+  max-width: 36rem;
   border-collapse: collapse;
   font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
@@ -37,6 +37,7 @@ h2 {
 
   td {
     text-align: right;
+    font-family: var(--font-mono);
     color: var(--text-primary);
     padding-left: 0.75rem;
   }

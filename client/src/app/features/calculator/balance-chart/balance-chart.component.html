@@ -1,0 +1,68 @@
+@let a = at();
+@let c = cursor();
+
+<section class="chart" aria-labelledby="balance-title">
+  <div class="head">
+    <div class="titles">
+      <h2 id="balance-title">What you owe, month by month</h2>
+      <p id="balance-summary" data-testid="balance-summary">{{ summary() }}</p>
+    </div>
+    @if (frames().length > 1) {
+      <div class="frames" role="group" aria-label="Time frame" data-testid="frames">
+        @for (f of frames(); track f.value) {
+          <button type="button" [attr.aria-pressed]="f.value === frame()" [attr.data-testid]="'frame-' + f.value" (click)="pick(f.value)">{{ f.label }}</button>
+        }
+      </div>
+    }
+  </div>
+
+  <figure aria-labelledby="balance-title" aria-describedby="balance-summary">
+    <div class="plot">
+      <svg role="img" data-testid="balance-chart" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none"
+           [attr.aria-label]="series().hasExtra ? 'Balance over time. Solid line: with extra payments. Dashed line: scheduled.' : 'Balance over time.'">
+        <g class="grid">
+          <line x1="0" y1="0" [attr.x2]="width" y2="0" />
+          <line x1="0" y1="80" [attr.x2]="width" y2="80" />
+          <line x1="0" y1="160" [attr.x2]="width" y2="160" />
+          <line x1="0" y1="240" [attr.x2]="width" y2="240" />
+        </g>
+        <line class="floor" x1="0" [attr.y1]="height" [attr.x2]="width" [attr.y2]="height" />
+        <path class="area" [attr.d]="paths().area" />
+        @if (series().hasExtra) {
+          <path class="scheduled" data-testid="balance-scheduled" [attr.d]="paths().scheduled" />
+        }
+        <path class="extra" data-testid="balance-extra" [attr.d]="paths().extra" />
+        <line class="cursor" [attr.x1]="c.x" y1="0" [attr.x2]="c.x" [attr.y2]="height" />
+      </svg>
+      <span class="dot extra" aria-hidden="true" [style.left.%]="c.left" [style.top.%]="c.extraTop"></span>
+      @if (series().hasExtra) {
+        <span class="dot scheduled" aria-hidden="true" [style.left.%]="c.left" [style.top.%]="c.scheduledTop"></span>
+      }
+      <div class="tip" aria-hidden="true" [class.on-right]="c.onRight" [style.left]="c.onRight ? 'auto' : 'calc(' + c.left + '% + 16px)'"
+           [style.right]="c.onRight ? 'calc(' + (100 - c.left) + '% + 16px)' : 'auto'">
+        <div class="when"><span data-testid="scrub-date">{{ a.date }} · payment {{ a.month }}</span></div>
+        <div class="row"><span>{{ series().hasExtra ? 'With extra' : 'You owe' }}</span><span class="figure" data-testid="scrub-extra">{{ usd(a.extra) }}</span></div>
+        @if (series().hasExtra) {
+          <div class="row"><span>Scheduled</span><span class="figure" data-testid="scrub-scheduled">{{ usd(a.scheduled) }}</span></div>
+          <div class="row total"><span>You owe less by</span><span class="figure gain" data-testid="scrub-gap">{{ usd(a.gap) }}</span></div>
+        }
+        <div class="row"><span>Interest paid so far</span><span class="figure" data-testid="scrub-interest">{{ usd(a.interest) }}</span></div>
+      </div>
+    </div>
+    <div class="axis" aria-hidden="true"><span>{{ axis().start }}</span><span>{{ axis().mid }}</span><span>{{ axis().end }}</span></div>
+  </figure>
+
+  <div class="scrub">
+    <label for="balance-scrubber">Scrub through the loan</label>
+    <input id="balance-scrubber" data-testid="scrubber" type="range" min="1" [max]="domain()" step="1" [value]="month()"
+           [attr.aria-valuetext]="valueText()" (input)="scrub($event)" (keydown)="key($event)" />
+    <ul class="key" aria-hidden="true">
+      <li><span class="swatch extra"></span>{{ series().hasExtra ? 'With extra payments' : 'Balance' }}</li>
+      @if (series().hasExtra) {
+        <li><span class="swatch scheduled"></span>Scheduled</li>
+      }
+    </ul>
+  </div>
+</section>
+
+<app-payment-ledger [payments]="result().accelerated.payments" [month]="month()" />

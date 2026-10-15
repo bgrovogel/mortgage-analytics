@@ -1,56 +1,105 @@
 import { TestBed } from '@angular/core/testing';
-import { aPayment, aResponse, aSchedule } from '../../../../testing/builders';
-import { fakeCharts } from '../../../../testing/fake-charts';
+import { aPayment, aResponse, aSavings, aSchedule } from '../../../../testing/builders';
+import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { BalanceChartComponent } from './balance-chart.component';
 
+/** A 120-payment loan of $120,000 paying $1,000 of principal and $400 of interest a month. */
+const loan = (months = 120, extra = 0) => aSchedule({
+  payments: Array.from({ length: months }, (_, i) => aPayment(i + 1, {
+    dueDate: `${2026 + Math.floor((10 + i) / 12)}-${String(((10 + i) % 12) + 1).padStart(2, '0')}-01`,
+    scheduledPayment: 1_400, principal: 1_000, extraPrincipal: extra, interest: 400,
+    remainingBalance: Math.max(0, 120_000 - (i + 1) * (1_000 + extra)),
+  })),
+});
+
 describe('BalanceChartComponent', () => {
-  it('plots the standard and accelerated balances, labelled by month', () => {
-    const charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
+  const render = (response: AmortizationResponse) => {
     const fixture = TestBed.createComponent(BalanceChartComponent);
-    fixture.componentRef.setInput('result', aResponse({
-      baseline: aSchedule({ payments: [aPayment(1, { remainingBalance: 2_000 }), aPayment(2, { remainingBalance: 0 })] }),
-      accelerated: aSchedule({ payments: [aPayment(1, { remainingBalance: 0 })] }),
-    }));
-
+    fixture.componentRef.setInput('result', response);
     fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const text = (id: string) => root.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
+    const scrub = (value: number) => {
+      const input = root.querySelector('[data-testid="scrubber"]') as HTMLInputElement;
+      input.value = String(value);
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    return { fixture, root, text, scrub };
+  };
 
-    const config = charts.lastConfig();
-    const title = (config.options!.plugins!.tooltip!.callbacks as unknown as Record<string, (items: unknown) => string>)['title'];
-    expect(config.data.datasets.map((d) => [d.label, d.data])).toEqual([
-      ['Standard payoff', [2_000, 0]],
-      // Paid off early, the balance stays at $0, so the shaded gap runs to the standard payoff.
-      ['With extra payments', [0, 0]],
-    ]);
-    expect(config.data.labels).toEqual(['Jan 2026', 'Feb 2026']);
-    expect(title([{ dataIndex: 1, label: 'Feb 2026' }])).toBe('Payment 2 · Feb 2026');
-    // The gap between the curves is shaded: that area is the time saved.
-    expect(config.data.datasets[1].fill).toBe('-1');
+  const withExtra = () => aResponse({ baseline: loan(120), accelerated: loan(80, 500), savings: aSavings({ paymentsSaved: 40 }) });
+
+  it('says in a sentence what the chart shows, and draws both curves', () => {
+    const { root, text } = render(withExtra());
+
+    expect(text('balance-summary')).toBe('Paying extra clears the loan in Jun 2033, 3 yr 4 mo sooner than scheduled.');
+    expect(root.querySelector('svg[data-testid="balance-chart"]')!.getAttribute('role')).toBe('img');
+    expect(root.querySelector('[data-testid="balance-extra"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="balance-scheduled"]')).not.toBeNull();
   });
 
-  it('labels the axis on whole years, ending with the last payment', () => {
-    const charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
-    const fixture = TestBed.createComponent(BalanceChartComponent);
-    const payments = Array.from({ length: 360 }, (_, i) => aPayment(i + 1));
-    fixture.componentRef.setInput('result', aResponse({ baseline: aSchedule({ payments }), accelerated: aSchedule({ payments }) }));
+  it('draws one curve, and says when the loan ends, when nothing extra is paid', () => {
+    const { root, text } = render(aResponse({ baseline: loan(120), accelerated: loan(120) }));
 
-    fixture.detectChanges();
-
-    const ticks = charts.lastConfig().options!.scales!['x']!.ticks as unknown as { callback: (v: unknown, i: number) => string | null };
-    const shown = payments.map((_, i) => i).filter((i) => ticks.callback(i, i) !== null);
-    expect(shown).toEqual([0, 60, 120, 180, 240, 300, 359]);
+    expect(root.querySelector('[data-testid="balance-scheduled"]')).toBeNull();
+    expect(text('balance-summary')).toBe('The loan runs until Oct 2036.');
   });
 
-  it('draws one line when there are no extra payments: two would sit on top of each other under a legend for both', () => {
-    const charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
-    const fixture = TestBed.createComponent(BalanceChartComponent);
-    const payments = [aPayment(1, { remainingBalance: 2_000 }), aPayment(2, { remainingBalance: 0 })];
-    fixture.componentRef.setInput('result', aResponse({ baseline: aSchedule({ payments }), accelerated: aSchedule({ payments }) }));
+  it('offers the time frames that fit the loan, the full term chosen at first', () => {
+    const { root } = render(withExtra());
+    const frames = [...root.querySelectorAll('[data-testid="frames"] button')].map((b) => [b.textContent!.trim(), b.getAttribute('aria-pressed')]);
 
+    expect(frames).toEqual([['5Y', 'false'], ['To payoff', 'false'], ['10Y', 'true']]);
+  });
+
+  it('narrows to a time frame, and the scrubber follows its length', () => {
+    const { fixture, root } = render(withExtra());
+
+    (root.querySelector('[data-testid="frame-5y"]') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(charts.lastConfig().data.datasets.map((d) => [d.label, d.data])).toEqual([['Balance', [2_000, 0]]]);
+    expect((root.querySelector('[data-testid="scrubber"]') as HTMLInputElement).max).toBe('60');
+    expect(root.querySelector('[data-testid="frame-5y"]')!.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('reads the balances at the month scrubbed to: on the chart, in the tooltip and to a screen reader', () => {
+    const { root, text, scrub } = render(withExtra());
+
+    scrub(24);
+
+    expect(text('scrub-date')).toBe('Oct 2028 · payment 24');
+    expect(text('scrub-extra')).toBe('$84,000');
+    expect(text('scrub-scheduled')).toBe('$96,000');
+    expect(text('scrub-gap')).toBe('$12,000');
+    expect(text('scrub-interest')).toBe('$9,600');
+    expect((root.querySelector('[data-testid="scrubber"]') as HTMLInputElement).getAttribute('aria-valuetext'))
+      .toBe('Payment 24, Oct 2028: you owe $84,000 with extra, $96,000 on schedule');
+  });
+
+  it('moves a year at a time with Page Up and Page Down', () => {
+    const { fixture, root, scrub, text } = render(withExtra());
+    scrub(24);
+    const input = root.querySelector('[data-testid="scrubber"]') as HTMLInputElement;
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true }));
+    fixture.detectChanges();
+    expect(text('scrub-date')).toBe('Oct 2029 · payment 36');
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(text('scrub-date')).toBe('Oct 2027 · payment 12');
+  });
+
+  it('lists the payments from the month scrubbed to, in the ledger beneath', () => {
+    const { root, scrub } = render(withExtra());
+
+    scrub(10);
+    const rows = [...root.querySelectorAll('[data-testid="ledger"] tbody tr')].map((tr) => [...tr.children].map((c) => c.textContent!.trim()));
+
+    expect(rows).toHaveLength(6);
+    expect(rows[0]).toEqual(['Aug 2027', '1,900.00', '1,500.00', '400.00', '105,000.00']);
+    expect(rows[5][0]).toBe('Jan 2028');
   });
 });

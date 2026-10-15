@@ -21,7 +21,7 @@ interface Slice {
   selector: 'app-payment-breakdown',
   imports: [CurrencyPipe, PercentPipe],
   template: `
-    <h2 id="breakdown-title">Monthly payment breakdown</h2>
+    <h2 id="breakdown-title" class="visually-hidden">Monthly payment breakdown</h2>
     <div class="bar" role="img" [attr.aria-label]="ariaLabel()">
       @for (slice of slices(); track slice.label) {
         <span [style.flex-grow]="slice.amount" [style.background]="'var(' + slice.color + ')'"></span>

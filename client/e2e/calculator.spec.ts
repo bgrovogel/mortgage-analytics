@@ -17,7 +17,7 @@ test.describe('Mortgage calculator', () => {
     // An average US purchase: $415,000 with 9% down at 6.25%, 0.9% property tax, $3,100 of insurance, $50 of HOA dues.
     // $377,650 borrowed: $2,325.26 of principal and interest, plus $311.25 + $258.33 + $157.35 + $50 = $3,102.19.
     await expect(calculator.totalMonthlyPayment, 'every cost of the average example, each month').toHaveText('$3,102.19');
-    await expect(page.getByTestId('page-lead'), 'the page leads with the payment, under its question').toHaveText('$3,102 a month');
+    await expect(page.getByTestId('page-lead'), 'the page leads with the payment, under its question').toHaveText('$3,102.19 a month');
     await expect(page.getByTestId('page-answer'), 'and says what is behind it in a sentence')
       .toContainText('$2,325 goes to the loan and $777 to taxes, insurance and the rest. You would bring $48,129 to closing.');
     await expect(calculator.pmiEnd, 'the PMI end date is shown when PMI applies').toBeVisible();
@@ -934,7 +934,7 @@ test.describe('On a phone', () => {
 test('spaces the overview evenly: no empty row adds a second gap above the charts', async ({ calculator, page }) => {
   const headline = await calculator.headline.boundingBox();
   const whatIf = await page.getByTestId('rate-what-if').boundingBox();
-  const charts = await page.locator('app-overview-tab .charts').boundingBox();
+  const charts = await page.locator('app-overview-tab app-balance-chart').boundingBox();
 
   expect(whatIf!.y - (headline!.y + headline!.height), 'one 1.25rem gap between the headline and the rate slider, for a fixed-rate loan')
     .toBeLessThanOrEqual(21);

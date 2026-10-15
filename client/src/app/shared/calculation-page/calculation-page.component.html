@@ -1,22 +1,5 @@
 @let state = store();
 
-<!-- What the page answers, the same way on every page: a question, then one line on how. -->
-<header class="page-intro">
-  <!-- Printed only: what the page is, for which inputs, and when. -->
-  @if (printSummary(); as summary) {
-    <p class="print-summary" data-testid="print-summary">{{ summary }}</p>
-  }
-  <h1 data-testid="page-heading">{{ heading() }}</h1>
-  @if (lead(); as lead) {
-    <p class="lead" data-testid="page-lead">{{ lead }}</p>
-  }
-  @if (answer(); as answer) {
-    <p class="answer" data-testid="page-answer">{{ answer }}</p>
-  } @else {
-    <p data-testid="page-intro">{{ intro() }}</p>
-  }
-</header>
-
 <div class="layout">
   <aside #formPanel class="panel form-panel" [class.sheet-open]="sheetOpen()" tabindex="-1" aria-label="Your numbers" data-testid="form-panel"
          [attr.role]="sheetOpen() ? 'dialog' : null" [attr.aria-modal]="sheetOpen() ? 'true' : null" (keydown.escape)="closeSheet()">
@@ -35,6 +18,33 @@
 
   <section class="results" [attr.aria-label]="label()" [attr.aria-live]="announce() ? 'polite' : null"
            [attr.aria-busy]="state.busy()" [class.updating]="state.busy()" data-testid="results">
+    <!-- What the page answers, the same way on every page: the question, then the answer as the one large figure. -->
+    <header class="page-intro">
+      <!-- Printed only: what the page is, for which inputs, and when. -->
+      @if (printSummary(); as summary) {
+        <p class="print-summary" data-testid="print-summary">{{ summary }}</p>
+      }
+      <div class="question-row">
+        <h1 data-testid="page-heading">{{ heading() }}</h1>
+        <app-calc-status [store]="state" />
+      </div>
+      @if (leadParts(); as part) {
+        <p class="lead" [class.money]="part.money" data-testid="page-lead">
+          @if (part.money) {
+            <span class="amount" data-testid="lead-amount"><span class="dollars">{{ part.dollars }}</span><span class="cents">{{ part.cents }}</span></span>@if (part.unit) {&ngsp;<span class="unit">{{ part.unit }}</span>}
+          } @else {
+            {{ part.text }}
+          }
+        </p>
+      }
+      <ng-content select="[hero]" />
+      @if (answer(); as answer) {
+        <p class="answer" data-testid="page-answer">{{ answer }}</p>
+      } @else {
+        <p class="intro" data-testid="page-intro">{{ intro() }}</p>
+      }
+    </header>
+
     <div class="results-header">
       <ng-content select="[tabs]" />
       <!-- On a phone the form comes after the results: one tap to get back to it. -->

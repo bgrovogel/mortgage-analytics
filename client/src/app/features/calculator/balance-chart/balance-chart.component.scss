@@ -1,0 +1,259 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+}
+
+// Time frames: one control, the chosen one raised.
+.frames {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  button {
+    min-height: 36px;
+    min-width: 56px;
+    padding: 0 0.75rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: var(--surface-3);
+      color: var(--text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+}
+
+figure {
+  margin: 0;
+}
+
+.plot {
+  position: relative;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 320px;
+  overflow: visible;
+
+  path,
+  line {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .grid line {
+    stroke: var(--grid);
+    stroke-width: 1;
+  }
+
+  .floor {
+    stroke: var(--border-strong);
+  }
+
+  .area {
+    fill: var(--accent);
+    fill-opacity: 0.08;
+  }
+
+  .extra {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+
+  // The ghost: what the loan would be without what you add.
+  .scheduled {
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 5;
+  }
+
+  .cursor {
+    stroke: var(--text-primary);
+    stroke-opacity: 0.35;
+    stroke-width: 1;
+  }
+
+  // Curves morph between frames rather than redrawing (not with reduced motion).
+  path {
+    transition: d var(--dur-slow) var(--ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  svg path {
+    transition: none;
+  }
+}
+
+.dot {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+
+  &.extra {
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  &.scheduled {
+    width: 8px;
+    height: 8px;
+    background: var(--page);
+    border: 2px solid var(--text-muted);
+  }
+}
+
+.tip {
+  position: absolute;
+  top: 8px;
+  width: 15.5rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  font-size: 0.84rem;
+  pointer-events: none;
+
+  .when {
+    font-weight: 600;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-secondary);
+
+    &.total {
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-strong);
+    }
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+  }
+
+  .gain {
+    color: var(--positive);
+  }
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scrub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  input {
+    flex: 1 1 320px;
+    min-height: 44px;
+    accent-color: var(--accent);
+  }
+}
+
+.key {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .swatch {
+    width: 16px;
+    border-top: 2.5px solid var(--accent);
+
+    &.scheduled {
+      border-top: 2px dashed var(--text-muted);
+    }
+  }
+}
+
+// A phone has no room beside the cursor: the readout is a card under the chart instead of a tooltip over it.
+@media (max-width: 600px) {
+  .tip,
+  .tip.on-right {
+    position: static;
+    width: auto;
+    margin-top: 0.75rem;
+    left: auto !important;
+    right: auto !important;
+  }
+}

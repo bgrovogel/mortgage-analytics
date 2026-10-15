@@ -1,0 +1,58 @@
+// One pill, four states, told apart by shape (the icon) and words as well as color.
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 28px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+
+  svg {
+    flex: none;
+  }
+
+  &[data-state='ok'] svg {
+    color: var(--positive);
+  }
+
+  &[data-state='busy'] svg {
+    color: var(--accent);
+  }
+
+  &[data-state='offline'] {
+    color: var(--warning-text);
+  }
+
+  &[data-state='error'] {
+    color: var(--critical);
+  }
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+.retry {
+  min-height: 28px;
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

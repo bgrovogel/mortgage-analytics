@@ -43,19 +43,19 @@ describe('the answer in a sentence', () => {
     });
 
     expect(answerSentence(buydown, null)).toBe('$1,700 goes to the loan and $777 to taxes, insurance and the rest.');
-    expect(paymentLead(buydown, null)).toBe('$2,477 a month in year 1');
+    expect(paymentLead(buydown, null)).toBe('$2,476.93 a month in year 1');
   });
 
   it('counts the payment due next on a loan already being paid', () => {
     const due = aPayment(61, { scheduledPayment: 2_325.26, housingCosts: 928.94 });
 
-    expect(paymentLead(example(), due)).toBe('$3,254 a month');
+    expect(paymentLead(example(), due)).toBe('$3,254.20 a month');
     expect(answerSentence(example(), due)).toContain('$2,325 goes to the loan and $929 to taxes');
   });
 
   describe('the lead', () => {
     it('is the monthly payment', () => {
-      expect(paymentLead(example(), null)).toBe('$3,102 a month');
+      expect(paymentLead(example(), null)).toBe('$3,102.19 a month');
     });
   });
 
@@ -74,7 +74,7 @@ describe('the answer in a sentence', () => {
       for (const view of ['overview', 'closing', 'projection', 'schedule']) {
         const answer = viewAnswer(example(), view, null);
 
-        expect([answer.heading, answer.lead]).toEqual(['What will this home cost?', '$3,102 a month']);
+        expect([answer.heading, answer.lead]).toEqual(['What will this home cost?', '$3,102.19 a month']);
         expect(answer.detail).toBe('$2,325 goes to the loan and $777 to taxes, insurance and the rest.');
       }
     });
@@ -142,7 +142,7 @@ describe('the answer in a sentence', () => {
       });
 
       it('leaves the other views alone', () => {
-        expect(viewAnswer(example(), 'overview', null, 'budget').lead).toBe('$3,102 a month');
+        expect(viewAnswer(example(), 'overview', null, 'budget').lead).toBe('$3,102.19 a month');
       });
     });
 

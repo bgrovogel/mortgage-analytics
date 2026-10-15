@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
+import { CalcStatusComponent } from './calc-status.component';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
 
@@ -22,7 +23,7 @@ const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
  */
 @Component({
   selector: 'app-calculation-page',
-  imports: [SaveCalculationComponent, ShareMenuComponent],
+  imports: [CalcStatusComponent, SaveCalculationComponent, ShareMenuComponent],
   templateUrl: './calculation-page.component.html',
   styleUrl: './calculation-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +58,19 @@ export class CalculationPageComponent {
 
   /** True to announce new results to screen readers as they arrive. Off for long, tabbed results. */
   readonly announce = input(true);
+
+  /**
+   * The answer split for the page's one large figure: money ("$3,102.19 a month") sets its dollars at hero size with
+   * the cents small beside them; any other answer ("Yes, comfortably") is a serif line.
+   */
+  protected readonly leadParts = computed(() => {
+    const lead = this.lead();
+    if (!lead) return null;
+    const money = /^(\$[\d,]+)(\.\d{2})?(?:\s+(.*))?$/.exec(lead);
+    return money
+      ? { money: true as const, dollars: money[1], cents: money[2] ?? '', unit: money[3] ?? '', text: lead }
+      : { money: false as const, dollars: '', cents: '', unit: '', text: lead };
+  });
 
   /** What a printout is for, e.g. "Mortgage Analytics · Calculator: $415,000 home, 9% down at 6.25% · Oct 14, 2026". */
   protected readonly printSummary = computed(() => {

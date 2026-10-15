@@ -19,12 +19,12 @@ describe('SavingsSummaryComponent', () => {
   const text = (testId: string) =>
     (fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null)?.textContent?.trim();
 
-  it('shows the all-in monthly payment with principal and interest broken out', () => {
+  it('breaks the monthly payment into principal and interest and the housing costs, the total being the headline above', () => {
     render(aResponse({ baseline: aSchedule({ monthlyPayment: 1_199.1, totalMonthlyPayment: 1_711.6, monthlyHousingCosts: aHousingCosts({ localTax: 512.5 }) }) }));
 
-    expect(text('total-monthly-payment')).toBe('$1,711.60');
     expect(text('monthly-payment')).toBe('$1,199.10');
     expect(text('housing-costs-label')).toBe('county/city tax');
+    expect(text('payment-parts')).toContain('$512.50');
   });
 
   it('warns of a jumbo loan, with the limit it is above', () => {
@@ -72,18 +72,20 @@ describe('SavingsSummaryComponent', () => {
   it('says P&I, spelled out for screen readers and on hover, so the line fits the tile', () => {
     render(aResponse({ baseline: aSchedule({ monthlyHousingCosts: aHousingCosts({ propertyTax: 595.83 }) }) }));
 
-    const abbr = fixture.nativeElement.querySelector('[data-testid="total-monthly-payment"] ~ .note abbr') as HTMLElement;
+    const abbr = fixture.nativeElement.querySelector('[data-testid="payment-parts"] abbr') as HTMLElement;
     expect(abbr.textContent).toBe('P&I');
     expect(abbr.title).toBe('principal and interest');
-    expect(abbr.parentElement!.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^\$[\d,.]+ P&I \+ \$595\.83 property tax$/);
+    expect(abbr.parentElement!.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^\$[\d,.]+ P&I \+ \$595\.83 property tax/);
   });
 
-  it('leads with the monthly payment, the first of the answers', () => {
-    render(aResponse());
+  it('draws where the month goes under the line of its parts: the bar and each part with its figure', () => {
+    render(aResponse({
+      accelerated: aSchedule({ monthlyPayment: 2_325.26, monthlyHousingCosts: aHousingCosts({ propertyTax: 776.93, total: 776.93 }) }),
+    }));
+    const root = fixture.nativeElement as HTMLElement;
 
-    const first = fixture.nativeElement.querySelector('.answers .tile');
-    expect(first.querySelector('dt').textContent).toBe('Monthly payment');
-    expect(first.classList).toContain('primary');
+    expect(root.querySelector('[data-testid="payment-parts"] app-payment-breakdown')).not.toBeNull();
+    expect(text('breakdown-total')).toBe('$3,102.19');
   });
 
   it('shows what the first payment comes to with the extra principal', () => {
@@ -202,7 +204,6 @@ describe('SavingsSummaryComponent', () => {
       },
     }));
 
-    expect(text('total-monthly-payment')).toBe('$954.83');
     expect(text('monthly-payment')).toBe('$954.83');
     expect(text('buydown-first-year')).toBe('In year 1, with the buydown; $1,199.10 from year 3');
   });
@@ -227,8 +228,8 @@ describe('SavingsSummaryComponent', () => {
 
     expect(text('payoff-date')).toBe('Sep 2050');
     expect(fixture.nativeElement.querySelector('[data-testid="payoff-date"]').closest('.tile').textContent).toContain('6 yr 1 mo sooner, instead of Oct 2056');
-    // The payment, whether you can afford it, the savings, and when it is paid off: nothing to close, no PMI.
-    expect(fixture.nativeElement.querySelectorAll('.tile')).toHaveLength(4);
+    // Whether you can afford it, the savings, and when it is paid off: nothing to close, no PMI.
+    expect(fixture.nativeElement.querySelectorAll('.tile')).toHaveLength(3);
   });
 
   it('itemizes PMI saved and recast fees', () => {
@@ -354,7 +355,6 @@ describe('SavingsSummaryComponent', () => {
     }));
     fixture.detectChanges();
 
-    expect(text('total-monthly-payment')).toBe('$3,254.20');
     expect(text('monthly-payment')).toBe('$2,325.26');
     expect(fixture.nativeElement.textContent).toContain('+ $928.94');
     expect(text('housing-costs-label')).toBe('property tax & insurance');

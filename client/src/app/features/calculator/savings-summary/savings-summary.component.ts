@@ -7,6 +7,7 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { decimal, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse, HousingCosts, Payment } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
+import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
 import { buydownYears } from '../rate-plan/buydown-years';
 
 /** Each tax, as the payment tile names it when it is the only one. */
@@ -24,7 +25,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
  */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe, RouterLink, TermComponent],
+  imports: [CurrencyPipe, DatePipe, PaymentBreakdownComponent, RouterLink, TermComponent],
   template: `
     @let r = result();
     @if (r.purchase.isJumbo) {
@@ -34,29 +35,31 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         differ more than usual.
       </p>
     }
-    <!-- The four answers: what it costs each month, what it takes to close, whether you can afford it, what paying
-         extra saves. Each tile is a term, its value, and notes on the value (more dd elements: a dl allows only dt
-         and dd). -->
-    <dl class="tiles answers">
-      <div class="tile payment primary">
-        <dt>Monthly payment</dt>
-        <dd data-testid="total-monthly-payment">{{ firstPayment().total | currency }}</dd>
-        <dd class="note">
-          <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
-          @if (firstPayment().costs.total > 0) {
-            + {{ firstPayment().costs.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
-          }
-        </dd>
+    <!-- What each month is made of, in a line and as a bar: the hero figure above is its total. -->
+    <section class="payment" aria-label="What each month is made of" data-testid="payment-parts">
+      <p class="parts">
+        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
+        @if (firstPayment().costs.total > 0) {
+          &ngsp;+ {{ firstPayment().costs.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
+        }
         @if (r.annualPercentageRate; as apr) {
-          <dd class="note" data-testid="apr"><app-term of="APR">APR</app-term> {{ percent(apr) }}%</dd>
+          &ngsp;· <span data-testid="apr"><app-term of="APR">APR</app-term> {{ percent(apr) }}%</span>
         }
-        @if (r.buydown) {
-          <dd class="note with-extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</dd>
-        }
-        @if (withExtra(); as extra) {
-          <dd class="note with-extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</dd>
-        }
-      </div>
+      </p>
+      @if (r.buydown) {
+        <p class="extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</p>
+      }
+      @if (withExtra(); as extra) {
+        <p class="extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</p>
+      }
+      <!-- Where it goes: a bar of the parts, with each one's figure and share. -->
+      <app-payment-breakdown [schedule]="r.accelerated" [principalAndInterest]="r.buydown?.years?.[0]?.monthlyPayment ?? null"
+                             [current]="current()" [program]="r.program ?? null" />
+    </section>
+
+    <!-- What it takes to close, when it is paid off, what paying extra saves and when the insurance ends, in one rail
+         (a dl allows only dt and dd, so a figure's notes are more dd elements). -->
+    <dl class="rail">
       <!-- Closing and affordability are for a purchase still ahead: a loan already being paid closed long ago. -->
       @if (cash(); as cash) {
         <div class="tile" data-testid="cash-tile">
@@ -81,10 +84,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
         }
       </div>
-    </dl>
 
-    <!-- What backs the answers up: whether it can be afforded, what paying extra saves, and when the insurance ends. -->
-    <dl class="tiles more">
       @if (!current()) {
         <div class="tile" data-testid="afford-tile">
           <dt>Can you afford it?</dt>

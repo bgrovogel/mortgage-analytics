@@ -54,7 +54,7 @@ export class CalculatorPage {
 
   constructor(private readonly page: Page) {
     this.results = page.getByTestId('results');
-    this.totalMonthlyPayment = page.getByTestId('total-monthly-payment');
+    this.totalMonthlyPayment = page.getByTestId('lead-amount');
     this.monthlyPayment = page.getByTestId('monthly-payment');
     this.netSavings = page.getByTestId('net-savings');
     this.totalInterest = page.getByTestId('total-interest');

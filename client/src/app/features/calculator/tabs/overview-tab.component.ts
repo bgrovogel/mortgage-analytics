@@ -3,7 +3,6 @@ import { InViewDirective } from '../../../core/layout/in-view.directive';
 import { nextPayment } from '../answer-sentence';
 import { BalanceChartComponent } from '../balance-chart/balance-chart.component';
 import { CalculatorStore } from '../calculator.store';
-import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdown.component';
 import { PointsSummaryComponent } from '../points-summary/points-summary.component';
 import { ProgramSummaryComponent } from '../program-summary/program-summary.component';
 import { RatePlanComponent } from '../rate-plan/rate-plan.component';
@@ -18,17 +17,14 @@ import { SavingsSummaryComponent } from '../savings-summary/savings-summary.comp
  */
 @Component({
   selector: 'app-overview-tab',
-  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, RateWhatIfComponent, PaymentBreakdownComponent, BalanceChartComponent, InViewDirective],
+  imports: [SavingsSummaryComponent, RatePlanComponent, ProgramSummaryComponent, PointsSummaryComponent, RateWhatIfComponent, BalanceChartComponent, InViewDirective],
   template: `
     <app-savings-summary [result]="result()" [current]="nextPayment()" (appInView)="headlineVisible($event)" aria-live="polite" data-testid="headline" />
     <app-program-summary [result]="result()" />
     <app-rate-plan [result]="result()" />
     <app-points-summary [result]="result()" />
     <app-rate-what-if [loan]="rateLoan()" />
-    <div class="charts">
-      <div class="panel"><app-payment-breakdown [schedule]="result().accelerated" [principalAndInterest]="result().buydown?.years?.[0]?.monthlyPayment ?? null" [current]="nextPayment()" [program]="result().program ?? null" /></div>
-      <div class="panel"><app-balance-chart [result]="result()" /></div>
-    </div>
+    <app-balance-chart [result]="result()" />
   `,
   styleUrl: './result-tab.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

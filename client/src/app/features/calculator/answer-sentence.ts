@@ -1,4 +1,4 @@
-import { decimal, usd } from '../../core/formatting/format';
+import { decimal, usd, usdCents } from '../../core/formatting/format';
 import { paymentsMade } from '../../core/loans/loan-progress';
 import { AmortizationResponse, Payment } from '../../core/models/amortization.models';
 
@@ -30,10 +30,10 @@ function monthlyParts(result: AmortizationResponse, due: Payment | null) {
   return { housing, loan, total, inYearOne: !!firstYear && !due };
 }
 
-/** The monthly payment, the answer to what the home costs: "$3,102 a month", "in year 1" with a buydown. */
+/** The monthly payment, the answer to what the home costs, to the cent: "$3,102.19 a month", "in year 1" with a buydown. */
 export function paymentLead(result: AmortizationResponse, due: Payment | null): string {
   const { total, inYearOne } = monthlyParts(result, due);
-  return `${usd(total)} a month${inYearOne ? ' in year 1' : ''}`;
+  return `${usdCents(total)} a month${inYearOne ? ' in year 1' : ''}`;
 }
 
 /**

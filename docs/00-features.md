@@ -309,12 +309,17 @@ all of it.
 
 ### The results
 
-- **Cost (the Overview):** three equal answers: the **monthly payment** (principal and interest, and the housing
-  costs; a buydown's year-1 payment), the **cash to close**, and **when it is paid off** and how much sooner. Under
-  them, three that back them up: **can you afford it**, what **paying extra saves** (the net savings and the total
-  interest, or without extra payments, the total interest over the loan, never a $0 saving), and **when PMI ends**.
-  Then the rate what-if, the payment breakdown, and the balance over time with the gap between the two payoffs
-  shaded. Closing costs, year by year and every payment are one step down, as links under the four views.
+- **Cost (the Overview):** one hero figure, the **monthly payment** to the cent (the dollars large in serif, the cents a
+  third of the size; a buydown's year-1 payment), with the question above it and a status pill ("Up to date",
+  "Calculating", "Offline · last result kept", "Couldn't calculate · Retry"). Under it, what the month is made of: a line
+  (principal and interest, the housing costs, the APR, any extra principal) and a **bar** of the parts with each one's
+  figure and share. Then one **rail** of the key figures: the **cash to close**, **when it is paid off** and how much
+  sooner, **can you afford it**, what **paying extra saves** (the net savings and the total interest, or without extra
+  payments, the total interest over the loan, never a $0 saving), and **when PMI ends**. Then the rate what-if, and
+  **what you owe month by month**: the balance with extra payments against the standard schedule as a ghost, in time
+  frames (5Y, 10Y, to payoff, the full term), with a **scrubber** (arrow keys a month, Page Up and Page Down a year)
+  whose month a tooltip and a ledger of the next six payments follow. Closing costs, year by year and every payment
+  are one step down, as links under the four views.
 - **Can I afford it?** three figures of equal weight (the payment's share of income, with the debts, and the most you
   could pay), a bar placing this home against the comfortable and the most a lender allows, and each limit in a
   table (below).
