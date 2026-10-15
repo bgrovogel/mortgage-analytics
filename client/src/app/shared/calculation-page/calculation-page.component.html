@@ -2,6 +2,10 @@
 
 <!-- What the page answers, the same way on every page: a question, then one line on how. -->
 <header class="page-intro">
+  <!-- Printed only: what the page is, for which inputs, and when. -->
+  @if (printSummary(); as summary) {
+    <p class="print-summary" data-testid="print-summary">{{ summary }}</p>
+  }
   <h2 data-testid="page-heading">{{ heading() }}</h2>
   <p data-testid="page-intro">{{ intro() }}</p>
 </header>
@@ -20,6 +24,7 @@
       <!-- Copy link and Save side by side; what copying did goes before them, or under them on a phone. -->
       <div class="page-actions">
         <app-share-link [fragment]="state.shareFragment()" [note]="state.shareNote" />
+        <button type="button" class="print" data-testid="print" [disabled]="!state.result()" (click)="print()">Print</button>
         <app-save-calculation [payload]="state.savePayload()" [suggestion]="state.suggestedName()" [linked]="state.saved()"
                               (saved)="state.linkTo($event)" />
       </div>

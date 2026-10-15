@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareLinkComponent } from '../share-link/share-link.component';
+
+/** The date a printout was made, as people write it: "Oct 14, 2026". */
+const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
 
 /**
  * The layout every calculator page shares: the question the page answers and one line on how, then the form on the
@@ -48,6 +51,18 @@ export class CalculationPageComponent {
 
   /** True to announce new results to screen readers as they arrive. Off for long, tabbed results. */
   readonly announce = input(true);
+
+  /** What a printout is for, e.g. "Mortgage Analytics · Calculator: $415,000 home, 9% down at 6.25% · Oct 14, 2026". */
+  protected readonly printSummary = computed(() => {
+    const store = this.store();
+    const request = store.request();
+    return request ? `Mortgage Analytics · ${store.pageName}: ${store.describe(request)} · ${PRINTED.format(new Date())}` : null;
+  });
+
+  /** Prints the page: the results, in the light theme, without the form or the page's controls (styles.scss). */
+  print(): void {
+    window.print();
+  }
 
   /**
    * Brings the form into view and puts focus on it, so keyboard and screen-reader users land there too. Scrolls

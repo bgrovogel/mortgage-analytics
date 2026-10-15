@@ -87,6 +87,23 @@ describe('CalculationPageComponent', () => {
     expect(copy().disabled).toBe(false);
   });
 
+  it('prints the results under a line saying what they are for', () => {
+    jest.setSystemTime(new Date(2026, 9, 14));
+    const print = jest.spyOn(window, 'print').mockImplementation(() => undefined);
+    const { host, fixture, text } = render();
+    const button = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="print"]')!;
+    expect(button().disabled).toBe(true); // nothing to print yet
+
+    host.store.send(375_000);
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+    host.store.responses.next('done');
+    fixture.detectChanges();
+    button().click();
+
+    expect(print).toHaveBeenCalled();
+    expect(text('print-summary')).toBe('Mortgage Analytics · Test: 375000 · Oct 14, 2026');
+  });
+
   it('says when a share link could not be opened, until it is dismissed', () => {
     const { host, fixture, text } = render();
     host.store.linkProblem.set('This link could not be opened.');

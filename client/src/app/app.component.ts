@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { BrandMarkComponent } from './core/layout/brand-mark.component';
+import { printInLightTheme } from './core/layout/print';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 
@@ -76,6 +77,11 @@ export class AppComponent {
   private readonly router = inject(Router);
   protected readonly pages = PAGES;
   protected readonly auth = inject(AuthService);
+
+  constructor() {
+    // Every page prints in the light theme (core/layout/print.ts).
+    inject(DestroyRef).onDestroy(printInLightTheme(window));
+  }
 
   /** The URL of the page shown. */
   protected readonly url = toSignal(

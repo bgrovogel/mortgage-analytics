@@ -212,8 +212,9 @@ own, which hid its last sections.
 ### Charts
 
 `core/charts/line-chart.ts` builds every line chart's Chart.js configuration (`buildLineChart`), and
-`hostChart` owns one chart per component: it rebuilds when inputs or the OS theme change and destroys it with the
-component. Charts are created through an injected `ChartFactory`, so Jest tests (jsdom has no canvas) provide a
+`hostChart` owns one chart per component: it rebuilds when inputs or the OS theme change, or the page switches to the
+light theme to print (`core/layout/print.ts`, on the browser's `beforeprint` and back on `afterprint`), and destroys
+it with the component. Charts are created through an injected `ChartFactory`, so Jest tests (jsdom has no canvas) provide a
 fake and assert on the configuration. Every chart has a written takeaway and a data table, and colors come from a
 palette checked for colorblind safety in light and dark mode.
 

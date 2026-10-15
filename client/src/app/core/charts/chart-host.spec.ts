@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Chart, type ChartConfiguration } from 'chart.js';
 import { CHART_FACTORY } from './chart-factory';
 import { hostChart } from './chart-host';
+import { THEME_CHANGE } from '../layout/print';
 
 /** A minimal component that owns a chart through hostChart, driven by a signal. */
 @Component({ template: '<canvas #canvas></canvas>' })
@@ -40,6 +41,14 @@ describe('hostChart', () => {
   };
 
   const lastChart = () => createChart.mock.results[createChart.mock.results.length - 1].value as { destroy: jest.Mock };
+
+  it('redraws when the page switches theme to print', () => {
+    render();
+
+    window.dispatchEvent(new Event(THEME_CHANGE));
+
+    expect(createChart).toHaveBeenCalledTimes(2);
+  });
 
   it('draws the chart on the component canvas after rendering', () => {
     const fixture = render();

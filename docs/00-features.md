@@ -156,6 +156,13 @@ them. A link cut short when copied opens the page as usual and says it could not
 
 ![Copy link beside Save: "Link copied. Anyone with it sees these numbers. Your income and debts are left out."](images/share-link.png)
 
+#### Print or save as a PDF
+
+**Print**, beside Copy link, prints the page's results (or saves them as a PDF from the print dialog) under a line
+saying what they are for: "Mortgage Analytics · Calculator: $415,000 home · 9% down · 6.25% · 30 yr · Oct 14, 2026".
+The header, the form and the page's controls stay on the screen, and the page prints in the light theme even when the
+screen is dark, charts included; the browser's own Print does the same.
+
 #### Can you afford it?
 
 Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab

@@ -444,3 +444,47 @@ select {
     }
   }
 }
+
+// On paper: the results alone, full width, in the light theme (core/layout/print.ts switches to it before printing).
+// The header, the form and the page's controls are for the screen; a line at the top says what the printout is for
+// (CalculationPageComponent). Component styles carry Angular's attribute selectors, so these need !important to win.
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .app-header,
+  .app-footer,
+  .form-panel,
+  .results-header,
+  .summary-bar {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .layout {
+    display: block !important;
+  }
+
+  // Cards print flat, with their colours, and are not split across pages.
+  * {
+    box-shadow: none !important;
+    print-color-adjust: exact;
+  }
+
+  .panel,
+  table,
+  canvas,
+  figure {
+    break-inside: avoid;
+  }
+}
