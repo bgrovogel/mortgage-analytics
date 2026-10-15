@@ -155,6 +155,12 @@ buy, refinancing, pay off or invest), worked through with the example loan, then
 names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
 loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term.
 
+#### Paying every two weeks
+
+Under the monthly extra, the form offers what paying **every two weeks** comes to: twenty-six half payments are thirteen
+whole ones a year, so it is one extra payment a year, a twelfth of the payment added to each month ($193.77 on the
+example). **Use it** fills the monthly extra with that amount, and the rest of the calculator follows.
+
 #### A spreadsheet of every payment
 
 The Schedule tab's **Download (CSV)** saves the schedule shown (monthly or yearly, with or without extra payments) as a

@@ -779,6 +779,37 @@ describe('LoanFormComponent', () => {
     });
   });
 
+  describe('paying every two weeks', () => {
+    it('offers the equivalent extra each month: a twelfth of the payment, thirteen payments a year', () => {
+      expect(text('biweekly-extra')).toBe('Paying every two weeks adds $193.77 a month Use it');
+    });
+
+    it('fills in the monthly extra when asked, and then has nothing more to offer', () => {
+      el('biweekly-use')!.click();
+      fixture.detectChanges();
+
+      expect(controls().monthlyExtra.value).toBe(193.77);
+      expect(last().extraPayments?.monthlyAmount).toBe(193.77);
+      expect(el('biweekly-extra')).toBeNull();
+    });
+
+    it('follows the loan: a smaller payment, a smaller extra', () => {
+      controls().homePrice.setValue(250_000);
+      controls().downPayment.setValue(50_000);
+      controls().annualInterestRate.setValue(6.5);
+      fixture.detectChanges();
+
+      expect(text('biweekly-extra')).toBe('Paying every two weeks adds $105.35 a month Use it');
+    });
+
+    it('is not offered without a loan', () => {
+      controls().downPayment.setValue(415_000);
+      fixture.detectChanges();
+
+      expect(el('biweekly-extra')).toBeNull();
+    });
+  });
+
   describe('resetting to the example', () => {
     const click = (testId: string) => {
       el(testId)!.click();

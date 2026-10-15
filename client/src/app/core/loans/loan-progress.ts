@@ -16,6 +16,22 @@ export function paymentsMade(firstPayment: string | null | undefined, today: Dat
   return Math.max(0, made);
 }
 
+/** The level monthly payment that repays `amount` at `annualRate` percent over `termMonths`, to the cent. */
+export function monthlyPayment(amount: number, annualRate: number, termMonths: number): number {
+  if (amount <= 0 || termMonths <= 0) return 0;
+  const r = annualRate / 1200;
+  const payment = r === 0 ? amount / termMonths : (amount * r) / (1 - (1 + r) ** -termMonths);
+  return Math.round(payment * 100) / 100;
+}
+
+/**
+ * What paying half of each month's payment every two weeks adds to each month. Twenty-six half payments are thirteen
+ * whole ones a year, so it is one extra payment a year: a twelfth of the payment, spread over the months, to the cent.
+ */
+export function biweeklyExtra(payment: number): number {
+  return Math.round((payment / 12) * 100) / 100;
+}
+
 /** What is owed after `made` of `termMonths` equal payments on `amount` borrowed at `annualRate` percent. */
 export function balanceAfter(amount: number, annualRate: number, termMonths: number, made: number): number {
   if (made <= 0) return amount;

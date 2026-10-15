@@ -13,7 +13,7 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, OccupancyType, YearProjection } from '../../../core/models/amortization.models';
-import { PAID_OFF_ALREADY, balanceAfter, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
+import { PAID_OFF_ALREADY, balanceAfter, biweeklyExtra, monthlyPayment, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { LOAN_FORM } from './loan-form.token';
 import { ClosingSectionComponent } from './sections/closing-section.component';
@@ -159,6 +159,26 @@ export class LoanFormComponent implements OnInit {
 
   /** Loan amount derived live from price and down payment, shown under the down payment field. */
   readonly loanAmount = computed(() => Math.max(0, (this.values().homePrice ?? 0) - this.downPaymentAmount()));
+
+  /**
+   * What paying every two weeks would add each month, offered until it is the monthly extra: the loan's payment
+   * over twelve, since half a payment every two weeks is thirteen payments a year. Null without a loan, or once the
+   * extra is that amount.
+   */
+  readonly biweekly = computed(() => {
+    const v = this.values();
+    const loan = this.loanAmount();
+    const term = (v.termYears ?? 0) * 12;
+    if (loan <= 0 || term <= 0 || v.annualInterestRate === null || v.annualInterestRate === undefined) return null;
+    const extra = biweeklyExtra(monthlyPayment(loan, v.annualInterestRate, term));
+    return extra > 0 && v.monthlyExtra !== extra ? extra : null;
+  });
+
+  /** Sets the monthly extra to the biweekly equivalent. */
+  useBiweekly(): void {
+    const extra = this.biweekly();
+    if (extra !== null) this.form.controls.monthlyExtra.setValue(extra);
+  }
 
   /** Down payment as a percentage of the price. */
   readonly downPaymentPercent = computed(() => {

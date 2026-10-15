@@ -48,6 +48,12 @@
     </div>
 
     <app-number-field [control]="form.controls.monthlyExtra" [rule]="rules.monthlyExtra" testId="monthly-extra" />
+    @if (biweekly(); as extra) {
+      <p class="biweekly" data-testid="biweekly-extra">
+        Paying every two weeks adds {{ extra | currency: 'USD' : 'symbol' : '1.2-2' }} a month
+        <button type="button" class="link-button" data-testid="biweekly-use" (click)="useBiweekly()">Use it</button>
+      </p>
+    }
 
     <label class="field">
       <span>First payment</span>

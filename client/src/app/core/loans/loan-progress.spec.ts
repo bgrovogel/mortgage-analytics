@@ -1,4 +1,25 @@
-import { balanceAfter, firstOfMonthFromNext, loanToday, originalAmount, paymentsMade } from './loan-progress';
+import { balanceAfter, biweeklyExtra, firstOfMonthFromNext, loanToday, monthlyPayment, originalAmount, paymentsMade } from './loan-progress';
+
+describe('monthlyPayment', () => {
+  it('is the payment that repays the loan: $377,650 at 6.25% over 30 years is $2,325.26', () => {
+    expect(monthlyPayment(377_650, 6.25, 360)).toBe(2_325.26);
+    expect(monthlyPayment(200_000, 6.5, 360)).toBe(1_264.14);
+  });
+
+  it('is the loan over the months when there is no interest, and nothing when there is no loan', () => {
+    expect(monthlyPayment(120_000, 0, 120)).toBe(1_000);
+    expect(monthlyPayment(0, 6, 360)).toBe(0);
+    expect(monthlyPayment(100_000, 6, 0)).toBe(0);
+  });
+});
+
+describe('biweeklyExtra', () => {
+  it('is a twelfth of the payment: thirteen payments a year instead of twelve', () => {
+    expect(biweeklyExtra(2_325.26)).toBe(193.77);
+    expect(biweeklyExtra(1_264.14)).toBe(105.35);
+    expect(biweeklyExtra(0)).toBe(0);
+  });
+});
 
 describe('existing loan', () => {
   const today = new Date(2026, 9, 10); // Oct 10, 2026
