@@ -46,6 +46,42 @@ describe('BalanceChartComponent', () => {
     expect(text('balance-summary')).toBe('The loan runs until Oct 2036.');
   });
 
+  describe('as a table', () => {
+    const rows = (root: HTMLElement) => [...root.querySelectorAll('[data-testid="balance-table"] tbody tr')]
+      .map((tr) => [...tr.querySelectorAll('th, td')].map((c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' | '));
+
+    it('offers the balance after every year of payments, both ways, for anyone who would rather read than see it', () => {
+      const { fixture, root } = render(withExtra());
+      const toggle = () => root.querySelector('[data-testid="balance-as-table"]') as HTMLButtonElement;
+      expect(root.querySelector('[data-testid="balance-table"]')).toBeNull();
+
+      toggle().click();
+      fixture.detectChanges();
+
+      const found = rows(root);
+      expect(found).toHaveLength(10);
+      expect(found[0]).toBe('Oct 2027 · payment 12 | $102,000 | $108,000 | $4,800');
+      expect(found[9]).toBe('Oct 2036 · payment 120 | $0 | $0 | $32,000');
+      expect(root.querySelector('svg[data-testid="balance-chart"]')).toBeNull();
+      expect(toggle().textContent!.trim()).toBe('View as chart');
+
+      toggle().click();
+      fixture.detectChanges();
+
+      expect(root.querySelector('svg[data-testid="balance-chart"]')).not.toBeNull();
+    });
+
+    it('has one balance column when nothing extra is paid', () => {
+      const { fixture, root } = render(aResponse({ baseline: loan(120), accelerated: loan(120) }));
+
+      (root.querySelector('[data-testid="balance-as-table"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect([...root.querySelectorAll('[data-testid="balance-table"] thead th')].map((c) => c.textContent!.trim()))
+        .toEqual(['After', 'You owe', 'Interest paid so far']);
+    });
+  });
+
   it('offers the time frames that fit the loan, the full term chosen at first', () => {
     const { root } = render(withExtra());
     const frames = [...root.querySelectorAll('[data-testid="frames"] button')].map((b) => [b.textContent!.trim(), b.getAttribute('aria-pressed')]);

@@ -94,6 +94,17 @@ export class BalanceChartComponent {
     };
   });
 
+  /** Whether the figures are shown as a table instead of the drawing. */
+  protected readonly asTable = signal(false);
+
+  /** The balance after each year of payments (and the last payment), for the table. */
+  protected readonly tableRows = computed(() => {
+    const { extra, scheduled, interest } = this.series();
+    const payments = this.result().baseline.payments;
+    const months = payments.map((_, i) => i + 1).filter((m) => m % 12 === 0 || m === payments.length);
+    return months.map((m) => ({ when: `${monthOf(payments[m - 1].dueDate)} · payment ${m}`, extra: extra[m], scheduled: scheduled[m], interest: interest[m] }));
+  });
+
   /** The paths, scaled to the largest balance. */
   protected readonly paths = computed(() => {
     const s = this.series();

@@ -1,0 +1,63 @@
+// The toggle that swaps a chart for its figures as a table, and the table: shared by every chart.
+@mixin styles {
+  // A quiet way to read the figures instead of the drawing.
+  .as-table {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-text);
+    cursor: pointer;
+    min-height: 44px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // The same figures as a table: as tall as a chart, scrolling inside itself, with the headings kept in view.
+  .table-wrap {
+    max-height: 20rem;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th,
+    td {
+      padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface-1);
+      color: var(--text-secondary);
+    }
+
+    // The first column names the row: left, in the heading and below it.
+    th:first-child {
+      text-align: left;
+    }
+
+    tbody th {
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    td {
+      font-family: var(--font-mono);
+    }
+  }
+}

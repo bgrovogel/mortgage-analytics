@@ -47,12 +47,42 @@ let nextId = 0;
     @let a = at();
     @let c = cursor();
     <figure>
-      <figcaption [id]="titleId" class="title">{{ title() }}</figcaption>
+      <div class="head">
+        <figcaption [id]="titleId" class="title">{{ title() }}</figcaption>
+        <button type="button" class="as-table" data-testid="chart-as-table" [attr.aria-pressed]="asTable()" (click)="asTable.set(!asTable())">
+          {{ asTable() ? 'View as chart' : 'View as table' }}
+        </button>
+      </div>
       <ul class="key" aria-hidden="true">
         @for (s of spec().series; track s.label) {
           <li><span class="swatch" [class.dashed]="s.dashed || !!s.dash" [class.dotted]="s.dotted" [style.border-color]="'var(' + s.color + ')'"></span>{{ s.label }}</li>
         }
       </ul>
+      @if (asTable()) {
+        <div class="table-wrap" tabindex="0" role="region" [attr.aria-labelledby]="titleId">
+          <table>
+            <caption class="visually-hidden">{{ title() }}</caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                @for (s of spec().series; track s.label) {
+                  <th scope="col">{{ s.label }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (label of spec().labels; track $index; let row = $index) {
+                <tr>
+                  <th scope="row">{{ label }}</th>
+                  @for (s of spec().series; track s.label) {
+                    <td>{{ usd(s.data[row] ?? 0) }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
       <div class="plot">
         <div class="canvas" (pointermove)="hover($event)" (pointerdown)="press($event)">
         <svg role="img" [attr.data-testid]="testId()" [attr.aria-labelledby]="titleId" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none">
@@ -108,6 +138,7 @@ let nextId = 0;
         <input [id]="inputId" data-testid="scrub-input" type="range" min="0" [max]="last()" step="1" [value]="index()"
                [attr.aria-valuetext]="a.valueText" (input)="scrub($event)" (keydown)="key($event)" />
       </div>
+      }
     </figure>
   `,
   styleUrl: './scrub-chart.component.scss',
@@ -128,7 +159,11 @@ export class ScrubChartComponent {
 
   protected readonly titleId = `scrub-title-${nextId}`;
   protected readonly inputId = `scrub-input-${nextId++}`;
+  protected readonly usd = usd;
   protected readonly width = WIDTH;
+
+  /** Whether the figures are shown as a table instead of the drawing. */
+  protected readonly asTable = signal(false);
   protected readonly height = HEIGHT;
 
   /** The index of the last point. */

@@ -12,7 +12,10 @@
         </button>
       }
     </div>
-    @if (frames().length > 1) {
+    <button type="button" class="as-table" data-testid="balance-as-table" [attr.aria-pressed]="asTable()" (click)="asTable.set(!asTable())">
+      {{ asTable() ? 'View as chart' : 'View as table' }}
+    </button>
+    @if (frames().length > 1 && !asTable()) {
       <div class="frames" role="group" aria-label="Time frame" data-testid="frames">
         @for (f of frames(); track f.value) {
           <button type="button" [attr.aria-pressed]="f.value === frame()" [attr.data-testid]="'frame-' + f.value" (click)="pick(f.value)">{{ f.label }}</button>
@@ -21,6 +24,35 @@
     }
   </div>
 
+  @if (asTable()) {
+    <div class="table-wrap" tabindex="0" role="region" aria-labelledby="balance-title">
+      <table data-testid="balance-table">
+        <caption class="visually-hidden">What you owe after each year of payments</caption>
+        <thead>
+          <tr>
+            <th scope="col">After</th>
+            <th scope="col">{{ series().hasExtra ? 'With extra payments' : 'You owe' }}</th>
+            @if (series().hasExtra) {
+              <th scope="col">Scheduled</th>
+            }
+            <th scope="col">Interest paid so far</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tableRows(); track row.when) {
+            <tr>
+              <th scope="row">{{ row.when }}</th>
+              <td>{{ usd(row.extra) }}</td>
+              @if (series().hasExtra) {
+                <td>{{ usd(row.scheduled) }}</td>
+              }
+              <td>{{ usd(row.interest) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
   <figure aria-labelledby="balance-title" aria-describedby="balance-summary">
     <div class="plot">
       <svg role="img" data-testid="balance-chart" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none"
@@ -71,6 +103,7 @@
       }
     </ul>
   </div>
+  }
 </section>
 
 <app-payment-ledger [payments]="result().accelerated.payments" [month]="month()" />

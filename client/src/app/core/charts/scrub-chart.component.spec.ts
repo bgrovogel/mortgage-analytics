@@ -103,6 +103,46 @@ describe('ScrubChartComponent', () => {
     expect([...root.querySelectorAll('.y span')].map((s) => s.textContent!.trim())).toEqual(['$90K', '$0', '-$20K']);
   });
 
+  describe('as a table', () => {
+    const toggle = (root: HTMLElement) => root.querySelector('[data-testid="chart-as-table"]') as HTMLButtonElement;
+
+    it('offers the same figures as a table, for anyone who would rather read them than see a drawing', () => {
+      const { fixture, root } = render(spec());
+      expect(toggle(root).textContent!.trim()).toBe('View as table');
+      expect(root.querySelector('table')).toBeNull();
+
+      toggle(root).click();
+      fixture.detectChanges();
+
+      const rows = [...root.querySelectorAll('table tr')].map((tr) => [...tr.querySelectorAll('th, td')].map((c) => c.textContent!.trim()).join(' | '));
+      expect(rows).toEqual([
+        'When | Invest | Hybrid',
+        'Now | $0 | $0',
+        'Yr 1 | $1,000 | $800',
+        'Yr 2 | $2,500 | $2,000',
+        'Yr 3 | $4,000 | $3,000',
+        'Yr 4 | $7,500 | $6,000',
+      ]);
+      expect(root.querySelector('table caption')!.textContent!.trim()).toBe('Net worth over time');
+      expect(root.querySelector('svg')).toBeNull();
+      expect(toggle(root).textContent!.trim()).toBe('View as chart');
+      expect(toggle(root).getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('goes back to the chart, with the scrubber where it was', () => {
+      const { fixture, root, text, scrub } = render(spec());
+      scrub(3);
+
+      toggle(root).click();
+      fixture.detectChanges();
+      toggle(root).click();
+      fixture.detectChanges();
+
+      expect(root.querySelector('svg')).not.toBeNull();
+      expect(text('scrub-title')).toBe('Yr 3 · after 3 years');
+    });
+  });
+
   describe('pointing at the drawing', () => {
     const point = (root: HTMLElement, type: string, fraction: number) => {
       const canvas = root.querySelector('.canvas') as HTMLElement;

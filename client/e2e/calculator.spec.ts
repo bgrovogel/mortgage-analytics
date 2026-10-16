@@ -274,6 +274,23 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('the balance chart can be read as a table, and back', async ({ calculator, page }) => {
+    await expect(page.getByTestId('balance-chart'), 'the balance chart is drawn').toBeVisible();
+
+    await page.getByTestId('balance-as-table').click();
+
+    const table = page.getByTestId('balance-table');
+    await expect(table.locator('tbody tr').first().locator('th'), 'the first row is the end of the first year of payments').toHaveText('Oct 2027 · payment 12');
+    await expect(table.locator('thead th'), 'with extra payments, both balances and the interest are listed')
+      .toHaveText(['After', 'With extra payments', 'Scheduled', 'Interest paid so far']);
+    await expect(page.getByTestId('balance-chart'), 'the drawing makes way for the table').toHaveCount(0);
+
+    await page.getByTestId('balance-as-table').click();
+
+    await expect(page.getByTestId('balance-chart'), 'and comes back').toBeVisible();
+    await expect(table, 'with the table gone').toHaveCount(0);
+  });
+
   test('co-buyers: their income and debts count together, and who pays what is shown', async ({ calculator, page }) => {
     // The $415,000 example with 9% down: you earn $90,000 with $400 of debts, and a co-buyer $60,000 with $200, putting in 40% of the down payment.
     await calculator.set('annual-income', 90_000);

@@ -1,3 +1,5 @@
+@use 'chart-table';
+
 :host {
   display: block;
   min-width: 0;
@@ -10,10 +12,20 @@ figure {
   gap: 0.75rem;
 }
 
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
 .title {
   font-weight: 600;
   color: var(--text-primary);
 }
+
+@include chart-table.styles;
 
 .key {
   display: flex;

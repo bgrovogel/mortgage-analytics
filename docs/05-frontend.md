@@ -217,6 +217,9 @@ time frames, a ghost of the previous result and a ledger of the payments from th
 rent-or-buy and projection views from one `ScrubChartSpec` (labels, series, a title and a footer for each point). The
 scrubber under each is a native range input, so the arrow keys move a point, Page Up and Page Down a step, and a screen
 reader hears the date and every figure (`aria-valuetext`); a tooltip (a card under the chart on a phone) says the same.
+Every chart also has **View as table**, which swaps the drawing for the same figures in a table that scrolls inside itself
+(the balance chart's is the balance after each year of payments); the mouse reads a point by hovering and chooses it by
+pressing.
 Colors are read from the role tokens, so light and dark need nothing more, and jsdom (which has no canvas) tests the
 real thing: specs read each component's `spec()` and the rendered SVG. The page switches to the light theme to print
 (`core/layout/print.ts`, on the browser's `beforeprint` and back on `afterprint`). Every chart has a written takeaway,
