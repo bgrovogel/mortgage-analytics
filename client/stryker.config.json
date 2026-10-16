@@ -20,7 +20,6 @@
     "src/app/core/loans/*.ts",
     "src/app/core/models/*.ts",
     "src/app/core/state/*.ts",
-    "src/app/core/charts/line-chart.ts",
     "src/app/features/calculation-stores.ts",
     "src/app/features/*/*.store.ts",
     "src/app/features/*/*/*-fields.ts",

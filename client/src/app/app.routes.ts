@@ -4,7 +4,7 @@ import { OverviewTabComponent } from './features/calculator/tabs/overview-tab.co
 import { signedInGuard } from './core/auth/signed-in.guard';
 import { openShareLink } from './features/share-link.guard';
 
-// The calculator's overview is the landing page, so it (and Chart.js) is in the first download. Every other page
+// The calculator's overview is the landing page, so it is in the first download. Every other page
 // and tab is a separate chunk, fetched when first opened and preloaded once the app is idle (app.config.ts).
 
 /** Route data for pages shown without the page tabs (sign-in and the other account pages). */

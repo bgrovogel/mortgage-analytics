@@ -426,13 +426,13 @@ def ci_pipeline():
 
 def tech_stack():
     s = Svg(960, 452, "The tech stack",
-            "Frontend: Angular 22, TypeScript 6.0, signals, RxJS 7.8, Chart.js 4.5, Inter. Backend: ASP.NET Core 10 "
+            "Frontend: Angular 22, TypeScript 6.0, signals, RxJS 7.8, SVG charts, Instrument Sans. Backend: ASP.NET Core 10 "
             "minimal APIs, FluentValidation 12, Identity, MailKit 4, Swashbuckle 10. Data: EF Core 10 and SQLite or PostgreSQL. "
             "Quality: NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python "
             "Decimal models. Delivery: Docker, docker compose with Mailpit, GitHub Actions.")
     s.card("The tech stack", "What each layer is built with. Versions as pinned in the repository.")
     rows = [
-        ("Frontend", "accent", ["Angular 22", "TypeScript 6.0", "Signals", "RxJS 7.8", "Chart.js 4.5", "Inter", "SCSS"]),
+        ("Frontend", "accent", ["Angular 22", "TypeScript 6.0", "Signals", "RxJS 7.8", "SVG charts", "Instrument Sans", "SCSS"]),
         ("Backend", "neutral", [".NET 10 / C#", "Minimal APIs", "FluentValidation 12", "Identity", "MailKit 4",
                                 "Swashbuckle 10"]),
         ("Data", "neutral", ["EF Core 10", "SQLite or PostgreSQL", "JSON columns", "Migrations at startup"]),

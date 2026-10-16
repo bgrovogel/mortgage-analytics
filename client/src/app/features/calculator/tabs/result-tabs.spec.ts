@@ -2,7 +2,6 @@ import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { aResponse } from '../../../../testing/builders';
-import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
 import { AmortizationRequest, AmortizationResponse } from '../../../core/models/amortization.models';
@@ -19,14 +18,12 @@ import { ScheduleTabComponent } from './schedule-tab.component';
 /** The routed result tabs. Each reads the current result from the store. */
 describe('result tabs', () => {
   let store: CalculatorStore;
-  let charts: ReturnType<typeof fakeCharts>;
   let response: AmortizationResponse;
 
   beforeEach(() => {
     response = aResponse();
     jest.useFakeTimers();
-    charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [provideRouter([]), charts.provider, { provide: AmortizationApiService, useValue: { calculate: () => of(response) } }] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: AmortizationApiService, useValue: { calculate: () => of(response) } }] });
     store = TestBed.inject(CalculatorStore);
     store.send({} as AmortizationRequest);
     jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
@@ -258,15 +255,15 @@ describe('result tabs', () => {
       const root = render(ProjectionTabComponent).nativeElement as HTMLElement;
 
       expect(captions(root)).toEqual(['Projected yearly taxes & costs', 'Home value, and what each tax is charged on', 'Equity: what is yours, and what is owed']);
-      expect(root.querySelectorAll('canvas')).toHaveLength(3);
+      expect(root.querySelectorAll('app-scrub-chart')).toHaveLength(3);
     });
 
     it('gives the quick numbers above the charts, for the year clicked on the costs chart', () => {
       const fixture = render(ProjectionTabComponent);
       const root = fixture.nativeElement as HTMLElement;
-      const costsChart = charts.config(0);
-
-      (costsChart.options!.onClick as unknown as (event: unknown, elements: { index: number }[]) => void)({}, [{ index: 2 }]);
+      const scrubber = root.querySelector('[data-testid="scrub-input"]') as HTMLInputElement;
+      scrubber.value = '2';
+      scrubber.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
       expect(root.firstElementChild?.querySelector('app-cost-totals')).not.toBeNull(); // the numbers come first

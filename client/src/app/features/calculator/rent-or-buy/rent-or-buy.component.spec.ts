@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { fakeCharts } from '../../../../testing/fake-charts';
 import { RentOrBuyComparison, RentOrBuyYear } from '../../../core/models/amortization.models';
 import { RentOrBuyComponent } from './rent-or-buy.component';
 
@@ -16,12 +15,6 @@ describe('RentOrBuyComponent', () => {
   /** Thirty years: renting ahead for six, buying from year 7 on. */
   const typical = comparison([...Array(30).keys()].map((i) => (i + 1 - 7) * 5_000 + (i >= 6 ? 1 : 0)), 7);
 
-  let charts: ReturnType<typeof fakeCharts>;
-  beforeEach(() => {
-    charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
-  });
-
   const render = (c: RentOrBuyComparison) => {
     const fixture = TestBed.createComponent(RentOrBuyComponent);
     fixture.componentRef.setInput('comparison', c);
@@ -30,7 +23,7 @@ describe('RentOrBuyComponent', () => {
     const text = (id: string) => root.querySelector(`[data-testid="${id}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
     const rows = () => Array.from(root.querySelectorAll('tbody tr'), (tr) =>
       Array.from(tr.querySelectorAll('th, td'), (c2) => c2.textContent!.replace(/\s+/g, ' ').trim()).join(' | '));
-    return { text, rows };
+    return { text, rows, chart: () => fixture.componentInstance.chart() };
   };
 
   describe('the three figures', () => {
@@ -81,12 +74,11 @@ describe('RentOrBuyComponent', () => {
   });
 
   it('plots how far buying is ahead, year by year, crossing zero where it breaks even', () => {
-    render(typical);
-    const config = charts.config(0);
+    const spec = render(typical).chart();
 
-    expect(config.data.datasets.map((d) => d.label)).toEqual(['Buying ahead by']);
-    expect(config.data.datasets[0].data.slice(5, 7)).toEqual([-5_000, 1]);
-    expect(config.data.labels).toHaveLength(30);
+    expect(spec.series.map((s) => s.label)).toEqual(['Buying ahead by']);
+    expect(spec.series[0].data.slice(5, 7)).toEqual([-5_000, 1]);
+    expect(spec.labels).toHaveLength(30);
   });
 
   it('says what is assumed and what is left out', () => {

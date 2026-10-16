@@ -4,7 +4,6 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { aHousingCosts, aResponse, aSchedule, aSavings } from '../../../testing/builders';
-import { fakeCharts } from '../../../testing/fake-charts';
 import { routes } from '../../app.routes';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
@@ -21,7 +20,7 @@ describe('CalculatorPageComponent', () => {
     jest.useFakeTimers();
     calculate = jest.fn().mockReturnValue(of(aResponse()));
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }, { provide: AmortizationApiService, useValue: { calculate } }],
+      providers: [provideRouter(routes), { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }, { provide: AmortizationApiService, useValue: { calculate } }],
     });
   });
   afterEach(() => jest.useRealTimers());

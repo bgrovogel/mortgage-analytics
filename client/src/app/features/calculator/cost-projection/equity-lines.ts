@@ -1,4 +1,4 @@
-import { LineSeries } from '../../../core/charts/line-chart';
+import { ScrubSeries as LineSeries } from '../../../core/charts/scrub-chart.component';
 import { usd } from '../../../core/formatting/format';
 import { YearProjection } from '../../../core/models/amortization.models';
 

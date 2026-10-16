@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { aRefinanceResponse } from '../../../testing/builders';
-import { fakeCharts } from '../../../testing/fake-charts';
 import { RefinanceRequest, RefinanceResponse } from '../../core/models/refinance.models';
 import { RefinanceApiService } from '../../core/services/refinance-api.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -22,7 +21,6 @@ describe('RefinancePageComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        fakeCharts().provider,
         { provide: RefinanceApiService, useValue: { analyze } },
         { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } },
       ],

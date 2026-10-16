@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { aStrategyComparison } from '../../../testing/builders';
-import { fakeCharts } from '../../../testing/fake-charts';
 import { StrategyComparison, StrategyRequest } from '../../core/models/strategy.models';
 import { StrategyApiService } from '../../core/services/strategy-api.service';
 import { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
@@ -24,7 +23,6 @@ describe('StrategyPageComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        fakeCharts().provider,
         { provide: StrategyApiService, useValue: { compare } },
         { provide: SavedCalculationsApiService, useValue: {} },
         { provide: AuthService, useValue: { user: signal(null) } },

@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, input, viewChild } from '@angular/core';
-import { hostChart } from '../../../core/charts/chart-host';
-import { buildLineChart } from '../../../core/charts/line-chart';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { PayoffStrategy, STRATEGIES, StrategyProjection } from '../../../core/models/strategy.models';
 import { yearLabel, yearTitle } from './net-worth-chart.component';
 
@@ -10,19 +9,8 @@ import { yearLabel, yearTitle } from './net-worth-chart.component';
  */
 @Component({
   selector: 'app-crossover-chart',
-  template: `
-    <figure>
-      <figcaption id="crossover-title">Mortgage owed vs. investments: {{ name() }}</figcaption>
-      <div class="canvas-wrap">
-        <canvas #canvas role="img" aria-labelledby="crossover-title" data-testid="crossover-chart"></canvas>
-      </div>
-    </figure>
-  `,
-  styles: `
-    figure { margin: 0; }
-    figcaption { font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary); }
-    .canvas-wrap { position: relative; height: 280px; }
-  `,
+  imports: [ScrubChartComponent],
+  template: `<app-scrub-chart [title]="'Mortgage owed vs. investments: ' + name()" [spec]="spec()" testId="crossover-chart" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CrossoverChartComponent {
@@ -34,26 +22,17 @@ export class CrossoverChartComponent {
 
   protected readonly name = computed(() => STRATEGIES[this.strategy()].name);
 
-  private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
-
-  constructor() {
-    hostChart(
-      () => this.canvas().nativeElement,
-      (host) => {
-        const years = this.projection().years;
-        return buildLineChart(
-          {
-            labels: years.map((y) => yearLabel(y.year)),
-            series: [
-              { label: 'Mortgage owed', color: '--series-8', data: years.map((y) => y.mortgageBalance) },
-              { label: 'Investments (after tax)', color: STRATEGIES[this.strategy()].color, data: years.map((y) => y.investments) },
-            ],
-            title: (index) => yearTitle(years[index].year),
-            tickEvery: 5,
-          },
-          host,
-        );
-      },
-    );
-  }
+  /** What is drawn: the mortgage owed against the investments after tax. */
+  readonly spec = computed<ScrubChartSpec>(() => {
+    const years = this.projection().years;
+    return {
+      labels: years.map((y) => yearLabel(y.year)),
+      series: [
+        { label: 'Mortgage owed', color: '--series-8', data: years.map((y) => y.mortgageBalance) },
+        { label: 'Investments (after tax)', color: STRATEGIES[this.strategy()].color, data: years.map((y) => y.investments) },
+      ],
+      title: (index) => yearTitle(years[index].year),
+      tickEvery: 5,
+    };
+  });
 }

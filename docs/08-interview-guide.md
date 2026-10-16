@@ -136,7 +136,7 @@ configuration. Each is easy to add when a real need appears (KISS, YAGNI). The f
 - **Template Method:** `CalculationStore`, where each page's store fills in `send$`, `loanOf` and `describe`.
 - **Adapter / port:** the repository.
 - **Builder:** in tests, `A.Request...`.
-- **Factory:** `RecastPolicy.OnLumpSum`, and the injectable `ChartFactory`.
+- **Factory:** `RecastPolicy.OnLumpSum`, and the `ScrubChartSpec` that every chart is drawn from.
 - **Container/presentational components** on the client.
 
 **Why validate twice?**
@@ -251,7 +251,7 @@ Everything returns RFC 9457 ProblemDetails:
 
 **How do you test code that depends on "today"?**
 Services take `TimeProvider`; tests pass `FakeTimeProvider` with a fixed date. The same seam exists on the client
-for charts: the Chart.js constructor is injected, so tests use a fake (jsdom has no canvas).
+for charts: they are SVG drawn from a plain spec, so tests read the spec and the rendered markup, with nothing to fake.
 
 **Service lifetimes?**
 - The domain services and use cases are **singletons**: they're stateless.
@@ -542,8 +542,8 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,268 .NET · 1,226 Jest · 144 Playwright (22 axe scans); 85% coverage gate |
-| Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, Chart.js · Docker, GitHub Actions |
+| Tests | 1,268 .NET · 1,195 Jest · 144 Playwright (22 axe scans); 85% coverage gate |
+| Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, SVG charts · Docker, GitHub Actions |
 
 ---
 

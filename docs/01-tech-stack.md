@@ -13,7 +13,7 @@
 
 ## At a glance
 
-![The tech stack by layer: Angular 22, TypeScript 6.0, signals, RxJS 7.8 and Chart.js 4.5 in the browser; .NET 10 minimal APIs, FluentValidation 12, Identity, MailKit 4 and Swashbuckle 10 on the server; EF Core 10 and SQLite for data; NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python models for quality; Docker, compose and GitHub Actions for delivery](images/tech-stack.svg)
+![The tech stack by layer: Angular 22, TypeScript 6.0, signals, RxJS 7.8 in the browser; .NET 10 minimal APIs, FluentValidation 12, Identity, MailKit 4 and Swashbuckle 10 on the server; EF Core 10 and SQLite for data; NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python models for quality; Docker, compose and GitHub Actions for delivery](images/tech-stack.svg)
 
 How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-system).
 
@@ -57,7 +57,7 @@ How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-syste
 | **Angular Router** | `app.routes.ts` | Pages and the calculator's result tabs each have a URL (bookmarkable, back button works). A functional guard protects History. |
 | **HttpClient** (`withFetch`) | `core/services/*-api.service.ts` | One thin service per API area; components never touch `HttpClient` directly. |
 | **Instrument Sans, Instrument Serif, IBM Plex Mono (`@fontsource*` 5.3)** | `styles.scss`, via `angular.json` | The typefaces of the UI Blueprint (interface, money you read first, ledger), self-hosted because the CSP allows fonts only from the app; tabular figures keep amounts aligned. |
-| **Chart.js 4.5** | `core/charts/` | Line and stacked charts. Wrapped once (`buildLineChart`, `hostChart`) and injected through a factory, so tests use a fake. |
+| **SVG charts (no library)** | `core/charts/scrub-chart.component.ts`, `calculator/balance-chart/` | Line and stacked charts drawn as SVG from one spec, each with a native range-input scrubber, a tooltip and a key. Nothing to inject or fake: jsdom renders them. |
 | **SCSS** | `*.component.scss`, `core/forms/_*.scss` | Shared partials for form fields, segmented controls and scroll hints; CSS grid for the two-column layout; light and dark themes. |
 
 ---

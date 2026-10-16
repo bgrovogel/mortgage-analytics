@@ -4,7 +4,6 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, of } from 'rxjs';
 import { aResponse } from '../../../testing/builders';
-import { fakeCharts } from '../../../testing/fake-charts';
 import { routes } from '../../app.routes';
 import { AuthService } from '../../core/auth/auth.service';
 import { AmortizationRequest, AmortizationResponse } from '../../core/models/amortization.models';
@@ -22,7 +21,7 @@ describe('ComparePageComponent', () => {
     jest.useFakeTimers();
     calculate = jest.fn().mockReturnValue(of(aResponse()));
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), fakeCharts().provider, { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }, { provide: AmortizationApiService, useValue: { calculate } }],
+      providers: [provideRouter(routes), { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }, { provide: AmortizationApiService, useValue: { calculate } }],
     });
   });
   afterEach(() => jest.useRealTimers());

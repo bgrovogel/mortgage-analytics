@@ -1,16 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aStrategyComparison } from '../../../../testing/builders';
-import { fakeCharts } from '../../../../testing/fake-charts';
+import { By } from '@angular/platform-browser';
+import { NetWorthChartComponent } from '../strategy-charts/net-worth-chart.component';
+import { CrossoverChartComponent } from '../strategy-charts/crossover-chart.component';
 import { StrategyComparison } from '../../../core/models/strategy.models';
 import { StrategyResultsComponent } from './strategy-results.component';
 
 describe('StrategyResultsComponent', () => {
   let fixture: ComponentFixture<StrategyResultsComponent>;
-  let charts: ReturnType<typeof fakeCharts>;
 
   const render = (result: StrategyComparison = aStrategyComparison()) => {
-    charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
     fixture = TestBed.createComponent(StrategyResultsComponent);
     fixture.componentRef.setInput('result', result);
     fixture.detectChanges();
@@ -71,14 +70,14 @@ describe('StrategyResultsComponent', () => {
 
   it('charts the difference from paying off first, and net worth on request', () => {
     const root = render();
-    const chart = () => charts.lastConfig();
+    const chart = () => fixture.debugElement.query(By.directive(NetWorthChartComponent)).componentInstance.spec();
 
-    expect(chart().data.datasets[0].data.every((v) => v === 0)).toBe(true);
-    expect(chart().data.datasets[1].data[30]).toBeCloseTo(3_844_781.09 - 3_719_026.59, 2);
+    expect(chart().series[0].data.every((v: number) => v === 0)).toBe(true);
+    expect(chart().series[1].data[30]).toBeCloseTo(3_844_781.09 - 3_719_026.59, 2);
 
     click(root, 'view-total');
 
-    expect(chart().data.datasets[1].data[30]).toBeCloseTo(3_844_781.09, 2);
+    expect(chart().series[1].data[30]).toBeCloseTo(3_844_781.09, 2);
   });
 
   it('switches every card, the table and the charts to another market scenario', () => {
@@ -123,6 +122,7 @@ describe('StrategyResultsComponent', () => {
     click(root, 'crossover-PayOffFirst');
 
     expect(text(root, 'crossover-note')).toContain('Sep 2033');
-    expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Mortgage owed', 'Investments (after tax)']);
+    const crossover = fixture.debugElement.query(By.directive(CrossoverChartComponent)).componentInstance.spec();
+    expect(crossover.series.map((s: { label: string }) => s.label)).toEqual(['Mortgage owed', 'Investments (after tax)']);
   });
 });

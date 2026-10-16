@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, viewChild } from '@angular/core';
-import { hostChart } from '../../../core/charts/chart-host';
-import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { MarketScenario, STRATEGIES, StrategyComparison, StrategyOutcome } from '../../../core/models/strategy.models';
 
 /** Axis labels: "Now", "Yr 1", "Yr 2"... short enough for a phone. */
@@ -18,21 +17,8 @@ export type NetWorthView = 'total' | 'gap';
  */
 @Component({
   selector: 'app-net-worth-chart',
-  template: `
-    <figure>
-      <figcaption id="net-worth-title">
-        {{ view() === 'gap' ? 'How far each strategy is ahead of Debt free ASAP' : 'Net worth over 30 years' }}{{ todaysDollars() ? ", in today's dollars" : '' }}
-      </figcaption>
-      <div class="canvas-wrap">
-        <canvas #canvas role="img" aria-labelledby="net-worth-title" data-testid="net-worth-chart"></canvas>
-      </div>
-    </figure>
-  `,
-  styles: `
-    figure { margin: 0; }
-    figcaption { font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary); }
-    .canvas-wrap { position: relative; height: 320px; }
-  `,
+  imports: [ScrubChartComponent],
+  template: `<app-scrub-chart [title]="caption()" [spec]="spec()" testId="net-worth-chart" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NetWorthChartComponent {
@@ -51,34 +37,27 @@ export class NetWorthChartComponent {
    */
   readonly view = input<NetWorthView>('total');
 
-  private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  protected readonly caption = computed(() =>
+    `${this.view() === 'gap' ? 'How far each strategy is ahead of Debt free ASAP' : 'Net worth over 30 years'}${this.todaysDollars() ? ", in today's dollars" : ''}`);
 
-  constructor() {
-    hostChart(
-      () => this.canvas().nativeElement,
-      (host) => {
-        const scenario = this.scenario();
-        const real = this.todaysDollars();
-        const outcomes = this.result().strategies;
-        const years = outcomes[0][scenario].years;
-        const worth = (o: StrategyOutcome) => o[scenario].years.map((y) => (real ? y.netWorthInTodaysDollars : y.netWorth));
-        const baseline = worth(outcomes.find((o) => o.strategy === 'PayOffFirst')!);
-        const series: LineSeries[] = outcomes.map((o) => ({
-          label: STRATEGIES[o.strategy].name,
-          color: STRATEGIES[o.strategy].color,
-          data: this.view() === 'gap' ? worth(o).map((value, i) => value - baseline[i]) : worth(o),
-          dashed: o.strategy === 'Hybrid',
-        }));
-        return buildLineChart(
-          {
-            labels: years.map((y) => yearLabel(y.year)),
-            series,
-            title: (index) => yearTitle(years[index].year),
-            tickEvery: 5,
-          },
-          host,
-        );
-      },
-    );
-  }
+  /** What is drawn: each strategy's net worth, or its lead over paying off first. */
+  readonly spec = computed<ScrubChartSpec>(() => {
+    const scenario = this.scenario();
+    const real = this.todaysDollars();
+    const outcomes = this.result().strategies;
+    const years = outcomes[0][scenario].years;
+    const worth = (o: StrategyOutcome) => o[scenario].years.map((y) => (real ? y.netWorthInTodaysDollars : y.netWorth));
+    const baseline = worth(outcomes.find((o) => o.strategy === 'PayOffFirst')!);
+    return {
+      labels: years.map((y) => yearLabel(y.year)),
+      series: outcomes.map((o) => ({
+        label: STRATEGIES[o.strategy].name,
+        color: STRATEGIES[o.strategy].color,
+        data: this.view() === 'gap' ? worth(o).map((value, i) => value - baseline[i]) : worth(o),
+        dashed: o.strategy === 'Hybrid',
+      })),
+      title: (index) => yearTitle(years[index].year),
+      tickEvery: 5,
+    };
+  });
 }

@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, input, viewChild } from '@angular/core';
-import { hostChart } from '../../../core/charts/chart-host';
-import { buildLineChart } from '../../../core/charts/line-chart';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { decimal, usd } from '../../../core/formatting/format';
 import { RentOrBuyComparison } from '../../../core/models/amortization.models';
 
@@ -13,6 +12,7 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
  */
 @Component({
   selector: 'app-rent-or-buy',
+  imports: [ScrubChartComponent],
   template: `
     <div class="stats">
       <div class="stat" data-testid="rent-stat-year">
@@ -36,12 +36,7 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
       }
     </div>
     <p class="verdict" data-testid="rent-or-buy-verdict">{{ verdict() }}</p>
-    <figure>
-      <figcaption id="rent-or-buy-chart-title">How far buying is ahead of renting (below zero, renting is ahead)</figcaption>
-      <div class="canvas-wrap">
-        <canvas #canvas role="img" aria-labelledby="rent-or-buy-chart-title" data-testid="rent-or-buy-chart"></canvas>
-      </div>
-    </figure>
+    <app-scrub-chart title="How far buying is ahead of renting (below zero, renting is ahead)" [spec]="chart()" testId="rent-or-buy-chart" />
     <div class="table-wrap" tabindex="0" aria-label="Buying and renting, year by year">
       <table data-testid="rent-or-buy">
         <thead>
@@ -87,7 +82,6 @@ export class RentOrBuyComponent {
   protected readonly abs = Math.abs;
   protected readonly percent = (value: number) => `${decimal(value)}%`;
 
-  private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   /** How long to stay for buying to come out ahead, or that renting stays ahead. */
   readonly verdict = computed(() => {
@@ -123,26 +117,19 @@ export class RentOrBuyComponent {
   /** The milestone years compared. */
   readonly milestones = computed(() => this.comparison().years.filter((y) => MILESTONES.includes(y.year)));
 
-  constructor() {
-    hostChart(
-      () => this.canvas().nativeElement,
-      (host) => {
-        const years = this.comparison().years;
-        return buildLineChart(
-          {
-            labels: years.map((y) => `Yr ${y.year}`),
-            // The two households' worth grow so large that the gap between them, the answer, is lost: plot the gap,
-            // which crosses zero where buying breaks even.
-            series: [{ label: 'Buying ahead by', color: '--series-1', data: years.map((y) => y.advantage) }],
-            title: (index) => `Year ${years[index].year}`,
-            footer: (index) => {
-              const y = years[index];
-              return `If you buy ${usd(y.buyerNetWorth)} · if you rent ${usd(y.renterNetWorth)}`;
-            },
-          },
-          host,
-        );
+  /** What is drawn: the gap between the two households, which crosses zero where buying breaks even. */
+  readonly chart = computed<ScrubChartSpec>(() => {
+    const years = this.comparison().years;
+    return {
+      labels: years.map((y) => `Yr ${y.year}`),
+      // The two households' worth grow so large that the gap between them, the answer, is lost: plot the gap.
+      series: [{ label: 'Buying ahead by', color: '--series-1', data: years.map((y) => y.advantage) }],
+      title: (index) => `Year ${years[index].year}`,
+      footer: (index) => {
+        const y = years[index];
+        return `If you buy ${usd(y.buyerNetWorth)} · if you rent ${usd(y.renterNetWorth)}`;
       },
-    );
-  }
+      tickEvery: 5,
+    };
+  });
 }

@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
-import { hostChart } from '../../../core/charts/chart-host';
-import { LineSeries, buildLineChart } from '../../../core/charts/line-chart';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ScrubChartComponent, ScrubChartSpec, ScrubSeries } from '../../../core/charts/scrub-chart.component';
 import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
@@ -28,14 +27,10 @@ const CAPTIONS: Record<ProjectionView, string> = {
  */
 @Component({
   selector: 'app-cost-projection',
+  imports: [ScrubChartComponent],
   template: `
-    <figure>
-      <figcaption [id]="'projection-title-' + view()">{{ caption() }}</figcaption>
-      <div class="canvas-wrap">
-        <canvas #canvas role="img" [attr.aria-labelledby]="'projection-title-' + view()" [attr.data-testid]="'projection-chart-' + view()"></canvas>
-      </div>
-      <p class="note" [attr.data-testid]="'projection-note-' + view()">{{ note() }}</p>
-    </figure>
+    <app-scrub-chart [title]="caption()" [spec]="spec()" [testId]="'projection-chart-' + view()" (picked)="pick($event)" />
+    <p class="note" [attr.data-testid]="'projection-note-' + view()">{{ note() }}</p>
   `,
   styleUrl: './cost-projection.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +45,6 @@ export class CostProjectionComponent {
   /** The loan year clicked on the costs chart, so the page can show its quick numbers. */
   readonly yearPicked = output<number>();
 
-  private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   /** The chart's caption. */
   protected readonly caption = computed(() => CAPTIONS[this.view()]);
@@ -66,58 +60,52 @@ export class CostProjectionComponent {
     return `Yearly taxes & costs go from ${usd(first.costs.total)} in year 1 to ${usd(last.costs.total)} in year ${last.year}.`;
   });
 
-  constructor() {
-    hostChart(
-      () => this.canvas().nativeElement,
-      (host) => {
-        const projection = this.result().projection;
-        const labels = projection.map((y) => `Year ${y.year}`);
-        const startYear = (i: number) => new Date(projection[i].startDate).getUTCFullYear();
+  /** What is drawn for the view shown. */
+  readonly spec = computed<ScrubChartSpec>(() => {
+    const projection = this.result().projection;
+    const labels = projection.map((y) => `Year ${y.year}`);
+    const startYear = (i: number) => new Date(projection[i].startDate).getUTCFullYear();
 
-        if (this.view() === 'equity') {
-          return buildLineChart(
-            {
-              labels,
-              series: equityLines(projection),
-              footer: (i) => equityFooter(projection[i]),
-              title: (i, label) => `${label} (from ${startYear(i)})`,
-              // Owed and yours add up to the home's value, which is the top edge.
-              stacked: true,
-            },
-            host,
-          );
-        }
+    if (this.view() === 'equity') {
+      return {
+        labels,
+        series: equityLines(projection),
+        footer: (i) => equityFooter(projection[i]),
+        title: (i, label) => `${label} (from ${startYear(i)})`,
+        // Owed and yours add up to the home's value, which is the top edge.
+        stacked: true,
+        tickEvery: 5,
+      };
+    }
 
-        if (this.view() === 'value') {
-          return buildLineChart(
-            {
-              labels,
-              series: valueLines(projection),
-              // Each year's bills, so every line can be checked against the tax it produces.
-              footer: (i) => valueBills(projection[i]),
-              title: (i, label) => `${label} (from ${startYear(i)})`,
-            },
-            host,
-          );
-        }
+    if (this.view() === 'value') {
+      return {
+        labels,
+        series: valueLines(projection),
+        // Each year's bills, so every line can be checked against the tax it produces.
+        footer: (i) => valueBills(projection[i]),
+        title: (i, label) => `${label} (from ${startYear(i)})`,
+        tickEvery: 5,
+      };
+    }
 
-        const series: LineSeries[] = costCategoriesFor(this.result().program)
-          .filter((c) => projection.some((y) => y.costs[c.key] > 0))
-          .map((c) => ({ label: c.label, color: c.color, data: projection.map((y) => y.costs[c.key]) }));
+    const series: ScrubSeries[] = costCategoriesFor(this.result().program)
+      .filter((c) => projection.some((y) => y.costs[c.key] > 0))
+      .map((c) => ({ label: c.label, color: c.color, data: projection.map((y) => y.costs[c.key]) }));
+    return {
+      labels,
+      series,
+      title: (i, label) => `${label} (from ${startYear(i)})`,
+      footer: (i) => `Total: ${usd(projection[i].costs.total)}`,
+      // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
+      stacked: true,
+      tickEvery: 5,
+    };
+  });
 
-        return buildLineChart(
-          {
-            labels,
-            series,
-            title: (i, label) => `${label} (from ${startYear(i)})`,
-            footer: (i) => `Total: ${usd(projection[i].costs.total)}`,
-            // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
-            stacked: true,
-            onPick: (i) => this.yearPicked.emit(projection[i].year),
-          },
-          host,
-        );
-      },
-    );
+  /** The year the reader scrubbed to on the costs chart, passed on so the page can show its quick numbers. */
+  protected pick(index: number): void {
+    const year = this.result().projection[index]?.year;
+    if (this.view() === 'costs' && year !== undefined) this.yearPicked.emit(year);
   }
 }

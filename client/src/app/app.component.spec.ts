@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NEVER, of } from 'rxjs';
-import { fakeCharts } from '../testing/fake-charts';
 import { AppComponent } from './app.component';
 import { routes } from './app.routes';
 import { AuthService, User } from './core/auth/auth.service';
@@ -29,7 +28,6 @@ describe('AppComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
-        fakeCharts().provider,
         { provide: AmortizationApiService, useValue: { calculate: () => NEVER } },
         { provide: SavedCalculationsApiService, useValue: { list: () => NEVER } },
         { provide: RefinanceApiService, useValue: { analyze: () => NEVER } },

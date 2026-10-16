@@ -1,0 +1,220 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .swatch {
+    width: 18px;
+    border-top: 2.5px solid;
+
+    &.dashed {
+      border-top-style: dashed;
+    }
+
+    &.dotted {
+      border-top-style: dotted;
+    }
+  }
+}
+
+.plot {
+  position: relative;
+}
+
+// The drawing, with its dots and tooltip, starts after the scale.
+.canvas {
+  position: relative;
+  margin-left: 3.25rem;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 320px;
+  overflow: visible;
+
+  path,
+  line {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .grid line {
+    stroke: var(--grid);
+  }
+
+  .floor {
+    stroke: var(--border-strong);
+  }
+
+  .zero {
+    stroke: var(--text-muted);
+    stroke-dasharray: 2 4;
+  }
+
+  .line {
+    fill: none;
+    stroke-width: 2.25;
+    stroke-linejoin: round;
+
+    &.dashed {
+      stroke-dasharray: 6 4;
+    }
+
+    &.dotted {
+      stroke-dasharray: 2 4;
+    }
+  }
+
+  .area {
+    fill-opacity: 0.16;
+    stroke: none;
+  }
+
+  .cursor {
+    stroke: var(--text-primary);
+    stroke-opacity: 0.35;
+  }
+}
+
+// The scale: a few labels at the left edge, on the page, not in the drawing (which is stretched).
+.y {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3rem;
+  height: 320px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+
+  span {
+    position: absolute;
+    right: 0.35rem;
+    transform: translateY(-50%);
+  }
+}
+
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--page);
+}
+
+.tip {
+  position: absolute;
+  top: 8px;
+  width: 15.5rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  font-size: 0.84rem;
+  pointer-events: none;
+
+  .when {
+    font-weight: 600;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-secondary);
+
+    &.foot {
+      padding-top: 0.45rem;
+      border-top: 1px solid var(--border-strong);
+      font-size: 0.78rem;
+    }
+  }
+
+  .swatch.small {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.45rem;
+    border-radius: 2px;
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+  }
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0 0 3.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scrub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  input {
+    flex: 1 1 320px;
+    min-height: 44px;
+    accent-color: var(--accent);
+  }
+}
+
+// A phone has no room beside the cursor: the readout is a card under the chart.
+@media (max-width: 600px) {
+  .tip,
+  .tip.on-right {
+    position: static;
+    width: auto;
+    margin: 0.75rem 0 0;
+    left: auto !important;
+    right: auto !important;
+  }
+}

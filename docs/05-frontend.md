@@ -17,7 +17,7 @@ client/src/app/
   app.routes.ts, app.config.ts, app.component.*      routes, providers, the shell (header, page tabs)
   core/                     used by every feature; knows nothing about any one page
     auth/                   AuthService (who is signed in, as a signal), signedInGuard, safe return URLs
-    charts/                 buildLineChart, hostChart, the injectable ChartFactory
+    charts/                 ScrubChartComponent: SVG lines and areas with a scrubber
     errors/                 toErrorMessages: any HTTP failure → readable lines
     formatting/             format.ts (usd, pct, monthOf…), duration, describe-inputs (names for saved items)
     forms/                  FieldRule tables, app-number-field, the appNumber directive, setChanged
@@ -211,23 +211,26 @@ own, which hid its last sections.
 
 ### Charts
 
-`core/charts/line-chart.ts` builds every line chart's Chart.js configuration (`buildLineChart`), and
-`hostChart` owns one chart per component: it rebuilds when inputs or the OS theme change, or the page switches to the
-light theme to print (`core/layout/print.ts`, on the browser's `beforeprint` and back on `afterprint`), and destroys
-it with the component. Charts are created through an injected `ChartFactory`, so Jest tests (jsdom has no canvas) provide a
-fake and assert on the configuration. Every chart has a written takeaway and a data table, and colors come from a
-palette checked for colorblind safety in light and dark mode.
+Every chart is plain SVG, drawn by the app (no charting library): the balance chart (`BalanceChartComponent`, with
+time frames, a ghost of the previous result and a ledger of the payments from the scrubbed month) and
+`core/charts/scrub-chart.component.ts`, which draws a few lines or stacked areas for the refinance, pay-off-or-invest,
+rent-or-buy and projection views from one `ScrubChartSpec` (labels, series, a title and a footer for each point). The
+scrubber under each is a native range input, so the arrow keys move a point, Page Up and Page Down a step, and a screen
+reader hears the date and every figure (`aria-valuetext`); a tooltip (a card under the chart on a phone) says the same.
+Colors are read from the role tokens, so light and dark need nothing more, and jsdom (which has no canvas) tests the
+real thing: specs read each component's `spec()` and the rendered SVG. The page switches to the light theme to print
+(`core/layout/print.ts`, on the browser's `beforeprint` and back on `afterprint`). Every chart has a written takeaway,
+and colors come from a palette checked for colorblind safety in light and dark mode.
 
-- **Readable axes.** X-axis labels are chosen in code (`tickIndices`), so the last point is always labelled, on whole
-  years for monthly data, and only as many as fit the width.
+- **Readable axes.** Five dates are labelled along the bottom, the start and the end among them, and the vertical scale
+  names its top, its zero (when the data crosses it) and its bottom.
 - **Lines that stay visible.** The gap between the two payoffs on the balance chart is shaded, so the time and
   interest saved show as an area; taxable value is dashed, so it shows where it overlaps market value; later series
   draw on top.
 - **Tabs that follow WAI-ARIA.** Where charts share a card, the tabs take arrow keys and Home/End, with one tab in the
   tab order.
-- **Clickable when it helps.** `buildLineChart`'s optional `onPick` reports the point clicked (the projection uses it
-  to choose a year), with a pointer over the plot.
-- **The app's typeface,** read from the `--font-sans` token like the colours.
+- **Scrubbing reports the point.** `ScrubChartComponent`'s `picked` output says which point is under the scrubber (the
+  projection uses it to choose a year).
 
 ### Visual design
 
@@ -254,8 +257,7 @@ A calm fintech look, built from shared parts so every page stays consistent:
   everywhere, so amounts line up in tables and do not jitter while they update.
 - **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar; the same mark
   is the browser-tab icon (`public/favicon.svg`, with a PNG for iOS home screens), and the toolbar colour follows the bar.
-- **Charts in the same type:** `buildLineChart` reads `--font-sans` like its colours, so Chart.js draws its legend, axes
-  and tooltips in Instrument Sans rather than its default Helvetica or Arial.
+- **Charts in the same type:** they are SVG and HTML on the page, so they take its fonts and colours like everything else.
 
 The flows are designed around the people using it:
 
@@ -288,7 +290,7 @@ The flows are designed around the people using it:
 - **"What will I have paid by year 10?"** The Projection tab opens on the quick numbers (`CostTotalsComponent`): for a
   chosen year, each cost that year, through it, and over the whole loan, from the same projection as the chart
   (`cost-totals.ts`, pure functions). It starts at the year the loan is in now, so "through" is what has been paid; the
-  picker or a click on the chart (`buildLineChart`'s `onPick`, with a pointer over the plot) chooses another. On a phone
+  picker or the scrubber on the chart (`ScrubChartComponent`'s `picked`) chooses another. On a phone
   the cost names stay pinned while the amounts scroll sideways.
 
 <br clear="right" />

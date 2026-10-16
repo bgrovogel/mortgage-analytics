@@ -14,8 +14,8 @@ const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 /** The page's violations, one line each: "color-contrast (serious): .hint, .label". */
 async function violations(page: Page): Promise<string[]> {
-  // Charts are canvases with their own text alternatives (a takeaway and a data table), so their pixels are skipped.
-  const results = await new AxeBuilder({ page }).withTags(WCAG).exclude('canvas').analyze();
+  // Charts are SVG with a written takeaway and a scrubber that reads the numbers, so they are scanned like the rest.
+  const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
   return results.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
 }
 

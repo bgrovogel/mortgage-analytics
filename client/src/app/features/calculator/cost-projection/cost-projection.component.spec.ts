@@ -1,17 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aHousingCosts, aProjectionYear, aResponse } from '../../../../testing/builders';
-import { fakeCharts } from '../../../../testing/fake-charts';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { CostProjectionComponent } from './cost-projection.component';
 
 describe('CostProjectionComponent', () => {
   let fixture: ComponentFixture<CostProjectionComponent>;
-  let charts: ReturnType<typeof fakeCharts>;
-
-  beforeEach(() => {
-    charts = fakeCharts();
-    TestBed.configureTestingModule({ providers: [charts.provider] });
-  });
 
   const render = (response: AmortizationResponse) => {
     fixture = TestBed.createComponent(CostProjectionComponent);
@@ -24,7 +17,7 @@ describe('CostProjectionComponent', () => {
     fixture.componentRef.setInput('view', 'value');
     fixture.detectChanges();
   };
-  const tooltip = () => charts.lastConfig().options!.plugins!.tooltip!.callbacks! as unknown as Record<string, (items: unknown) => string>;
+  const spec = () => fixture.componentInstance.spec();
 
   const rising = aResponse({
     projection: [
@@ -39,7 +32,9 @@ describe('CostProjectionComponent', () => {
       const picked: number[] = [];
       component.yearPicked.subscribe((year) => picked.push(year));
 
-      (charts.lastConfig().options!.onClick as unknown as (event: unknown, elements: { index: number }[]) => void)({}, [{ index: 1 }]);
+      const scrubber = fixture.nativeElement.querySelector('[data-testid="scrub-input"]') as HTMLInputElement;
+      scrubber.value = '1';
+      scrubber.dispatchEvent(new Event('input'));
 
       expect(picked).toEqual([2]);
     });
@@ -47,21 +42,21 @@ describe('CostProjectionComponent', () => {
     it('stacks the categories as areas, so the top edge is the total cost', () => {
       render(rising);
 
-      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBe(true);
+      expect(spec().stacked).toBe(true);
     });
 
     it('draws one line per category that has any cost', () => {
       render(rising);
 
-      expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['School tax', 'HOA dues']);
-      expect(charts.lastConfig().data.labels).toEqual(['Year 1', 'Year 2']);
+      expect(spec().series.map((s) => s.label)).toEqual(['School tax', 'HOA dues']);
+      expect(spec().labels).toEqual(['Year 1', 'Year 2']);
     });
 
     it('labels the tooltip with the calendar year and adds a total', () => {
       render(rising);
 
-      expect(tooltip()['title']([{ dataIndex: 1, label: 'Year 2' }])).toBe('Year 2 (from 2027)');
-      expect(tooltip()['footer']([{ dataIndex: 1 }])).toBe('Total: $2,818');
+      expect(spec().title(1, 'Year 2')).toBe('Year 2 (from 2027)');
+      expect(spec().footer!(1)).toBe('Total: $2,818');
     });
 
     it('summarizes how costs change from the first year to the last', () => {
@@ -79,11 +74,11 @@ describe('CostProjectionComponent', () => {
       ] }));
       showValue();
 
-      expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Market value', 'Assessed value (capped)', 'School taxable value']);
-      expect(charts.lastConfig().data.datasets.map((d) => d.borderDash)).toEqual([[], [6, 4], []]);
-      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBeFalsy(); // values are compared, not added
-      expect(tooltip()['title']([{ dataIndex: 0, label: 'Year 1' }])).toBe('Year 1 (from 2026)');
-      expect(tooltip()['footer']([{ dataIndex: 0 }])).toBe(''); // no taxes in this example
+      expect(spec().series.map((s) => s.label)).toEqual(['Market value', 'Assessed value (capped)', 'School taxable value']);
+      expect(spec().series.map((s) => !!s.dashed)).toEqual([false, true, false]);
+      expect(spec().stacked).toBeFalsy(); // values are compared, not added
+      expect(spec().title(0, 'Year 1')).toBe('Year 1 (from 2026)');
+      expect(spec().footer!(0)).toBe(''); // no taxes in this example
     });
 
     it('explains what each tax is charged on', () => {
@@ -111,9 +106,9 @@ describe('CostProjectionComponent', () => {
       showEquity();
 
       expect(fixture.nativeElement.querySelector('figcaption').textContent.trim()).toBe('Equity: what is yours, and what is owed');
-      expect(charts.lastConfig().data.datasets.map((d) => d.label)).toEqual(['Owed on the loan', 'Your equity']);
-      expect(charts.lastConfig().options!.scales!['y']!.stacked).toBe(true);
-      expect(tooltip()['footer']([{ dataIndex: 1 }])).toBe('Home value: $260,000 · 25% yours');
+      expect(spec().series.map((s) => s.label)).toEqual(['Owed on the loan', 'Your equity']);
+      expect(spec().stacked).toBe(true);
+      expect(spec().footer!(1)).toBe('Home value: $260,000 · 25% yours');
     });
 
     it('says how the equity grows', () => {
@@ -124,7 +119,7 @@ describe('CostProjectionComponent', () => {
     });
   });
 
-  it('names the chart for the view shown, and draws a new chart when the view changes', () => {
+  it('names the chart for the view shown', () => {
     render(rising);
     const caption = () => fixture.nativeElement.querySelector('figcaption').textContent.trim();
     expect(caption()).toBe('Projected yearly taxes & costs');
@@ -132,7 +127,6 @@ describe('CostProjectionComponent', () => {
     showValue();
 
     expect(caption()).toBe('Home value, and what each tax is charged on');
-    expect(charts.count()).toBe(2);
   });
 
   it('shows no note when there is no projection', () => {

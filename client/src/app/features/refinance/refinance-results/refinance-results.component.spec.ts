@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aRefinanceOption, aRefinanceResponse } from '../../../../testing/builders';
-import { fakeCharts } from '../../../../testing/fake-charts';
 import { RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceResultsComponent } from './refinance-results.component';
 
 describe('RefinanceResultsComponent', () => {
   let fixture: ComponentFixture<RefinanceResultsComponent>;
-
-  beforeEach(() => TestBed.configureTestingModule({ providers: [fakeCharts().provider] }));
 
   const render = (result: RefinanceResponse) => {
     fixture = TestBed.createComponent(RefinanceResultsComponent);
