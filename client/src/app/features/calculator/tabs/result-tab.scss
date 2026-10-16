@@ -12,6 +12,14 @@
   padding: 1.25rem;
 }
 
+// What is the page's own content, not a box on it: the figures and the chart sit on the page.
+.panel.flat {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
 .charts {
   display: grid;
   grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);

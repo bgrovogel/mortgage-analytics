@@ -26,7 +26,7 @@ import { CalculatorStore } from '../calculator.store';
       </div>
     }
     @if (result().affordability; as affordability) {
-      <div class="panel">
+      <div class="panel flat">
         <app-affordability [affordability]="affordability" [program]="result().program?.type ?? 'Conventional'"
                            [downPaymentPercent]="result().purchase.downPaymentPercent" [homePrice]="result().purchase.homePrice" />
         @if (affordability.comfortable.maxHomePrice > 0) {

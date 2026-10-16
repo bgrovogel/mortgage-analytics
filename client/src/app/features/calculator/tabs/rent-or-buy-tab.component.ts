@@ -12,9 +12,9 @@ import { RentOrBuyComponent } from '../rent-or-buy/rent-or-buy.component';
   selector: 'app-rent-or-buy-tab',
   imports: [CurrencyPipe, RentOrBuyComponent],
   template: `
-    <div class="panel rent-or-buy">
+    <div class="panel flat rent-or-buy">
       @if (result().rentOrBuy; as comparison) {
-        <h2>Should you rent or buy?</h2>
+        <h2 class="visually-hidden">Should you rent or buy?</h2>
         <p class="intro">Buying this home against renting a similar one: what each would leave you, year by year. The rent and what is assumed are with your numbers, on the left.</p>
         <app-rent-or-buy [comparison]="comparison" />
       } @else {

@@ -18,6 +18,30 @@
   box-shadow: var(--shadow-card);
 }
 
+// A rail: a few key figures in one strip divided by hairlines, not a box for each (UI blueprint, pillar 1). Cells wrap
+// and grow to fill their row, so the hairlines never leave a hole.
+@mixin rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  margin: 0;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+// One cell of a rail: a label, a figure, a note.
+@mixin rail-cell {
+  display: flex;
+  flex: 1 1 200px;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 1.1rem 1.25rem;
+  background: var(--surface-1);
+}
+
 // A verdict: the page's headline answer. Its colour carries the meaning, the same way on every page:
 // blue for a plain fact, green (.positive) for a good outcome, amber (.warning) for "look again before you act".
 @mixin verdict {

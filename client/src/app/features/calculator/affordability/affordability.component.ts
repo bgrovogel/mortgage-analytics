@@ -31,7 +31,7 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
 @Component({
   selector: 'app-affordability',
   template: `
-    <h2 id="affordability-title">Can you afford it?</h2>
+    <h2 id="affordability-title" class="visually-hidden">Can you afford it?</h2>
     <div class="stats">
       <div class="stat" data-testid="afford-stat-housing">
         <span>Housing payment, as a share of income</span>

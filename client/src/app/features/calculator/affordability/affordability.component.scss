@@ -1,3 +1,5 @@
+@use '../../../core/layout/surfaces';
+
 h2 {
   font-size: 1rem;
   margin: 0 0 0.35rem;
@@ -100,30 +102,24 @@ tbody th {
   color: var(--text-primary);
 }
 
-// Three figures of equal weight, then where this home sits against the limits.
+// Three figures of equal weight in one rail, then where this home sits against the limits.
 .stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem;
+  @include surfaces.rail;
   margin: 0.5rem 0 1.25rem;
 }
 
 .stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-2);
+  @include surfaces.rail-cell;
 
   span {
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
     color: var(--text-secondary);
   }
 
   strong {
     font-size: 1.5rem;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
