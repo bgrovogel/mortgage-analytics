@@ -46,7 +46,7 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   width: 2.4rem;
   height: 2.4rem;
   cursor: pointer;
@@ -122,7 +122,7 @@
 .unit-toggle {
   display: inline-flex;
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 
   label {

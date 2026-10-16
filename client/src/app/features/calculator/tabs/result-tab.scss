@@ -91,7 +91,7 @@
 .start {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   margin: 0 0 1rem;
 

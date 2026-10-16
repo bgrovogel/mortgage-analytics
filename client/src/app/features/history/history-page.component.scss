@@ -29,7 +29,7 @@ input {
   font: inherit;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-1);
   color: var(--text-primary);
 }
@@ -52,7 +52,7 @@ input {
 .toggle {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 
   button {
@@ -161,7 +161,7 @@ button {
   font: inherit;
   min-height: 36px;
   padding: 0 0.9rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
@@ -190,7 +190,7 @@ button {
   color: var(--text-secondary);
   background: var(--surface-1);
   border: 1px dashed var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
 
   a {
     color: var(--accent-text);
@@ -201,7 +201,7 @@ button {
   border: 1px solid var(--critical);
   background: var(--critical-soft);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.9rem 1.1rem;
 }
 
@@ -330,7 +330,7 @@ button {
   kbd {
     padding: 1px 6px;
     border: 1px solid var(--border-strong);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--text-muted);

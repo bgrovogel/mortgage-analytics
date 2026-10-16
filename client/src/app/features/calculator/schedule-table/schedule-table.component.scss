@@ -21,7 +21,7 @@ h2 {
 .toggle {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 
   button {
@@ -51,7 +51,7 @@ h2 {
     min-height: 36px;
     padding: 0 0.8rem;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 0.85rem;
     color: var(--text-secondary);
     cursor: pointer;
@@ -79,8 +79,8 @@ h2 {
     padding: 0.6rem 0.75rem;
     background: var(--surface-1);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-overlay);
   }
 
   legend {
@@ -107,7 +107,7 @@ h2 {
   max-height: max(420px, calc(100vh - 14rem));
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 
   &:focus-visible {
     outline: 2px solid var(--accent);
@@ -236,7 +236,7 @@ tbody tr:nth-child(even) .pinned {
     right: 1px;
     bottom: 1px;
     width: 2rem;
-    border-radius: 0 10px 10px 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
     pointer-events: none;
     background: linear-gradient(to right, transparent, var(--surface-1));
   }
@@ -263,7 +263,7 @@ tbody tr:nth-child(even) .pinned {
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-1);
   color: var(--text-primary);
   cursor: pointer;

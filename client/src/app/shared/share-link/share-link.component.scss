@@ -20,7 +20,7 @@ button {
   font: inherit;
   min-height: 36px;
   padding: 0 0.9rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
@@ -60,7 +60,7 @@ button {
     font: inherit;
     min-height: 36px;
     padding: 0 0.6rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--surface-1);
     color: var(--text-primary);

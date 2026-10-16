@@ -121,7 +121,7 @@ h3 {
     padding: 0.6rem 0.8rem;
     border: 1px solid var(--warning-border);
     background: var(--warning-soft);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text-primary);
   }
 }
