@@ -100,7 +100,7 @@ describe('ScrubChartComponent', () => {
     const { root } = render(spec({ series: [{ label: 'Rent vs buy', color: '--series-1', data: [-20_000, -5_000, 10_000, 40_000, 90_000] }] }));
 
     expect(root.querySelector('line.zero')).not.toBeNull();
-    expect([...root.querySelectorAll('.y span')].map((s) => s.textContent!.trim())).toEqual(['$90.0K', '$0', '-$20.0K']);
+    expect([...root.querySelectorAll('.y span')].map((s) => s.textContent!.trim())).toEqual(['$90K', '$0', '-$20K']);
   });
 
   describe('pointing at the drawing', () => {

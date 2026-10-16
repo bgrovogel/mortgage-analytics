@@ -8,6 +8,8 @@ describe('format', () => {
     expect(money(1798.65)).toBe('$1,798.65');
     expect(money(1562.5)).toBe('$1,562.50'); // cents always two digits
     expect(compactUsd(1_250_000)).toBe('$1.3M');
+    expect(compactUsd(90_000)).toBe('$90K'); // never "$90.0K", whichever ICU data the runtime ships
+    expect(compactUsd(-20_000)).toBe('-$20K');
   });
 
   it('signs a difference, and calls a rounding-sized one $0', () => {

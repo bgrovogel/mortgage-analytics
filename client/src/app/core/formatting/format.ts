@@ -17,7 +17,7 @@ export const usdCents = (value: number) => cents.format(value);
 export const money = (value: number) => (Number.isInteger(Math.round(value * 100) / 100) ? dollarsOrCents.format(value) : cents.format(value));
 
 /** "$1.2M": for chart axes. */
-export const compactUsd = (value: number) => compactDollars.format(value);
+export const compactUsd = (value: number) => compactDollars.format(value).replace(/\.0(?=[KMBT]$)/, '');
 
 /** "+$1,234", "−$1,234" or "$0": a difference. */
 export const signedUsd = (value: number) => (Math.round(value) === 0 ? '$0' : `${value > 0 ? '+' : '−'}${dollars.format(Math.abs(value))}`);
