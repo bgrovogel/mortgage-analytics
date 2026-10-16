@@ -6,6 +6,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fido2" />
     <PackageReference Include="MailKit" />
     <!-- Not used directly: lifts MailKit's copy past a security advisory (see Directory.Packages.props). -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" />

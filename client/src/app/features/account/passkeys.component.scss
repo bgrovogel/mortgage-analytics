@@ -1,0 +1,44 @@
+@use 'account-page' as page;
+@use '../../core/forms/form-fields' as fields;
+
+@include page.styles;
+
+// The one text box here is a name, which looks like every other box in the app.
+input[type='text'] {
+  @include fields.control;
+}
+
+// Each passkey on a line of its own: its name and dates, with the button to remove it at the end.
+.passkey-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.65rem 0.85rem;
+
+    & + li {
+      border-top: 1px solid var(--border);
+    }
+  }
+}
+
+.passkey-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+
+  small {
+    color: var(--text-secondary);
+  }
+}

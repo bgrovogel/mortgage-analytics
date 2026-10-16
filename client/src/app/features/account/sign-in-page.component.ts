@@ -4,6 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { PasskeyService } from '../../core/auth/passkey.service';
 import { safeReturnUrl } from '../../core/auth/signed-in.guard';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { DevMailboxHintComponent } from './dev-mailbox-hint.component';
@@ -24,6 +25,7 @@ type Mode = 'sign-in' | 'create';
 })
 export class SignInPageComponent {
   private readonly auth = inject(AuthService);
+  protected readonly passkeys = inject(PasskeyService);
   private readonly router = inject(Router);
   private readonly returnUrl = safeReturnUrl(inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl'));
 
@@ -80,6 +82,22 @@ export class SignInPageComponent {
       error: (error: unknown) => {
         this.busy.set(false);
         this.error.set(this.messageFor(error));
+      },
+    });
+  }
+
+  /** Signs in with a passkey the device holds, with no password; closing the device's prompt is not an error. */
+  signInWithPasskey(): void {
+    this.busy.set(true);
+    this.error.set(null);
+    this.passkeys.signIn().subscribe({
+      next: (result) => {
+        this.busy.set(false);
+        if (result === 'signed-in') void this.router.navigateByUrl(this.returnUrl);
+      },
+      error: () => {
+        this.busy.set(false);
+        this.error.set('That passkey could not sign you in. Try your password instead.');
       },
     });
   }

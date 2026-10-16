@@ -13,7 +13,7 @@
 
 ## At a glance
 
-![The tech stack by layer: Angular 22, TypeScript 6.0, signals, RxJS 7.8 in the browser; .NET 10 minimal APIs, FluentValidation 12, Identity, MailKit 4 and Swashbuckle 10 on the server; EF Core 10 and SQLite for data; NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python models for quality; Docker, compose and GitHub Actions for delivery](images/tech-stack.svg)
+![The tech stack by layer: Angular 22, TypeScript 6.0, signals, RxJS 7.8 in the browser; .NET 10 minimal APIs, FluentValidation 12, Identity, Fido2 4, MailKit 4 and Swashbuckle 10 on the server; EF Core 10 and SQLite for data; NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python models for quality; Docker, compose and GitHub Actions for delivery](images/tech-stack.svg)
 
 How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-system).
 
@@ -31,6 +31,7 @@ How the pieces connect: [Architecture](03-architecture.md#the-shape-of-the-syste
 | **EF Core 10 + SQLite or PostgreSQL** | `src/MortgageAnalytics.Infrastructure/` | Saved calculations and user accounts. SQLite is one file, needs no server, and fits a demo; PostgreSQL (Npgsql 10) is a setting away, for several writers and instances. EF Core migrations version the schema, one set per provider. |
 | **ASP.NET Core Identity** | `Api/Endpoints/AccountEndpoints.cs` | Built-in, well-reviewed accounts: password hashing, lockout, email confirmation, password reset, and the `MapIdentityApi` endpoints. No hand-rolled security. |
 | **Data Protection** | `AccountEndpoints.AddAccounts` | Signs the session cookie and the codes in emailed links; keys are kept on disk so restarts don't sign people out. |
+| **Fido2 4** | `Api/Endpoints/PasskeyEndpoints.cs` | WebAuthn (passkeys): checks the challenge, signature, origin and counter, so none of the cryptography is hand-rolled. It brings NSec and libsodium for the signatures. The browser side is the platform's own `navigator.credentials`. |
 | **MailKit 4** | `Api/Email/SmtpMailTransport.cs` | Sends account emails over SMTP. Without SMTP settings, a file outbox is used instead (local dev needs no mail server). |
 | **Source-generated logging** | `[LoggerMessage]` in `GlobalExceptionHandler` | No boxing or template parsing at runtime; the analyzers recommend it. |
 | **`TimeProvider`** | Application services | "Today" is injected, so tests pin the date with `FakeTimeProvider`. |

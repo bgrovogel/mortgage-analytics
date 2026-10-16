@@ -60,7 +60,7 @@ three files are one database: copy them together, or stop the app first (see [In
 
 ## The schema
 
-![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete, and so does UserPreferences (OwnerId, KeyFigureOrder, KeyFiguresHidden: one row per user who arranged the key figures); Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
+![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete, and so does UserPreferences (OwnerId, KeyFigureOrder, KeyFiguresHidden: one row per user who arranged the key figures), and so does Passkeys (a credential id, a public key, a user handle, a counter, a name and two times: one row per passkey); Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
 
 **`SavedCalculations`**, the app's own table, defined in `CalculationsDbContext.OnModelCreating`:
 
@@ -168,6 +168,8 @@ silently lose its value. Two things stop that:
 | `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, OtherHomes, Refinance, Strategy, UpdatedAt` for the changed columns |
 | `DELETE /api/v1/calculations/{id}` | Delete in one statement, without loading it | `DELETE … WHERE Id = @id AND OwnerId = @me` (`ExecuteDeleteAsync`) |
 
+`PasskeyRepository` finds a passkey by the credential id a device sends when it signs in (`SELECT … WHERE CredentialId = @id`, the primary key), lists a user's by `OwnerId` (indexed), and records each sign-in's counter; deleting is by owner and id in one statement.
+
 `UserPreferencesRepository` does two things, both for the signed-in user alone: `GET /api/v1/account/key-figures` reads the
 user's one row (`SELECT … WHERE OwnerId = @me`; no row is an empty arrangement), and `PUT` replaces it (the row is found,
 or added, and both columns written).
@@ -226,6 +228,7 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddDataProtectionKeys` | `DataProtectionKeys`, for signing keys kept in the database |
 | `AddHomeComparisons` | Added `SecondHome` (on PostgreSQL, `PostgresAddHomeComparisons`) |
 | `AddUserPreferences` | `UserPreferences`: one row per user who has arranged the key figures (`OwnerId`, `KeyFigureOrder`, `KeyFiguresHidden`), with a cascade delete from the user |
+| `AddPasskeys` | `Passkeys`: one row per passkey (credential id as the key, public key, user handle, counter, name, times), with a cascade delete from the user |
 | `CompareUpToFourHomes` | Renamed `SecondHome` to `OtherHomes`, and **moved the data** with SQL added by hand: each saved second home becomes a list of one (`'[' \|\| OtherHomes \|\| ']'`). Down, the first of the list becomes the second home again, and a third or fourth home is lost. `HomeComparisonMigrationTests` checks both ways on SQLite, and a Postgres test on PostgreSQL |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:

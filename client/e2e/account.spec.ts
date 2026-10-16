@@ -48,6 +48,31 @@ test.describe('Accounts', () => {
     await expect(page, 'signed in, back on Refinance').toHaveURL(/\/refinance$/);
   });
 
+  test('a passkey: added on the account page, then used to sign in with no password, and removed', async ({ account, page, context }) => {
+    // The browser gets a device that keeps passkeys and unlocks them itself, as a laptop's fingerprint reader would.
+    const devtools = await context.newCDPSession(page);
+    await devtools.send('WebAuthn.enable');
+    await devtools.send('WebAuthn.addVirtualAuthenticator', {
+      options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
+    });
+    await page.goto('/account');
+    await page.getByTestId('passkey-name').fill('Test laptop');
+    await page.getByTestId('passkey-add').click();
+    await expect(page.getByTestId('passkey-list'), 'the passkey is listed under its name').toContainText('Test laptop');
+    await expect(page.getByTestId('passkey-list'), 'and has not been used yet').toContainText('Never used');
+
+    // Signed out, the same device signs in with it: no email, no password.
+    await page.request.post('/api/v1/account/logout');
+    await page.goto('/sign-in');
+    await page.getByTestId('passkey-sign-in').click();
+    await expect(page.getByTestId('signed-in-as'), 'signed in as the account that registered it').toHaveText(account.email);
+
+    await page.goto('/account');
+    await expect(page.getByTestId('passkey-list'), 'its use is noted').toContainText('Last used');
+    await page.getByRole('button', { name: 'Remove Test laptop' }).click();
+    await expect(page.getByTestId('passkeys-none'), 'removed, so none is left').toHaveText('No passkeys yet.');
+  });
+
   test('an unconfirmed email cannot sign in, and can ask for the link again', async ({ page }) => {
     const email = uniqueEmail();
     await expect(await page.request.post('/api/v1/account/register', { data: { email, password: PASSWORD } }), 'registered, not confirmed').toBeOK();

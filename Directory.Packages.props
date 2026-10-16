@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Production">
+    <PackageVersion Include="Fido2" Version="4.3.1" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
     <PackageVersion Include="MailKit" Version="4.18.1" />

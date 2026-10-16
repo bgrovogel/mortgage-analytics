@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Passkeys;
 using MortgageAnalytics.Application.Preferences;
 using MortgageAnalytics.Application.SavedCalculations;
 using MortgageAnalytics.Application.Validation;
@@ -25,6 +26,9 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
 
     /// <summary>Every saved calculation.</summary>
     public DbSet<SavedCalculation> SavedCalculations => Set<SavedCalculation>();
+
+    /// <summary>The passkeys users have registered to sign in with.</summary>
+    public DbSet<Passkey> Passkeys => Set<Passkey>();
 
     /// <summary>What each signed-in user has chosen about how the app looks to them.</summary>
     public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
@@ -59,6 +63,20 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
         calculation.Property(c => c.OwnerId).HasMaxLength(450).IsRequired();
         calculation.HasIndex(c => new { c.OwnerId, c.UpdatedAt });
         calculation.HasOne<IdentityUser>().WithMany().HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Cascade);
+
+        // A passkey is the public half of a key pair: no secret is stored. Its credential id is the key, so signing in
+        // finds it directly; like everything a user owns, it goes when the user does.
+        var passkey = builder.Entity<Passkey>();
+        passkey.HasKey(p => p.CredentialId);
+        passkey.Property(p => p.CredentialId).HasMaxLength(1023);
+        passkey.Property(p => p.PublicKey).HasMaxLength(1024).IsRequired();
+        passkey.Property(p => p.UserHandle).HasMaxLength(64).IsRequired();
+        passkey.Property(p => p.Name).HasMaxLength(RegisterPasskeyRequestValidator.MaxNameLength).IsRequired();
+        passkey.Property(p => p.OwnerId).HasMaxLength(450).IsRequired();
+        passkey.Property(p => p.CreatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        passkey.Property(p => p.LastUsedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        passkey.HasIndex(p => p.OwnerId);
+        passkey.HasOne<IdentityUser>().WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
 
         // One row per user who has chosen anything; it goes when the user does.
         var preferences = builder.Entity<UserPreferences>();

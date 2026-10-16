@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { PasskeyService } from '../../core/auth/passkey.service';
 import { SignInPageComponent } from './sign-in-page.component';
 import { DevMailboxService } from '../../core/dev/dev-mailbox.service';
 
@@ -10,8 +11,10 @@ describe('SignInPageComponent', () => {
   let fixture: ComponentFixture<SignInPageComponent>;
   let auth: { signIn: jest.Mock; register: jest.Mock; resendConfirmation: jest.Mock };
   let navigate: jest.SpyInstance;
+  let passkeys: { supported: jest.Mock; signIn: jest.Mock };
 
-  const create = (returnUrl: string | null = null) => {
+  const create = (returnUrl: string | null = null, canDoPasskeys = true) => {
+    passkeys = { supported: jest.fn().mockReturnValue(canDoPasskeys), signIn: jest.fn().mockReturnValue(of('signed-in')) };
     auth = {
       signIn: jest.fn().mockReturnValue(of(undefined)),
       register: jest.fn().mockReturnValue(of(undefined)),
@@ -21,6 +24,7 @@ describe('SignInPageComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: auth },
+        { provide: PasskeyService, useValue: passkeys },
         { provide: DevMailboxService, useValue: { available: () => of(true) } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(returnUrl ? { returnUrl } : {}) } } },
       ],
@@ -52,6 +56,58 @@ describe('SignInPageComponent', () => {
     expect(benefits).toContain('Save any calculation');
     expect(benefits).toContain('Private to you');
     expect(benefits).toContain('The calculators never need an account.');
+  });
+
+  describe('with a passkey', () => {
+    it('offers to sign in with one, below the password form', () => {
+      create();
+
+      expect(el('passkey-sign-in')!.textContent!.trim()).toBe('Sign in with a passkey');
+    });
+
+    it('offers nothing a browser cannot do, nor when creating an account', () => {
+      create(null, false);
+      expect(el('passkey-sign-in')).toBeNull();
+
+      TestBed.resetTestingModule();
+      create();
+      (el('account-mode-create') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(el('passkey-sign-in')).toBeNull();
+    });
+
+    it('signs in with it and goes back to where the person was heading, with no password asked', () => {
+      create('/calculator/schedule');
+
+      (el('passkey-sign-in') as HTMLButtonElement).click();
+
+      expect(passkeys.signIn).toHaveBeenCalledTimes(1);
+      expect(auth.signIn).not.toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledWith('/calculator/schedule');
+    });
+
+    it('stays where it is, saying nothing, when the person closes the device prompt', () => {
+      create();
+      passkeys.signIn.mockReturnValue(of('cancelled'));
+
+      (el('passkey-sign-in') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(el('account-error')).toBeNull();
+    });
+
+    it('says so, and points to the password, when the API refuses the passkey', () => {
+      create();
+      passkeys.signIn.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401, error: { title: 'no' } })));
+
+      (el('passkey-sign-in') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(el('account-error')!.textContent).toContain('That passkey could not sign you in. Try your password instead.');
+      expect(navigate).not.toHaveBeenCalled();
+    });
   });
 
   it('signs in and goes back to where the user was heading', () => {

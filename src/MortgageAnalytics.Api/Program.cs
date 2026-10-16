@@ -19,6 +19,7 @@ var provider = builder.Configuration.GetValue("Database:Provider", DatabaseProvi
 builder.Services.AddInfrastructure(database, provider);
 builder.Services.AddDatabaseBackups(builder.Configuration, database, provider);
 builder.Services.AddAccounts(builder.Configuration, builder.Environment);
+builder.Services.AddPasskeys();
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddProxyHeaders(builder.Configuration);
 
@@ -89,6 +90,7 @@ app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
 app.MapFhaEndpoints();
 app.MapAccountEndpoints();
+app.MapPasskeyEndpoints();
 // Development only: lists the emails in the local outbox, so sign-up and password reset can be demoed
 // without a mail server. Never in Production: it would show every user's links.
 if (app.Environment.IsDevelopment())

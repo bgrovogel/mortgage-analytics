@@ -427,14 +427,14 @@ def ci_pipeline():
 def tech_stack():
     s = Svg(960, 452, "The tech stack",
             "Frontend: Angular 22, TypeScript 6.0, signals, RxJS 7.8, SVG charts, Instrument Sans. Backend: ASP.NET Core 10 "
-            "minimal APIs, FluentValidation 12, Identity, MailKit 4, Swashbuckle 10. Data: EF Core 10 and SQLite or PostgreSQL. "
+            "minimal APIs, FluentValidation 12, Identity, Fido2 4, MailKit 4, Swashbuckle 10. Data: EF Core 10 and SQLite or PostgreSQL. "
             "Quality: NUnit 5, NSubstitute 6, Jest 30, Playwright 1.64, axe-core, Stryker.NET 5.0 and Python "
             "Decimal models. Delivery: Docker, docker compose with Mailpit, GitHub Actions.")
     s.card("The tech stack", "What each layer is built with. Versions as pinned in the repository.")
     rows = [
         ("Frontend", "accent", ["Angular 22", "TypeScript 6.0", "Signals", "RxJS 7.8", "SVG charts", "Instrument Sans", "SCSS"]),
-        ("Backend", "neutral", [".NET 10 / C#", "Minimal APIs", "FluentValidation 12", "Identity", "MailKit 4",
-                                "Swashbuckle 10"]),
+        ("Backend", "neutral", [".NET 10 / C#", "Minimal APIs", "FluentValidation 12", "Identity", "Fido2 4",
+                                "MailKit 4", "Swashbuckle 10"]),
         ("Data", "neutral", ["EF Core 10", "SQLite or PostgreSQL", "JSON columns", "Migrations at startup"]),
         ("Quality", "positive", ["NUnit 5", "NSubstitute 6", "Jest 30", "Playwright 1.64", "axe-core", "Stryker.NET 5.0",
                                  "Python models"]),
@@ -513,12 +513,13 @@ def amortization_engine():
 
 
 def schema():
-    s = Svg(960, 592, "The database schema",
+    s = Svg(960, 780, "The database schema",
             "SavedCalculations has Id, OwnerId, Name, four JSON columns (Inputs, OtherHomes, Refinance, Strategy: one kind "
             "per row, and a comparison of homes sets Inputs and OtherHomes), "
             "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
             "with cascade delete. UserPreferences has OwnerId, KeyFigureOrder and KeyFiguresHidden, one row per user who has arranged "
-            "the key figures, also with cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
+            "the key figures, also with cascade delete. Passkeys has CredentialId (the key), OwnerId, PublicKey, UserHandle, SignCount, "
+            "Name, CreatedAt and LastUsedAt, one row per passkey, with a cascade delete from the user. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
             "__EFMigrationsHistory records the applied migrations.")
     s.card("The database", "One SQLite file: the app's own table, ASP.NET Core Identity's, and EF Core's bookkeeping")
 
@@ -568,19 +569,31 @@ def schema():
         ("KeyFigureOrder", "TEXT · names, comma-separated", ""),
         ("KeyFiguresHidden", "TEXT · names, comma-separated", ""),
     ], note="One row per user who arranged the key figures")
+    table(28, 414, 400, "Passkeys", "accent", [
+        ("CredentialId", "BLOB", "PK"),
+        ("OwnerId", "TEXT", "FK"),
+        ("PublicKey", "BLOB", ""),
+        ("UserHandle", "BLOB", ""),
+        ("SignCount", "INTEGER", ""),
+        ("Name", "TEXT · ≤ 50", ""),
+        ("CreatedAt · LastUsedAt", "INTEGER", ""),
+    ], note="One row per passkey · no secret: the private key stays on the device")
+    s.arrow([(428, 500), (480, 500), (480, 296), (530, 296)], color=ACCENT, sw=2)
+    s.text(436, 520, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
+    s.text(436, 534, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
     s.arrow([(732, 336), (732, 316)], color=ACCENT, sw=2)
     s.text(742, 331, "cascade delete", size=10.5, weight=600, fill=ACCENT_DARK)
     s.arrow([(428, 174), (480, 174), (480, 148), (530, 148)], color=ACCENT, sw=2)
     s.text(436, 196, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
     s.text(436, 210, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
 
-    s.rect(28, 414, 400, 78, fill=SURFACE_2, stroke=BORDER_STRONG, rx=12, dash="5 4")
-    s.text(44, 438, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
-    s.text(44, 460, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
-    s.text(44, 478, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
-    s.rect(28, 508, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
-    s.text(44, 532, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
-    s.text(44, 554, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
+    s.rect(532, 488, 400, 78, fill=SURFACE_2, stroke=BORDER_STRONG, rx=12, dash="5 4")
+    s.text(548, 512, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
+    s.text(548, 534, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
+    s.text(548, 552, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
+    s.rect(28, 696, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
+    s.text(44, 720, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
+    s.text(44, 742, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
                     "while it does)", size=12, fill=INK_2)
     s.save("schema.svg")
 

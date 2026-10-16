@@ -499,6 +499,11 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 
 - **Sign up** with an email and a password, and confirm the email from the link sent to it. A forgotten password is
   reset by email.
+- **Passkeys.** On **Your account**, **Add a passkey** has the device (its fingerprint reader, face unlock or screen
+  lock) make a key pair under a name you choose; the private half never leaves the device, and the server keeps only
+  the public half, so there is no secret to guess or steal. Then **Sign in with a passkey** on the sign-in page signs
+  in with no email and no password. Each passkey is listed with when it was added and last used, and can be removed;
+  up to ten. Closing the device's prompt changes nothing, and the password still works.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
   or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved

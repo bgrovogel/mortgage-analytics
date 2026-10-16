@@ -60,6 +60,10 @@
     </form>
 
     @if (mode() === 'sign-in') {
+      @if (passkeys.supported()) {
+        <p class="or" aria-hidden="true"><span>or</span></p>
+        <button type="button" class="secondary" [disabled]="busy()" (click)="signInWithPasskey()" data-testid="passkey-sign-in">Sign in with a passkey</button>
+      }
       <div class="links"><a routerLink="/forgot-password" data-testid="forgot-password-link">Forgot your password?</a></div>
     }
   }

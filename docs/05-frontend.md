@@ -318,7 +318,10 @@ Compare show the same row of views (`BuyTabsComponent`), so the way between them
 ### Talking to the API
 
 One service per area (`AmortizationApiService`, `RefinanceApiService`, `StrategyApiService`,
-`SavedCalculationsApiService`, `AuthService`), each a thin wrapper over `HttpClient` with the URL and types.
+`SavedCalculationsApiService`, `AuthService`, `KeyFiguresApiService`), each a thin wrapper over `HttpClient` with the URL and types.
+`PasskeyService` carries a passkey ceremony between the API and the browser's own `navigator.credentials`: the options and
+the answers travel as WebAuthn's JSON form, which current browsers parse and write themselves (`parseCreationOptionsFromJSON`,
+`toJSON()`), so no byte is handled in the app; closing the device's prompt is a quiet `cancelled`, not an error.
 Models in `core/models/` mirror the C# contracts by hand. A contract snapshot test (`ContractSnapshotTests`) fails
 on any change to the API's shape (a path, schema, property, type or enum value) and leaves a `.received.json` file
 to diff against the approved one, so the change to follow here is spelled out; the e2e consistency suite then checks

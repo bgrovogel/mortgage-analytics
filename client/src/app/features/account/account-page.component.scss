@@ -2,30 +2,6 @@
 
 @include page.styles;
 
-// Each part of the page (the password, then deleting the account) starts below a rule. Deleting is also drawn in the
-// critical colour, so it is never clicked in passing.
-.part,
-.danger {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-
-  h3 {
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-}
-
 // Delete above, keep below: full width, like the other account cards' buttons.
 .actions {
   display: flex;

@@ -4,16 +4,17 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { CalculationStores } from '../calculation-stores';
+import { PasskeysComponent } from './passkeys.component';
 
 /**
- * The signed-in account: change its password, or delete it. Changing the password needs the current one; the API
+ * The signed-in account: change its password, add passkeys to sign in with, or delete it. Changing the password needs the current one; the API
  * keeps this session and ends every other. Deleting takes two deliberate steps: open the delete section, then type
  * the password. The API checks the password, deletes the account with everything saved in it, and ends every
  * session, here and on other devices.
  */
 @Component({
   selector: 'app-account-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PasskeysComponent],
   template: `
     <section class="card" aria-labelledby="account-page-title" aria-live="polite">
       <h1 id="account-page-title">Your account</h1>
@@ -55,6 +56,8 @@ import { CalculationStores } from '../calculation-stores';
             <button type="submit" class="secondary" [disabled]="passwordStatus() === 'working'" data-testid="password-submit">Change password</button>
           </form>
         </div>
+
+        <app-passkeys />
 
         <div class="danger" role="group" aria-labelledby="delete-title">
           <h3 id="delete-title">Delete your account</h3>

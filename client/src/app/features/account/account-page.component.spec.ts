@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { AuthService, User } from '../../core/auth/auth.service';
+import { PasskeyService } from '../../core/auth/passkey.service';
 import { CalculatorStore } from '../calculator/calculator.store';
 import { AccountPageComponent } from './account-page.component';
 
@@ -19,6 +20,7 @@ describe('AccountPageComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: { user: signal<User | null>({ email: 'alice@example.com' }), deleteAccount, changePassword } },
+        { provide: PasskeyService, useValue: { supported: () => false } },
       ],
     });
     fixture = TestBed.createComponent(AccountPageComponent);
@@ -38,6 +40,10 @@ describe('AccountPageComponent', () => {
     (el('delete-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     fixture.detectChanges();
   };
+
+  it('has a place for passkeys between the password and deleting the account', () => {
+    expect(fixture.nativeElement.querySelector('app-passkeys')).not.toBeNull();
+  });
 
   it('says which account is signed in', () => {
     expect(el('account-page-email')!.textContent).toContain('alice@example.com');
