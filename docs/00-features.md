@@ -191,7 +191,8 @@ and the download always has every payment.
 
 The rail of key figures is the reader's: **Arrange these figures** opens a list where each can be put away and moved
 earlier or later (buttons, so the keyboard and a screen reader work; where a figure now stands is announced), and this
-browser remembers it. A saved item has a small **cover** drawn from its own figures (what is put down against borrowed,
+browser remembers it. Signed in, your account does too: the arrangement is sent once it has settled (`PUT
+/api/v1/account/key-figures`), and signing in on another device brings it along; signed out, it stays in the browser. A saved item has a small **cover** drawn from its own figures (what is put down against borrowed,
 or the old rate against the new) with its payment in serif. **Key dates** (a chip under the payment) lists the dates to
 act on, each a payment on the schedule: when to ask for the mortgage insurance to come off (and what waiting costs),
 when half the loan is paid, and when it is free and clear; **Add all to calendar** saves them as an `.ics` file. On a

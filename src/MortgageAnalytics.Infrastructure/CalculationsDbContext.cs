@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Preferences;
 using MortgageAnalytics.Application.SavedCalculations;
 using MortgageAnalytics.Application.Validation;
 
@@ -24,6 +25,9 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
 
     /// <summary>Every saved calculation.</summary>
     public DbSet<SavedCalculation> SavedCalculations => Set<SavedCalculation>();
+
+    /// <summary>What each signed-in user has chosen about how the app looks to them.</summary>
+    public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
 
     /// <summary>The keys that sign session cookies and emailed codes, when <c>DataProtection:Store</c> is <c>Database</c>.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -55,6 +59,14 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
         calculation.Property(c => c.OwnerId).HasMaxLength(450).IsRequired();
         calculation.HasIndex(c => new { c.OwnerId, c.UpdatedAt });
         calculation.HasOne<IdentityUser>().WithMany().HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Cascade);
+
+        // One row per user who has chosen anything; it goes when the user does.
+        var preferences = builder.Entity<UserPreferences>();
+        preferences.HasKey(p => p.OwnerId);
+        preferences.Property(p => p.OwnerId).HasMaxLength(450);
+        preferences.Property(p => p.KeyFigureOrder).HasMaxLength(700).IsRequired();
+        preferences.Property(p => p.KeyFiguresHidden).HasMaxLength(700).IsRequired();
+        preferences.HasOne<IdentityUser>().WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static ValueConverter<T?, string?> JsonConverter<T>() where T : class

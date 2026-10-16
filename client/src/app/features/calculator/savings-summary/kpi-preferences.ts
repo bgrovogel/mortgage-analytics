@@ -16,20 +16,23 @@ export const KPI_LABELS: Record<KpiKey, string> = {
 /** Where the arrangement is remembered, per browser. */
 export const KPI_STORAGE_KEY = 'kpi-rail';
 
-interface Saved {
+export interface Saved {
   order: KpiKey[];
   hidden: KpiKey[];
 }
 
-/** What was saved, kept to the figures that exist: an unknown name is dropped, and a new figure joins at the end. */
+/** An arrangement kept to the figures that exist: an unknown name is dropped, and a new figure joins at the end. */
+function known(raw: { order?: unknown; hidden?: unknown } | null): Saved {
+  const names = (list: unknown): KpiKey[] => (Array.isArray(list) ? list.filter((k): k is KpiKey => KPI_KEYS.includes(k as KpiKey)) : []);
+  return { order: [...new Set([...names(raw?.order), ...KPI_KEYS])], hidden: names(raw?.hidden) };
+}
+
+/** What this browser remembered. */
 function load(): Saved {
   try {
-    const raw = JSON.parse(localStorage.getItem(KPI_STORAGE_KEY) ?? 'null') as Partial<Saved> | null;
-    const known = (list: unknown): KpiKey[] => (Array.isArray(list) ? list.filter((k): k is KpiKey => KPI_KEYS.includes(k as KpiKey)) : []);
-    const order = [...new Set([...known(raw?.order), ...KPI_KEYS])];
-    return { order, hidden: known(raw?.hidden) };
+    return known(JSON.parse(localStorage.getItem(KPI_STORAGE_KEY) ?? 'null') as Partial<Saved> | null);
   } catch {
-    return { order: [...KPI_KEYS], hidden: [] };
+    return known(null);
   }
 }
 
@@ -66,6 +69,24 @@ export class KpiPreferences {
     const hidden = new Set(this.hidden());
     if (!hidden.delete(key)) hidden.add(key);
     this.hidden.set(hidden);
+    this.save();
+  }
+
+  /** The arrangement as lists of names, the way the account keeps it. */
+  arrangement(): Saved {
+    return { order: this.order(), hidden: [...this.hidden()] };
+  }
+
+  /** True while it is the page's own arrangement: every figure shown, in the page's order. */
+  isDefault(): boolean {
+    return this.hidden().size === 0 && this.order().every((key, i) => key === KPI_KEYS[i]);
+  }
+
+  /** Takes an arrangement from elsewhere (the account), kept to the figures that exist, and remembers it here too. */
+  apply(raw: { order: string[]; hidden: string[] }): void {
+    const arranged = known(raw);
+    this.order.set(arranged.order);
+    this.hidden.set(new Set(arranged.hidden));
     this.save();
   }
 

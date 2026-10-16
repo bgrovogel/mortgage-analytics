@@ -274,6 +274,26 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('the key figures keep the order you gave them in your account, on another device', async ({ signedIn, account, page, browser }) => {
+    // Signed in, on the calculator: put "when the mortgage insurance ends" first.
+    expect(signedIn, 'the calculator is open, signed in').toBeTruthy();
+    const saved = page.waitForResponse((r) => r.url().endsWith('/api/v1/account/key-figures') && r.request().method() === 'PUT');
+    await page.getByTestId('arrange-rail').click();
+    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Move When the mortgage insurance ends earlier' }).click();
+    expect((await saved).ok(), 'the arrangement is sent to the account').toBe(true);
+
+    // Another browser with nothing remembered: signing in brings the order with it.
+    const other = await browser.newContext();
+    const there = await other.newPage();
+    await there.addInitScript(() => localStorage.setItem('first-visit-hints', '1'));
+    await expect(await there.request.post('/api/v1/account/login?useCookies=true', { data: account }), 'signed in on the other device').toBeOK();
+    await there.goto('/calculator');
+    await there.getByTestId('arrange-rail').click();
+
+    await expect(there.getByTestId('arrange-list').locator('li').first(), 'the insurance figure is first here too').toContainText('When the mortgage insurance ends');
+    await other.close();
+  });
+
   test('the balance chart can be read as a table, and back', async ({ calculator, page }) => {
     await expect(page.getByTestId('balance-chart'), 'the balance chart is drawn').toBeVisible();
 

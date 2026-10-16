@@ -60,7 +60,7 @@ three files are one database: copy them together, or stop the app first (see [In
 
 ## The schema
 
-![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete; Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
+![The database: SavedCalculations (Id, OwnerId, Name, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete, and so does UserPreferences (OwnerId, KeyFigureOrder, KeyFiguresHidden: one row per user who arranged the key figures); Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
 
 **`SavedCalculations`**, the app's own table, defined in `CalculationsDbContext.OnModelCreating`:
 
@@ -79,6 +79,12 @@ One kind of inputs is set per row, and which says what kind of save it is (`Save
 it, not stored): `Inputs` alone is a purchase, `Inputs` and `OtherHomes` homes compared, `Refinance` or
 `Strategy` a comparison of its own. One index, on **(OwnerId, UpdatedAt)**, matches the one list query every History page
 makes.
+
+**`UserPreferences`** holds what a signed-in user has chosen about how the app looks to them: one row per user who has
+arranged the key figures, keyed by `OwnerId` (a foreign key with cascade delete, so it goes with the account). The
+arrangement is two columns of figure names, comma-separated (`KeyFigureOrder`, `KeyFiguresHidden`): a name is a short
+lowercase word, which the validator enforces, so a comma is never inside one, and the API does not need to know the
+page's figures to keep them.
 
 **ASP.NET Core Identity's tables** come from `IdentityDbContext`. The app uses `AspNetUsers` (email, normalized email
 for lookups, `EmailConfirmed`, `PasswordHash`, `SecurityStamp`, and the lockout columns `LockoutEnd` and
@@ -162,6 +168,10 @@ silently lose its value. Two things stop that:
 | `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, OtherHomes, Refinance, Strategy, UpdatedAt` for the changed columns |
 | `DELETE /api/v1/calculations/{id}` | Delete in one statement, without loading it | `DELETE … WHERE Id = @id AND OwnerId = @me` (`ExecuteDeleteAsync`) |
 
+`UserPreferencesRepository` does two things, both for the signed-in user alone: `GET /api/v1/account/key-figures` reads the
+user's one row (`SELECT … WHERE OwnerId = @me`; no row is an empty arrangement), and `PUT` replaces it (the row is found,
+or added, and both columns written).
+
 - **Ownership is in the query**, not checked afterwards: another user's id simply finds nothing, which the API returns
   as a **404**, never a 403, so it never confirms that the id exists.
 - **The owner comes from the session**, never from the request body.
@@ -215,6 +225,7 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddStrategyComparisons` | Added `Strategy` |
 | `AddDataProtectionKeys` | `DataProtectionKeys`, for signing keys kept in the database |
 | `AddHomeComparisons` | Added `SecondHome` (on PostgreSQL, `PostgresAddHomeComparisons`) |
+| `AddUserPreferences` | `UserPreferences`: one row per user who has arranged the key figures (`OwnerId`, `KeyFigureOrder`, `KeyFiguresHidden`), with a cascade delete from the user |
 | `CompareUpToFourHomes` | Renamed `SecondHome` to `OtherHomes`, and **moved the data** with SQL added by hand: each saved second home becomes a list of one (`'[' \|\| OtherHomes \|\| ']'`). Down, the first of the list becomes the second home again, and a third or fourth home is lost. `HomeComparisonMigrationTests` checks both ways on SQLite, and a Postgres test on PostgreSQL |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:

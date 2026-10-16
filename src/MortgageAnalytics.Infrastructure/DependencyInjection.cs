@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MortgageAnalytics.Application.Preferences;
 using MortgageAnalytics.Application.SavedCalculations;
 using MortgageAnalytics.Infrastructure.Backups;
 
@@ -37,6 +38,7 @@ public static class DependencyInjection
         else
             services.AddDbContext<CalculationsDbContext, SqliteCalculationsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ISavedCalculationRepository, SavedCalculationRepository>();
+        services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
         services.AddHealthChecks().AddDbContextCheck<CalculationsDbContext>("database");
         return services;
     }

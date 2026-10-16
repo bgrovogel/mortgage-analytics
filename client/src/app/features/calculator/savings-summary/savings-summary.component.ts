@@ -170,7 +170,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
       <button type="button" data-testid="arrange-rail" (click)="arranging.open()">Arrange these figures</button>
     </div>
     <app-dialog #arranging heading="Your key figures">
-      <p class="arrange-hint">Put them in the order you read them, and put away the ones you do not need. This browser remembers it.</p>
+      <p class="arrange-hint">Put them in the order you read them, and put away the ones you do not need. This browser remembers it; signed in, so does your account, on every device.</p>
       <ul class="arrange-list" data-testid="arrange-list">
         @for (key of preferences.order(); track key; let first = $first; let last = $last) {
           <li>

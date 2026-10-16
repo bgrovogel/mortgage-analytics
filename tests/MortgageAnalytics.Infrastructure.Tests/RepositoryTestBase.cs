@@ -42,6 +42,9 @@ public abstract class RepositoryTestBase
     /// <summary>A repository on a new context, the way each HTTP request gets one.</summary>
     protected SavedCalculationRepository NewRepository() => new(NewContext());
 
+    /// <summary>A preferences repository on a new context.</summary>
+    protected UserPreferencesRepository NewPreferences() => new(NewContext());
+
     /// <summary>The owner most tests save as.</summary>
     protected const string Alice = "alice-id";
 

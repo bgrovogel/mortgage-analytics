@@ -513,11 +513,12 @@ def amortization_engine():
 
 
 def schema():
-    s = Svg(960, 500, "The database schema",
+    s = Svg(960, 592, "The database schema",
             "SavedCalculations has Id, OwnerId, Name, four JSON columns (Inputs, OtherHomes, Refinance, Strategy: one kind "
             "per row, and a comparison of homes sets Inputs and OtherHomes), "
             "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
-            "with cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
+            "with cascade delete. UserPreferences has OwnerId, KeyFigureOrder and KeyFiguresHidden, one row per user who has arranged "
+            "the key figures, also with cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
             "__EFMigrationsHistory records the applied migrations.")
     s.card("The database", "One SQLite file: the app's own table, ASP.NET Core Identity's, and EF Core's bookkeeping")
 
@@ -562,17 +563,24 @@ def schema():
         ("SecurityStamp", "TEXT", ""),
         ("LockoutEnd · AccessFailedCount", "", ""),
     ], note="… and Identity's other columns, unused here")
+    table(532, 336, 400, "UserPreferences", "accent", [
+        ("OwnerId", "TEXT", "FK"),
+        ("KeyFigureOrder", "TEXT · names, comma-separated", ""),
+        ("KeyFiguresHidden", "TEXT · names, comma-separated", ""),
+    ], note="One row per user who arranged the key figures")
+    s.arrow([(732, 336), (732, 316)], color=ACCENT, sw=2)
+    s.text(742, 331, "cascade delete", size=10.5, weight=600, fill=ACCENT_DARK)
     s.arrow([(428, 174), (480, 174), (480, 148), (530, 148)], color=ACCENT, sw=2)
     s.text(436, 196, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
     s.text(436, 210, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
 
-    s.rect(532, 324, 400, 78, fill=SURFACE_2, stroke=BORDER_STRONG, rx=12, dash="5 4")
-    s.text(548, 348, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
-    s.text(548, 370, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
-    s.text(548, 388, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
-    s.rect(28, 412, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
-    s.text(44, 436, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
-    s.text(44, 458, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
+    s.rect(28, 414, 400, 78, fill=SURFACE_2, stroke=BORDER_STRONG, rx=12, dash="5 4")
+    s.text(44, 438, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
+    s.text(44, 460, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
+    s.text(44, 478, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
+    s.rect(28, 508, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
+    s.text(44, 532, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
+    s.text(44, 554, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
                     "while it does)", size=12, fill=INK_2)
     s.save("schema.svg")
 

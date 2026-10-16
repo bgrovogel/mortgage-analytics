@@ -226,6 +226,27 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("MortgageAnalytics.Application.Preferences.UserPreferences", b =>
+                {
+                    b.Property<string>("OwnerId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("KeyFigureOrder")
+                        .IsRequired()
+                        .HasMaxLength(700)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("KeyFiguresHidden")
+                        .IsRequired()
+                        .HasMaxLength(700)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("OwnerId");
+
+                    b.ToTable("UserPreferences");
+                });
+
             modelBuilder.Entity("MortgageAnalytics.Application.SavedCalculations.SavedCalculation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -314,6 +335,15 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MortgageAnalytics.Application.Preferences.UserPreferences", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -395,6 +395,89 @@
         }
       }
     },
+    "/api/v1/account/key-figures": {
+      "get": {
+        "tags": [
+          "Preferences"
+        ],
+        "operationId": "GetKeyFigures",
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyFigurePreferences"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Preferences"
+        ],
+        "operationId": "SaveKeyFigures",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyFigurePreferences"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {},
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/refinance/analyze": {
       "post": {
         "tags": [
@@ -1755,6 +1838,26 @@
           "Aggressive"
         ],
         "type": "string"
+      },
+      "KeyFigurePreferences": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "hidden": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "LoanPaymentResponse": {
         "type": "object",
@@ -3384,6 +3487,9 @@
     },
     {
       "name": "FHA"
+    },
+    {
+      "name": "Preferences"
     },
     {
       "name": "Refinance"

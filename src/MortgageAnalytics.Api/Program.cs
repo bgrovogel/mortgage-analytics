@@ -94,6 +94,7 @@ app.MapAccountEndpoints();
 if (app.Environment.IsDevelopment())
     app.MapDevOutbox();
 app.MapSavedCalculationEndpoints();
+app.MapPreferencesEndpoints();
 app.MapRefinanceEndpoints();
 app.MapStrategyEndpoints();
 

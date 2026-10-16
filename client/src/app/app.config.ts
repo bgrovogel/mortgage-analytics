@@ -4,6 +4,7 @@ import { PreloadAllModules, provideRouter, withInMemoryScrolling, withPreloading
 import { catchError, of } from 'rxjs';
 import { routes } from './app.routes';
 import { AuthService } from './core/auth/auth.service';
+import { KeyFigureSync } from './features/calculator/savings-summary/key-figure-sync';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,5 +16,9 @@ export const appConfig: ApplicationConfig = {
     // Ask who is signed in before the first navigation, so guards and the header know at once.
     // If the API is down the app still starts, signed out; the calculators work without an account.
     provideAppInitializer(() => inject(AuthService).load().pipe(catchError(() => of(undefined)))),
+    // Keep the key figures' arrangement with the account of whoever is signed in.
+    provideAppInitializer(() => {
+      inject(KeyFigureSync);
+    }),
   ],
 };

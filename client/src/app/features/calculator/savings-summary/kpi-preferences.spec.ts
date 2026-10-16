@@ -47,6 +47,26 @@ describe('KpiPreferences', () => {
     expect(again.visible()).toEqual(['payoff', 'savings', 'afford', 'pmi']);
   });
 
+  it('takes an arrangement from elsewhere, such as the account, keeping to the figures that exist, and remembers it', () => {
+    const prefs = create();
+
+    prefs.apply({ order: ['pmi', 'cash', 'nonsense'], hidden: ['afford', 'nope'] });
+
+    expect(prefs.order()).toEqual(['pmi', 'cash', 'payoff', 'afford', 'savings']);
+    expect(prefs.visible()).toEqual(['pmi', 'cash', 'payoff', 'savings']);
+    expect(create().order()).toEqual(['pmi', 'cash', 'payoff', 'afford', 'savings']);
+  });
+
+  it('describes the arrangement as lists of names, and knows when it is the page own order', () => {
+    const prefs = create();
+    expect(prefs.isDefault()).toBe(true);
+
+    prefs.toggle('pmi');
+
+    expect(prefs.isDefault()).toBe(false);
+    expect(prefs.arrangement()).toEqual({ order: ['cash', 'payoff', 'afford', 'savings', 'pmi'], hidden: ['pmi'] });
+  });
+
   it('keeps to the figures that exist: a name it does not know is dropped, a new one joins at the end', () => {
     localStorage.setItem(KPI_STORAGE_KEY, JSON.stringify({ order: ['pmi', 'old-one', 'cash'], hidden: ['gone'] }));
 
