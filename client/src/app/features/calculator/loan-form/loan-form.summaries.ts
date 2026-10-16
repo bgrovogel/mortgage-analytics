@@ -62,10 +62,14 @@ export function closingSummary(v: LoanFormValues): string {
   ]) || 'No fees';
 }
 
-/** The household's income a year, debts a month and monthly budget, or that none is given. */
+/** The buyers' income a year and debts a month added together, with how many there are, and the monthly budget, or that none is given. */
 export function incomeSummary(v: LoanFormValues): string {
+  // A co-buyer counts once they have an income.
+  const coBuyers = (v.coBuyers ?? []).filter((c) => c.annualIncome);
+  const income = (v.annualIncome ?? 0) + coBuyers.reduce((sum, c) => sum + (c.annualIncome ?? 0), 0);
+  const debts = (v.monthlyDebts ?? 0) + coBuyers.reduce((sum, c) => sum + (c.monthlyDebts ?? 0), 0);
   const parts = [
-    ...(v.annualIncome ? [`Income ${usd(v.annualIncome)}/yr`, `Debts ${usd(v.monthlyDebts ?? 0)}/mo`] : []),
+    ...(v.annualIncome ? [...(coBuyers.length > 0 ? [`${coBuyers.length + 1} buyers`] : []), `Income ${usd(income)}/yr`, `Debts ${usd(debts)}/mo`] : []),
     ...(v.monthlyBudget ? [`Budget ${usd(v.monthlyBudget)}/mo`] : []),
   ];
   return parts.length > 0 ? joined(parts) : 'Add yours to see what you can afford';

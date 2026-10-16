@@ -248,7 +248,7 @@ screen is dark, charts included; the browser's own Print does the same.
 
 #### Can you afford it?
 
-Add your household's income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
+Add your income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
 measures the home the way a lender does; the Overview's tile answers in a word (Yes, A stretch, Too much). Until an
 income is given, the tile and the tab offer **Add your income**, which opens that section with the cursor in the field. The housing payment counts principal and interest at the note rate (a buydown's cheaper
 first years are not qualified on), taxes, insurance, mortgage insurance, dues and PID. An adjustable rate is counted
@@ -264,6 +264,13 @@ it reaches with the same down payment share, rate and costs, and whether this ho
 | **Most a conventional loan allows** | (none) | **45%** (Fannie Mae's Selling Guide B3-6-02, with good credit and reserves; up to 50% through its automated underwriting) |
 | **Most an FHA loan allows** | **31%** | **43%** (HUD; up to 40% and 50% with compensating factors) |
 | **Most a VA loan allows** | (none) | **41%** (past it, VA asks for 20% more residual income) |
+
+**Buying with someone?** Once your income is in, **Add a co-buyer** (up to three) gives each person an income and debts of
+their own and the share of the down payment they put in; you put in the rest. A lender counts everyone on the loan
+together, so the ratios, the limits and the highest prices are for all of you, and the tab adds a **Who pays what**
+table: each buyer's income, debts, down payment (a share and in dollars) and share of the monthly payment, split in
+proportion to income to the cent, with everyone together underneath. A co-buyer with no income yet counts for nothing.
+Co-buyers travel with a saved calculation and a shared link, and a link still holds numbers only, never a name.
 
 The tab leads with the answer to "how much house can I afford?": the most you could pay for a home, comfortably and
 at the most the loan allows, before it measures the home in the form. The start page's question of the same name

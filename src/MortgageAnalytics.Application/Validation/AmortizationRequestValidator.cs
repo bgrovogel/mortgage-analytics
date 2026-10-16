@@ -44,6 +44,9 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
     /// <summary>The most lump sums one request may contain.</summary>
     public const int MaxLumpSums = 120;
 
+    /// <summary>The most co-buyers on a loan, besides the first buyer: a few people, not a crowd.</summary>
+    public const int MaxCoBuyers = 3;
+
     /// <summary>
     /// The lowest recast minimum accepted. Lenders typically require $5,000 to $10,000; anything near zero
     /// would recast (and charge a fee) after routine monthly extras.
@@ -224,6 +227,16 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .OverridePropertyName("Affordability.MonthlyDebts").WithName("Monthly debts")
             .When(r => r.Affordability is not null);
 
+        RuleFor(r => r.Affordability!.CoBuyers)
+            .Must(coBuyers => coBuyers.Count <= MaxCoBuyers).WithMessage($"'Co-buyers' can be at most {MaxCoBuyers}.")
+            .Must(coBuyers => coBuyers.Sum(c => c.DownPaymentPercent) <= 100m).WithMessage("The co-buyers' shares of the down payment add up to more than all of it.")
+            .OverridePropertyName("Affordability.CoBuyers").WithName("Co-buyers")
+            .When(r => r.Affordability is not null);
+
+        RuleForEach(r => r.Affordability!.CoBuyers)
+            .SetValidator(new CoBuyerValidator())
+            .When(r => r.Affordability is not null);
+
         RuleFor(r => r.MonthlyBudget!.Value)
             .GreaterThan(0).LessThanOrEqualTo(MaxMonthlyBudget).WholeCents()
             .OverridePropertyName(nameof(AmortizationRequest.MonthlyBudget)).WithName("Monthly budget")
@@ -304,6 +317,20 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(c => c.EscrowMonths).InclusiveBetween(0, ClosingCosts.MaxEscrowMonths).WithName("Months of escrow");
             RuleFor(c => c.Credits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Credits");
             RuleFor(c => c.LenderCredits).InclusiveBetween(0, MaxAmount).WholeCents().WithName("Lender credits");
+        }
+    }
+
+    /// <summary>Someone buying with the first buyer: an income and debts in dollars and cents, and a share of the down payment.</summary>
+    private sealed class CoBuyerValidator : AbstractValidator<CoBuyerRequest>
+    {
+        public CoBuyerValidator()
+        {
+            RuleFor(c => c.AnnualIncome).GreaterThan(0).LessThanOrEqualTo(MaxIncome).WholeCents().WithName("Co-buyer income");
+            RuleFor(c => c.MonthlyDebts).InclusiveBetween(0, MaxIncome / 12).WholeCents().WithName("Co-buyer debts");
+            RuleFor(c => c.DownPaymentPercent)
+                .InclusiveBetween(0, 100)
+                .Must(percent => decimal.Round(percent, 2) == percent).WithMessage("'Co-buyer share of the down payment' can have at most 2 decimal places.")
+                .WithName("Co-buyer share of the down payment");
         }
     }
 

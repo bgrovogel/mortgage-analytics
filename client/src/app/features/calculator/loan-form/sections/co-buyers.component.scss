@@ -1,0 +1,32 @@
+// Each co-buyer under a rule, so each reads as one person.
+.co-buyers,
+.co-buyer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.co-buyer {
+  min-width: 0;
+  margin: 0;
+  padding: 0.6rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+
+  legend {
+    padding: 0 0.5rem 0 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+}
+
+.co-buyer-share {
+  grid-template-columns: minmax(0, 1fr) auto;
+
+  > .icon-button {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+}

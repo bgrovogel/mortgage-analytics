@@ -120,10 +120,13 @@ public sealed record RentOrBuyRequest
     public decimal SellingCostPercent { get; init; } = 6m;
 }
 
-/// <summary>A household's income and debts, for what it can afford.</summary>
+/// <summary>
+/// The buyers' income and debts, for what they can afford. The first buyer is given here; others on the loan are
+/// <see cref="CoBuyers"/>, and a lender counts everyone's income and debts together.
+/// </summary>
 public sealed record AffordabilityRequest
 {
-    /// <summary>Gross household income a year, before taxes, as a lender counts it.</summary>
+    /// <summary>Gross income a year, before taxes, as a lender counts it: the first buyer's, or the whole household's when nobody else is on the loan.</summary>
     /// <example>150000</example>
     public decimal AnnualIncome { get; init; }
 
@@ -133,6 +136,28 @@ public sealed record AffordabilityRequest
     /// </summary>
     /// <example>600</example>
     public decimal MonthlyDebts { get; init; }
+
+    /// <summary>
+    /// Others buying with the first buyer, up to <see cref="Validation.AmortizationRequestValidator.MaxCoBuyers"/>.
+    /// Their income and debts count with the first buyer's, and each puts in a share of the down payment.
+    /// </summary>
+    public IReadOnlyList<CoBuyerRequest> CoBuyers { get; init; } = [];
+}
+
+/// <summary>Someone buying the home with the first buyer, and what they bring to it.</summary>
+public sealed record CoBuyerRequest
+{
+    /// <summary>Gross income a year, before taxes, as a lender counts it.</summary>
+    /// <example>60000</example>
+    public decimal AnnualIncome { get; init; }
+
+    /// <summary>Other debts a month, as for the first buyer.</summary>
+    /// <example>200</example>
+    public decimal MonthlyDebts { get; init; }
+
+    /// <summary>The share of the down payment this buyer puts in, as a percentage; the first buyer puts in the rest.</summary>
+    /// <example>40</example>
+    public decimal DownPaymentPercent { get; init; }
 }
 
 /// <summary>How to weigh the ways to take the seller's or builder's offer.</summary>

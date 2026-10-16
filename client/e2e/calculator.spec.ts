@@ -274,6 +274,29 @@ test.describe('Mortgage calculator', () => {
     await expect(rows.nth(1).locator('td'), 'FHA: 31% is $3,100').toHaveText(['31% · 43%', '$3,100', '$366,653', 'Past it']);
   });
 
+  test('co-buyers: their income and debts count together, and who pays what is shown', async ({ calculator, page }) => {
+    // The $415,000 example with 9% down: you earn $90,000 with $400 of debts, and a co-buyer $60,000 with $200, putting in 40% of the down payment.
+    await calculator.set('annual-income', 90_000);
+    await calculator.set('monthly-debts', 400);
+    await page.getByTestId('add-co-buyer').click();
+    await calculator.set('co-buyer-income', 60_000);
+    await calculator.set('co-buyer-debts', 200);
+    await calculator.set('co-buyer-share', 40);
+    await calculator.calculate();
+    await expect(page.getByTestId('income-summary'), 'the section counts both buyers').toHaveText('2 buyers · Income $150,000/yr · Debts $600/mo');
+    await calculator.showResults('affordability');
+
+    await expect(page.getByTestId('afford-intro'), 'the ratios are for the two of them together')
+      .toContainText('of your combined $12,500 monthly income, and');
+    const buyers = page.getByTestId('afford-buyers').locator('tbody tr, tfoot tr');
+    await expect(buyers.nth(0).locator('th, td'), 'you put in the 60% the co-buyer leaves, and pay by income').toHaveText(['You', '$7,500', '$400', '60% · $22,410', /^\$[\d,]+$/]);
+    await expect(buyers.nth(1).locator('th, td'), 'the co-buyer puts in 40%').toHaveText(['Co-buyer 1', '$5,000', '$200', '40% · $14,940', /^\$[\d,]+$/]);
+    await expect(buyers.nth(2).locator('th, td'), 'together').toHaveText(['Together', '$12,500', '$600', '$37,350', /^\$[\d,]+$/]);
+
+    await calculator.set('co-buyer-income', '');
+    await expect(page.getByTestId('afford-buyers'), 'a co-buyer with no income is left out, so the buyer is alone again and the table goes').toHaveCount(0);
+  });
+
   test('price a home at the most that stays comfortable: the home price follows, with the same share down', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
     await calculator.set('property-tax-rate', 2.2);

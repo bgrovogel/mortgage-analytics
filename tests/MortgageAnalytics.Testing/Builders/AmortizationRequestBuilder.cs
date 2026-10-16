@@ -144,6 +144,16 @@ public sealed class AmortizationRequestBuilder
     public AmortizationRequestBuilder WithAffordability(decimal annualIncome, decimal monthlyDebts = 0m) =>
         With(r => r with { Affordability = new AffordabilityRequest { AnnualIncome = annualIncome, MonthlyDebts = monthlyDebts } });
 
+    /// <summary>Adds someone buying with the first buyer: their gross <paramref name="annualIncome"/>, other <paramref name="monthlyDebts"/> and share of the down payment. Needs the first buyer's income set.</summary>
+    public AmortizationRequestBuilder WithCoBuyer(decimal annualIncome, decimal monthlyDebts = 0m, decimal downPaymentPercent = 0m) =>
+        With(r => r with
+        {
+            Affordability = r.Affordability! with
+            {
+                CoBuyers = [.. r.Affordability.CoBuyers, new CoBuyerRequest { AnnualIncome = annualIncome, MonthlyDebts = monthlyDebts, DownPaymentPercent = downPaymentPercent }],
+            },
+        });
+
     /// <summary>Asks for the most a home could cost for a total monthly payment of <paramref name="monthlyBudget"/>, at the same down payment share.</summary>
     public AmortizationRequestBuilder WithMonthlyBudget(decimal monthlyBudget) => With(r => r with { MonthlyBudget = monthlyBudget });
 

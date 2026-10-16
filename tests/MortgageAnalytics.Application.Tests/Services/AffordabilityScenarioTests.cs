@@ -67,6 +67,67 @@ public class AffordabilityScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void CoBuyers_AreMeasuredTogether_AsOneHouseholdWithTheirIncomeAndDebtsAdded()
+    {
+        var together = Service.Analyze(TexasPurchase().WithAffordability(90_000m, 400m).WithCoBuyer(60_000m, 200m, 40m)).Affordability!;
+        var one = AffordabilityOf(TexasPurchase(), 150_000m, 600m);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(together.MonthlyIncome, Is.EqualTo(12_500m), "$150,000 a year between them");
+            Assert.That(together.MonthlyDebts, Is.EqualTo(600m), "$400 and $200 of debts");
+            Assert.That(together with { Buyers = null }, Is.EqualTo(one with { Buyers = null }), "every ratio and limit is the one a lender finds for that household");
+        });
+    }
+
+    [Test]
+    public void ABuyerAlone_HasNoBuyersToShowSeparately()
+    {
+        Assert.That(AffordabilityOf(TexasPurchase()).Buyers, Is.Null, "one buyer: nothing to split");
+    }
+
+    [Test]
+    public void TheBuyers_EachBringTheirOwnIncome_DebtsAndShareOfTheDownPayment_TheFirstTakingWhatIsLeft()
+    {
+        var response = Service.Analyze(TexasPurchase().WithAffordability(90_000m, 400m).WithCoBuyer(60_000m, 200m, 40m));
+        var buyers = response.Affordability!.Buyers!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buyers.Select(b => b.MonthlyIncome), Is.EqualTo(new[] { 7_500m, 5_000m }), "the first buyer, then the co-buyer");
+            Assert.That(buyers.Select(b => b.MonthlyDebts), Is.EqualTo(new[] { 400m, 200m }), "debts, each their own");
+            Assert.That(buyers.Select(b => b.DownPaymentPercent), Is.EqualTo(new[] { 60m, 40m }), "the co-buyer's 40%, and the rest");
+            Assert.That(buyers.Select(b => b.DownPayment), Is.EqualTo(new[] { 7_500m, 5_000m }), "5% of $250,000 is $12,500, shared 60/40");
+        });
+    }
+
+    [Test]
+    public void TheBuyers_SharePaymentInProportionToIncome_AddingUpToTheFirstMonthsPayment()
+    {
+        var response = Service.Analyze(TexasPurchase().WithAffordability(90_000m, 400m).WithCoBuyer(60_000m, 200m, 40m));
+        var buyers = response.Affordability!.Buyers!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buyers.Sum(b => b.MonthlyPayment), Is.EqualTo(response.Baseline.TotalMonthlyPayment), "no cent lost");
+            Assert.That(buyers[0].MonthlyPayment, Is.EqualTo(Math.Round(response.Baseline.TotalMonthlyPayment * 0.6m, 2)).Within(0.01m), "$90,000 of $150,000 is 60%");
+        });
+    }
+
+    [Test]
+    public void TheDownPaymentShares_AddUpToTheDownPayment_WhenTheCentsDoNotDivide()
+    {
+        var response = Service.Analyze(TexasPurchase().WithAffordability(90_000m).WithCoBuyer(60_000m, 0m, 33.33m).WithCoBuyer(30_000m, 0m, 33.33m));
+        var buyers = response.Affordability!.Buyers!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buyers.Select(b => b.DownPaymentPercent), Is.EqualTo(new[] { 33.34m, 33.33m, 33.33m }), "the first buyer takes the remainder");
+            Assert.That(buyers.Sum(b => b.DownPayment), Is.EqualTo(12_500m), "the whole down payment");
+        });
+    }
+
+    [Test]
     public void ABudgetBelowAnyLoansPayment_ReachesNoHome()
     {
         var budget = Service.Analyze(TexasPurchase().WithMonthlyBudget(1m)).Budget!;

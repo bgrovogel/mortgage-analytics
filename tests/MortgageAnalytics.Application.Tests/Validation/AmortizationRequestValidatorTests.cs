@@ -325,6 +325,44 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertInvalid(A.Request.WithAffordability(income, debts), path, "a household's income and debts, in dollars and cents");
     }
 
+    [TestCase(0, 0, 0, "Affordability.CoBuyers[0].AnnualIncome", TestName = "A co-buyer with no income")]
+    [TestCase(100_000_000.01, 0, 0, "Affordability.CoBuyers[0].AnnualIncome", TestName = "A co-buyer with an income past $100 million")]
+    [TestCase(60_000, -1, 0, "Affordability.CoBuyers[0].MonthlyDebts", TestName = "A co-buyer with debts below zero")]
+    [TestCase(60_000, 0.001, 0, "Affordability.CoBuyers[0].MonthlyDebts", TestName = "A co-buyer with debts to a fraction of a cent")]
+    [TestCase(60_000, 0, -1, "Affordability.CoBuyers[0].DownPaymentPercent", TestName = "A co-buyer putting in less than none of the down payment")]
+    [TestCase(60_000, 0, 100.01, "Affordability.CoBuyers[0].DownPaymentPercent", TestName = "A co-buyer putting in more than all of it")]
+    [TestCase(60_000, 0, 33.333, "Affordability.CoBuyers[0].DownPaymentPercent", TestName = "A share to more than two decimals")]
+    public void CoBuyer_OutOfRange_IsRejected(decimal income, decimal debts, decimal percent, string path)
+    {
+        AssertInvalid(A.Request.WithAffordability(90_000m).WithCoBuyer(income, debts, percent), path, "a co-buyer's income, debts and share of the down payment");
+    }
+
+    [Test]
+    public void CoBuyers_PuttingInMoreThanTheWholeDownPayment_AreRejected()
+    {
+        AssertInvalid(A.Request.WithAffordability(90_000m).WithCoBuyer(60_000m, 0m, 60m).WithCoBuyer(50_000m, 0m, 50m), "Affordability.CoBuyers", "the shares of the down payment leave the first buyer with a negative share");
+    }
+
+    [Test]
+    public void MoreCoBuyers_ThanTheLimit_AreRejected()
+    {
+        var request = A.Request.WithAffordability(90_000m);
+        for (var i = 0; i <= AmortizationRequestValidator.MaxCoBuyers; i++)
+            request = request.WithCoBuyer(50_000m);
+
+        AssertInvalid(request, "Affordability.CoBuyers", "a loan has a few buyers, not a crowd");
+    }
+
+    [Test]
+    public void CoBuyers_UpToTheLimit_AreAccepted()
+    {
+        var request = A.Request.WithAffordability(90_000m);
+        for (var i = 0; i < AmortizationRequestValidator.MaxCoBuyers; i++)
+            request = request.WithCoBuyer(50_000m, 100m, 25m);
+
+        AssertValid(request, "three co-buyers putting in 25% each leave the first buyer 25%");
+    }
+
     [TestCase(0, 0.25, "SellerOffer.YearsKept", TestName = "An offer weighed over no years")]
     [TestCase(51, 0.25, "SellerOffer.YearsKept", TestName = "An offer weighed over more than 50 years")]
     [TestCase(7, 0, "SellerOffer.RateCutPerPoint", TestName = "Points that cut no rate")]

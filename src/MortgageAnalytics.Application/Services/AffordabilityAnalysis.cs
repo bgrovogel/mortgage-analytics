@@ -29,8 +29,9 @@ internal static class AffordabilityAnalysis
             program, analysis.Rates.Loan.AnnualInterestRate, request.ToAdjustableRate(), request.TermInMonths,
             analysis.Purchase.LoanAmount / analysis.Purchase.HomePrice * 100m);
 
-        var income = Money.Round(household.AnnualIncome / 12m);
-        var debts = household.MonthlyDebts;
+        // A lender counts everyone on the loan together: the first buyer's income and debts, and each co-buyer's.
+        var income = Money.Round((household.AnnualIncome + household.CoBuyers.Sum(c => c.AnnualIncome)) / 12m);
+        var debts = household.MonthlyDebts + household.CoBuyers.Sum(c => c.MonthlyDebts);
         var ratios = new DebtToIncome(income, debts, qualifyingPayment(request, rate.Rate));
 
         var paymentAt = PricedPayments.At(request, rate.Rate, qualifyingPayment);
@@ -48,7 +49,27 @@ internal static class AffordabilityAnalysis
             income, debts, ratios.HousingPayment, ratios.HousingPercent, ratios.TotalPercent,
             Measure(DebtToIncomeLimit.Comfortable),
             Measure(DebtToIncomeLimit.MostAllowed(program)),
-            rate.Rate, ToResponse(rate.Basis));
+            rate.Rate, ToResponse(rate.Basis),
+            household.CoBuyers.Count == 0 ? null : BuyersOf(household, analysis.Purchase.DownPayment, qualifyingPayment(request, analysis.Rates.Loan.AnnualInterestRate)));
+    }
+
+    /// <summary>
+    /// Each buyer, the first first: their own income and debts, their share of the down payment (the first buyer's is
+    /// what the co-buyers leave) and their share of the first month's payment, in proportion to income.
+    /// </summary>
+    private static List<BuyerResponse> BuyersOf(AffordabilityRequest household, decimal downPayment, decimal payment)
+    {
+        var incomes = new[] { household.AnnualIncome }.Concat(household.CoBuyers.Select(c => c.AnnualIncome)).ToList();
+        var debts = new[] { household.MonthlyDebts }.Concat(household.CoBuyers.Select(c => c.MonthlyDebts)).ToList();
+        var coPercents = household.CoBuyers.Select(c => c.DownPaymentPercent).ToList();
+        var percents = new[] { 100m - coPercents.Sum() }.Concat(coPercents).ToList();
+
+        // The co-buyers' shares are rounded to the cent; the first buyer puts in what is left, so the shares add up.
+        var coDownPayments = coPercents.Select(percent => Money.Round(downPayment * percent / 100m)).ToList();
+        var downPayments = new[] { downPayment - coDownPayments.Sum() }.Concat(coDownPayments).ToList();
+
+        var payments = PaymentSplit.ByIncome(payment, incomes);
+        return incomes.Select((annual, i) => new BuyerResponse(Money.Round(annual / 12m), debts[i], percents[i], downPayments[i], payments[i])).ToList();
     }
 
     private static Contracts.QualifyingRateBasis ToResponse(Domain.Affordability.QualifyingRateBasis basis) => basis switch

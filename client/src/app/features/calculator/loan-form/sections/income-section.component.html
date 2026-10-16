@@ -9,10 +9,12 @@
         <app-number-field [control]="f.form.controls.monthlyDebts" [rule]="f.rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
       </div>
       <p class="hint">
-        Your household's income before taxes, and what other debts take each month: car, student and personal loans,
-        card minimums, support. Not rent or utilities. The Affordability tab then measures this home against them as a
-        lender would, and says the most you could pay.
+        Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums,
+        support. Not rent or utilities. The Affordability tab then measures this home against them as a lender would,
+        and says the most you could pay.
       </p>
+
+      <app-co-buyers />
       <app-number-field [control]="f.form.controls.monthlyBudget" [rule]="f.rules.monthlyBudget" testId="monthly-budget" label="Or what you want to pay a month" />
       <p class="hint">
         No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the Affordability

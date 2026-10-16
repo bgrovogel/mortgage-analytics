@@ -89,7 +89,8 @@
         <app-number-field [control]="form.controls.annualIncome" [rule]="rules.annualIncome" testId="annual-income" label="Income a year" />
         <app-number-field [control]="form.controls.monthlyDebts" [rule]="rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
       </div>
-      <p class="hint">Your household's income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities.</p>
+      <p class="hint">Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities.</p>
+      <app-co-buyers />
       <app-number-field [control]="form.controls.monthlyBudget" [rule]="rules.monthlyBudget" testId="monthly-budget" label="Or what you want to pay a month" />
       <p class="hint">No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the highest price that reaches is answered here.</p>
     </fieldset>

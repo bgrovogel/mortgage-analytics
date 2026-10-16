@@ -618,7 +618,10 @@ def affordability(request, today):
     household = request.get('affordability')
     if not household:
         return None
-    income, debts = money(D(str(household['annualIncome'])) / 12), D(str(household['monthlyDebts']))
+    # A lender counts everyone on the loan together: the first buyer, then each co-buyer.
+    buyers = [household] + household.get('coBuyers', [])
+    income = money(sum(D(str(b['annualIncome'])) for b in buyers) / 12)
+    debts = sum(D(str(b['monthlyDebts'])) for b in buyers)
     housing = qualifying_payment(request, today)
     percent = lambda x: (x / income * 100).quantize(CENT, rounding=ROUND_HALF_UP)  # noqa: E731
 
@@ -634,7 +637,31 @@ def affordability(request, today):
     return {'monthlyIncome': income, 'monthlyDebts': debts, 'housingPayment': housing,
             'housingPercent': percent(housing), 'totalPercent': percent(housing + debts),
             'comfortable': limit(*COMFORTABLE), 'mostAllowed': limit(*MOST_ALLOWED[kind]),
-            'qualifyingRate': qualifying, 'qualifyingRateBasis': basis}
+            'qualifyingRate': qualifying, 'qualifyingRateBasis': basis,
+            'buyers': buyers_of(request, today, buyers) if len(buyers) > 1 else None}
+
+
+def buyers_of(request, today, buyers):
+    """
+    Each buyer, the first first: their own income and debts, their share of the down payment (the first buyer puts in
+    what the co-buyers leave) and their share of the first month's payment in proportion to income, the odd cents going
+    to the largest remainders.
+    """
+    down = D(str(request['downPayment']))
+    percents = [D(str(b.get('downPaymentPercent', 0))) for b in buyers[1:]]
+    co_downs = [money(down * pct / 100) for pct in percents]
+    downs = [down - sum(co_downs)] + co_downs
+    percents = [100 - sum(percents)] + percents
+
+    incomes = [D(str(b['annualIncome'])) for b in buyers]
+    cents = int((qualifying_payment(request, today, D(str(request['annualInterestRate']))) * 100).to_integral_value(rounding=ROUND_HALF_UP))
+    exact = [cents * income / sum(incomes) for income in incomes]
+    shares = [int(x.to_integral_value(rounding='ROUND_FLOOR')) for x in exact]
+    for i in sorted(range(len(shares)), key=lambda i: (-(exact[i] - shares[i]), i))[:cents - sum(shares)]:
+        shares[i] += 1
+
+    return [{'monthlyIncome': money(incomes[i] / 12), 'monthlyDebts': D(str(b['monthlyDebts'])), 'downPaymentPercent': percents[i],
+             'downPayment': downs[i], 'monthlyPayment': D(shares[i]) / 100} for i, b in enumerate(buyers)]
 
 
 def price_edge_problems(request, today, affordability_response, cap=D(100_000_000)):

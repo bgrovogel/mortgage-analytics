@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { decimal, usd } from '../../../core/formatting/format';
-import { Affordability, AffordabilityLimit, LoanProgramType, QualifyingRateBasis } from '../../../core/models/amortization.models';
+import { Affordability, AffordabilityLimit, Buyer, LoanProgramType, QualifyingRateBasis } from '../../../core/models/amortization.models';
 
 /** How a sentence names each program's loan. */
 const LOAN: Record<LoanProgramType, string> = { Conventional: 'a conventional loan', Fha: 'an FHA loan', Va: 'a VA loan' };
@@ -90,6 +90,43 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
         }
       </tbody>
     </table>
+    @if (buyers(); as who) {
+      <h3 id="buyers-title">Who pays what</h3>
+      <div class="table-wrap">
+        <table aria-labelledby="buyers-title" data-testid="afford-buyers">
+          <thead>
+            <tr>
+              <th scope="col" class="name">Buyer</th>
+              <th scope="col">Income a month</th>
+              <th scope="col">Debts a month</th>
+              <th scope="col">Down payment</th>
+              <th scope="col">Share of the payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of who.rows; track $index) {
+              <tr>
+                <th scope="row" class="name">{{ b.name }}</th>
+                <td>{{ usd(b.monthlyIncome) }}</td>
+                <td>{{ usd(b.monthlyDebts) }}</td>
+                <td>{{ pct(b.downPaymentPercent) }} · {{ usd(b.downPayment) }}</td>
+                <td>{{ usd(b.monthlyPayment) }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" class="name">Together</th>
+              <td>{{ usd(who.together.monthlyIncome) }}</td>
+              <td>{{ usd(who.together.monthlyDebts) }}</td>
+              <td>{{ usd(who.together.downPayment) }}</td>
+              <td>{{ usd(who.together.monthlyPayment) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="note" data-testid="afford-buyers-note">{{ who.note }}</p>
+    }
     <p class="note" data-testid="afford-note">
       The highest price keeps this home’s {{ downPercent() }}% down, rate, taxes and insurance. {{ stretch() }} {{ rateNote() }}
     </p>
@@ -148,6 +185,24 @@ export class AffordabilityComponent {
       : `Lenders count this adjustable rate’s payment at ${decimal(qualifyingRate, 3)}%, ${ABOVE_START[qualifyingRateBasis]}.`;
   });
 
+  /** Each buyer, the first as "You", and all of them together, when there are co-buyers; null for a buyer alone. */
+  protected readonly buyers = computed(() => {
+    const all = this.affordability().buyers;
+    if (!all || all.length < 2) return null;
+    const sum = (pick: (b: Buyer) => number) => all.reduce((total, b) => total + pick(b), 0);
+    const together = {
+      monthlyIncome: sum((b) => b.monthlyIncome), monthlyDebts: sum((b) => b.monthlyDebts),
+      downPayment: sum((b) => b.downPayment), monthlyPayment: sum((b) => b.monthlyPayment),
+    };
+    const yours = decimal((all[0].monthlyIncome / together.monthlyIncome) * 100, 1);
+    return {
+      rows: all.map((b, i) => ({ ...b, name: i === 0 ? 'You' : `Co-buyer ${i}` })),
+      together,
+      note: `Each share of the monthly payment follows income: you earn ${yours}% of what you earn together. A lender counts the income and debts `
+        + 'of everyone on the loan together, so these ratios are for all of you.',
+    };
+  });
+
   /** What the household could buy at all, before this home: the answer to "how much house can I afford?". */
   readonly budget = computed(() => {
     const { comfortable, mostAllowed } = this.affordability();
@@ -165,7 +220,7 @@ export class AffordabilityComponent {
   readonly intro = computed(() => {
     const a = this.affordability();
     const share = `This home’s payment, ${usd(a.housingPayment)} a month with taxes, insurance and mortgage insurance, is `
-      + `${decimal(a.housingPercent)}% of your ${usd(a.monthlyIncome)} monthly income`;
+      + `${decimal(a.housingPercent)}% of your ${a.buyers ? 'combined ' : ''}${usd(a.monthlyIncome)} monthly income`;
     return a.monthlyDebts > 0 ? `${share}, and ${decimal(a.totalPercent)}% with your ${usd(a.monthlyDebts)} of other debts.` : `${share}.`;
   });
 

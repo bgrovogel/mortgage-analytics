@@ -176,11 +176,21 @@ export interface BudgetAnswer {
   downPayment: number;
 }
 
-/** A household's gross income and other debts. */
+/** The buyers' gross income and other debts: the first buyer's, with each co-buyer's counted alongside. */
 export interface AffordabilityInput {
   annualIncome: number;
   /** Car, student and personal loans, card minimums, support: not rent, utilities or this home. */
   monthlyDebts: number;
+  /** Others on the loan; left out when the first buyer buys alone. */
+  coBuyers?: CoBuyerInput[];
+}
+
+/** Someone buying with the first buyer. */
+export interface CoBuyerInput {
+  annualIncome: number;
+  monthlyDebts: number;
+  /** The share of the down payment they put in, as a percentage; the first buyer puts in the rest. */
+  downPaymentPercent: number;
 }
 
 /** One debt-to-income limit, and what it allows. */
@@ -211,6 +221,19 @@ export interface Affordability {
   qualifyingRate: number;
   /** Why: the note rate, or an adjustable rate's program rule. */
   qualifyingRateBasis: QualifyingRateBasis;
+  /** Each buyer, the first first, when there are co-buyers; otherwise null. */
+  buyers?: Buyer[] | null;
+}
+
+/** One of the buyers: what they bring, and the share of the payment that follows their income. */
+export interface Buyer {
+  monthlyIncome: number;
+  monthlyDebts: number;
+  downPaymentPercent: number;
+  /** Their share of the down payment in dollars; every buyer's adds up to it. */
+  downPayment: number;
+  /** Their share of the first month's payment, split in proportion to income; every buyer's adds up to it. */
+  monthlyPayment: number;
 }
 
 /**

@@ -3,7 +3,7 @@ import { firstOfMonthFromNext } from '../../../core/loans/loan-progress';
 import { AmortizationRequest } from '../../../core/models/amortization.models';
 import {
   FHA_DOWN_TOO_LOW, FHA_LOW_SCORE_DOWN_TOO_LOW, FHA_SCORE_TOO_LOW, GOVERNMENT_LOAN_NOT_LIVED_IN, chargedTaxes, conventionalDownProblem, fhaDownProblem,
-  occupancyProblem, loanForm, lumpSumGroup, pointsApply,
+  coBuyerGroup, occupancyProblem, loanForm, lumpSumGroup, pointsApply,
   rateChangeGroup, rateChangesOf, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 
@@ -291,6 +291,31 @@ describe('loan form model', () => {
       expect(toLoanRequest(form, 1).affordability).toEqual({ annualIncome: 150_000, monthlyDebts: 600 });
     });
 
+    it('sends each co-buyer with the first buyer, and nothing about co-buyers when there are none', () => {
+      const form = newForm();
+      form.patchValue({ annualIncome: 90_000, monthlyDebts: 400 });
+      expect(toLoanRequest(form, 1).affordability).toEqual({ annualIncome: 90_000, monthlyDebts: 400 });
+
+      form.controls.coBuyers.push(coBuyerGroup(fb, 60_000, 200, 40));
+      form.controls.coBuyers.push(coBuyerGroup(fb, 30_000, null, 0));
+
+      expect(toLoanRequest(form, 1).affordability).toEqual({
+        annualIncome: 90_000, monthlyDebts: 400,
+        coBuyers: [{ annualIncome: 60_000, monthlyDebts: 200, downPaymentPercent: 40 }, { annualIncome: 30_000, monthlyDebts: 0, downPaymentPercent: 0 }],
+      });
+    });
+
+    it('leaves out a co-buyer whose income is not given yet, and all of them when the first buyer has none', () => {
+      const form = newForm();
+      form.controls.coBuyers.push(coBuyerGroup(fb, 60_000, 0, 0));
+      expect(toLoanRequest(form, 1).affordability).toBeNull();
+
+      form.patchValue({ annualIncome: 90_000 });
+      form.controls.coBuyers.push(coBuyerGroup(fb, null, 0, 0));
+
+      expect(toLoanRequest(form, 1).affordability?.coBuyers).toEqual([{ annualIncome: 60_000, monthlyDebts: 0, downPaymentPercent: 0 }]);
+    });
+
     it('is cleared by restoring a request without it', () => {
       const form = newForm();
       form.patchValue({ annualIncome: 150_000, monthlyDebts: 600 });
@@ -319,6 +344,7 @@ describe('loan form model', () => {
         usePoints: true, points: 1.5, rateWithoutPoints: 6.5,
       });
       form.controls.lumpSums.push(lumpSumGroup(fb, 24, 5_000));
+      form.controls.coBuyers.push(coBuyerGroup(fb, 60_000, 200, 40));
       form.controls.rateChanges.push(rateChangeGroup(fb, 5, { schoolTaxRate: 1 }));
       syncTaxMode(form);
       syncPoints(form);
@@ -332,6 +358,18 @@ describe('loan form model', () => {
       restoreLoanForm(form, fb, request);
 
       expect(toLoanRequest(form, 1)).toEqual(request);
+    });
+
+    it('replaces the co-buyers, rather than adding to them', () => {
+      const request = toLoanRequest(unusualForm(), 1);
+      const form = newForm();
+
+      restoreLoanForm(form, fb, request);
+      restoreLoanForm(form, fb, request);
+      expect(form.controls.coBuyers.length).toBe(1);
+
+      restoreLoanForm(form, fb, toLoanRequest(newForm(), 1));
+      expect(form.controls.coBuyers.length).toBe(0);
     });
 
     it('replaces the lump sums and rate changes, rather than adding to them', () => {

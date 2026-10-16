@@ -163,6 +163,12 @@ def random_purchase(rng):
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}
+        # Some have co-buyers, each bringing an income and debts and putting in a share of the down payment.
+        if rng.random() < 0.4:
+            shares = rng.choice([[50], [40, 20], [25, 25, 25], [33.33, 33.33], [0]])
+            request['affordability']['coBuyers'] = [
+                {'annualIncome': money(rng, 20_000, 300_000, 500), 'monthlyDebts': rng.choice([0, 100, 450]), 'downPaymentPercent': share}
+                for share in shares]
     # Some give a monthly budget, to be answered with the highest price it reaches.
     if rng.random() < 0.3:
         request['monthlyBudget'] = money(rng, 1_000, 9_000, 100)

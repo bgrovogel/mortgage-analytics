@@ -408,6 +408,12 @@ total %          = (housing payment + other debts) ÷ monthly income × 100
 most for housing = min(income × total limit − debts, income × housing limit), rounded down to the cent, never below 0
 ```
 
+- **Co-buyers** are counted together: the income and the debts of everyone on the loan are added, so the ratios and
+  every price are for the whole household. The down payment is shared out by what each co-buyer puts in (a percentage,
+  rounded to the cent; the first buyer puts in what is left, so the shares add up exactly), and the first month's payment
+  is split in proportion to income by `PaymentSplit.ByIncome`: each share rounded down to the cent, and the cents left
+  over going to the largest remainders, so the shares add up to the payment. Splitting by income is an assumption;
+  how two people really divide a mortgage is their own agreement.
 - **The limits:** comfortable is 28% and 36%. The most allowed is the program's: conventional 45% in all (Fannie
   Mae's Selling Guide B3-6-02, for a manually underwritten loan with the credit score and reserves its matrix asks;
   its automated underwriting goes to 50%). FHA is 31% and 43% (HUD's 2013 manual underwriting
@@ -437,7 +443,7 @@ most for housing = min(income × total limit − debts, income × housing limit)
   about 10 ms to a calculation. FHA's MIP still needs the original schedule.
 - On the reference purchase ($250,000, 5% down, 6.5%, Texas taxes) with $90,000 a year and $400 of debts, the
   comfortable limit allows **$2,100** for housing (28% of $7,500; 36% less the debts would be $2,300).
-- The domain is `DebtToIncome`, `DebtToIncomeLimit`, `QualifyingRate` and `MostAffordable` (`Domain/Affordability`),
+- The domain is `DebtToIncome`, `DebtToIncomeLimit`, `QualifyingRate`, `MostAffordable` and `PaymentSplit` (`Domain/Affordability`),
   and `AffordabilityAnalysis` (`Application/Services`). The Python model checks every price at its edge, from its own
   first-month costs, and finds the qualifying rate its own way, counting the cap steps rather than following the rate
   path. The random purchases include incomes from $40,000 to $400,000, and ARMs fixed 1, 3, 5, 7 and 10 years.

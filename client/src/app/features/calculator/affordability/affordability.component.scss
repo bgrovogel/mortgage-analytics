@@ -187,3 +187,27 @@ tbody th {
     }
   }
 }
+
+h3 {
+  font-size: 0.95rem;
+  margin: 1rem 0 0.25rem;
+}
+
+// Who pays what: wider than a phone, so it scrolls on its own.
+.table-wrap {
+  overflow-x: auto;
+
+  table {
+    min-width: 34rem;
+  }
+
+  .name {
+    text-align: left;
+  }
+
+  tfoot th,
+  tfoot td {
+    font-weight: 600;
+    border-bottom: 0;
+  }
+}

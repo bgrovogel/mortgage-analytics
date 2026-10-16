@@ -71,6 +71,16 @@ export const RATE_CHANGE_RULES = {
   mudTaxRate: { label: 'New MUD tax rate', unit: '%', min: 0, max: 5, decimals: 4, optional: true },
 } as const satisfies FieldRules;
 
+/** The three numbers in each co-buyer row. A row with no income yet counts for nothing, so the form is not held up by it. */
+export const CO_BUYER_RULES = {
+  annualIncome: { label: 'Co-buyer income', unit: '$', min: 0.01, max: 100_000_000, optional: true },
+  monthlyDebts: { label: 'Co-buyer debts', unit: '$', min: 0, max: 8_333_333, optional: true },
+  downPaymentPercent: { label: 'Share of the down payment', unit: '%', min: 0, max: 100 },
+} as const satisfies FieldRules;
+
+/** The most co-buyers on a loan, besides the first buyer: the API's limit. */
+export const MAX_CO_BUYERS = 3;
+
 /** The two numbers in each lump-sum row. */
 export const LUMP_SUM_RULES = {
   amount: { label: 'Lump sum', unit: '$', min: 0.01, max: MAX_AMOUNT },

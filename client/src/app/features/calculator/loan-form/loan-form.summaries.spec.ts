@@ -44,6 +44,16 @@ describe('loan form section summaries', () => {
       expect(incomeSummary({ annualIncome: 150_000, monthlyDebts: null })).toBe('Income $150,000/yr · Debts $0/mo');
     });
 
+    it('counts the buyers and adds their incomes and debts together', () => {
+      const v = { annualIncome: 90_000, monthlyDebts: 400, coBuyers: [{ annualIncome: 60_000, monthlyDebts: 200 }, { annualIncome: 30_000, monthlyDebts: null }] };
+
+      expect(incomeSummary(v)).toBe('3 buyers · Income $180,000/yr · Debts $600/mo');
+    });
+
+    it('leaves a co-buyer with no income out of the count', () => {
+      expect(incomeSummary({ annualIncome: 90_000, monthlyDebts: 0, coBuyers: [{ annualIncome: null, monthlyDebts: 100 }] })).toBe('Income $90,000/yr · Debts $0/mo');
+    });
+
     it('invites an income when there is none', () => {
       expect(incomeSummary({ annualIncome: null })).toBe('Add yours to see what you can afford');
     });

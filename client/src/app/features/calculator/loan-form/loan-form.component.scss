@@ -77,15 +77,20 @@
   }
 }
 
-.link-button {
-  align-self: flex-start;
-  background: none;
-  border: 0;
+// Text buttons: a plain button that reads as a link.
+.link-button,
+.reset {
   padding: 0;
+  border: 0;
+  background: none;
   font: inherit;
-  font-size: 0.9rem;
   color: var(--accent-text);
   cursor: pointer;
+}
+
+.link-button {
+  align-self: flex-start;
+  font-size: 0.9rem;
   // A comfortable touch target for a small text button.
   min-height: 40px;
 
@@ -168,14 +173,8 @@
 // Quiet: a way back to the worked example, not a call to action.
 .reset {
   justify-self: start;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--accent-text);
-  cursor: pointer;
   text-decoration: underline;
 
   &:focus-visible {

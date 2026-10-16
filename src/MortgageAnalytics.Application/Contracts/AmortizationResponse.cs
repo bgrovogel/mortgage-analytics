@@ -99,6 +99,7 @@ public sealed record RentOrBuyYearResponse(
 /// <param name="MostAllowed">The loan program's limit: conventional 45% in all, FHA 31% and 43%, VA 41% in all.</param>
 /// <param name="QualifyingRate">The rate the principal and interest are qualified at, here and at every price searched.</param>
 /// <param name="QualifyingRateBasis">Why it is that rate: the note rate, or an adjustable rate's program rule.</param>
+/// <param name="Buyers">Each buyer, the first first, when there are co-buyers; null for a buyer alone.</param>
 public sealed record AffordabilityResponse(
     decimal MonthlyIncome,
     decimal MonthlyDebts,
@@ -108,7 +109,21 @@ public sealed record AffordabilityResponse(
     AffordabilityLimitResponse Comfortable,
     AffordabilityLimitResponse MostAllowed,
     decimal QualifyingRate,
-    QualifyingRateBasis QualifyingRateBasis);
+    QualifyingRateBasis QualifyingRateBasis,
+    IReadOnlyList<BuyerResponse>? Buyers = null);
+
+/// <summary>One of the buyers: what they bring, and the share of the home's payment that follows their income.</summary>
+/// <param name="MonthlyIncome">Gross income a month.</param>
+/// <param name="MonthlyDebts">Other debts a month.</param>
+/// <param name="DownPaymentPercent">The share of the down payment they put in, as a percentage.</param>
+/// <param name="DownPayment">That share, in dollars; every buyer's adds up to the down payment.</param>
+/// <param name="MonthlyPayment">Their share of the first month's payment if it is split in proportion to income; every buyer's adds up to the payment.</param>
+public sealed record BuyerResponse(
+    decimal MonthlyIncome,
+    decimal MonthlyDebts,
+    decimal DownPaymentPercent,
+    decimal DownPayment,
+    decimal MonthlyPayment);
 
 /// <summary>Why a loan is qualified at the rate it is.</summary>
 public enum QualifyingRateBasis

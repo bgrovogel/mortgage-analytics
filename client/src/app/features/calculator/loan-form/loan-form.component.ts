@@ -15,18 +15,19 @@ import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, OccupancyType, YearProjection } from '../../../core/models/amortization.models';
 import { PAID_OFF_ALREADY, balanceAfter, biweeklyExtra, monthlyPayment, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
-import { LOAN_RULES, LUMP_SUM_RULES, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
+import { CO_BUYER_RULES, LOAN_RULES, LUMP_SUM_RULES, MAX_CO_BUYERS, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { currentBuyView } from '../buy-tabs/buy-tabs.component';
 import { LOAN_FORM } from './loan-form.token';
 import { ClosingSectionComponent } from './sections/closing-section.component';
 import { CostsSectionComponent } from './sections/costs-section.component';
 import { ExtraPaymentsSectionComponent } from './sections/extra-payments-section.component';
 import { GrowthSectionComponent } from './sections/growth-section.component';
+import { CoBuyersComponent } from './sections/co-buyers.component';
 import { IncomeSectionComponent } from './sections/income-section.component';
 import { LoanTypeSectionComponent } from './sections/loan-type-section.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateSummary } from '../../../shared/rate-options/rate-options';
 import {
-  LoanForm, LumpSumForm, RateChangeForm, chargedTaxes, conventionalDownProblem, fhaDownProblem, occupancyProblem, syncOccupancy, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
+  CoBuyerForm, LoanForm, LumpSumForm, coBuyerGroup, coBuyerSharesProblem, RateChangeForm, chargedTaxes, conventionalDownProblem, fhaDownProblem, occupancyProblem, syncOccupancy, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 
@@ -50,7 +51,7 @@ const SECTION_CONTROLS = {
   costs: ['annualInsurance', 'monthlyHoa', 'pmiRate'],
   program: ['creditScore'],
   closing: ['loanCosts', 'otherFees', 'prepaidInterestDays', 'escrowMonths', 'closingCredits', 'lenderCredits'],
-  income: ['annualIncome', 'monthlyDebts', 'monthlyBudget'],
+  income: ['annualIncome', 'monthlyDebts', 'coBuyers', 'monthlyBudget'],
   growth: ['homeValueGrowthRate', 'insuranceIncreaseRate', 'hoaIncreaseRate'],
   options: ['annualExtra', 'annualFirstPayment', 'lumpSums', 'recastMinimum', 'recastFee'],
   rate: ['rate', 'points', 'rateWithoutPoints'],
@@ -83,7 +84,7 @@ function downProblemOf(v: ReturnType<LoanForm['getRawValue']>, adjustableRate: b
   selector: 'app-loan-form',
   imports: [
     ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective,
-    LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent,
+    LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, CoBuyersComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent,
   ],
   // The sections read the form from here.
   providers: [{ provide: LOAN_FORM, useExisting: forwardRef(() => LoanFormComponent) }],
@@ -153,6 +154,7 @@ export class LoanFormComponent implements OnInit {
 
   readonly rules = rules;
   readonly lumpSumRules = LUMP_SUM_RULES;
+  readonly coBuyerRules = CO_BUYER_RULES;
   readonly rateChangeRules = RATE_CHANGE_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
   protected readonly paidOffAlready = PAID_OFF_ALREADY;
@@ -373,6 +375,10 @@ export class LoanFormComponent implements OnInit {
     return this.form.controls.lumpSums;
   }
 
+  get coBuyers(): FormArray<CoBuyerForm> {
+    return this.form.controls.coBuyers;
+  }
+
   /** Loads the starting request, if any, then calculates at once so results appear without any input. */
   ngOnInit(): void {
     const initial = this.initial();
@@ -461,6 +467,21 @@ export class LoanFormComponent implements OnInit {
     this.rateChanges.removeAt(index);
   }
 
+  /** True while another co-buyer may be added: a few people buy together, not a crowd. */
+  canAddCoBuyer(): boolean {
+    return this.coBuyers.length < MAX_CO_BUYERS;
+  }
+
+  /** Adds a co-buyer: their income to be given, and no share of the down payment yet. */
+  addCoBuyer(): void {
+    if (this.canAddCoBuyer()) this.coBuyers.push(coBuyerGroup(this.fb, null, null, 0));
+  }
+
+  /** Removes the co-buyer at `index`. */
+  removeCoBuyer(index: number): void {
+    this.coBuyers.removeAt(index);
+  }
+
   /** Adds a lump-sum row, pre-filled with a $10,000 payment at month 12 (enough to qualify for a typical recast). */
   addLumpSum(): void {
     this.lumpSums.push(lumpSumGroup(this.fb, 12, 10_000));
@@ -501,6 +522,8 @@ export class LoanFormComponent implements OnInit {
       ...problemsIn(rules, this.form.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.rate.controls),
       ...this.lumpSums.controls.flatMap((row) => problemsIn(LUMP_SUM_RULES, row.controls)),
+      ...this.coBuyers.controls.flatMap((row) => problemsIn(CO_BUYER_RULES, row.controls)),
+      ...coBuyerSharesProblem(v.coBuyers),
       ...this.rateChanges.controls.flatMap((row) => problemsIn(RATE_CHANGE_RULES, row.controls)),
       ...(v.rateChanges.some((c) => c.fromYear > v.termYears) ? [`A tax rate change must start within the loan's ${v.termYears} years.`] : []),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
@@ -519,6 +542,9 @@ export class LoanFormComponent implements OnInit {
 
   /** True when any control in `section` is invalid. */
   private sectionInvalid(section: keyof typeof SECTION_CONTROLS): boolean {
+    // A control's status is not a signal: reading the values (which change when it does) makes a summary built on this
+    // recompute as the form is fixed, rather than stay on "Check the values" because it read nothing while invalid.
+    this.values();
     return SECTION_CONTROLS[section].some((name) => this.form.controls[name].invalid);
   }
 

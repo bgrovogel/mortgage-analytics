@@ -355,6 +355,17 @@ describe('LoanFormComponent', () => {
         expect(text(id)).toBe('Check the values in this section');
       }
     });
+
+    it('goes back to the summary once the invalid value is fixed, rather than staying on the warning', () => {
+      controls().loanCosts.setValue(-1);
+      fixture.detectChanges();
+      expect(text('closing-summary')).toBe('Check the values in this section');
+
+      controls().loanCosts.setValue(2_000);
+      fixture.detectChanges();
+
+      expect(text('closing-summary')).toBe('Fees $3,000 · 15 days interest · 3 mo escrow');
+    });
   });
 
   describe('down payment in dollars or percent', () => {
@@ -452,6 +463,78 @@ describe('LoanFormComponent', () => {
       component.removeLumpSum(0);
 
       expect(last().extraPayments?.lumpSums).toEqual([{ paymentNumber: 12, amount: 10_000 }]);
+    });
+
+    describe('co-buyers', () => {
+      beforeEach(() => controls().annualIncome.setValue(90_000));
+
+      it('adds and removes co-buyers, up to three', () => {
+        component.addCoBuyer();
+        component.addCoBuyer();
+        component.addCoBuyer();
+        component.addCoBuyer();
+        expect(component.coBuyers.length).toBe(3);
+        expect(component.canAddCoBuyer()).toBe(false);
+
+        component.removeCoBuyer(0);
+
+        expect(component.coBuyers.length).toBe(2);
+        expect(component.canAddCoBuyer()).toBe(true);
+      });
+
+      it('starts a co-buyer with no income, who is left out of the request until one is given', () => {
+        component.addCoBuyer();
+        expect(last().affordability?.coBuyers).toBeUndefined();
+
+        component.coBuyers.at(0).controls.annualIncome.setValue(60_000);
+        component.coBuyers.at(0).controls.downPaymentPercent.setValue(40);
+
+        expect(last().affordability?.coBuyers).toEqual([{ annualIncome: 60_000, monthlyDebts: 0, downPaymentPercent: 40 }]);
+      });
+
+      it('counts the buyers in the section summary once each has an income', () => {
+        component.addCoBuyer();
+        component.coBuyers.at(0).controls.annualIncome.setValue(60_000);
+        component.coBuyers.at(0).controls.monthlyDebts.setValue(200);
+        component.coBuyers.at(0).controls.downPaymentPercent.setValue(40);
+
+        expect(component.incomeSummary()).toBe('2 buyers · Income $150,000/yr · Debts $200/mo');
+      });
+
+      it('keeps the section summary current as the boxes are typed in', () => {
+        fixture.detectChanges();
+        (el('add-co-buyer') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(text('income-summary')).toBe('Income $90,000/yr · Debts $0/mo');
+        const type = (testId: string, value: string) => {
+          const input = el(testId) as HTMLInputElement; // the box itself carries the test id
+          input.value = value;
+          input.dispatchEvent(new Event('input'));
+          fixture.detectChanges();
+        };
+
+        type('co-buyer-income', '60000');
+        type('co-buyer-debts', '200');
+        type('co-buyer-share', '40');
+
+        expect(text('income-summary')).toBe('2 buyers · Income $150,000/yr · Debts $200/mo');
+      });
+
+      it('will not send shares of the down payment that add up to more than all of it', () => {
+        component.addCoBuyer();
+        component.addCoBuyer();
+        component.coBuyers.at(0).controls.annualIncome.setValue(60_000);
+        component.coBuyers.at(1).controls.annualIncome.setValue(50_000);
+        component.coBuyers.at(0).controls.downPaymentPercent.setValue(60);
+        const reports: string[][] = [];
+        component.problems.subscribe((p) => reports.push(p));
+        const sent = emitted.length;
+
+        component.coBuyers.at(1).controls.downPaymentPercent.setValue(50);
+
+        expect(reports[reports.length - 1]).toEqual(["The co-buyers' shares of the down payment add up to 110%: at most 100% can be shared out."]);
+        expect(emitted).toHaveLength(sent);
+      });
     });
 
     it('sends a PID only when its assessment is positive, with no end year when blank', () => {

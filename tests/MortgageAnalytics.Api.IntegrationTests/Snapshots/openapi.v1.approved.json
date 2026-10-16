@@ -876,6 +876,13 @@
           "monthlyDebts": {
             "type": "number",
             "format": "double"
+          },
+          "coBuyers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoBuyerRequest"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -915,6 +922,13 @@
           },
           "qualifyingRateBasis": {
             "$ref": "#/components/schemas/QualifyingRateBasis"
+          },
+          "buyers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuyerResponse"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1146,6 +1160,32 @@
         },
         "additionalProperties": false
       },
+      "BuyerResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyDebts": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPaymentPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "CashToCloseResponse": {
         "type": "object",
         "properties": {
@@ -1269,6 +1309,24 @@
             "format": "double"
           },
           "lenderCredits": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoBuyerRequest": {
+        "type": "object",
+        "properties": {
+          "annualIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyDebts": {
+            "type": "number",
+            "format": "double"
+          },
+          "downPaymentPercent": {
             "type": "number",
             "format": "double"
           }

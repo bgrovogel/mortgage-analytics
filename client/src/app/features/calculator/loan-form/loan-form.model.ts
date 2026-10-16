@@ -1,11 +1,12 @@
 import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { validatorsFor } from '../../../core/forms/field-rules';
+import { pct } from '../../../core/formatting/format';
 import { firstOfMonthFromNext, toCents } from '../../../core/loans/loan-progress';
 import {
-  AmortizationRequest, BuydownFunding, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, OccupancyType, TaxRateChange, VaFundingFeeType,
+  AmortizationRequest, BuydownFunding, CoBuyerInput, ExtraPaymentStrategy, LoanProgramType, MortgageInsuranceCancellation, OccupancyType, TaxRateChange, VaFundingFeeType,
 } from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
-import { LOAN_RULES as rules, LUMP_SUM_RULES, RATE_CHANGE_RULES } from './loan-fields';
+import { CO_BUYER_RULES, LOAN_RULES as rules, LUMP_SUM_RULES, RATE_CHANGE_RULES } from './loan-fields';
 
 /**
  * The calculator's form as data: its controls and defaults, and the conversions between its values and the API's
@@ -19,6 +20,13 @@ export type DownPaymentMode = 'amount' | 'percent';
 export type TaxMode = 'single' | 'separate';
 
 export type LumpSumForm = FormGroup<{ paymentNumber: FormControl<number>; amount: FormControl<number> }>;
+
+/** Someone buying with the first buyer: an income (blank until given), debts and a share of the down payment. */
+export type CoBuyerForm = FormGroup<{
+  annualIncome: FormControl<number | null>;
+  monthlyDebts: FormControl<number | null>;
+  downPaymentPercent: FormControl<number>;
+}>;
 
 /** A tax rate change: the year it starts, and a new rate for each tax (null keeps it). */
 export type RateChangeForm = FormGroup<{
@@ -106,6 +114,8 @@ export function loanForm(fb: NonNullableFormBuilder) {
     // A household's income and debts, for what it can afford: left blank, there is no affordability panel.
     annualIncome: [null as number | null, validatorsFor(rules.annualIncome)],
     monthlyDebts: [null as number | null, validatorsFor(rules.monthlyDebts)],
+    // Others buying with them, each with an income and debts of their own and a share of the down payment.
+    coBuyers: fb.array<CoBuyerForm>([]),
     // What the household wants to pay each month: left blank, there is no budget answer.
     monthlyBudget: [null as number | null, validatorsFor(rules.monthlyBudget)],
 
@@ -130,6 +140,28 @@ export function loanForm(fb: NonNullableFormBuilder) {
 }
 
 export type LoanForm = ReturnType<typeof loanForm>;
+
+/** One co-buyer row: blank income, to be given, and a share of the down payment. */
+export function coBuyerGroup(fb: NonNullableFormBuilder, annualIncome: number | null, monthlyDebts: number | null, downPaymentPercent: number): CoBuyerForm {
+  return fb.group({
+    annualIncome: fb.control<number | null>(annualIncome, validatorsFor(CO_BUYER_RULES.annualIncome)),
+    monthlyDebts: fb.control<number | null>(monthlyDebts, validatorsFor(CO_BUYER_RULES.monthlyDebts)),
+    downPaymentPercent: [downPaymentPercent, validatorsFor(CO_BUYER_RULES.downPaymentPercent)],
+  });
+}
+
+/** The co-buyers who can be sent: those with an income, a blank debt counting as none. */
+function coBuyersOf(v: ReturnType<LoanForm['getRawValue']>): CoBuyerInput[] {
+  return v.coBuyers
+    .filter((c) => c.annualIncome)
+    .map((c) => ({ annualIncome: c.annualIncome!, monthlyDebts: c.monthlyDebts || 0, downPaymentPercent: c.downPaymentPercent }));
+}
+
+/** Shown when the co-buyers put in more of the down payment between them than there is, leaving the first buyer less than none. */
+export function coBuyerSharesProblem(coBuyers: { downPaymentPercent: number | null }[]): string[] {
+  const total = coBuyers.reduce((sum, c) => sum + (c.downPaymentPercent ?? 0), 0);
+  return total > 100 ? [`The co-buyers' shares of the down payment add up to ${pct(total, 2)}: at most 100% can be shared out.`] : [];
+}
 
 /** One lump-sum row. */
 export function lumpSumGroup(fb: NonNullableFormBuilder, paymentNumber: number, amount: number): LumpSumForm {
@@ -353,7 +385,7 @@ export function toLoanRequest(form: LoanForm, nextPayment: number): Amortization
       credits: v.closingCredits || 0,
       lenderCredits: v.lenderCredits || 0,
     },
-    affordability: v.annualIncome ? { annualIncome: v.annualIncome, monthlyDebts: v.monthlyDebts || 0 } : null,
+    affordability: v.annualIncome ? { annualIncome: v.annualIncome, monthlyDebts: v.monthlyDebts || 0, ...(coBuyersOf(v).length > 0 && { coBuyers: coBuyersOf(v) }) } : null,
     monthlyBudget: v.monthlyBudget || null,
   };
 }
@@ -373,6 +405,10 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
   const quietly = { emitEvent: false };
   form.controls.downPaymentMode.setValue('amount', quietly);
   form.controls.lumpSums.clear(quietly);
+  form.controls.coBuyers.clear(quietly);
+  for (const coBuyer of r.affordability?.coBuyers ?? []) {
+    form.controls.coBuyers.push(coBuyerGroup(fb, coBuyer.annualIncome, coBuyer.monthlyDebts || null, coBuyer.downPaymentPercent), quietly);
+  }
   form.controls.rateChanges.clear(quietly);
   for (const change of costs?.rateChanges ?? []) {
     form.controls.rateChanges.push(rateChangeGroup(fb, change.fromYear, change), quietly);

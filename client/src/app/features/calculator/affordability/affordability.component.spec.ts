@@ -26,6 +26,67 @@ describe('AffordabilityComponent', () => {
     return { text, rows };
   };
 
+  describe('who pays what', () => {
+    const together: Affordability = {
+      ...typical,
+      buyers: [
+        { monthlyIncome: 7_500, monthlyDebts: 400, downPaymentPercent: 60, downPayment: 22_410, monthlyPayment: 2_076.07 },
+        { monthlyIncome: 5_000, monthlyDebts: 200, downPaymentPercent: 40, downPayment: 14_940, monthlyPayment: 1_384.04 },
+      ],
+    };
+    const buyerRows = (root: HTMLElement) => Array.from(root.querySelectorAll('[data-testid="afford-buyers"] tbody tr, [data-testid="afford-buyers"] tfoot tr'),
+      (tr) => Array.from(tr.querySelectorAll('th, td'), (c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' | '));
+
+    it('is left out for a buyer alone', () => {
+      const fixture = TestBed.createComponent(AffordabilityComponent);
+      fixture.componentRef.setInput('affordability', typical);
+      fixture.componentRef.setInput('program', 'Conventional');
+      fixture.componentRef.setInput('downPaymentPercent', 9);
+      fixture.componentRef.setInput('homePrice', null);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="afford-buyers"]')).toBeNull();
+    });
+
+    it('shows each buyer with their income, debts, share of the down payment and share of the payment, then them together', () => {
+      const fixture = TestBed.createComponent(AffordabilityComponent);
+      fixture.componentRef.setInput('affordability', together);
+      fixture.componentRef.setInput('program', 'Conventional');
+      fixture.componentRef.setInput('downPaymentPercent', 9);
+      fixture.componentRef.setInput('homePrice', null);
+      fixture.detectChanges();
+
+      expect(buyerRows(fixture.nativeElement)).toEqual([
+        'You | $7,500 | $400 | 60% · $22,410 | $2,076',
+        'Co-buyer 1 | $5,000 | $200 | 40% · $14,940 | $1,384',
+        'Together | $12,500 | $600 | $37,350 | $3,460',
+      ]);
+    });
+
+    it('counts the income as the buyers have it together', () => {
+      const fixture = TestBed.createComponent(AffordabilityComponent);
+      fixture.componentRef.setInput('affordability', together);
+      fixture.componentRef.setInput('program', 'Conventional');
+      fixture.componentRef.setInput('downPaymentPercent', 9);
+      fixture.componentRef.setInput('homePrice', null);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="afford-intro"]').textContent).toContain('of your combined $12,500 monthly income');
+    });
+
+    it('says how the payment is shared', () => {
+      const fixture = TestBed.createComponent(AffordabilityComponent);
+      fixture.componentRef.setInput('affordability', together);
+      fixture.componentRef.setInput('program', 'Conventional');
+      fixture.componentRef.setInput('downPaymentPercent', 9);
+      fixture.componentRef.setInput('homePrice', null);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="afford-buyers-note"]').textContent.replace(/\s+/g, ' ').trim())
+        .toBe('Each share of the monthly payment follows income: you earn 60% of what you earn together. A lender counts the income and debts of everyone on the loan together, so these ratios are for all of you.');
+    });
+  });
+
   describe('the three figures', () => {
     it('shows the payment as a share of income, with the debts, and the most that could be paid', () => {
       const { text } = render(typical);
