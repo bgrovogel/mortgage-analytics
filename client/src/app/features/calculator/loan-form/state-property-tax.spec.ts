@@ -1,4 +1,4 @@
-import { STATE_PROPERTY_TAX_RATES, stateRate } from './state-property-tax';
+import { STATE_PROPERTY_TAX_RATES, stateRate, stateRules } from './state-property-tax';
 
 describe('typical property tax rates by state', () => {
   it('has the fifty states and the District of Columbia, each once, in alphabetical order', () => {
@@ -13,6 +13,18 @@ describe('typical property tax rates by state', () => {
     for (const { name, rate } of STATE_PROPERTY_TAX_RATES) {
       expect({ name, ok: rate > 0 && rate <= 10 && Math.round(rate * 100) / 100 === rate }).toEqual({ name, ok: true });
     }
+  });
+
+  it('gives the rules of a new buyer for California and Florida, and none for a state it has not checked', () => {
+    expect(stateRules('California')).toMatchObject({ assessmentCap: 2, homesteadExemption: 7_000 });
+    expect(stateRules('Florida')).toMatchObject({ assessmentCap: 3 });
+    expect(stateRules('Florida')?.homesteadExemption).toBeUndefined();
+    expect(stateRules('Ohio')).toBeUndefined();
+    expect(stateRules('Atlantis')).toBeUndefined();
+  });
+
+  it('starts a new California buyer at the rate on the purchase price, not the median of owners whose values Proposition 13 froze', () => {
+    expect(stateRate('California')).toBe(1.1);
   });
 
   it('finds a state by name, and nothing for a name it does not know', () => {

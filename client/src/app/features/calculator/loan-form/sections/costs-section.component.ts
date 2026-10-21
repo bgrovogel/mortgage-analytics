@@ -1,9 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ControlContainer, FormGroupDirective, ReactiveFormsModule } from '@angular/forms';
 import { NumberFieldComponent } from '../../../../core/forms/number-field.component';
 import { LOAN_FORM } from '../loan-form.token';
-import { STATE_PROPERTY_TAX_RATES, stateRate } from '../state-property-tax';
+import { STATE_PROPERTY_TAX_RATES, stateRate, stateRules } from '../state-property-tax';
 
 /** The loan form's Taxes, insurance, HOA & PMI section: Everything paid with the loan each month besides principal and interest: property taxes and any PID, insurance, HOA dues and PMI. */
 @Component({
@@ -21,11 +21,24 @@ export class CostsSectionComponent {
 
   protected readonly states = STATE_PROPERTY_TAX_RATES;
 
-  /** Starts the property tax rate from a state's typical one, then goes back to asking so the same state can be chosen again. */
+  /** What is known of how a new buyer in the state last chosen is taxed; empty where it has not been checked. */
+  protected readonly rulesNote = signal('');
+
+  /**
+   * Starts the property tax rate from a state's typical one, and, where the state's rules for a new buyer are known, the
+   * appraisal cap and homestead exemption too. Then goes back to asking so the same state can be chosen again.
+   */
   protected useState(event: Event): void {
     const select = event.target as HTMLSelectElement;
+    const { propertyTaxRate, homesteadAssessmentCap, propertyTaxHomesteadExemption } = this.f.form.controls;
     const rate = stateRate(select.value);
-    if (rate !== undefined) this.f.form.controls.propertyTaxRate.setValue(rate);
+    if (rate !== undefined) propertyTaxRate.setValue(rate);
+    const rules = stateRules(select.value);
+    if (rules) {
+      homesteadAssessmentCap.setValue(rules.assessmentCap);
+      propertyTaxHomesteadExemption.setValue(rules.homesteadExemption ?? 0);
+    }
+    this.rulesNote.set(rules?.note ?? '');
     select.value = '';
   }
 }

@@ -444,6 +444,21 @@ test.describe('Mortgage calculator', () => {
       .toContainText('counts the federal tax owning saves');
   });
 
+  test('a state starts its rate, and where the rules are known, the cap and the exemption', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 500_000, downPayment: 100_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.openSection('section-costs');
+    await page.getByTestId('state-tax-rate').selectOption('California');
+
+    await expect(page.getByTestId('property-tax-rate'), 'a new buyer pays on the price').toHaveValue('1.1');
+    await expect(page.getByTestId('assessment-cap'), 'Proposition 13 allows 2% a year').toHaveValue('2');
+    await expect(page.getByTestId('homestead-exemption'), 'the homeowners exemption').toHaveValue('7,000');
+    await expect(page.getByTestId('state-rules'), 'the note says why').toContainText('purchase price');
+
+    await calculator.calculate();
+    await calculator.showResults('projection');
+    await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
+  });
+
   test('if you sell: what a sale would leave each year, after the loan, the costs and the tax on the gain', async ({ calculator, page }) => {
     // $375,000 with 5% down at 5.99%, the home rising 3% a year: sold after five years it leaves the buyer's equity, less 6%.
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });

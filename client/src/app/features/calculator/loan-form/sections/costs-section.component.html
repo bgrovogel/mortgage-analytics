@@ -22,9 +22,12 @@
           </select>
         </label>
         <p class="hint">
-          The median tax paid over the median home value in each state (Census Bureau, 2024 American Community Survey).
+          The median tax paid over the median home value in each state (Census Bureau, 2024 American Community Survey), except California, which is the rate on a new buyer's price.
           Your county, city and school district each set their own, so a tax bill, or a listing's tax, is better.
         </p>
+        @if (rulesNote(); as note) {
+          <p class="hint" data-testid="state-rules">{{ note }}</p>
+        }
       } @else {
         <div class="row three">
           <app-number-field [control]="f.form.controls.schoolTaxRate" [rule]="f.rules.schoolTaxRate" testId="school-tax-rate" label="School" />

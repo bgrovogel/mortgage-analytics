@@ -173,6 +173,29 @@ describe('LoanFormComponent', () => {
       expect((el('state-tax-rate') as HTMLSelectElement).value).toBe('');
     });
 
+    it('also starts the appraisal cap and the homestead exemption of a state whose rules for a new buyer are known', () => {
+      choose('California');
+
+      expect([controls().propertyTaxRate.value, controls().homesteadAssessmentCap.value, controls().propertyTaxHomesteadExemption.value]).toEqual([1.1, 2, 7_000]);
+      expect(el('state-rules')?.textContent).toContain('purchase price');
+    });
+
+    it('starts only the cap for Florida, whose exemptions the typical rate already counts, and says the ballot may change them', () => {
+      choose('California');
+      choose('Florida');
+
+      expect([controls().propertyTaxRate.value, controls().homesteadAssessmentCap.value, controls().propertyTaxHomesteadExemption.value]).toEqual([0.8, 3, 0]);
+      expect(el('state-rules')?.textContent).toContain('Amendment 3');
+    });
+
+    it('leaves the cap and exemption alone, and says nothing more, for a state without rules', () => {
+      choose('California');
+      choose('Ohio');
+
+      expect([controls().propertyTaxRate.value, controls().homesteadAssessmentCap.value, controls().propertyTaxHomesteadExemption.value]).toEqual([1.23, 2, 7_000]);
+      expect(el('state-rules')).toBeNull();
+    });
+
     it('is a way to start, not a lock: the rate can still be typed over', () => {
       choose('Hawaii');
       controls().propertyTaxRate.setValue(0.31);
