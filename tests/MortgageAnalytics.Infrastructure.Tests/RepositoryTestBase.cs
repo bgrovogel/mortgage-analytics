@@ -45,6 +45,9 @@ public abstract class RepositoryTestBase
     /// <summary>A preferences repository on a new context.</summary>
     protected UserPreferencesRepository NewPreferences() => new(NewContext());
 
+    /// <summary>A session repository on a new context.</summary>
+    protected UserSessionRepository NewSessions() => new(NewContext());
+
     /// <summary>A passkey repository on a new context.</summary>
     protected PasskeyRepository NewPasskeys() => new(NewContext());
 

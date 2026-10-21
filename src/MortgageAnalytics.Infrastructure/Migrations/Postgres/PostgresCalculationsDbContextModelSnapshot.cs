@@ -345,6 +345,35 @@ namespace MortgageAnalytics.Infrastructure.Migrations.Postgres
                     b.ToTable("SavedCalculations");
                 });
 
+            modelBuilder.Entity("MortgageAnalytics.Application.Sessions.UserSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Device")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("LastSeenAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "LastSeenAt");
+
+                    b.ToTable("UserSessions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -415,6 +444,15 @@ namespace MortgageAnalytics.Infrastructure.Migrations.Postgres
                 });
 
             modelBuilder.Entity("MortgageAnalytics.Application.SavedCalculations.SavedCalculation", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MortgageAnalytics.Application.Sessions.UserSession", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()

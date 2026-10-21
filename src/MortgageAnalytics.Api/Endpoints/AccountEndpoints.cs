@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MortgageAnalytics.Api.Security;
+using MortgageAnalytics.Application.Sessions;
 using MortgageAnalytics.Infrastructure;
 
 namespace MortgageAnalytics.Api.Endpoints;
@@ -68,6 +70,8 @@ public static class AccountEndpoints
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.ExpireTimeSpan = TimeSpan.FromDays(14);
             options.SlidingExpiration = true;
+            // Each sign-in is a session that can be listed and ended from another.
+            SessionTracking.Track(options);
         });
 
         // Check every session against its user on each request (one lookup by id), not every 30 minutes as Identity
@@ -195,8 +199,11 @@ public static class AccountEndpoints
         return TypedResults.Ok(new SessionResponse(user?.Email));
     }
 
-    private static async Task<NoContent> SignOut(SignInManager<IdentityUser> signInManager)
+    private static async Task<NoContent> SignOut(ClaimsPrincipal user, SignInManager<IdentityUser> signInManager, IUserSessionRepository sessions, CancellationToken cancellationToken)
     {
+        // The session ends with the sign-out, so it is no longer listed as somewhere the account is signed in.
+        if (user.Identity?.IsAuthenticated == true && SessionTracking.IdOf(user) is { } session)
+            await sessions.DeleteAsync(user.OwnerId(), session, cancellationToken);
         await signInManager.SignOutAsync();
         return TypedResults.NoContent();
     }
@@ -207,7 +214,8 @@ public static class AccountEndpoints
     /// other sessions; this one is signed in again with the new stamp, so it carries on.
     /// </summary>
     private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> ChangePassword(
-        [FromBody] ChangePasswordRequest request, ClaimsPrincipal principal, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn)
+        [FromBody] ChangePasswordRequest request, ClaimsPrincipal principal, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn,
+        HttpContext context, IUserSessionRepository sessions)
     {
         var user = await users.GetUserAsync(principal);
         if (user is null)
@@ -227,7 +235,9 @@ public static class AccountEndpoints
                 ["newPassword"] = [.. changed.Errors.Select(e => e.Description)],
             });
 
+        // Signed in again with the new stamp, this session has a record of its own; every other session's cookie has just stopped working, so its record goes.
         await signIn.RefreshSignInAsync(user);
+        await sessions.DeleteOthersAsync(user.Id, SessionTracking.SignedInDuring(context) ?? Guid.Empty, context.RequestAborted);
         return TypedResults.NoContent();
     }
 

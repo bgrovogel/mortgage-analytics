@@ -513,13 +513,13 @@ def amortization_engine():
 
 
 def schema():
-    s = Svg(960, 780, "The database schema",
+    s = Svg(960, 900, "The database schema",
             "SavedCalculations has Id, OwnerId, Name, a Note, four JSON columns (Inputs, OtherHomes, Refinance, Strategy: one kind "
             "per row, and a comparison of homes sets Inputs and OtherHomes), "
             "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
             "with cascade delete. UserPreferences has OwnerId, KeyFigureOrder and KeyFiguresHidden, one row per user who has arranged "
             "the key figures, also with cascade delete. Passkeys has CredentialId (the key), OwnerId, PublicKey, UserHandle, SignCount, "
-            "Name, CreatedAt and LastUsedAt, one row per passkey, with a cascade delete from the user. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
+            "Name, CreatedAt and LastUsedAt, one row per passkey, with a cascade delete from the user. UserSessions has Id, OwnerId, Device, CreatedAt and LastSeenAt, one row per sign-in with a session cookie, also with a cascade delete. Identity also creates roles, claims, logins and tokens tables, which stay empty here. "
             "__EFMigrationsHistory records the applied migrations.")
     s.card("The database", "One SQLite file: the app's own table, ASP.NET Core Identity's, and EF Core's bookkeeping")
 
@@ -592,9 +592,17 @@ def schema():
     s.text(548, 512, "Also created by Identity, empty here", size=12.5, weight=650, fill=INK_2)
     s.text(548, 534, "AspNetRoles · AspNetRoleClaims · AspNetUserRoles", size=11.5, fill=INK_3)
     s.text(548, 552, "AspNetUserClaims · AspNetUserLogins · AspNetUserTokens", size=11.5, fill=INK_3)
-    s.rect(28, 696, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
-    s.text(44, 720, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
-    s.text(44, 742, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
+    table(532, 590, 400, "UserSessions", "accent", [
+        ("Id", "TEXT · GUID", "PK"),
+        ("OwnerId", "TEXT", "FK"),
+        ("Device", "TEXT · ≤ 100", ""),
+        ("CreatedAt · LastSeenAt", "INTEGER", ""),
+    ], note="One row per sign-in with a session cookie · the cookie carries the Id")
+    s.arrow([(532, 686), (506, 686), (506, 250), (530, 250)], color=ACCENT, sw=2)
+    s.text(436, 664, "cascade delete", size=10.5, weight=600, fill=ACCENT_DARK)
+    s.rect(28, 816, 904, 64, fill=SURFACE_2, stroke=BORDER, rx=12)
+    s.text(44, 840, "__EFMigrationsHistory", size=12.5, weight=650, fill=INK, mono=True)
+    s.text(44, 862, "the migrations applied so far, so startup applies only the new ones (and __EFMigrationsLock "
                     "while it does)", size=12, fill=INK_2)
     s.save("schema.svg")
 

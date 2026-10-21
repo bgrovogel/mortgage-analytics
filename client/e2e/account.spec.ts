@@ -76,6 +76,28 @@ test.describe('Accounts', () => {
     await expect(page.getByTestId('passkeys-none'), 'removed, so none is left').toHaveText('No passkeys yet.');
   });
 
+  test('where you are signed in: a second browser is listed, and signing it out from the first signs it out', async ({ account, page, browser }) => {
+    // Signed in on this browser, and again in another with nothing remembered, as a phone or a borrowed computer would be.
+    const other = await browser.newContext();
+    const there = await other.newPage();
+    await there.addInitScript(() => localStorage.setItem('first-visit-hints', '1'));
+    await expect(await there.request.post('/api/v1/account/login?useCookies=true', { data: account }), 'signed in on the other browser').toBeOK();
+    await there.goto('/account');
+    await expect(there.getByTestId('session-list').locator('li'), 'it sees both places').toHaveCount(2);
+
+    await page.goto('/account');
+    await expect(page.getByTestId('session-list').locator('li'), 'the first sees both too').toHaveCount(2);
+    await expect(page.getByTestId('session-current'), 'and which one it is').toHaveCount(1);
+    await page.getByTestId('session-list').getByRole('button', { name: /^Sign out / }).click();
+    await expect(page.getByTestId('sessions-status'), 'the other is signed out').toContainText('signed out');
+    await expect(page.getByTestId('session-list').locator('li'), 'and is no longer listed').toHaveCount(1);
+
+    // The other browser is refused at its next request: asking who is signed in now says nobody.
+    const session = await there.request.get('/api/v1/account/session');
+    expect((await session.json()).email, 'the other browser is signed out').toBeNull();
+    await other.close();
+  });
+
   test('downloads a copy of the data the account holds: the email and every saved calculation', async ({ signedIn, account, page }) => {
     await signedIn.saveAs('Oak St');
     await page.goto('/account');

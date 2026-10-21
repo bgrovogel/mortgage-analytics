@@ -1,0 +1,50 @@
+@use 'account-page' as page;
+
+@include page.styles;
+
+// Each session on a line of its own: the device and its dates, with the button to sign it out at the end.
+.session-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.65rem 0.85rem;
+
+    & + li {
+      border-top: 1px solid var(--border);
+    }
+  }
+}
+
+.session-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  min-width: 0;
+
+  small {
+    flex-basis: 100%;
+    color: var(--text-secondary);
+  }
+}
+
+// What marks the session in use.
+.badge {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}

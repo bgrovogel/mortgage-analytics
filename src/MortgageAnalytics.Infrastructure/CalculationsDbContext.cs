@@ -9,6 +9,7 @@ using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Passkeys;
 using MortgageAnalytics.Application.Preferences;
 using MortgageAnalytics.Application.SavedCalculations;
+using MortgageAnalytics.Application.Sessions;
 using MortgageAnalytics.Application.Validation;
 
 namespace MortgageAnalytics.Infrastructure;
@@ -29,6 +30,9 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
 
     /// <summary>The passkeys users have registered to sign in with.</summary>
     public DbSet<Passkey> Passkeys => Set<Passkey>();
+
+    /// <summary>Where each user is signed in: one row per sign-in with a session cookie.</summary>
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
 
     /// <summary>What each signed-in user has chosen about how the app looks to them.</summary>
     public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
@@ -78,6 +82,17 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
         passkey.Property(p => p.LastUsedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
         passkey.HasIndex(p => p.OwnerId);
         passkey.HasOne<IdentityUser>().WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
+
+        // A session is the record that a cookie's sign-in is still wanted. Looked up by id on every request, listed by owner
+        // and last use; it goes when the user does, as does everything they own.
+        var session = builder.Entity<UserSession>();
+        session.HasKey(s => s.Id);
+        session.Property(s => s.OwnerId).HasMaxLength(450).IsRequired();
+        session.Property(s => s.Device).HasMaxLength(DeviceLabel.MaxLength).IsRequired();
+        session.Property(s => s.CreatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        session.Property(s => s.LastSeenAt).HasConversion(new DateTimeOffsetToBinaryConverter());
+        session.HasIndex(s => new { s.OwnerId, s.LastSeenAt });
+        session.HasOne<IdentityUser>().WithMany().HasForeignKey(s => s.OwnerId).OnDelete(DeleteBehavior.Cascade);
 
         // One row per user who has chosen anything; it goes when the user does.
         var preferences = builder.Entity<UserPreferences>();

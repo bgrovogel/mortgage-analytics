@@ -91,6 +91,7 @@ app.MapAmortizationEndpoints();
 app.MapFhaEndpoints();
 app.MapAccountEndpoints();
 app.MapPasskeyEndpoints();
+app.MapSessionEndpoints();
 app.MapAccountExportEndpoints();
 // Development only: lists the emails in the local outbox, so sign-up and password reset can be demoed
 // without a mail server. Never in Production: it would show every user's links.

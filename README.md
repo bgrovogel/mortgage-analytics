@@ -43,7 +43,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 - **Money math you can trust.** `decimal` throughout, every schedule ends at exactly $0.00, and the expected values
   in the tests come from independent Python models, not from this code. Scripts compare 300 random purchases, 300
   refinances and 300 households with the live API, field by field. They have caught real bugs.
-- **Tested from the domain to the browser.** 1,466 .NET, 1,339 Jest and 245 Playwright tests, written test-first. An 85%
+- **Tested from the domain to the browser.** 1,501 .NET, 1,349 Jest and 246 Playwright tests, written test-first. An 85%
   coverage gate, a mutation-score gate on the domain (Stryker.NET, and StrykerJS locally on the Angular logic), a snapshot of the whole API contract, and
   assertion standards enforced at build time with Roslyn.
 - **Built like it will be attacked.** Cookie-only sessions, account attempt limits, a Content-Security-Policy that
@@ -99,14 +99,14 @@ Every command is in the [commands guide](docs/02-commands.md).
 ### Running the tests
 
 ```bash
-dotnet test                       # 1,466 NUnit tests, including the convention tests
+dotnet test                       # 1,501 NUnit tests, including the convention tests
 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
 npm run typecheck                 # tsc over the test code, which Jest and Playwright run without checking types
-npm test                          # 1,339 Jest unit tests; fails below 85% coverage
+npm test                          # 1,349 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
-npm run e2e                       # 245 Playwright tests (29 are axe accessibility scans); builds the app and serves it from the API, as in production
+npm run e2e                       # 246 Playwright tests (29 are axe accessibility scans); builds the app and serves it from the API, as in production
 ```
 
 How each layer is tested, the standards the build enforces, coverage and mutation testing:
@@ -126,6 +126,7 @@ How each layer is tested, the standards the build enforces, coverage and mutatio
 | `POST /api/v1/account/forgotPassword` · `resetPassword` | Email a reset link; set a new password with its code |
 | `GET /api/v1/account/session` | Who is signed in (200 with a null email when nobody is, so a page load logs no error) |
 | `GET` · `POST` · `DELETE /api/v1/account/passkeys` 🔒 · `POST /api/v1/account/passkeys/sign-in-options` · `sign-in` | Add, list and remove passkeys; sign in with one (the options and the answer), which sets the session cookie |
+| `GET /api/v1/account/sessions` 🔒 · `DELETE /api/v1/account/sessions/{id}` · `POST .../sessions/end-others` | Where the account is signed in; end one, or every other; that device is signed out at its next request |
 | `POST /api/v1/account/password` 🔒 | Change your password, with the current one; this session stays, every other ends |
 | `GET /api/v1/fha/loan-limits` | HUD's FHA loan limits for every county (2026), for the county list |
 | `DELETE /api/v1/account` 🔒 | Delete your account and everything saved in it, with your password; signs you out everywhere |
@@ -180,7 +181,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite or PostgreSQL (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · passkeys (WebAuthn, Fido2) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · SVG charts · self-hosted Instrument Sans, Serif and IBM Plex Mono |
-| **Tests** | NUnit + NSubstitute: 1,466 backend tests · Jest: 1,339 Angular unit tests · Playwright: 245 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 1,501 backend tests · Jest: 1,349 Angular unit tests · Playwright: 246 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 
 Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).

@@ -60,7 +60,7 @@ three files are one database: copy them together, or stop the app first (see [In
 
 ## The schema
 
-![The database: SavedCalculations (Id, OwnerId, Name, Note, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete, and so does UserPreferences (OwnerId, KeyFigureOrder, KeyFiguresHidden: one row per user who arranged the key figures), and so does Passkeys (a credential id, a public key, a user handle, a counter, a name and two times: one row per passkey); Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
+![The database: SavedCalculations (Id, OwnerId, Name, Note, the four JSON columns Inputs, OtherHomes, Refinance and Strategy, CreatedAt and UpdatedAt, indexed on OwnerId and UpdatedAt) references AspNetUsers through OwnerId with cascade delete, and so does UserPreferences (OwnerId, KeyFigureOrder, KeyFiguresHidden: one row per user who arranged the key figures), and so does Passkeys (a credential id, a public key, a user handle, a counter, a name and two times: one row per passkey), and so does UserSessions (Id, OwnerId, Device, CreatedAt, LastSeenAt: one row per sign-in with a session cookie); Identity's roles, claims, logins and tokens tables are created but empty; __EFMigrationsHistory records the migrations](images/schema.svg)
 
 **`SavedCalculations`**, the app's own table, defined in `CalculationsDbContext.OnModelCreating`:
 
@@ -230,6 +230,7 @@ There is no manual `database update` step, locally or in Docker. While it migrat
 | `AddUserPreferences` | `UserPreferences`: one row per user who has arranged the key figures (`OwnerId`, `KeyFigureOrder`, `KeyFiguresHidden`), with a cascade delete from the user |
 | `AddPasskeys` | `Passkeys`: one row per passkey (credential id as the key, public key, user handle, counter, name, times), with a cascade delete from the user |
 | `AddCalculationNote` | `SavedCalculations.Note`: an optional note of up to 500 characters, null for none; an update replaces it, so one without a note clears it |
+| `AddUserSessions` | `UserSessions`: one row per sign-in with a session cookie (`Id`, which the cookie carries, `OwnerId`, `Device` as "Chrome on Windows", `CreatedAt`, `LastSeenAt`), indexed on `OwnerId` and `LastSeenAt`, with a cascade delete from the user |
 | `CompareUpToFourHomes` | Renamed `SecondHome` to `OtherHomes`, and **moved the data** with SQL added by hand: each saved second home becomes a list of one (`'[' \|\| OtherHomes \|\| ']'`). Down, the first of the list becomes the second home again, and a third or fourth home is lost. `HomeComparisonMigrationTests` checks both ways on SQLite, and a Postgres test on PostgreSQL |
 
 To add one: [Commands, "Change the database"](02-commands.md#change-the-database). Two tests keep this honest:

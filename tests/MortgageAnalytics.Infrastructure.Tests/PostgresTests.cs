@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Passkeys;
 using MortgageAnalytics.Application.SavedCalculations;
+using MortgageAnalytics.Application.Sessions;
 using Testcontainers.PostgreSql;
 
 namespace MortgageAnalytics.Infrastructure.Tests;
@@ -178,6 +179,45 @@ public class PostgresTests
         {
             Assert.That(found?.OtherHomes, Is.EqualTo(new[] { second }), "a list of one, every value kept");
             Assert.That(format.Read(down), Is.EqualTo(second), "and one home again on the way down");
+        });
+    }
+
+    [Test]
+    public async Task Sessions_AreListedTouchedAndEnded_AndGoWithTheirUser()
+    {
+        var user = new IdentityUser { Id = "sessions-id", UserName = "sessions" };
+        await using (var context = NewContext())
+        {
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+        UserSession Session(string device, int minutes) => new()
+        {
+            Id = Guid.NewGuid(), OwnerId = user.Id, Device = device, CreatedAt = TestClock.Now.AddMinutes(minutes), LastSeenAt = TestClock.Now.AddMinutes(minutes),
+        };
+        var laptop = Session("Chrome on Windows", 0);
+        var phone = Session("Safari on iPhone", 30);
+        await new UserSessionRepository(NewContext()).AddAsync(laptop, CancellationToken.None);
+        await new UserSessionRepository(NewContext()).AddAsync(phone, CancellationToken.None);
+
+        var listed = await new UserSessionRepository(NewContext()).ListAsync(user.Id, TestClock.Now.AddDays(-14), CancellationToken.None);
+        var touched = await new UserSessionRepository(NewContext()).TouchAsync(laptop.Id, user.Id, TestClock.Now.AddMinutes(60), TimeSpan.FromMinutes(5), CancellationToken.None);
+        var afterTouch = await new UserSessionRepository(NewContext()).ListAsync(user.Id, TestClock.Now.AddDays(-14), CancellationToken.None);
+        var ended = await new UserSessionRepository(NewContext()).DeleteOthersAsync(user.Id, laptop.Id, CancellationToken.None);
+
+        await using (var context = NewContext())
+        {
+            context.Users.Remove(await context.Users.SingleAsync(u => u.Id == user.Id));
+            await context.SaveChangesAsync();
+        }
+
+        Assert.Multiple(async () =>
+        {
+            Assert.That(listed.Select(s => s.Device), Is.EqualTo(new[] { "Safari on iPhone", "Chrome on Windows" }), "newest used first, the times compared as stored");
+            Assert.That(touched, Is.True, "the laptop is still wanted");
+            Assert.That(afterTouch.Select(s => s.Device), Is.EqualTo(new[] { "Chrome on Windows", "Safari on iPhone" }), "and its use was recorded, which put it first");
+            Assert.That(ended, Is.EqualTo(1), "the phone alone was ended");
+            Assert.That(await NewContext().Set<UserSession>().CountAsync(s => s.OwnerId == user.Id), Is.EqualTo(0), "and deleting the user took the rest");
         });
     }
 }

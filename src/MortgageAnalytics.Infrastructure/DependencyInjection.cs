@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MortgageAnalytics.Application.Passkeys;
 using MortgageAnalytics.Application.Preferences;
+using MortgageAnalytics.Application.Sessions;
 using MortgageAnalytics.Application.SavedCalculations;
 using MortgageAnalytics.Infrastructure.Backups;
 
@@ -40,6 +41,7 @@ public static class DependencyInjection
             services.AddDbContext<CalculationsDbContext, SqliteCalculationsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<ISavedCalculationRepository, SavedCalculationRepository>();
         services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<IPasskeyRepository, PasskeyRepository>();
         services.AddHealthChecks().AddDbContextCheck<CalculationsDbContext>("database");
         return services;

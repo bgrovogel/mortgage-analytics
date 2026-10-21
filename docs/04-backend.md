@@ -84,6 +84,7 @@ The use cases: what the API offers, and the translation between the outside worl
 | `Mapping/` | Extension methods from contracts to domain objects and back: `request.ToLoanTerms(...)`, `comparison.ToResponse(...)`. `RateOptionMapper` maps ARMs and buydowns the same way for every page. |
 | `Services/` | `AmortizationService`, `RefinanceService`, `StrategyService`: map in, call the domain, map out. They depend on interfaces (`ILoanComparer`, `IRefinanceAnalyzer`, `IStrategyOptimizer`) and `TimeProvider`. |
 | `SavedCalculations/` | `SavedCalculation` (the entity), `ISavedCalculationRepository` (the port), `SavedCalculationService` (stamps times, trims names, maps). |
+| `Sessions/` | `UserSession` (one sign-in with a session cookie), `IUserSessionRepository` (the port) and `DeviceLabel` ("Chrome on Windows" from a user agent, reading only the few words that tell devices apart). |
 | `Passkeys/` | `Passkey` (the entity: a credential id, its public key, the user handle, a counter and a name) and `IPasskeyRepository` (the port). |
 | `Preferences/` | `UserPreferences` (the entity: what one user has chosen about how the app looks to them) and `IUserPreferencesRepository` (the port); the key-figure arrangement is kept here. |
 | `DependencyInjection.cs` | `AddApplication()`: registers all of the above. |
@@ -103,6 +104,7 @@ code puts those decisions where they can be read and unit-tested one by one, whi
 | File | Purpose |
 |---|---|
 | `CalculationsDbContext.cs` | EF Core context: Identity's tables (it derives from `IdentityDbContext`) plus `SavedCalculations`, `UserPreferences` and `Passkeys` |
+| `UserSessionRepository.cs` | Records sign-ins; says whether a session is still wanted and notes its use at most every five minutes; lists a user's by last use (clearing those older than the cookie lasts); ends one, or all but one, by owner in one statement |
 | `PasskeyRepository.cs` | Finds a passkey by the credential id a device sends; lists, adds, records a sign-in's counter and time, and deletes by owner |
 | `UserPreferencesRepository.cs` | Reads and replaces a user's key-figure arrangement (names kept comma-separated); one row per user |
 | `SavedCalculationRepository.cs` | The port's implementation: list (with a case-insensitive, wildcard-safe search), find, add, update, delete; always filtered by owner |

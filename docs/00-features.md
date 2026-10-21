@@ -562,6 +562,10 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   the public half, so there is no secret to guess or steal. Then **Sign in with a passkey** on the sign-in page signs
   in with no email and no password. Each passkey is listed with when it was added and last used, and can be removed;
   up to ten. Closing the device's prompt changes nothing, and the password still works.
+- **Where you're signed in.** **Your account** lists every browser or device signed in to it (the browser and system, when it
+  signed in and was last used, this one marked). **Sign out** ends another, and **Sign out everywhere else** ends all but this one,
+  for a lost phone or a shared computer; that device is refused at its next request. Signing out, changing the password (which ends
+  the others) and deleting the account clear the list too. A session unused for 14 days, as long as its cookie lasts, drops off.
 - **Download your data.** **Your data** on the account page saves one JSON file of everything the account holds: the
   email, every saved calculation with all its inputs, the passkeys' names and dates, and the key figures' order. It never
   holds the password or a passkey's key.
