@@ -1,4 +1,4 @@
-// One pill, four states, told apart by shape (the icon) and words as well as color.
+// One pill, five states, told apart by shape (the icon) and words as well as color.
 .pill {
   display: inline-flex;
   align-items: center;
@@ -21,6 +21,10 @@
   }
 
   &[data-state='offline'] {
+    color: var(--warning-text);
+  }
+
+  &[data-state='stale'] {
     color: var(--warning-text);
   }
 

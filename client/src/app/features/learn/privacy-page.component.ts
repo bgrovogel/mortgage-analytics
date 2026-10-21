@@ -36,16 +36,23 @@ import { ReadingNavComponent } from './reading-nav.component';
         <section id="account">
           <h3>With an account</h3>
           <p>An account is an email address and a password, which is kept scrambled so nobody, including us, can read it.
-            Calculations you choose to save are kept in your account and are visible only to you. You can change your
-            password at any time, and you can delete your account: that deletes every calculation saved in it.</p>
+            Calculations you choose to save are kept in your account and are visible only to you. So is the order of your
+            key figures, if you arranged them, so it follows you to another device.</p>
+          <p>A passkey, if you add one, lets you sign in with your device's fingerprint, face or screen lock. Only its
+            public half is kept here, with the name you gave it and when it was added and last used; the private half
+            never leaves your device, so there is nothing to steal or to guess.</p>
+          <p>You can change your password, and remove any passkey, at any time. You can delete your account, which deletes
+            everything above: every saved calculation, every passkey and your arrangement.</p>
           <p>Signing in puts a cookie in your browser that keeps you signed in. Scripts on the page cannot read it, and
             other sites cannot send it.</p>
         </section>
 
         <section id="browser">
           <h3>In your browser</h3>
-          <p>The page remembers two small things in your browser, only on your device: which columns you chose for the
-            payment schedule, and your colour theme if you picked one. Clearing the site's data removes them.</p>
+          <p>The page remembers a few small things in your browser, only on your device: your colour theme if you picked
+            one, which columns you chose for the payment schedule, the order of your key figures (also kept in your account
+            when you are signed in), whether you chose to hide amounts on Saved, and that you have seen the first-visit
+            tips. Clearing the site's data removes them.</p>
         </section>
 
         <section id="none">

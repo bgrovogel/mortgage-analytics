@@ -141,6 +141,11 @@ export function loanForm(fb: NonNullableFormBuilder) {
 
 export type LoanForm = ReturnType<typeof loanForm>;
 
+/** The rows of a list in a request that may not be what it should: nothing for a value that is not a list, and only its objects. */
+function rowsOf<T extends object>(list: readonly T[] | null | undefined): T[] {
+  return Array.isArray(list) ? list.filter((row): row is T => typeof row === 'object' && row !== null) : [];
+}
+
 /** One co-buyer row: blank income, to be given, and a share of the down payment. */
 export function coBuyerGroup(fb: NonNullableFormBuilder, annualIncome: number | null, monthlyDebts: number | null, downPaymentPercent: number): CoBuyerForm {
   return fb.group({
@@ -406,14 +411,15 @@ export function restoreLoanForm(form: LoanForm, fb: NonNullableFormBuilder, r: A
   form.controls.downPaymentMode.setValue('amount', quietly);
   form.controls.lumpSums.clear(quietly);
   form.controls.coBuyers.clear(quietly);
-  for (const coBuyer of r.affordability?.coBuyers ?? []) {
+  // A request can come from a link someone made by hand: a list that is not a list, or a row that is not an object, is skipped.
+  for (const coBuyer of rowsOf(r.affordability?.coBuyers)) {
     form.controls.coBuyers.push(coBuyerGroup(fb, coBuyer.annualIncome, coBuyer.monthlyDebts || null, coBuyer.downPaymentPercent), quietly);
   }
   form.controls.rateChanges.clear(quietly);
-  for (const change of costs?.rateChanges ?? []) {
+  for (const change of rowsOf(costs?.rateChanges)) {
     form.controls.rateChanges.push(rateChangeGroup(fb, change.fromYear, change), quietly);
   }
-  for (const lump of extras?.lumpSums ?? []) {
+  for (const lump of rowsOf(extras?.lumpSums)) {
     form.controls.lumpSums.push(lumpSumGroup(fb, lump.paymentNumber, lump.amount), quietly);
   }
   form.patchValue({

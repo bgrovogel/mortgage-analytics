@@ -964,6 +964,42 @@ test.describe('On a phone', () => {
     await expect(calculator.headline, 'on the answer').toBeInViewport();
   });
 
+  test('says the payment in the sheet is the last valid one while the form has something to fix', async ({ calculator, page }) => {
+    await page.getByTestId('edit-inputs').click();
+    await expect(calculator.formPanel, 'the sheet is open').toBeInViewport();
+    await calculator.set('home-price', 0);
+
+    await expect(page.getByTestId('sheet-lead'), 'not presented as the payment for the price now on screen').toContainText('Last valid: $3,102.19 a month');
+    await expect(page.getByTestId('calc-status'), 'and the status says the same').toHaveText('Last valid numbers');
+
+    await calculator.set('home-price', 415_000);
+
+    await expect(page.getByTestId('sheet-lead'), 'fixed, it is the payment again').not.toContainText('Last valid');
+  });
+
+  test('the payments ledger under the balance chart fits without scrolling sideways', async ({ calculator, page }) => {
+    await expect(calculator.headline, 'the page has loaded').toBeVisible();
+    await page.getByTestId('ledger').scrollIntoViewIfNeeded();
+
+    const { scroll, shown } = await page.getByTestId('ledger').evaluate((el) => ({ scroll: el.scrollWidth, shown: el.clientWidth }));
+
+    expect(scroll, 'the date, principal, interest and balance are all in view').toBeLessThanOrEqual(shown + 1);
+  });
+
+  test('the rent-or-buy table shows what you would have, and who is ahead, without scrolling sideways', async ({ calculator, page }) => {
+    await calculator.showResults('rent-or-buy');
+    await calculator.set('monthly-rent', 2_700);
+    await page.getByTestId('close-sheet').click();
+    await expect(page.getByTestId('rent-or-buy'), 'the table is shown').toBeVisible();
+
+    const { scroll, shown } = await page.getByTestId('rent-or-buy').evaluate((table) => {
+      const wrap = table.closest('.table-wrap') as HTMLElement;
+      return { scroll: wrap.scrollWidth, shown: wrap.clientWidth };
+    });
+
+    expect(scroll, 'the buy, rent and ahead columns are all in view').toBeLessThanOrEqual(shown + 1);
+  });
+
   test('shows every page link, wrapping onto a second row rather than hiding past the edge', async ({ calculator, page }) => {
     await expect(calculator.headline, 'the page has loaded').toBeVisible();
     const links = page.getByRole('navigation', { name: 'Pages' }).getByRole('link');

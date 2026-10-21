@@ -39,4 +39,14 @@ test.describe('How it is calculated and the glossary', () => {
       expect(overflow, `${path} fits the screen`).toBeLessThanOrEqual(0);
     }
   });
+
+  test('the links to its sections are as easy to hit as any other target on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/how-it-works');
+
+    for (const link of await page.getByTestId('contents').getByRole('link').all()) {
+      const box = (await link.boundingBox())!;
+      expect(box.height, `${await link.textContent()} is at least 44px tall`).toBeGreaterThanOrEqual(43.5);
+    }
+  });
 });

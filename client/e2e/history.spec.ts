@@ -65,6 +65,18 @@ test.describe('History', () => {
     await expect(page.getByTestId('save-update'), 'saving again offers to update the one it came from').toContainText(name);
   });
 
+  test('every filter reads in full on a phone, none cut off at its edge', async ({ account, page }) => {
+    expect(account.email, 'signed in').toBeTruthy();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/history');
+    await expect(page.getByTestId('kind-filter-all'), 'the filters are shown').toBeVisible();
+
+    const cut = await page.locator('[data-testid^="kind-filter-"]').evaluateAll((buttons) =>
+      buttons.filter((b) => b.scrollWidth > b.clientWidth + 1).map((b) => b.textContent!.trim()));
+
+    expect(cut, 'no filter is wider than its button').toEqual([]);
+  });
+
   test('renames and deletes a saved calculation', async ({ signedIn: calculator, page }) => {
     const name = `Maple ${tag}`;
     const renamed = `Maple final ${tag}`;

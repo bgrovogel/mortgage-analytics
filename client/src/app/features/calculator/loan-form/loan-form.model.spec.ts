@@ -360,6 +360,36 @@ describe('loan form model', () => {
       expect(toLoanRequest(form, 1)).toEqual(request);
     });
 
+    it('takes what it can from a request of the wrong shape, as a share link might carry, and never throws', () => {
+      const form = newForm();
+      const wrong = (patch: Record<string, unknown>) => ({ ...toLoanRequest(newForm(), 1), ...patch }) as unknown as AmortizationRequest;
+
+      expect(() => restoreLoanForm(form, fb, wrong({ affordability: { annualIncome: 90_000, monthlyDebts: 0, coBuyers: 5 } }))).not.toThrow();
+      expect(() => restoreLoanForm(form, fb, wrong({ affordability: { annualIncome: 90_000, monthlyDebts: 0, coBuyers: 'abc' } }))).not.toThrow();
+      expect(() => restoreLoanForm(form, fb, wrong({ affordability: 'x' }))).not.toThrow();
+      expect(() => restoreLoanForm(form, fb, wrong({ extraPayments: { lumpSums: 5 } }))).not.toThrow();
+      expect(() => restoreLoanForm(form, fb, wrong({ housingCosts: { rateChanges: 3 } }))).not.toThrow();
+      expect(() => restoreLoanForm(form, fb, wrong({ housingCosts: 'x', extraPayments: [] }))).not.toThrow();
+      expect(form.controls.coBuyers.length).toBe(0); // a list that is not a list holds no co-buyers
+      expect(form.controls.lumpSums.length).toBe(0); // and no lump sums
+      expect(form.controls.rateChanges.length).toBe(0); // and no rate changes
+    });
+
+    it('leaves out the rows of a list that are not objects, and keeps the ones that are', () => {
+      const form = newForm();
+      const request = {
+        ...toLoanRequest(newForm(), 1),
+        affordability: { annualIncome: 90_000, monthlyDebts: 0, coBuyers: [null, 7, { annualIncome: 60_000, monthlyDebts: 200, downPaymentPercent: 40 }] },
+        extraPayments: { monthlyAmount: 0, lumpSums: [null, { paymentNumber: 24, amount: 5_000 }] },
+      } as unknown as AmortizationRequest;
+
+      restoreLoanForm(form, fb, request);
+
+      expect(form.controls.coBuyers.length).toBe(1);
+      expect(form.controls.coBuyers.at(0).controls.annualIncome.value).toBe(60_000);
+      expect(form.controls.lumpSums.length).toBe(1);
+    });
+
     it('replaces the co-buyers, rather than adding to them', () => {
       const request = toLoanRequest(unusualForm(), 1);
       const form = newForm();

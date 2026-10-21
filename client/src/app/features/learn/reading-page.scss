@@ -130,7 +130,11 @@ article section {
   }
 
   a {
-    padding: 0.2rem 0.65rem;
+    // A thumb's width on a phone: the same 44px as every other target there.
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.2rem 0.85rem;
     border: 1px solid var(--border);
     border-radius: 999px;
     background: var(--surface-1);

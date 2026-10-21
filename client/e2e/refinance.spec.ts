@@ -84,4 +84,17 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-pmi'), "each loan's PMI is in the table").toBeVisible();
     await expect(page.getByTestId('refi-break-even'), 'and the break-even counts it').toContainText('the interest and PMI saved');
   });
+
+  test('the options side by side fit a phone without scrolling sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/refinance');
+    await expect(page.getByTestId('refi-table'), 'the table is shown').toBeVisible();
+
+    const { scroll, shown } = await page.getByTestId('refi-table').evaluate((table) => {
+      const wrap = table.closest('.table-wrap') as HTMLElement;
+      return { scroll: wrap.scrollWidth, shown: wrap.clientWidth };
+    });
+
+    expect(scroll, 'every column is in view, none cut off at the edge').toBeLessThanOrEqual(shown + 1);
+  });
 });

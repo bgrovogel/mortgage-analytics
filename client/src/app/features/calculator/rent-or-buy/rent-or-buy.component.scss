@@ -83,7 +83,13 @@ td.buy {
   color: var(--text-muted);
 }
 
+// On a phone the table keeps what the comparison is about (what each would leave you, and who is ahead); what each
+// cost in that one year is on a wider screen.
 @media (max-width: 560px) {
+  .yearly {
+    display: none;
+  }
+
   table {
     font-size: 0.8rem;
   }

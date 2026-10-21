@@ -25,7 +25,7 @@ export const LEDGER_ROWS = 6;
         <thead>
           <tr>
             <th scope="col" class="date">Date</th>
-            <th scope="col">Payment</th>
+            <th scope="col" class="paid">Payment</th>
             <th scope="col">Principal</th>
             <th scope="col">Interest</th>
             <th scope="col">Balance</th>
@@ -35,7 +35,7 @@ export const LEDGER_ROWS = 6;
           @for (row of rows(); track row.paymentNumber; let first = $first) {
             <tr [class.at]="first">
               <th scope="row" class="date">{{ date(row) }}</th>
-              <td>{{ row.scheduledPayment + row.extraPrincipal | number: '1.2-2' }}</td>
+              <td class="paid">{{ row.scheduledPayment + row.extraPrincipal | number: '1.2-2' }}</td>
               <td class="principal">{{ row.principal + row.extraPrincipal | number: '1.2-2' }}</td>
               <td class="interest">{{ row.interest | number: '1.2-2' }}</td>
               <td>{{ row.remainingBalance | number: '1.2-2' }}</td>

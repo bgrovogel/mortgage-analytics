@@ -55,6 +55,7 @@ describe('SignInPageComponent', () => {
     const benefits = el('account-benefits')!.textContent!.replace(/\s+/g, ' ');
     expect(benefits).toContain('Save any calculation');
     expect(benefits).toContain('Private to you');
+    expect(benefits).toContain('passkey');
     expect(benefits).toContain('The calculators never need an account.');
   });
 

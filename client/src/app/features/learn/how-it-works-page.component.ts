@@ -42,8 +42,9 @@ import { ReadingNavComponent } from './reading-nav.component';
 
         <section id="taxes">
           <h3>Taxes and insurance</h3>
-          <p>Property tax is the taxable value times the rate, less any exemption, and the value grows by the yearly
-            increase you set (a <app-term of="Homestead">homestead</app-term>'s can rise only so fast). Homeowners insurance and
+          <p>Property tax is the rate times the taxable value: the home's value less any <app-term of="Exemption">exemption</app-term>,
+            and the value grows by the yearly increase you set (a <app-term of="Homestead">homestead</app-term>'s can rise only so
+            fast, held by the <app-term of="Appraisal cap">appraisal cap</app-term>). Homeowners insurance and
             <app-term of="HOA">HOA</app-term> dues are what you enter,
             rising at the rates you give them. They are collected with each payment into <app-term of="Escrow">escrow</app-term>, so the first month's
             total is the loan's payment plus a twelfth of each.</p>
@@ -84,7 +85,9 @@ import { ReadingNavComponent } from './reading-nav.component';
             comfortable limits are 28% and 36%; the most a conventional loan allows is 45% of income in all, FHA 31% and 43%,
             VA 41%. The highest price keeps your down payment's share, rate and costs and changes only the price, found by
             searching since taxes and insurance do not rise in a straight line. An adjustable rate is counted at the rate
-            its program says, not its starting one.</p>
+            its program says, not its starting one. With a <app-term of="Co-buyer">co-buyer</app-term>, a lender counts everyone's
+            income and debts together, so the answer is for all of you; the first month's payment is then shared in proportion
+            to income, and the down payment by what each puts in.</p>
         </section>
 
         <section id="rent">

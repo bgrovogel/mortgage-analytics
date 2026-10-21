@@ -8,7 +8,7 @@
       <span class="title">
         <strong>Your numbers</strong>
         @if (lead(); as lead) {
-          <span class="live" data-testid="sheet-lead">{{ lead }}</span>
+          <span class="live" data-testid="sheet-lead">{{ problems().length > 0 ? 'Last valid: ' : '' }}{{ lead }}</span>
         }
       </span>
       <button type="button" data-testid="close-sheet" (click)="closeSheet()">Done</button>
@@ -28,7 +28,7 @@
       <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-testid="live-announcement">{{ announcement() }}</p>
       <div class="question-row">
         <h1 data-testid="page-heading">{{ heading() }}</h1>
-        <app-calc-status [store]="state" />
+        <app-calc-status [store]="state" [fixing]="problems().length > 0" />
       </div>
       @if (leadParts(); as part) {
         <p class="lead" [class.money]="part.money" data-testid="page-lead">

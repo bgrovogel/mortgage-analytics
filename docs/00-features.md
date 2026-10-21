@@ -169,8 +169,9 @@ loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands o
 (the APR on the tiles, PMI and escrow on How it's calculated) link there themselves, with the meaning on hover.
 **Privacy**, in the same
 footer, says what happens to what you type: nothing is saved without an account, a share link keeps the numbers after
-its `#`, an account holds an email address, a scrambled password and what you save (all deleted with the account), and
-the browser keeps only your column choice and theme. There is no analytics, advertising or tracking.
+its `#`, an account holds an email address, a scrambled password, the passkeys you add (their public halves only), the order of
+your key figures and what you save (all deleted with the account), and the browser keeps only your theme, column choice,
+key-figure order, whether amounts are hidden on Saved, and that you have seen the first-visit tips. There is no analytics, advertising or tracking.
 
 #### Paying every two weeks
 

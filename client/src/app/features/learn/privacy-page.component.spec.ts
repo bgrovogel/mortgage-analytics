@@ -32,6 +32,24 @@ describe('PrivacyPageComponent', () => {
     expect(root.querySelector('#account')!.textContent).toContain('delete your account');
   });
 
+  it('says everything an account holds: the email, the password, passkeys, the arrangement of key figures, and what was saved', () => {
+    const text = render().querySelector('#account')!.textContent!.replace(/\s+/g, ' ');
+
+    expect(text).toContain('email address');
+    expect(text).toContain('scrambled');
+    expect(text).toContain('passkey');
+    expect(text).toContain('public half');
+    expect(text).toContain('order of your key figures');
+    expect(text).toContain('deletes everything above');
+  });
+
+  it('names every setting the browser keeps, and says clearing the site data removes them', () => {
+    const text = render().querySelector('#browser')!.textContent!.replace(/\s+/g, ' ');
+
+    for (const kept of ['theme', 'payment schedule', 'key figures', 'hide amounts', 'first-visit tips']) expect(text).toContain(kept);
+    expect(text).toContain('Clearing the site');
+  });
+
   it('names what the browser keeps, and says there is no tracking', () => {
     const root = render();
 

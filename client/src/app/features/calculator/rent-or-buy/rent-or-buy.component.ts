@@ -42,8 +42,8 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
         <thead>
           <tr>
             <td></td>
-            <th scope="col">Owning that year</th>
-            <th scope="col">Rent that year</th>
+            <th scope="col" class="yearly">Owning that year</th>
+            <th scope="col" class="yearly">Rent that year</th>
             <th scope="col">If you buy</th>
             <th scope="col">If you rent</th>
             <th scope="col">Ahead</th>
@@ -53,8 +53,8 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
           @for (y of milestones(); track y.year) {
             <tr>
               <th scope="row">Year {{ y.year }}</th>
-              <td>{{ usd(y.ownershipCost) }}</td>
-              <td>{{ usd(y.rent) }}</td>
+              <td class="yearly">{{ usd(y.ownershipCost) }}</td>
+              <td class="yearly">{{ usd(y.rent) }}</td>
               <td>{{ usd(y.buyerNetWorth) }}</td>
               <td>{{ usd(y.renterNetWorth) }}</td>
               <td [class.buy]="y.advantage >= 0">{{ y.advantage >= 0 ? 'Buy' : 'Rent' }} by {{ usd(abs(y.advantage)) }}</td>

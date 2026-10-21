@@ -214,16 +214,15 @@ button {
 
   .toggle {
     display: flex;
+    flex-wrap: wrap;
     width: 100%;
 
     button {
       flex: 1 1 auto;
-      min-width: 0;
-      padding-inline: 0.5rem;
-      // Five filters are wider than a phone on one line: "Pay off or invest" takes two lines rather than the page a
-      // sideways scroll.
-      white-space: normal;
-      line-height: 1.2;
+      // Five filters are wider than a phone on one line: they wrap onto a second row, each read in full, rather than
+      // a word cut off or the page scrolling sideways.
+      min-width: max-content;
+      padding-inline: 0.75rem;
     }
   }
 

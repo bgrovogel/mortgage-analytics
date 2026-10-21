@@ -41,6 +41,40 @@ describe('CalcStatusComponent', () => {
     expect([state(), text()]).toEqual(['ok', 'Up to date']);
   });
 
+  it('says the numbers are the last valid ones, not up to date, while the form has something to fix', () => {
+    result.set({});
+    const { fixture, state, text } = render();
+
+    fixture.componentRef.setInput('fixing', true);
+    fixture.detectChanges();
+
+    expect([state(), text()]).toEqual(['stale', 'Last valid numbers']);
+
+    fixture.componentRef.setInput('fixing', false);
+    fixture.detectChanges();
+    expect(state()).toBe('ok');
+  });
+
+  it('says nothing about last valid numbers when there are none yet', () => {
+    const { fixture, state } = render();
+
+    fixture.componentRef.setInput('fixing', true);
+    fixture.detectChanges();
+
+    expect(state()).toBeNull();
+  });
+
+  it('puts a failed calculation ahead of a form to fix, since the retry is what can be done', () => {
+    result.set({});
+    errors.set(['We could not run that calculation.']);
+    const { fixture, state } = render();
+
+    fixture.componentRef.setInput('fixing', true);
+    fixture.detectChanges();
+
+    expect(state()).toBe('error');
+  });
+
   it('says it is calculating only after 300ms, so a quick answer does not flicker', () => {
     result.set({});
     const { fixture, state } = render();
