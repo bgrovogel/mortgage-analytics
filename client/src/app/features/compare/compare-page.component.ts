@@ -20,7 +20,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
   imports: [BuyTabsComponent, CalculationPageComponent, LoanFormComponent, CompareResultsComponent, TPipe],
   template: `
     <app-calculation-page [store]="comparison" [heading]="'Which home, or which offer, costs less?' | t" [label]="'Homes compared' | t"
-                          intro="Up to four homes, or one home from different lenders, side by side: what each costs a month, to close, and over the first years."
+                          [intro]="'Up to four homes, or one home from different lenders, side by side: what each costs a month, to close, and over the first years.' | t"
                           [problems]="problems()" [placeholder]="'Comparing your homes…' | t" errorTitle="We couldn't compare those homes.">
       <app-buy-tabs tabs />
       <div form>

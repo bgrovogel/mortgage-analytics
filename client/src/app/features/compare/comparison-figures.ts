@@ -1,6 +1,7 @@
 import { AmortizationResponse } from '../../core/models/amortization.models';
 import { usd, usdCents } from '../../core/formatting/format';
 import { homeName } from '../../core/models/home-comparison.models';
+import { msg, t } from '../../core/i18n/i18n';
 
 /** How many years the "first years" figures cover. */
 export const FIRST_YEARS = 5;
@@ -73,23 +74,36 @@ export function figuresOf(r: AmortizationResponse): HomeFigures {
  * another home measured against Home A.
  */
 export function comparisonHeadline(a: HomeFigures, b: HomeFigures, name = homeName(1)): string {
-  const by = (difference: number, format: (value: number) => string, unit = '') =>
-    format(Math.abs(difference)) === format(0) ? `the same${unit}` : `${format(Math.abs(difference))}${unit} ${difference > 0 ? 'more' : 'less'}`;
-  const parts = [`costs ${by(b.monthlyPayment - a.monthlyPayment, usdCents, ' a month')}`];
-  if (a.cashToClose !== null && b.cashToClose !== null) parts.push(`needs ${by(b.cashToClose - a.cashToClose, usd)} at closing`);
-  parts.push(`costs ${by(b.fiveYearCost - a.fiveYearCost, usd)} over the first ${FIRST_YEARS} years`);
+  // Which of three phrases a difference is: the same, more or less, with its amount.
+  const pick = (difference: number, format: (value: number) => string, same: string, more: string, less: string) => {
+    const amount = format(Math.abs(difference));
+    return amount === format(0) ? t(same) : difference > 0 ? t(more, [amount]) : t(less, [amount]);
+  };
+  const monthly = b.monthlyPayment - a.monthlyPayment;
+  const parts = [pick(monthly, usdCents, msg('costs the same a month'), msg('costs {0} a month more'), msg('costs {0} a month less'))];
+  if (a.cashToClose !== null && b.cashToClose !== null) {
+    parts.push(pick(b.cashToClose - a.cashToClose, usd, msg('needs the same at closing'), msg('needs {0} more at closing'), msg('needs {0} less at closing')));
+  }
+  const five = b.fiveYearCost - a.fiveYearCost;
+  parts.push(
+    usd(Math.abs(five)) === usd(0)
+      ? t('costs the same over the first {0} years', [FIRST_YEARS])
+      : five > 0
+        ? t('costs {0} more over the first {1} years', [usd(Math.abs(five)), FIRST_YEARS])
+        : t('costs {0} less over the first {1} years', [usd(Math.abs(five)), FIRST_YEARS]),
+  );
   const last = parts.pop()!;
-  return `${name} ${parts.join(', ')}, and ${last}.`;
+  return t('{0} {1}, and {2}.', [name, parts.join(', '), last]);
 }
 
 /** "Home C costs the least over the first 5 years: $7,250 less than Home B, the next.": the cheapest of several homes. */
 export function cheapestHome(homes: HomeFigures[]): string {
   const ranked = homes.map((f, i) => ({ name: homeName(i), cost: f.fiveYearCost })).sort((x, y) => x.cost - y.cost);
-  if (Math.round(ranked[ranked.length - 1].cost - ranked[0].cost) === 0) return `All ${homes.length} homes cost the same over the first ${FIRST_YEARS} years.`;
+  if (Math.round(ranked[ranked.length - 1].cost - ranked[0].cost) === 0) return t('All {0} homes cost the same over the first {1} years.', [homes.length, FIRST_YEARS]);
   const [best, next] = ranked;
   const gap = Math.round(next.cost - best.cost);
   const [first, second] = [best, next].map((h) => h.name).sort();
   return gap === 0
-    ? `${first} and ${second} cost the least over the first ${FIRST_YEARS} years, the same.`
-    : `${best.name} costs the least over the first ${FIRST_YEARS} years: ${usd(gap)} less than ${next.name}, the next.`;
+    ? t('{0} and {1} cost the least over the first {2} years, the same.', [first, second, FIRST_YEARS])
+    : t('{0} costs the least over the first {1} years: {2} less than {3}, the next.', [best.name, FIRST_YEARS, usd(gap), next.name]);
 }

@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures';
 
 /** The language switch: one press in the header, on every page, remembered for the next visit. */
@@ -45,4 +46,65 @@ test.describe('Language', () => {
 
     await expect(page.getByTestId('language-es'), 'the switch is on the sign-in page').toBeVisible();
   });
+});
+
+/**
+ * Every page in Spanish: nothing left in English that the app wrote, nothing wider than the screen (Spanish runs longer),
+ * and no accessibility rule broken. Brand and loan names (Mortgage Analytics, Loan Estimate, FHA) stay as they are.
+ */
+const PAGES = [
+  '/', '/calculator/overview', '/calculator/affordability', '/calculator/closing', '/calculator/rent-or-buy', '/calculator/projection',
+  '/calculator/sale', '/calculator/rental', '/calculator/schedule', '/compare', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/terms', '/sign-in',
+];
+
+/** Words that only English text has, found in the page's main content as whole words. */
+const ENGLISH = /\b(the|your|you|with|and|of|is|for)\b/;
+
+test.describe('Spanish, on every page', () => {
+  test.use({ locale: 'es-MX', viewport: { width: 390, height: 844 } });
+  test.slow();
+
+  for (const path of PAGES) {
+    test(`${path} is in Spanish, fits a phone, and breaks no accessibility rule`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator('html'), 'the page is in Spanish').toHaveAttribute('lang', 'es');
+      if (path.startsWith('/calculator') || ['/compare', '/refinance', '/strategy'].includes(path)) {
+        await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
+      } else {
+        await expect(page.locator('main h1').first(), 'the page has arrived').toBeVisible();
+      }
+      for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
+
+      const text = await page.locator('main').innerText();
+      const english = text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line));
+      expect(english.slice(0, 6), 'no line of the page is left in English').toEqual([]);
+
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(1);
+
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+      const broken = results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 4).join(', ')}`);
+      expect(broken, 'no accessibility rule is broken').toEqual([]);
+    });
+  }
+});
+
+/** The same check after switching with the page open: everything on it follows, not only what is drawn afresh. */
+test.describe('Spanish, switched on the page', () => {
+  test.use({ viewport: { width: 1200, height: 900 } });
+  test.slow();
+
+  for (const path of ['/calculator/overview', '/calculator/affordability', '/calculator/closing', '/calculator/rent-or-buy', '/calculator/projection', '/calculator/sale', '/calculator/rental', '/calculator/schedule', '/compare', '/refinance', '/strategy']) {
+    test(`${path} follows the switch without a reload`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
+      await page.getByTestId('language-es').click();
+      await expect(page.locator('html'), 'the page is in Spanish').toHaveAttribute('lang', 'es');
+      for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
+
+      const text = await page.locator('main').innerText();
+      const english = text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line));
+      expect(english.slice(0, 6), 'no line of the page is left in English').toEqual([]);
+    });
+  }
 });

@@ -13,7 +13,7 @@ import { t } from '../../core/i18n/i18n';
   imports: [CalculationPageComponent, RefinanceFormComponent, RefinanceResultsComponent, TPipe],
   template: `
     <app-calculation-page [store]="store" [heading]="'Should you refinance?' | t" [label]="'Refinance comparison' | t"
-                          intro="Your loan today against a new one: the payment, the break-even, and the cost over both loans."
+                          [intro]="'Your loan today against a new one: the payment, the break-even, and the cost over both loans.' | t"
                           [problems]="problems()"
                           [placeholder]="'Comparing your loans…' | t" errorTitle="We could not compare those loans.">
       <app-refinance-form form [initial]="startFrom" [loan]="loan" [verdict]="verdict()" (analyze)="store.send($event)" (problems)="problems.set($event)" />

@@ -15,8 +15,8 @@ describe('LanguageSwitchComponent', () => {
   it('offers each language by its own name, English marked as the one in use', () => {
     const { button } = render();
 
-    expect(button('en').getAttribute('aria-label')).toBe('English');
-    expect(button('es').getAttribute('aria-label')).toBe('Español');
+    expect(button('en').getAttribute('aria-label')).toBe('EN English');
+    expect(button('es').getAttribute('aria-label')).toBe('ES Español');
     expect(button('en').getAttribute('aria-pressed')).toBe('true');
     expect(button('es').getAttribute('aria-pressed')).toBe('false');
   });

@@ -83,6 +83,12 @@ export function initialLanguage(win: Pick<Window, 'localStorage' | 'navigator'>)
  * half-translated moment), tells the document, and remembers the choice for the next visit.
  */
 export async function chooseLanguage(code: Language, win: Window = window): Promise<void> {
+  // Remembered first, so a page opened straight after the press is already in the language chosen.
+  try {
+    win.localStorage.setItem(STORAGE_KEY, code);
+  } catch {
+    // The page is in the language chosen for this visit all the same.
+  }
   if (code !== 'en' && !dictionary()) {
     // The translations, and the names of months and days (for the date pipe), arrive together.
     const [translations, locale] = await Promise.all([import('./es'), import('@angular/common/locales/es-US')]);
@@ -92,11 +98,6 @@ export async function chooseLanguage(code: Language, win: Window = window): Prom
   language.set(code);
   languageChanged.next();
   win.document.documentElement.lang = code;
-  try {
-    win.localStorage.setItem(STORAGE_KEY, code);
-  } catch {
-    // The page is in the language chosen for this visit all the same.
-  }
 }
 
 /** Starts the page in its language, before anything is drawn, so there is no flash of English. */

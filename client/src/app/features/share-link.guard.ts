@@ -3,6 +3,7 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { SavedCalculationKind } from '../core/models/saved-calculation.models';
 import { readShareLink } from '../core/state/share-link';
 import { CalculationStores } from './calculation-stores';
+import { msg } from '../core/i18n/i18n';
 
 /** The page each address opens, for a link that cannot be read. */
 const KIND_OF: Record<string, SavedCalculationKind> = {
@@ -24,7 +25,7 @@ export const openShareLink: CanActivateFn = (route, state) => {
   const page = KIND_OF[here.root.children['primary']?.segments[0].path ?? ''] ?? 'Purchase';
 
   if (link === 'broken') {
-    stores.of(page).linkProblem.set('This link could not be opened. It may have been cut short when it was copied.');
+    stores.of(page).linkProblem.set(msg('This link could not be opened. It may have been cut short when it was copied.'));
     return here;
   }
   const store = stores.of(link.kind);

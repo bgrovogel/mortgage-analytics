@@ -5,6 +5,7 @@ import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
 import { ComparisonStore } from './comparison.store';
 import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /** One line of the comparison: how to show a figure, whether a difference between homes means anything, and which way is better. */
 interface Line {
@@ -28,55 +29,55 @@ const monthIndex = (date: string) => Number(date.slice(0, 4)) * 12 + Number(date
 /** "+0.05 pt", "−0.02 pt": a difference between two rates, or nothing when they match to a thousandth. */
 const pointsApart = (difference: number) => {
   const rounded = Math.round(difference * 1_000) / 1_000;
-  return rounded === 0 ? '' : `${rounded > 0 ? '+' : '−'}${decimal(Math.abs(rounded), 3)} pt`;
+  return rounded === 0 ? '' : t('{0} pt', [`${rounded > 0 ? '+' : '−'}${decimal(Math.abs(rounded), 3)}`]);
 };
 
 /** "2 yr 5 mo sooner", "3 mo later", or nothing on the same month. */
 const monthsApart = (difference: number) =>
-  difference === 0 ? '' : `${formatMonths(Math.abs(difference))} ${difference < 0 ? 'sooner' : 'later'}`;
+  difference === 0 ? '' : difference < 0 ? t('{0} sooner', [formatMonths(Math.abs(difference))]) : t('{0} later', [formatMonths(Math.abs(difference))]);
 
 const LINES: readonly Line[] = [
-  { label: 'Home price', show: (f) => money(f.homePrice), amount: (f) => f.homePrice },
-  { label: 'Down payment', show: (f) => `${money(f.downPayment)} (${pct(f.downPaymentPercent, 1)})`, amount: (f) => f.downPayment },
-  { label: 'Loan', show: (f) => money(f.loanAmount), amount: (f) => f.loanAmount },
-  { label: 'Rate', show: (f) => pct(f.rate, 3) },
+  { get label() { return t('Home price'); }, show: (f) => money(f.homePrice), amount: (f) => f.homePrice },
+  { get label() { return t('Down payment'); }, show: (f) => t('{0} ({1})', [money(f.downPayment), pct(f.downPaymentPercent, 1)]), amount: (f) => f.downPayment },
+  { get label() { return t('Loan'); }, show: (f) => money(f.loanAmount), amount: (f) => f.loanAmount },
+  { get label() { return t('Rate'); }, show: (f) => pct(f.rate, 3) },
   {
-    label: 'APR', note: 'the rate counting fees',
+    get label() { return t('APR'); }, get note() { return t('the rate counting fees'); },
     show: (f) => (f.apr === null ? '—' : pct(f.apr, 3)), amount: (f) => f.apr, better: 'lower', difference: pointsApart,
   },
   {
-    label: 'Monthly payment', note: 'the first, with housing costs',
+    get label() { return t('Monthly payment'); }, get note() { return t('the first, with housing costs'); },
     show: (f) => money(f.monthlyPayment), amount: (f) => f.monthlyPayment, better: 'lower',
   },
   {
-    label: 'With extra principal', note: 'the first payment, and what is paid ahead',
+    get label() { return t('With extra principal'); }, get note() { return t('the first payment, and what is paid ahead'); },
     show: (f) => money(f.monthlyPayment + f.extraPrincipal), amount: (f) => f.monthlyPayment + f.extraPrincipal,
     when: (homes) => homes.some((f) => f.extraPrincipal > 0),
   },
-  { label: 'Principal & interest', show: (f) => money(f.principalAndInterest), amount: (f) => f.principalAndInterest, better: 'lower' },
+  { get label() { return t('Principal & interest'); }, show: (f) => money(f.principalAndInterest), amount: (f) => f.principalAndInterest, better: 'lower' },
   {
-    label: 'Housing costs', note: 'taxes, insurance, mortgage insurance, dues',
+    get label() { return t('Housing costs'); }, get note() { return t('taxes, insurance, mortgage insurance, dues'); },
     show: (f) => money(f.housingCosts), amount: (f) => f.housingCosts, better: 'lower',
   },
-  { label: 'Cash to close', show: (f) => (f.cashToClose === null ? '—' : money(f.cashToClose)), amount: (f) => f.cashToClose, better: 'lower' },
+  { get label() { return t('Cash to close'); }, show: (f) => (f.cashToClose === null ? '—' : money(f.cashToClose)), amount: (f) => f.cashToClose, better: 'lower' },
   {
-    label: 'Mortgage insurance ends', show: (f) => (f.insuranceEnds ? monthOf(f.insuranceEnds) : 'None'),
+    get label() { return t('Mortgage insurance ends'); }, show: (f) => (f.insuranceEnds ? monthOf(f.insuranceEnds) : t('None')),
     amount: (f) => (f.insuranceEnds ? monthIndex(f.insuranceEnds) : null), better: 'lower', difference: monthsApart,
   },
   {
-    label: 'Paid off', note: 'with extra payments', show: (f) => monthOf(f.paidOff),
+    get label() { return t('Paid off'); }, get note() { return t('with extra payments'); }, show: (f) => monthOf(f.paidOff),
     amount: (f) => monthIndex(f.paidOff), better: 'lower', difference: monthsApart,
   },
   {
-    label: 'Interest over the loan', note: 'with extra payments',
+    get label() { return t('Interest over the loan'); }, get note() { return t('with extra payments'); },
     show: (f) => money(Math.round(f.interest)), amount: (f) => Math.round(f.interest), better: 'lower',
   },
   {
-    label: `Cost of the first ${FIRST_YEARS} years`, note: 'what builds no equity',
+    get label() { return t('Cost of the first {0} years', [FIRST_YEARS]); }, get note() { return t('what builds no equity'); },
     show: (f) => money(Math.round(f.fiveYearCost)), amount: (f) => Math.round(f.fiveYearCost), better: 'lower',
   },
   {
-    label: `Equity after ${FIRST_YEARS} years`, note: 'value less what is owed',
+    get label() { return t('Equity after {0} years', [FIRST_YEARS]); }, get note() { return t('value less what is owed'); },
     show: (f) => money(Math.round(f.equityAfterFiveYears)), amount: (f) => Math.round(f.equityAfterFiveYears), better: 'higher',
   },
 ];

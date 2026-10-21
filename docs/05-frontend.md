@@ -301,6 +301,33 @@ The flows are designed around the people using it:
 
 <br clear="right" />
 
+### Two languages (`core/i18n/`)
+
+The app is in English and Spanish, switched at run time with no reload. The design is small on purpose:
+
+- **The English text is its own key.** A template writes `{{ 'Your account' | t }}` and code writes `t('Request failed ({0}).', [status])`;
+  a message with no translation, and every message in English, is shown as written. There are no message ids to keep in step.
+- **`t(message, params?)` reads a signal.** The current language is a signal, so a template (the `t` pipe is impure), a
+  `computed` or a stream that calls it is redone when the language changes. Placeholders are `{0}`, `{1}` or `{name}`.
+  `tp(count, one, other)` picks the singular for exactly 1; both languages use *one* for 1 only. `msg('…')` marks a message kept as
+  data (a field's label, a page title) so it is found and checked, and is translated where it is shown.
+- **Labels in tables are getters** (`get label() { return t('Home price'); }`), so a table defined once reads in whatever
+  language is current when it is read.
+- **Spanish is a lazy chunk.** `es/` holds the dictionary, one file for each area of the app, merged in `es/index.ts`; it is
+  fetched the first time Spanish is chosen, together with Angular's Spanish locale data, so English visitors never pay for it.
+  `chooseLanguage` loads before it switches, so the page never shows a half-translated moment.
+- **Dates follow the language.** The `date` pipe in `core/i18n/date.pipe.ts` has the name and arguments of Angular's and
+  replaces it where imported; `dateText` and `monthOf` do the same for code. Numbers stay as US English writes them.
+- **Page titles** are translated by `TranslatedTitleStrategy`: the routes keep the English name and the title is written
+  again when the language changes.
+- **It is checked.** `translations.spec.ts` finds every message in the source (`'…' | t`, `t('…')`, `tp(n, '…', '…')`, `msg('…')`)
+  and fails on a message with no Spanish, a Spanish that loses a placeholder, a Spanish entry nothing uses, or a message that
+  is not a plain string literal. The end-to-end `language.spec.ts` opens every page in Spanish on a phone, looking for lines
+  still in English, sideways scrolling and accessibility-rule breaks, and again after switching on an open page.
+
+Adding a screen means writing its text through `t` and adding the Spanish to the area's file in `core/i18n/es/`; the test says
+which messages are missing.
+
 ### Routing and auth
 
 `app.routes.ts`: `/` (the start page: a question first, six cards that each open the page answering it),

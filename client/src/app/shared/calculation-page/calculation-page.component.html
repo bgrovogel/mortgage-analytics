@@ -61,7 +61,7 @@
 
     @if (state.linkProblem(); as problem) {
       <div class="alert" role="alert" data-testid="link-problem">
-        {{ problem }}
+        {{ problem | t }}
         <button type="button" class="retry" (click)="state.linkProblem.set(null)">{{ 'Dismiss' | t }}</button>
       </div>
     }

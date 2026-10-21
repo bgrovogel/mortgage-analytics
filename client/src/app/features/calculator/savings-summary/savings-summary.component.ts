@@ -350,9 +350,9 @@ export class SavingsSummaryComponent {
    */
   readonly savingsDetail = computed(() => {
     const s = this.result().savings;
-    const parts = [`${usd(s.interestSaved)} interest`];
-    if (s.mortgageInsuranceSaved > 0) parts.push(`+ ${usd(s.mortgageInsuranceSaved)} ${this.insuranceName()}`);
-    if (s.recastFees > 0) parts.push(`− ${usd(s.recastFees)} fees`);
+    const parts = [t('{0} interest', [usd(s.interestSaved)])];
+    if (s.mortgageInsuranceSaved > 0) parts.push(t('+ {0} {1}', [usd(s.mortgageInsuranceSaved), this.insuranceName()]));
+    if (s.recastFees > 0) parts.push(t('− {0} fees', [usd(s.recastFees)]));
     return parts.length > 1 ? parts.join(' ') : null;
   });
 }

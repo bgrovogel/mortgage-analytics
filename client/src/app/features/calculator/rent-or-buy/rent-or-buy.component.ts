@@ -59,7 +59,7 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
               <td class="yearly">{{ usd(y.rent) }}</td>
               <td>{{ usd(y.buyerNetWorth) }}</td>
               <td>{{ usd(y.renterNetWorth) }}</td>
-              <td [class.buy]="y.advantage >= 0">{{ '{0} by {1}' | t: [(y.advantage >= 0 ? ('Buy' | t) : ('Rent' | t)), usd(abs(y.advantage))] }}</td>
+              <td [class.buy]="y.advantage >= 0">{{ y.advantage >= 0 ? ('Buy by {0}' | t: [usd(abs(y.advantage))]) : ('Rent by {0}' | t: [usd(abs(y.advantage))]) }}</td>
             </tr>
           }
         </tbody>
@@ -107,7 +107,7 @@ export class RentOrBuyComponent {
     const { breakEvenYear, years } = this.comparison();
     const standing = (y: { advantage: number; buyerNetWorth: number; renterNetWorth: number }) => ({
       advantage: y.advantage,
-      lead: t('{0} by {1}', [y.advantage >= 0 ? t('Buy') : t('Rent'), usd(Math.abs(y.advantage))]),
+      lead: y.advantage >= 0 ? t('Buy by {0}', [usd(Math.abs(y.advantage))]) : t('Rent by {0}', [usd(Math.abs(y.advantage))]),
       detail: t('{0} bought vs {1} rented', [usd(y.buyerNetWorth), usd(y.renterNetWorth)]),
     });
     const ten = years.find((y) => y.year === 10);

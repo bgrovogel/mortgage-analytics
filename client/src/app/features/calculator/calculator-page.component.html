@@ -21,7 +21,7 @@
 <app-first-visit-hints />
 
 <app-calculation-page [store]="store" [heading]="heading()"
-                      intro="What it costs each month and to close, whether you can afford it, and what paying extra saves."
+                      [intro]="'What it costs each month and to close, whether you can afford it, and what paying extra saves.' | t"
                       [lead]="answered()?.lead ?? null" [answer]="answered()?.detail ?? null"
                       [problems]="problems()" [announce]="false" [placeholder]="'Calculating your schedule…' | t"
                       errorTitle="We couldn't run that calculation.">

@@ -568,6 +568,14 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   URLs, and so does Compare homes (an old link to the Compare tab lands there); the back button works.
 - **Light and dark mode,** following the system until you choose System, Light or Dark in the footer, which is
   remembered in the browser.
+- **English and Spanish.** The whole app is in both: a switch of two buttons (EN and ES on a phone) sits in the header of
+  every page, the account pages included. One press changes every word on the page at once, with what you typed still in
+  the boxes and no reload; the choice is remembered in the browser, and a first visit from a browser that prefers Spanish
+  starts in Spanish. The names of months, the page titles and the screen-reader wording follow the language. Numbers and
+  dollars are written the same in both (1,234.56), as in US Spanish. Words the server writes, such as a validation message
+  from the API, stay in English. The Spanish is written for US readers (*pago inicial*, *costos de cierre*, *seguro
+  hipotecario privado*); the pages that explain how everything is calculated are in Spanish too. A native speaker's review
+  of the financial terms would still be wise before relying on it.
 
 <br clear="right" />
 

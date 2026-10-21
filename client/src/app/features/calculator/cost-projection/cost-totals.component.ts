@@ -28,7 +28,7 @@ import { TPipe } from '../../../core/i18n/t.pipe';
         </label>
       </header>
 
-      <div class="table-wrap">
+      <div class="table-wrap" tabindex="0" [attr.aria-label]="'Taxes & costs at a glance' | t">
         <table data-testid="cost-totals">
           <thead>
             <tr>

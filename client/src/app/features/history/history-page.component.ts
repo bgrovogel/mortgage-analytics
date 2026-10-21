@@ -89,8 +89,8 @@ export class HistoryPageComponent {
 
   /** The filter's choices: all, then each kind by the name of the page it opens on. */
   protected readonly kinds: { value: SavedCalculationKind | 'all'; label: string }[] = [
-    { value: 'all', label: 'All' },
-    ...this.stores.pages().map(({ kind, pageName }) => ({ value: kind, label: pageName })),
+    { value: 'all', get label() { return t('All'); } },
+    ...this.stores.pages().map(({ kind }) => ({ value: kind, label: this.kindLabel(kind) })),
   ];
 
   /** A kind's name, as the navigation shows its page: "Calculator", "Refinance", "Pay off or invest". */
@@ -225,20 +225,20 @@ export class HistoryPageComponent {
     if (!first || !second || !a || !b) return null;
     const money = (n: number) => `${n < 0 ? '−' : '+'}${usd(Math.abs(n))}`;
     const payment = (r: typeof a) => monthlyPayment(r.homePrice - r.downPayment, r.annualInterestRate, r.termInMonths);
-    const points = (n: number) => `${n < 0 ? '−' : '+'}${decimal(Math.abs(n), 3)} pt`;
+    const points = (n: number) => t('{0} pt', [`${n < 0 ? '−' : '+'}${decimal(Math.abs(n), 3)}`]);
     const rows = [
-      { label: 'Home price', a: usd(a.homePrice), b: usd(b.homePrice), difference: a.homePrice === b.homePrice ? '' : money(b.homePrice - a.homePrice) },
-      { label: 'Down payment', a: usd(a.downPayment), b: usd(b.downPayment), difference: a.downPayment === b.downPayment ? '' : money(b.downPayment - a.downPayment) },
+      { label: t('Home price'), a: usd(a.homePrice), b: usd(b.homePrice), difference: a.homePrice === b.homePrice ? '' : money(b.homePrice - a.homePrice) },
+      { label: t('Down payment'), a: usd(a.downPayment), b: usd(b.downPayment), difference: a.downPayment === b.downPayment ? '' : money(b.downPayment - a.downPayment) },
       {
-        label: 'Rate', a: `${decimal(a.annualInterestRate)}%`, b: `${decimal(b.annualInterestRate)}%`,
+        label: t('Rate'), a: `${decimal(a.annualInterestRate)}%`, b: `${decimal(b.annualInterestRate)}%`,
         difference: a.annualInterestRate === b.annualInterestRate ? '' : points(b.annualInterestRate - a.annualInterestRate),
       },
       {
-        label: 'Term', a: `${a.termInMonths / 12} yr`, b: `${b.termInMonths / 12} yr`,
-        difference: a.termInMonths === b.termInMonths ? '' : `${b.termInMonths < a.termInMonths ? '−' : '+'}${Math.abs(b.termInMonths - a.termInMonths) / 12} yr`,
+        label: t('Term'), a: t('{0} yr', [a.termInMonths / 12]), b: t('{0} yr', [b.termInMonths / 12]),
+        difference: a.termInMonths === b.termInMonths ? '' : t('{0} yr', [`${b.termInMonths < a.termInMonths ? '−' : '+'}${Math.abs(b.termInMonths - a.termInMonths) / 12}`]),
       },
       {
-        label: 'Principal and interest', a: usdCents(payment(a)), b: usdCents(payment(b)),
+        label: t('Principal and interest'), a: usdCents(payment(a)), b: usdCents(payment(b)),
         difference: payment(a) === payment(b) ? '' : `${payment(b) < payment(a) ? '−' : '+'}${usdCents(Math.abs(payment(b) - payment(a)))}`,
       },
     ];
@@ -293,7 +293,7 @@ export class HistoryPageComponent {
     const name = this.renaming()?.name.trim();
     const note = this.renaming()?.note.trim() || null;
     if (!name) {
-      this.error.set('Give the calculation a name.');
+      this.error.set(t('Give the calculation a name.'));
       return;
     }
 

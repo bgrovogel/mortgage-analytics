@@ -14,7 +14,7 @@ import { TPipe } from './t.pipe';
     <div class="language" role="group" [attr.aria-label]="'Language' | t">
       @for (language of languages; track language.code) {
         <button type="button" [attr.lang]="language.code" [attr.aria-pressed]="current() === language.code"
-                [attr.aria-label]="language.name" [attr.data-testid]="'language-' + language.code" (click)="choose(language.code)">
+                [attr.aria-label]="language.short + ' ' + language.name" [attr.data-testid]="'language-' + language.code" (click)="choose(language.code)">
           <span class="full" aria-hidden="true">{{ language.name }}</span>
           <span class="short" aria-hidden="true">{{ language.short }}</span>
         </button>

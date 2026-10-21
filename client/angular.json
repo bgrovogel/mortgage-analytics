@@ -84,7 +84,7 @@
                 },
                 {
                   "type": "anyScript",
-                  "maximumWarning": "350kB",
+                  "maximumWarning": "400kB",
                   "maximumError": "450kB"
                 },
                 {
