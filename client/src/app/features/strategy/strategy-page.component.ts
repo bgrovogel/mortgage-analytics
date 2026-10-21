@@ -4,6 +4,7 @@ import { StrategyFormComponent } from './strategy-form/strategy-form.component';
 import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { StrategyStore } from './strategy.store';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { msg } from '../../core/i18n/i18n';
 
 /** The pay-off-or-invest comparison: the household, and how the three strategies play out. The store keeps it across pages. */
 @Component({
@@ -13,7 +14,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
     <app-calculation-page [store]="store" [heading]="'Pay off the mortgage, or invest?' | t" [label]="'Strategy comparison' | t"
                           [intro]="'Spare cash each month, put three ways over 30 years: after tax, and through a bad decade.' | t"
                           [problems]="problems()" [placeholder]="'Playing out 30 years…' | t"
-                          errorTitle="We could not compare those strategies.">
+                          [errorTitle]="errorTitle">
       <app-strategy-form form [initial]="startFrom" [loan]="loan" (compare)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
         <app-strategy-results [result]="result" />
@@ -23,6 +24,9 @@ import { TPipe } from '../../core/i18n/t.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StrategyPageComponent {
+  /** Said above the problems when a calculation fails. */
+  protected readonly errorTitle = msg('We could not compare those strategies.');
+
   protected readonly store = inject(StrategyStore);
 
   /** The comparison to resume, read once: the form owns its values from then on. */

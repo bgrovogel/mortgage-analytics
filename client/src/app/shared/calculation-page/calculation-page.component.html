@@ -83,7 +83,7 @@
 
     @if (state.errors().length > 0) {
       <div class="alert" role="alert" data-testid="calculation-errors">
-        <strong>{{ errorTitle() }}</strong>
+        <strong>{{ errorTitle() | t }}</strong>
         <ul>
           @for (message of state.errors(); track message) {
             <li>{{ message }}</li>

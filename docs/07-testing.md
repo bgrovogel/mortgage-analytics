@@ -19,7 +19,7 @@
 | API integration | 164 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 1,420 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 282 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| End-to-end | 283 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -125,7 +125,7 @@ Take the ARM margin floor as an example of the order of work:
   only browser CI installs, so the other engines are run by hand with `npm run e2e:cross:install` and `npm run e2e:cross`
   (Firefox and WebKit, two workers, since Firefox crashes under more). They cover what differs between engines: the
   calculator and every results view without a script error, a chart read with the arrow keys, the native dialog and where
-  focus goes when it closes, a theme kept in storage, and the layout rules and chart geometry (the dots on their lines). The first
+  focus goes when it closes, a theme kept in storage, the switch to Spanish (with its month names, loaded on demand), and the layout rules and chart geometry (the dots on their lines). The first
   run found that Safari does not focus a button when it is clicked, so a dialog gave focus back to the page's main area
   instead of the button that opened it; the dialog now remembers what was clicked. The counts in these docs are Chromium's.
 - **Accessibility** (`e2e/accessibility.spec.ts`): axe scans every page and results tab against WCAG 2.2 A and AA, in

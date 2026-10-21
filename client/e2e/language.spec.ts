@@ -57,8 +57,8 @@ const PAGES = [
   '/calculator/sale', '/calculator/rental', '/calculator/schedule', '/compare', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/terms', '/sign-in',
 ];
 
-/** Words that only English text has, found in the page's main content as whole words. */
-const ENGLISH = /\b(the|your|you|with|and|of|is|for)\b/;
+/** Words that only English text has, found in the page's main content as whole words (letters with accents count as letters). */
+const ENGLISH = /(?<!\p{L})(the|your|you|with|and|of|is|for|to|in|this|that|are|from|not|all|by|per|each|than)(?!\p{L})/iu;
 
 test.describe('Spanish, on every page', () => {
   test.use({ locale: 'es-MX', viewport: { width: 390, height: 844 } });

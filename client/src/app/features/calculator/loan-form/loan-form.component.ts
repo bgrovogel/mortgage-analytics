@@ -103,7 +103,7 @@ export class LoanFormComponent implements OnInit {
   readonly initial = input<AmortizationRequest | null>(null);
 
   /** The form's heading: "Your numbers", or which home it is when two are compared. */
-  readonly heading = input('Your numbers');
+  readonly heading = input(msg('Your numbers'));
 
   /** The view of buying open: income and debts come up beside the five numbers when it asks whether a home can be afforded. */
   readonly view = currentBuyView();

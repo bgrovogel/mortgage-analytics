@@ -10,5 +10,9 @@ export const CHROME: Record<string, string> = {
   'Words to find it by, separated by commas': 'Palabras para encontrarlo, separadas por comas',
   'Tags, separated by commas': 'Etiquetas, separadas por comas',
   'Tags for {0}': 'Etiquetas de {0}',
+  "We couldn't run that calculation.": 'No pudimos hacer ese cálculo.',
+  "We couldn't compare those homes.": 'No pudimos comparar esas casas.',
+  'We could not compare those loans.': 'No pudimos comparar esos préstamos.',
+  'We could not compare those strategies.': 'No pudimos comparar esas estrategias.',
   '{0} · Mortgage Analytics': '{0} · Mortgage Analytics',
 };

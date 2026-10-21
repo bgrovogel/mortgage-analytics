@@ -24,7 +24,7 @@
                       [intro]="'What it costs each month and to close, whether you can afford it, and what paying extra saves.' | t"
                       [lead]="answered()?.lead ?? null" [answer]="answered()?.detail ?? null"
                       [problems]="problems()" [announce]="false" [placeholder]="'Calculating your schedule…' | t"
-                      errorTitle="We couldn't run that calculation.">
+                      [errorTitle]="errorTitle">
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
                  (calculate)="store.send($event)" (problems)="problems.set($event)">
     <!-- What the question asks for sits with the five numbers, above the optional details. -->

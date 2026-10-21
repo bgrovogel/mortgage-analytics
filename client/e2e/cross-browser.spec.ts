@@ -59,4 +59,22 @@ test.describe('In every browser', () => {
 
     await expect(page.locator('html'), 'still dark').toHaveAttribute('data-theme', 'dark');
   });
+
+  test('the page switches to Spanish at one press, with the names of months and the typed number kept', async ({ calculator, page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await calculator.set('home-price', 512_000);
+
+    await page.getByTestId('language-es').click();
+
+    await expect(page.locator('html'), 'the page is in Spanish').toHaveAttribute('lang', 'es');
+    await expect(calculator.field('home-price'), 'what was typed is kept').toHaveValue('512,000');
+    await expect(page.locator('app-calculation-page'), 'the answer is in Spanish').toContainText('al mes');
+    await calculator.showResults('schedule');
+    const firstRow = page.getByRole('table').first().locator('tbody tr').first();
+    await expect(firstRow, 'the schedule has its first payment').toBeVisible();
+    const when = await firstRow.innerText();
+    expect(when, 'and its date uses a Spanish month name').toMatch(/(ene|feb|mar|abr|may|jun|jul|ago|sep|sept|oct|nov|dic)\.?\s\d{4}/i);
+    expect(errors, 'no script threw').toEqual([]);
+  });
 });

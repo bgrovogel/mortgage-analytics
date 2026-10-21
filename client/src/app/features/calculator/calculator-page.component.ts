@@ -12,6 +12,7 @@ import { SaleSettingsComponent } from './sale-settings/sale-settings.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 import { AmortizationResponse } from '../../core/models/amortization.models';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { msg } from '../../core/i18n/i18n';
 
 /**
  * The calculator: the form on the left, the routed result tabs on the right. The page wires the form
@@ -26,6 +27,9 @@ import { TPipe } from '../../core/i18n/t.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalculatorPageComponent {
+  /** Said above the problems when a calculation fails. */
+  protected readonly errorTitle = msg("We couldn't run that calculation.");
+
   protected readonly store = inject(CalculatorStore);
 
   /** The calculation to resume when the page opens, read once: the form owns its values from then on. */

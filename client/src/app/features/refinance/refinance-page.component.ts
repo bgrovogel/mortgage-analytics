@@ -5,7 +5,7 @@ import { RefinanceFormComponent } from './refinance-form/refinance-form.componen
 import { RefinanceResultsComponent } from './refinance-results/refinance-results.component';
 import { RefinanceStore } from './refinance.store';
 import { TPipe } from '../../core/i18n/t.pipe';
-import { t } from '../../core/i18n/i18n';
+import { msg, t } from '../../core/i18n/i18n';
 
 /** The refinance comparison: the form, and what refinancing would do. The store keeps it across pages. */
 @Component({
@@ -15,7 +15,7 @@ import { t } from '../../core/i18n/i18n';
     <app-calculation-page [store]="store" [heading]="'Should you refinance?' | t" [label]="'Refinance comparison' | t"
                           [intro]="'Your loan today against a new one: the payment, the break-even, and the cost over both loans.' | t"
                           [problems]="problems()"
-                          [placeholder]="'Comparing your loans…' | t" errorTitle="We could not compare those loans.">
+                          [placeholder]="'Comparing your loans…' | t" [errorTitle]="errorTitle">
       <app-refinance-form form [initial]="startFrom" [loan]="loan" [verdict]="verdict()" (analyze)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
         <app-refinance-results [result]="result" [newRate]="store.request()?.newAnnualInterestRate ?? null" />
@@ -25,6 +25,9 @@ import { t } from '../../core/i18n/i18n';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RefinancePageComponent {
+  /** Said above the problems when a calculation fails. */
+  protected readonly errorTitle = msg('We could not compare those loans.');
+
   protected readonly store = inject(RefinanceStore);
 
   /** The comparison to resume, read once: the form owns its values from then on. */

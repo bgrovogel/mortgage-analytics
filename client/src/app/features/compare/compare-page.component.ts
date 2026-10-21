@@ -8,6 +8,7 @@ import { LoanFormComponent } from '../calculator/loan-form/loan-form.component';
 import { CompareResultsComponent } from './compare-results.component';
 import { ComparisonStore } from './comparison.store';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { msg } from '../../core/i18n/i18n';
 
 /**
  * Compare homes: two to four side by side. Home A is the calculator's own loan, so it follows the calculator (and the
@@ -21,7 +22,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
   template: `
     <app-calculation-page [store]="comparison" [heading]="'Which home, or which offer, costs less?' | t" [label]="'Homes compared' | t"
                           [intro]="'Up to four homes, or one home from different lenders, side by side: what each costs a month, to close, and over the first years.' | t"
-                          [problems]="problems()" [placeholder]="'Comparing your homes…' | t" errorTitle="We couldn't compare those homes.">
+                          [problems]="problems()" [placeholder]="'Comparing your homes…' | t" [errorTitle]="errorTitle">
       <app-buy-tabs tabs />
       <div form>
         <div class="segmented house-switch" role="radiogroup" [attr.aria-label]="'Which home to edit' | t" data-testid="house-switch">
@@ -66,6 +67,9 @@ import { TPipe } from '../../core/i18n/t.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComparePageComponent {
+  /** Said above the problems when a calculation fails. */
+  protected readonly errorTitle = msg("We couldn't compare those homes.");
+
   protected readonly calculator = inject(CalculatorStore);
   protected readonly comparison = inject(ComparisonStore);
 
