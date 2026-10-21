@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 
 /** The language switch: one press in the header, on every page, remembered for the next visit. */
@@ -60,6 +61,12 @@ const PAGES = [
 /** Words that only English text has, found in the page's main content as whole words (letters with accents count as letters). */
 const ENGLISH = /(?<!\p{L})(the|your|you|with|and|of|is|for|to|in|this|that|are|from|not|all|by|per|each|than)(?!\p{L})/iu;
 
+/** The lines of the page's main content that still hold an English word, other than the names that stay as they are. */
+async function englishLines(page: Page): Promise<string[]> {
+  const text = await page.locator('main').innerText();
+  return text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line)).slice(0, 6);
+}
+
 test.describe('Spanish, on every page', () => {
   test.use({ locale: 'es-MX', viewport: { width: 390, height: 844 } });
   test.slow();
@@ -75,9 +82,8 @@ test.describe('Spanish, on every page', () => {
       }
       for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
 
-      const text = await page.locator('main').innerText();
-      const english = text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line));
-      expect(english.slice(0, 6), 'no line of the page is left in English').toEqual([]);
+      // The spoken answer is announced after a short pause, so it follows the switch a moment later: ask until it has.
+      await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);
 
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(1);
@@ -102,9 +108,8 @@ test.describe('Spanish, switched on the page', () => {
       await expect(page.locator('html'), 'the page is in Spanish').toHaveAttribute('lang', 'es');
       for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
 
-      const text = await page.locator('main').innerText();
-      const english = text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line));
-      expect(english.slice(0, 6), 'no line of the page is left in English').toEqual([]);
+      // The spoken answer is announced after a short pause, so it follows the switch a moment later: ask until it has.
+      await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);
     });
   }
 });
