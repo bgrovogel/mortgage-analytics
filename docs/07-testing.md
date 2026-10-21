@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 3,160 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 3,170 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -15,7 +15,7 @@
 |---|---|---|---|
 | Domain | 718 | NUnit | < 1 s |
 | Application | 573 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 67 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
+| Infrastructure | 69 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 162 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 1,388 | Jest, jest-preset-angular | ~10 s |

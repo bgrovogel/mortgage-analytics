@@ -30,7 +30,7 @@ public static class SavedCalculationEndpoints
         group.MapGet("/", List)
             .WithName("ListCalculations")
             .WithSummary("List saved calculations, most recently changed first.")
-            .WithDescription("Pass search to keep only names that contain it, ignoring case.");
+            .WithDescription("Pass search to keep only calculations whose name or note contains it, ignoring case.");
 
         group.MapGet("/{id:guid}", Get)
             .WithName("GetCalculation")

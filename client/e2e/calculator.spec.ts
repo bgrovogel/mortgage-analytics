@@ -472,7 +472,8 @@ test.describe('Mortgage calculator', () => {
     expect(download.suggestedFilename(), 'named for what it is').toBe('mortgage-calculation.xlsx');
     const path = await download.path();
     const bytes = (await import('node:fs')).readFileSync(path);
-    expect(bytes.subarray(0, 2).toString(), 'a ZIP, which is what a workbook is').toBe('PK');
+    const signature = bytes.toString('latin1', 0, 2);
+    expect(signature, 'a ZIP, which is what a workbook is').toBe('PK');
     for (const part of ['xl/workbook.xml', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet3.xml']) {
       expect(bytes.includes(Buffer.from(part)), `the workbook has ${part}`).toBe(true);
     }

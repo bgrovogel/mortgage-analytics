@@ -142,6 +142,27 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
     }
 
     [Test]
+    public async Task List_AlsoFindsAWordInTheNote_IgnoringCase_AndANoteIsNotFoundByAnotherOwnersSearch()
+    {
+        var roof = ACalculation("Elm Ct", 0);
+        roof.Note = "Ask about the ROOF: 15 years old";
+        var bobs = ACalculation("Pine Rd", 1, owner: Bob);
+        bobs.Note = "roof is new";
+        await SeedAsync(roof, ACalculation("Oak St", 1), bobs);
+
+        var found = await NewRepository().ListAsync(Alice, "roof", CancellationToken.None);
+        var nameOrNote = await NewRepository().ListAsync(Alice, "oak", CancellationToken.None);
+        var literal = await NewRepository().ListAsync(Alice, "15 years", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found.Select(c => c.Name), Is.EqualTo(new[] { "Elm Ct" }), "a word in the note finds the calculation, whatever its case, and only Alice's");
+            Assert.That(nameOrNote.Select(c => c.Name), Is.EqualTo(new[] { "Oak St" }), "a name still finds it, with or without a note on the others");
+            Assert.That(literal.Select(c => c.Name), Is.EqualTo(new[] { "Elm Ct" }), "a phrase in the note is found as typed");
+        });
+    }
+
+    [Test]
     public async Task Update_WritesTheChanges()
     {
         var saved = ACalculation("Before");

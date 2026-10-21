@@ -150,6 +150,23 @@ public class PostgresTests
     }
 
     [Test]
+    public async Task ASearch_FindsAWordInTheNote_OnPostgreSqlToo()
+    {
+        var withNote = Saved("Cedar Lane", "alice-id");
+        withNote.Note = "Ask about the ROOFING";
+        await using (var context = NewContext())
+        {
+            context.SavedCalculations.Add(withNote);
+            context.SavedCalculations.Add(Saved("No note here", "alice-id"));
+            await context.SaveChangesAsync();
+        }
+
+        var found = await new SavedCalculationRepository(NewContext()).ListAsync("alice-id", "roofing", CancellationToken.None);
+
+        Assert.That(found.Select(c => c.Name), Is.EqualTo(new[] { "Cedar Lane" }), "a calculation with no note is not an error, and a note's case does not matter");
+    }
+
+    [Test]
     public async Task ASavedSecondHome_BecomesTheOnlyOtherHome_AndComesBackOnTheWayDown()
     {
         // Back to before lists, a comparison saved the old way, then up again: the migration's own SQL moves it.

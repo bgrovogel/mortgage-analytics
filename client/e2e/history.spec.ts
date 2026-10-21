@@ -56,6 +56,9 @@ test.describe('History', () => {
     await page.reload();
     await history.searchFor(tag);
     await expect(history.item(name).getByTestId('history-note'), 'and is still there after a reload').toHaveText('Roof checked: fine.');
+
+    await history.searchFor('ROOF CHECKED');
+    await expect(history.item(name), 'a word in the note finds it, whatever its case').toBeVisible();
   });
 
   test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ signedIn: calculator, page }) => {

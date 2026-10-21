@@ -19,15 +19,15 @@ public sealed class SavedCalculationRepository(CalculationsDbContext db) : ISave
             var pattern = ContainsPattern(search);
             // SQLite's LIKE ignores case; PostgreSQL's does not, and its ILIKE is the same match ignoring case.
             query = db.Database.IsNpgsql()
-                ? query.Where(c => EF.Functions.ILike(c.Name, pattern, LikeEscape))
-                : query.Where(c => EF.Functions.Like(c.Name, pattern, LikeEscape));
+                ? query.Where(c => EF.Functions.ILike(c.Name, pattern, LikeEscape) || (c.Note != null && EF.Functions.ILike(c.Note, pattern, LikeEscape)))
+                : query.Where(c => EF.Functions.Like(c.Name, pattern, LikeEscape) || (c.Note != null && EF.Functions.Like(c.Note, pattern, LikeEscape)));
         }
 
         return await query.OrderByDescending(c => c.UpdatedAt).ToListAsync(cancellationToken);
     }
 
     /// <summary>
-    /// A LIKE pattern matching names that contain <paramref name="search"/>. Escaping its wildcards makes a "%" or "_"
+    /// A LIKE pattern matching names and notes that contain <paramref name="search"/>. Escaping its wildcards makes a "%" or "_"
     /// in the search match only itself.
     /// </summary>
     private static string ContainsPattern(string search)

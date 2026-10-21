@@ -162,7 +162,7 @@ silently lose its value. Two things stop that:
 
 | API call | What the repository does | SQL, in effect |
 |---|---|---|
-| `GET /api/v1/calculations?search=` | List, newest change first, optionally by name | `SELECT … WHERE OwnerId = @me [AND Name LIKE '%term%' ESCAPE '\'] ORDER BY UpdatedAt DESC` |
+| `GET /api/v1/calculations?search=` | List, newest change first, optionally by name or note | `SELECT … WHERE OwnerId = @me [AND (Name LIKE '%term%' OR Note LIKE '%term%') ESCAPE '\'] ORDER BY UpdatedAt DESC` |
 | `GET /api/v1/calculations/{id}` | Find one | `SELECT … WHERE Id = @id AND OwnerId = @me` |
 | `POST /api/v1/calculations` | Add | `INSERT` with a new v7 id, `CreatedAt = UpdatedAt = now` |
 | `PUT /api/v1/calculations/{id}` | Find it (as above), then change the name and inputs | `UPDATE … SET Name, Inputs, OtherHomes, Refinance, Strategy, UpdatedAt` for the changed columns |

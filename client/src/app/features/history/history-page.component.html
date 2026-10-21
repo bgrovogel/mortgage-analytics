@@ -16,7 +16,7 @@
                   [attr.data-testid]="'kind-filter-' + kind.value">{{ kind.label }}</button>
         }
       </div>
-      <input class="search" type="search" placeholder="Search by name" aria-label="Search saved calculations by name"
+      <input class="search" type="search" placeholder="Search by name or note" aria-label="Search saved calculations by name or note"
              data-testid="history-search" (input)="onSearch($any($event.target).value)" />
     </div>
   </header>
