@@ -80,7 +80,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "800kB",
-                  "maximumError": "1.5MB"
+                  "maximumError": "900kB"
+                },
+                {
+                  "type": "anyScript",
+                  "maximumWarning": "350kB",
+                  "maximumError": "450kB"
                 },
                 {
                   "type": "anyComponentStyle",
