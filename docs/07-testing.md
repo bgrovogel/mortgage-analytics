@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 2,790 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 2,840 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -19,7 +19,7 @@
 | API integration | 139 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 1,270 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 173 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| End-to-end | 224 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -112,6 +112,11 @@ Take the ARM margin floor as an example of the order of work:
 - ProblemDetails messages.
 
 **End-to-end (Playwright)**
+- **Layout rules** (`e2e/layout.spec.ts`): the bugs a screenshot comparison would catch, written as what must be true, so there
+  are no baseline images to keep in step across operating systems. On every page, on a desktop, a tablet and a phone: the page
+  does not scroll sideways, no table is cut off at its edge (the payment schedule is the one that may scroll), no text is clipped
+  with an ellipsis, no number reads `NaN` or `undefined`, there is one `h1`, and on a phone what is pressed is at least 40px
+  tall. It was added after a page-by-page review found tables and filters cut off on a phone.
 - **Accessibility** (`e2e/accessibility.spec.ts`): axe scans every page and results tab against WCAG 2.2 A and AA, in
   light and dark mode, on desktop and a phone, signed in and out, with every form section open, and with each rate plan (a buydown's year-by-year table, an
   adjustable rate's resets). A failure names
