@@ -51,6 +51,7 @@
       <app-number-field [control]="form.controls.annualInterestRate" [rule]="rules.annualInterestRate" testId="interest-rate" />
       <app-number-field [control]="form.controls.termYears" [rule]="rules.termYears" testId="term-years" label="Term (years)" />
     </div>
+    <app-average-rate [termYears]="values().termYears" [current]="values().annualInterestRate" (use)="form.controls.annualInterestRate.setValue($event)" />
 
     <app-number-field [control]="form.controls.monthlyExtra" [rule]="rules.monthlyExtra" testId="monthly-extra" />
     @if (biweekly(); as extra) {

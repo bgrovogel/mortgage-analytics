@@ -5,6 +5,7 @@ using MortgageAnalytics.Api.Email;
 using MortgageAnalytics.Api.Endpoints;
 using MortgageAnalytics.Api.Errors;
 using MortgageAnalytics.Api.Observability;
+using MortgageAnalytics.Api.Rates;
 using MortgageAnalytics.Api.Security;
 using MortgageAnalytics.Application;
 using MortgageAnalytics.Application.Contracts;
@@ -21,6 +22,7 @@ builder.Services.AddDatabaseBackups(builder.Configuration, database, provider);
 builder.Services.AddAccounts(builder.Configuration, builder.Environment);
 builder.Services.AddPasskeys();
 builder.Services.AddEmail(builder.Configuration);
+builder.Services.AddAverageRates(builder.Configuration);
 builder.Services.AddProxyHeaders(builder.Configuration);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -89,6 +91,7 @@ app.UseRateLimiter();
 app.MapHealthChecks("/health");
 app.MapAmortizationEndpoints();
 app.MapFhaEndpoints();
+app.MapRatesEndpoints();
 app.MapAccountEndpoints();
 app.MapPasskeyEndpoints();
 app.MapSessionEndpoints();

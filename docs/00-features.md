@@ -37,6 +37,18 @@ year** and **every payment**.
   the dates, the balance and PMI follow the original loan. The form says which payment is next and roughly what is
   owed; extra payments start with the next payment due, and a lump sum on a payment already made is flagged.
 
+### This week's average rate
+
+Under the rate box (on the calculator, and for the new loan on Refinance), a line says **this week's average rate** and offers
+to start from it: the **15-year** average for a 15-year loan, the **30-year** for any other term, with who publishes it and the
+week ("This week's average 30-year fixed rate: 7.41% (Freddie Mac, Oct 15). **Use 7.41%**"). It is a starting point, not a quote:
+a lender's rate depends on the buyer. The numbers in the examples throughout these docs are an example set, not the week's rates.
+
+The server reads Freddie Mac's public weekly survey (the Primary Mortgage Market Survey history), keeps what it reads for six
+hours, and makes one request however many people ask; if the survey cannot be reached it serves the last rates it read, tries
+again only every ten minutes, and gives up after five seconds. With no rates, the line is simply not there. A deployment that must
+not call out sets `Rates:Enabled` to `false`. Nothing about the visitor is sent.
+
 ### Loan types
 
 | Loan | Down payment | Mortgage insurance and fees |
@@ -567,8 +579,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   for a lost phone or a shared computer; that device is refused at its next request. Signing out, changing the password (which ends
   the others) and deleting the account clear the list too. A session unused for 14 days, as long as its cookie lasts, drops off.
 - **Download your data.** **Your data** on the account page saves one JSON file of everything the account holds: the
-  email, every saved calculation with all its inputs, the passkeys' names and dates, and the key figures' order. It never
-  holds the password or a passkey's key.
+  email, every saved calculation with all its inputs, the passkeys' names and dates, the key figures' order, and where the
+  account is signed in (the browser and system, and when). It never holds the password or a passkey's key.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
   or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved

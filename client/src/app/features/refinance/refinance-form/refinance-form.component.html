@@ -84,6 +84,7 @@
         </select>
       </label>
     </div>
+    <app-average-rate [termYears]="newTermYears()" [current]="values().newAnnualInterestRate" (use)="form.controls.newAnnualInterestRate.setValue($event)" />
     @if (values().newTerm === 'keep') {
       <p class="hint" data-testid="keep-term-hint">Ends when your loan does: {{ remainingLabel() }}.</p>
     }

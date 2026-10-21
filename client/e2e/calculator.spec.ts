@@ -462,6 +462,29 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
   });
 
+  test('this week’s average rate is offered under the rate, for the term, and starts the rate when used', async ({ page }) => {
+    // The test server has the survey switched off, so the rates are supplied here, as the API would answer.
+    await page.route('**/api/v1/rates/average', (route) => route.fulfill({
+      json: { asOf: '2026-10-15', thirtyYearFixed: 7.41, fifteenYearFixed: 6.71, source: 'Freddie Mac Primary Mortgage Market Survey' },
+    }));
+    await page.goto('/calculator');
+
+    await expect(page.getByTestId('average-rate'), 'the 30-year average, for the 30-year default').toContainText('30-year fixed rate: 7.41% (Freddie Mac, Oct 15)');
+    await page.getByTestId('term-years').fill('15');
+    await expect(page.getByTestId('average-rate'), 'a 15-year loan gets the 15-year average').toContainText('15-year fixed rate: 6.71%');
+
+    await page.getByTestId('use-average-rate').click();
+
+    await expect(page.getByTestId('interest-rate'), 'the rate starts from the average').toHaveValue('6.71');
+    await expect(page.getByTestId('using-average-rate'), 'and the button gives way to saying so').toBeVisible();
+  });
+
+  test('without average rates, the rate box has no hint and nothing is logged as failed', async ({ calculator, page }) => {
+    await expect(calculator.headline, 'the calculator works as ever').toBeVisible();
+
+    await expect(page.getByTestId('average-rate'), 'no hint where there are no rates').toHaveCount(0);
+  });
+
   test('a second loan instead of PMI: tried from Closing, weighed over the years kept, and the cheaper way named', async ({ calculator, page }) => {
     // $250,000 with 10% down at 6.5% pays PMI; a $25,000 second loan brings the first loan to 80% of the price.
     await calculator.fillLoan({ homePrice: 250_000, downPayment: 25_000, rate: 6.5, years: 30, firstPayment: '2036-01-01' });

@@ -44,6 +44,21 @@ describe('PrivacyPageComponent', () => {
     expect(text).toContain('download a copy');
   });
 
+  it('says what is kept about where an account is signed in: the browser and system, and when, never an address', () => {
+    const text = render().querySelector('#account')!.textContent!.replace(/\s+/g, ' ');
+
+    expect(text).toContain('browser and system');
+    expect(text).toContain('where you are signed in');
+    expect(text).toContain('never keep your address');
+  });
+
+  it('says the server asks one public site for the week’s average rates, and sends nothing about you', () => {
+    const text = render().querySelector('#none')!.textContent!.replace(/\s+/g, ' ');
+
+    expect(text).toContain('Freddie Mac');
+    expect(text).toContain('nothing about you is sent');
+  });
+
   it('names every setting the browser keeps, and says clearing the site data removes them', () => {
     const text = render().querySelector('#browser')!.textContent!.replace(/\s+/g, ' ');
 

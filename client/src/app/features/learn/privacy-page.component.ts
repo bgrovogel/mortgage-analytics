@@ -41,9 +41,12 @@ import { ReadingNavComponent } from './reading-nav.component';
           <p>A passkey, if you add one, lets you sign in with your device's fingerprint, face or screen lock. Only its
             public half is kept here, with the name you gave it and when it was added and last used; the private half
             never leaves your device, so there is nothing to steal or to guess.</p>
+          <p>For each place you are signed in we keep the browser and system (for example “Chrome on Windows”), when that
+            sign-in began and when it was last used, so that you can see where you are signed in and sign a device out. We
+            never keep your address or the full details your browser sends.</p>
           <p>You can change your password, and remove any passkey, at any time. You can download a copy of everything above
             as a file, and you can delete your account, which deletes everything above: every saved calculation, every
-            passkey and your arrangement.</p>
+            passkey, your arrangement and the list of where you were signed in.</p>
           <p>Signing in puts a cookie in your browser that keeps you signed in. Scripts on the page cannot read it, and
             other sites cannot send it.</p>
         </section>
@@ -60,6 +63,9 @@ import { ReadingNavComponent } from './reading-nav.component';
           <h3>What is not here</h3>
           <p>No analytics, no advertising and no tracking, and nothing from other companies' servers is loaded on the
             page. The numbers you type are not sold or shared, because they are not kept.</p>
+          <p>One thing the server does ask another site for: once in a while it reads Freddie Mac’s public weekly survey for
+            the average mortgage rates, to offer as a starting point under a rate box. The request is the same for everyone,
+            and nothing about you is sent.</p>
         </section>
       </article>
     </section>

@@ -85,6 +85,7 @@ The use cases: what the API offers, and the translation between the outside worl
 | `Services/` | `AmortizationService`, `RefinanceService`, `StrategyService`: map in, call the domain, map out. They depend on interfaces (`ILoanComparer`, `IRefinanceAnalyzer`, `IStrategyOptimizer`) and `TimeProvider`. |
 | `SavedCalculations/` | `SavedCalculation` (the entity), `ISavedCalculationRepository` (the port), `SavedCalculationService` (stamps times, trims names, maps). |
 | `Sessions/` | `UserSession` (one sign-in with a session cookie), `IUserSessionRepository` (the port) and `DeviceLabel` ("Chrome on Windows" from a user agent, reading only the few words that tell devices apart). |
+| `Rates/` | `AverageRates`, `IAverageRates` (the port) and `PmmsCsv`, which reads Freddie Mac's survey history by column name and gives nothing for anything that is not it, or for a rate no loan could have. |
 | `Passkeys/` | `Passkey` (the entity: a credential id, its public key, the user handle, a counter and a name) and `IPasskeyRepository` (the port). |
 | `Preferences/` | `UserPreferences` (the entity: what one user has chosen about how the app looks to them) and `IUserPreferencesRepository` (the port); the key-figure arrangement is kept here. |
 | `DependencyInjection.cs` | `AddApplication()`: registers all of the above. |

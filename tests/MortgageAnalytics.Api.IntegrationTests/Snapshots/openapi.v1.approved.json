@@ -878,6 +878,26 @@
         }
       }
     },
+    "/api/v1/rates/average": {
+      "get": {
+        "tags": [
+          "Rates"
+        ],
+        "operationId": "GetAverageRates",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AverageRatesResponse"
+                }
+              }
+            }
+          },
+          "204": {}
+        }
+      }
+    },
     "/api/v1/refinance/analyze": {
       "post": {
         "tags": [
@@ -1294,6 +1314,13 @@
           },
           "keyFigures": {
             "$ref": "#/components/schemas/KeyFigurePreferences"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSessionResponse"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1617,6 +1644,28 @@
           "firstPaymentNumber": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AverageRatesResponse": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "thirtyYearFixed": {
+            "type": "number",
+            "format": "double"
+          },
+          "fifteenYearFixed": {
+            "type": "number",
+            "format": "double"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4387,6 +4436,9 @@
     },
     {
       "name": "Preferences"
+    },
+    {
+      "name": "Rates"
     },
     {
       "name": "Refinance"

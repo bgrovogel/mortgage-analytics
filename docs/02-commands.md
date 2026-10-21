@@ -101,6 +101,8 @@ startup projects, and press F5.
 | `Email:Smtp:Host`, `Port`, `Username`, `Password` | none (file outbox) | Send real email |
 | `Email:From`, `Email:PublicUrl` | `no-reply@mortgage-analytics.local`, `http://localhost:4200` | Sender address; the site address used in email links |
 | `Email:OutboxDirectory` | `App_Data/outbox` | Where emails go when no SMTP host is set |
+| `Rates:Enabled` | `true` | `false` stops the server asking Freddie Mac for the weekly average rates (it then has none, and the app carries on without); the browser tests set it |
+| `Rates:SourceUrl`, `Rates:TimeoutSeconds` | Freddie Mac's PMMS history CSV, `5` | Where the survey is read, and how long to wait for it |
 | `ASPNETCORE_ENVIRONMENT` | `Development` locally, `Production` in Docker | The dev mailbox exists only in Development |
 
 Set them in `appsettings.Development.json`, with user secrets (`dotnet user-secrets set "Email:Smtp:Host" "smtp.example.com" --project src/MortgageAnalytics.Api`),

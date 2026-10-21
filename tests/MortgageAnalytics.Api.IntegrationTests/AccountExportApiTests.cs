@@ -37,6 +37,8 @@ public class AccountExportApiTests : ApiTestBase
             Assert.That(body.GetProperty("savedCalculations")[0].GetProperty("inputs").GetProperty("homePrice").GetDecimal(), Is.EqualTo(512_000m), "with all its inputs, so it can be put back");
             Assert.That(body.GetProperty("passkeys")[0].GetProperty("name").GetString(), Is.EqualTo("My laptop"), "each passkey by name");
             Assert.That(body.GetProperty("keyFigures").GetProperty("order")[0].GetString(), Is.EqualTo("pmi"), "and the arrangement of key figures");
+            Assert.That(body.GetProperty("sessions").GetArrayLength(), Is.GreaterThanOrEqualTo(1), "and where the account is signed in");
+            Assert.That(body.GetProperty("sessions")[0].TryGetProperty("device", out _), Is.True, "each by its device, which is all the account keeps of it");
         });
     }
 

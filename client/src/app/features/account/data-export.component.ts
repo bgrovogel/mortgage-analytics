@@ -4,8 +4,8 @@ import { AccountExportService } from '../../core/services/account-export.service
 
 /**
  * "Your data", on the account page: a copy of everything the account holds, as one file, so nothing here is only here.
- * It holds the email, the saved calculations with their inputs, the passkeys' names and dates and the key figures'
- * order, and never the password or a passkey's key.
+ * It holds the email, the saved calculations with their inputs, the passkeys' names and dates, the key figures'
+ * order and where the account is signed in, and never the password or a passkey's key.
  */
 @Component({
   selector: 'app-data-export',
@@ -14,7 +14,7 @@ import { AccountExportService } from '../../core/services/account-export.service
       <h3 id="data-title">Your data</h3>
       <p>
         Download a copy of what this account holds: your email, your saved calculations with all their inputs, the names
-        and dates of your passkeys, and the order of your key figures. It never includes your password or a passkey's key.
+        and dates of your passkeys, the order of your key figures, and where you are signed in (the browser and system, and when). It never includes your password or a passkey's key.
       </p>
       @if (error(); as message) {
         <p class="alert" role="alert" data-testid="data-error">{{ message }}</p>

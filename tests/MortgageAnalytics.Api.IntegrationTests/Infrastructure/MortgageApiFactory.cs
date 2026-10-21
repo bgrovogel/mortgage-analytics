@@ -59,6 +59,8 @@ public sealed class MortgageApiFactory(
         builder.UseSetting("Backups:Directory", BackupDirectory);
         // The whole suite signs up and in from one address; the limit itself is tested with its own host.
         builder.UseSetting("RateLimiting:AccountPermitsPerMinute", "10000");
+        // No test calls out: the survey is switched off unless a test brings its own source of rates.
+        builder.UseSetting("Rates:Enabled", "false");
         foreach (var (key, value) in settings ?? [])
             builder.UseSetting(key, value);
         builder.ConfigureTestServices(services =>

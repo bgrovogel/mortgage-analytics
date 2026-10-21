@@ -9,9 +9,11 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="SavedCalculations">Every saved calculation, with its inputs, so each can be opened again.</param>
 /// <param name="Passkeys">Each passkey's name and dates.</param>
 /// <param name="KeyFigures">The arrangement of key figures, empty when none was made.</param>
+/// <param name="Sessions">Where the account is signed in: each by its device (the browser and system) and when it began and was last used.</param>
 public sealed record AccountExport(
     string Email,
     DateTimeOffset ExportedAt,
     IReadOnlyList<SavedCalculationResponse> SavedCalculations,
     IReadOnlyList<PasskeyResponse> Passkeys,
-    KeyFigurePreferences KeyFigures);
+    KeyFigurePreferences KeyFigures,
+    IReadOnlyList<UserSessionResponse> Sessions);

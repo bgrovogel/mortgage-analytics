@@ -7,6 +7,7 @@ import { problemsIn, problemsOf } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { FormNavigator } from '../../../core/forms/form-navigator';
+import { AverageRateComponent } from '../../../shared/average-rate/average-rate.component';
 import { NumberInputDirective } from '../../../core/forms/number-input.directive';
 import { setChanged } from '../../../core/forms/set-changed';
 import { UndoHistory } from '../../../core/forms/undo-history';
@@ -83,7 +84,7 @@ function downProblemOf(v: ReturnType<LoanForm['getRawValue']>, adjustableRate: b
 @Component({
   selector: 'app-loan-form',
   imports: [
-    ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective,
+    ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, AverageRateComponent,
     LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, CoBuyersComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent,
   ],
   // The sections read the form from here.

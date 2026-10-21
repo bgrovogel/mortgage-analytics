@@ -12,6 +12,7 @@ import { PAID_OFF_ALREADY, balanceAfter, firstOfMonthFromNext, originalAmount, p
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
+import { AverageRateComponent } from '../../../shared/average-rate/average-rate.component';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
@@ -41,7 +42,7 @@ const ENTRY_CONTROLS = {
  */
 @Component({
   selector: 'app-refinance-form',
-  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe, RateOptionsComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe, RateOptionsComponent, AverageRateComponent],
   templateUrl: './refinance-form.component.html',
   styleUrl: './refinance-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,6 +106,9 @@ export class RefinanceFormComponent implements OnInit {
   });
 
   protected readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  /** The new loan's term in years, or null while it is "my payoff date" (which is no whole term to match an average to). */
+  protected readonly newTermYears = computed(() => Number(this.values().newTerm) || null);
 
   /** Emits what is wrong whenever that changes: an empty list once every field is valid again. */
   readonly problems = outputFromObservable(problemsOf(this.form, () => this.currentProblems()));

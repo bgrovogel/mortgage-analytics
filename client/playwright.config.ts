@@ -50,6 +50,8 @@ export default defineConfig({
         // dev mailbox endpoint, exactly as a person does in the browser.
         ASPNETCORE_ENVIRONMENT: 'Development',
         Email__OutboxDirectory: OUTBOX,
+        // No test calls another site: the weekly average rates are switched off here, and a test that shows them supplies its own.
+        Rates__Enabled: 'false',
       },
       reuseExistingServer: !process.env['CI'],
       // A production build of the app, then a build of the API.
