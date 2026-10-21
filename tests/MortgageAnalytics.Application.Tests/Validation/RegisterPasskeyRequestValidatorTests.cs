@@ -25,6 +25,10 @@ public class RegisterPasskeyRequestValidatorTests : ValidatorTestBase<RegisterPa
         AssertValid(Named($"  {new string('a', RegisterPasskeyRequestValidator.MaxNameLength)}  "), "the limit counts the trimmed name");
 
     [Test]
+    public void NoName_IsRejected() =>
+        AssertErrorMessage(new RegisterPasskeyRequest { State = "a-state" }, "Name", "Give the passkey a name.", "a request with no name at all starts blank, and a blank name is refused");
+
+    [Test]
     public void NoState_IsRejected() =>
         AssertInvalid(new RegisterPasskeyRequest { Name = "x" }, "State", "the answer must say which ceremony it finishes");
 

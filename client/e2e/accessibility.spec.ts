@@ -148,6 +148,61 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await violations(page), 'the account page breaks no accessibility rule').toEqual([]);
     });
 
+    test('the newer views of the calculator: co-buyers, the charts as tables, and the dialogs', async ({ page }) => {
+      await page.goto('/calculator/overview');
+      await settled(page);
+
+      // The key figures' arrangement, the arithmetic behind the payment, and the key dates: each a dialog over the page.
+      await page.getByTestId('arrange-rail').click();
+      expect(await violations(page), 'the arrangement dialog breaks no accessibility rule').toEqual([]);
+      await page.keyboard.press('Escape');
+      await page.getByTestId('show-math').click();
+      expect(await violations(page), 'the arithmetic dialog breaks no accessibility rule').toEqual([]);
+      await page.keyboard.press('Escape');
+      await page.getByTestId('key-dates').click();
+      expect(await violations(page), 'the key dates dialog breaks no accessibility rule').toEqual([]);
+      await page.keyboard.press('Escape');
+
+      // The balance chart as a table.
+      await page.getByTestId('balance-as-table').click();
+      expect(await violations(page), 'the balance chart as a table breaks no accessibility rule').toEqual([]);
+
+      // Co-buyers, on the form and in the Who pays what table.
+      await openSections(page);
+      await page.getByTestId('annual-income').fill('90000');
+      await page.getByTestId('add-co-buyer').click();
+      await page.getByTestId('co-buyer-income').fill('60000');
+      await page.getByTestId('co-buyer-share').fill('40');
+      await settled(page);
+      expect(await violations(page), 'the form with a co-buyer breaks no accessibility rule').toEqual([]);
+      await openView(page, 'affordability');
+      await settled(page);
+      await expect(page.getByTestId('afford-buyers'), 'the Who pays what table is shown').toBeVisible();
+      expect(await violations(page), 'Who pays what breaks no accessibility rule').toEqual([]);
+    });
+
+    test('a chart as a table, on pay off or invest', async ({ page }) => {
+      await page.goto('/strategy');
+      await settled(page);
+      await page.getByTestId('chart-as-table').first().click();
+
+      expect(await violations(page), 'the figures as a table break no accessibility rule').toEqual([]);
+    });
+
+    test('the account page, with a passkey', async ({ account, page, context }) => {
+      expect(account.email, 'signed in').toBeTruthy();
+      const devtools = await context.newCDPSession(page);
+      await devtools.send('WebAuthn.enable');
+      await devtools.send('WebAuthn.addVirtualAuthenticator', {
+        options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
+      });
+      await page.goto('/account');
+      await page.getByTestId('passkey-add').click();
+      await expect(page.getByTestId('passkey-list'), 'the passkey is listed').toBeVisible();
+
+      expect(await violations(page), 'the account page with a passkey and its notice breaks no accessibility rule').toEqual([]);
+    });
+
     test('history, signed in, with a saved calculation', async ({ signedIn, page }) => {
       await signedIn.saveAs('Oak St');
       await page.goto('/history');

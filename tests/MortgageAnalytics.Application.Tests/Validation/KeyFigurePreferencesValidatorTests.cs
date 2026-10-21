@@ -39,6 +39,23 @@ public class KeyFigurePreferencesValidatorTests : ValidatorTestBase<KeyFigurePre
         AssertInvalid(new KeyFigurePreferences { Hidden = [null!] }, "Hidden[0]", "a null is not a name");
 
     [Test]
+    public void TheHiddenList_FollowsTheSameRules_AsTheOrder()
+    {
+        AssertInvalid(new KeyFigurePreferences { Hidden = ["cash", "cash"] }, "Hidden", "a figure is put away once");
+        AssertInvalid(new KeyFigurePreferences { Hidden = [.. Enumerable.Range(0, KeyFigurePreferencesValidator.MaxFigures + 1).Select(i => $"figure{i}")] }, "Hidden",
+            "and there is a limit to how many");
+        AssertInvalid(new KeyFigurePreferences { Hidden = null! }, "Hidden", "and the list is given, empty for none");
+    }
+
+    [Test]
+    public void TheLimits_AreInclusive_AFullListAndALongestNameAreValid() =>
+        AssertValid(new KeyFigurePreferences
+        {
+            Order = [.. Enumerable.Range(0, KeyFigurePreferencesValidator.MaxFigures).Select(i => $"f{i}")],
+            Hidden = [new string('a', KeyFigurePreferencesValidator.MaxNameLength)],
+        }, "exactly the most figures, and a name of exactly the most characters");
+
+    [Test]
     public void ARepeatedFigure_IsRejected() =>
         AssertInvalid(new KeyFigurePreferences { Order = ["cash", "cash"] }, "Order", "a figure has one place in the order");
 }

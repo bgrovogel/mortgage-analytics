@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Application.Passkeys;
 using MortgageAnalytics.Application.SavedCalculations;
 using Testcontainers.PostgreSql;
 
@@ -85,6 +86,51 @@ public class PostgresTests
         {
             Assert.That(bobs.Select(c => c.Name), Is.EqualTo(new[] { "Bob's" }), "an owner lists only their own");
             Assert.That(await check.SavedCalculations.AnyAsync(c => c.OwnerId == "carol-id"), Is.False, "a deleted user's saves go with them");
+        });
+    }
+
+    [Test]
+    public async Task APasskey_IsFoundByItsBinaryCredentialId_AndGoesWithItsUser()
+    {
+        await using (var context = NewContext())
+        {
+            context.Users.Add(new IdentityUser { Id = "dave-id", UserName = "dave" });
+            await context.SaveChangesAsync();
+        }
+        byte[] credentialId = [0, 255, 7, 128, 3];
+        await new PasskeyRepository(NewContext()).AddAsync(new Passkey
+        {
+            CredentialId = credentialId, OwnerId = "dave-id", PublicKey = [1, 2, 3], UserHandle = [9, 9], SignCount = 0, Name = "Laptop", CreatedAt = TestClock.Now,
+        }, CancellationToken.None);
+
+        var found = await new PasskeyRepository(NewContext()).FindAsync(credentialId, CancellationToken.None);
+        await new PasskeyRepository(NewContext()).RecordUseAsync(credentialId, 5, TestClock.Now.AddHours(1), CancellationToken.None);
+        var used = await new PasskeyRepository(NewContext()).FindAsync(credentialId, CancellationToken.None);
+        await using (var context = NewContext())
+            await context.Users.Where(u => u.Id == "dave-id").ExecuteDeleteAsync();
+        var afterTheUser = await new PasskeyRepository(NewContext()).FindAsync(credentialId, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found?.OwnerId, Is.EqualTo("dave-id"), "found by the bytes a device sends, which PostgreSQL stores as bytea");
+            Assert.That(used?.SignCount, Is.EqualTo(5u), "a sign-in's counter is kept");
+            Assert.That(afterTheUser, Is.Null, "and the passkey goes with its user");
+        });
+    }
+
+    [Test]
+    public async Task AKeyFigureArrangement_RoundTrips_OnPostgreSqlToo()
+    {
+        var preferences = new UserPreferencesRepository(NewContext());
+        await preferences.SaveKeyFiguresAsync("alice-id", new KeyFigurePreferences { Order = ["payoff", "cash"], Hidden = ["cash"] }, CancellationToken.None);
+        await new UserPreferencesRepository(NewContext()).SaveKeyFiguresAsync("alice-id", new KeyFigurePreferences { Order = ["afford", "pmi"], Hidden = [] }, CancellationToken.None);
+
+        var found = await new UserPreferencesRepository(NewContext()).GetKeyFiguresAsync("alice-id", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found.Order, Is.EqualTo(new[] { "afford", "pmi" }), "the second save replaces the first, in order");
+            Assert.That(found.Hidden, Is.Empty, "with nothing left put away");
         });
     }
 

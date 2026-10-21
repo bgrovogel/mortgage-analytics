@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MortgageAnalytics.Application.Passkeys;
 
 namespace MortgageAnalytics.Infrastructure.Tests;
@@ -67,6 +68,22 @@ public class PasskeyRepositoryTests : RepositoryTestBase
         {
             Assert.That(found?.SignCount, Is.EqualTo(42u), "the device's counter");
             Assert.That(found?.LastUsedAt, Is.EqualTo(at), "when it signed in");
+        });
+    }
+
+    [Test]
+    public async Task DeletingTheUser_DeletesTheirPasskeys_AndOnlyTheirs()
+    {
+        await NewPasskeys().AddAsync(APasskey(), CancellationToken.None);
+        await NewPasskeys().AddAsync(APasskey(Bob, id: 2, name: "Another user"), CancellationToken.None);
+
+        await using (var context = NewContext())
+            await context.Users.Where(u => u.Id == Alice).ExecuteDeleteAsync();
+
+        Assert.Multiple(async () =>
+        {
+            Assert.That(await NewPasskeys().ListAsync(Alice, CancellationToken.None), Is.Empty, "a passkey goes with its user, so no key outlives the account");
+            Assert.That(await NewPasskeys().ListAsync(Bob, CancellationToken.None), Has.Count.EqualTo(1), "and another user's stays");
         });
     }
 

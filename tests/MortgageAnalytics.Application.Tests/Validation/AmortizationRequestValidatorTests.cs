@@ -338,6 +338,17 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     }
 
     [Test]
+    public void CoBuyers_PuttingInAllOfTheDownPayment_AreAccepted() =>
+        AssertValid(A.Request.WithAffordability(90_000m).WithCoBuyer(60_000m, 0m, 60m).WithCoBuyer(50_000m, 0m, 40m), "the shares may add up to exactly all of it: the first buyer then puts in none");
+
+    [Test]
+    public void ACoBuyer_WithDebtsAtAndPastATwelfthOfTheMostIncome_IsAcceptedThenRejected()
+    {
+        AssertValid(A.Request.WithAffordability(90_000m).WithCoBuyer(60_000m, 8_333_333m), "debts up to a twelfth of the most income a year");
+        AssertInvalid(A.Request.WithAffordability(90_000m).WithCoBuyer(60_000m, 8_333_333.34m), "Affordability.CoBuyers[0].MonthlyDebts", "and past it");
+    }
+
+    [Test]
     public void CoBuyers_PuttingInMoreThanTheWholeDownPayment_AreRejected()
     {
         AssertInvalid(A.Request.WithAffordability(90_000m).WithCoBuyer(60_000m, 0m, 60m).WithCoBuyer(50_000m, 0m, 50m), "Affordability.CoBuyers", "the shares of the down payment leave the first buyer with a negative share");

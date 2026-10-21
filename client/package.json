@@ -47,5 +47,9 @@
     "jest-preset-angular": "^17.0.2",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.71.1"
+  },
+  "overrides": {
+    "vite": "8.3.4",
+    "qs": "6.16.1"
   }
 }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MortgageAnalytics.Application.Contracts;
 
 namespace MortgageAnalytics.Infrastructure.Tests;
@@ -46,6 +47,17 @@ public class UserPreferencesRepositoryTests : RepositoryTestBase
             Assert.That(found.Order, Is.EqualTo(new[] { "cash" }), "the new order alone");
             Assert.That(found.Hidden, Is.Empty, "nothing is left of the old one");
         });
+    }
+
+    [Test]
+    public async Task DeletingTheUser_DeletesTheirArrangement()
+    {
+        await NewPreferences().SaveKeyFiguresAsync(Alice, Arranged, CancellationToken.None);
+
+        await using (var context = NewContext())
+            await context.Users.Where(u => u.Id == Alice).ExecuteDeleteAsync();
+
+        Assert.That((await NewPreferences().GetKeyFiguresAsync(Alice, CancellationToken.None)).Order, Is.Empty, "the arrangement goes with the account");
     }
 
     [Test]
