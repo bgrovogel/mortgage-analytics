@@ -202,6 +202,14 @@ year (twelve payments) at a time**, with Previous and Next, a list of the years,
 shown; a loan already being paid opens on the year of its next payment. **All payments** shows the whole schedule at once,
 and the download always has every payment.
 
+Above the schedule, **Download the workbook (.xlsx)** saves the **whole calculation as an Excel workbook**: a **Summary** (the
+purchase, a month, the loan, what extra payments save, the APR and the cash to close), **Year by year** (the home's value, each
+cost, what is owed and the equity, a row a year) and **Payments** (every payment: principal, interest, extra, housing costs, what
+you pay and what is owed after), with a second sheet for the plan with extra payments when there are any. The cells are numbers,
+money, percentages and dates, with a frozen header and column widths set, so Excel can add them up, chart and sort them. It is
+made in the browser from the figures on screen (nothing is sent anywhere), with no spreadsheet library: a small writer for the
+workbook's parts and for the ZIP that holds them. It was read back with openpyxl to check it opens cleanly.
+
 #### Arranging the key figures, covers and key dates
 
 The rail of key figures is the reader's: **Arrange these figures** opens a list where each can be put away and moved

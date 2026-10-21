@@ -311,5 +311,25 @@ describe('result tabs', () => {
 
       expect(root.querySelector('[data-testid="schedule-table"]')).not.toBeNull();
     });
+
+    it('offers the whole calculation as an Excel workbook, saved under a name that says what it is', () => {
+      const root = render(ScheduleTabComponent).nativeElement as HTMLElement;
+      const saved: { name: string; bytes: Uint8Array }[] = [];
+      const link = { click: jest.fn(), href: '', download: '' };
+      jest.spyOn(document, 'createElement').mockImplementation(((tag: string) => (tag === 'a' ? link : Document.prototype.createElement.call(document, tag))) as typeof document.createElement);
+      URL.createObjectURL = jest.fn((blob: Blob) => {
+        saved.push({ name: '', bytes: new Uint8Array() });
+        expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        return 'blob:test';
+      });
+      URL.revokeObjectURL = jest.fn();
+
+      (root.querySelector('[data-testid="download-workbook"]') as HTMLButtonElement).click();
+
+      expect(link.download).toBe('mortgage-calculation.xlsx');
+      expect(link.click).toHaveBeenCalledTimes(1);
+      expect(saved).toHaveLength(1);
+      jest.restoreAllMocks();
+    });
   });
 });

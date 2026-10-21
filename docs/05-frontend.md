@@ -19,6 +19,7 @@ client/src/app/
     auth/                   AuthService (who is signed in, as a signal), signedInGuard, safe return URLs
     charts/                 ScrubChartComponent: SVG lines and areas with a scrubber
     errors/                 toErrorMessages: any HTTP failure → readable lines
+    files/                  saveFile (the browser's own download), and the writers for an Excel workbook: xlsx.ts (the sheets' XML) in zip.ts (a stored ZIP with CRC-32), no library
     formatting/             format.ts (usd, pct, monthOf…), duration, describe-inputs (names for saved items)
     forms/                  FieldRule tables, app-number-field, the appNumber directive, setChanged
     layout/                 header-height and in-view directives

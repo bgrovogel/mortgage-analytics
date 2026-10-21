@@ -462,6 +462,25 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
   });
 
+  test('the whole calculation downloads as an Excel workbook: a summary, the years, and every payment', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 75_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('schedule');
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('download-workbook').click()]);
+
+    expect(download.suggestedFilename(), 'named for what it is').toBe('mortgage-calculation.xlsx');
+    const path = await download.path();
+    const bytes = (await import('node:fs')).readFileSync(path);
+    expect(bytes.subarray(0, 2).toString(), 'a ZIP, which is what a workbook is').toBe('PK');
+    for (const part of ['xl/workbook.xml', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet3.xml']) {
+      expect(bytes.includes(Buffer.from(part)), `the workbook has ${part}`).toBe(true);
+    }
+    // 360 payments of a $300,000 loan, each a row, and the numbers as numbers: the first payment's $1,798.65 is a number, not text.
+    expect(bytes.includes(Buffer.from('<v>1798.65</v>')), 'the monthly payment is a number a spreadsheet can use').toBe(true);
+    expect(bytes.includes(Buffer.from('<row r="361">')), 'a row for each of the 360 payments, and the heading').toBe(true);
+  });
+
   test('this week’s average rate is offered under the rate, for the term, and starts the rate when used', async ({ page }) => {
     // The test server has the survey switched off, so the rates are supplied here, as the API would answer.
     await page.route('**/api/v1/rates/average', (route) => route.fulfill({
