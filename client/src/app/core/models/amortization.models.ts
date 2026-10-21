@@ -131,6 +131,43 @@ export interface AmortizationRequest {
   monthlyBudget?: number | null;
   /** Weighs buying the home against renting a similar one; leave out for none. */
   rentOrBuy?: RentOrBuyInput | null;
+  /** What selling would leave at the end of each year; leave out for none. */
+  sale?: SaleInput | null;
+}
+
+/** How a sale is weighed: what it costs, and how the gain is taxed. */
+export interface SaleInput {
+  /** What selling costs, as a percentage of the home's value then. */
+  sellingCostPercent: number;
+  /** How the seller files, which sets the gain a home lived in shelters from tax. */
+  filingStatus: TaxFilingStatus;
+  /** The federal rate on a long-term capital gain, as a percentage. */
+  gainsTaxRatePercent: number;
+}
+
+/** Selling at the end of one year. */
+export interface SaleYear {
+  year: number;
+  homeValue: number;
+  /** What is owed then, on the plan with its extra payments. */
+  loanBalance: number;
+  sellingCosts: number;
+  /** The sale less its costs, over the price paid; negative for a loss. */
+  gain: number;
+  /** The part of the gain the exclusion shelters. */
+  taxFreeGain: number;
+  taxOnGain: number;
+  /** What is left after the loan, the costs and the tax; negative when the sale does not cover them. */
+  netProceeds: number;
+}
+
+/** What selling would leave in hand, for each year it might be sold. */
+export interface SaleOutcome {
+  sellingCostPercent: number;
+  gainsTaxRatePercent: number;
+  /** The gain a sale could shelter from tax after two years: $250,000, $500,000 for a couple filing jointly, nothing for a home not lived in. */
+  exclusionPerSale: number;
+  years: SaleYear[];
 }
 
 /** What renting a similar home would cost, and what money does meanwhile. */
@@ -615,6 +652,8 @@ export interface AmortizationResponse {
   budget?: BudgetAnswer | null;
   /** Buying against renting; null unless asked. */
   rentOrBuy?: RentOrBuyComparison | null;
+  /** What selling would leave at the end of each year; null unless asked. */
+  sale?: SaleOutcome | null;
   /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */
   annualPercentageRate?: number | null;
   /** A Loan Estimate's "in 5 years" on the standard schedule: what the first 60 payments come to and the principal they pay off. */

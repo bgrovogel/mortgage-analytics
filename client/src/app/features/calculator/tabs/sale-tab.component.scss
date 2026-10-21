@@ -1,0 +1,12 @@
+.sale {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

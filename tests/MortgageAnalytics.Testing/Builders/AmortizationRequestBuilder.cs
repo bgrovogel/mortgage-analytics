@@ -186,6 +186,14 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Asks what selling would leave in hand each year, with <paramref name="selling"/>% in costs and a long-term gain taxed at <paramref name="gainsTaxRate"/>% for a seller filing as <paramref name="filingStatus"/>.</summary>
+    public AmortizationRequestBuilder WithSale(
+        decimal selling = 6m, TaxFilingStatus filingStatus = TaxFilingStatus.Single, decimal gainsTaxRate = 15m) =>
+        With(r => r with
+        {
+            Sale = new SaleRequest { SellingCostPercent = selling, FilingStatus = filingStatus, GainsTaxRatePercent = gainsTaxRate },
+        });
+
     /// <summary>Builds the request.</summary>
     public AmortizationRequest Build() => _extras is null ? _request : _request with { ExtraPayments = _extras };
 

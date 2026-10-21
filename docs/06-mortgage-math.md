@@ -478,8 +478,35 @@ every year after; one good year followed by a bad one does not count.
 - On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
   else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
 - The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
-  Python model compares every year its own way: 300 of 300 random purchases match, 130 of them with a rent, 58 of
+  Python model compares every year its own way: 300 of 300 random purchases match, 140 of them with a rent, 68 of
   those with the owner's taxes.
+
+### If you sell
+
+What a sale at the end of each year leaves (`HomeSale`, `Domain/Selling`; up to 30 years, or the loan's term):
+
+```
+costs     = value then × selling cost %, to the cent
+gain      = value − costs − price paid
+tax-free  = min(max(gain, 0), exclusion), from year 2 only
+tax       = (max(gain, 0) − tax-free) × rate on the gain, to the cent
+proceeds  = value − owed − costs − tax
+```
+
+The value is the projection's market value; what is owed is the balance after that year's last payment on the plan
+with its extra payments (nothing once it is paid off). The exclusion (IRC 121) is **$250,000**, or **$500,000** for a
+couple filing jointly, and applies only to a home the seller lives in and has owned two years; a second home or an
+investment property gets none, and a head of household has the single filer's. A loss is not taxed, and not deducted.
+
+- The price paid is the basis: the costs of buying and any improvements would raise it and lower the gain, so the tax
+  leans high. State tax, the 3.8% tax on net investment income (unless it is folded into the rate) and the partial
+  exclusion for a sale before two years are left out.
+- A $300,000 home rising 10% a year and sold after 8 years, owing $250,000, with 6% costs and a 15% rate for a single
+  filer: it sells for **$643,076.64**, costs **$38,584.60**, so the gain is $604,492.04 − 300,000 = **$304,492.04**; the
+  first $250,000 is tax-free and the other **$54,492.04** pays **$8,173.81**; the seller keeps
+  643,076.64 − 250,000 − 38,584.60 − 8,173.81 = **$346,318.23**.
+- The domain is `HomeSale`, and `SaleAnalysis` (`Application/Services`) feeds it the projection's values and the plan's
+  balances. The Python model works every year its own way: 300 of 300 random purchases match, 115 of them with a sale.
 
 ### The best use of the seller's money
 

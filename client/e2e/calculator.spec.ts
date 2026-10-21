@@ -444,6 +444,36 @@ test.describe('Mortgage calculator', () => {
       .toContainText('counts the federal tax owning saves');
   });
 
+  test('if you sell: what a sale would leave each year, after the loan, the costs and the tax on the gain', async ({ calculator, page }) => {
+    // $375,000 with 5% down at 5.99%, the home rising 3% a year: sold after five years it leaves the buyer's equity, less 6%.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('home-value-growth', 3);
+    await calculator.calculate();
+    await calculator.showResults('sale');
+    await expect(page.getByTestId('sale-stat-net'), 'a sale after five years leaves some money').toContainText('You walk away with');
+    await expect(page.getByTestId('sale-breakdown'), 'from the price down to what is kept').toContainText('The home sells for');
+    await expect(page.getByTestId('sale-stat-tax'), 'the gain is under the $250,000 exclusion').toContainText('$0');
+
+    await page.getByTestId('sale-year').selectOption('1');
+    await expect(page.getByTestId('sale-stat-gain'), 'after one year, 3% growth does not cover the 6% to sell')
+      .toContainText('The loss');
+    await expect(page.getByTestId('sale-stat-tax'), 'a loss is not taxed').toContainText('A loss is not taxed');
+    await expect(page.getByTestId('sale-table').locator('tbody tr'), 'the milestone years').toHaveCount(9);
+  });
+
+  test('if you sell: a higher cost to sell leaves less', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 75_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('sale');
+    const before = await page.getByTestId('sale-stat-net').locator('strong').innerText();
+
+    await page.getByTestId('sale-costs').fill('10');
+    await expect(page.getByTestId('sale-breakdown'), 'the costs are 10% now').toContainText('Selling costs (10%)');
+    const after = await page.getByTestId('sale-stat-net').locator('strong').innerText();
+
+    expect(Number(after.replace(/[^0-9.]/g, '')), `${after} is less than ${before}`).toBeLessThan(Number(before.replace(/[^0-9.]/g, '')));
+  });
+
   test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

@@ -69,6 +69,7 @@ describe('CalculatorPageComponent', () => {
       ['← Back to Cost', '/calculator/overview'], // on a view under Cost, the way back comes first
       ['Closing costs', '/calculator/closing'],
       ['Year by year', '/calculator/projection'],
+      ['If you sell', '/calculator/sale'],
       ['Every payment', '/calculator/schedule'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();

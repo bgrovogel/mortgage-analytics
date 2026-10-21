@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { describeInputs, suggestName } from '../../core/formatting/describe-inputs';
-import { AmortizationRequest, AmortizationResponse, RentOrBuyInput, SellerOfferInput } from '../../core/models/amortization.models';
+import { AmortizationRequest, AmortizationResponse, RentOrBuyInput, SaleInput, SellerOfferInput } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
@@ -11,6 +11,9 @@ export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 
 /** The seller's offer is weighed over seven years, the usual time a loan is kept, with a quarter point off per point. */
 export const DEFAULT_OFFER_SETTINGS: SellerOfferInput = { yearsKept: 7, rateCutPerPoint: 0.25 };
+
+/** A sale costs 6% of the price, and its gain is taxed at the usual 15% rate for a single filer. */
+export const DEFAULT_SALE_SETTINGS: SaleInput = { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 };
 
 /** The calculator's state, shared by the form, the result tabs and other pages. */
 @Injectable({ providedIn: 'root' })
@@ -40,12 +43,19 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   readonly rentSettings = signal<RentOrBuyInput | null>(null);
 
   /**
+   * What selling costs and how its gain is taxed, set beside the answer (the If you sell view), not in the form. Every
+   * request carries them, so the view always has its figures.
+   */
+  readonly saleSettings = signal<SaleInput>(DEFAULT_SALE_SETTINGS);
+
+  /**
    * Queues a request with the settings the tabs keep: how the seller's offer is weighed, and the rent to weigh buying
    * against. A request that brings its own (a saved one) sets them instead.
    */
   override send(request: AmortizationRequest): void {
     if (request.sellerOffer) this.offerSettings.set(request.sellerOffer);
     if (request.rentOrBuy) this.rentSettings.set(request.rentOrBuy);
+    if (request.sale) this.saleSettings.set(request.sale);
     super.send(this.withSettings(request));
   }
 
@@ -61,8 +71,14 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
     this.resend();
   }
 
+  /** Weighs a sale another way, and calculates again. */
+  setSaleSettings(settings: SaleInput): void {
+    this.saleSettings.set(settings);
+    this.resend();
+  }
+
   private withSettings(request: AmortizationRequest): AmortizationRequest {
-    return { ...request, sellerOffer: this.offerSettings(), rentOrBuy: this.rentSettings() };
+    return { ...request, sellerOffer: this.offerSettings(), rentOrBuy: this.rentSettings(), sale: this.saleSettings() };
   }
 
   /** Sends the current request again with the settings as they are now, once there is one. */

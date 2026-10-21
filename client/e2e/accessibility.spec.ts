@@ -54,7 +54,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await openSections(page);
       expect(await violations(page), 'the Overview tab and the open form break no accessibility rule').toEqual([]);
 
-      for (const tab of ['affordability', 'closing', 'rent-or-buy', 'projection', 'schedule'] as const) {
+      for (const tab of ['affordability', 'closing', 'rent-or-buy', 'projection', 'sale', 'schedule'] as const) {
         await openView(page, tab);
         await settled(page);
         expect(await violations(page), `the ${tab} tab breaks no accessibility rule`).toEqual([]);

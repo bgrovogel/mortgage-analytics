@@ -87,6 +87,9 @@ public sealed record AmortizationRequest
     /// <summary>Weighs buying the home against renting a similar one, year by year. Omit for none.</summary>
     public RentOrBuyRequest? RentOrBuy { get; init; }
 
+    /// <summary>What selling the home would leave in hand at the end of each year, after the loan, the costs of selling and tax on the gain. Omit for none.</summary>
+    public SaleRequest? Sale { get; init; }
+
     /// <summary>
     /// What the household wants to pay each month, all in: principal and interest, taxes, insurance, mortgage insurance
     /// and dues. The response says the highest price that fits it, at the same down payment share, rate and costs.
@@ -124,6 +127,21 @@ public sealed record RentOrBuyRequest
     /// itemize, against the standard deduction. Omit to leave tax out, as the comparison does by default.
     /// </summary>
     public OwnerTaxesRequest? OwnerTaxes { get; init; }
+}
+
+/// <summary>How a sale is weighed: what it costs, and how the gain is taxed.</summary>
+public sealed record SaleRequest
+{
+    /// <summary>What selling costs, as a percentage of the home's value then: commissions and the seller's closing costs.</summary>
+    /// <example>6</example>
+    public decimal SellingCostPercent { get; init; } = 6m;
+
+    /// <summary>How the seller files, which sets how much of the gain a home they lived in shelters from tax ($250,000, or $500,000 for a couple filing jointly).</summary>
+    public TaxFilingStatus FilingStatus { get; init; }
+
+    /// <summary>The federal rate on a long-term capital gain, as a percentage: 0, 15 or 20, and 3.8 more at high incomes.</summary>
+    /// <example>15</example>
+    public decimal GainsTaxRatePercent { get; init; } = 15m;
 }
 
 /// <summary>The tax side of owning against renting: who the owner is, for federal income tax, and what else they deduct.</summary>

@@ -304,6 +304,22 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertValid(A.Request.WithRentOrBuy(2_000m).WithOwnerTaxes(TaxFilingStatus.HeadOfHousehold, 50m, 100_000_000m, 0m), "the edges are tax profiles");
     }
 
+    [TestCase(-0.01, 15, "Sale.SellingCostPercent", TestName = "Selling costs below nothing")]
+    [TestCase(20.01, 15, "Sale.SellingCostPercent", TestName = "Selling costs over 20%")]
+    [TestCase(6, -0.01, "Sale.GainsTaxRatePercent", TestName = "A gains tax rate below nothing")]
+    [TestCase(6, 40.01, "Sale.GainsTaxRatePercent", TestName = "A gains tax rate over 40%")]
+    public void Sale_OutOfRange_IsRejected(decimal selling, decimal gainsTaxRate, string path)
+    {
+        AssertInvalid(A.Request.WithSale(selling, TaxFilingStatus.Single, gainsTaxRate), path, "costs and a tax rate a market could have");
+    }
+
+    [Test]
+    public void Sale_AtTheEdgesOfItsRanges_IsAccepted()
+    {
+        AssertValid(A.Request.WithSale(0m, TaxFilingStatus.HeadOfHousehold, 40m), "the edges are assumptions a seller could face");
+        AssertValid(A.Request.WithSale(20m, TaxFilingStatus.MarriedFilingJointly, 0m), "so is the other end");
+    }
+
     [TestCase(0, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "No rent")]
     [TestCase(2_000.001, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "Rent to a fraction of a cent")]
     [TestCase(2_000, 20.01, 7, 1, 6, "RentOrBuy.RentIncreasePercent", TestName = "Rent rising more than 20% a year")]

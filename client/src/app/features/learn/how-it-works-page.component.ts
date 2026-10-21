@@ -95,7 +95,17 @@ import { ReadingNavComponent } from './reading-nav.component';
           <p>Two households spend the same each month. Whichever of owning and renting costs less invests the difference,
             and the renter also invests what buying takes to close. The buyer is worth the home after selling (its value
             less what is owed and selling costs) plus investments; the renter, their investments. Buying breaks even in the
-            first year from which it stays ahead.</p>
+            first year from which it stays ahead. Tick the tax savings and the buyer's mortgage interest and property tax are
+            weighed against the standard deduction a renter would take; what owning adds beyond it, at your tax rate, is
+            invested as it is saved.</p>
+        </section>
+
+        <section id="sell">
+          <h3>If you sell</h3>
+          <p>For each year you might sell: the home's value then, less what you still owe, the costs of selling and the tax
+            on any gain. The gain is the sale less its costs, over the price you paid. A home you live in shelters the first
+            $250,000 of gain from tax ($500,000 for a couple filing jointly) once you have owned it two years; the rest is
+            taxed at the rate you give. A second home or an investment property has no tax-free gain.</p>
         </section>
 
         <section id="refinance">
@@ -145,6 +155,7 @@ export class HowItWorksPageComponent {
     { id: 'apr', label: 'The APR' },
     { id: 'afford', label: 'What you can afford' },
     { id: 'rent', label: 'Rent or buy' },
+    { id: 'sell', label: 'If you sell' },
     { id: 'refinance', label: 'Refinancing' },
     { id: 'invest', label: 'Pay off or invest' },
   ];

@@ -6,7 +6,7 @@ import { filter, map } from 'rxjs';
 /**
  * The views of buying a home, each its own URL so it can be bookmarked, shared and reached with the back button.
  * Four questions sit in the row: what it costs, whether you can afford it, rent or buy, and Compare (a page of its own
- * that takes the calculator's loan as Home A). The three views under Cost, the closing costs, the years and every
+ * that takes the calculator's loan as Home A). The views under Cost, the closing costs, the years, what a sale would leave and every
  * payment, are one step down: a second row shown with Cost, so the first row stays four questions, not seven tabs.
  */
 export const BUY_VIEWS = [
@@ -20,11 +20,12 @@ export const BUY_VIEWS = [
 export const BUY_DEPTH = [
   { id: 'closing', link: '/calculator/closing', label: 'Closing costs' },
   { id: 'projection', link: '/calculator/projection', label: 'Year by year' },
+  { id: 'sale', link: '/calculator/sale', label: 'If you sell' },
   { id: 'schedule', link: '/calculator/schedule', label: 'Every payment' },
 ] as const;
 
 /** Every view's id, in the order a buyer meets them. */
-export const BUY_TABS = [BUY_VIEWS[0], BUY_VIEWS[1], BUY_DEPTH[0], BUY_VIEWS[2], BUY_DEPTH[1], BUY_DEPTH[2], BUY_VIEWS[3]] as const;
+export const BUY_TABS = [BUY_VIEWS[0], BUY_VIEWS[1], BUY_DEPTH[0], BUY_VIEWS[2], BUY_DEPTH[1], BUY_DEPTH[2], BUY_DEPTH[3], BUY_VIEWS[3]] as const;
 
 /** The id of the view an address shows: `/calculator/closing` is "closing", `/compare` is "compare". */
 export function buyViewOf(url: string): string {

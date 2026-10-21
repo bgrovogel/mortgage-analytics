@@ -71,7 +71,7 @@ describe('CalculatorStore', () => {
       settle();
 
       // Weighed by the current settings for the seller's offer, which a save made before them leaves out.
-      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null };
+      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 } };
       expect(store.request()).toEqual(sent);
       expect(calculate).toHaveBeenCalledWith(sent);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
@@ -152,6 +152,33 @@ describe('CalculatorStore', () => {
       store.send({ ...request(), rentOrBuy: rent });
 
       expect(store.rentSettings()).toEqual(rent);
+    });
+  });
+
+  describe('weighing a sale', () => {
+    beforeEach(() => calculate.mockReturnValue(of(aResponse())));
+    const sale = { sellingCostPercent: 8, filingStatus: 'MarriedFilingJointly' as const, gainsTaxRatePercent: 20 };
+
+    it('asks for a sale with the usual costs and tax rate, so the view always has figures', () => {
+      store.send(request());
+
+      expect(store.request()?.sale).toEqual({ sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 });
+    });
+
+    it('calculates again with other costs, and keeps them for the requests after', () => {
+      store.send(request());
+      settle();
+      store.setSaleSettings(sale);
+      settle();
+      store.send(request(5));
+
+      expect(store.request()?.sale).toEqual(sale);
+    });
+
+    it('takes the settings a saved calculation brings', () => {
+      store.send({ ...request(), sale });
+
+      expect(store.saleSettings()).toEqual(sale);
     });
   });
 

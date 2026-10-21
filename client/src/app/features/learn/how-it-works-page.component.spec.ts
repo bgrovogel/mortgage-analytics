@@ -16,7 +16,7 @@ describe('HowItWorksPageComponent', () => {
 
     expect(headings).toEqual([
       'Your monthly payment', 'Taxes and insurance', 'Mortgage insurance', 'Cash to close', 'The APR',
-      'What you can afford', 'Rent or buy', 'Refinancing', 'Pay off or invest',
+      'What you can afford', 'Rent or buy', 'If you sell', 'Refinancing', 'Pay off or invest',
     ]);
   });
 
@@ -35,7 +35,7 @@ describe('HowItWorksPageComponent', () => {
 
     expect(links.map((a) => a.textContent!.trim())).toEqual([
       'Your monthly payment', 'Taxes and insurance', 'Mortgage insurance', 'Cash to close', 'The APR',
-      'What you can afford', 'Rent or buy', 'Refinancing', 'Pay off or invest',
+      'What you can afford', 'Rent or buy', 'If you sell', 'Refinancing', 'Pay off or invest',
     ]);
     expect(sections).toHaveLength(links.length);
     expect(links.map((a) => a.getAttribute('href'))).toEqual(sections.map((id) => `/#${id}`));

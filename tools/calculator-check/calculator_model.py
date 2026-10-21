@@ -451,6 +451,7 @@ def analyze(request, today, other_choice=True):
     out['sellerOffer'] = seller_offer(request, today, out)
     out['affordability'] = affordability(request, today)
     out['rentOrBuy'] = rent_or_buy(request, out)
+    out['sale'] = sale(request, out)
     out['annualPercentageRate'] = annual_percentage_rate(out)
     out['inFiveYears'], out['totalInterestPercentage'] = loan_estimate_figures(out)
     return out
@@ -577,6 +578,40 @@ def rent_or_buy(request, out):
         since = (since or y['year']) if y['advantage'] >= 0 else None
     return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
             'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner)}
+
+
+# Gain on a home lived in for two years that is free of tax (IRC 121): a couple filing jointly, and anyone else.
+EXCLUSION = {'MarriedFilingJointly': D(500_000)}
+EXCLUSION_DEFAULT = D(250_000)
+
+
+def sale(request, out):
+    """
+    What selling leaves at the end of each year of the loan (up to 30): the home's value, less what the plan still owes
+    (nothing once it is paid off), the selling costs and the tax on the gain. The gain is the value less the costs, over
+    the price paid; a loss is not taxed. A home lived in has the first $250,000 of gain ($500,000 for a couple filing
+    jointly) free of tax once owned two years; any other home has none.
+    """
+    a = request.get('sale')
+    if not a:
+        return None
+    selling, rate = D(str(a.get('sellingCostPercent', 6))), D(str(a.get('gainsTaxRatePercent', 15)))
+    primary = request.get('occupancy', 'PrimaryResidence') == 'PrimaryResidence'
+    exclusion = EXCLUSION.get(a.get('filingStatus', 'Single'), EXCLUSION_DEFAULT) if primary else D(0)
+    price = D(str(request['homePrice']))
+    growth = D(str((request.get('housingCosts') or {}).get('homeValueGrowthRate', 0)))
+    owed = out['accelerated']['payments']
+    years = []
+    for year in range(1, min(30, len(out['baseline']['payments']) // 12) + 1):
+        value = grow(price, growth, year)
+        balance = owed[year * 12 - 1]['remainingBalance'] if year * 12 <= len(owed) else D(0)
+        costs = money(value * selling / 100)
+        gain = value - costs - price
+        free = min(max(gain, D(0)), exclusion) if year >= 2 else D(0)
+        tax = money((max(gain, D(0)) - free) * rate / 100)
+        years.append({'year': year, 'homeValue': value, 'loanBalance': balance, 'sellingCosts': costs, 'gain': gain,
+                      'taxFreeGain': free, 'taxOnGain': tax, 'netProceeds': value - balance - costs - tax})
+    return {'sellingCostPercent': selling, 'gainsTaxRatePercent': rate, 'exclusionPerSale': exclusion, 'years': years}
 
 
 # Debt-to-income limits, as percentages of gross monthly income: (housing, total). Comfortable is the classic 28/36;

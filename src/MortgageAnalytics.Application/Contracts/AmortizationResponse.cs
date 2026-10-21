@@ -19,6 +19,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Affordability">The home against the household's income and debts. Null unless the request gives them.</param>
 /// <param name="RentOrBuy">Buying the home against renting a similar one, year by year. Null unless the request asks.</param>
 /// <param name="Budget">The highest price a monthly budget reaches. Null unless the request gives a budget.</param>
+/// <param name="Sale">What selling would leave in hand at the end of each year. Null unless the request asks.</param>
 /// <param name="AnnualPercentageRate">
 /// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
 /// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
@@ -43,7 +44,8 @@ public sealed record AmortizationResponse(
     decimal? AnnualPercentageRate = null,
     InFiveYearsResponse? InFiveYears = null,
     decimal? TotalInterestPercentage = null,
-    BudgetResponse? Budget = null);
+    BudgetResponse? Budget = null,
+    SaleResponse? Sale = null);
 
 /// <summary>What a Loan Estimate lists as "in 5 years" for the standard schedule, with no extra payments.</summary>
 /// <param name="TotalPaid">The first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs.</param>
@@ -74,6 +76,29 @@ public sealed record RentOrBuyResponse(
     int? BreakEvenYear,
     IReadOnlyList<RentOrBuyYearResponse> Years,
     bool CountsTaxSavings = false);
+
+/// <summary>
+/// What selling the home would leave in hand, for each year it might be sold. The gain is the sale, less its costs, over
+/// the price paid; a home lived in has the first $250,000 of it ($500,000 for a couple filing jointly) free of tax after
+/// two years. Improvements and the costs of buying would lower the gain, so the tax shown leans high.
+/// </summary>
+/// <param name="SellingCostPercent">What selling costs, as a percentage of the home's value then.</param>
+/// <param name="GainsTaxRatePercent">The federal rate on the gain taxed.</param>
+/// <param name="ExclusionPerSale">The gain a sale of this home could shelter from tax once owned two years: $250,000 or $500,000, and nothing for a home that is not lived in.</param>
+/// <param name="Years">Each year the loan runs, up to 30.</param>
+public sealed record SaleResponse(decimal SellingCostPercent, decimal GainsTaxRatePercent, decimal ExclusionPerSale, IReadOnlyList<SaleYearResponse> Years);
+
+/// <summary>Selling at the end of one year.</summary>
+/// <param name="Year">The 1-based year.</param>
+/// <param name="HomeValue">What the home sells for.</param>
+/// <param name="LoanBalance">What is owed then, on the plan with its extra payments.</param>
+/// <param name="SellingCosts">Commissions and the seller's closing costs.</param>
+/// <param name="Gain">The sale less its costs, over the price paid; negative for a loss.</param>
+/// <param name="TaxFreeGain">The part of the gain the exclusion shelters.</param>
+/// <param name="TaxOnGain">The federal tax on the rest.</param>
+/// <param name="NetProceeds">What is left after the loan, the costs and the tax; negative when the sale does not cover them.</param>
+public sealed record SaleYearResponse(
+    int Year, decimal HomeValue, decimal LoanBalance, decimal SellingCosts, decimal Gain, decimal TaxFreeGain, decimal TaxOnGain, decimal NetProceeds);
 
 /// <summary>One year of renting instead of buying.</summary>
 /// <param name="Year">The 1-based year.</param>

@@ -167,6 +167,10 @@ def random_purchase(rng):
             request['rentOrBuy']['ownerTaxes'] = {
                 'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold']), 'marginalTaxRatePercent': rng.choice([10, 12, 22, 24, 32, 35, 37]),
                 'otherStateAndLocalTaxes': rng.choice([0, 0, 5_000, 12_000, 35_000]), 'otherItemizedDeductions': rng.choice([0, 0, 3_000, 15_000])}
+    # Some weigh a sale: what it costs, how it is taxed, and how the seller files.
+    if rng.random() < 0.4:
+        request['sale'] = {'sellingCostPercent': rng.choice([0, 5, 6, 8]), 'gainsTaxRatePercent': rng.choice([0, 15, 20, 23.8]),
+                           'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold'])}
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}

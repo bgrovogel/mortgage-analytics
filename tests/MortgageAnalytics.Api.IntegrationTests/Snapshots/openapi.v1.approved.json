@@ -1378,6 +1378,9 @@
           "rentOrBuy": {
             "$ref": "#/components/schemas/RentOrBuyRequest"
           },
+          "sale": {
+            "$ref": "#/components/schemas/SaleRequest"
+          },
           "monthlyBudget": {
             "type": "number",
             "format": "double",
@@ -1450,6 +1453,9 @@
           },
           "budget": {
             "$ref": "#/components/schemas/BudgetResponse"
+          },
+          "sale": {
+            "$ref": "#/components/schemas/SaleResponse"
           }
         },
         "additionalProperties": false
@@ -3103,6 +3109,86 @@
           "newPassword": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleRequest": {
+        "type": "object",
+        "properties": {
+          "sellingCostPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "filingStatus": {
+            "$ref": "#/components/schemas/TaxFilingStatus"
+          },
+          "gainsTaxRatePercent": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleResponse": {
+        "type": "object",
+        "properties": {
+          "sellingCostPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "gainsTaxRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "exclusionPerSale": {
+            "type": "number",
+            "format": "double"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleYearResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "homeValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "loanBalance": {
+            "type": "number",
+            "format": "double"
+          },
+          "sellingCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "gain": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxFreeGain": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxOnGain": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProceeds": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

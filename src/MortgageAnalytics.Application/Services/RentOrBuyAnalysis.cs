@@ -1,7 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.RentOrBuy;
-using MortgageAnalytics.Domain.Strategies;
 
 namespace MortgageAnalytics.Application.Services;
 
@@ -24,7 +23,7 @@ internal static class RentOrBuyAnalysis
             : analysis.Purchase.DownPayment;
         var assumptions = new RentOrBuyAssumptions(
             renting.MonthlyRent, renting.RentIncreasePercent, renting.InvestmentReturnPercent, renting.MaintenancePercent, renting.SellingCostPercent);
-        var tax = renting.OwnerTaxes is { } owner ? new OwnerTaxProfile(ToDomain(owner.FilingStatus), owner.MarginalTaxRatePercent, owner.OtherStateAndLocalTaxes, owner.OtherItemizedDeductions) : null;
+        var tax = renting.OwnerTaxes is { } owner ? new OwnerTaxProfile(StrategyMapper.ToDomain(owner.FilingStatus), owner.MarginalTaxRatePercent, owner.OtherStateAndLocalTaxes, owner.OtherItemizedDeductions) : null;
         var years = RentOrBuyComparison.Years(
             assumptions, cashToClose, analysis.Rates.Loan, analysis.Comparison.Baseline, analysis.Comparison.BaselineCosts, analysis.Rates.Buydown,
             analysis.Valuation, tax);
@@ -36,12 +35,4 @@ internal static class RentOrBuyAnalysis
                 y.Year, y.OwnershipCost, y.Rent, y.HomeEquity, y.BuyerInvestments, y.BuyerNetWorth, y.RenterNetWorth, y.Advantage, y.TaxSaved))],
             tax is not null);
     }
-
-    private static FilingStatus ToDomain(TaxFilingStatus status) => status switch
-    {
-        TaxFilingStatus.Single => FilingStatus.SingleFiler,
-        TaxFilingStatus.MarriedFilingJointly => FilingStatus.MarriedFilingJointly,
-        TaxFilingStatus.HeadOfHousehold => FilingStatus.HeadOfHousehold,
-        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown filing status."),
-    };
 }

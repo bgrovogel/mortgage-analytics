@@ -30,6 +30,8 @@
     <!-- What the question asks for sits with the five numbers, above the optional details. -->
     @if (view() === 'rent-or-buy') {
       <app-rent-settings question />
+    } @else if (view() === 'sale') {
+      <app-sale-settings question />
     }
   </app-loan-form>
 

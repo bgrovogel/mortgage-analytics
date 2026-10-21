@@ -6,6 +6,7 @@ using MortgageAnalytics.Application.Services;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.RentOrBuy;
+using MortgageAnalytics.Domain.Selling;
 
 namespace MortgageAnalytics.Application.Validation;
 
@@ -243,6 +244,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             .When(r => r.MonthlyBudget is not null);
 
         RuleFor(r => r.RentOrBuy!).SetValidator(new RentOrBuyValidator()).When(r => r.RentOrBuy is not null);
+        RuleFor(r => r.Sale!).SetValidator(new SaleValidator()).When(r => r.Sale is not null);
 
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
@@ -331,6 +333,17 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 .InclusiveBetween(0, 100)
                 .Must(percent => decimal.Round(percent, 2) == percent).WithMessage("'Co-buyer share of the down payment' can have at most 2 decimal places.")
                 .WithName("Co-buyer share of the down payment");
+        }
+    }
+
+    /// <summary>How a sale is weighed: values a market could have, the domain's own limits.</summary>
+    private sealed class SaleValidator : AbstractValidator<SaleRequest>
+    {
+        public SaleValidator()
+        {
+            RuleFor(s => s.SellingCostPercent).InclusiveBetween(0, 20).WithName("Selling costs");
+            RuleFor(s => s.FilingStatus).IsInEnum();
+            RuleFor(s => s.GainsTaxRatePercent).InclusiveBetween(0, SaleAssumptions.MaxGainsTaxRate).WithName("Tax rate on the gain");
         }
     }
 

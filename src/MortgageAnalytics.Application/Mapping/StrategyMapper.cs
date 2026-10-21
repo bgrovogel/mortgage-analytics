@@ -100,7 +100,7 @@ public static class StrategyMapper
             [.. projection.Years.Select(y => new NetWorthYearResponse(
                 y.Year, y.HomeValue, y.MortgageBalance, y.HomeEquity, y.Investments, y.NetWorth, y.NetWorthInTodaysDollars))]);
 
-    private static FilingStatus ToDomain(TaxFilingStatus status) => status switch
+    internal static FilingStatus ToDomain(TaxFilingStatus status) => status switch
     {
         TaxFilingStatus.Single => FilingStatus.SingleFiler,
         TaxFilingStatus.MarriedFilingJointly => FilingStatus.MarriedFilingJointly,

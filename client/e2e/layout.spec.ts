@@ -10,7 +10,7 @@ import { expect, test } from './fixtures';
 
 const PAGES = [
   '/', '/calculator/overview', '/calculator/affordability', '/calculator/closing', '/calculator/rent-or-buy', '/calculator/projection',
-  '/calculator/schedule', '/compare', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/terms', '/sign-in',
+  '/calculator/sale', '/calculator/schedule', '/compare', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/terms', '/sign-in',
   '/forgot-password', '/no-such-page',
 ];
 

@@ -7,6 +7,7 @@ import { CalculatorStore } from './calculator.store';
 import { FirstVisitHintsComponent } from './first-visit/first-visit-hints.component';
 import { LoanFormComponent } from './loan-form/loan-form.component';
 import { RentSettingsComponent } from './rent-settings/rent-settings.component';
+import { SaleSettingsComponent } from './sale-settings/sale-settings.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 import { AmortizationResponse } from '../../core/models/amortization.models';
 
@@ -17,7 +18,7 @@ import { AmortizationResponse } from '../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, FirstVisitHintsComponent, LoanFormComponent, RentSettingsComponent, RouterOutlet],
+  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, FirstVisitHintsComponent, LoanFormComponent, RentSettingsComponent, RouterOutlet, SaleSettingsComponent],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
