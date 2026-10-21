@@ -246,8 +246,8 @@ export class CalculatorPage {
     await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
   }
 
-  /** Opens a result tab: Overview, Affordability, Closing, Rent or buy, Projection, If you sell or Schedule. Each has its own URL. */
-  async showResults(tab: 'overview' | 'affordability' | 'closing' | 'rent-or-buy' | 'projection' | 'sale' | 'schedule'): Promise<void> {
+  /** Opens a result tab: Overview, Affordability, Closing, Rent or buy, Projection, If you sell, As a rental or Schedule. Each has its own URL. */
+  async showResults(tab: 'overview' | 'affordability' | 'closing' | 'rent-or-buy' | 'projection' | 'sale' | 'rental' | 'schedule'): Promise<void> {
     // The views under Cost are one step down: from another question, go through Cost first.
     const link = this.page.getByTestId(`result-tab-${tab}`);
     if (!(await link.isVisible())) await this.page.getByTestId('result-tab-overview').click();

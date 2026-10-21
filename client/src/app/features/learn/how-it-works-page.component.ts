@@ -108,6 +108,14 @@ import { ReadingNavComponent } from './reading-nav.component';
             taxed at the rate you give. A second home or an investment property has no tax-free gain.</p>
         </section>
 
+        <section id="rental">
+          <h3>As a rental</h3>
+          <p>If the home were let out: the rent, less the share lost to empty months, a manager, upkeep and the property
+            taxes, insurance and dues of owning it, is what the property earns (its net operating income). The cap rate is
+            that over the price; after the loan's payments it is the cash flow, and over the cash you put in, the
+            cash-on-cash return. Lenders look for the rent to cover the payments 1.25 times.</p>
+        </section>
+
         <section id="refinance">
           <h3>Refinancing</h3>
           <p>The new loan's payment and total interest against the loan you have, with closing costs included. The break-even
@@ -156,6 +164,7 @@ export class HowItWorksPageComponent {
     { id: 'afford', label: 'What you can afford' },
     { id: 'rent', label: 'Rent or buy' },
     { id: 'sell', label: 'If you sell' },
+    { id: 'rental', label: 'As a rental' },
     { id: 'refinance', label: 'Refinancing' },
     { id: 'invest', label: 'Pay off or invest' },
   ];

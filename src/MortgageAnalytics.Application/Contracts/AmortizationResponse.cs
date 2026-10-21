@@ -20,6 +20,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="RentOrBuy">Buying the home against renting a similar one, year by year. Null unless the request asks.</param>
 /// <param name="Budget">The highest price a monthly budget reaches. Null unless the request gives a budget.</param>
 /// <param name="Sale">What selling would leave in hand at the end of each year. Null unless the request asks.</param>
+/// <param name="Rental">The home let out, measured as an investment. Null unless the request asks.</param>
 /// <param name="AnnualPercentageRate">
 /// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
 /// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
@@ -45,7 +46,8 @@ public sealed record AmortizationResponse(
     InFiveYearsResponse? InFiveYears = null,
     decimal? TotalInterestPercentage = null,
     BudgetResponse? Budget = null,
-    SaleResponse? Sale = null);
+    SaleResponse? Sale = null,
+    RentalResponse? Rental = null);
 
 /// <summary>What a Loan Estimate lists as "in 5 years" for the standard schedule, with no extra payments.</summary>
 /// <param name="TotalPaid">The first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs.</param>
@@ -76,6 +78,53 @@ public sealed record RentOrBuyResponse(
     int? BreakEvenYear,
     IReadOnlyList<RentOrBuyYearResponse> Years,
     bool CountsTaxSavings = false);
+
+/// <summary>
+/// The home let out, measured as an investment, year by year. Net operating income is the rent collected less the manager,
+/// upkeep and the taxes, assessments, insurance and dues of owning; cash flow is that less the loan's payments (principal,
+/// interest and mortgage insurance). The loan is the standard schedule: extra payments are left out.
+/// </summary>
+/// <param name="MonthlyRent">The rent now, a month.</param>
+/// <param name="VacancyPercent">The share of the rent lost to vacancy.</param>
+/// <param name="ManagementPercent">The manager's share of the rent collected.</param>
+/// <param name="MaintenancePercent">Upkeep a year, as a percentage of the home's value.</param>
+/// <param name="RentIncreasePercent">How much the rent rises each year.</param>
+/// <param name="CashInvested">What the buyer puts in at closing (the down payment alone without closing costs).</param>
+/// <param name="CapRatePercent">The first year's net operating income as a percentage of the price.</param>
+/// <param name="CashOnCashPercent">The first year's cash flow as a percentage of the cash invested; null when none was.</param>
+/// <param name="DebtServiceCoverage">The first year's net operating income over the loan's payments; lenders ask for 1.25 or more. Null without a loan.</param>
+/// <param name="GrossRentMultiplier">The price over a year's gross rent.</param>
+/// <param name="RentToPricePercent">A month's rent as a percentage of the price; the "1% rule" looks for 1.</param>
+/// <param name="BreakEvenMonthlyRent">The rent at which the first year's cash flow is nothing.</param>
+/// <param name="Years">Each year, up to 30 (or the loan's term when shorter).</param>
+public sealed record RentalResponse(
+    decimal MonthlyRent,
+    decimal VacancyPercent,
+    decimal ManagementPercent,
+    decimal MaintenancePercent,
+    decimal RentIncreasePercent,
+    decimal CashInvested,
+    decimal CapRatePercent,
+    decimal? CashOnCashPercent,
+    decimal? DebtServiceCoverage,
+    decimal GrossRentMultiplier,
+    decimal RentToPricePercent,
+    decimal BreakEvenMonthlyRent,
+    IReadOnlyList<RentalYearResponse> Years);
+
+/// <summary>One year of letting the home out.</summary>
+/// <param name="Year">The 1-based year.</param>
+/// <param name="GrossRent">The rent if let every month.</param>
+/// <param name="VacancyLoss">The rent lost to vacancy.</param>
+/// <param name="ManagementFee">What the manager is paid.</param>
+/// <param name="Maintenance">Repairs and upkeep.</param>
+/// <param name="OperatingCosts">Property taxes, assessments, insurance and dues.</param>
+/// <param name="NetOperatingIncome">What the property earns before the loan.</param>
+/// <param name="DebtService">The loan's payments, less any buydown's subsidy.</param>
+/// <param name="CashFlow">What is left after the loan; negative when the owner has to add money.</param>
+public sealed record RentalYearResponse(
+    int Year, decimal GrossRent, decimal VacancyLoss, decimal ManagementFee, decimal Maintenance, decimal OperatingCosts,
+    decimal NetOperatingIncome, decimal DebtService, decimal CashFlow);
 
 /// <summary>
 /// What selling the home would leave in hand, for each year it might be sold. The gain is the sale, less its costs, over

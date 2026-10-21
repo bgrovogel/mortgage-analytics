@@ -6,6 +6,7 @@ using MortgageAnalytics.Application.Services;
 using MortgageAnalytics.Domain.Closing;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.RentOrBuy;
+using MortgageAnalytics.Domain.Rental;
 using MortgageAnalytics.Domain.Selling;
 
 namespace MortgageAnalytics.Application.Validation;
@@ -245,6 +246,7 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
 
         RuleFor(r => r.RentOrBuy!).SetValidator(new RentOrBuyValidator()).When(r => r.RentOrBuy is not null);
         RuleFor(r => r.Sale!).SetValidator(new SaleValidator()).When(r => r.Sale is not null);
+        RuleFor(r => r.Rental!).SetValidator(new RentalValidator()).When(r => r.Rental is not null);
 
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
@@ -333,6 +335,19 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 .InclusiveBetween(0, 100)
                 .Must(percent => decimal.Round(percent, 2) == percent).WithMessage("'Co-buyer share of the down payment' can have at most 2 decimal places.")
                 .WithName("Co-buyer share of the down payment");
+        }
+    }
+
+    /// <summary>What letting the home out would bring in and cost: values a market could have, the domain's own limits.</summary>
+    private sealed class RentalValidator : AbstractValidator<RentalRequest>
+    {
+        public RentalValidator()
+        {
+            RuleFor(r => r.MonthlyRent).GreaterThan(0).LessThanOrEqualTo(RentalAssumptions.MaxMonthlyRent).WholeCents().WithName("Rent");
+            RuleFor(r => r.VacancyPercent).InclusiveBetween(0, RentalAssumptions.MaxVacancyPercent).WithName("Vacancy");
+            RuleFor(r => r.ManagementPercent).InclusiveBetween(0, RentalAssumptions.MaxManagementPercent).WithName("Management");
+            RuleFor(r => r.MaintenancePercent).InclusiveBetween(0, RentalAssumptions.MaxMaintenancePercent).WithName("Upkeep");
+            RuleFor(r => r.RentIncreasePercent).InclusiveBetween(-20, 20).WithName("Rent increase");
         }
     }
 

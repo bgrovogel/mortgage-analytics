@@ -478,7 +478,7 @@ every year after; one good year followed by a bad one does not count.
 - On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
   else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
 - The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
-  Python model compares every year its own way: 300 of 300 random purchases match, 140 of them with a rent, 68 of
+  Python model compares every year its own way: 300 of 300 random purchases match, 110 of them with a rent, 60 of
   those with the owner's taxes.
 
 ### If you sell
@@ -506,7 +506,38 @@ investment property gets none, and a head of household has the single filer's. A
   first $250,000 is tax-free and the other **$54,492.04** pays **$8,173.81**; the seller keeps
   643,076.64 − 250,000 − 38,584.60 − 8,173.81 = **$346,318.23**.
 - The domain is `HomeSale`, and `SaleAnalysis` (`Application/Services`) feeds it the projection's values and the plan's
-  balances. The Python model works every year its own way: 300 of 300 random purchases match, 115 of them with a sale.
+  balances. The Python model works every year its own way: 300 of 300 random purchases match, 122 of them with a sale.
+
+### As a rental
+
+What the home earns if it is let out (`RentalYear`, `RentalReturns`, `Domain/Rental`; up to 30 years, or the loan's term):
+
+```
+gross       = rent × (1 + rise %)^(year − 1), to the cent, × 12
+vacancy     = gross × vacancy %, to the cent
+collected   = gross − vacancy
+manager     = collected × management %, to the cent
+upkeep      = home value at the year's start × upkeep %, to the cent
+operating   = the year's property taxes, assessments, insurance and dues (not mortgage insurance)
+NOI         = collected − manager − upkeep − operating
+debt        = the year's principal and interest + mortgage insurance − any buydown subsidy
+cash flow   = NOI − debt
+```
+
+The first year gives the measures: **cap rate** = NOI ÷ price; **cash-on-cash** = cash flow ÷ cash invested (the cash to
+close, or the down payment without closing costs; none when nothing was put in); **debt service coverage** = NOI ÷ debt
+(none without a loan); **gross rent multiplier** = price ÷ gross; **rent to price** = monthly rent ÷ price; and the
+**break-even rent**, where cash flow is nil: `(upkeep + operating + debt) ÷ ((1 − vacancy %)(1 − management %)) ÷ 12`.
+
+- Mortgage insurance is counted with the loan, not the operating costs, because it ends with the loan's balance and a
+  lender's coverage test counts it in the payment. Extra payments, income tax, depreciation and the home's growth in
+  value are left out.
+- A hand-worked year, in a test: $2,500 a month on a $400,000 home, 5% vacancy, 8% manager, 1% upkeep, $9,000 of
+  operating costs and $18,000 of payments: gross **$30,000**, vacancy $1,500, manager $2,280, upkeep $4,000, NOI
+  **$13,220**, cash flow **−$4,780**, a cap rate of 3.31% and coverage of 0.73.
+- The domain is `RentalYear` and `RentalReturns`, and `RentalAnalysis` (`Application/Services`) feeds them the
+  schedule's payments and the housing costs. The Python model works every year its own way: 300 of 300 random purchases
+  match, 76 of them let out.
 
 ### The best use of the seller's money
 

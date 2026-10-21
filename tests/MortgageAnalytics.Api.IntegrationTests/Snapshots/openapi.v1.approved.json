@@ -1378,6 +1378,9 @@
           "rentOrBuy": {
             "$ref": "#/components/schemas/RentOrBuyRequest"
           },
+          "rental": {
+            "$ref": "#/components/schemas/RentalRequest"
+          },
           "sale": {
             "$ref": "#/components/schemas/SaleRequest"
           },
@@ -1456,6 +1459,9 @@
           },
           "sale": {
             "$ref": "#/components/schemas/SaleResponse"
+          },
+          "rental": {
+            "$ref": "#/components/schemas/RentalResponse"
           }
         },
         "additionalProperties": false
@@ -3071,6 +3077,137 @@
             "format": "double"
           },
           "taxSaved": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentalRequest": {
+        "type": "object",
+        "properties": {
+          "monthlyRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "vacancyPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "managementPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "maintenancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "rentIncreasePercent": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentalResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "vacancyPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "managementPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "maintenancePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "rentIncreasePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashInvested": {
+            "type": "number",
+            "format": "double"
+          },
+          "capRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashOnCashPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "debtServiceCoverage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "grossRentMultiplier": {
+            "type": "number",
+            "format": "double"
+          },
+          "rentToPricePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "breakEvenMonthlyRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RentalYearResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentalYearResponse": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grossRent": {
+            "type": "number",
+            "format": "double"
+          },
+          "vacancyLoss": {
+            "type": "number",
+            "format": "double"
+          },
+          "managementFee": {
+            "type": "number",
+            "format": "double"
+          },
+          "maintenance": {
+            "type": "number",
+            "format": "double"
+          },
+          "operatingCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "netOperatingIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "debtService": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashFlow": {
             "type": "number",
             "format": "double"
           }

@@ -71,7 +71,7 @@ describe('CalculatorStore', () => {
       settle();
 
       // Weighed by the current settings for the seller's offer, which a save made before them leaves out.
-      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 } };
+      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null };
       expect(store.request()).toEqual(sent);
       expect(calculate).toHaveBeenCalledWith(sent);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
@@ -152,6 +152,35 @@ describe('CalculatorStore', () => {
       store.send({ ...request(), rentOrBuy: rent });
 
       expect(store.rentSettings()).toEqual(rent);
+    });
+  });
+
+  describe('measuring a rental', () => {
+    beforeEach(() => calculate.mockReturnValue(of(aResponse())));
+    const rental = { monthlyRent: 2_500, vacancyPercent: 5, managementPercent: 8, maintenancePercent: 1, rentIncreasePercent: 3 };
+
+    it('asks for nothing until a rent is given', () => {
+      store.send(request());
+
+      expect(store.request()?.rental).toBeNull();
+    });
+
+    it('calculates again with a rent, and keeps it for the requests after, until it is cleared', () => {
+      store.send(request());
+      settle();
+      store.setRentalSettings(rental);
+      settle();
+      store.send(request(5));
+      expect(store.request()?.rental).toEqual(rental);
+
+      store.setRentalSettings(null);
+      expect(store.request()?.rental).toBeNull();
+    });
+
+    it('takes the rent a saved calculation brings', () => {
+      store.send({ ...request(), rental });
+
+      expect(store.rentalSettings()).toEqual(rental);
     });
   });
 

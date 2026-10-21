@@ -452,6 +452,7 @@ def analyze(request, today, other_choice=True):
     out['affordability'] = affordability(request, today)
     out['rentOrBuy'] = rent_or_buy(request, out)
     out['sale'] = sale(request, out)
+    out['rental'] = rental(request, out)
     out['annualPercentageRate'] = annual_percentage_rate(out)
     out['inFiveYears'], out['totalInterestPercentage'] = loan_estimate_figures(out)
     return out
@@ -578,6 +579,50 @@ def rent_or_buy(request, out):
         since = (since or y['year']) if y['advantage'] >= 0 else None
     return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
             'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner)}
+
+
+def rental(request, out):
+    """
+    The home let out, year by year (up to 30, or the loan's term), on the standard schedule. Collected rent is the year's
+    rent (the monthly rent after its yearly rises, times 12) less vacancy; less the manager's share of that, upkeep on the
+    home's value at the year's start, and the year's property taxes, assessments, insurance and dues, it is the net
+    operating income. The loan takes the year's principal, interest and mortgage insurance less any buydown subsidy. The
+    measures are the first year's; the break-even rent is the one whose first year leaves nothing after the loan.
+    """
+    a = request.get('rental')
+    if not a:
+        return None
+    rent0, rise = D(str(a['monthlyRent'])), D(str(a.get('rentIncreasePercent', 3)))
+    vacancy, mgmt = D(str(a.get('vacancyPercent', 5))), D(str(a.get('managementPercent', 8)))
+    upkeep_pct = D(str(a.get('maintenancePercent', 1)))
+    price = D(str(request['homePrice']))
+    growth = D(str((request.get('housingCosts') or {}).get('homeValueGrowthRate', 0)))
+    cash = out['cashToClose']['total'] if out['cashToClose'] else D(str(request['downPayment']))
+    payments = out['baseline']['payments']
+    operating_keys = ['propertyTax', 'schoolTax', 'localTax', 'mudTax', 'pidAssessment', 'homeownersInsurance', 'hoaDues']
+    years = []
+    for year in range(1, min(30, len(payments) // 12) + 1):
+        months = payments[(year - 1) * 12:year * 12]
+        gross = grow(rent0, rise, year - 1) * 12
+        lost = money(gross * vacancy / 100)
+        collected = gross - lost
+        fee = money(collected * mgmt / 100)
+        upkeep = money(grow(price, growth, year - 1) * upkeep_pct / 100)
+        operating = sum((p['costs'][k] for p in months for k in operating_keys), D(0))
+        debt = sum((p['scheduledPayment'] + p['costs']['mortgageInsurance'] - p['buydownSubsidy'] for p in months), D(0))
+        noi = collected - fee - upkeep - operating
+        years.append({'year': year, 'grossRent': gross, 'vacancyLoss': lost, 'managementFee': fee, 'maintenance': upkeep,
+                      'operatingCosts': operating, 'netOperatingIncome': noi, 'debtService': debt, 'cashFlow': noi - debt})
+    first = years[0]
+    kept = (1 - vacancy / 100) * (1 - mgmt / 100)
+    return {'monthlyRent': rent0, 'vacancyPercent': vacancy, 'managementPercent': mgmt, 'maintenancePercent': upkeep_pct,
+            'rentIncreasePercent': rise, 'cashInvested': cash,
+            'capRatePercent': money(first['netOperatingIncome'] / price * 100),
+            'cashOnCashPercent': money(first['cashFlow'] / cash * 100) if cash > 0 else None,
+            'debtServiceCoverage': money(first['netOperatingIncome'] / first['debtService']) if first['debtService'] > 0 else None,
+            'grossRentMultiplier': money(price / first['grossRent']), 'rentToPricePercent': money(rent0 / price * 100),
+            'breakEvenMonthlyRent': money((first['maintenance'] + first['operatingCosts'] + first['debtService']) / kept / 12),
+            'years': years}
 
 
 # Gain on a home lived in for two years that is free of tax (IRC 121): a couple filing jointly, and anyone else.

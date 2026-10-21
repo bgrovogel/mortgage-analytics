@@ -325,6 +325,22 @@ standard deduction, so with a modest loan the saving can be nothing at all.
 
 ![Rent or buy: the example against $2,700 a month of rent; buying comes out ahead if you stay 4 years or more, the gap crossing zero in year 4](images/rent-or-buy.png)
 
+#### As a rental
+
+**As a rental**, one step down from Cost, measures the home as an investment (any home can be tried; it is the
+natural view for an investment property). Put in the rent it would fetch, or **Try** about 0.8% of the price a month, and
+it works out each year: the rent, less **5%** vacancy, a property manager (**8%** of what is collected), upkeep
+(**1%** of the home's value a year) and the property taxes, assessments, insurance and dues you entered, is the
+**net operating income**; less the loan's payments (principal, interest and mortgage insurance), the **cash flow**. Rent
+rises **3%** a year, and taxes and insurance follow the home's value.
+
+It leads with three figures: what you add or keep each month, the **cap rate** (net operating income over the price),
+and the **cash-on-cash return** (the first year's cash flow over the cash you put in: the down payment and, with closing
+costs entered, those too). Beneath are the **debt service coverage** (lenders ask for 1.25), the rent against the
+price (the "1% rule"), the price over a year's rent, and the **rent that breaks even**. A chart shows the cash flow by
+year and a table the years 1, 2, 3, 5, 7, 10, 15, 20 and 30. The loan is the standard schedule, so extra payments are
+left out, as are income tax, depreciation and the home's growth in value.
+
 #### If you sell
 
 **If you sell**, one step down from Cost, answers *what would I walk away with?* For the year you choose (it starts on
@@ -373,7 +389,7 @@ all of it.
   payments, the total interest over the loan, never a $0 saving), and **when PMI ends**. Then the rate what-if, and
   **what you owe month by month**: the balance with extra payments against the standard schedule as a ghost, in time
   frames (5Y, 10Y, to payoff, the full term), with a **scrubber** (arrow keys a month, Page Up and Page Down a year)
-  whose month a tooltip and a ledger of the next six payments follow. Closing costs, year by year, if you sell and every payment
+  whose month a tooltip and a ledger of the next six payments follow. Closing costs, year by year, if you sell, as a rental and every payment
   are one step down, as links under the four views. Edit the loan and the previous curve stays behind as a faint ghost
   with a chip saying what changed ("6.25% → 5.75% · −$4,000 interest"); **Pin** keeps it, or it fades after four seconds.
 - **Can I afford it?** three figures of equal weight (the payment's share of income, with the debts, and the most you
@@ -496,9 +512,9 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   A sticky bar keeps the payment and savings in view once the answer has scrolled away, and the four pages are a bar
   along the bottom of the screen, where a thumb reaches. On a wider screen the form sits in its own column.
 - **For this question.** What a view needs sits with the five numbers, in a soft block, not further down a list:
-  income, debts and a monthly budget on Can I afford it?, the rent and what is assumed on Rent or buy?, and what a sale costs and how its gain is taxed on If you sell.
+  income, debts and a monthly budget on Can I afford it?, the rent and what is assumed on Rent or buy?, what a sale costs and how its gain is taxed on If you sell, and the rent and what letting costs on As a rental.
 - **Each view answers its own question.** Buy a home has four views in a row: **Cost**, **Can I afford it?**, **Rent or
-  buy?** and **Compare**; the closing costs, the year-by-year costs, what a sale would leave and every payment are one step down from Cost,
+  buy?** and **Compare**; the closing costs, the year-by-year costs, what a sale would leave, the home as a rental and every payment are one step down from Cost,
   as a quieter row of links, with **Back to Cost** on each of them. Under each view's question, once there is a result, the answer is set large with a
   sentence behind it: "$3,102 a month" with "$2,325 goes to the loan and $777 to taxes, insurance and the rest. You
   would bring $48,129 to closing. Paying extra pays it off 5 years 9 months sooner and saves $108,039"; or "Yes,
@@ -514,7 +530,7 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **The form in a buyer's order.** The five main numbers, then six collapsed sections, each summarized in one line:
   Loan type & rate · Taxes, insurance, HOA & PMI · Closing costs & credits · Income & debts · Extra payments · Future
   increases.
-- **Bookmarkable.** The calculator's Overview, Affordability, Closing, Rent or buy, Projection, Sale and Schedule tabs have their own
+- **Bookmarkable.** The calculator's Overview, Affordability, Closing, Rent or buy, Projection, Sale, Rental and Schedule tabs have their own
   URLs, and so does Compare homes (an old link to the Compare tab lands there); the back button works.
 - **Light and dark mode,** following the system until you choose System, Light or Dark in the footer, which is
   remembered in the browser.

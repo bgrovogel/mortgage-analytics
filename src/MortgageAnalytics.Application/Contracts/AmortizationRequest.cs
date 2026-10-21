@@ -87,6 +87,9 @@ public sealed record AmortizationRequest
     /// <summary>Weighs buying the home against renting a similar one, year by year. Omit for none.</summary>
     public RentOrBuyRequest? RentOrBuy { get; init; }
 
+    /// <summary>Lets the home out and measures it as an investment: net operating income, cash flow, cap rate, cash-on-cash return and debt service coverage, year by year. Omit for none.</summary>
+    public RentalRequest? Rental { get; init; }
+
     /// <summary>What selling the home would leave in hand at the end of each year, after the loan, the costs of selling and tax on the gain. Omit for none.</summary>
     public SaleRequest? Sale { get; init; }
 
@@ -127,6 +130,30 @@ public sealed record RentOrBuyRequest
     /// itemize, against the standard deduction. Omit to leave tax out, as the comparison does by default.
     /// </summary>
     public OwnerTaxesRequest? OwnerTaxes { get; init; }
+}
+
+/// <summary>What letting the home out would bring in, and cost besides owning it.</summary>
+public sealed record RentalRequest
+{
+    /// <summary>The rent now, a month.</summary>
+    /// <example>2500</example>
+    public decimal MonthlyRent { get; init; }
+
+    /// <summary>The share of the year's rent lost to empty months and unpaid rent, as a percentage.</summary>
+    /// <example>5</example>
+    public decimal VacancyPercent { get; init; } = 5m;
+
+    /// <summary>What a property manager is paid, as a percentage of the rent collected; 0 for an owner who manages it.</summary>
+    /// <example>8</example>
+    public decimal ManagementPercent { get; init; } = 8m;
+
+    /// <summary>What repairs and upkeep cost a year, as a percentage of the home's value that year.</summary>
+    /// <example>1</example>
+    public decimal MaintenancePercent { get; init; } = 1m;
+
+    /// <summary>How much the rent rises each year, as a percentage.</summary>
+    /// <example>3</example>
+    public decimal RentIncreasePercent { get; init; } = 3m;
 }
 
 /// <summary>How a sale is weighed: what it costs, and how the gain is taxed.</summary>

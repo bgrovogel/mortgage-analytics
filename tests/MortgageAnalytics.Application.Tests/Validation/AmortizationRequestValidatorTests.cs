@@ -304,6 +304,26 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertValid(A.Request.WithRentOrBuy(2_000m).WithOwnerTaxes(TaxFilingStatus.HeadOfHousehold, 50m, 100_000_000m, 0m), "the edges are tax profiles");
     }
 
+    [TestCase(0, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental with no rent")]
+    [TestCase(2_500.001, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental to a fraction of a cent")]
+    [TestCase(1_000_000.01, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental past a million a month")]
+    [TestCase(2_500, -0.01, 8, 1, 3, "Rental.VacancyPercent", TestName = "Vacancy below nothing")]
+    [TestCase(2_500, 50.01, 8, 1, 3, "Rental.VacancyPercent", TestName = "Vacancy over half")]
+    [TestCase(2_500, 5, 25.01, 1, 3, "Rental.ManagementPercent", TestName = "A manager paid over a quarter")]
+    [TestCase(2_500, 5, 8, 10.01, 3, "Rental.MaintenancePercent", TestName = "Upkeep over 10%")]
+    [TestCase(2_500, 5, 8, 1, 20.01, "Rental.RentIncreasePercent", TestName = "Rent rising more than 20% a year")]
+    public void Rental_OutOfRange_IsRejected(decimal rent, decimal vacancy, decimal management, decimal maintenance, decimal rise, string path)
+    {
+        AssertInvalid(A.Request.WithRental(rent, vacancy, management, maintenance, rise), path, "assumptions a market could have");
+    }
+
+    [Test]
+    public void Rental_AtTheEdgesOfItsRanges_IsAccepted()
+    {
+        AssertValid(A.Request.WithRental(0.01m, 0m, 0m, 0m, -20m), "the low edges are assumptions an owner could face");
+        AssertValid(A.Request.WithRental(1_000_000m, 50m, 25m, 10m, 20m), "so are the high edges");
+    }
+
     [TestCase(-0.01, 15, "Sale.SellingCostPercent", TestName = "Selling costs below nothing")]
     [TestCase(20.01, 15, "Sale.SellingCostPercent", TestName = "Selling costs over 20%")]
     [TestCase(6, -0.01, "Sale.GainsTaxRatePercent", TestName = "A gains tax rate below nothing")]

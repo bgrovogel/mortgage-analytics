@@ -133,6 +133,52 @@ export interface AmortizationRequest {
   rentOrBuy?: RentOrBuyInput | null;
   /** What selling would leave at the end of each year; leave out for none. */
   sale?: SaleInput | null;
+  /** Lets the home out and measures it as an investment; leave out for none. */
+  rental?: RentalInput | null;
+}
+
+/** What letting the home out would bring in, and cost besides owning it. */
+export interface RentalInput {
+  monthlyRent: number;
+  /** The share of the rent lost to empty months and unpaid rent, as a percentage. */
+  vacancyPercent: number;
+  /** What a property manager is paid, as a percentage of the rent collected. */
+  managementPercent: number;
+  /** Repairs and upkeep a year, as a percentage of the home's value. */
+  maintenancePercent: number;
+  /** How much the rent rises each year, as a percentage. */
+  rentIncreasePercent: number;
+}
+
+/** One year of letting the home out. */
+export interface RentalYear {
+  year: number;
+  grossRent: number;
+  vacancyLoss: number;
+  managementFee: number;
+  maintenance: number;
+  /** Property taxes, assessments, insurance and dues. */
+  operatingCosts: number;
+  netOperatingIncome: number;
+  /** The loan's payments: principal, interest and mortgage insurance. */
+  debtService: number;
+  /** What is left after the loan; negative when the owner has to add money. */
+  cashFlow: number;
+}
+
+/** The home let out, measured as an investment, year by year. */
+export interface RentalOutcome extends RentalInput {
+  /** What the buyer puts in at closing. */
+  cashInvested: number;
+  capRatePercent: number;
+  /** Null when no cash was put in. */
+  cashOnCashPercent: number | null;
+  /** Null without a loan. */
+  debtServiceCoverage: number | null;
+  grossRentMultiplier: number;
+  rentToPricePercent: number;
+  breakEvenMonthlyRent: number;
+  years: RentalYear[];
 }
 
 /** How a sale is weighed: what it costs, and how the gain is taxed. */
@@ -654,6 +700,8 @@ export interface AmortizationResponse {
   rentOrBuy?: RentOrBuyComparison | null;
   /** What selling would leave at the end of each year; null unless asked. */
   sale?: SaleOutcome | null;
+  /** The home let out, measured as an investment; null unless asked. */
+  rental?: RentalOutcome | null;
   /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */
   annualPercentageRate?: number | null;
   /** A Loan Estimate's "in 5 years" on the standard schedule: what the first 60 payments come to and the principal they pay off. */

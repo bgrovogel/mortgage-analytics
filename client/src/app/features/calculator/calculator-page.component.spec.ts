@@ -70,6 +70,7 @@ describe('CalculatorPageComponent', () => {
       ['Closing costs', '/calculator/closing'],
       ['Year by year', '/calculator/projection'],
       ['If you sell', '/calculator/sale'],
+      ['As a rental', '/calculator/rental'],
       ['Every payment', '/calculator/schedule'],
     ]);
     expect(el('app-schedule-tab')).not.toBeNull();

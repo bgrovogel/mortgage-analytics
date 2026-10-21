@@ -42,6 +42,7 @@ public sealed class AmortizationService(ILoanComparer comparer, TimeProvider clo
             Budget = BudgetAnalysis.For(request, analysis, QualifyingPayment),
             RentOrBuy = RentOrBuyAnalysis.For(request, analysis),
             Sale = SaleAnalysis.For(request, analysis),
+            Rental = RentalAnalysis.For(request, analysis),
         };
     }
 

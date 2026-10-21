@@ -277,10 +277,13 @@ test.describe('Mortgage calculator', () => {
   test('the key figures keep the order you gave them in your account, on another device', async ({ signedIn, account, page, browser }) => {
     // Signed in, on the calculator: put "when the mortgage insurance ends" first.
     expect(signedIn, 'the calculator is open, signed in').toBeTruthy();
-    const saved = page.waitForResponse((r) => r.url().endsWith('/api/v1/account/key-figures') && r.request().method() === 'PUT');
     await page.getByTestId('arrange-rail').click();
-    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Move When the mortgage insurance ends earlier' }).click();
-    expect((await saved).ok(), 'the arrangement is sent to the account').toBe(true);
+    // Each move is saved on its own: wait for every one, or the other device could sign in before the last arrives.
+    for (let i = 0; i < 4; i++) {
+      const saved = page.waitForResponse((r) => r.url().endsWith('/api/v1/account/key-figures') && r.request().method() === 'PUT');
+      await page.getByRole('button', { name: 'Move When the mortgage insurance ends earlier' }).click();
+      expect((await saved).ok(), `move ${i + 1} is sent to the account`).toBe(true);
+    }
 
     // Another browser with nothing remembered: signing in brings the order with it.
     const other = await browser.newContext();
@@ -457,6 +460,30 @@ test.describe('Mortgage calculator', () => {
     await calculator.calculate();
     await calculator.showResults('projection');
     await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
+  });
+
+  test('as a rental: a rent measures the home as an investment, and the rent that breaks even carries the loan', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 400_000, downPayment: 80_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('rental');
+    await expect(page.getByTestId('rental-empty'), 'it asks for the rent first').toBeVisible();
+
+    await page.getByTestId('rental-rent').fill('2800');
+    await expect(page.getByTestId('rental-stat-cap'), 'the cap rate is measured').toContainText('Cap rate');
+    await expect(page.getByTestId('rental-stat-cash'), 'a $320,000 loan at 6% costs about $23,000 a year').toContainText('each month');
+    await expect(page.getByTestId('rental-table').locator('tbody tr'), 'the milestone years').toHaveCount(9);
+    await expect(page.getByTestId('rental-measures'), 'what rent breaks even').toContainText('Rent that breaks even');
+  });
+
+  test('as a rental: trying a rent fills the box and measures the home', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 400_000, downPayment: 80_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('rental');
+
+    await page.getByTestId('try-rental-rent').click();
+
+    await expect(page.getByTestId('rental-rent'), 'about 0.8% of $400,000').toHaveValue('3,200');
+    await expect(page.getByTestId('rental-verdict'), 'a verdict is given').toBeVisible();
   });
 
   test('if you sell: what a sale would leave each year, after the loan, the costs and the tax on the gain', async ({ calculator, page }) => {

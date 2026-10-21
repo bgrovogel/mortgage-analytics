@@ -24,7 +24,7 @@ describe('BuyTabsComponent', () => {
   });
 
 
-  it('lists four questions, each with its own address, and the four views under Cost one step down', async () => {
+  it('lists four questions, each with its own address, and the five views under Cost one step down', async () => {
     await RouterTestingHarness.create('/calculator/overview');
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
@@ -40,9 +40,9 @@ describe('BuyTabsComponent', () => {
     ]);
     expect(root.querySelector('[data-testid="back-to-cost"]')).toBeNull(); // on Cost itself, there is no way back
     expect(named('nav[aria-label="Go deeper"] a')).toEqual([
-      ['Closing costs', '/calculator/closing'], ['Year by year', '/calculator/projection'], ['If you sell', '/calculator/sale'], ['Every payment', '/calculator/schedule'],
+      ['Closing costs', '/calculator/closing'], ['Year by year', '/calculator/projection'], ['If you sell', '/calculator/sale'], ['As a rental', '/calculator/rental'], ['Every payment', '/calculator/schedule'],
     ]);
-    expect(BUY_TABS.map((t) => t.id)).toEqual(['overview', 'affordability', 'closing', 'rent-or-buy', 'projection', 'sale', 'schedule', 'compare']);
+    expect(BUY_TABS.map((t) => t.id)).toEqual(['overview', 'affordability', 'closing', 'rent-or-buy', 'projection', 'sale', 'rental', 'schedule', 'compare']);
   });
 
   it('keeps Cost marked while a view under it is open, and shows the way to the others', async () => {

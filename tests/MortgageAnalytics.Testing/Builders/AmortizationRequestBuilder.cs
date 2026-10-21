@@ -186,6 +186,18 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Lets the home out for <paramref name="monthlyRent"/> and measures it as an investment, with the request's defaults for the rest.</summary>
+    public AmortizationRequestBuilder WithRental(
+        decimal monthlyRent, decimal vacancy = 5m, decimal management = 8m, decimal maintenance = 1m, decimal rentIncrease = 3m) =>
+        With(r => r with
+        {
+            Rental = new RentalRequest
+            {
+                MonthlyRent = monthlyRent, VacancyPercent = vacancy, ManagementPercent = management,
+                MaintenancePercent = maintenance, RentIncreasePercent = rentIncrease,
+            },
+        });
+
     /// <summary>Asks what selling would leave in hand each year, with <paramref name="selling"/>% in costs and a long-term gain taxed at <paramref name="gainsTaxRate"/>% for a seller filing as <paramref name="filingStatus"/>.</summary>
     public AmortizationRequestBuilder WithSale(
         decimal selling = 6m, TaxFilingStatus filingStatus = TaxFilingStatus.Single, decimal gainsTaxRate = 15m) =>

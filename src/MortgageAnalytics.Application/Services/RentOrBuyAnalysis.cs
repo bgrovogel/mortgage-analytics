@@ -18,9 +18,7 @@ internal static class RentOrBuyAnalysis
         if (request.RentOrBuy is not { } renting)
             return null;
 
-        var cashToClose = request.ToClosingCosts() is { } closing
-            ? AmortizationMapper.CashToCloseFor(closing, analysis.Purchase, analysis.Comparison, analysis.Rates).Total
-            : analysis.Purchase.DownPayment;
+        var cashToClose = analysis.CashToClose(request);
         var assumptions = new RentOrBuyAssumptions(
             renting.MonthlyRent, renting.RentIncreasePercent, renting.InvestmentReturnPercent, renting.MaintenancePercent, renting.SellingCostPercent);
         var tax = renting.OwnerTaxes is { } owner ? new OwnerTaxProfile(StrategyMapper.ToDomain(owner.FilingStatus), owner.MarginalTaxRatePercent, owner.OtherStateAndLocalTaxes, owner.OtherItemizedDeductions) : null;

@@ -26,6 +26,7 @@ export const routes: Routes = [
       { path: 'affordability', loadComponent: () => import('./features/calculator/tabs/affordability-tab.component').then((m) => m.AffordabilityTabComponent), title: title('Can you afford it?') },
       { path: 'closing', loadComponent: () => import('./features/calculator/tabs/closing-tab.component').then((m) => m.ClosingTabComponent), title: title('Closing') },
       { path: 'sale', loadComponent: () => import('./features/calculator/tabs/sale-tab.component').then((m) => m.SaleTabComponent), title: title('If you sell') },
+      { path: 'rental', loadComponent: () => import('./features/calculator/tabs/rental-tab.component').then((m) => m.RentalTabComponent), title: title('As a rental') },
       { path: 'rent-or-buy', loadComponent: () => import('./features/calculator/tabs/rent-or-buy-tab.component').then((m) => m.RentOrBuyTabComponent), title: title('Rent or buy') },
       { path: 'projection', loadComponent: () => import('./features/calculator/tabs/projection-tab.component').then((m) => m.ProjectionTabComponent), title: title('Projection') },
       { path: 'schedule', loadComponent: () => import('./features/calculator/tabs/schedule-tab.component').then((m) => m.ScheduleTabComponent), title: title('Schedule') },

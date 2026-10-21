@@ -1,3 +1,4 @@
+using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.HousingCosts;
@@ -11,4 +12,12 @@ namespace MortgageAnalytics.Application.Services;
 /// <param name="Plan">The housing costs.</param>
 /// <param name="Comparison">The standard and accelerated schedules, with their housing costs.</param>
 /// <param name="Rates">The loan, and any buydown, points or program.</param>
-internal sealed record Analysis(PropertyPurchase Purchase, PropertyValuation Valuation, HousingCostPlan Plan, LoanComparison Comparison, LoanRates Rates);
+internal sealed record Analysis(PropertyPurchase Purchase, PropertyValuation Valuation, HousingCostPlan Plan, LoanComparison Comparison, LoanRates Rates)
+{
+    /// <summary>What the buyer puts in at closing: the cash to close when closing costs are given, the down payment alone otherwise.</summary>
+    /// <param name="request">The request as made.</param>
+    public decimal CashToClose(AmortizationRequest request) =>
+        request.ToClosingCosts() is { } closing
+            ? AmortizationMapper.CashToCloseFor(closing, Purchase, Comparison, Rates).Total
+            : Purchase.DownPayment;
+}

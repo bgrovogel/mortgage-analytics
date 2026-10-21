@@ -171,6 +171,11 @@ def random_purchase(rng):
     if rng.random() < 0.4:
         request['sale'] = {'sellingCostPercent': rng.choice([0, 5, 6, 8]), 'gainsTaxRatePercent': rng.choice([0, 15, 20, 23.8]),
                            'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold'])}
+    # Some are let out and measured as an investment: rent from low to high for the price, with varied costs.
+    if rng.random() < 0.3:
+        request['rental'] = {'monthlyRent': money(rng, int(price / 600), int(price / 100), 25), 'vacancyPercent': rng.choice([0, 5, 8, 10]),
+                             'managementPercent': rng.choice([0, 8, 10]), 'maintenancePercent': rng.choice([0, 1, 1.5, 2]),
+                             'rentIncreasePercent': rng.choice([0, 2, 3, 5])}
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}

@@ -1,0 +1,25 @@
+.rental {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.intro,
+.prompt {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+// A rent to try, in the sentence that asks for one.
+.try {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 24px;
+}
