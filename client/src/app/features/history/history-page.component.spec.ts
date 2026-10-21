@@ -289,19 +289,19 @@ describe('HistoryPageComponent', () => {
     });
   });
 
-  describe('renaming', () => {
+  describe('editing', () => {
     it('renames in place, keeping the inputs', () => {
       create();
       api.update.mockReturnValue(of({ ...oak, name: 'Oak St, final' }));
 
-      click(button(items()[0], 'Rename'));
+      click(button(items()[0], 'Edit'));
       const box = items()[0].querySelector('input') as HTMLInputElement;
       expect(box.value).toBe('Oak St, 20% down');
       box.value = 'Oak St, final';
       box.dispatchEvent(new Event('input'));
       click(button(items()[0], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', { inputs: oak.inputs });
+      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', { inputs: oak.inputs }, null);
       expect(names()).toEqual(['Oak St, final', 'Maple Ave']);
     });
 
@@ -310,16 +310,45 @@ describe('HistoryPageComponent', () => {
       create();
       api.update.mockReturnValue(of({ ...oak, name: 'Renamed' }));
 
-      click(button(items()[0], 'Rename'));
+      click(button(items()[0], 'Edit'));
       click(button(items()[0], 'Save'));
 
       expect(store.saved()).toEqual({ id: '1', name: 'Renamed' });
     });
 
+    it('shows the note a calculation was saved with, under its name', () => {
+      api.list.mockReturnValue(of([{ ...oak, note: 'Ask about the roof' }, maple]));
+      create();
+
+      expect(items()[0].querySelector('[data-testid="history-note"]')?.textContent).toBe('Ask about the roof');
+      expect(items()[1].querySelector('[data-testid="history-note"]')).toBeNull();
+    });
+
+    it('changes the note with the name, and clearing it sends none', () => {
+      api.list.mockReturnValue(of([{ ...oak, note: 'Ask about the roof' }, maple]));
+      create();
+      api.update.mockReturnValue(of({ ...oak, note: 'Roof checked' }));
+
+      click(button(items()[0], 'Edit'));
+      const note = items()[0].querySelector('[data-testid="edit-note"]') as HTMLTextAreaElement;
+      expect(note.value).toBe('Ask about the roof');
+      note.value = '  Roof checked  ';
+      note.dispatchEvent(new Event('input'));
+      click(button(items()[0], 'Save'));
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, 'Roof checked');
+
+      click(button(items()[0], 'Edit'));
+      const again = items()[0].querySelector('[data-testid="edit-note"]') as HTMLTextAreaElement;
+      again.value = '';
+      again.dispatchEvent(new Event('input'));
+      click(button(items()[0], 'Save'));
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null);
+    });
+
     it('can be cancelled', () => {
       create();
 
-      click(button(items()[0], 'Rename'));
+      click(button(items()[0], 'Edit'));
       click(button(items()[0], 'Cancel'));
 
       expect(items()[0].querySelector('input[type="text"]')).toBeNull();
@@ -401,10 +430,10 @@ describe('HistoryPageComponent', () => {
       create();
       api.update.mockReturnValue(of({ ...refi, name: 'Refi, final' }));
 
-      click(button(items()[1], 'Rename'));
+      click(button(items()[1], 'Edit'));
       click(button(items()[1], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('3', 'Refi at 6%', { refinance });
+      expect(api.update).toHaveBeenCalledWith('3', 'Refi at 6%', { refinance }, null);
     });
 
     it('can be shown on their own, or hidden', () => {
@@ -448,10 +477,10 @@ describe('HistoryPageComponent', () => {
       TestBed.inject(StrategyStore).linkTo(payOff);
       api.update.mockReturnValue(of({ ...payOff, name: 'Pay off, final' }));
 
-      click(button(items()[1], 'Rename'));
+      click(button(items()[1], 'Edit'));
       click(button(items()[1], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('4', 'Pay off or invest?', { strategy });
+      expect(api.update).toHaveBeenCalledWith('4', 'Pay off or invest?', { strategy }, null);
       expect(TestBed.inject(StrategyStore).saved()).toEqual({ id: '4', name: 'Pay off, final' });
     });
 

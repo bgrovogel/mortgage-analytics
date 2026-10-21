@@ -12,6 +12,9 @@ public sealed class SaveCalculationRequestValidator : AbstractValidator<SaveCalc
     /// <summary>The longest name accepted, after trimming.</summary>
     public const int MaxNameLength = 100;
 
+    /// <summary>The longest note accepted, after trimming.</summary>
+    public const int MaxNoteLength = 500;
+
     /// <summary>The most homes a comparison holds: the calculator inputs and three others.</summary>
     public const int MaxHomes = 4;
 
@@ -22,6 +25,10 @@ public sealed class SaveCalculationRequestValidator : AbstractValidator<SaveCalc
             .Cascade(CascadeMode.Stop)
             .Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("Give the calculation a name.")
             .Must(name => name.Trim().Length <= MaxNameLength).WithMessage($"Keep the name to {MaxNameLength} characters or fewer.");
+
+        RuleFor(r => r.Note)
+            .Must(note => note is null || note.Trim().Length <= MaxNoteLength)
+            .WithMessage($"Keep the note to {MaxNoteLength} characters or fewer.");
 
         RuleFor(r => r.Inputs)
             .Must((request, _) => KindsGiven(request) == 1)

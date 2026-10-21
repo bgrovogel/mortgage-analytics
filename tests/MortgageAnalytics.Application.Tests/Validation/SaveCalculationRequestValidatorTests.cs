@@ -13,6 +13,22 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
     public void ANamedValidCalculation_IsValid() =>
         AssertValid(Named("Oak St, 20% down"), "a name and valid inputs are all a saved calculation needs");
 
+    [Test]
+    public void ANote_IsOptional_AndAtTheLimitIsValid()
+    {
+        AssertValid(Named("Oak St") with { Note = null }, "most calculations have no note");
+        AssertValid(Named("Oak St") with { Note = new string('x', SaveCalculationRequestValidator.MaxNoteLength) }, "a note at the limit is kept");
+    }
+
+    [Test]
+    public void ANoteOverTheLimit_IsRejected() =>
+        AssertErrorMessage(Named("Oak St") with { Note = new string('x', SaveCalculationRequestValidator.MaxNoteLength + 1) }, "Note",
+            "Keep the note to 500 characters or fewer.", "a note is a reminder, not a document");
+
+    [Test]
+    public void TheLengthOfANote_IsCountedAfterTrimming() =>
+        AssertValid(Named("Oak St") with { Note = "  " + new string('x', SaveCalculationRequestValidator.MaxNoteLength) + "  " }, "spaces around it are not kept, so they do not count");
+
     [TestCase("")]
     [TestCase("   ")]
     public void ABlankName_IsRejected(string name) =>

@@ -34,6 +34,33 @@ public class SavedCalculationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task ANote_IsSavedWithTheCalculation_ReturnedOnReading_AndReplacedOnUpdate()
+    {
+        var name = UniqueName("Has a note");
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, new { name, note = "  Ask about the roof  ", inputs = A.Request.Build() });
+        var saved = await ReadJsonAsync(response);
+        var id = saved.GetProperty("id").GetGuid();
+
+        var read = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{id}"));
+        var updated = await ReadJsonAsync(await Me.PutAsJsonAsync($"{CalculationsUrl}/{id}", new { name, note = "Roof checked: fine", inputs = A.Request.Build() }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved.GetProperty("note").GetString(), Is.EqualTo("Ask about the roof"), "the note is trimmed when saved");
+            Assert.That(read.GetProperty("note").GetString(), Is.EqualTo("Ask about the roof"), "and comes back when read");
+            Assert.That(updated.GetProperty("note").GetString(), Is.EqualTo("Roof checked: fine"), "and is replaced by an update");
+        });
+    }
+
+    [Test]
+    public async Task ANoteOver500Characters_Returns400()
+    {
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, new { name = UniqueName("Long note"), note = new string('x', 501), inputs = A.Request.Build() });
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "a note is a reminder, not a document");
+    }
+
+    [Test]
     public async Task Save_Returns201_WithTheLocationAndTheSavedCalculation()
     {
         var name = UniqueName("Oak St");

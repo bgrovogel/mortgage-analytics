@@ -17,6 +17,8 @@ export type SavedInputs =
 export interface SavedCalculation {
   id: string;
   name: string;
+  /** A few words to remind its owner what it was for, up to 500 characters; null or left out for none. */
+  note?: string | null;
   kind: SavedCalculationKind;
   /** Set for a purchase calculation, and for the first of the homes compared. */
   inputs: AmortizationRequest | null;

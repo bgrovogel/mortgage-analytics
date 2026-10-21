@@ -33,7 +33,7 @@ export class SaveCalculationComponent {
   readonly suggestion = input('');
 
   /** The saved item the page is showing, if any, so it can be updated in place. */
-  readonly linked = input<Pick<SavedCalculation, 'id' | 'name'> | null>(null);
+  readonly linked = input<Pick<SavedCalculation, 'id' | 'name' | 'note'> | null>(null);
 
   /** Emits what was saved or updated, so the page can link itself to it. */
   readonly saved = output<SavedCalculation>();
@@ -43,6 +43,9 @@ export class SaveCalculationComponent {
 
   /** The name being typed. */
   readonly name = signal('');
+
+  /** The note being typed, to remind you what this was for. */
+  readonly note = signal('');
 
   /** What went wrong with the last attempt, if anything. */
   readonly error = signal<string | null>(null);
@@ -77,6 +80,7 @@ export class SaveCalculationComponent {
   openForm(): void {
     if (!this.payload()) return;
     this.name.set(this.linked()?.name ?? this.suggestion());
+    this.note.set(this.linked()?.note ?? '');
     this.error.set(null);
     this.status.set(null);
     this.editing.set(true);
@@ -89,15 +93,15 @@ export class SaveCalculationComponent {
 
   /** Saves as a new calculation. */
   saveNew(): void {
-    this.submit('Saved as', (name, payload) => this.api.save(name, payload));
+    this.submit('Saved as', (name, payload, note) => this.api.save(name, payload, note));
   }
 
   /** Replaces the linked saved calculation with the current inputs (and name). */
   update(id: string): void {
-    this.submit('Updated', (name, payload) => this.api.update(id, name, payload));
+    this.submit('Updated', (name, payload, note) => this.api.update(id, name, payload, note));
   }
 
-  private submit(verb: string, send: (name: string, payload: SavedInputs) => Observable<SavedCalculation>): void {
+  private submit(verb: string, send: (name: string, payload: SavedInputs, note: string | null) => Observable<SavedCalculation>): void {
     const name = this.name().trim();
     const payload = this.payload();
     if (!name) {
@@ -107,7 +111,7 @@ export class SaveCalculationComponent {
     if (!payload || this.saving()) return;
 
     this.saving.set(true);
-    send(name, payload).subscribe({
+    send(name, payload, this.note().trim() || null).subscribe({
       next: (saved) => {
         this.saved.emit(saved);
         this.status.set({ verb, name: saved.name });

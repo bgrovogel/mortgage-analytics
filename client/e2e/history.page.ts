@@ -26,14 +26,14 @@ export class HistoryPage {
     return this.page.getByTestId('history-item').filter({ has: this.page.getByRole('heading', { name, exact: true }) });
   }
 
-  /** Clicks one of an entry's buttons: Open, Rename or Delete. */
-  act(name: string, action: 'Open' | 'Rename' | 'Delete'): Promise<void> {
+  /** Clicks one of an entry's buttons: Open, Edit or Delete. */
+  act(name: string, action: 'Open' | 'Edit' | 'Delete'): Promise<void> {
     return this.item(name).getByRole('button', { name: `${action} ${name}` }).click();
   }
 
   /** Renames an entry in place. */
   async rename(from: string, to: string): Promise<void> {
-    await this.act(from, 'Rename');
+    await this.act(from, 'Edit');
     await this.page.getByRole('textbox', { name: `New name for ${from}` }).fill(to);
     await this.page.getByRole('button', { name: 'Save', exact: true }).click();
   }

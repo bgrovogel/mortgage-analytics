@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 3,000 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 3,010 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -14,12 +14,12 @@
 | Suite | Count | Tools | Speed |
 |---|---|---|---|
 | Domain | 718 | NUnit | < 1 s |
-| Application | 515 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
-| Infrastructure | 57 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
-| API integration | 139 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
+| Application | 522 | NUnit, NSubstitute, `FakeTimeProvider` | < 1 s |
+| Infrastructure | 58 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
+| API integration | 141 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 1,319 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 243 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 1,324 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 244 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 

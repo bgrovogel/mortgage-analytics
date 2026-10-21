@@ -6,7 +6,7 @@ import { shareFragment as fragmentFor } from './share-link';
 import { SharedLoan, SharedLoanChange, SharedLoanStore, SharedRate, sameLoan, sameRate } from './shared-loan.store';
 
 /** The saved calculation a page is showing: enough to update it in place, and to name it. */
-export type SavedLink = Pick<SavedCalculation, 'id' | 'name'>;
+export type SavedLink = Pick<SavedCalculation, 'id' | 'name' | 'note'>;
 
 /**
  * The state of one calculator page (purchase, refinance, or pay off or invest): the latest request, its result,
@@ -133,8 +133,8 @@ export abstract class CalculationStore<TRequest, TResponse> {
   }
 
   /** Records that the current calculation is this saved one (after saving or renaming it). */
-  linkTo({ id, name }: SavedLink): void {
-    this.saved.set({ id, name });
+  linkTo({ id, name, note }: SavedLink): void {
+    this.saved.set({ id, name, note });
   }
 
   /**

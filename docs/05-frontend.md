@@ -34,7 +34,7 @@ client/src/app/
     calculator/             page, store, loan-form (+ loan-form.model.ts, loan-fields.ts, sections/), result tabs and charts
     compare/                Compare homes: the page, its store, the results table and the figures it compares
     refinance/  strategy/   page, store, form (+ *-fields.ts), results
-    history/                saved calculations: search, filter, open, rename, delete
+    history/                saved calculations: search, filter, open, edit name and note, delete
     account/                sign in / up, confirm email, forgot / reset password, dev mailbox
     calculation-stores.ts   every page's store, for History and sign-out
 client/e2e/                 Playwright specs, page objects and fixtures

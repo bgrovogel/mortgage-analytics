@@ -73,6 +73,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
             Id = Guid.CreateVersion7(now),
             OwnerId = ownerId,
             Name = request.Name.Trim(),
+            Note = NoteOf(request),
             Inputs = request.Inputs,
             OtherHomes = request.OtherHomes,
             Refinance = request.Refinance,
@@ -93,6 +94,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
             return null;
 
         calculation.Name = request.Name.Trim();
+        calculation.Note = NoteOf(request);
         calculation.Inputs = request.Inputs;
         calculation.OtherHomes = request.OtherHomes;
         calculation.Refinance = request.Refinance;
@@ -107,10 +109,15 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
     public Task<bool> DeleteAsync(string ownerId, Guid id, CancellationToken cancellationToken) =>
         repository.DeleteAsync(ownerId, id, cancellationToken);
 
+    /// <summary>The note, trimmed; none when it is blank.</summary>
+    private static string? NoteOf(SaveCalculationRequest request) =>
+        string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+
     private static SavedCalculationResponse ToResponse(SavedCalculation calculation) => new()
     {
         Id = calculation.Id,
         Name = calculation.Name,
+        Note = calculation.Note,
         Kind = calculation.Kind,
         Inputs = calculation.Inputs,
         OtherHomes = calculation.OtherHomes,

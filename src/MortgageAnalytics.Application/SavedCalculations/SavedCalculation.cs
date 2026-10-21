@@ -18,6 +18,9 @@ public sealed class SavedCalculation
     /// <summary>The name to find it by.</summary>
     public required string Name { get; set; }
 
+    /// <summary>A few words to remind its owner what it was for; null for none.</summary>
+    public string? Note { get; set; }
+
     /// <summary>The calculator inputs, for a purchase calculation or the first of the homes compared; otherwise null.</summary>
     public AmortizationRequest? Inputs { get; set; }
 

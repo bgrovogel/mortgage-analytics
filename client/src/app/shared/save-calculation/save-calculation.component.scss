@@ -85,13 +85,22 @@ a.primary {
     color: var(--text-secondary);
   }
 
-  input {
+  .optional {
+    color: var(--text-muted);
+  }
+
+  input,
+  textarea {
     font: inherit;
     padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface-2);
     color: var(--text-primary);
+  }
+
+  textarea {
+    resize: vertical;
   }
 
   .error {

@@ -45,6 +45,7 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
 
         calculation.HasKey(c => c.Id);
         calculation.Property(c => c.Name).HasMaxLength(SaveCalculationRequestValidator.MaxNameLength).IsRequired();
+        calculation.Property(c => c.Note).HasMaxLength(SaveCalculationRequestValidator.MaxNoteLength);
 
         // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
         // field, and the contracts can grow without a schema change. A row holds one kind; the others are null

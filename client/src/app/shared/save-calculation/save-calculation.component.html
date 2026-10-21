@@ -26,6 +26,10 @@
     <input #nameInput id="save-name" type="text" maxlength="100" autocomplete="off" data-testid="save-name"
            [value]="name()" (input)="name.set($any($event.target).value)" (keydown.enter)="linked() ? update(linked()!.id) : saveNew()" />
 
+    <label for="save-note">Note <span class="optional">(optional)</span></label>
+    <textarea id="save-note" rows="2" maxlength="500" placeholder="What it was for, or what to check" data-testid="save-note"
+              [value]="note()" (input)="note.set($any($event.target).value)"></textarea>
+
     @if (error(); as message) {
       <p class="error" role="alert" data-testid="save-error">{{ message }}</p>
     }

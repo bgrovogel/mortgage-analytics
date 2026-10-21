@@ -57,6 +57,8 @@ test.describe('Accounts', () => {
       options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
     });
     await page.goto('/account');
+    // The account page asks the server for its passkeys first; adding one before they arrive is lost under load.
+    await expect(page.getByTestId('passkeys-none'), 'the account has none yet, once its list has loaded').toHaveText('No passkeys yet.');
     await page.getByTestId('passkey-name').fill('Test laptop');
     await page.getByTestId('passkey-add').click();
     await expect(page.getByTestId('passkey-list'), 'the passkey is listed under its name').toContainText('Test laptop');

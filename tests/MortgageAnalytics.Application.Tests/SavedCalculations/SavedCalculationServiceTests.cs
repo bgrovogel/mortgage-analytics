@@ -38,6 +38,40 @@ public class SavedCalculationServiceTests
         UpdatedAt = at ?? TestClock.Now,
     };
 
+    [TestCase("  Ask about the roof  ", "Ask about the roof", TestName = "A note is trimmed")]
+    [TestCase("   ", null, TestName = "A note of only spaces is no note")]
+    [TestCase(null, null, TestName = "No note stays none")]
+    public async Task Save_StoresTheTrimmedNote_OrNoneWhenBlank(string? given, string? stored)
+    {
+        SavedCalculation? added = null;
+        await _repository.AddAsync(Arg.Do<SavedCalculation>(c => added = c), Arg.Any<CancellationToken>());
+
+        var response = await _service.SaveAsync(Owner, Request() with { Note = given }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(added!.Note, Is.EqualTo(stored), "what is kept");
+            Assert.That(response.Note, Is.EqualTo(stored), "what comes back");
+        });
+    }
+
+    [Test]
+    public async Task Update_ReplacesTheNote_AndLeavingItOutClearsIt()
+    {
+        var stored = Stored();
+        stored.Note = "Old note";
+        _repository.FindAsync(Owner, stored.Id, Arg.Any<CancellationToken>()).Returns(stored);
+
+        var replaced = await _service.UpdateAsync(Owner, stored.Id, Request() with { Note = "New note" }, CancellationToken.None);
+        var cleared = await _service.UpdateAsync(Owner, stored.Id, Request(), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(replaced!.Note, Is.EqualTo("New note"), "the note is replaced");
+            Assert.That(cleared!.Note, Is.Null, "a request without one clears it, as with the name and inputs: an update replaces");
+        });
+    }
+
     [Test]
     public async Task Save_StoresTheTrimmedNameAndInputs_StampedNow()
     {

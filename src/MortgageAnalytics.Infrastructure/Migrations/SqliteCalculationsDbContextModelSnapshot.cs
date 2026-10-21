@@ -306,6 +306,10 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("OtherHomes")
                         .HasColumnType("TEXT");
 

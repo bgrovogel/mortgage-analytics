@@ -29,6 +29,23 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
     }
 
     [Test]
+    public async Task ANote_RoundTrips_AndNoNoteStaysNull()
+    {
+        var withNote = ACalculation("Has a note");
+        withNote.Note = "Ask about the roof: 15 years old.";
+        var without = ACalculation("No note", minutesLater: 1);
+        await SeedAsync(withNote, without);
+
+        var repository = NewRepository();
+
+        Assert.Multiple(async () =>
+        {
+            Assert.That((await repository.FindAsync(Alice, withNote.Id, CancellationToken.None))?.Note, Is.EqualTo("Ask about the roof: 15 years old."), "the note is stored");
+            Assert.That((await repository.FindAsync(Alice, without.Id, CancellationToken.None))?.Note, Is.Null, "a calculation without one has none");
+        });
+    }
+
+    [Test]
     public async Task ARefinanceComparison_RoundTrips()
     {
         var refinance = new RefinanceRequest

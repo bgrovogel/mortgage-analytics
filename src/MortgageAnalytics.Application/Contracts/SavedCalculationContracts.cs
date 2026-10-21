@@ -7,6 +7,10 @@ public sealed record SaveCalculationRequest
     /// <example>Oak St, 20% down</example>
     public string Name { get; init; } = "";
 
+    /// <summary>A few words to remind you what it was for, up to 500 characters. Omit for none; an update without one clears it.</summary>
+    /// <example>Ask about the roof: 15 years old.</example>
+    public string? Note { get; init; }
+
     /// <summary>The calculator inputs, exactly as sent to the calculate endpoint. Give exactly one of the three kinds.</summary>
     public AmortizationRequest? Inputs { get; init; }
 
@@ -48,6 +52,9 @@ public sealed record SavedCalculationResponse
     /// <summary>The name it was saved under.</summary>
     /// <example>Oak St, 20% down</example>
     public required string Name { get; init; }
+
+    /// <summary>The note it was saved with; null for none.</summary>
+    public string? Note { get; init; }
 
     /// <summary>Whether this is a purchase, two homes compared, a refinance comparison or a pay-off-or-invest comparison.</summary>
     public required SavedCalculationKind Kind { get; init; }

@@ -3337,6 +3337,10 @@
             "type": "string",
             "nullable": true
           },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
           "inputs": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
@@ -3384,6 +3388,10 @@
             "format": "uuid"
           },
           "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
             "type": "string",
             "nullable": true
           },

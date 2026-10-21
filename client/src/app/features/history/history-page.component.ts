@@ -61,8 +61,8 @@ export class HistoryPageComponent {
   /** What went wrong with the last action, if anything. */
   readonly error = signal<string | null>(null);
 
-  /** The calculation being renamed, and the name typed so far. */
-  readonly renaming = signal<{ id: string; name: string } | null>(null);
+  /** The calculation being edited (renamed, or its note changed), and the name and note typed so far. */
+  readonly renaming = signal<{ id: string; name: string; note: string } | null>(null);
 
   /** The calculation waiting for a delete confirmation. */
   readonly confirmingDelete = signal<string | null>(null);
@@ -274,10 +274,10 @@ export class HistoryPageComponent {
     void this.router.navigate([...store.route]);
   }
 
-  /** Starts renaming, with the current name to edit. */
+  /** Starts editing, with the current name and note to change. */
   startRename(calculation: SavedCalculation): void {
     this.confirmingDelete.set(null);
-    this.renaming.set({ id: calculation.id, name: calculation.name });
+    this.renaming.set({ id: calculation.id, name: calculation.name, note: calculation.note ?? '' });
   }
 
   /** Asks to confirm deleting a calculation. */
@@ -286,15 +286,16 @@ export class HistoryPageComponent {
     this.confirmingDelete.set(calculation.id);
   }
 
-  /** Saves the new name; the inputs are sent back unchanged. */
+  /** Saves the new name and note; the inputs are sent back unchanged. */
   saveRename(calculation: SavedCalculation): void {
     const name = this.renaming()?.name.trim();
+    const note = this.renaming()?.note.trim() || null;
     if (!name) {
       this.error.set('Give the calculation a name.');
       return;
     }
 
-    this.api.update(calculation.id, name, savedInputsOf(calculation)).subscribe({
+    this.api.update(calculation.id, name, savedInputsOf(calculation), note).subscribe({
       next: (updated) => {
         this.calculations.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         // Keep whichever page shows this calculation linked to its new name.

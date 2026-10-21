@@ -514,7 +514,7 @@ def amortization_engine():
 
 def schema():
     s = Svg(960, 780, "The database schema",
-            "SavedCalculations has Id, OwnerId, Name, four JSON columns (Inputs, OtherHomes, Refinance, Strategy: one kind "
+            "SavedCalculations has Id, OwnerId, Name, a Note, four JSON columns (Inputs, OtherHomes, Refinance, Strategy: one kind "
             "per row, and a comparison of homes sets Inputs and OtherHomes), "
             "CreatedAt and UpdatedAt, with an index on OwnerId and UpdatedAt. OwnerId is a foreign key to AspNetUsers.Id "
             "with cascade delete. UserPreferences has OwnerId, KeyFigureOrder and KeyFiguresHidden, one row per user who has arranged "
@@ -549,6 +549,7 @@ def schema():
         ("Id", "TEXT · GUID v7", "PK"),
         ("OwnerId", "TEXT", "FK"),
         ("Name", "TEXT · ≤ 100", ""),
+        ("Note", "TEXT · ≤ 500 · null for none", ""),
         ("Inputs", "TEXT · JSON", ""),
         ("OtherHomes", "TEXT · JSON array", ""),
         ("Refinance", "TEXT · JSON", ""),
@@ -569,7 +570,7 @@ def schema():
         ("KeyFigureOrder", "TEXT · names, comma-separated", ""),
         ("KeyFiguresHidden", "TEXT · names, comma-separated", ""),
     ], note="One row per user who arranged the key figures")
-    table(28, 414, 400, "Passkeys", "accent", [
+    table(28, 438, 400, "Passkeys", "accent", [
         ("CredentialId", "BLOB", "PK"),
         ("OwnerId", "TEXT", "FK"),
         ("PublicKey", "BLOB", ""),
@@ -578,9 +579,9 @@ def schema():
         ("Name", "TEXT · ≤ 50", ""),
         ("CreatedAt · LastUsedAt", "INTEGER", ""),
     ], note="One row per passkey · no secret: the private key stays on the device")
-    s.arrow([(428, 500), (480, 500), (480, 296), (530, 296)], color=ACCENT, sw=2)
-    s.text(436, 520, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
-    s.text(436, 534, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
+    s.arrow([(428, 524), (480, 524), (480, 296), (530, 296)], color=ACCENT, sw=2)
+    s.text(436, 544, "cascade", size=10.5, weight=600, fill=ACCENT_DARK)
+    s.text(436, 558, "delete", size=10.5, weight=600, fill=ACCENT_DARK)
     s.arrow([(732, 336), (732, 316)], color=ACCENT, sw=2)
     s.text(742, 331, "cascade delete", size=10.5, weight=600, fill=ACCENT_DARK)
     s.arrow([(428, 174), (480, 174), (480, 148), (530, 148)], color=ACCENT, sw=2)

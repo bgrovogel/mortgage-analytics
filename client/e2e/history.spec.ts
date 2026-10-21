@@ -39,6 +39,25 @@ test.describe('History', () => {
     await expect(pair.getByRole('row', { name: /Principal and interest/ }), 'and the payment each comes to').toContainText('$');
   });
 
+  test('keeps a note with a saved calculation, shows it in History, and lets it be changed there', async ({ signedIn: calculator, page }) => {
+    const name = `Oak St ${tag}`;
+    await calculator.saveAs(name, 'Ask about the roof: 15 years old.');
+
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await expect(history.item(name).getByTestId('history-note'), 'the note is under the name').toHaveText('Ask about the roof: 15 years old.');
+
+    await history.act(name, 'Edit');
+    await page.getByRole('textbox', { name: `Note for ${name}` }).fill('Roof checked: fine.');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(history.item(name).getByTestId('history-note'), 'the new note replaces it').toHaveText('Roof checked: fine.');
+
+    await page.reload();
+    await history.searchFor(tag);
+    await expect(history.item(name).getByTestId('history-note'), 'and is still there after a reload').toHaveText('Roof checked: fine.');
+  });
+
   test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ signedIn: calculator, page }) => {
     const name = `Oak St ${tag}`;
     await calculator.set('home-price', 432_100);

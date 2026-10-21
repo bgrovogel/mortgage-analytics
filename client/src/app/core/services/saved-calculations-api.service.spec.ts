@@ -44,6 +44,23 @@ describe('SavedCalculationsApiService', () => {
     call.flush({});
   });
 
+  it('sends a note with a save or an update, trimmed, and leaves it out when blank', () => {
+    service.save('Oak St', { inputs }, '  Ask about the roof  ').subscribe();
+    const withNote = http.expectOne('/api/v1/calculations');
+    expect(withNote.request.body).toEqual({ name: 'Oak St', note: 'Ask about the roof', inputs });
+    withNote.flush({});
+
+    service.update('abc', 'Oak St', { inputs }, 'Roof checked').subscribe();
+    const updated = http.expectOne('/api/v1/calculations/abc');
+    expect(updated.request.body).toEqual({ name: 'Oak St', note: 'Roof checked', inputs });
+    updated.flush({});
+
+    service.save('Oak St', { inputs }, '   ').subscribe();
+    const blank = http.expectOne('/api/v1/calculations');
+    expect(blank.request.body).toEqual({ name: 'Oak St', inputs });
+    blank.flush({});
+  });
+
   it('saves a refinance comparison the same way', () => {
     const refinance = { currentBalance: 300_000 } as RefinanceRequest;
     service.save('Refi', { refinance }).subscribe();

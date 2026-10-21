@@ -4,6 +4,9 @@ import { Observable } from 'rxjs';
 import { SavedCalculation, SavedInputs } from '../models/saved-calculation.models';
 
 /** HTTP gateway for saved calculations (`/api/v1/calculations`). Errors arrive as ProblemDetails. */
+/** The note as the API takes it: left out when there is none (an update without one clears it). */
+const noteOf = (note: string | null) => (note?.trim() ? { note: note.trim() } : {});
+
 @Injectable({ providedIn: 'root' })
 export class SavedCalculationsApiService {
   private readonly http = inject(HttpClient);
@@ -17,13 +20,13 @@ export class SavedCalculationsApiService {
   }
 
   /** Saves calculator inputs or a refinance comparison under a name. */
-  save(name: string, saved: SavedInputs): Observable<SavedCalculation> {
-    return this.http.post<SavedCalculation>(this.baseUrl, { name, ...saved });
+  save(name: string, saved: SavedInputs, note: string | null = null): Observable<SavedCalculation> {
+    return this.http.post<SavedCalculation>(this.baseUrl, { name, ...noteOf(note), ...saved });
   }
 
   /** Renames a saved calculation, or replaces its inputs. */
-  update(id: string, name: string, saved: SavedInputs): Observable<SavedCalculation> {
-    return this.http.put<SavedCalculation>(`${this.baseUrl}/${id}`, { name, ...saved });
+  update(id: string, name: string, saved: SavedInputs, note: string | null = null): Observable<SavedCalculation> {
+    return this.http.put<SavedCalculation>(`${this.baseUrl}/${id}`, { name, ...noteOf(note), ...saved });
   }
 
   /** Deletes a saved calculation. */

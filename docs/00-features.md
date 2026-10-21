@@ -555,7 +555,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
   or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved
   purchases puts their price, down payment, rate, term and payment in one table with the difference. Open one on its own page (every number
-  is restored), rename it, or delete it. Each person sees only their own.
+  is restored), edit its name and **note**, or delete it. A note is up to 500 characters, an optional reminder of what the calculation
+  was for ("Ask about the roof"), written when saving or later in History, where it shows under the name. Each person sees only their own.
 
 ---
 
