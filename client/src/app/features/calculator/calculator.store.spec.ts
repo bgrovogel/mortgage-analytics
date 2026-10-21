@@ -71,7 +71,7 @@ describe('CalculatorStore', () => {
       settle();
 
       // Weighed by the current settings for the seller's offer, which a save made before them leaves out.
-      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null };
+      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null, secondLoan: null };
       expect(store.request()).toEqual(sent);
       expect(calculate).toHaveBeenCalledWith(sent);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
@@ -152,6 +152,35 @@ describe('CalculatorStore', () => {
       store.send({ ...request(), rentOrBuy: rent });
 
       expect(store.rentSettings()).toEqual(rent);
+    });
+  });
+
+  describe('weighing a second loan against PMI', () => {
+    beforeEach(() => calculate.mockReturnValue(of(aResponse())));
+    const second = { amount: 25_000, annualInterestRate: 8, termInMonths: 180, yearsKept: 7 };
+
+    it('asks for nothing until one is tried', () => {
+      store.send(request());
+
+      expect(store.request()?.secondLoan).toBeNull();
+    });
+
+    it('calculates again with a second loan, keeps it for the requests after, and drops it when stopped', () => {
+      store.send(request());
+      settle();
+      store.setSecondLoanSettings(second);
+      settle();
+      store.send(request(5));
+      expect(store.request()?.secondLoan).toEqual(second);
+
+      store.setSecondLoanSettings(null);
+      expect(store.request()?.secondLoan).toBeNull();
+    });
+
+    it('takes the second loan a saved calculation brings', () => {
+      store.send({ ...request(), secondLoan: second });
+
+      expect(store.secondLoanSettings()).toEqual(second);
     });
   });
 

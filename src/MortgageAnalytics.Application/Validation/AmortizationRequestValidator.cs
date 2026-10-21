@@ -248,6 +248,11 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
         RuleFor(r => r.Sale!).SetValidator(new SaleValidator()).When(r => r.Sale is not null);
         RuleFor(r => r.Rental!).SetValidator(new RentalValidator()).When(r => r.Rental is not null);
 
+        RuleFor(r => r.SecondLoan!).SetValidator(r => new SecondLoanValidator(r.HomePrice - r.DownPayment)).When(r => r.SecondLoan is not null);
+        RuleFor(r => r.Program)
+            .Null().WithMessage("A second loan goes with a conventional loan: an FHA or VA loan does not allow one.")
+            .When(r => r.SecondLoan is not null);
+
         RuleFor(r => r.HousingCosts!)
             .SetValidator(r => new HousingCostsValidator(r.TermInMonths))
             .When(r => r.HousingCosts is not null);
@@ -335,6 +340,19 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
                 .InclusiveBetween(0, 100)
                 .Must(percent => decimal.Round(percent, 2) == percent).WithMessage("'Co-buyer share of the down payment' can have at most 2 decimal places.")
                 .WithName("Co-buyer share of the down payment");
+        }
+    }
+
+    /// <summary>A second loan: less than what is borrowed, at a rate and for a term a lender could offer.</summary>
+    private sealed class SecondLoanValidator : AbstractValidator<SecondLoanRequest>
+    {
+        public SecondLoanValidator(decimal borrowed)
+        {
+            RuleFor(s => s.Amount).GreaterThan(0).WholeCents().WithName("Second loan");
+            RuleFor(s => s.Amount).LessThan(borrowed).WithMessage("The second loan must be less than what is borrowed: it takes part of the loan, not all of it.").WithName("Second loan");
+            RuleFor(s => s.AnnualInterestRate).InclusiveBetween(0, LoanTerms.MaxAnnualInterestRate).WithName("Second loan rate");
+            RuleFor(s => s.TermInMonths).InclusiveBetween(12, 360).WithName("Second loan term");
+            RuleFor(s => s.YearsKept).InclusiveBetween(1, 30).WithName("Years the loans are kept");
         }
     }
 

@@ -1,0 +1,106 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.intro,
+.note {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.verdict {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.try {
+  align-self: flex-start;
+  font: inherit;
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.link {
+  align-self: flex-start;
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 24px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+tbody th,
+tfoot th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+tfoot th,
+tfoot td {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.best {
+  background: var(--accent-soft);
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--on-accent);
+}

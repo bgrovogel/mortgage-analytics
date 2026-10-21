@@ -87,6 +87,12 @@ public sealed record AmortizationRequest
     /// <summary>Weighs buying the home against renting a similar one, year by year. Omit for none.</summary>
     public RentOrBuyRequest? RentOrBuy { get; init; }
 
+    /// <summary>
+    /// Borrows part of the price as a second loan instead of paying PMI (an 80/10/10), and compares the two over the years
+    /// the loans are kept. Conventional loans only. Omit for none.
+    /// </summary>
+    public SecondLoanRequest? SecondLoan { get; init; }
+
     /// <summary>Lets the home out and measures it as an investment: net operating income, cash flow, cap rate, cash-on-cash return and debt service coverage, year by year. Omit for none.</summary>
     public RentalRequest? Rental { get; init; }
 
@@ -130,6 +136,29 @@ public sealed record RentOrBuyRequest
     /// itemize, against the standard deduction. Omit to leave tax out, as the comparison does by default.
     /// </summary>
     public OwnerTaxesRequest? OwnerTaxes { get; init; }
+}
+
+/// <summary>
+/// A second loan taken with the first, behind it: what is borrowed, at what rate and for how long. The first loan is
+/// smaller by the same amount, which can bring it to 80% of the price and so out of PMI.
+/// </summary>
+public sealed record SecondLoanRequest
+{
+    /// <summary>The amount borrowed as a second loan; less than what the request already borrows.</summary>
+    /// <example>25000</example>
+    public decimal Amount { get; init; }
+
+    /// <summary>The second loan's yearly interest rate, as a percentage, fixed for its term.</summary>
+    /// <example>8</example>
+    public decimal AnnualInterestRate { get; init; }
+
+    /// <summary>The second loan's term, in months: 12 to 360.</summary>
+    /// <example>180</example>
+    public int TermInMonths { get; init; } = 180;
+
+    /// <summary>The years the loans are kept, for comparing what each way costs.</summary>
+    /// <example>7</example>
+    public int YearsKept { get; init; } = 7;
 }
 
 /// <summary>What letting the home out would bring in, and cost besides owning it.</summary>

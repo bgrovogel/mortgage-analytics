@@ -478,7 +478,7 @@ every year after; one good year followed by a bad one does not count.
 - On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
   else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
 - The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
-  Python model compares every year its own way: 300 of 300 random purchases match, 110 of them with a rent, 60 of
+  Python model compares every year its own way: 300 of 300 random purchases match, 125 of them with a rent, 69 of
   those with the owner's taxes.
 
 ### If you sell
@@ -506,7 +506,28 @@ investment property gets none, and a head of household has the single filer's. A
   first $250,000 is tax-free and the other **$54,492.04** pays **$8,173.81**; the seller keeps
   643,076.64 − 250,000 − 38,584.60 − 8,173.81 = **$346,318.23**.
 - The domain is `HomeSale`, and `SaleAnalysis` (`Application/Services`) feeds it the projection's values and the plan's
-  balances. The Python model works every year its own way: 300 of 300 random purchases match, 122 of them with a sale.
+  balances. The Python model works every year its own way: 300 of 300 random purchases match, 126 of them with a sale.
+
+### A second loan instead of PMI
+
+Two analyses of the same purchase, each without extra payments or a buydown (`SecondLoanComparison`, `Application/Services`):
+the request as made, and the request with the second loan's amount added to the down payment, so the first loan is
+smaller by it and, at 80% of the price, carries no PMI. Each is costed as the seller's offer is, over the years kept:
+
+```
+cash to close = what the calculator works out for that analysis, less the second loan's amount (it is not cash)
+payments      = the first loan's payments (principal, interest, taxes, insurance, dues, PMI) + the second loan's
+balance       = what the first loan still owes + what the second still owes, after the years kept
+cost          = cash to close + payments + balance
+saved         = cost with PMI − cost with the second loan
+```
+
+- The second loan is level-payment and fixed-rate over its own term; a term shorter than the years kept is paid off, so
+  nothing is owed on it. Its payment on $25,000 at 8% over 15 years is **$238.91**.
+- The down payment is the buyer's own in both, so the cash to close is the same up to what the smaller first loan changes in
+  the costs figured on it. The second loan's own closing costs are left out.
+- Not allowed with an FHA or VA loan. The second loan must be less than what is borrowed.
+- The Python model works both analyses its own way: 300 of 300 random purchases match, 55 of them with a second loan.
 
 ### As a rental
 
@@ -537,7 +558,7 @@ close, or the down payment without closing costs; none when nothing was put in);
   **$13,220**, cash flow **−$4,780**, a cap rate of 3.31% and coverage of 0.73.
 - The domain is `RentalYear` and `RentalReturns`, and `RentalAnalysis` (`Application/Services`) feeds them the
   schedule's payments and the housing costs. The Python model works every year its own way: 300 of 300 random purchases
-  match, 76 of them let out.
+  match, 84 of them let out.
 
 ### The best use of the seller's money
 

@@ -1,13 +1,13 @@
 import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { aResponse } from '../../../../testing/builders';
+import { aPurchase, aResponse } from '../../../../testing/builders';
 import { AmortizationApiService } from '../../../core/services/amortization-api.service';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from '../calculator.store';
 import { AmortizationRequest, AmortizationResponse } from '../../../core/models/amortization.models';
 import { of } from 'rxjs';
 import { FormNavigator } from '../../../core/forms/form-navigator';
-import { Affordability, CashToClose, RentOrBuyComparison, SellerOfferComparison } from '../../../core/models/amortization.models';
+import { Affordability, CashToClose, RentOrBuyComparison, SecondLoanComparison, SellerOfferComparison } from '../../../core/models/amortization.models';
 import { AffordabilityTabComponent } from './affordability-tab.component';
 import { ClosingTabComponent } from './closing-tab.component';
 import { OverviewTabComponent } from './overview-tab.component';
@@ -209,6 +209,40 @@ describe('result tabs', () => {
       expect([estimate.open, seller.open]).toEqual([false, true]);
       expect(seller.querySelector('[data-testid="seller-offer"]')).not.toBeNull();
       expect(seller.getAttribute('aria-labelledby')).toBe(seller.querySelector('h2')!.id);
+    });
+
+    describe('a second loan instead of PMI', () => {
+      const root = () => render(ClosingTabComponent).nativeElement as HTMLElement;
+      const second = {
+        amount: 25_000, annualInterestRate: 8, termInMonths: 180, yearsKept: 7, saved: 4_000,
+        withMortgageInsurance: {}, withSecondLoan: {},
+      } as unknown as SecondLoanComparison;
+
+      it('offers the usual one while PMI is paid, and sizes it to bring the first loan to 80%', () => {
+        response = aResponse({ cashToClose: cash, purchase: aPurchase({ homePrice: 250_000, downPayment: 25_000, mortgageInsuranceRequired: true }) });
+        store.send({ homePrice: 250_000, annualInterestRate: 6.5 } as AmortizationRequest);
+        jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+
+        const el = root();
+
+        expect(el.querySelector('[data-testid="second-loan-summary"]')!.textContent).toBe('Paying PMI? Compare it with a smaller first loan and a second loan for the rest.');
+        expect(el.querySelector('[data-testid="try-second-loan"]')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('Try $25,000 at 8.5% for 15 years');
+      });
+
+      it('says there is no PMI to avoid when 20% is already down', () => {
+        answer({ cashToClose: cash });
+
+        expect(root().querySelector('[data-testid="second-loan-summary"]')!.textContent).toBe('No PMI here: at least 20% is put down.');
+      });
+
+      it('says what the second loan saves once weighed', () => {
+        answer({ cashToClose: cash, secondLoan: second });
+
+        const el = root();
+
+        expect(el.querySelector('[data-testid="second-loan-summary"]')!.textContent).toBe('A $25,000 second loan costs $4,000 less than PMI over 7 years.');
+        expect(el.querySelector('[data-testid="open-second-loan"]')!.textContent).toBe('See the figures');
+      });
     });
 
     it('without an offer, says what it would show, and opens the seller credits', () => {

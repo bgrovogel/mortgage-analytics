@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormNavigator } from '../../../core/forms/form-navigator';
 import { decimal, usd } from '../../../core/formatting/format';
+import { SecondLoanInput } from '../../../core/models/amortization.models';
 import { DialogComponent } from '../../../core/layout/dialog.component';
 import { CalculatorStore } from '../calculator.store';
 import { CashToCloseComponent } from '../cash-to-close/cash-to-close.component';
 import { LoanEstimateBoxComponent } from '../loan-estimate-box/loan-estimate-box.component';
 import { SavingUpComponent } from '../saving-up/saving-up.component';
+import { SecondLoanComponent } from '../second-loan/second-loan.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 
 /**
@@ -15,7 +17,7 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
  */
 @Component({
   selector: 'app-closing-tab',
-  imports: [CashToCloseComponent, DialogComponent, LoanEstimateBoxComponent, SavingUpComponent, SellerOfferComponent],
+  imports: [CashToCloseComponent, DialogComponent, LoanEstimateBoxComponent, SavingUpComponent, SecondLoanComponent, SellerOfferComponent],
   template: `
     @if (result().cashToClose; as cash) {
       <div class="panel"><app-cash-to-close [cash]="cash" [program]="result().program" /></div>
@@ -31,6 +33,17 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
             <p data-testid="loan-estimate-summary">{{ estimateSummary() }}</p>
           </div>
           <button type="button" (click)="estimate.open()" data-testid="open-loan-estimate">See the figures</button>
+        </li>
+        <li data-testid="second-loan-row">
+          <div>
+            <h3>A second loan instead of PMI</h3>
+            <p data-testid="second-loan-summary">{{ secondLoanSummary() }}</p>
+          </div>
+          <button type="button" (click)="second.open()" data-testid="open-second-loan">{{ result().secondLoan ? 'See the figures' : 'Try it' }}</button>
+          <app-dialog #second heading="A second loan instead of PMI">
+            <app-second-loan [comparison]="result().secondLoan ?? null" [settings]="store.secondLoanSettings()" [suggestion]="suggestedSecondLoan()"
+                             (settingsChange)="store.setSecondLoanSettings($event)" />
+          </app-dialog>
         </li>
         @if (result().sellerOffer; as offer) {
           <li data-testid="seller-offer-row">
@@ -79,6 +92,30 @@ export class ClosingTabComponent {
     const { annualPercentageRate: apr, inFiveYears: five } = this.result();
     const parts = [apr != null ? `APR ${decimal(apr, 3)}%` : null, five ? `${usd(five.totalPaid)} paid in 5 years` : null];
     return `The figures a lender's Loan Estimate lists${parts.some(Boolean) ? `: ${parts.filter(Boolean).join(', ')}` : ''}.`;
+  });
+
+  /** What the second-loan comparison holds, in a line, so the way into it says what is there. */
+  protected readonly secondLoanSummary = computed(() => {
+    const c = this.result().secondLoan;
+    if (c) {
+      return c.saved >= 0
+        ? `A ${usd(c.amount)} second loan costs ${usd(c.saved)} less than PMI over ${c.yearsKept} years.`
+        : `A ${usd(c.amount)} second loan costs ${usd(-c.saved)} more than PMI over ${c.yearsKept} years.`;
+    }
+    return this.suggestedSecondLoan()
+      ? 'Paying PMI? Compare it with a smaller first loan and a second loan for the rest.'
+      : 'No PMI here: at least 20% is put down.';
+  });
+
+  /**
+   * The usual second loan: the amount that brings the first loan to 80% of the price (what takes PMI off), two points
+   * above the first loan's rate, over 15 years, kept 7. Null when 20% is already down.
+   */
+  protected readonly suggestedSecondLoan = computed<SecondLoanInput | null>(() => {
+    const { purchase } = this.result();
+    const amount = Math.round((purchase.homePrice * 0.2 - purchase.downPayment) * 100) / 100;
+    const rate = this.store.request()?.annualInterestRate ?? 0;
+    return amount > 0 ? { amount, annualInterestRate: Math.min(30, Math.round((rate + 2) * 1000) / 1000), termInMonths: 180, yearsKept: 7 } : null;
   });
 
   /** Opens the form's closing costs with the cursor in the seller credits. */

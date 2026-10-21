@@ -171,6 +171,11 @@ def random_purchase(rng):
     if rng.random() < 0.4:
         request['sale'] = {'sellingCostPercent': rng.choice([0, 5, 6, 8]), 'gainsTaxRatePercent': rng.choice([0, 15, 20, 23.8]),
                            'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold'])}
+    # Some borrow part as a second loan, against paying PMI: conventional loans only, the second a fraction of what is borrowed.
+    if request.get('program') is None and rng.random() < 0.3:
+        loan_amount = request['homePrice'] - request['downPayment']
+        request['secondLoan'] = {'amount': money(rng, max(1, int(loan_amount * 0.05)), max(2, int(loan_amount * 0.5)), 100), 'annualInterestRate': rng.choice([5, 7, 8, 10, 12]),
+                                 'termInMonths': rng.choice([60, 120, 180, 240, 360]), 'yearsKept': rng.choice([3, 5, 7, 10, 15])}
     # Some are let out and measured as an investment: rent from low to high for the price, with varied costs.
     if rng.random() < 0.3:
         request['rental'] = {'monthlyRent': money(rng, int(price / 600), int(price / 100), 25), 'vacancyPercent': rng.choice([0, 5, 8, 10]),

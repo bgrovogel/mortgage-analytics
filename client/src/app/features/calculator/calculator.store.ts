@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { describeInputs, suggestName } from '../../core/formatting/describe-inputs';
-import { AmortizationRequest, AmortizationResponse, RentOrBuyInput, RentalInput, SaleInput, SellerOfferInput } from '../../core/models/amortization.models';
+import { AmortizationRequest, AmortizationResponse, RentOrBuyInput, RentalInput, SaleInput, SecondLoanInput, SellerOfferInput } from '../../core/models/amortization.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
@@ -43,6 +43,11 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   readonly rentSettings = signal<RentOrBuyInput | null>(null);
 
   /**
+   * A second loan to weigh against paying PMI: set in the dialog under Closing, beside the answer. Null until one is tried.
+   */
+  readonly secondLoanSettings = signal<SecondLoanInput | null>(null);
+
+  /**
    * Letting the home out, to measure it as an investment: set on the As a rental view, beside the answer. Null until a
    * rent is given.
    */
@@ -63,6 +68,7 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
     if (request.rentOrBuy) this.rentSettings.set(request.rentOrBuy);
     if (request.sale) this.saleSettings.set(request.sale);
     if (request.rental) this.rentalSettings.set(request.rental);
+    if (request.secondLoan) this.secondLoanSettings.set(request.secondLoan);
     super.send(this.withSettings(request));
   }
 
@@ -75,6 +81,12 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   /** Weighs buying against renting at another rent (or none), and calculates again. */
   setRentSettings(settings: RentOrBuyInput | null): void {
     this.rentSettings.set(settings);
+    this.resend();
+  }
+
+  /** Weighs a second loan against PMI (or, with null, stops), and calculates again. */
+  setSecondLoanSettings(settings: SecondLoanInput | null): void {
+    this.secondLoanSettings.set(settings);
     this.resend();
   }
 
@@ -91,7 +103,7 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   }
 
   private withSettings(request: AmortizationRequest): AmortizationRequest {
-    return { ...request, sellerOffer: this.offerSettings(), rentOrBuy: this.rentSettings(), sale: this.saleSettings(), rental: this.rentalSettings() };
+    return { ...request, sellerOffer: this.offerSettings(), rentOrBuy: this.rentSettings(), sale: this.saleSettings(), rental: this.rentalSettings(), secondLoan: this.secondLoanSettings() };
   }
 
   /** Sends the current request again with the settings as they are now, once there is one. */

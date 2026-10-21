@@ -325,6 +325,20 @@ standard deduction, so with a modest loan the saving can be nothing at all.
 
 ![Rent or buy: the example against $2,700 a month of rent; buying comes out ahead if you stay 4 years or more, the gap crossing zero in year 4](images/rent-or-buy.png)
 
+#### A second loan instead of PMI
+
+Under **Closing**, **A second loan instead of PMI** weighs the other classic way round PMI: a smaller first loan at 80% of
+the price, and a second loan behind it for the rest of what is borrowed (an 80/10/10). **Try** offers the usual one: the
+amount that brings the first loan to 80% (on the example's 9% down, about 11% of the price), two points above the loan's
+rate, over 15 years, kept 7. Change any of them and it weighs again; **Stop comparing** drops it.
+
+It sets the two ways side by side: the first loan and the second, the first month all in (both loans, taxes, insurance,
+dues and any PMI), the cash to close, what is paid in the years kept, what both loans still owe then, and the cost of each
+(the cash to close, the payments and the balance), the cheaper marked, with a sentence saying how much the second loan saves or
+costs more. A second loan at a high rate can cost more than the PMI it avoids, which is why it is weighed rather than assumed.
+Each way is the loan worked out again, without extra payments; the second loan's own closing costs are not counted, and it is for
+conventional loans only (FHA and VA do not allow one).
+
 #### As a rental
 
 **As a rental**, one step down from Cost, measures the home as an investment (any home can be tried; it is the

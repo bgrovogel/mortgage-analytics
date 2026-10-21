@@ -453,6 +453,7 @@ def analyze(request, today, other_choice=True):
     out['rentOrBuy'] = rent_or_buy(request, out)
     out['sale'] = sale(request, out)
     out['rental'] = rental(request, out)
+    out['secondLoan'] = second_loan(request, today, out)
     out['annualPercentageRate'] = annual_percentage_rate(out)
     out['inFiveYears'], out['totalInterestPercentage'] = loan_estimate_figures(out)
     return out
@@ -579,6 +580,43 @@ def rent_or_buy(request, out):
         since = (since or y['year']) if y['advantage'] >= 0 else None
     return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
             'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner)}
+
+
+def second_loan(request, today, out):
+    """
+    A second loan against paying PMI. Each way is the request analyzed again, without extra payments or a buydown: as made
+    (one loan), and with the second loan's amount added to the down payment, so the first loan is smaller. Each is costed
+    over the years kept on its standard schedule: the cash to close (the second loan's amount is not cash, so the down
+    payment is the buyer's own in both), every payment of both loans, and what both still owe.
+    """
+    a = request.get('secondLoan')
+    if not a:
+        return None
+    amount, rate = D(str(a['amount'])), D(str(a['annualInterestRate']))
+    term, years = a.get('termInMonths', 180), a.get('yearsKept', 7)
+    down = D(str(request['downPayment']))
+    base = {k: v for k, v in request.items() if k not in ('secondLoan', 'rentOrBuy', 'sale', 'rental', 'affordability', 'sellerOffer', 'monthlyBudget')}
+    plain = dict(base, extraPayments=None, buydown=None)
+    as_made = analyze(plain, today, other_choice=False)
+    smaller = analyze(dict(plain, downPayment=down + amount), today, other_choice=False)
+    second = amortize(amount, rate, term)['rows']
+
+    def option(a_, second_amount, schedule):
+        cash = (a_['cashToClose']['total'] if a_['cashToClose'] else D(str(a_['purchase']['downPayment']))) - second_amount
+        kept = a_['baseline']['payments'][:years * 12]
+        second_kept = schedule[:years * 12] if schedule else []
+        payments = sum((p['totalOutlay'] for p in kept), D(0)) + sum((r['scheduled'] for r in second_kept), D(0))
+        balance = kept[-1]['remainingBalance'] + (second_kept[-1]['balance'] if second_kept else D(0))
+        first = a_['baseline']['payments'][0]
+        second_payment = schedule[0]['scheduled'] if schedule else D(0)
+        return {'firstLoan': a_['purchase']['loanAmount'], 'secondLoan': second_amount, 'firstLoanPayment': first['scheduledPayment'],
+                'secondLoanPayment': second_payment, 'mortgageInsurance': first['costs']['mortgageInsurance'],
+                'monthlyPayment': first['scheduledPayment'] + first['extraPrincipal'] + first['costs']['total'] + second_payment,
+                'cashToClose': cash, 'payments': payments, 'balance': balance, 'cost': cash + payments + balance}
+
+    without, with_ = option(as_made, D(0), None), option(smaller, amount, second)
+    return {'amount': amount, 'annualInterestRate': rate, 'termInMonths': term, 'yearsKept': years,
+            'withMortgageInsurance': without, 'withSecondLoan': with_, 'saved': without['cost'] - with_['cost']}
 
 
 def rental(request, out):

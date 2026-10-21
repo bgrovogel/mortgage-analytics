@@ -1378,6 +1378,9 @@
           "rentOrBuy": {
             "$ref": "#/components/schemas/RentOrBuyRequest"
           },
+          "secondLoan": {
+            "$ref": "#/components/schemas/SecondLoanRequest"
+          },
           "rental": {
             "$ref": "#/components/schemas/RentalRequest"
           },
@@ -1462,6 +1465,9 @@
           },
           "rental": {
             "$ref": "#/components/schemas/RentalResponse"
+          },
+          "secondLoan": {
+            "$ref": "#/components/schemas/SecondLoanResponse"
           }
         },
         "additionalProperties": false
@@ -3527,6 +3533,106 @@
             "format": "double"
           },
           "interestYouPay": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecondLoanOptionResponse": {
+        "type": "object",
+        "properties": {
+          "firstLoan": {
+            "type": "number",
+            "format": "double"
+          },
+          "secondLoan": {
+            "type": "number",
+            "format": "double"
+          },
+          "firstLoanPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "secondLoanPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "mortgageInsurance": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashToClose": {
+            "type": "number",
+            "format": "double"
+          },
+          "payments": {
+            "type": "number",
+            "format": "double"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecondLoanRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecondLoanResponse": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "withMortgageInsurance": {
+            "$ref": "#/components/schemas/SecondLoanOptionResponse"
+          },
+          "withSecondLoan": {
+            "$ref": "#/components/schemas/SecondLoanOptionResponse"
+          },
+          "saved": {
             "type": "number",
             "format": "double"
           }

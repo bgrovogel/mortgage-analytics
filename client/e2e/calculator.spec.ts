@@ -462,6 +462,29 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
   });
 
+  test('a second loan instead of PMI: tried from Closing, weighed over the years kept, and the cheaper way named', async ({ calculator, page }) => {
+    // $250,000 with 10% down at 6.5% pays PMI; a $25,000 second loan brings the first loan to 80% of the price.
+    await calculator.fillLoan({ homePrice: 250_000, downPayment: 25_000, rate: 6.5, years: 30, firstPayment: '2036-01-01' });
+    await calculator.calculate();
+    await calculator.showResults('closing');
+    await expect(page.getByTestId('second-loan-summary'), 'PMI is paid, so a way round it is offered')
+      .toHaveText('Paying PMI? Compare it with a smaller first loan and a second loan for the rest.');
+
+    await page.getByTestId('open-second-loan').click();
+    await expect(page.getByTestId('try-second-loan'), 'the usual second loan, sized to reach 80%').toContainText('Try $25,000 at 8.5% for 15 years');
+    await page.getByTestId('try-second-loan').click();
+
+    const table = page.getByTestId('second-loan');
+    await expect(table.locator('tbody tr').first().locator('td'), 'the first loan is $25,000 smaller').toHaveText(['$225,000', '$200,000']);
+    await expect(table.locator('tbody tr').nth(1).locator('td'), 'and the second loan is the difference').toHaveText(['None', '$25,000']);
+    await expect(page.getByTestId('second-loan-verdict'), 'it says which costs less over seven years').toContainText('Over 7 years');
+
+    await page.getByTestId('second-loan-rate').fill('14');
+    await expect(page.getByTestId('second-loan-verdict'), 'a dear second loan costs more than PMI').toContainText('more than paying PMI');
+    await page.getByTestId('second-loan-stop').click();
+    await expect(page.getByTestId('try-second-loan'), 'stopping goes back to the offer').toBeVisible();
+  });
+
   test('as a rental: a rent measures the home as an investment, and the rent that breaks even carries the loan', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 400_000, downPayment: 80_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

@@ -94,6 +94,12 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await violations(page), 'the dialog with the seller’s money each way breaks no accessibility rule').toEqual([]);
       await page.keyboard.press('Escape');
       await expect(page.getByTestId('seller-offer'), 'Escape closes it').toBeHidden();
+      await page.getByTestId('open-second-loan').click();
+      await page.getByTestId('try-second-loan').click();
+      await expect(page.getByTestId('second-loan'), 'a second loan against PMI, in a dialog').toBeVisible();
+      expect(await violations(page), 'the dialog with a second loan against PMI breaks no accessibility rule').toEqual([]);
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('second-loan'), 'Escape closes it').toBeHidden();
       await openView(page, 'affordability');
       await expect(page.getByTestId('affordability'), 'whether it is affordable').toBeVisible();
       expect(await violations(page), 'affordability breaks no accessibility rule').toEqual([]);

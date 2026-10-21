@@ -135,6 +135,48 @@ export interface AmortizationRequest {
   sale?: SaleInput | null;
   /** Lets the home out and measures it as an investment; leave out for none. */
   rental?: RentalInput | null;
+  /** Borrows part of the price as a second loan instead of paying PMI, and compares the two; leave out for none. */
+  secondLoan?: SecondLoanInput | null;
+}
+
+/** A second loan taken with the first, behind it. */
+export interface SecondLoanInput {
+  /** The amount borrowed as a second loan; less than what the request already borrows. */
+  amount: number;
+  /** Its yearly interest rate, as a percentage, fixed for its term. */
+  annualInterestRate: number;
+  /** Its term, in months: 12 to 360. */
+  termInMonths: number;
+  /** The years the loans are kept, for comparing what each way costs. */
+  yearsKept: number;
+}
+
+/** One way of borrowing: with PMI on one loan, or a smaller first loan and a second. */
+export interface SecondLoanOption {
+  firstLoan: number;
+  /** 0 for none. */
+  secondLoan: number;
+  firstLoanPayment: number;
+  secondLoanPayment: number;
+  /** The first month's PMI; 0 when the first loan needs none. */
+  mortgageInsurance: number;
+  /** The first month, all in: both loans, taxes, insurance, dues and PMI. */
+  monthlyPayment: number;
+  cashToClose: number;
+  /** Every payment in the years kept, for both loans. */
+  payments: number;
+  /** What both loans still owe at the end of the years kept. */
+  balance: number;
+  /** The cash to close, the payments and the balance: what the buyer pays. */
+  cost: number;
+}
+
+/** A second loan against paying PMI, over the years the loans are kept. */
+export interface SecondLoanComparison extends SecondLoanInput {
+  withMortgageInsurance: SecondLoanOption;
+  withSecondLoan: SecondLoanOption;
+  /** What the second loan saves over the years kept; negative when it costs more. */
+  saved: number;
 }
 
 /** What letting the home out would bring in, and cost besides owning it. */
@@ -702,6 +744,8 @@ export interface AmortizationResponse {
   sale?: SaleOutcome | null;
   /** The home let out, measured as an investment; null unless asked. */
   rental?: RentalOutcome | null;
+  /** A second loan against paying PMI; null unless asked. */
+  secondLoan?: SecondLoanComparison | null;
   /** The rate counting the lender's costs, prepaid interest, points and mortgage insurance; null when nothing was received. */
   annualPercentageRate?: number | null;
   /** A Loan Estimate's "in 5 years" on the standard schedule: what the first 60 payments come to and the principal they pay off. */

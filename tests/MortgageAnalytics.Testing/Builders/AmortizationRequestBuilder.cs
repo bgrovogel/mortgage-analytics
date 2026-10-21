@@ -186,6 +186,10 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>Borrows <paramref name="amount"/> as a second loan at <paramref name="rate"/>% for <paramref name="termInMonths"/> months, and compares it with paying PMI over <paramref name="yearsKept"/> years.</summary>
+    public AmortizationRequestBuilder WithSecondLoan(decimal amount, decimal rate, int termInMonths = 180, int yearsKept = 7) =>
+        With(r => r with { SecondLoan = new SecondLoanRequest { Amount = amount, AnnualInterestRate = rate, TermInMonths = termInMonths, YearsKept = yearsKept } });
+
     /// <summary>Lets the home out for <paramref name="monthlyRent"/> and measures it as an investment, with the request's defaults for the rest.</summary>
     public AmortizationRequestBuilder WithRental(
         decimal monthlyRent, decimal vacancy = 5m, decimal management = 8m, decimal maintenance = 1m, decimal rentIncrease = 3m) =>

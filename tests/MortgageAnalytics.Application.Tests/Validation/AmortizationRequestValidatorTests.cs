@@ -304,6 +304,33 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertValid(A.Request.WithRentOrBuy(2_000m).WithOwnerTaxes(TaxFilingStatus.HeadOfHousehold, 50m, 100_000_000m, 0m), "the edges are tax profiles");
     }
 
+    [TestCase(0, 8, 180, 7, "SecondLoan.Amount", TestName = "A second loan of nothing")]
+    [TestCase(25_000.001, 8, 180, 7, "SecondLoan.Amount", TestName = "A second loan to a fraction of a cent")]
+    [TestCase(225_000, 8, 180, 7, "SecondLoan.Amount", TestName = "A second loan as big as the whole loan")]
+    [TestCase(25_000, -0.01, 180, 7, "SecondLoan.AnnualInterestRate", TestName = "A second loan rate below nothing")]
+    [TestCase(25_000, 30.01, 180, 7, "SecondLoan.AnnualInterestRate", TestName = "A second loan rate over 30%")]
+    [TestCase(25_000, 8, 11, 7, "SecondLoan.TermInMonths", TestName = "A second loan shorter than a year")]
+    [TestCase(25_000, 8, 361, 7, "SecondLoan.TermInMonths", TestName = "A second loan over 30 years")]
+    [TestCase(25_000, 8, 180, 0, "SecondLoan.YearsKept", TestName = "Keeping the loans no years")]
+    [TestCase(25_000, 8, 180, 31, "SecondLoan.YearsKept", TestName = "Keeping the loans more than 30 years")]
+    public void SecondLoan_OutOfRange_IsRejected(decimal amount, decimal rate, int term, int years, string path)
+    {
+        AssertInvalid(A.Request.WithHomePrice(250_000m).WithDownPayment(25_000m).WithSecondLoan(amount, rate, term, years), path, "a second loan a lender could offer, taking part of the loan");
+    }
+
+    [Test]
+    public void SecondLoan_AtTheEdgesOfItsRanges_IsAccepted()
+    {
+        AssertValid(A.Request.WithHomePrice(250_000m).WithDownPayment(25_000m).WithSecondLoan(0.01m, 0m, 12, 1), "the low edges are a second loan");
+        AssertValid(A.Request.WithHomePrice(250_000m).WithDownPayment(25_000m).WithSecondLoan(224_999.99m, 30m, 360, 30), "so are the high edges, one cent short of the whole loan");
+    }
+
+    [Test]
+    public void SecondLoan_WithAGovernmentLoan_IsRejected()
+    {
+        AssertInvalid(A.Request.WithHomePrice(250_000m).WithDownPayment(25_000m).WithSecondLoan(25_000m, 8m).WithProgram(LoanProgramType.Va, VaFundingFeeType.FirstUse), "Program", "a second loan goes with a conventional loan");
+    }
+
     [TestCase(0, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental with no rent")]
     [TestCase(2_500.001, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental to a fraction of a cent")]
     [TestCase(1_000_000.01, 5, 8, 1, 3, "Rental.MonthlyRent", TestName = "A rental past a million a month")]

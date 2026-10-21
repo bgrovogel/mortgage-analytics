@@ -21,6 +21,7 @@ namespace MortgageAnalytics.Application.Contracts;
 /// <param name="Budget">The highest price a monthly budget reaches. Null unless the request gives a budget.</param>
 /// <param name="Sale">What selling would leave in hand at the end of each year. Null unless the request asks.</param>
 /// <param name="Rental">The home let out, measured as an investment. Null unless the request asks.</param>
+/// <param name="SecondLoan">A second loan against paying PMI, over the years the loans are kept. Null unless the request asks.</param>
 /// <param name="AnnualPercentageRate">
 /// The loan's APR as a percentage: the rate counting the lender's costs, prepaid interest, discount points, an FHA or VA
 /// upfront fee and mortgage insurance, so offers with different fees can be compared. Null when nothing was received.
@@ -47,7 +48,8 @@ public sealed record AmortizationResponse(
     decimal? TotalInterestPercentage = null,
     BudgetResponse? Budget = null,
     SaleResponse? Sale = null,
-    RentalResponse? Rental = null);
+    RentalResponse? Rental = null,
+    SecondLoanResponse? SecondLoan = null);
 
 /// <summary>What a Loan Estimate lists as "in 5 years" for the standard schedule, with no extra payments.</summary>
 /// <param name="TotalPaid">The first 60 payments of principal, interest and mortgage insurance, plus the lender's loan costs.</param>
@@ -78,6 +80,37 @@ public sealed record RentOrBuyResponse(
     int? BreakEvenYear,
     IReadOnlyList<RentOrBuyYearResponse> Years,
     bool CountsTaxSavings = false);
+
+/// <summary>
+/// A second loan against paying PMI, each the request analyzed again and costed over the years the loans are kept:
+/// the cash to close, every payment (principal, interest and housing costs, for both loans) and what is still owed.
+/// Extra payments are left out of both.
+/// </summary>
+/// <param name="Amount">The second loan.</param>
+/// <param name="AnnualInterestRate">Its rate.</param>
+/// <param name="TermInMonths">Its term.</param>
+/// <param name="YearsKept">The years the loans are kept.</param>
+/// <param name="WithMortgageInsurance">The request as made: one loan, with PMI if it needs it.</param>
+/// <param name="WithSecondLoan">The first loan smaller by the second loan's amount, and the second loan.</param>
+/// <param name="Saved">What the second loan saves over the years kept; negative when it costs more.</param>
+public sealed record SecondLoanResponse(
+    decimal Amount, decimal AnnualInterestRate, int TermInMonths, int YearsKept,
+    SecondLoanOptionResponse WithMortgageInsurance, SecondLoanOptionResponse WithSecondLoan, decimal Saved);
+
+/// <summary>One way of borrowing: with PMI on one loan, or a smaller first loan and a second.</summary>
+/// <param name="FirstLoan">The first loan.</param>
+/// <param name="SecondLoan">The second loan; 0 for none.</param>
+/// <param name="FirstLoanPayment">The first loan's principal and interest in its first month.</param>
+/// <param name="SecondLoanPayment">The second loan's monthly payment; 0 for none.</param>
+/// <param name="MortgageInsurance">The first month's PMI; 0 when the first loan needs none.</param>
+/// <param name="MonthlyPayment">The first month, all in: both loans, taxes, insurance, dues and PMI.</param>
+/// <param name="CashToClose">What the buyer brings to closing.</param>
+/// <param name="Payments">Every payment in the years kept, for both loans.</param>
+/// <param name="Balance">What both loans still owe at the end of the years kept.</param>
+/// <param name="Cost">The cash to close, the payments and the balance: what the buyer pays.</param>
+public sealed record SecondLoanOptionResponse(
+    decimal FirstLoan, decimal SecondLoan, decimal FirstLoanPayment, decimal SecondLoanPayment, decimal MortgageInsurance,
+    decimal MonthlyPayment, decimal CashToClose, decimal Payments, decimal Balance, decimal Cost);
 
 /// <summary>
 /// The home let out, measured as an investment, year by year. Net operating income is the rent collected less the manager,
