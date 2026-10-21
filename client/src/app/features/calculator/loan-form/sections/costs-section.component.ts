@@ -4,11 +4,12 @@ import { ControlContainer, FormGroupDirective, ReactiveFormsModule } from '@angu
 import { NumberFieldComponent } from '../../../../core/forms/number-field.component';
 import { LOAN_FORM } from '../loan-form.token';
 import { STATE_PROPERTY_TAX_RATES, stateRate, stateRules } from '../state-property-tax';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 /** The loan form's Taxes, insurance, HOA & PMI section: Everything paid with the loan each month besides principal and interest: property taxes and any PID, insurance, HOA dues and PMI. */
 @Component({
   selector: 'app-costs-section',
-  imports: [ReactiveFormsModule, CurrencyPipe, NumberFieldComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, NumberFieldComponent, TPipe],
   templateUrl: './costs-section.component.html',
   styleUrls: ['../loan-form.component.scss', './section.component.scss'],
   // Its controls belong to the loan form's own form group.

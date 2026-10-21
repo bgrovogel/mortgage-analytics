@@ -2,6 +2,7 @@ import { CurrencyPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { LoanProgramType, Payment, Schedule } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** One slice of the monthly payment. */
 interface Slice {
@@ -19,9 +20,9 @@ interface Slice {
  */
 @Component({
   selector: 'app-payment-breakdown',
-  imports: [CurrencyPipe, PercentPipe],
+  imports: [CurrencyPipe, PercentPipe, TPipe],
   template: `
-    <h2 id="breakdown-title" class="visually-hidden">Monthly payment breakdown</h2>
+    <h2 id="breakdown-title" class="visually-hidden">{{ 'Monthly payment breakdown' | t }}</h2>
     <div class="bar" role="img" [attr.aria-label]="ariaLabel()">
       @for (slice of slices(); track slice.label) {
         <span [style.flex-grow]="slice.amount" [style.background]="'var(' + slice.color + ')'"></span>
@@ -39,7 +40,7 @@ interface Slice {
       </tbody>
       <tfoot>
         <tr>
-          <th scope="row">Total</th>
+          <th scope="row">{{ 'Total' | t }}</th>
           <td data-testid="breakdown-total">{{ total() | currency }}</td>
           <td></td>
         </tr>

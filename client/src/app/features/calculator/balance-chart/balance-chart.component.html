@@ -4,19 +4,19 @@
 <section class="chart" aria-labelledby="balance-title">
   <div class="head">
     <div class="titles">
-      <h2 id="balance-title">What you owe, month by month</h2>
+      <h2 id="balance-title">{{ 'What you owe, month by month' | t }}</h2>
       <p id="balance-summary" data-testid="balance-summary">{{ summary() }}</p>
       @if (delta(); as change) {
         <button type="button" class="delta" [attr.aria-pressed]="pinned()" data-testid="ghost-chip" (click)="togglePin()">
-          <span>{{ change }}</span>&ngsp;<span class="pin">{{ pinned() ? 'Pinned · Unpin' : 'Pin' }}</span>
+          <span>{{ change }}</span>{{ '&ngsp;' | t }}<span class="pin">{{ pinned() ? ('Pinned · Unpin' | t) : ('Pin' | t) }}</span>
         </button>
       }
     </div>
     <button type="button" class="as-table" data-testid="balance-as-table" [attr.aria-pressed]="asTable()" (click)="asTable.set(!asTable())">
-      {{ asTable() ? 'View as chart' : 'View as table' }}
+      {{ asTable() ? ('View as chart' | t) : ('View as table' | t) }}
     </button>
     @if (frames().length > 1 && !asTable()) {
-      <div class="frames" role="group" aria-label="Time frame" data-testid="frames">
+      <div class="frames" role="group" [attr.aria-label]="'Time frame' | t" data-testid="frames">
         @for (f of frames(); track f.value) {
           <button type="button" [attr.aria-pressed]="f.value === frame()" [attr.data-testid]="'frame-' + f.value" (click)="pick(f.value)">{{ f.label }}</button>
         }
@@ -27,15 +27,15 @@
   @if (asTable()) {
     <div class="table-wrap" tabindex="0" role="region" aria-labelledby="balance-title">
       <table data-testid="balance-table">
-        <caption class="visually-hidden">What you owe after each year of payments</caption>
+        <caption class="visually-hidden">{{ 'What you owe after each year of payments' | t }}</caption>
         <thead>
           <tr>
-            <th scope="col">After</th>
-            <th scope="col">{{ series().hasExtra ? 'With extra payments' : 'You owe' }}</th>
+            <th scope="col">{{ 'After' | t }}</th>
+            <th scope="col">{{ series().hasExtra ? ('With extra payments' | t) : ('You owe' | t) }}</th>
             @if (series().hasExtra) {
-              <th scope="col">Scheduled</th>
+              <th scope="col">{{ 'Scheduled' | t }}</th>
             }
-            <th scope="col">Interest paid so far</th>
+            <th scope="col">{{ 'Interest paid so far' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -56,7 +56,7 @@
   <figure aria-labelledby="balance-title" aria-describedby="balance-summary">
     <div class="plot">
       <svg role="img" data-testid="balance-chart" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none"
-           [attr.aria-label]="series().hasExtra ? 'Balance over time. Solid line: with extra payments. Dashed line: scheduled.' : 'Balance over time.'">
+           [attr.aria-label]="series().hasExtra ? ('Balance over time. Solid line: with extra payments. Dashed line: scheduled.' | t) : ('Balance over time.' | t)">
         <g class="grid">
           <line x1="0" y1="0" [attr.x2]="width" y2="0" />
           <line x1="0" y1="80" [attr.x2]="width" y2="80" />
@@ -80,26 +80,26 @@
       }
       <div class="tip" aria-hidden="true" [class.on-right]="c.onRight" [style.left]="c.onRight ? 'auto' : 'calc(' + c.left + '% + 16px)'"
            [style.right]="c.onRight ? 'calc(' + (100 - c.left) + '% + 16px)' : 'auto'">
-        <div class="when"><span data-testid="scrub-date">{{ a.date }} · payment {{ a.month }}</span></div>
-        <div class="row"><span>{{ series().hasExtra ? 'With extra' : 'You owe' }}</span><span class="figure" data-testid="scrub-extra">{{ usd(a.extra) }}</span></div>
+        <div class="when"><span data-testid="scrub-date">{{ '{0} · payment {1}' | t: [a.date, a.month] }}</span></div>
+        <div class="row"><span>{{ series().hasExtra ? ('With extra' | t) : ('You owe' | t) }}</span><span class="figure" data-testid="scrub-extra">{{ usd(a.extra) }}</span></div>
         @if (series().hasExtra) {
-          <div class="row"><span>Scheduled</span><span class="figure" data-testid="scrub-scheduled">{{ usd(a.scheduled) }}</span></div>
-          <div class="row total"><span>You owe less by</span><span class="figure gain" data-testid="scrub-gap">{{ usd(a.gap) }}</span></div>
+          <div class="row"><span>{{ 'Scheduled' | t }}</span><span class="figure" data-testid="scrub-scheduled">{{ usd(a.scheduled) }}</span></div>
+          <div class="row total"><span>{{ 'You owe less by' | t }}</span><span class="figure gain" data-testid="scrub-gap">{{ usd(a.gap) }}</span></div>
         }
-        <div class="row"><span>Interest paid so far</span><span class="figure" data-testid="scrub-interest">{{ usd(a.interest) }}</span></div>
+        <div class="row"><span>{{ 'Interest paid so far' | t }}</span><span class="figure" data-testid="scrub-interest">{{ usd(a.interest) }}</span></div>
       </div>
     </div>
     <div class="axis" aria-hidden="true"><span>{{ axis().start }}</span><span>{{ axis().mid }}</span><span>{{ axis().end }}</span></div>
   </figure>
 
   <div class="scrub">
-    <label for="balance-scrubber">Scrub through the loan</label>
+    <label for="balance-scrubber">{{ 'Scrub through the loan' | t }}</label>
     <input id="balance-scrubber" data-testid="scrubber" type="range" min="1" [max]="domain()" step="1" [value]="month()"
            [attr.aria-valuetext]="valueText()" (input)="scrub($event)" (keydown)="key($event)" />
     <ul class="key" aria-hidden="true">
-      <li><span class="swatch extra"></span>{{ series().hasExtra ? 'With extra payments' : 'Balance' }}</li>
+      <li><span class="swatch extra"></span>{{ series().hasExtra ? ('With extra payments' | t) : ('Balance' | t) }}</li>
       @if (series().hasExtra) {
-        <li><span class="swatch scheduled"></span>Scheduled</li>
+        <li><span class="swatch scheduled"></span>{{ 'Scheduled' | t }}</li>
       }
     </ul>
   </div>

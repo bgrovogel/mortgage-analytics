@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * The views of buying a home, each its own URL so it can be bookmarked, shared and reached with the back button.
@@ -44,20 +45,20 @@ export function currentBuyView(): Signal<string> {
 /** The rows of views, shared by the calculator and Compare so a buyer never loses the way between them. */
 @Component({
   selector: 'app-buy-tabs',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   template: `
-    <nav class="result-tabs" aria-label="Results">
+    <nav class="result-tabs" [attr.aria-label]="'Results' | t">
       @for (view of views; track view.id) {
         <a [routerLink]="view.link" [class.active]="isOpen(view.id)" [attr.aria-current]="view.id === current() ? 'page' : null"
            [attr.data-testid]="'result-tab-' + view.id">{{ view.label }}</a>
       }
     </nav>
     @if (showDepth()) {
-      <nav class="depth" aria-label="Go deeper" data-testid="depth-views">
+      <nav class="depth" [attr.aria-label]="'Go deeper' | t" data-testid="depth-views">
         @if (current() === 'overview') {
-          <span class="lead">Go deeper</span>
+          <span class="lead">{{ 'Go deeper' | t }}</span>
         } @else {
-          <a class="back" routerLink="/calculator/overview" data-testid="back-to-cost">← Back to Cost</a>
+          <a class="back" routerLink="/calculator/overview" data-testid="back-to-cost">{{ '← Back to Cost' | t }}</a>
         }
         @for (view of depth; track view.id) {
           <a [routerLink]="view.link" [class.active]="view.id === current()" [attr.aria-current]="view.id === current() ? 'page' : null"

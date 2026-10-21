@@ -1,44 +1,42 @@
 <section class="card" aria-labelledby="account-title">
-  <div class="toggle" role="group" aria-label="Account">
-    <button type="button" [attr.aria-pressed]="mode() === 'sign-in'" (click)="setMode('sign-in')" data-testid="account-mode-sign-in">Sign in</button>
-    <button type="button" [attr.aria-pressed]="mode() === 'create'" (click)="setMode('create')" data-testid="account-mode-create">Create account</button>
+  <div class="toggle" role="group" [attr.aria-label]="'Account' | t">
+    <button type="button" [attr.aria-pressed]="mode() === 'sign-in'" (click)="setMode('sign-in')" data-testid="account-mode-sign-in">{{ 'Sign in' | t }}</button>
+    <button type="button" [attr.aria-pressed]="mode() === 'create'" (click)="setMode('create')" data-testid="account-mode-create">{{ 'Create account' | t }}</button>
   </div>
 
-  <h1 id="account-title">{{ mode() === 'create' ? 'Create your account' : 'Welcome back' }}</h1>
+  <h1 id="account-title">{{ mode() === 'create' ? ('Create your account' | t) : ('Welcome back' | t) }}</h1>
   <p class="intro">
-    {{ mode() === 'create'
-      ? 'An account keeps your saved calculations and refinance comparisons private, and lets you find them again.'
-      : 'Sign in to save calculations and see your history.' }}
+    {{ mode() === 'create' ? ('An account keeps your saved calculations and refinance comparisons private, and lets you find them again.' | t) : ('Sign in to save calculations and see your history.' | t) }}
   </p>
 
   @if (sentTo(); as email) {
     <div class="check-email" data-testid="account-check-email">
       <p class="note" role="status">
-        Almost there: we sent a link to <strong>{{ email }}</strong>. Open it to confirm your email, then sign in.
+        {{ 'Almost there: we sent a link to' | t }} <strong>{{ email }}</strong>{{ '. Open it to confirm your email, then sign in.' | t }}
       </p>
       @if (resent()) {
-        <p class="note" role="status" data-testid="account-resent">We sent the link again.</p>
+        <p class="note" role="status" data-testid="account-resent">{{ 'We sent the link again.' | t }}</p>
       } @else {
-        <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">Send the link again</button>
+        <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">{{ 'Send the link again' | t }}</button>
       }
       <app-dev-mailbox-hint />
     </div>
   } @else {
     <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="account-form">
       <label class="field">
-        <span>Email</span>
+        <span>{{ 'Email' | t }}</span>
         <input type="email" formControlName="email" autocomplete="email" data-testid="account-email" [attr.aria-invalid]="showError('email')" />
         @if (showError('email')) {
-          <small class="error">Enter a valid email address.</small>
+          <small class="error">{{ 'Enter a valid email address.' | t }}</small>
         }
       </label>
 
       <label class="field">
-        <span>Password</span>
+        <span>{{ 'Password' | t }}</span>
         <input type="password" formControlName="password" data-testid="account-password" [attr.aria-invalid]="showError('password')"
                [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
         @if (showError('password')) {
-          <small class="error">At least 8 characters, with a number.</small>
+          <small class="error">{{ 'At least 8 characters, with a number.' | t }}</small>
         }
       </label>
 
@@ -47,36 +45,36 @@
       }
       @if (needsConfirmation()) {
         @if (resent()) {
-          <p class="note" role="status" data-testid="account-resent">We sent the link again.</p>
+          <p class="note" role="status" data-testid="account-resent">{{ 'We sent the link again.' | t }}</p>
         } @else {
-          <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">Send the link again</button>
+          <button type="button" class="secondary" (click)="resend()" data-testid="account-resend">{{ 'Send the link again' | t }}</button>
         }
         <app-dev-mailbox-hint />
       }
 
       <button type="submit" class="primary" [disabled]="busy()" data-testid="account-submit">
-        {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
+        {{ mode() === 'create' ? ('Create account' | t) : ('Sign in' | t) }}
       </button>
     </form>
 
     @if (mode() === 'sign-in') {
       @if (passkeys.supported()) {
-        <p class="or" aria-hidden="true"><span>or</span></p>
-        <button type="button" class="secondary" [disabled]="busy()" (click)="signInWithPasskey()" data-testid="passkey-sign-in">Sign in with a passkey</button>
+        <p class="or" aria-hidden="true"><span>{{ 'or' | t }}</span></p>
+        <button type="button" class="secondary" [disabled]="busy()" (click)="signInWithPasskey()" data-testid="passkey-sign-in">{{ 'Sign in with a passkey' | t }}</button>
       }
-      <div class="links"><a routerLink="/forgot-password" data-testid="forgot-password-link">Forgot your password?</a></div>
+      <div class="links"><a routerLink="/forgot-password" data-testid="forgot-password-link">{{ 'Forgot your password?' | t }}</a></div>
     }
   }
 </section>
 
 <!-- Why sign up: what an account adds, and the reassurance that nothing else needs one. -->
 <aside class="benefits" aria-labelledby="benefits-title" data-testid="account-benefits">
-  <h2 id="benefits-title">What an account adds</h2>
+  <h2 id="benefits-title">{{ 'What an account adds' | t }}</h2>
   <ul>
-    <li><strong>Save any calculation</strong> under a name you choose: a home purchase, a refinance, or pay off or invest.</li>
-    <li><strong>Pick up where you left off.</strong> Opening a saved one puts every number back on its page.</li>
-    <li><strong>Private to you.</strong> Nobody else can see what you save, or even find out it exists.</li>
-    <li><strong>No password to remember.</strong> Add a passkey, and sign in with your fingerprint, face or screen lock.</li>
+    <li><strong>{{ 'Save any calculation' | t }}</strong> {{ 'under a name you choose: a home purchase, a refinance, or pay off or invest.' | t }}</li>
+    <li><strong>{{ 'Pick up where you left off.' | t }}</strong> {{ 'Opening a saved one puts every number back on its page.' | t }}</li>
+    <li><strong>{{ 'Private to you.' | t }}</strong> {{ 'Nobody else can see what you save, or even find out it exists.' | t }}</li>
+    <li><strong>{{ 'No password to remember.' | t }}</strong> {{ 'Add a passkey, and sign in with your fingerprint, face or screen lock.' | t }}</li>
   </ul>
-  <p class="free">The calculators never need an account.</p>
+  <p class="free">{{ 'The calculators never need an account.' | t }}</p>
 </aside>

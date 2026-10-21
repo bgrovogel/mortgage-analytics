@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import type { ScheduleColumn, ScheduleRow } from './schedule-model';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * What the whole schedule adds up to, so the table need not be scrolled to its foot to know: the three figures that
@@ -8,28 +9,28 @@ import type { ScheduleColumn, ScheduleRow } from './schedule-model';
  */
 @Component({
   selector: 'app-schedule-totals',
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, TPipe],
   template: `
     @let t = totals();
     <!-- Everything this schedule costs, whichever columns are showing. -->
     <p class="scope" data-testid="lifetime-scope">
-      Totals until the loan is paid off, after {{ payments() }} payments. Taxes and insurance are counted to that date only.
+      {{ 'Totals until the loan is paid off, after {0} payments. Taxes and insurance are counted to that date only.' | t: [payments()] }}
     </p>
     <p class="headline" data-testid="lifetime-headline">
-      <span>Loan repaid <strong>{{ t.principal + t.extraPrincipal | currency }}</strong></span>&ngsp;
-      <span>Interest <strong>{{ t.interest | currency }}</strong></span>&ngsp;
-      <span class="all">Everything paid <strong>{{ t.totalOutlay | currency }}</strong></span>
+      <span>{{ 'Loan repaid' | t }} <strong>{{ t.principal + t.extraPrincipal | currency }}</strong></span>{{ '&ngsp;' | t }}
+      <span>{{ 'Interest' | t }} <strong>{{ t.interest | currency }}</strong></span>{{ '&ngsp;' | t }}
+      <span class="all">{{ 'Everything paid' | t }} <strong>{{ t.totalOutlay | currency }}</strong></span>
     </p>
     <details class="every" data-testid="lifetime-more">
-      <summary>Every total</summary>
-      <dl class="lifetime" data-testid="lifetime-totals" aria-label="Totals over the whole schedule">
-        <div><dt>Loan repaid </dt><dd>{{ t.principal + t.extraPrincipal | currency }}</dd></div>
+      <summary>{{ 'Every total' | t }}</summary>
+      <dl class="lifetime" data-testid="lifetime-totals" [attr.aria-label]="'Totals over the whole schedule' | t">
+        <div><dt>{{ 'Loan repaid' | t }} </dt><dd>{{ t.principal + t.extraPrincipal | currency }}</dd></div>
         @for (column of columns(); track column.key) {
           @if (column.key !== 'housingCosts' && column.key !== 'totalOutlay') {
             <div><dt>{{ label(column) }} </dt><dd>{{ column.value(t) | currency }}</dd></div>
           }
         }
-        <div class="all"><dt>Everything paid </dt><dd>{{ t.totalOutlay | currency }}</dd></div>
+        <div class="all"><dt>{{ 'Everything paid' | t }} </dt><dd>{{ t.totalOutlay | currency }}</dd></div>
       </dl>
     </details>
   `,

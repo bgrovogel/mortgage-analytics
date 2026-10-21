@@ -4,6 +4,7 @@ import { decimal, money, monthOf, pct } from '../../core/formatting/format';
 import { MAX_HOMES, homeName } from '../../core/models/home-comparison.models';
 import { ComparisonStore } from './comparison.store';
 import { FIRST_YEARS, HomeFigures, cheapestHome, comparisonHeadline, figuresOf } from './comparison-figures';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** One line of the comparison: how to show a figure, whether a difference between homes means anything, and which way is better. */
 interface Line {
@@ -98,6 +99,7 @@ interface Row {
  * better, the best home is marked. Two homes are summed up in one line; more in a line each, after the cheapest.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-compare-results',
   template: `
     @if (figures(); as homes) {
@@ -112,9 +114,9 @@ interface Row {
         }
         <label class="only-differences">
           <input type="checkbox" data-testid="only-differences" [checked]="onlyDifferences()" (change)="onlyDifferences.set(!onlyDifferences())" />
-          Only the rows that differ
+          {{ 'Only the rows that differ' | t }}
         </label>
-        <div class="table-wrap" tabindex="0" aria-label="The homes side by side">
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'The homes side by side' | t">
           <table data-testid="compare-table" [class]="'homes-' + homes.length" [style.--homes]="homes.length">
             <thead>
               <tr>
@@ -137,9 +139,7 @@ interface Row {
           </table>
         </div>
         <p class="note">
-          Edit any home with the switch above the form, where you can add one, up to {{ maxHomes }}. Under each figure is
-          its difference from Home A, and the best on each line is shaded. The cost of the first {{ years }} years is
-          interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.
+          {{ 'Edit any home with the switch above the form, where you can add one, up to {0}. Under each figure is its difference from Home A, and the best on each line is shaded. The cost of the first {1} years is interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.' | t: [maxHomes, years] }}
         </p>
       </section>
     }

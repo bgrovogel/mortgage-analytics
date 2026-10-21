@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { decimal, usd } from '../../../core/formatting/format';
 import { RentalOutcome } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The years the table shows, of those the loan runs. */
 const MILESTONES = [1, 2, 3, 5, 7, 10, 15, 20, 30];
@@ -16,52 +17,52 @@ const LENDER_COVERAGE = 1.25;
  */
 @Component({
   selector: 'app-rental',
-  imports: [ScrubChartComponent],
+  imports: [ScrubChartComponent, TPipe],
   template: `
     <div class="stats">
       <div class="stat" data-testid="rental-stat-cash">
-        <span>{{ first().cashFlow < 0 ? 'You add each month' : 'You keep each month' }}</span>
+        <span>{{ first().cashFlow < 0 ? ('You add each month' | t) : ('You keep each month' | t) }}</span>
         <strong [class.short]="first().cashFlow < 0">{{ usd(abs(first().cashFlow / 12)) }}</strong>
-        <small>{{ usd(abs(first().cashFlow)) }} a year, after the loan</small>
+        <small>{{ '{0} a year, after the loan' | t: [usd(abs(first().cashFlow))] }}</small>
       </div>
       <div class="stat" data-testid="rental-stat-cap">
-        <span>Cap rate</span>
+        <span>{{ 'Cap rate' | t }}</span>
         <strong>{{ percent(rental().capRatePercent) }}</strong>
-        <small>What the home earns on its price, before the loan</small>
+        <small>{{ 'What the home earns on its price, before the loan' | t }}</small>
       </div>
       <div class="stat" data-testid="rental-stat-coc">
-        <span>Cash-on-cash</span>
-        <strong [class.short]="(rental().cashOnCashPercent ?? 0) < 0">{{ rental().cashOnCashPercent === null ? 'None' : percent(rental().cashOnCashPercent!) }}</strong>
-        <small>{{ rental().cashOnCashPercent === null ? 'No cash was put in' : 'The cash flow on the ' + usd(rental().cashInvested) + ' you put in' }}</small>
+        <span>{{ 'Cash-on-cash' | t }}</span>
+        <strong [class.short]="(rental().cashOnCashPercent ?? 0) < 0">{{ rental().cashOnCashPercent === null ? ('None' | t) : percent(rental().cashOnCashPercent!) }}</strong>
+        <small>{{ rental().cashOnCashPercent === null ? ('No cash was put in' | t) : ('The cash flow on the {0} you put in' | t: [usd(rental().cashInvested)]) }}</small>
       </div>
     </div>
 
     <p class="verdict" data-testid="rental-verdict">{{ verdict() }}</p>
 
     <dl class="measures" data-testid="rental-measures">
-      <div><dt>Rent covers the loan</dt><dd>{{ coverage() }}</dd></div>
-      <div><dt>Rent against the price</dt><dd>{{ percent(rental().rentToPricePercent) }} a month</dd></div>
-      <div><dt>Price over a year's rent</dt><dd>{{ decimal(rental().grossRentMultiplier) }} times</dd></div>
-      <div><dt>Rent that breaks even</dt><dd>{{ usd(rental().breakEvenMonthlyRent) }} a month</dd></div>
+      <div><dt>{{ 'Rent covers the loan' | t }}</dt><dd>{{ coverage() }}</dd></div>
+      <div><dt>{{ 'Rent against the price' | t }}</dt><dd>{{ '{0} a month' | t: [percent(rental().rentToPricePercent)] }}</dd></div>
+      <div><dt>{{ "Price over a year's rent" | t }}</dt><dd>{{ '{0} times' | t: [decimal(rental().grossRentMultiplier)] }}</dd></div>
+      <div><dt>{{ 'Rent that breaks even' | t }}</dt><dd>{{ '{0} a month' | t: [usd(rental().breakEvenMonthlyRent)] }}</dd></div>
     </dl>
 
-    <app-scrub-chart title="What the home leaves you each year after the loan (below zero, you add money)" [spec]="chart()" testId="rental-chart" />
+    <app-scrub-chart [title]="'What the home leaves you each year after the loan (below zero, you add money)' | t" [spec]="chart()" testId="rental-chart" />
 
-    <div class="table-wrap" tabindex="0" aria-label="The home let out, year by year">
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'The home let out, year by year' | t">
       <table data-testid="rental-table">
         <thead>
           <tr>
             <td></td>
-            <th scope="col" class="detail">Rent</th>
-            <th scope="col">Earns</th>
-            <th scope="col" class="detail">Loan</th>
-            <th scope="col">Cash flow</th>
+            <th scope="col" class="detail">{{ 'Rent' | t }}</th>
+            <th scope="col">{{ 'Earns' | t }}</th>
+            <th scope="col" class="detail">{{ 'Loan' | t }}</th>
+            <th scope="col">{{ 'Cash flow' | t }}</th>
           </tr>
         </thead>
         <tbody>
           @for (y of milestones(); track y.year) {
             <tr>
-              <th scope="row">Year {{ y.year }}</th>
+              <th scope="row">{{ 'Year {0}' | t: [y.year] }}</th>
               <td class="detail">{{ usd(y.grossRent) }}</td>
               <td>{{ usd(y.netOperatingIncome) }}</td>
               <td class="detail">{{ usd(y.debtService) }}</td>

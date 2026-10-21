@@ -12,6 +12,7 @@ import { PaymentBreakdownComponent } from '../payment-breakdown/payment-breakdow
 import { KPI_LABELS, KpiKey, KpiPreferences } from './kpi-preferences';
 import { ProvenanceChipsComponent } from '../provenance/provenance-chips.component';
 import { buydownYears } from '../rate-plan/buydown-years';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** Each tax, as the payment tile names it when it is the only one. */
 const TAXES: readonly [keyof HousingCosts, string][] = [
@@ -28,33 +29,31 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
  */
 @Component({
   selector: 'app-savings-summary',
-  imports: [CurrencyPipe, DatePipe, DialogComponent, PaymentBreakdownComponent, ProvenanceChipsComponent, RouterLink, TermComponent],
+  imports: [CurrencyPipe, DatePipe, DialogComponent, PaymentBreakdownComponent, ProvenanceChipsComponent, RouterLink, TermComponent, TPipe],
   template: `
     @let r = result();
     @if (r.purchase.isJumbo) {
       <p class="notice" data-testid="jumbo-notice">
-        This is a jumbo loan: above the {{ r.purchase.conformingLoanLimit | currency: 'USD' : 'symbol' : '1.0-0' }} conforming limit.
-        Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can
-        differ more than usual.
+        {{ 'This is a jumbo loan: above the {0} conforming limit. Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can differ more than usual.' | t: [(r.purchase.conformingLoanLimit | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
       </p>
     }
     <!-- What each month is made of, in a line and as a bar: the hero figure above is its total. -->
-    <section class="payment" aria-label="What each month is made of" data-testid="payment-parts">
+    <section class="payment" [attr.aria-label]="'What each month is made of' | t" data-testid="payment-parts">
       <p class="parts">
-        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr title="principal and interest">P&amp;I</abbr>
+        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>{{ '&ngsp;' | t }}<abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr>
         @if (firstPayment().costs.total > 0) {
-          &ngsp;+ {{ firstPayment().costs.total | currency }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
+          {{ '&ngsp;+ {0}' | t: [(firstPayment().costs.total | currency)] }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
         }
         @if (r.annualPercentageRate; as apr) {
-          &ngsp;· <span data-testid="apr"><app-term of="APR">APR</app-term> {{ percent(apr) }}%</span>
+          {{ '&ngsp;·' | t }} <span data-testid="apr"><app-term of="APR">{{ 'APR' | t }}</app-term> {{ percent(apr) }}%</span>
         }
       </p>
       <app-provenance-chips [result]="r" />
       @if (r.buydown) {
-        <p class="extra" data-testid="buydown-first-year">In year 1, with the buydown; {{ fromNoteRate() }}</p>
+        <p class="extra" data-testid="buydown-first-year">{{ 'In year 1, with the buydown; {0}' | t: [fromNoteRate()] }}</p>
       }
       @if (withExtra(); as extra) {
-        <p class="extra" data-testid="with-extra">+ {{ extra.amount | currency: 'USD' : 'symbol' : '1.0-0' }} extra = {{ extra.total | currency }}</p>
+        <p class="extra" data-testid="with-extra">{{ '+ {0} extra = {1}' | t: [(extra.amount | currency: ('USD' | t) : 'symbol' : '1.0-0'), (extra.total | currency)] }}</p>
       }
       <!-- Where it goes: a bar of the parts, with each one's figure and share. -->
       <app-payment-breakdown [schedule]="r.accelerated" [principalAndInterest]="r.buydown?.years?.[0]?.monthlyPayment ?? null"
@@ -70,41 +69,41 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           @case ('cash') {
           @if (cash(); as cash) {
             <div class="tile" data-testid="cash-tile">
-              <dt>Cash to close</dt>
+              <dt>{{ 'Cash to close' | t }}</dt>
               <dd data-testid="cash-tile-total">{{ cash.total | currency }}</dd>
               <dd class="note">
-                {{ cash.downPayment | currency }} down + {{ cash.closingCosts | currency }} closing costs
+                {{ '{0} down + {1} closing costs' | t: [(cash.downPayment | currency), (cash.closingCosts | currency)] }}
                 @if (cash.credits > 0) {
-                  − {{ cash.credits | currency }} credits
+                  {{ '− {0} credits' | t: [(cash.credits | currency)] }}
                 }
               </dd>
-              <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">See the costs →</a></dd>
+              <dd class="link"><a routerLink="/calculator/closing" data-testid="cash-tile-link">{{ 'See the costs →' | t }}</a></dd>
             </div>
           }
           }
           @case ('payoff') {
           <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
           <div class="tile">
-            <dt>Paid off</dt>
-            <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
+            <dt>{{ 'Paid off' | t }}</dt>
+            <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: ('MMM yyyy' | t) }}</dd>
             @if (r.savings.paymentsSaved > 0) {
-              <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> sooner, instead of {{ r.savings.originalPayoffDate | date: 'MMM yyyy' }}</dd>
+              <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> {{ 'sooner, instead of {0}' | t: [(r.savings.originalPayoffDate | date: ('MMM yyyy' | t))] }}</dd>
             } @else if (r.accelerated.recasts.length > 0) {
-              <dd class="note" data-testid="same-payoff">Same date: a recast lowers the payment instead</dd>
+              <dd class="note" data-testid="same-payoff">{{ 'Same date: a recast lowers the payment instead' | t }}</dd>
             }
           </div>
           }
           @case ('afford') {
           @if (!current()) {
             <div class="tile" data-testid="afford-tile">
-              <dt>Can you afford it?</dt>
+              <dt>{{ 'Can you afford it?' | t }}</dt>
               @if (afford(); as a) {
                 <dd [class.gain]="a.answer === 'Yes'" data-testid="afford-tile-answer">{{ a.answer }}</dd>
                 <dd class="note" data-testid="afford-tile-note">{{ a.note }}</dd>
-                <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">How lenders see it →</a></dd>
+                <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">{{ 'How lenders see it →' | t }}</a></dd>
               } @else {
-                <dd class="note">Your income and debts tell whether this home fits, and the most you could pay.</dd>
-                <dd class="link"><button type="button" (click)="addIncome()" data-testid="afford-tile-add">Add income</button></dd>
+                <dd class="note">{{ 'Your income and debts tell whether this home fits, and the most you could pay.' | t }}</dd>
+                <dd class="link"><button type="button" (click)="addIncome()" data-testid="afford-tile-add">{{ 'Add income' | t }}</button></dd>
               }
             </div>
           }
@@ -112,13 +111,13 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           @case ('savings') {
           @if (hasSavings()) {
             <div class="tile savings positive" data-testid="savings-tile">
-              <dt>Net savings from paying extra</dt>
-              <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
+              <dt>{{ 'Net savings from paying extra' | t }}</dt>
+              <dd data-testid="net-savings">{{ r.savings.netSavings | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</dd>
               @if (savingsDetail(); as detail) {
                 <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
               }
               <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
-              <dd class="note">Total interest <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">instead of {{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span></dd>
+              <dd class="note">{{ 'Total interest' | t }} <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</span>{{ '&ngsp;' | t }}<span data-testid="total-interest-detail">{{ 'instead of {0}' | t: [(r.baseline.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</span></dd>
               @if (buydownNote(); as note) {
                 <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
               }
@@ -126,9 +125,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           } @else {
             <!-- Nothing extra is paid, so a $0 saving would say nothing: say what the loan costs instead. -->
             <div class="tile savings" data-testid="savings-tile">
-              <dt>Total interest over the loan</dt>
-              <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
-              <dd class="note" data-testid="total-interest-detail">Add an extra payment to see how much you could save.</dd>
+              <dt>{{ 'Total interest over the loan' | t }}</dt>
+              <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</dd>
+              <dd class="note" data-testid="total-interest-detail">{{ 'Add an extra payment to see how much you could save.' | t }}</dd>
               @if (buydownNote(); as note) {
                 <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
               }
@@ -138,24 +137,24 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           @case ('pmi') {
           @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
             <div class="tile">
-              <dt>{{ insuranceName() }} ends</dt>
-              <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
+              <dt>{{ '{0} ends' | t: [insuranceName()] }}</dt>
+              <dd data-testid="pmi-end">{{ pmiEnd | date: ('MMM yyyy' | t) }}</dd>
               <!-- Kept for the life of the loan (FHA MIP with under 10% down), it ends with the payoff tile's date. -->
               @if (pmiEnd.slice(0, 7) === r.savings.acceleratedPayoffDate.slice(0, 7)) {
-                <dd class="note" data-testid="pmi-with-loan">Lasts as long as the loan, so paying it off sooner ends it too</dd>
+                <dd class="note" data-testid="pmi-with-loan">{{ 'Lasts as long as the loan, so paying it off sooner ends it too' | t }}</dd>
               } @else if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
-                <dd class="note gain" data-testid="pmi-sooner">{{ pmiSooner() }} sooner, instead of {{ r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy' }}</dd>
+                <dd class="note gain" data-testid="pmi-sooner">{{ '{0} sooner, instead of {1}' | t: [pmiSooner(), (r.baseline.mortgageInsuranceEndDate | date: ('MMM yyyy' | t))] }}</dd>
               } @else {
-                <dd class="note">{{ r.purchase.downPaymentPercent }}% down</dd>
+                <dd class="note">{{ '{0}% down' | t: [r.purchase.downPaymentPercent] }}</dd>
               }
               <!-- Automatic removal keeps to the original schedule, whatever is paid extra; asking at 80% does not. -->
               @if (r.pmiOtherChoice; as other) {
                 <dd class="note ask" data-testid="pmi-other-choice">
                   @if (other.removal === 'BorrowerRequested') {
-                    Ask your lender at 80%: ends {{ other.endDate | date: 'MMM yyyy' }}, saving {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }}
+                    {{ 'Ask your lender at 80%: ends {0}, saving {1}' | t: [(other.endDate | date: ('MMM yyyy' | t)), (other.savedByAsking | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
                   } @else {
                     <!-- Automatic removal is the latest the law requires; some servicers drop it sooner, but none has to. -->
-                    If you don't ask, your servicer only has to remove it in {{ other.endDate | date: 'MMM yyyy' }}, costing {{ other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0' }} more
+                    {{ "If you don't ask, your servicer only has to remove it in {0}, costing {1} more" | t: [(other.endDate | date: ('MMM yyyy' | t)), (other.savedByAsking | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
                   }
                 </dd>
               }
@@ -167,10 +166,10 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
     </dl>
 
     <div class="arrange">
-      <button type="button" data-testid="arrange-rail" (click)="arranging.open()">Arrange these figures</button>
+      <button type="button" data-testid="arrange-rail" (click)="arranging.open()">{{ 'Arrange these figures' | t }}</button>
     </div>
-    <app-dialog #arranging heading="Your key figures">
-      <p class="arrange-hint">Put them in the order you read them, and put away the ones you do not need. This browser remembers it; signed in, so does your account, on every device.</p>
+    <app-dialog #arranging [heading]="'Your key figures' | t">
+      <p class="arrange-hint">{{ 'Put them in the order you read them, and put away the ones you do not need. This browser remembers it; signed in, so does your account, on every device.' | t }}</p>
       <ul class="arrange-list" data-testid="arrange-list">
         @for (key of preferences.order(); track key; let first = $first; let last = $last) {
           <li>
@@ -179,25 +178,23 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
               {{ labels[key] }}
             </label>
             <span class="moves">
-              <button type="button" [disabled]="first" [attr.aria-label]="'Move ' + labels[key] + ' earlier'" (click)="moved(key, -1)">↑</button>
-              <button type="button" [disabled]="last" [attr.aria-label]="'Move ' + labels[key] + ' later'" (click)="moved(key, 1)">↓</button>
+              <button type="button" [disabled]="first" [attr.aria-label]="'Move {0} earlier' | t: [labels[key]]" (click)="moved(key, -1)">↑</button>
+              <button type="button" [disabled]="last" [attr.aria-label]="'Move {0} later' | t: [labels[key]]" (click)="moved(key, 1)">↓</button>
             </span>
           </li>
         }
       </ul>
       <p class="visually-hidden" role="status" aria-live="polite" data-testid="arrange-status">{{ arrangeStatus() }}</p>
-      <button type="button" class="reset" data-testid="arrange-reset" (click)="preferences.reset()">Back to the default</button>
+      <button type="button" class="reset" data-testid="arrange-reset" (click)="preferences.reset()">{{ 'Back to the default' | t }}</button>
     </app-dialog>
 
     @if (r.accelerated.recasts.length > 0) {
       <ul class="recasts" data-testid="recasts">
         @for (recast of r.accelerated.recasts; track recast.afterPaymentNumber) {
           <li>
-            <strong>Recast after payment {{ recast.afterPaymentNumber }}</strong>:
-            payment drops from {{ recast.previousPayment | currency }} to {{ recast.newPayment | currency }}
-            starting {{ recast.effectiveDate | date: 'MMM yyyy' }}
+            <strong>{{ 'Recast after payment {0}' | t: [recast.afterPaymentNumber] }}</strong>{{ ': payment drops from {0} to {1} starting {2}' | t: [(recast.previousPayment | currency), (recast.newPayment | currency), (recast.effectiveDate | date: ('MMM yyyy' | t))] }}
             @if (recast.fee > 0) {
-              ({{ recast.fee | currency: 'USD' : 'symbol' : '1.0-0' }} fee)
+              {{ '({0} fee)' | t: [(recast.fee | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
             }
           </li>
         }

@@ -3,6 +3,7 @@ import { usd } from '../../../core/formatting/format';
 import { LoanProgramType, YearProjection } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
 import { costTotals, startingYear } from './cost-totals';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * The projection's quick numbers: for a chosen year, each tax and cost that year, everything paid through it, and
@@ -10,17 +11,18 @@ import { costTotals, startingYear } from './cost-totals';
  * chooses another.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-cost-totals',
   template: `
     @let t = totals();
     <section class="cost-totals" aria-labelledby="cost-totals-title">
       <header>
-        <h3 id="cost-totals-title">Taxes &amp; costs at a glance</h3>
+        <h3 id="cost-totals-title">{{ 'Taxes & costs at a glance' | t }}</h3>
         <label class="pick">
-          <span>Year</span>
+          <span>{{ 'Year' | t }}</span>
           <select data-testid="cost-totals-year" (change)="pick($event)">
             @for (y of projection(); track y.year) {
-              <option [value]="y.year" [selected]="y.year === shown()">Year {{ y.year }} ({{ calendarYear(y) }})</option>
+              <option [value]="y.year" [selected]="y.year === shown()">{{ 'Year {0} ({1})' | t: [y.year, calendarYear(y)] }}</option>
             }
           </select>
         </label>
@@ -30,13 +32,13 @@ import { costTotals, startingYear } from './cost-totals';
         <table data-testid="cost-totals">
           <thead>
             <tr>
-              <th scope="col">Cost</th>
-              <th scope="col">Year {{ shown() }} ({{ calendarYear(projection()[shown() - 1]) }})</th>
+              <th scope="col">{{ 'Cost' | t }}</th>
+              <th scope="col">{{ 'Year {0} ({1})' | t: [shown(), calendarYear(projection()[shown() - 1])] }}</th>
               <!-- Through year 1 is year 1 again: shown from year 2. -->
               @if (shown() > 1) {
-                <th scope="col">Through year {{ shown() }}</th>
+                <th scope="col">{{ 'Through year {0}' | t: [shown()] }}</th>
               }
-              <th scope="col">All {{ projection().length }} years</th>
+              <th scope="col">{{ 'All {0} years' | t: [projection().length] }}</th>
             </tr>
           </thead>
           <tbody>
@@ -53,8 +55,8 @@ import { costTotals, startingYear } from './cost-totals';
           </tbody>
           <tfoot>
             <tr data-testid="cost-totals-total">
-              <th scope="row">Total</th>
-              <td>{{ money(t.total.thisYear) }} <small>{{ money(t.total.monthly) }}/mo</small></td>
+              <th scope="row">{{ 'Total' | t }}</th>
+              <td>{{ money(t.total.thisYear) }} <small>{{ '{0}/mo' | t: [money(t.total.monthly)] }}</small></td>
               @if (shown() > 1) {
                 <td>{{ money(t.total.toDate) }}</td>
               }
@@ -63,7 +65,7 @@ import { costTotals, startingYear } from './cost-totals';
           </tfoot>
         </table>
       </div>
-      <p class="note">Taxes, insurance and dues continue after the loan is paid off, so they run the full term; mortgage insurance ends on your plan, with its extra payments. Click a year on the chart to see it here.</p>
+      <p class="note">{{ 'Taxes, insurance and dues continue after the loan is paid off, so they run the full term; mortgage insurance ends on your plan, with its extra payments. Click a year on the chart to see it here.' | t }}</p>
     </section>
   `,
   styleUrl: './cost-totals.component.scss',

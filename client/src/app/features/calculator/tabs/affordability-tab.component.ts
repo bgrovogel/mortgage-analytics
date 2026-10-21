@@ -4,6 +4,7 @@ import { usd } from '../../../core/formatting/format';
 import { BudgetAnswer } from '../../../core/models/amortization.models';
 import { AffordabilityComponent } from '../affordability/affordability.component';
 import { CalculatorStore } from '../calculator.store';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Can you afford it: the home against the household's income and debts, as a lender measures it. Until an income is
@@ -11,17 +12,17 @@ import { CalculatorStore } from '../calculator.store';
  */
 @Component({
   selector: 'app-affordability-tab',
-  imports: [AffordabilityComponent],
+  imports: [AffordabilityComponent, TPipe],
   template: `
-    <div class="start" role="radiogroup" aria-label="Start from" data-testid="afford-start">
-      <label><input type="radio" name="afford-start" value="home" [checked]="store.affordStart() === 'home'" (change)="store.affordStart.set('home')" data-testid="start-home" /> A home in mind</label>
-      <label><input type="radio" name="afford-start" value="budget" [checked]="store.affordStart() === 'budget'" (change)="store.affordStart.set('budget')" data-testid="start-budget" /> My budget</label>
+    <div class="start" role="radiogroup" [attr.aria-label]="'Start from' | t" data-testid="afford-start">
+      <label><input type="radio" name="afford-start" value="home" [checked]="store.affordStart() === 'home'" (change)="store.affordStart.set('home')" data-testid="start-home" /> {{ 'A home in mind' | t }}</label>
+      <label><input type="radio" name="afford-start" value="budget" [checked]="store.affordStart() === 'budget'" (change)="store.affordStart.set('budget')" data-testid="start-budget" /> {{ 'My budget' | t }}</label>
     </div>
     @if (result().budget; as budget) {
       <div class="panel budget-answer">
         <p data-testid="budget-answer">{{ budgetSentence(budget) }}</p>
         @if (budget.maxHomePrice > 0) {
-          <button type="button" (click)="priceAt(budget.maxHomePrice)" data-testid="price-at-budget">Price a home at {{ money(budget.maxHomePrice) }}</button>
+          <button type="button" (click)="priceAt(budget.maxHomePrice)" data-testid="price-at-budget">{{ 'Price a home at {0}' | t: [money(budget.maxHomePrice)] }}</button>
         }
       </div>
     }
@@ -31,16 +32,16 @@ import { CalculatorStore } from '../calculator.store';
                            [downPaymentPercent]="result().purchase.downPaymentPercent" [homePrice]="result().purchase.homePrice" />
         @if (affordability.comfortable.maxHomePrice > 0) {
           <p class="carry">
-            <button type="button" (click)="priceAt(affordability.comfortable.maxHomePrice)" data-testid="price-at-comfortable">Price a home at {{ money(affordability.comfortable.maxHomePrice) }}</button>
-            <span>Fills the home price in the form, keeping your down payment share, to see what it would really cost.</span>
+            <button type="button" (click)="priceAt(affordability.comfortable.maxHomePrice)" data-testid="price-at-comfortable">{{ 'Price a home at {0}' | t: [money(affordability.comfortable.maxHomePrice)] }}</button>
+            <span>{{ 'Fills the home price in the form, keeping your down payment share, to see what it would really cost.' | t }}</span>
           </p>
         }
       </div>
     } @else {
       <div class="panel empty" data-testid="affordability-empty">
         <!-- The answer above already asks the question and says what is needed; this says what the tab will show. -->
-        <p>This tab measures the home the way a lender would: the share of your income it takes, and the most you could pay.</p>
-        <button type="button" (click)="addIncome()" data-testid="add-income">Add your income</button>
+        <p>{{ 'This tab measures the home the way a lender would: the share of your income it takes, and the most you could pay.' | t }}</p>
+        <button type="button" (click)="addIncome()" data-testid="add-income">{{ 'Add your income' | t }}</button>
       </div>
     }
   `,

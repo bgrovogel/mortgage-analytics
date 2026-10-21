@@ -1,16 +1,17 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** The four pages that explain the app, as one row, so a reader moves between them without going back. */
 @Component({
   selector: 'app-reading-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TPipe],
   template: `
-    <nav aria-label="Pages that explain it" class="reading-nav">
-      <a routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page">How it’s calculated</a>
-      <a routerLink="/glossary" routerLinkActive="active" ariaCurrentWhenActive="page">Glossary</a>
-      <a routerLink="/privacy" routerLinkActive="active" ariaCurrentWhenActive="page">Privacy</a>
-      <a routerLink="/terms" routerLinkActive="active" ariaCurrentWhenActive="page">Terms</a>
+    <nav [attr.aria-label]="'Pages that explain it' | t" class="reading-nav">
+      <a routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'How it’s calculated' | t }}</a>
+      <a routerLink="/glossary" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'Glossary' | t }}</a>
+      <a routerLink="/privacy" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'Privacy' | t }}</a>
+      <a routerLink="/terms" routerLinkActive="active" ariaCurrentWhenActive="page">{{ 'Terms' | t }}</a>
     </nav>
   `,
   styles: `

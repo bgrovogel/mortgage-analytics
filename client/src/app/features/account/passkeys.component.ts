@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { Passkey, PasskeyService } from '../../core/auth/passkey.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Passkeys, on the account page: sign in with the device's fingerprint, face or screen lock instead of a password. Each
@@ -11,16 +12,15 @@ import { Passkey, PasskeyService } from '../../core/auth/passkey.service';
  */
 @Component({
   selector: 'app-passkeys',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, TPipe],
   template: `
     <div class="part" role="group" aria-labelledby="passkeys-title">
-      <h3 id="passkeys-title">Passkeys</h3>
+      <h3 id="passkeys-title">{{ 'Passkeys' | t }}</h3>
       <p>
-        Sign in with your fingerprint, face or screen lock instead of a password. A passkey stays on your device; nothing
-        secret is kept here, so there is nothing to guess or to steal.
+        {{ 'Sign in with your fingerprint, face or screen lock instead of a password. A passkey stays on your device; nothing secret is kept here, so there is nothing to guess or to steal.' | t }}
       </p>
       @if (!passkeys.supported()) {
-        <p class="note" data-testid="passkeys-unsupported">This browser cannot make passkeys.</p>
+        <p class="note" data-testid="passkeys-unsupported">{{ 'This browser cannot make passkeys.' | t }}</p>
       } @else {
         @if (list().length > 0) {
           <ul class="passkey-list" data-testid="passkey-list">
@@ -28,27 +28,27 @@ import { Passkey, PasskeyService } from '../../core/auth/passkey.service';
               <li>
                 <span class="passkey-name">
                   <strong>{{ passkey.name }}</strong>
-                  <small>Added {{ passkey.createdAt | date: 'mediumDate' }} · {{ passkey.lastUsedAt ? 'Last used ' + (passkey.lastUsedAt | date: 'mediumDate') : 'Never used' }}</small>
+                  <small>{{ 'Added {0} · {1}' | t: [(passkey.createdAt | date: 'mediumDate'), (passkey.lastUsedAt ? ('Last used {0}' | t: [((passkey.lastUsedAt | date: 'mediumDate'))]) : ('Never used' | t))] }}</small>
                 </span>
-                <button type="button" class="secondary" [attr.aria-label]="'Remove ' + passkey.name" (click)="remove(passkey)">Remove</button>
+                <button type="button" class="secondary" [attr.aria-label]="'Remove {0}' | t: [passkey.name]" (click)="remove(passkey)">{{ 'Remove' | t }}</button>
               </li>
             }
           </ul>
         } @else {
-          <p class="hint" data-testid="passkeys-none">No passkeys yet.</p>
+          <p class="hint" data-testid="passkeys-none">{{ 'No passkeys yet.' | t }}</p>
         }
         <form [formGroup]="form" (submit)="$event.preventDefault(); add()" novalidate data-testid="passkey-form">
           <label class="field">
-            <span>Name for this passkey</span>
+            <span>{{ 'Name for this passkey' | t }}</span>
             <input type="text" formControlName="name" maxlength="50" autocomplete="off" data-testid="passkey-name" [attr.aria-invalid]="nameInvalid()" />
             @if (nameInvalid()) {
-              <small class="error" data-testid="passkey-name-error">Give the passkey a name.</small>
+              <small class="error" data-testid="passkey-name-error">{{ 'Give the passkey a name.' | t }}</small>
             }
           </label>
           @if (error(); as message) {
             <p class="alert" role="alert" data-testid="passkey-error">{{ message }}</p>
           }
-          <button type="submit" class="secondary" [disabled]="busy()" data-testid="passkey-add">Add a passkey</button>
+          <button type="submit" class="secondary" [disabled]="busy()" data-testid="passkey-add">{{ 'Add a passkey' | t }}</button>
         </form>
         <p class="visually-hidden" role="status" aria-live="polite" data-testid="passkey-status-live">{{ status() }}</p>
         @if (status(); as message) {

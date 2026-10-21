@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { decimal } from '../../core/formatting/format';
 import { AverageRatesService } from '../../core/services/average-rates.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * This week's average mortgage rate, under a rate box, for someone with no quote yet: the 15-year average for a 15-year
@@ -10,15 +11,15 @@ import { AverageRatesService } from '../../core/services/average-rates.service';
  */
 @Component({
   selector: 'app-average-rate',
-  imports: [DatePipe],
+  imports: [DatePipe, TPipe],
   template: `
     @if (average(); as a) {
       <p class="average" data-testid="average-rate">
-        This week’s average {{ a.years }}-year fixed rate: {{ decimal(a.rate) }}% ({{ a.source }}, {{ a.asOf | date: 'MMM d' }}).
+        {{ 'This week’s average {0}-year fixed rate: {1}% ({2}, {3}).' | t: [a.years, decimal(a.rate), a.source, (a.asOf | date: ('MMM d' | t))] }}
         @if (a.rate !== current()) {
-          <button type="button" class="link-button" (click)="use.emit(a.rate)" data-testid="use-average-rate">Use {{ decimal(a.rate) }}%</button>
+          <button type="button" class="link-button" (click)="use.emit(a.rate)" data-testid="use-average-rate">{{ 'Use {0}%' | t: [decimal(a.rate)] }}</button>
         } @else {
-          <span data-testid="using-average-rate">You are using it.</span>
+          <span data-testid="using-average-rate">{{ 'You are using it.' | t }}</span>
         }
       </p>
     }

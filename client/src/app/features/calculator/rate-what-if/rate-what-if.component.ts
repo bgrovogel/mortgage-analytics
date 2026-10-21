@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { pct, usd, usdCents } from '../../../core/formatting/format';
 import { RateWhatIfLoan, whatIf } from './rate-what-if';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** How far the slider reaches either way, and how finely: eighths of a point, as lenders quote rates. */
 const REACH = 1.5;
@@ -28,35 +29,36 @@ const signed = (value: number, format: (amount: number) => string) => `${value <
  * principal and interest alone, so it is left out for a loan whose rate changes along the way.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-rate-what-if',
   template: `
     @if (loan(); as l) {
       @let w = scenario();
       <section class="panel" [class.bare]="bare()" data-testid="rate-what-if">
-        <h3>What if the rate were different?</h3>
+        <h3>{{ 'What if the rate were different?' | t }}</h3>
         <div class="control">
-          <label for="what-if-slider">Rate</label>
+          <label for="what-if-slider">{{ 'Rate' | t }}</label>
           <output for="what-if-slider" class="rate" data-testid="what-if-rate">{{ pct(w.rate, 3) }}</output>
           <input id="what-if-slider" type="range" data-testid="what-if-slider" [min]="-reach" [max]="reach" [step]="step"
                  [value]="delta()" [attr.aria-valuetext]="pct(w.rate, 3)" (input)="move($event)" />
           @if (delta() !== 0) {
-            <button type="button" class="link" data-testid="what-if-reset" (click)="delta.set(0)">Back to {{ pct(l.rate, 3) }}</button>
+            <button type="button" class="link" data-testid="what-if-reset" (click)="delta.set(0)">{{ 'Back to {0}' | t: [pct(l.rate, 3)] }}</button>
           }
         </div>
         <dl class="figures">
           <div>
-            <dt>Principal and interest</dt>
-            <dd data-testid="what-if-payment">{{ usdCents(w.payment) }}/mo</dd>
+            <dt>{{ 'Principal and interest' | t }}</dt>
+            <dd data-testid="what-if-payment">{{ '{0}/mo' | t: [usdCents(w.payment)] }}</dd>
             <dd class="change" data-testid="what-if-payment-change">{{ paymentChange() }}</dd>
           </div>
           <div>
-            <dt>Interest over the loan</dt>
+            <dt>{{ 'Interest over the loan' | t }}</dt>
             <dd data-testid="what-if-interest">{{ usd(w.interest) }}</dd>
             <dd class="change" data-testid="what-if-interest-change">{{ interestChange() }}</dd>
           </div>
         </dl>
         <p class="note" data-testid="what-if-note">
-          Each quarter of a point on this loan is about {{ usdCents(quarterPoint()) }} a month. Principal and interest only, paid on schedule.
+          {{ 'Each quarter of a point on this loan is about {0} a month. Principal and interest only, paid on schedule.' | t: [usdCents(quarterPoint())] }}
         </p>
       </section>
     }

@@ -2,6 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { usd, usdCents } from '../../../core/formatting/format';
 import { CashToClose, LoanProgramType } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The down payment that reaches each higher conventional limit, by that limit's percentage. */
 const DOWN_FOR_LIMIT: Record<number, number> = { 6: 10, 9: 25 };
@@ -27,20 +28,20 @@ interface Line {
  */
 @Component({
   selector: 'app-cash-to-close',
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, TPipe],
   template: `
     <div class="lead">
-      <h2 id="cash-to-close-title">Cash to close</h2>
+      <h2 id="cash-to-close-title">{{ 'Cash to close' | t }}</h2>
       <p class="intro" data-testid="cash-to-close-intro">{{ intro() }}</p>
       @if (cash().unusedCredits > 0) {
         <p class="note" data-testid="unused-credits">
-          {{ unusedCredits() }} of the credits goes unused: credits pay closing costs, never the down payment.
+          {{ '{0} of the credits goes unused: credits pay closing costs, never the down payment.' | t: [unusedCredits()] }}
         </p>
       }
       <p class="note" data-testid="concession-limit">{{ concessionLimit() }}</p>
       @if (cash().concessions.overLimit > 0) {
         <p class="note warn" data-testid="concessions-over">
-          That is {{ overLimit() }} over the limit, which can't pay your costs: ask for it off the price instead.
+          {{ "That is {0} over the limit, which can't pay your costs: ask for it off the price instead." | t: [overLimit()] }}
         </p>
       }
       @if (nextTier(); as next) {
@@ -58,7 +59,7 @@ interface Line {
       </tbody>
       <tfoot>
         <tr>
-          <th scope="row">Cash to close</th>
+          <th scope="row">{{ 'Cash to close' | t }}</th>
           <td data-testid="cash-to-close-total">{{ cash().total | currency }}</td>
         </tr>
       </tfoot>

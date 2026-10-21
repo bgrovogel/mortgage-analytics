@@ -7,6 +7,7 @@ import { RentOrBuyInput } from '../../../core/models/amortization.models';
 import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { TaxFilingStatus } from '../../../core/models/strategy.models';
 import { CalculatorStore } from '../calculator.store';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** Renting's cost and what money earns, with the limits the API enforces (AmortizationRequestValidator). */
 export const RENT_RULES = {
@@ -33,27 +34,27 @@ export const OWNER_TAX_DEFAULTS = { filingStatus: 'Single' as TaxFilingStatus, m
  */
 @Component({
   selector: 'app-rent-settings',
-  imports: [NumberFieldComponent, ReactiveFormsModule],
+  imports: [NumberFieldComponent, ReactiveFormsModule, TPipe],
   template: `
     <fieldset class="question" data-testid="rent-settings">
-      <legend>For this question</legend>
-      <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="monthly-rent" label="Rent for a similar home, a month" placeholder="e.g. 2,200" />
+      <legend>{{ 'For this question' | t }}</legend>
+      <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="monthly-rent" [label]="'Rent for a similar home, a month' | t" placeholder="e.g. 2,200" />
       <div class="pair">
-        <app-number-field [control]="form.controls.rentIncreasePercent" [rule]="rules.rentIncreasePercent" testId="rent-increase" label="Rent rises each year" />
-        <app-number-field [control]="form.controls.investmentReturnPercent" [rule]="rules.investmentReturnPercent" testId="investment-return" label="Investments earn" />
-        <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="maintenance" label="Upkeep of the home" />
-        <app-number-field [control]="form.controls.sellingCostPercent" [rule]="rules.sellingCostPercent" testId="selling-costs" label="Cost to sell" />
+        <app-number-field [control]="form.controls.rentIncreasePercent" [rule]="rules.rentIncreasePercent" testId="rent-increase" [label]="'Rent rises each year' | t" />
+        <app-number-field [control]="form.controls.investmentReturnPercent" [rule]="rules.investmentReturnPercent" testId="investment-return" [label]="'Investments earn' | t" />
+        <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="maintenance" [label]="'Upkeep of the home' | t" />
+        <app-number-field [control]="form.controls.sellingCostPercent" [rule]="rules.sellingCostPercent" testId="selling-costs" [label]="'Cost to sell' | t" />
       </div>
       <p class="hint">
-        The rent's rise, what investments earn and upkeep are a year; upkeep and selling costs are shares of the home's value.
+        {{ "The rent's rise, what investments earn and upkeep are a year; upkeep and selling costs are shares of the home's value." | t }}
       </p>
       <label class="count-tax">
         <input type="checkbox" [formControl]="form.controls.countTax" data-testid="count-tax" />
-        <span><strong>Count the tax savings of owning</strong></span>
+        <span><strong>{{ 'Count the tax savings of owning' | t }}</strong></span>
       </label>
       @if (form.controls.countTax.value) {
         <label class="status">
-          <span>Filing status</span>
+          <span>{{ 'Filing status' | t }}</span>
           <select [formControl]="form.controls.filingStatus" data-testid="filing-status">
             @for (status of filingStatuses; track status.value) {
               <option [value]="status.value">{{ status.label }}</option>
@@ -61,14 +62,12 @@ export const OWNER_TAX_DEFAULTS = { filingStatus: 'Single' as TaxFilingStatus, m
           </select>
         </label>
         <div class="pair">
-          <app-number-field [control]="form.controls.marginalTaxRatePercent" [rule]="rules.marginalTaxRatePercent" testId="tax-rate" label="Your federal tax rate" />
-          <app-number-field [control]="form.controls.otherStateAndLocalTaxes" [rule]="rules.otherStateAndLocalTaxes" testId="other-state-local-taxes" label="Other state and local taxes a year" />
-          <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" label="Charity and other deductions a year" />
+          <app-number-field [control]="form.controls.marginalTaxRatePercent" [rule]="rules.marginalTaxRatePercent" testId="tax-rate" [label]="'Your federal tax rate' | t" />
+          <app-number-field [control]="form.controls.otherStateAndLocalTaxes" [rule]="rules.otherStateAndLocalTaxes" testId="other-state-local-taxes" [label]="'Other state and local taxes a year' | t" />
+          <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" [label]="'Charity and other deductions a year' | t" />
         </div>
         <p class="hint" data-testid="tax-hint">
-          Owning lowers your federal tax when the mortgage interest and the property tax, with your other deductions, beat the
-          standard deduction. Figures for 2026: state and local taxes count up to $40,400, and the deductions are taken to rise
-          with prices.
+          {{ 'Owning lowers your federal tax when the mortgage interest and the property tax, with your other deductions, beat the standard deduction. Figures for 2026: state and local taxes count up to $40,400, and the deductions are taken to rise with prices.' | t }}
         </p>
       }
     </fieldset>

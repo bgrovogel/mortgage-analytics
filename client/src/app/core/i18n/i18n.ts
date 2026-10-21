@@ -21,12 +21,15 @@ const dictionary = signal<Dictionary | null>(null);
 export const currentLanguage = language.asReadonly();
 
 /** The values a message's {0}, {1} (or {name}) stand for. */
-export type MessageParams = readonly (string | number)[] | Readonly<Record<string, string | number>>;
+export type MessageParams = readonly MessageValue[] | Readonly<Record<string, MessageValue>>;
 
-/** Fills a message's {0}, {1} or {name} with the values given; a placeholder with no value is left as it is. */
+/** What a placeholder can stand for; nothing (null, undefined) is written as nothing. */
+export type MessageValue = string | number | null | undefined;
+
+/** Fills a message's {0}, {1} or {name} with the values given; a placeholder with no value at all is left as it is. */
 function fill(message: string, params: MessageParams): string {
-  const values = params as Readonly<Record<string, string | number>>;
-  return message.replace(/\{(\w+)\}/g, (placeholder, key: string) => (key in values ? String(values[key]) : placeholder));
+  const values = params as Readonly<Record<string, MessageValue>>;
+  return message.replace(/\{(\w+)\}/g, (placeholder, key: string) => (key in values ? String(values[key] ?? '') : placeholder));
 }
 
 /**
@@ -43,7 +46,7 @@ export function t(message: string, params?: MessageParams): string {
  * A message that depends on a count: `one` for exactly 1 and `other` for anything else, each translated on its own, with
  * the count as {n}. Both English and Spanish use "one" for 1 only.
  */
-export function tp(count: number, one: string, other: string, params: Readonly<Record<string, string | number>> = {}): string {
+export function tp(count: number, one: string, other: string, params: Readonly<Record<string, MessageValue>> = {}): string {
   return t(count === 1 ? one : other, { ...params, n: count });
 }
 

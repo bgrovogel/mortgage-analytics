@@ -1,23 +1,25 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Copies a link to this page with its inputs (core/state/share-link.ts), and says what anyone who opens it sees. When
  * the clipboard cannot be used (an older browser, or permission refused) it shows the link, selected, to copy by hand.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-share-link',
   template: `
     @if (copied()) {
-      <p class="status" role="status" data-testid="share-status">Link copied. Anyone with it sees these numbers.{{ noteAfter() }}</p>
+      <p class="status" role="status" data-testid="share-status">{{ 'Link copied. Anyone with it sees these numbers.{0}' | t: [noteAfter()] }}</p>
     }
     @if (showButton()) {
-      <button type="button" data-testid="share-copy" [disabled]="!fragment()" (click)="copy()">Copy link</button>
+      <button type="button" data-testid="share-copy" [disabled]="!fragment()" (click)="copy()">{{ 'Copy link' | t }}</button>
     }
     @if (manual(); as url) {
       <div class="manual" data-testid="share-manual">
-        <label for="share-url">Copy this link: anyone with it sees these numbers.{{ noteAfter() }}</label>
+        <label for="share-url">{{ 'Copy this link: anyone with it sees these numbers.{0}' | t: [noteAfter()] }}</label>
         <input #urlInput id="share-url" type="text" readonly data-testid="share-url" [value]="url" (focus)="urlInput.select()" />
-        <button type="button" class="link" (click)="manual.set(null)">Done</button>
+        <button type="button" class="link" (click)="manual.set(null)">{{ 'Done' | t }}</button>
       </div>
     }
   `,

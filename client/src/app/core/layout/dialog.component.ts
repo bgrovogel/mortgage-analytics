@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, input, output, viewChild } from '@angular/core';
+import { TPipe } from '../i18n/t.pipe';
 
 let nextId = 0;
 
@@ -8,13 +9,14 @@ let nextId = 0;
  * with focus returned to what opened it. The host opens it: `<app-dialog #d heading="…">…</app-dialog>` and `d.open()`.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-dialog',
   template: `
     <dialog #dialog class="dialog" [attr.aria-labelledby]="titleId" (close)="onClosed()">
       <div class="surface">
         <header>
           <h2 [id]="titleId">{{ heading() }}</h2>
-          <button type="button" class="close" (click)="close()">Close</button>
+          <button type="button" class="close" (click)="close()">{{ 'Close' | t }}</button>
         </header>
         <div class="body"><ng-content /></div>
       </div>

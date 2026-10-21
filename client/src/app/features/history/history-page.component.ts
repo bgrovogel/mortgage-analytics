@@ -11,6 +11,7 @@ import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../cor
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { CalculationStores } from '../calculation-stores';
 import { ScenarioCoverComponent, coverShares } from './scenario-cover.component';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -38,7 +39,7 @@ const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', y
  */
 @Component({
   selector: 'app-history-page',
-  imports: [RouterLink, ScenarioCoverComponent],
+  imports: [RouterLink, ScenarioCoverComponent, TPipe],
   templateUrl: './history-page.component.html',
   styleUrl: './history-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,41 +1,40 @@
 <form [formGroup]="form" novalidate data-testid="refinance-form">
   <!-- Only on a phone, where the form is a sheet: one question at a time, the verdict in view from the second. -->
   <div class="steps" data-testid="refi-steps">
-    <p class="step-label">Step {{ step() === 'today' ? 1 : 2 }} of 2</p>
+    <p class="step-label">{{ 'Step {0} of 2' | t: [(step() === 'today' ? 1 : 2)] }}</p>
     <div class="progress" aria-hidden="true"><span class="on"></span><span [class.on]="step() === 'new'"></span></div>
   </div>
 
   <fieldset [class.step-off]="step() !== 'today'" data-testid="step-today">
-    <legend class="title">Your numbers <span class="shared-tag" data-testid="shared-tag">Shared with the other pages</span></legend>
+    <legend class="title">{{ 'Your numbers' | t }} <span class="shared-tag" data-testid="shared-tag">{{ 'Shared with the other pages' | t }}</span></legend>
     @if (example()) {
-      <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
+      <p class="example-note" data-testid="example-note"><strong>{{ 'These are example numbers.' | t }}</strong> {{ 'Type your own: the results follow as you go.' | t }}</p>
     }
     @if (sharedFrom(); as from) {
-      <p class="hint" data-testid="loan-shared">Filled in from your loan on the {{ from }} page. Change it here and the other pages follow.</p>
+      <p class="hint" data-testid="loan-shared">{{ 'Filled in from your loan on the {0} page. Change it here and the other pages follow.' | t: [from] }}</p>
     }
 
-    <div class="segmented" role="radiogroup" aria-label="Describe your loan by" data-testid="loan-entry">
-      <label><input type="radio" formControlName="loanEntry" value="today" data-testid="loan-entry-today" /> What I owe now</label>
-      <label><input type="radio" formControlName="loanEntry" value="original" data-testid="loan-entry-original" /> My original loan</label>
+    <div class="segmented" role="radiogroup" [attr.aria-label]="'Describe your loan by' | t" data-testid="loan-entry">
+      <label><input type="radio" formControlName="loanEntry" value="today" data-testid="loan-entry-today" /> {{ 'What I owe now' | t }}</label>
+      <label><input type="radio" formControlName="loanEntry" value="original" data-testid="loan-entry-original" /> {{ 'My original loan' | t }}</label>
     </div>
 
     @if (byOriginalLoan()) {
       <div class="row">
         <app-number-field [control]="form.controls.originalAmount" [rule]="rules.originalAmount" testId="original-amount" />
-        <app-number-field [control]="form.controls.originalTermYears" [rule]="rules.originalTermYears" testId="original-term" label="Term (years)" />
+        <app-number-field [control]="form.controls.originalTermYears" [rule]="rules.originalTermYears" testId="original-term" [label]="'Term (years)' | t" />
       </div>
       <div class="row">
-        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
+        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" [label]="'Interest rate' | t" />
         <label class="field">
-          <span>First payment</span>
+          <span>{{ 'First payment' | t }}</span>
           <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
         </label>
       </div>
       @if (loanToday(); as today) {
         @if (!today.paidOff) {
           <p class="hint" data-testid="original-loan-today">
-            Payment {{ today.next }} of {{ today.termInMonths }} is next, with about {{ today.balance | currency: 'USD' : 'symbol' : '1.0-0' }} owed.
-            The comparison starts from that loan's own schedule.
+            {{ "Payment {0} of {1} is next, with about {2} owed. The comparison starts from that loan's own schedule." | t: [today.next, today.termInMonths, (today.balance | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
           </p>
         } @else {
           <small class="error" data-testid="original-loan-today">{{ paidOffAlready }}</small>
@@ -45,7 +44,7 @@
       <app-number-field [control]="form.controls.currentBalance" [rule]="rules.currentBalance" testId="current-balance" />
 
       <div class="row">
-        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" label="Interest rate" />
+        <app-number-field [control]="form.controls.currentAnnualInterestRate" [rule]="rules.currentAnnualInterestRate" testId="current-rate" [label]="'Interest rate' | t" />
         <app-number-field [control]="form.controls.yearsLeft" [rule]="rules.yearsLeft" testId="years-left" />
       </div>
     }
@@ -54,11 +53,11 @@
       <app-number-field [control]="form.controls.homeValue" [rule]="rules.homeValue" testId="home-value" />
       <app-number-field [control]="form.controls.currentMonthlyPmi" [rule]="rules.currentMonthlyPmi" testId="current-pmi" />
     </div>
-    <p class="hint" data-testid="current-pmi-hint">PMI from your statement, if you pay any. It ends once you owe 80% of the home's value.</p>
+    <p class="hint" data-testid="current-pmi-hint">{{ "PMI from your statement, if you pay any. It ends once you owe 80% of the home's value." | t }}</p>
 
     <details class="section" data-testid="section-current-rate">
       <summary>
-        <span class="section-title">Rate type</span>
+        <span class="section-title">{{ 'Rate type' | t }}</span>
         <span class="section-summary" data-testid="current-rate-summary">{{ currentRateSummary() }}</span>
       </summary>
       <div class="section-body">
@@ -69,69 +68,69 @@
   </fieldset>
 
   <fieldset [class.step-off]="step() !== 'new'" data-testid="step-new">
-    <legend class="title">The new loan</legend>
+    <legend class="title">{{ 'The new loan' | t }}</legend>
 
     <div class="row">
-      <app-number-field [control]="form.controls.newAnnualInterestRate" [rule]="rules.newAnnualInterestRate" testId="new-rate" label="Interest rate" />
+      <app-number-field [control]="form.controls.newAnnualInterestRate" [rule]="rules.newAnnualInterestRate" testId="new-rate" [label]="'Interest rate' | t" />
       <label class="field">
-        <span>Term</span>
+        <span>{{ 'Term' | t }}</span>
         <select formControlName="newTerm" data-testid="new-term">
           @for (years of terms; track years) {
-            <option [value]="'' + years">{{ years }} years</option>
+            <option [value]="'' + years">{{ '{0} years' | t: [years] }}</option>
           }
           <!-- Short, so the half-width box shows it whole; the line below says how long that is. -->
-          <option value="keep">My payoff date</option>
+          <option value="keep">{{ 'My payoff date' | t }}</option>
         </select>
       </label>
     </div>
     <app-average-rate [termYears]="newTermYears()" [current]="values().newAnnualInterestRate" (use)="form.controls.newAnnualInterestRate.setValue($event)" />
     @if (values().newTerm === 'keep') {
-      <p class="hint" data-testid="keep-term-hint">Ends when your loan does: {{ remainingLabel() }}.</p>
+      <p class="hint" data-testid="keep-term-hint">{{ 'Ends when your loan does: {0}.' | t: [remainingLabel()] }}</p>
     }
 
     <details class="section" data-testid="section-new-rate">
       <summary>
-        <span class="section-title">Rate type</span>
+        <span class="section-title">{{ 'Rate type' | t }}</span>
         <span class="section-summary" data-testid="new-rate-summary">{{ newRateSummary() }}</span>
       </summary>
       <div class="section-body">
         <app-rate-options [form]="form.controls.newRate" idPrefix="new-" [rate]="form.controls.newAnnualInterestRate.value" />
-        <p class="hint">In a refinance you pay for a buydown yourself, at closing; it comes back as lower payments.</p>
+        <p class="hint">{{ 'In a refinance you pay for a buydown yourself, at closing; it comes back as lower payments.' | t }}</p>
       </div>
     </details>
 
     <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
-    <p class="hint">Lender fees, points, appraisal and title. Often 2% to 5% of the loan.</p>
+    <p class="hint">{{ 'Lender fees, points, appraisal and title. Often 2% to 5% of the loan.' | t }}</p>
 
     <label class="checkbox">
       <input type="checkbox" formControlName="financeClosingCosts" data-testid="finance-closing-costs" />
-      <span><strong>Add them to the loan</strong> instead of paying at closing</span>
+      <span><strong>{{ 'Add them to the loan' | t }}</strong> {{ 'instead of paying at closing' | t }}</span>
     </label>
 
     <!-- Not every refinance takes cash out or carries PMI: one line says where each stands, and opens to change it. -->
     <details class="section" data-testid="section-new-extras">
       <summary>
-        <span class="section-title">Cash out and PMI</span>
+        <span class="section-title">{{ 'Cash out and PMI' | t }}</span>
         <span class="section-summary" data-testid="new-extras-summary">{{ extrasSummary() }}</span>
       </summary>
       <div class="section-body">
         <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
-        <p class="hint" data-testid="cash-out-hint">Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow.</p>
+        <p class="hint" data-testid="cash-out-hint">{{ "Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow." | t }}</p>
 
         <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
-        <p class="hint" data-testid="new-pmi-hint">A yearly share of the new loan, charged only while it is more than 80% of the home's value.</p>
+        <p class="hint" data-testid="new-pmi-hint">{{ "A yearly share of the new loan, charged only while it is more than 80% of the home's value." | t }}</p>
       </div>
     </details>
   </fieldset>
 
   <div class="step-actions" data-testid="refi-step-actions">
     @if (step() === 'today') {
-      <button type="button" class="next" data-testid="refi-next" (click)="step.set('new')">The new loan</button>
+      <button type="button" class="next" data-testid="refi-next" (click)="step.set('new')">{{ 'The new loan' | t }}</button>
     } @else {
       @if (verdict(); as verdict) {
-        <p class="verdict" role="status" data-testid="refi-live-verdict"><span>Live verdict</span><strong>{{ verdict }}</strong></p>
+        <p class="verdict" role="status" data-testid="refi-live-verdict"><span>{{ 'Live verdict' | t }}</span><strong>{{ verdict }}</strong></p>
       }
-      <button type="button" class="back" data-testid="refi-back" (click)="step.set('today')">Back to your loan</button>
+      <button type="button" class="back" data-testid="refi-back" (click)="step.set('today')">{{ 'Back to your loan' | t }}</button>
     }
   </div>
 </form>

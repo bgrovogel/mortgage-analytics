@@ -1,29 +1,29 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** Where the link in the confirmation email lands: it confirms the address, then offers to sign in. */
 @Component({
   selector: 'app-confirm-email-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   template: `
     <section class="card" aria-live="polite" data-testid="confirm-email">
       @switch (status()) {
         @case ('working') {
-          <h1>Confirming your email…</h1>
+          <h1>{{ 'Confirming your email…' | t }}</h1>
         }
         @case ('done') {
-          <h1>Your email is confirmed</h1>
-          <p class="intro">Your account is ready. Sign in to save calculations and see your history.</p>
-          <a class="primary" routerLink="/sign-in">Sign in</a>
+          <h1>{{ 'Your email is confirmed' | t }}</h1>
+          <p class="intro">{{ 'Your account is ready. Sign in to save calculations and see your history.' | t }}</p>
+          <a class="primary" routerLink="/sign-in">{{ 'Sign in' | t }}</a>
         }
         @case ('failed') {
-          <h1>That link did not work</h1>
+          <h1>{{ 'That link did not work' | t }}</h1>
           <p class="intro">
-            It may be incomplete or out of date. Try signing in: if your email still needs confirming, you can ask
-            for a new link there.
+            {{ 'It may be incomplete or out of date. Try signing in: if your email still needs confirming, you can ask for a new link there.' | t }}
           </p>
-          <a class="primary" routerLink="/sign-in">Go to sign in</a>
+          <a class="primary" routerLink="/sign-in">{{ 'Go to sign in' | t }}</a>
         }
       }
     </section>

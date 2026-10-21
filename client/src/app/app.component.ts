@@ -9,6 +9,7 @@ import { ThemeSwitchComponent } from './core/layout/theme-switch.component';
 import { LanguageSwitchComponent } from './core/i18n/language-switch.component';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
+import { TPipe } from './core/i18n/t.pipe';
 
 /**
  * The pages in the top navigation: one for each thing a buyer is deciding. Buying a home also holds Compare, which is
@@ -24,27 +25,27 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
 /** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent, LanguageSwitchComponent],
+  imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent, LanguageSwitchComponent, TPipe],
   template: `
-    <a class="skip-link" href="#main" (click)="skipToPage($event)">Skip to the page</a>
+    <a class="skip-link" href="#main" (click)="skipToPage($event)">{{ 'Skip to the page' | t }}</a>
     @if (focused()) {
       <!-- Account pages: just the app's name and a way back, nothing to wander off to mid-sign-in. -->
       <header class="app-header focused">
         <div class="app-bar">
-          <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
+          <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">{{ 'Mortgage Analytics' | t }}</span></a>
           <div class="header-actions">
             <app-language-switch />
-            <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
+            <a class="back" [routerLink]="back().path" data-testid="back-to-app">{{ '← Back to {0}' | t: [back().name] }}</a>
           </div>
         </div>
       </header>
     } @else {
       <header class="app-header">
         <div class="app-bar">
-        <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
+        <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">{{ 'Mortgage Analytics' | t }}</span></a>
         <div class="header-actions">
           <app-language-switch />
-          <nav class="app-nav" aria-label="Pages">
+          <nav class="app-nav" [attr.aria-label]="'Pages' | t">
             @for (page of pages; track page.path) {
               <a [routerLink]="page.path" [class.active]="isCurrent(page)" [attr.aria-current]="isCurrent(page) ? 'page' : null">{{ page.label }}</a>
             }
@@ -52,18 +53,18 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
           <div class="account">
             @if (auth.user(); as user) {
               <!-- The email on a wide screen; on a phone, where the email would not fit, a person icon named "Account". -->
-              <a class="who" routerLink="/account" [queryParams]="{ returnUrl: url() }" data-testid="account-link" [attr.title]="'Your account: ' + user.email">
+              <a class="who" routerLink="/account" [queryParams]="{ returnUrl: url() }" data-testid="account-link" [attr.title]="'Your account: {0}' | t: [user.email]">
                 <span class="email" data-testid="signed-in-as">{{ user.email }}</span>
                 <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
                   <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2" />
                   <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
-                <span class="short">Account</span>
+                <span class="short">{{ 'Account' | t }}</span>
               </a>
-              <button type="button" class="link" (click)="signOut()" data-testid="sign-out" [attr.title]="'Signed in as ' + user.email">Sign out</button>
+              <button type="button" class="link" (click)="signOut()" data-testid="sign-out" [attr.title]="'Signed in as {0}' | t: [user.email]">{{ 'Sign out' | t }}</button>
             } @else {
               <!-- Signing in comes back to this page, and the sign-in page's way back names it. -->
-              <a routerLink="/sign-in" [queryParams]="{ returnUrl: url() }" data-testid="sign-in-link">Sign in</a>
+              <a routerLink="/sign-in" [queryParams]="{ returnUrl: url() }" data-testid="sign-in-link">{{ 'Sign in' | t }}</a>
             }
           </div>
         </div>
@@ -76,15 +77,15 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
     @if (!focused()) {
       <!-- For developers, apart from the pages: the API every page is built on. -->
       <footer class="app-footer">
-        <nav class="footer-links" aria-label="About">
-          <a routerLink="/how-it-works">How it’s calculated</a>
-          <a routerLink="/glossary">Glossary</a>
-          <a routerLink="/privacy">Privacy</a>
-          <a routerLink="/terms">Terms</a>
+        <nav class="footer-links" [attr.aria-label]="'About' | t">
+          <a routerLink="/how-it-works">{{ 'How it’s calculated' | t }}</a>
+          <a routerLink="/glossary">{{ 'Glossary' | t }}</a>
+          <a routerLink="/privacy">{{ 'Privacy' | t }}</a>
+          <a routerLink="/terms">{{ 'Terms' | t }}</a>
         </nav>
-        <a href="/swagger" target="_blank" rel="noopener">Developer API docs ↗</a>
+        <a href="/swagger" target="_blank" rel="noopener">{{ 'Developer API docs ↗' | t }}</a>
         <app-theme-switch />
-        <span>Mortgage Analytics: a .NET 10 API and an Angular 22 app</span>
+        <span>{{ 'Mortgage Analytics: a .NET 10 API and an Angular 22 app' | t }}</span>
       </footer>
     }
   `,

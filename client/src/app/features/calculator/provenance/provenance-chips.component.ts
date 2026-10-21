@@ -4,6 +4,7 @@ import { DialogComponent } from '../../../core/layout/dialog.component';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { icsCalendar, milestones } from './milestones';
 import { paymentMath } from './payment-math';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Under the headline number, where it comes from, as a receipt rather than a badge (UI blueprint, pillar 4): that the
@@ -12,21 +13,21 @@ import { paymentMath } from './payment-math';
  */
 @Component({
   selector: 'app-provenance-chips',
-  imports: [DialogComponent],
+  imports: [DialogComponent, TPipe],
   template: `
     @let m = math();
     <div class="chips">
       @if (m?.endsAtZero) {
         <span class="chip" data-testid="exact-chip">
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="m5.5 8 1.8 1.8L11 6.2" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-          Exact to the cent · ends at $0.00
+          {{ 'Exact to the cent · ends at $0.00' | t }}
         </span>
       }
       <button type="button" class="chip action" data-testid="key-dates" (click)="dates.open()">
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M2 7h12M5.5 1.5v3M10.5 1.5v3" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-        Key dates
+        {{ 'Key dates' | t }}
       </button>
-      <app-dialog #dates heading="Dates you act on">
+      <app-dialog #dates [heading]="'Dates you act on' | t">
         <ol class="dates" data-testid="dates">
           @for (item of dateItems(); track item.id) {
             <li>
@@ -36,27 +37,25 @@ import { paymentMath } from './payment-math';
             </li>
           }
         </ol>
-        <button type="button" class="download" data-testid="download-ics" (click)="download()">Add all to calendar (.ics)</button>
+        <button type="button" class="download" data-testid="download-ics" (click)="download()">{{ 'Add all to calendar (.ics)' | t }}</button>
       </app-dialog>
       @if (m) {
         <button type="button" class="chip action" data-testid="show-math" (click)="dialog.open()">
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><path d="M2 13 6 7l3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-          Show the math
+          {{ 'Show the math' | t }}
         </button>
-        <app-dialog #dialog [heading]="'How ' + cents(m.payment) + ' a month is worked out'">
+        <app-dialog #dialog [heading]="'How {0} a month is worked out' | t: [cents(m.payment)]">
           <div class="math" data-testid="math">
-            <p>The payment is the same every month, set so that the balance reaches exactly zero at the last one:</p>
-            <p class="formula">payment = balance × r ÷ (1 − (1 + r)<sup>−n</sup>)</p>
+            <p>{{ 'The payment is the same every month, set so that the balance reaches exactly zero at the last one:' | t }}</p>
+            <p class="formula">{{ 'payment = balance × r ÷ (1 − (1 + r)' | t }}<sup>−n</sup>)</p>
             <dl>
-              <div><dt>balance</dt><dd>{{ whole(m.balance) }}</dd></div>
-              <div><dt>r</dt><dd>{{ pct(m.annualRatePercent) }}% ÷ 12 = {{ rate(m.monthlyRatePercent) }}% a month</dd></div>
-              <div><dt>n</dt><dd>{{ m.payments }} payments</dd></div>
-              <div class="result"><dt>payment</dt><dd>{{ cents(m.payment) }}</dd></div>
+              <div><dt>{{ 'balance' | t }}</dt><dd>{{ whole(m.balance) }}</dd></div>
+              <div><dt>r</dt><dd>{{ '{0}% ÷ 12 = {1}% a month' | t: [pct(m.annualRatePercent), rate(m.monthlyRatePercent)] }}</dd></div>
+              <div><dt>n</dt><dd>{{ '{0} payments' | t: [m.payments] }}</dd></div>
+              <div class="result"><dt>{{ 'payment' | t }}</dt><dd>{{ cents(m.payment) }}</dd></div>
             </dl>
             <p>
-              The first month, as the schedule shows it: the interest is the balance times r, {{ cents(m.firstInterest) }};
-              the rest of the payment, {{ cents(m.firstPrincipal) }}, pays the loan down. Each month's interest is rounded to the
-              cent, and the last payment clears what is left to $0.00.
+              {{ "The first month, as the schedule shows it: the interest is the balance times r, {0}; the rest of the payment, {1}, pays the loan down. Each month's interest is rounded to the cent, and the last payment clears what is left to $0.00." | t: [cents(m.firstInterest), cents(m.firstPrincipal)] }}
             </p>
           </div>
         </app-dialog>

@@ -1,21 +1,20 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="loan-form">
   <!-- The five main inputs are always visible; everything else is under More details below. -->
   <fieldset class="primary-fields">
-    <legend class="title"><span data-testid="loan-heading">{{ heading() }}</span>@if (shared()) { <span class="shared-tag" data-testid="shared-tag">Shared with the other pages</span>}</legend>
+    <legend class="title"><span data-testid="loan-heading">{{ heading() }}</span>@if (shared()) { <span class="shared-tag" data-testid="shared-tag">{{ 'Shared with the other pages' | t }}</span>}</legend>
     @if (example()) {
-      <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
+      <p class="example-note" data-testid="example-note"><strong>{{ 'These are example numbers.' | t }}</strong> {{ 'Type your own: the results follow as you go.' | t }}</p>
     } @else {
       <div class="reset-row">
-        <button type="button" class="reset" data-testid="reset-example" (click)="resetToExample()">Reset to the example numbers</button>
+        <button type="button" class="reset" data-testid="reset-example" (click)="resetToExample()">{{ 'Reset to the example numbers' | t }}</button>
         @if (canUndo()) {
-          <button type="button" class="reset" data-testid="undo" (click)="undo()">Undo</button>
+          <button type="button" class="reset" data-testid="undo" (click)="undo()">{{ 'Undo' | t }}</button>
         }
       </div>
     }
     @if (sharedFrom(); as shared) {
       <p class="hint" data-testid="loan-shared">
-        Filled in from your loan on the {{ shared.from }} page@if (shared.rounded; as rounded) {, with {{ rounded.from }} left rounded to {{ rounded.to }}}.
-        Change it here and the other pages follow.
+        {{ 'Filled in from your loan on the {0} page' | t: [shared.from] }}@if (shared.rounded; as rounded) {{{ ', with {0} left rounded to {1}' | t: [rounded.from, rounded.to] }}}{{ '. Change it here and the other pages follow.' | t }}
       </p>
     }
 
@@ -23,8 +22,8 @@
       <app-number-field [control]="form.controls.homePrice" [rule]="rules.homePrice" testId="home-price" />
       <div class="field">
         <div class="label-row">
-          <label for="down-payment">Down payment</label>
-          <span class="unit-toggle" role="radiogroup" aria-label="Enter the down payment in">
+          <label for="down-payment">{{ 'Down payment' | t }}</label>
+          <span class="unit-toggle" role="radiogroup" [attr.aria-label]="'Enter the down payment in' | t">
             <label><input type="radio" formControlName="downPaymentMode" value="amount" data-testid="down-payment-mode-amount" />$</label>
             <label><input type="radio" formControlName="downPaymentMode" value="percent" data-testid="down-payment-mode-percent" />%</label>
           </span>
@@ -37,11 +36,10 @@
     </div>
     @if (loanAmount() > 0) {
       <p class="summary-chip" data-testid="loan-summary">
-        {{ downPaymentAmount() | currency: 'USD' : 'symbol' : '1.0-0' }} down ({{ downPaymentPercent() | number: '1.0-2' }}%)
-        · Loan {{ loanAmount() | currency: 'USD' : 'symbol' : '1.0-0' }}
+        {{ '{0} down ({1}%) · Loan {2}' | t: [(downPaymentAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0'), (downPaymentPercent() | number: '1.0-2'), (loanAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
       </p>
     } @else {
-      <small class="error">The down payment must be less than the home price.</small>
+      <small class="error">{{ 'The down payment must be less than the home price.' | t }}</small>
     }
     @if (downProblem(); as problem) {
       <small class="error" data-testid="down-payment-error">{{ problem }}</small>
@@ -49,35 +47,34 @@
 
     <div class="row">
       <app-number-field [control]="form.controls.annualInterestRate" [rule]="rules.annualInterestRate" testId="interest-rate" />
-      <app-number-field [control]="form.controls.termYears" [rule]="rules.termYears" testId="term-years" label="Term (years)" />
+      <app-number-field [control]="form.controls.termYears" [rule]="rules.termYears" testId="term-years" [label]="'Term (years)' | t" />
     </div>
     <app-average-rate [termYears]="values().termYears" [current]="values().annualInterestRate" (use)="form.controls.annualInterestRate.setValue($event)" />
 
     <app-number-field [control]="form.controls.monthlyExtra" [rule]="rules.monthlyExtra" testId="monthly-extra" />
     @if (biweekly(); as extra) {
       <p class="biweekly" data-testid="biweekly-extra">
-        Paying every two weeks adds {{ extra | currency: 'USD' : 'symbol' : '1.2-2' }} a month
-        <button type="button" class="link-button" data-testid="biweekly-use" (click)="useBiweekly()">Use it</button>
+        {{ 'Paying every two weeks adds {0} a month' | t: [(extra | currency: ('USD' | t) : 'symbol' : '1.2-2')] }}
+        <button type="button" class="link-button" data-testid="biweekly-use" (click)="useBiweekly()">{{ 'Use it' | t }}</button>
       </p>
     }
 
     <label class="field">
-      <span>First payment</span>
+      <span>{{ 'First payment' | t }}</span>
       <input type="date" formControlName="firstPaymentDate" data-testid="first-payment-date" />
     </label>
     @if (existingLoan(); as existing) {
       @if (!existing.paidOff) {
         <p class="hint" data-testid="existing-loan">
-          A loan you already have: payment {{ existing.next }} of {{ existing.termInMonths }} is next, with about
-          {{ existing.balance | currency: 'USD' : 'symbol' : '1.0-0' }} owed. Extra payments start there; PMI follows the original loan.
+          {{ 'A loan you already have: payment {0} of {1} is next, with about {2} owed. Extra payments start there; PMI follows the original loan.' | t: [existing.next, existing.termInMonths, (existing.balance | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
         </p>
       } @else {
         <small class="error" data-testid="existing-loan">{{ paidOffAlready }}</small>
       }
     } @else {
       <details class="help" data-testid="first-payment-help">
-        <summary>A loan you already have?</summary>
-        <p>Enter its real first payment: the schedule, PMI and dates follow it.</p>
+        <summary>{{ 'A loan you already have?' | t }}</summary>
+        <p>{{ 'Enter its real first payment: the schedule, PMI and dates follow it.' | t }}</p>
       </details>
     }
   </fieldset>
@@ -85,22 +82,22 @@
   @if (view() === 'affordability') {
     <!-- What this question needs, with the five numbers rather than a section down the list. -->
     <fieldset class="question" data-testid="question-income">
-      <legend>For this question</legend>
+      <legend>{{ 'For this question' | t }}</legend>
       <div class="row">
-        <app-number-field [control]="form.controls.annualIncome" [rule]="rules.annualIncome" testId="annual-income" label="Income a year" />
-        <app-number-field [control]="form.controls.monthlyDebts" [rule]="rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
+        <app-number-field [control]="form.controls.annualIncome" [rule]="rules.annualIncome" testId="annual-income" [label]="'Income a year' | t" />
+        <app-number-field [control]="form.controls.monthlyDebts" [rule]="rules.monthlyDebts" testId="monthly-debts" [label]="'Debts a month' | t" />
       </div>
-      <p class="hint">Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities.</p>
+      <p class="hint">{{ 'Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities.' | t }}</p>
       <app-co-buyers />
-      <app-number-field [control]="form.controls.monthlyBudget" [rule]="rules.monthlyBudget" testId="monthly-budget" label="Or what you want to pay a month" />
-      <p class="hint">No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the highest price that reaches is answered here.</p>
+      <app-number-field [control]="form.controls.monthlyBudget" [rule]="rules.monthlyBudget" testId="monthly-budget" [label]="'Or what you want to pay a month' | t" />
+      <p class="hint">{{ 'No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the highest price that reaches is answered here.' | t }}</p>
     </fieldset>
   }
 
   <ng-content select="[question]" />
 
   <section class="more-details" aria-labelledby="loan-more-details" data-testid="more-details">
-  <h3 id="loan-more-details">More details</h3>
+  <h3 id="loan-more-details">{{ 'More details' | t }}</h3>
   <app-loan-type-section class="first" />
   <app-costs-section />
   <app-closing-section />

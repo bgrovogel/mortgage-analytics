@@ -3,68 +3,68 @@
 <section class="hero" [class.warning]="costsMore()" [class.positive]="!costsMore()" data-testid="refi-verdict">
   @if (r.cashOut > 0) {
     <!-- The lifetime figure counts the cash as money in hand, so it is what the cash and the restart cost together. -->
-    <p class="eyebrow">Cash-out refinance</p>
+    <p class="eyebrow">{{ 'Cash-out refinance' | t }}</p>
     <p class="headline">
-      Taking out {{ dollars(r.cashOut) }} {{ costsMore() ? 'costs ' + dollars(-lifetime()) + ' more' : 'saves ' + dollars(lifetime()) }} over the life of the loan
+      {{ 'Taking out {0} {1} over the life of the loan' | t: [dollars(r.cashOut), (costsMore() ? ('costs {0} more' | t: [dollars(-lifetime())]) : ('saves {0}' | t: [dollars(lifetime())]))] }}
     </p>
   } @else if (costsMore()) {
-    <p class="eyebrow">Over the life of the loan</p>
-    <p class="headline">Refinancing costs {{ dollars(-lifetime()) }} more</p>
+    <p class="eyebrow">{{ 'Over the life of the loan' | t }}</p>
+    <p class="headline">{{ 'Refinancing costs {0} more' | t: [dollars(-lifetime())] }}</p>
   } @else {
-    <p class="eyebrow">Over the life of the loan</p>
-    <p class="headline">Refinancing saves {{ dollars(lifetime()) }}</p>
+    <p class="eyebrow">{{ 'Over the life of the loan' | t }}</p>
+    <p class="headline">{{ 'Refinancing saves {0}' | t: [dollars(lifetime())] }}</p>
   }
-  <p class="detail">{{ paymentSentence() }} Closing costs are included.</p>
+  <p class="detail">{{ '{0} Closing costs are included.' | t: [paymentSentence()] }}</p>
 </section>
 
 <div class="tiles">
   <div class="tile" data-testid="refi-payment">
-    <span class="label">New monthly payment</span>
+    <span class="label">{{ 'New monthly payment' | t }}</span>
     @if (keepsPayment()) {
       <strong>{{ cents(r.current.monthlyPayment + r.current.monthlyPmi) }}</strong>
-      <small>same as now, with {{ cents(r.keepingCurrentPayment!.extraMonthlyPrincipal) }} of it going to principal</small>
+      <small>{{ 'same as now, with {0} of it going to principal' | t: [cents(r.keepingCurrentPayment!.extraMonthlyPrincipal)] }}</small>
     } @else {
       <strong>{{ cents(r.refinanced.monthlyPayment + r.refinanced.monthlyPmi) }}</strong>
       <small>
-        {{ r.monthlySavings >= 0 ? cents(r.monthlySavings) + ' less than now' : cents(-r.monthlySavings) + ' more than now' }}
+        {{ r.monthlySavings >= 0 ? ('{0} less than now' | t: [cents(r.monthlySavings)]) : ('{0} more than now' | t: [cents(-r.monthlySavings)]) }}
       </small>
     }
     @if (r.refinanced.pmiEndDate; as end) {
-      <small data-testid="refi-new-pmi">with {{ cents(r.refinanced.monthlyPmi) }} PMI, until {{ date(end) }}</small>
+      <small data-testid="refi-new-pmi">{{ 'with {0} PMI, until {1}' | t: [cents(r.refinanced.monthlyPmi), date(end)] }}</small>
     }
     @if (r.newBuydown; as buydown) {
       <!-- What is actually paid at first, as the calculator's payment tile says. -->
-      <small class="first-year" data-testid="refi-buydown-first-year">{{ cents(buydown.years[0].monthlyPayment) }} in year 1, with the buydown</small>
+      <small class="first-year" data-testid="refi-buydown-first-year">{{ '{0} in year 1, with the buydown' | t: [cents(buydown.years[0].monthlyPayment)] }}</small>
     }
   </div>
   @if (r.cashOut > 0) {
     <!-- Cash out borrows more, so "when do the savings cover the costs" is not the question: what is in hand is. -->
     <div class="tile" data-testid="refi-cash">
-      <span class="label">Cash in hand</span>
+      <span class="label">{{ 'Cash in hand' | t }}</span>
       <strong>{{ dollars(r.netCash) }}</strong>
       <small>{{ cashDetail() }}</small>
     </div>
   } @else {
     <div class="tile" data-testid="refi-break-even">
-      <span class="label">Break-even</span>
+      <span class="label">{{ 'Break-even' | t }}</span>
       @if (r.breakEvenDate) {
         <strong>{{ date(r.breakEvenDate) }}</strong>
-        <small>after {{ r.breakEvenPaymentNumber }} payments, {{ hasPmi() ? 'the interest and PMI saved cover' : 'the interest saved covers' }} the closing costs</small>
+        <small>{{ 'after {0} payments, {1} the closing costs' | t: [r.breakEvenPaymentNumber, (hasPmi() ? ('the interest and PMI saved cover' | t) : ('the interest saved covers' | t))] }}</small>
       } @else {
-        <strong>Never</strong>
-        <small>{{ hasPmi() ? 'the interest and PMI saved never cover' : 'the interest saved never covers' }} the closing costs</small>
+        <strong>{{ 'Never' | t }}</strong>
+        <small>{{ '{0} the closing costs' | t: [(hasPmi() ? ('the interest and PMI saved never cover' | t) : ('the interest saved never covers' | t))] }}</small>
       }
     </div>
   }
   <div class="tile" [class.warning]="r.monthsAdded > 0 && !keepsPayment()" data-testid="refi-payoff">
-    <span class="label">Paid off</span>
+    <span class="label">{{ 'Paid off' | t }}</span>
     <strong>{{ date(option().payoffDate) }}</strong>
     <small>{{ payoffChange() }}</small>
   </div>
   <div class="tile" data-testid="refi-interest">
-    <span class="label">Total interest</span>
+    <span class="label">{{ 'Total interest' | t }}</span>
     <strong>{{ dollars(option().totalInterest) }}</strong>
-    <small>vs {{ dollars(r.current.totalInterest) }} left on your loan</small>
+    <small>{{ 'vs {0} left on your loan' | t: [dollars(r.current.totalInterest)] }}</small>
   </div>
 </div>
 
@@ -74,14 +74,13 @@
 
 @if (r.monthsAdded > 0) {
   <section class="panel restart" data-testid="refi-restart">
-    <h3>The clock restarts</h3>
+    <h3>{{ 'The clock restarts' | t }}</h3>
     <p>
-      Your loan has {{ months(r.current.numberOfPayments) }} left; the new one starts a fresh {{ months(r.refinanced.numberOfPayments) }}.
-      Early payments go mostly to interest again: of the first payment's {{ money(r.refinanced.monthlyPayment) }} in principal and interest, {{ money(firstInterest()) }} is interest.
+      {{ "Your loan has {0} left; the new one starts a fresh {1}. Early payments go mostly to interest again: of the first payment's {2} in principal and interest, {3} is interest." | t: [months(r.current.numberOfPayments), months(r.refinanced.numberOfPayments), money(r.refinanced.monthlyPayment), money(firstInterest())] }}
       @if (costsMore()) {
-        That is how a lower rate and a lower payment can still cost more in the end.
+        {{ 'That is how a lower rate and a lower payment can still cost more in the end.' | t }}
       } @else {
-        It is why the refinance saves less than the lower rate alone would.
+        {{ 'It is why the refinance saves less than the lower rate alone would.' | t }}
       }
     </p>
   </section>
@@ -89,19 +88,18 @@
 
 @if (r.keepingCurrentPayment; as keep) {
   <section class="panel keep" data-testid="refi-keep-payment">
-    <h3>Keep paying {{ cents(r.current.monthlyPayment + r.current.monthlyPmi) }} a month instead</h3>
+    <h3>{{ 'Keep paying {0} a month instead' | t: [cents(r.current.monthlyPayment + r.current.monthlyPmi)] }}</h3>
     <p>
-      Take the new rate but keep today's payment. The extra {{ cents(keep.extraMonthlyPrincipal) }} goes to principal:
-      paid off {{ date(keep.payoffDate) }}, {{ months(keepingMonthsSooner()) }} sooner than your current loan,
+      {{ "Take the new rate but keep today's payment. The extra {0} goes to principal: paid off {1}, {2} sooner than your current loan," | t: [cents(keep.extraMonthlyPrincipal), date(keep.payoffDate), months(keepingMonthsSooner())] }}
       @if ((r.keepingCurrentPaymentLifetimeSavings ?? 0) >= 0) {
-        saving {{ dollars(r.keepingCurrentPaymentLifetimeSavings ?? 0) }} overall.
+        {{ 'saving {0} overall.' | t: [(dollars(r.keepingCurrentPaymentLifetimeSavings ?? 0))] }}
       } @else {
-        though it still costs {{ dollars(-(r.keepingCurrentPaymentLifetimeSavings ?? 0)) }} more overall.
+        {{ 'though it still costs {0} more overall.' | t: [(dollars(-(r.keepingCurrentPaymentLifetimeSavings ?? 0)))] }}
       }
     </p>
     <!-- The better move, one tap away: the verdict above and its figures show it instead. -->
     <label class="switch" data-testid="refi-keep-switch">
-      <span>Show this in the verdict</span>
+      <span>{{ 'Show this in the verdict' | t }}</span>
       <input type="checkbox" role="switch" [checked]="keeping()" (change)="setKeeping($event)" />
     </label>
   </section>
@@ -109,7 +107,7 @@
 
 @if (rates(); as rates) {
   <section class="panel rates" data-testid="refi-rates">
-    <h3>Rates ahead</h3>
+    <h3>{{ 'Rates ahead' | t }}</h3>
     <ul>
       @for (line of rates.resets; track line) {
         <li>{{ line }}</li>
@@ -124,12 +122,12 @@
   </section>
 }
 
-<section class="panel details" aria-label="Details">
-  <app-detail-tabs label="Details" [tabs]="tabs()" [(selected)]="tab">
+<section class="panel details" [attr.aria-label]="'Details' | t">
+  <app-detail-tabs [label]="'Details' | t" [tabs]="tabs()" [(selected)]="tab">
     @switch (tab()) {
       @case ('table') {
         <div>
-          <div class="table-wrap" tabindex="0" aria-label="The options side by side">
+          <div class="table-wrap" tabindex="0" [attr.aria-label]="'The options side by side' | t">
             <table data-testid="refi-table">
               <thead>
                 <tr>
@@ -141,45 +139,45 @@
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row">Monthly payment</th>
+                  <th scope="row">{{ 'Monthly payment' | t }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ cents(column.option.monthlyPayment + column.option.extraMonthlyPrincipal + column.option.monthlyPmi) }}</td>
                   }
                 </tr>
                 <tr>
-                  <th scope="row">Payments</th>
+                  <th scope="row">{{ 'Payments' | t }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ column.option.numberOfPayments }}</td>
                   }
                 </tr>
                 <tr>
-                  <th scope="row">Paid off</th>
+                  <th scope="row">{{ 'Paid off' | t }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ date(column.option.payoffDate) }}</td>
                   }
                 </tr>
                 <tr>
-                  <th scope="row">Total interest</th>
+                  <th scope="row">{{ 'Total interest' | t }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ dollars(column.option.totalInterest) }}</td>
                   }
                 </tr>
                 @if (hasPmi()) {
                   <tr data-testid="refi-pmi">
-                    <th scope="row">PMI</th>
+                    <th scope="row">{{ 'PMI' | t }}</th>
                     @for (column of columns(); track column.label) {
-                      <td>{{ column.option.pmiEndDate ? dollars(column.option.totalPmi) + ' to ' + date(column.option.pmiEndDate) : '$0' }}</td>
+                      <td>{{ column.option.pmiEndDate ? ('{0} to {1}' | t: [dollars(column.option.totalPmi), date(column.option.pmiEndDate)]) : '$0' }}</td>
                     }
                   </tr>
                 }
                 <tr>
-                  <th scope="row">{{ r.buydownCost > 0 ? 'Closing costs + buydown' : 'Closing costs' }}</th>
+                  <th scope="row">{{ r.buydownCost > 0 ? ('Closing costs + buydown' | t) : ('Closing costs' | t) }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ column.closing }}</td>
                   }
                 </tr>
                 <tr class="total" data-testid="refi-total-cost">
-                  <th scope="row">Total cost</th>
+                  <th scope="row">{{ 'Total cost' | t }}</th>
                   @for (column of columns(); track column.label) {
                     <td>{{ dollars(column.totalCost) }}</td>
                   }

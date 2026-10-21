@@ -3,11 +3,12 @@ import { ControlContainer, FormGroupDirective, ReactiveFormsModule } from '@angu
 import { NumberFieldComponent } from '../../../../core/forms/number-field.component';
 import { LOAN_FORM } from '../loan-form.token';
 import { CoBuyersComponent } from './co-buyers.component';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 /** The loan form's Income & debts section: The household's income and other debts, which the Affordability tab measures the home against. */
 @Component({
   selector: 'app-income-section',
-  imports: [ReactiveFormsModule, NumberFieldComponent, CoBuyersComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, CoBuyersComponent, TPipe],
   templateUrl: './income-section.component.html',
   styleUrls: ['../loan-form.component.scss', './section.component.scss'],
   // Its controls belong to the loan form's own form group.

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DevMailboxService, OutboxEmail } from '../../core/dev/dev-mailbox.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Development only: the emails the app has "sent" to its local outbox, newest first, with their links.
@@ -8,37 +9,37 @@ import { DevMailboxService, OutboxEmail } from '../../core/dev/dev-mailbox.servi
  */
 @Component({
   selector: 'app-dev-mailbox-page',
-  imports: [DatePipe],
+  imports: [DatePipe, TPipe],
   template: `
     <section class="card wide" aria-labelledby="mailbox-title">
       <div class="title-row">
-        <h1 id="mailbox-title">Dev mailbox</h1>
+        <h1 id="mailbox-title">{{ 'Dev mailbox' | t }}</h1>
         <div class="buttons">
-          <button type="button" class="secondary" (click)="load()" data-testid="mailbox-refresh">Refresh</button>
+          <button type="button" class="secondary" (click)="load()" data-testid="mailbox-refresh">{{ 'Refresh' | t }}</button>
           @if (emails()?.length) {
-            <button type="button" class="secondary" (click)="clear()" data-testid="mailbox-clear">Clear</button>
+            <button type="button" class="secondary" (click)="clear()" data-testid="mailbox-clear">{{ 'Clear' | t }}</button>
           }
         </div>
       </div>
       @if (emails(); as list) {
-        <p class="intro">Emails the app sent while running locally. Nothing here leaves your machine.</p>
+        <p class="intro">{{ 'Emails the app sent while running locally. Nothing here leaves your machine.' | t }}</p>
         @if (list.length === 0) {
-          <p class="note" data-testid="mailbox-empty">No emails yet. Create an account or ask for a password reset.</p>
+          <p class="note" data-testid="mailbox-empty">{{ 'No emails yet. Create an account or ask for a password reset.' | t }}</p>
         }
         <ul class="emails">
           @for (email of list; track $index) {
             <li data-testid="mailbox-email">
               <div>
                 <strong>{{ email.subject }}</strong>
-                <small>To {{ email.to }} · {{ email.sentAt | date: 'medium' }}</small>
+                <small>{{ 'To {0} · {1}' | t: [email.to, (email.sentAt | date: 'medium')] }}</small>
               </div>
-              <a class="primary" [href]="email.actionUrl">Open link</a>
+              <a class="primary" [href]="email.actionUrl">{{ 'Open link' | t }}</a>
             </li>
           }
         </ul>
       } @else if (loaded()) {
         <p class="alert" role="alert" data-testid="mailbox-unavailable">
-          The dev mailbox exists only while the API runs in Development (for example with <code>dotnet run</code>).
+          {{ 'The dev mailbox exists only while the API runs in Development (for example with' | t }} <code>dotnet run</code>).
         </p>
       }
     </section>

@@ -4,16 +4,17 @@ import { CalculationPageComponent } from '../../shared/calculation-page/calculat
 import { RefinanceFormComponent } from './refinance-form/refinance-form.component';
 import { RefinanceResultsComponent } from './refinance-results/refinance-results.component';
 import { RefinanceStore } from './refinance.store';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** The refinance comparison: the form, and what refinancing would do. The store keeps it across pages. */
 @Component({
   selector: 'app-refinance-page',
-  imports: [CalculationPageComponent, RefinanceFormComponent, RefinanceResultsComponent],
+  imports: [CalculationPageComponent, RefinanceFormComponent, RefinanceResultsComponent, TPipe],
   template: `
-    <app-calculation-page [store]="store" heading="Should you refinance?" label="Refinance comparison"
+    <app-calculation-page [store]="store" [heading]="'Should you refinance?' | t" [label]="'Refinance comparison' | t"
                           intro="Your loan today against a new one: the payment, the break-even, and the cost over both loans."
                           [problems]="problems()"
-                          placeholder="Comparing your loans…" errorTitle="We could not compare those loans.">
+                          [placeholder]="'Comparing your loans…' | t" errorTitle="We could not compare those loans.">
       <app-refinance-form form [initial]="startFrom" [loan]="loan" [verdict]="verdict()" (analyze)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {
         <app-refinance-results [result]="result" [newRate]="store.request()?.newAnnualInterestRate ?? null" />

@@ -4,16 +4,16 @@
     <!-- The same figures the headline tiles lead with: the first payment due, and the net savings (or, without extra
          payments, the interest over the loan). -->
     <!-- A buydown's first payment rises after year 1: say so, as the tile does. -->
-    <span><strong>{{ firstMonthlyPayment(r) | currency: 'USD' : 'symbol' : '1.0-0' }}/mo</strong>@if (r.buydown) {&ngsp;in year 1}</span>
+    <span><strong>{{ '{0}/mo' | t: [(firstMonthlyPayment(r) | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</strong>@if (r.buydown) {{{ '&ngsp;in year 1' | t }}}</span>
     @if (questionLead(); as lead) {
       <span data-testid="summary-lead"><strong>{{ lead }}</strong></span>
     } @else if (r.savings.netSavings > 0) {
-      <span>Net savings <strong>{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+      <span>{{ 'Net savings' | t }} <strong>{{ r.savings.netSavings | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong></span>
     } @else {
-      <span>Interest <strong>{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</strong></span>
+      <span>{{ 'Interest' | t }} <strong>{{ r.baseline.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong></span>
     }
     @if (store.busy()) {
-      <span class="updating">Updating…</span>
+      <span class="updating">{{ 'Updating…' | t }}</span>
     }
   </div>
 }
@@ -23,7 +23,7 @@
 <app-calculation-page [store]="store" [heading]="heading()"
                       intro="What it costs each month and to close, whether you can afford it, and what paying extra saves."
                       [lead]="answered()?.lead ?? null" [answer]="answered()?.detail ?? null"
-                      [problems]="problems()" [announce]="false" placeholder="Calculating your schedule…"
+                      [problems]="problems()" [announce]="false" [placeholder]="'Calculating your schedule…' | t"
                       errorTitle="We couldn't run that calculation.">
   <app-loan-form form [initial]="startFrom" [loan]="loan" [firstYear]="store.result()?.projection?.[0] ?? null"
                  (calculate)="store.send($event)" (problems)="problems.set($event)">

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { buydownYears } from './buydown-years';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** One line of the payment timeline: when, at what rate, and what principal and interest come to. */
 interface Step {
@@ -17,6 +18,7 @@ interface Step {
  * fixed rate.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-rate-plan',
   template: `
     @if (buydown(); as b) {
@@ -25,7 +27,7 @@ interface Step {
         <!-- Every year of it: what you pay each month (with that year's taxes and insurance), and what the buydown pays. -->
         <table class="years" data-testid="buydown-years">
           <thead>
-            <tr><th scope="col">Year</th><th scope="col">Rate</th><th scope="col" class="num">Each month</th><th scope="col" class="num">Buydown pays</th></tr>
+            <tr><th scope="col">{{ 'Year' | t }}</th><th scope="col">{{ 'Rate' | t }}</th><th scope="col" class="num">{{ 'Each month' | t }}</th><th scope="col" class="num">{{ 'Buydown pays' | t }}</th></tr>
           </thead>
           <tbody>
             @for (y of b.rows; track y.label) {
@@ -35,38 +37,36 @@ interface Step {
                 <td class="num">
                   <strong>{{ usdCents(y.monthlyTotal) }}</strong>
                   @if (y.monthlyTotal !== y.loanPayment) {
-                    &ngsp;<small>{{ usdCents(y.loanPayment) }} <abbr title="principal and interest">P&amp;I</abbr></small>
+                    {{ '&ngsp;' | t }}<small>{{ usdCents(y.loanPayment) }} <abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr></small>
                   }
                 </td>
                 <td class="num">
                   @if (y.subsidy > 0) {
-                    <strong>{{ usd(y.subsidy) }}</strong>&ngsp;<small>{{ usdCents(y.monthlySubsidy) }}/mo</small>
+                    <strong>{{ usd(y.subsidy) }}</strong>{{ '&ngsp;' | t }}<small>{{ '{0}/mo' | t: [usdCents(y.monthlySubsidy)] }}</small>
                   } @else {
-                    <span class="none">Nothing</span>
+                    <span class="none">{{ 'Nothing' | t }}</span>
                   }
                 </td>
               </tr>
             }
           </tbody>
           <tfoot>
-            <tr><th scope="row">In all</th><td></td><td></td><td class="num"><strong>{{ b.cost }}</strong></td></tr>
+            <tr><th scope="row">{{ 'In all' | t }}</th><td></td><td></td><td class="num"><strong>{{ b.cost }}</strong></td></tr>
           </tfoot>
         </table>
         <p class="note" data-testid="buydown-cost">
           @if (b.sellerPays) {
-            The seller or builder pays {{ b.cost }} up front to make up the difference. That money pays part of your early
-            interest, so you pay {{ b.cost }} less interest over the loan.
+            {{ 'The seller or builder pays {0} up front to make up the difference. That money pays part of your early interest, so you pay {1} less interest over the loan.' | t: [b.cost, b.cost] }}
           } @else {
-            You pay {{ b.cost }} at closing to make up the difference, and get it back as lower payments over {{ b.years }}:
-            it changes when you pay, not how much.
+            {{ 'You pay {0} at closing to make up the difference, and get it back as lower payments over {1}: it changes when you pay, not how much.' | t: [b.cost, b.years] }}
           }
-          The loan itself is at {{ b.noteRate }} throughout, so its interest and payoff do not change.
+          {{ 'The loan itself is at {0} throughout, so its interest and payoff do not change.' | t: [b.noteRate] }}
         </p>
       </section>
     }
     @if (adjustable(); as a) {
       <section class="panel" data-testid="rate-plan">
-        <h3>Adjustable rate</h3>
+        <h3>{{ 'Adjustable rate' | t }}</h3>
         <ol class="steps">
           @for (step of a.steps; track step.when) {
             <li><span class="when">{{ step.when }}</span><span class="rate">{{ step.rate }}</span><strong>{{ step.payment }}</strong></li>

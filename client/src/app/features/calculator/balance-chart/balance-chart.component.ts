@@ -4,6 +4,7 @@ import { decimal, monthOf, usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { balanceFrames, balanceSeries, pathThrough, resample } from './balance-series';
 import { PaymentLedgerComponent } from './payment-ledger.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** How long the ghost of the previous result stays before it fades away, unless it is pinned. */
 export const GHOST_MS = 4000;
@@ -27,7 +28,7 @@ const POINTS = 120;
  */
 @Component({
   selector: 'app-balance-chart',
-  imports: [PaymentLedgerComponent],
+  imports: [PaymentLedgerComponent, TPipe],
   templateUrl: './balance-chart.component.html',
   styleUrl: './balance-chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

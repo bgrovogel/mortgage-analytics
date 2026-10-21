@@ -4,11 +4,12 @@ import { ControlContainer, FormControl, FormGroup, FormGroupDirective, ReactiveF
 import { FieldRules, MAX_AMOUNT, validatorsFor } from '../../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../../core/forms/number-field.component';
 import { LOAN_FORM } from '../loan-form.token';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 /** The loan form's Closing costs & credits section: What is paid at closing besides the down payment, and the credits that pay it. */
 @Component({
   selector: 'app-closing-section',
-  imports: [ReactiveFormsModule, CurrencyPipe, NumberFieldComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, NumberFieldComponent, TPipe],
   templateUrl: './closing-section.component.html',
   styleUrls: ['../loan-form.component.scss', './section.component.scss'],
   // Its controls belong to the loan form's own form group.

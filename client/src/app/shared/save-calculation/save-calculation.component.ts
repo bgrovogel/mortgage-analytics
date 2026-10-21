@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Saves what a page is showing (calculator inputs, a refinance comparison, or a pay-off-or-invest comparison) under a name. A new save
@@ -14,7 +15,7 @@ import { SavedCalculationsApiService } from '../../core/services/saved-calculati
  */
 @Component({
   selector: 'app-save-calculation',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   templateUrl: './save-calculation.component.html',
   styleUrl: './save-calculation.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

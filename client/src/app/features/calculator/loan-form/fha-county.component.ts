@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { FhaLimitsService } from '../../../core/services/fha-limits.service';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Where an FHA home is: a state, then one of its counties, from HUD's table. It sets the county's FIPS code on the
@@ -10,23 +11,23 @@ import { FhaLimitsService } from '../../../core/services/fha-limits.service';
  */
 @Component({
   selector: 'app-fha-county',
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule, CurrencyPipe, TPipe],
   template: `
     @if (limits(); as l) {
       <div class="row">
         <label class="field">
-          <span>State</span>
+          <span>{{ 'State' | t }}</span>
           <select data-testid="fha-state" [value]="state()" (change)="chooseState($any($event.target).value)">
-            <option value="">Choose a state</option>
+            <option value="">{{ 'Choose a state' | t }}</option>
             @for (s of states(); track s.code) {
               <option [value]="s.code" [selected]="s.code === state()">{{ s.name }}</option>
             }
           </select>
         </label>
         <label class="field">
-          <span>County</span>
+          <span>{{ 'County' | t }}</span>
           <select data-testid="fha-county" [formControl]="county()" [attr.disabled]="state() ? null : true">
-            <option value="">Choose a county</option>
+            <option value="">{{ 'Choose a county' | t }}</option>
             @for (c of counties(); track c.fips) {
               <option [value]="c.fips">{{ c.name }}</option>
             }
@@ -34,14 +35,14 @@ import { FhaLimitsService } from '../../../core/services/fha-limits.service';
         </label>
       </div>
       @if (chosen(); as c) {
-        <p class="hint" data-testid="fha-limit">FHA's {{ l.year }} limit in {{ c.name }}, {{ c.state }}: {{ c.limit | currency: 'USD' : 'symbol' : '1.0-0' }}.</p>
+        <p class="hint" data-testid="fha-limit">{{ "FHA's {0} limit in {1}, {2}: {3}." | t: [l.year, c.name, c.state, (c.limit | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</p>
         @if (loanAmount() > c.limit) {
           <small class="error" data-testid="fha-over-limit">
-            This loan, {{ loanAmount() | currency: 'USD' : 'symbol' : '1.0-0' }}, is over it: put more down, or choose another loan type.
+            {{ 'This loan, {0}, is over it: put more down, or choose another loan type.' | t: [(loanAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
           </small>
         }
       } @else {
-        <p class="hint">Optional: the county sets the most FHA insures there ({{ l.floor | currency: 'USD' : 'symbol' : '1.0-0' }} in most).</p>
+        <p class="hint">{{ 'Optional: the county sets the most FHA insures there ({0} in most).' | t: [(l.floor | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</p>
       }
     }
   `,

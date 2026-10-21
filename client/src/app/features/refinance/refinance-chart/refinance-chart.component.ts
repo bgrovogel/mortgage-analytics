@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { ScrubChartComponent, ScrubChartSpec, ScrubSeries } from '../../../core/charts/scrub-chart.component';
 import { LoanPayment, RefinanceResponse } from '../../../core/models/refinance.models';
 import { monthOf } from '../../../core/formatting/format';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** Each option's balance after every payment, padded with $0 once it is paid off. */
 const balances = (payments: LoanPayment[], length: number) =>
@@ -10,8 +11,8 @@ const balances = (payments: LoanPayment[], length: number) =>
 /** Remaining balance over time for the current loan, the refinance, and the refinance at today's payment. */
 @Component({
   selector: 'app-refinance-chart',
-  imports: [ScrubChartComponent],
-  template: `<app-scrub-chart title="What you owe over time" [spec]="spec()" testId="refi-chart" />`,
+  imports: [ScrubChartComponent, TPipe],
+  template: `<app-scrub-chart [title]="'What you owe over time' | t" [spec]="spec()" testId="refi-chart" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RefinanceChartComponent {

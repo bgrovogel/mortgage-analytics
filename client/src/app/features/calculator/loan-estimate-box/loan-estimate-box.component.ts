@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TermComponent } from '../../../core/glossary/term.component';
 import { decimal } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * A Loan Estimate's comparison box: the APR, what the first five years cost and pay off, and the interest over the
@@ -10,28 +11,28 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-loan-estimate-box',
-  imports: [CurrencyPipe, TermComponent],
+  imports: [CurrencyPipe, TermComponent, TPipe],
   template: `
     @let r = result();
-    <p class="intro">The figures a lender's Loan Estimate lists to compare one loan with another.</p>
+    <p class="intro">{{ "The figures a lender's Loan Estimate lists to compare one loan with another." | t }}</p>
     <dl>
       @if (r.annualPercentageRate !== null && r.annualPercentageRate !== undefined) {
         <div>
-          <dt data-testid="le-apr"><span class="label"><app-term of="APR">APR</app-term></span>&ngsp;<span class="value">{{ percent(r.annualPercentageRate) }}%</span></dt>
-          <dd data-testid="le-apr-note">The yearly rate counting the lender’s fees as well as the interest, so offers with different fees compare fairly.</dd>
+          <dt data-testid="le-apr"><span class="label"><app-term of="APR">{{ 'APR' | t }}</app-term></span>{{ '&ngsp;' | t }}<span class="value">{{ percent(r.annualPercentageRate) }}%</span></dt>
+          <dd data-testid="le-apr-note">{{ 'The yearly rate counting the lender’s fees as well as the interest, so offers with different fees compare fairly.' | t }}</dd>
         </div>
       }
       @if (r.inFiveYears; as five) {
         <div>
-          <dt data-testid="le-paid"><span class="label">In 5 years, you will have paid</span>&ngsp;<span class="value">{{ five.totalPaid | currency }}</span></dt>
-          <dd data-testid="le-paid-note">The first 60 payments of principal, interest, mortgage insurance and the lender’s loan costs, without extra payments.</dd>
-          <dt data-testid="le-principal"><span class="label">and paid off</span>&ngsp;<span class="value">{{ five.principalPaidOff | currency }}</span>&ngsp;<span class="label">of the principal</span></dt>
+          <dt data-testid="le-paid"><span class="label">{{ 'In 5 years, you will have paid' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ five.totalPaid | currency }}</span></dt>
+          <dd data-testid="le-paid-note">{{ 'The first 60 payments of principal, interest, mortgage insurance and the lender’s loan costs, without extra payments.' | t }}</dd>
+          <dt data-testid="le-principal"><span class="label">{{ 'and paid off' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ five.principalPaidOff | currency }}</span>{{ '&ngsp;' | t }}<span class="label">{{ 'of the principal' | t }}</span></dt>
         </div>
       }
       @if (r.totalInterestPercentage !== null && r.totalInterestPercentage !== undefined) {
         <div>
-          <dt data-testid="le-tip"><span class="label">Total interest percentage</span>&ngsp;<span class="value">{{ percent(r.totalInterestPercentage) }}%</span></dt>
-          <dd data-testid="le-tip-note">The interest over the whole loan as a share of the amount borrowed: how much you pay for the loan for each dollar of it.</dd>
+          <dt data-testid="le-tip"><span class="label">{{ 'Total interest percentage' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ percent(r.totalInterestPercentage) }}%</span></dt>
+          <dd data-testid="le-tip-note">{{ 'The interest over the whole loan as a share of the amount borrowed: how much you pay for the loan for each dollar of it.' | t }}</dd>
         </div>
       }
     </dl>

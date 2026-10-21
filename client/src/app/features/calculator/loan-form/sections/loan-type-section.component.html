@@ -1,71 +1,68 @@
 <details class="section" data-testid="section-loan">
   <summary>
-    <span class="section-title">Loan type &amp; rate</span>
+    <span class="section-title">{{ 'Loan type & rate' | t }}</span>
     <span class="section-summary"><span data-testid="program-summary">{{ f.programSummary() }}</span> · <span data-testid="rate-summary">{{ f.rateSummary() }}</span></span>
   </summary>
   <div class="section-body">
       <div class="field">
-        <span id="occupancy-label">This home is</span>
+        <span id="occupancy-label">{{ 'This home is' | t }}</span>
         <div class="segmented three" role="radiogroup" aria-labelledby="occupancy-label">
-          <label><input type="radio" formControlName="occupancy" value="PrimaryResidence" data-testid="occupancy-PrimaryResidence" /> Your home</label>
-          <label><input type="radio" formControlName="occupancy" value="SecondHome" data-testid="occupancy-SecondHome" /> Second home</label>
-          <label><input type="radio" formControlName="occupancy" value="InvestmentProperty" data-testid="occupancy-InvestmentProperty" /> Investment</label>
+          <label><input type="radio" formControlName="occupancy" value="PrimaryResidence" data-testid="occupancy-PrimaryResidence" /> {{ 'Your home' | t }}</label>
+          <label><input type="radio" formControlName="occupancy" value="SecondHome" data-testid="occupancy-SecondHome" /> {{ 'Second home' | t }}</label>
+          <label><input type="radio" formControlName="occupancy" value="InvestmentProperty" data-testid="occupancy-InvestmentProperty" /> {{ 'Investment' | t }}</label>
         </div>
       </div>
       @if (f.occupancy() !== 'PrimaryResidence') {
         <p class="hint" data-testid="occupancy-hint">
-          {{ f.occupancy() === 'SecondHome' ? 'At least 10% down' : 'At least 15% down, a seller may pay only 2%,' }} and no FHA, VA or homestead.
+          {{ '{0} and no FHA, VA or homestead.' | t: [(f.occupancy() === 'SecondHome' ? ('At least 10% down' | t) : ('At least 15% down, a seller may pay only 2%,' | t))] }}
         </p>
       }
-      <div class="segmented three" role="radiogroup" aria-label="Loan type">
-        <label><input type="radio" formControlName="loanProgram" value="Conventional" data-testid="program-conventional" /> Conventional</label>
-        <label><input type="radio" formControlName="loanProgram" value="Fha" data-testid="program-fha" /> <abbr title="Federal Housing Administration">FHA</abbr></label>
-        <label><input type="radio" formControlName="loanProgram" value="Va" data-testid="program-va" /> <abbr title="Department of Veterans Affairs">VA</abbr></label>
+      <div class="segmented three" role="radiogroup" [attr.aria-label]="'Loan type' | t">
+        <label><input type="radio" formControlName="loanProgram" value="Conventional" data-testid="program-conventional" /> {{ 'Conventional' | t }}</label>
+        <label><input type="radio" formControlName="loanProgram" value="Fha" data-testid="program-fha" /> <abbr [attr.title]="'Federal Housing Administration' | t">{{ 'FHA' | t }}</abbr></label>
+        <label><input type="radio" formControlName="loanProgram" value="Va" data-testid="program-va" /> <abbr [attr.title]="'Department of Veterans Affairs' | t">{{ 'VA' | t }}</abbr></label>
       </div>
       @if (f.occupancyProblem(); as problem) {
         <small class="error" data-testid="occupancy-error">{{ problem }}</small>
       }
       @switch (f.loanProgram()) {
         @case ('Fha') {
-          <p class="hint" data-testid="program-hint">At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.</p>
+          <p class="hint" data-testid="program-hint">{{ 'At least 3.5% down, a 1.75% upfront fee, and a yearly MIP.' | t }}</p>
           <details class="help" data-testid="program-more">
-            <summary>More about FHA's MIP</summary>
+            <summary>{{ "More about FHA's MIP" | t }}</summary>
             <p class="hint">
-              The 1.75% upfront MIP is added to the loan unless you pay it at closing. The annual MIP comes from HUD's
-              table (0.55% of the balance for most 30-year loans with less than 5% down), for 11 years with 10% or more
-              down, otherwise for the whole loan.
+              {{ "The 1.75% upfront MIP is added to the loan unless you pay it at closing. The annual MIP comes from HUD's table (0.55% of the balance for most 30-year loans with less than 5% down), for 11 years with 10% or more down, otherwise for the whole loan." | t }}
             </p>
           </details>
-          <app-number-field [control]="f.form.controls.creditScore" [rule]="f.rules.creditScore" testId="credit-score" placeholder="580 or more" />
-          <p class="hint">With a score from 500 to 579, FHA needs 10% down; below 500, it does not insure the loan.</p>
+          <app-number-field [control]="f.form.controls.creditScore" [rule]="f.rules.creditScore" testId="credit-score" [placeholder]="'580 or more' | t" />
+          <p class="hint">{{ 'With a score from 500 to 579, FHA needs 10% down; below 500, it does not insure the loan.' | t }}</p>
           <app-fha-county [county]="f.form.controls.countyFips" [loanAmount]="f.loanAmount()" />
         }
         @case ('Va') {
           <div class="field">
-            <span id="va-use-label">VA funding fee</span>
+            <span id="va-use-label">{{ 'VA funding fee' | t }}</span>
             <div class="segmented three" role="radiogroup" aria-labelledby="va-use-label" data-testid="va-use">
-              <label><input type="radio" formControlName="vaUse" value="FirstUse" data-testid="va-use-first" /> First use</label>
-              <label><input type="radio" formControlName="vaUse" value="SubsequentUse" data-testid="va-use-subsequent" /> Used before</label>
-              <label><input type="radio" formControlName="vaUse" value="Exempt" data-testid="va-use-exempt" /> Exempt</label>
+              <label><input type="radio" formControlName="vaUse" value="FirstUse" data-testid="va-use-first" /> {{ 'First use' | t }}</label>
+              <label><input type="radio" formControlName="vaUse" value="SubsequentUse" data-testid="va-use-subsequent" /> {{ 'Used before' | t }}</label>
+              <label><input type="radio" formControlName="vaUse" value="Exempt" data-testid="va-use-exempt" /> {{ 'Exempt' | t }}</label>
             </div>
           </div>
-          <p class="hint" data-testid="program-hint">No down payment needed and no mortgage insurance, but a one-time funding fee.</p>
+          <p class="hint" data-testid="program-hint">{{ 'No down payment needed and no mortgage insurance, but a one-time funding fee.' | t }}</p>
           <details class="help" data-testid="program-more">
-            <summary>More about the funding fee</summary>
+            <summary>{{ 'More about the funding fee' | t }}</summary>
             <p class="hint">
-              It is 2.15% (3.3% if used before) with less than 5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated
-              for a service-connected disability are exempt.
+              {{ 'It is 2.15% (3.3% if used before) with less than 5% down, 1.5% with 5%, 1.25% with 10%. Veterans compensated for a service-connected disability are exempt.' | t }}
             </p>
           </details>
         }
         @default {
-          <p class="hint">PMI, below 20% down, is set under Taxes, insurance, HOA &amp; PMI.</p>
+          <p class="hint">{{ 'PMI, below 20% down, is set under Taxes, insurance, HOA & PMI.' | t }}</p>
         }
       }
       @if (f.loanProgram() !== 'Conventional') {
         <label class="checkbox">
           <input type="checkbox" formControlName="financeUpfrontFee" data-testid="finance-upfront-fee" />
-          <span>Add the {{ f.loanProgram() === 'Fha' ? 'upfront MIP' : 'funding fee' }} to the loan (most do), rather than pay it at closing</span>
+          <span>{{ 'Add the {0} to the loan (most do), rather than pay it at closing' | t: [(f.loanProgram() === 'Fha' ? ('upfront MIP' | t) : ('funding fee' | t))] }}</span>
         </label>
       }
     
@@ -74,18 +71,18 @@
       @if (f.values().rate?.rateType === 'buydown') {
         <!-- Who pays decides whether it saves anything: the seller's money, or your own paid earlier. -->
         <div class="field">
-          <span id="buydown-paid-by-label">Who pays for the buydown?</span>
+          <span id="buydown-paid-by-label">{{ 'Who pays for the buydown?' | t }}</span>
           <div class="segmented" role="radiogroup" aria-labelledby="buydown-paid-by-label" data-testid="buydown-paid-by">
-            <label><input type="radio" formControlName="buydownPaidBy" value="Seller" data-testid="buydown-paid-by-seller" /> Seller or builder</label>
-            <label><input type="radio" formControlName="buydownPaidBy" value="Borrower" data-testid="buydown-paid-by-you" /> You, at closing</label>
+            <label><input type="radio" formControlName="buydownPaidBy" value="Seller" data-testid="buydown-paid-by-seller" /> {{ 'Seller or builder' | t }}</label>
+            <label><input type="radio" formControlName="buydownPaidBy" value="Borrower" data-testid="buydown-paid-by-you" /> {{ 'You, at closing' | t }}</label>
           </div>
         </div>
-        <p class="hint">Paid by the seller or builder, it saves you its cost in interest. Paid by you, it only lowers your early payments.</p>
+        <p class="hint">{{ 'Paid by the seller or builder, it saves you its cost in interest. Paid by you, it only lowers your early payments.' | t }}</p>
       }
       @if (f.pointsOffered()) {
         <label class="checkbox">
           <input type="checkbox" formControlName="usePoints" data-testid="use-points" />
-          <span><strong>Discount points</strong>: a fee at closing for a lower rate for the whole loan</span>
+          <span><strong>{{ 'Discount points' | t }}</strong>{{ ': a fee at closing for a lower rate for the whole loan' | t }}</span>
         </label>
         @if (f.values().usePoints) {
           <div class="row">
@@ -96,8 +93,7 @@
             <small class="error" data-testid="points-rate-error">{{ f.pointsRateMessage }}</small>
           }
           <p class="hint">
-            A point is 1% of the loan. The interest rate above is the rate with the points; enter the rate the same lender
-            quotes without them. The results say when the points pay for themselves.
+            {{ 'A point is 1% of the loan. The interest rate above is the rate with the points; enter the rate the same lender quotes without them. The results say when the points pay for themselves.' | t }}
           </p>
         }
       }

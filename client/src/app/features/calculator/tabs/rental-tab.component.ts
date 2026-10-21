@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CalculatorStore } from '../calculator.store';
 import { RENTAL_DEFAULTS } from '../rental-settings/rental-settings.component';
 import { RentalComponent } from '../rental/rental.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * As a rental: the home let out, measured as an investment, once a rent is given (beside the other numbers, in the form).
@@ -10,19 +11,18 @@ import { RentalComponent } from '../rental/rental.component';
  */
 @Component({
   selector: 'app-rental-tab',
-  imports: [CurrencyPipe, RentalComponent],
+  imports: [CurrencyPipe, RentalComponent, TPipe],
   template: `
     <div class="panel flat rental">
-      <h2 class="visually-hidden">The home as a rental</h2>
+      <h2 class="visually-hidden">{{ 'The home as a rental' | t }}</h2>
       @if (result().rental; as rental) {
-        <p class="intro">What the home would earn if you let it out: the rent, less vacancy, a manager, upkeep and the costs of owning it, against the loan's payments. The rent and what is assumed are with your numbers, on the left.</p>
+        <p class="intro">{{ "What the home would earn if you let it out: the rent, less vacancy, a manager, upkeep and the costs of owning it, against the loan's payments. The rent and what is assumed are with your numbers, on the left." | t }}</p>
         <app-rental [rental]="rental" />
       } @else {
         <p class="prompt" data-testid="rental-empty">
-          What this home would earn if you let it out: its cash flow, cap rate and cash-on-cash return, year by year. Put the rent
-          in the form. No rent in mind?
-          <button type="button" class="try" (click)="tryRent()" data-testid="try-rental-rent">Try {{ suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0' }} a month</button>
-          (about 0.8% of the price, a common rule of thumb).
+          {{ 'What this home would earn if you let it out: its cash flow, cap rate and cash-on-cash return, year by year. Put the rent in the form. No rent in mind?' | t }}
+          <button type="button" class="try" (click)="tryRent()" data-testid="try-rental-rent">{{ 'Try {0} a month' | t: [(suggestedRent() | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</button>
+          {{ '(about 0.8% of the price, a common rule of thumb).' | t }}
         </p>
       }
     </div>

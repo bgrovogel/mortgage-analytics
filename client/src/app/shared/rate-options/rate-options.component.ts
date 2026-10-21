@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { switchMap } from 'rxjs';
 import { NumberFieldComponent } from '../../core/forms/number-field.component';
 import { ARM_TYPES, ArmMode, BUYDOWNS, RATE_OPTION_RULES, RateOptionsForm, buydownSteps } from './rate-options';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * How a loan's rate works, wherever a loan has one: fixed, a temporary buydown, or adjustable (an ARM, by its type
@@ -12,7 +13,7 @@ import { ARM_TYPES, ArmMode, BUYDOWNS, RATE_OPTION_RULES, RateOptionsForm, buydo
  */
 @Component({
   selector: 'app-rate-options',
-  imports: [ReactiveFormsModule, NumberFieldComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, TPipe],
   templateUrl: './rate-options.component.html',
   styleUrl: './rate-options.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { decimal, usd } from '../../../core/formatting/format';
 import { SaleOutcome } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The years the table shows, of those the loan runs. */
 const MILESTONES = [1, 2, 3, 5, 7, 10, 15, 20, 30];
@@ -15,61 +16,61 @@ const STARTING_YEAR = 5;
  */
 @Component({
   selector: 'app-sale',
-  imports: [ScrubChartComponent],
+  imports: [ScrubChartComponent, TPipe],
   template: `
     <label class="picker">
-      <span>If you sell after</span>
+      <span>{{ 'If you sell after' | t }}</span>
       <select [value]="chosen().year" (change)="year.set(+$any($event.target).value)" data-testid="sale-year">
         @for (y of sale().years; track y.year) {
-          <option [value]="y.year" [selected]="y.year === chosen().year">{{ y.year }} {{ y.year === 1 ? 'year' : 'years' }}</option>
+          <option [value]="y.year" [selected]="y.year === chosen().year">{{ y.year }} {{ y.year === 1 ? ('year' | t) : ('years' | t) }}</option>
         }
       </select>
     </label>
 
     <div class="stats">
       <div class="stat" data-testid="sale-stat-net">
-        <span>{{ chosen().netProceeds < 0 ? 'You would need to bring' : 'You walk away with' }}</span>
+        <span>{{ chosen().netProceeds < 0 ? ('You would need to bring' | t) : ('You walk away with' | t) }}</span>
         <strong [class.short]="chosen().netProceeds < 0">{{ usd(abs(chosen().netProceeds)) }}</strong>
-        <small>{{ chosen().netProceeds < 0 ? 'The sale does not cover the loan and the costs' : 'After the loan, the costs and the tax' }}</small>
+        <small>{{ chosen().netProceeds < 0 ? ('The sale does not cover the loan and the costs' | t) : ('After the loan, the costs and the tax' | t) }}</small>
       </div>
       <div class="stat" data-testid="sale-stat-gain">
-        <span>{{ chosen().gain < 0 ? 'The loss' : 'The gain' }}</span>
+        <span>{{ chosen().gain < 0 ? ('The loss' | t) : ('The gain' | t) }}</span>
         <strong>{{ usd(abs(chosen().gain)) }}</strong>
-        <small>The sale, less its costs, against what you paid</small>
+        <small>{{ 'The sale, less its costs, against what you paid' | t }}</small>
       </div>
       <div class="stat" data-testid="sale-stat-tax">
-        <span>Tax on the gain</span>
+        <span>{{ 'Tax on the gain' | t }}</span>
         <strong>{{ usd(chosen().taxOnGain) }}</strong>
         <small>{{ shelter() }}</small>
       </div>
     </div>
 
-    <dl class="breakdown" data-testid="sale-breakdown" aria-label="From the sale price to what you keep">
-      <div><dt>The home sells for</dt><dd>{{ usd(chosen().homeValue) }}</dd></div>
-      <div><dt>The loan you pay off</dt><dd class="minus">{{ minus(chosen().loanBalance) }}</dd></div>
-      <div><dt>Selling costs ({{ percent(sale().sellingCostPercent) }})</dt><dd class="minus">{{ minus(chosen().sellingCosts) }}</dd></div>
-      <div><dt>Tax on the gain</dt><dd class="minus">{{ minus(chosen().taxOnGain) }}</dd></div>
-      <div class="total"><dt>{{ chosen().netProceeds < 0 ? 'You bring to closing' : 'You walk away with' }}</dt><dd>{{ usd(abs(chosen().netProceeds)) }}</dd></div>
+    <dl class="breakdown" data-testid="sale-breakdown" [attr.aria-label]="'From the sale price to what you keep' | t">
+      <div><dt>{{ 'The home sells for' | t }}</dt><dd>{{ usd(chosen().homeValue) }}</dd></div>
+      <div><dt>{{ 'The loan you pay off' | t }}</dt><dd class="minus">{{ minus(chosen().loanBalance) }}</dd></div>
+      <div><dt>{{ 'Selling costs ({0})' | t: [percent(sale().sellingCostPercent)] }}</dt><dd class="minus">{{ minus(chosen().sellingCosts) }}</dd></div>
+      <div><dt>{{ 'Tax on the gain' | t }}</dt><dd class="minus">{{ minus(chosen().taxOnGain) }}</dd></div>
+      <div class="total"><dt>{{ chosen().netProceeds < 0 ? ('You bring to closing' | t) : ('You walk away with' | t) }}</dt><dd>{{ usd(abs(chosen().netProceeds)) }}</dd></div>
     </dl>
 
-    <app-scrub-chart title="What you would walk away with, by the year you sell" [spec]="chart()" testId="sale-chart" />
+    <app-scrub-chart [title]="'What you would walk away with, by the year you sell' | t" [spec]="chart()" testId="sale-chart" />
 
-    <div class="table-wrap" tabindex="0" aria-label="What a sale would leave, year by year">
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'What a sale would leave, year by year' | t">
       <table data-testid="sale-table">
         <thead>
           <tr>
             <td></td>
-            <th scope="col">Sells for</th>
-            <th scope="col" class="detail">You owe</th>
-            <th scope="col" class="detail">Costs</th>
-            <th scope="col" class="detail">Tax</th>
-            <th scope="col">You keep</th>
+            <th scope="col">{{ 'Sells for' | t }}</th>
+            <th scope="col" class="detail">{{ 'You owe' | t }}</th>
+            <th scope="col" class="detail">{{ 'Costs' | t }}</th>
+            <th scope="col" class="detail">{{ 'Tax' | t }}</th>
+            <th scope="col">{{ 'You keep' | t }}</th>
           </tr>
         </thead>
         <tbody>
           @for (y of milestones(); track y.year) {
             <tr>
-              <th scope="row">Year {{ y.year }}</th>
+              <th scope="row">{{ 'Year {0}' | t: [y.year] }}</th>
               <td>{{ usd(y.homeValue) }}</td>
               <td class="detail">{{ usd(y.loanBalance) }}</td>
               <td class="detail">{{ usd(y.sellingCosts) }}</td>

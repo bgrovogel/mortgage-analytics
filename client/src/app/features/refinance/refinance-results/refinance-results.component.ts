@@ -5,6 +5,7 @@ import { DetailTab, DetailTabsComponent } from '../../../core/layout/detail-tabs
 import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RateWhatIfComponent } from '../../calculator/rate-what-if/rate-what-if.component';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** One column of the comparison table. */
 interface TableColumn {
@@ -23,7 +24,7 @@ interface TableColumn {
  */
 @Component({
   selector: 'app-refinance-results',
-  imports: [DetailTabsComponent, RateWhatIfComponent, RefinanceChartComponent],
+  imports: [DetailTabsComponent, RateWhatIfComponent, RefinanceChartComponent, TPipe],
   templateUrl: './refinance-results.component.html',
   styleUrl: './refinance-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** Where it is remembered, per browser, that the hints were dismissed. */
 export const HINTS_STORAGE_KEY = 'first-visit-hints';
@@ -16,16 +17,17 @@ function dismissedBefore(): boolean {
  * views are. A banner above the page, not a tour that takes the page over.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-first-visit-hints',
   template: `
     @if (!dismissed()) {
-      <section class="hints" aria-label="How this page works" data-testid="first-visit">
+      <section class="hints" [attr.aria-label]="'How this page works' | t" data-testid="first-visit">
         <ol>
-          <li><strong>Your numbers</strong> are on the left, starting from an example: type your own and everything follows.</li>
-          <li><strong>The answer</strong> is at the top, in a line, with what is behind it under it.</li>
-          <li><strong>The views</strong> answer the next question: can you afford it, rent or buy, compare. Closing costs and every payment are under Cost.</li>
+          <li><strong>{{ 'Your numbers' | t }}</strong> {{ 'are on the left, starting from an example: type your own and everything follows.' | t }}</li>
+          <li><strong>{{ 'The answer' | t }}</strong> {{ 'is at the top, in a line, with what is behind it under it.' | t }}</li>
+          <li><strong>{{ 'The views' | t }}</strong> {{ 'answer the next question: can you afford it, rent or buy, compare. Closing costs and every payment are under Cost.' | t }}</li>
         </ol>
-        <button type="button" data-testid="dismiss-hints" (click)="dismiss()">Got it</button>
+        <button type="button" data-testid="dismiss-hints" (click)="dismiss()">{{ 'Got it' | t }}</button>
       </section>
     }
   `,

@@ -1,19 +1,17 @@
 <details class="section" data-testid="section-growth">
   <summary>
-    <span class="section-title">Future increases</span>
+    <span class="section-title">{{ 'Future increases' | t }}</span>
     <span class="section-summary"><span data-testid="growth-summary">{{ f.growthSummary() }}</span></span>
   </summary>
   <div class="section-body">
       <div class="row three">
-        <app-number-field [control]="f.form.controls.homeValueGrowthRate" [rule]="f.rules.homeValueGrowthRate" testId="home-value-growth" label="Home value" />
-        <app-number-field [control]="f.form.controls.insuranceIncreaseRate" [rule]="f.rules.insuranceIncreaseRate" testId="insurance-increase" label="Insurance" />
-        <app-number-field [control]="f.form.controls.hoaIncreaseRate" [rule]="f.rules.hoaIncreaseRate" testId="hoa-increase" label="HOA" />
+        <app-number-field [control]="f.form.controls.homeValueGrowthRate" [rule]="f.rules.homeValueGrowthRate" testId="home-value-growth" [label]="'Home value' | t" />
+        <app-number-field [control]="f.form.controls.insuranceIncreaseRate" [rule]="f.rules.insuranceIncreaseRate" testId="insurance-increase" [label]="'Insurance' | t" />
+        <app-number-field [control]="f.form.controls.hoaIncreaseRate" [rule]="f.rules.hoaIncreaseRate" testId="hoa-increase" [label]="'HOA' | t" />
       </div>
-      <p class="hint">Rising home f.values raise property taxes each year (limited by the appraisal cap for a homestead).</p>
+      <p class="hint">{{ 'Rising home f.values raise property taxes each year (limited by the appraisal cap for a homestead).' | t }}</p>
       <p class="hint" data-testid="growth-sources">
-        Defaults are long-run US averages: home f.values +4.3% a year (FHFA House Price Index, 1975–2025),
-        home insurance +4.8% a year (GAO, average premium 2019–2024), HOA dues +4% (typically 3–5%).
-        Local markets vary.
+        {{ 'Defaults are long-run US averages: home f.values +4.3% a year (FHFA House Price Index, 1975–2025), home insurance +4.8% a year (GAO, average premium 2019–2024), HOA dues +4% (typically 3–5%). Local markets vary.' | t }}
       </p>
     
   </div>

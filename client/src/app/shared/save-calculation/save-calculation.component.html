@@ -2,32 +2,32 @@
   @if (status(); as s) {
     <p class="status" role="status" data-testid="save-status">
       @if (changedSinceSave()) {
-        Changed since you saved “{{ s.name }}”: Save to update it.
+        {{ 'Changed since you saved “{0}”: Save to update it.' | t: [s.name] }}
       } @else {
-        {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">View history</a>
+        {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">{{ 'View history' | t }}</a>
       }
     </p>
   }
   <button type="button" class="open" data-testid="save-open" [disabled]="!payload()" [attr.aria-expanded]="editing()"
-          aria-controls="save-form" (click)="editing() ? close() : openForm()">Save</button>
+          aria-controls="save-form" (click)="editing() ? close() : openForm()">{{ 'Save' | t }}</button>
 </div>
 
 @if (editing() && !auth.user()) {
   <div class="save-form" id="save-form" data-testid="save-sign-in">
-    <p class="prompt">Sign in to save calculations and find them again in History.</p>
+    <p class="prompt">{{ 'Sign in to save calculations and find them again in History.' | t }}</p>
     <div class="actions">
-      <a class="primary" routerLink="/sign-in" [queryParams]="{ returnUrl }">Sign in</a>
-      <button type="button" class="link" (click)="close()">Not now</button>
+      <a class="primary" routerLink="/sign-in" [queryParams]="{ returnUrl }">{{ 'Sign in' | t }}</a>
+      <button type="button" class="link" (click)="close()">{{ 'Not now' | t }}</button>
     </div>
   </div>
 } @else if (editing()) {
-  <form class="save-form" id="save-form" aria-label="Save this calculation" (submit)="$event.preventDefault()">
-    <label for="save-name">Name</label>
+  <form class="save-form" id="save-form" [attr.aria-label]="'Save this calculation' | t" (submit)="$event.preventDefault()">
+    <label for="save-name">{{ 'Name' | t }}</label>
     <input #nameInput id="save-name" type="text" maxlength="100" autocomplete="off" data-testid="save-name"
            [value]="name()" (input)="name.set($any($event.target).value)" (keydown.enter)="linked() ? update(linked()!.id) : saveNew()" />
 
-    <label for="save-note">Note <span class="optional">(optional)</span></label>
-    <textarea id="save-note" rows="2" maxlength="500" placeholder="What it was for, or what to check" data-testid="save-note"
+    <label for="save-note">{{ 'Note' | t }} <span class="optional">{{ '(optional)' | t }}</span></label>
+    <textarea id="save-note" rows="2" maxlength="500" [attr.placeholder]="'What it was for, or what to check' | t" data-testid="save-note"
               [value]="note()" (input)="note.set($any($event.target).value)"></textarea>
 
     @if (error(); as message) {
@@ -37,13 +37,13 @@
     <div class="actions">
       @if (linked(); as link) {
         <button type="button" class="primary" data-testid="save-update" [disabled]="saving()" (click)="update(link.id)">
-          Update “{{ link.name }}”
+          {{ 'Update “{0}”' | t: [link.name] }}
         </button>
       }
       <button type="button" [class.primary]="!linked()" data-testid="save-new" [disabled]="saving()" (click)="saveNew()">
-        {{ linked() ? 'Save as new' : 'Save' }}
+        {{ linked() ? ('Save as new' | t) : ('Save' | t) }}
       </button>
-      <button type="button" class="link" data-testid="save-cancel" (click)="close()">Cancel</button>
+      <button type="button" class="link" data-testid="save-cancel" (click)="close()">{{ 'Cancel' | t }}</button>
     </div>
   </form>
 }

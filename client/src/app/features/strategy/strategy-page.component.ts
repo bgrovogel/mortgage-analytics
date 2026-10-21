@@ -3,15 +3,16 @@ import { CalculationPageComponent } from '../../shared/calculation-page/calculat
 import { StrategyFormComponent } from './strategy-form/strategy-form.component';
 import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { StrategyStore } from './strategy.store';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** The pay-off-or-invest comparison: the household, and how the three strategies play out. The store keeps it across pages. */
 @Component({
   selector: 'app-strategy-page',
-  imports: [CalculationPageComponent, StrategyFormComponent, StrategyResultsComponent],
+  imports: [CalculationPageComponent, StrategyFormComponent, StrategyResultsComponent, TPipe],
   template: `
-    <app-calculation-page [store]="store" heading="Pay off the mortgage, or invest?" label="Strategy comparison"
+    <app-calculation-page [store]="store" [heading]="'Pay off the mortgage, or invest?' | t" [label]="'Strategy comparison' | t"
                           intro="Spare cash each month, put three ways over 30 years: after tax, and through a bad decade."
-                          [problems]="problems()" placeholder="Playing out 30 years…"
+                          [problems]="problems()" [placeholder]="'Playing out 30 years…' | t"
                           errorTitle="We could not compare those strategies.">
       <app-strategy-form form [initial]="startFrom" [loan]="loan" (compare)="store.send($event)" (problems)="problems.set($event)" />
       @if (store.result(); as result) {

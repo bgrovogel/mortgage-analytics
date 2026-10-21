@@ -7,6 +7,7 @@ import { CalculatorStore } from '../calculator/calculator.store';
 import { LoanFormComponent } from '../calculator/loan-form/loan-form.component';
 import { CompareResultsComponent } from './compare-results.component';
 import { ComparisonStore } from './comparison.store';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Compare homes: two to four side by side. Home A is the calculator's own loan, so it follows the calculator (and the
@@ -16,14 +17,14 @@ import { ComparisonStore } from './comparison.store';
  */
 @Component({
   selector: 'app-compare-page',
-  imports: [BuyTabsComponent, CalculationPageComponent, LoanFormComponent, CompareResultsComponent],
+  imports: [BuyTabsComponent, CalculationPageComponent, LoanFormComponent, CompareResultsComponent, TPipe],
   template: `
-    <app-calculation-page [store]="comparison" heading="Which home, or which offer, costs less?" label="Homes compared"
+    <app-calculation-page [store]="comparison" [heading]="'Which home, or which offer, costs less?' | t" [label]="'Homes compared' | t"
                           intro="Up to four homes, or one home from different lenders, side by side: what each costs a month, to close, and over the first years."
-                          [problems]="problems()" placeholder="Comparing your homes…" errorTitle="We couldn't compare those homes.">
+                          [problems]="problems()" [placeholder]="'Comparing your homes…' | t" errorTitle="We couldn't compare those homes.">
       <app-buy-tabs tabs />
       <div form>
-        <div class="segmented house-switch" role="radiogroup" aria-label="Which home to edit" data-testid="house-switch">
+        <div class="segmented house-switch" role="radiogroup" [attr.aria-label]="'Which home to edit' | t" data-testid="house-switch">
           @for (home of homeIndexes(); track home) {
             <label>
               <input type="radio" name="house" [value]="home" [checked]="editing() === home" (change)="edit(home)" [attr.data-testid]="'edit-home-' + letterOf(home)" />
@@ -31,22 +32,22 @@ import { ComparisonStore } from './comparison.store';
             </label>
           }
         </div>
-        <p class="editing" data-testid="editing-note">Editing {{ nameOf(editing()) }} · {{ homeIndexes().length }} of {{ maxHomes }} homes</p>
+        <p class="editing" data-testid="editing-note">{{ 'Editing {0} · {1} of {2} homes' | t: [nameOf(editing()), homeIndexes().length, maxHomes] }}</p>
         <div class="house-actions">
           @if (homeIndexes().length < maxHomes) {
-            <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">+ Add a home or another offer</button>
+            <button type="button" class="link-button" (click)="addHome()" data-testid="add-home">{{ '+ Add a home or another offer' | t }}</button>
           }
           @if (editing() > 0 && homeIndexes().length > 2) {
-            <button type="button" class="link-button" (click)="removeHome()" data-testid="remove-home">Remove {{ nameOf(editing()) }}</button>
+            <button type="button" class="link-button" (click)="removeHome()" data-testid="remove-home">{{ 'Remove {0}' | t: [nameOf(editing())] }}</button>
           }
         </div>
         @if (homeIndexes().length < maxHomes) {
           <p class="hint" data-testid="add-home-hint">
-            A copy of Home A to change whatever differs: its price, or the same home from another lender, with that lender's rate and fees.
+            {{ "A copy of Home A to change whatever differs: its price, or the same home from another lender, with that lender's rate and fees." | t }}
           </p>
         }
         @if (editing() === 0) {
-          <app-loan-form heading="Home A" [initial]="startFrom()" [loan]="loan()" [firstYear]="calculator.result()?.projection?.[0] ?? null"
+          <app-loan-form [heading]="'Home A' | t" [initial]="startFrom()" [loan]="loan()" [firstYear]="calculator.result()?.projection?.[0] ?? null"
                          (calculate)="calculator.send($event)" (problems)="problems.set($event)" />
         } @else {
           <!-- Tracked by the home, so each home gets a form of its own. -->

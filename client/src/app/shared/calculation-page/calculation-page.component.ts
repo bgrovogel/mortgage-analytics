@@ -5,6 +5,7 @@ import { CalculationStore } from '../../core/state/calculation-store';
 import { CalcStatusComponent } from './calc-status.component';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** How long the answer holds still before it is announced. */
 export const ANNOUNCE_AFTER_MS = 600;
@@ -28,7 +29,7 @@ const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
  */
 @Component({
   selector: 'app-calculation-page',
-  imports: [CalcStatusComponent, SaveCalculationComponent, ShareMenuComponent],
+  imports: [CalcStatusComponent, SaveCalculationComponent, ShareMenuComponent, TPipe],
   templateUrl: './calculation-page.component.html',
   styleUrl: './calculation-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

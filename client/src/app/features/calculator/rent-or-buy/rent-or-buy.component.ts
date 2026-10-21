@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { decimal, usd } from '../../../core/formatting/format';
 import { RentOrBuyComparison } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The years the table shows, of those compared. */
 const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
@@ -12,62 +13,59 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
  */
 @Component({
   selector: 'app-rent-or-buy',
-  imports: [ScrubChartComponent],
+  imports: [ScrubChartComponent, TPipe],
   template: `
     <div class="stats">
       <div class="stat" data-testid="rent-stat-year">
-        <span>Buying pulls ahead</span>
+        <span>{{ 'Buying pulls ahead' | t }}</span>
         <strong>{{ stats().year }}</strong>
         <small>{{ stats().yearNote }}</small>
       </div>
       @if (stats().ten; as ten) {
         <div class="stat" data-testid="rent-stat-ten">
-          <span>After 10 years</span>
+          <span>{{ 'After 10 years' | t }}</span>
           <strong [class.buy]="ten.advantage >= 0">{{ ten.lead }}</strong>
           <small>{{ ten.detail }}</small>
         </div>
       }
       @if (stats().end; as end) {
         <div class="stat" data-testid="rent-stat-end">
-          <span>After {{ comparison().years.length }} years</span>
+          <span>{{ 'After {0} years' | t: [comparison().years.length] }}</span>
           <strong [class.buy]="end.advantage >= 0">{{ end.lead }}</strong>
           <small>{{ end.detail }}</small>
         </div>
       }
     </div>
     <p class="verdict" data-testid="rent-or-buy-verdict">{{ verdict() }}</p>
-    <app-scrub-chart title="How far buying is ahead of renting (below zero, renting is ahead)" [spec]="chart()" testId="rent-or-buy-chart" />
-    <div class="table-wrap" tabindex="0" aria-label="Buying and renting, year by year">
+    <app-scrub-chart [title]="'How far buying is ahead of renting (below zero, renting is ahead)' | t" [spec]="chart()" testId="rent-or-buy-chart" />
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'Buying and renting, year by year' | t">
       <table data-testid="rent-or-buy">
         <thead>
           <tr>
             <td></td>
-            <th scope="col" class="yearly">Owning that year</th>
-            <th scope="col" class="yearly">Rent that year</th>
-            <th scope="col">If you buy</th>
-            <th scope="col">If you rent</th>
-            <th scope="col">Ahead</th>
+            <th scope="col" class="yearly">{{ 'Owning that year' | t }}</th>
+            <th scope="col" class="yearly">{{ 'Rent that year' | t }}</th>
+            <th scope="col">{{ 'If you buy' | t }}</th>
+            <th scope="col">{{ 'If you rent' | t }}</th>
+            <th scope="col">{{ 'Ahead' | t }}</th>
           </tr>
         </thead>
         <tbody>
           @for (y of milestones(); track y.year) {
             <tr>
-              <th scope="row">Year {{ y.year }}</th>
+              <th scope="row">{{ 'Year {0}' | t: [y.year] }}</th>
               <td class="yearly">{{ usd(y.ownershipCost) }}</td>
               <td class="yearly">{{ usd(y.rent) }}</td>
               <td>{{ usd(y.buyerNetWorth) }}</td>
               <td>{{ usd(y.renterNetWorth) }}</td>
-              <td [class.buy]="y.advantage >= 0">{{ y.advantage >= 0 ? 'Buy' : 'Rent' }} by {{ usd(abs(y.advantage)) }}</td>
+              <td [class.buy]="y.advantage >= 0">{{ '{0} by {1}' | t: [(y.advantage >= 0 ? ('Buy' | t) : ('Rent' | t)), usd(abs(y.advantage))] }}</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
     <p class="note" data-testid="rent-or-buy-note">
-      The renter invests the {{ usd(comparison().cashToClose) }} buying would take to close, and each month whichever costs
-      less invests the difference, at {{ percent(comparison().investmentReturnPercent) }} a year. Owning includes
-      {{ percent(comparison().maintenancePercent) }} of the home’s value a year in upkeep, and
-      {{ percent(comparison().sellingCostPercent) }} to sell. {{ taxNote() }}
+      {{ 'The renter invests the {0} buying would take to close, and each month whichever costs less invests the difference, at {1} a year. Owning includes {2} of the home’s value a year in upkeep, and {3} to sell. {4}' | t: [usd(comparison().cashToClose), percent(comparison().investmentReturnPercent), percent(comparison().maintenancePercent), percent(comparison().sellingCostPercent), taxNote()] }}
     </p>
   `,
   styleUrl: './rent-or-buy.component.scss',

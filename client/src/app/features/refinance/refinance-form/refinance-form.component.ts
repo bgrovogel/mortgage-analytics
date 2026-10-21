@@ -15,6 +15,7 @@ import { REFINANCE_RULES } from './refinance-fields';
 import { AverageRateComponent } from '../../../shared/average-rate/average-rate.component';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The usual new terms, in years. "keep" means the new loan ends when the current one would. */
 const TERMS = [30, 25, 20, 15, 10] as const;
@@ -42,7 +43,7 @@ const ENTRY_CONTROLS = {
  */
 @Component({
   selector: 'app-refinance-form',
-  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe, RateOptionsComponent, AverageRateComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, CurrencyPipe, RateOptionsComponent, AverageRateComponent, TPipe],
   templateUrl: './refinance-form.component.html',
   styleUrl: './refinance-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

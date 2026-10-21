@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** A loan year to show, or `'all'`. */
 export type SchedulePage = number | 'all';
@@ -8,20 +9,21 @@ export type SchedulePage = number | 'all';
  * payments those are. It holds nothing; the table owns which year is shown and listens.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-schedule-pager',
   template: `
     <div class="pager" data-testid="pager">
-      <button type="button" data-testid="page-previous" aria-label="Previous year" [disabled]="page() === 'all' || page() === 1" (click)="step(-1)">‹ Previous</button>
+      <button type="button" data-testid="page-previous" [attr.aria-label]="'Previous year' | t" [disabled]="page() === 'all' || page() === 1" (click)="step(-1)">{{ '‹ Previous' | t }}</button>
       <label class="jump">
-        <span class="visually-hidden">Loan year to show</span>
+        <span class="visually-hidden">{{ 'Loan year to show' | t }}</span>
         <select data-testid="page-year" (change)="choose($event)">
           @for (year of years(); track year) {
-            <option [value]="year" [selected]="page() === year">Year {{ year }}</option>
+            <option [value]="year" [selected]="page() === year">{{ 'Year {0}' | t: [year] }}</option>
           }
-          <option value="all" [selected]="page() === 'all'">All payments</option>
+          <option value="all" [selected]="page() === 'all'">{{ 'All payments' | t }}</option>
         </select>
       </label>
-      <button type="button" data-testid="page-next" aria-label="Next year" [disabled]="page() === 'all' || page() === years().length" (click)="step(1)">Next ›</button>
+      <button type="button" data-testid="page-next" [attr.aria-label]="'Next year' | t" [disabled]="page() === 'all' || page() === years().length" (click)="step(1)">{{ 'Next ›' | t }}</button>
       <p class="caption" data-testid="page-caption" aria-live="polite">{{ caption() }}</p>
     </div>
   `,

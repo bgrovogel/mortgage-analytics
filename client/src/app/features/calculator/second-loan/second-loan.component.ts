@@ -5,6 +5,7 @@ import { FieldRules, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { decimal, usd } from '../../../core/formatting/format';
 import { SecondLoanComparison, SecondLoanInput } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The second loan, with the limits the API enforces (AmortizationRequestValidator). */
 const SECOND_LOAN_RULES = {
@@ -21,19 +22,18 @@ const SECOND_LOAN_RULES = {
  */
 @Component({
   selector: 'app-second-loan',
-  imports: [NumberFieldComponent],
+  imports: [NumberFieldComponent, TPipe],
   template: `
     @if (!comparison()) {
       <p class="intro" data-testid="second-loan-intro">
-        With less than 20% down, a conventional loan carries PMI. Another way is a smaller first loan, at 80% of the price,
-        and a second loan for the rest of what is borrowed, usually at a higher rate. This weighs the two over the years you keep the loans.
+        {{ 'With less than 20% down, a conventional loan carries PMI. Another way is a smaller first loan, at 80% of the price, and a second loan for the rest of what is borrowed, usually at a higher rate. This weighs the two over the years you keep the loans.' | t }}
       </p>
       @if (suggestion(); as suggested) {
         <button type="button" class="try" (click)="settingsChange.emit(suggested)" data-testid="try-second-loan">
-          Try {{ money(suggested.amount) }} at {{ decimal(suggested.annualInterestRate) }}% for {{ suggested.termInMonths / 12 }} years
+          {{ 'Try {0} at {1}% for {2} years' | t: [money(suggested.amount), decimal(suggested.annualInterestRate), suggested.termInMonths / 12] }}
         </button>
       } @else {
-        <p class="note" data-testid="second-loan-none">There is no PMI to avoid here: at least 20% is put down.</p>
+        <p class="note" data-testid="second-loan-none">{{ 'There is no PMI to avoid here: at least 20% is put down.' | t }}</p>
       }
     } @else {
       <div class="settings" data-testid="second-loan-settings">
@@ -43,13 +43,13 @@ const SECOND_LOAN_RULES = {
         <app-number-field [control]="form.controls.yearsKept" [rule]="rules.yearsKept" testId="second-loan-years" />
       </div>
       <p class="verdict" data-testid="second-loan-verdict">{{ verdict() }}</p>
-      <div class="table-wrap" tabindex="0" aria-label="A second loan against PMI">
+      <div class="table-wrap" tabindex="0" [attr.aria-label]="'A second loan against PMI' | t">
         <table data-testid="second-loan">
           <thead>
             <tr>
               <th scope="col"></th>
-              <th scope="col" [class.best]="!cheaper()">With PMI @if (!cheaper()) {<span class="badge">Less</span>}</th>
-              <th scope="col" [class.best]="cheaper()">With a second loan @if (cheaper()) {<span class="badge">Less</span>}</th>
+              <th scope="col" [class.best]="!cheaper()">{{ 'With PMI' | t }} @if (!cheaper()) {<span class="badge">{{ 'Less' | t }}</span>}</th>
+              <th scope="col" [class.best]="cheaper()">{{ 'With a second loan' | t }} @if (cheaper()) {<span class="badge">{{ 'Less' | t }}</span>}</th>
             </tr>
           </thead>
           <tbody>
@@ -63,7 +63,7 @@ const SECOND_LOAN_RULES = {
           </tbody>
           <tfoot>
             <tr>
-              <th scope="row">Cost over {{ years() }}</th>
+              <th scope="row">{{ 'Cost over {0}' | t: [years()] }}</th>
               <td [class.best]="!cheaper()">{{ money(comparison()!.withMortgageInsurance.cost) }}</td>
               <td [class.best]="cheaper()">{{ money(comparison()!.withSecondLoan.cost) }}</td>
             </tr>
@@ -71,10 +71,9 @@ const SECOND_LOAN_RULES = {
         </table>
       </div>
       <p class="note" data-testid="second-loan-note">
-        Each way is the loan worked out again, with no extra payments. The cost is what you bring to closing, every payment in
-        those years (both loans, taxes, insurance and dues) and what is still owed. The second loan’s own closing costs are not counted.
+        {{ 'Each way is the loan worked out again, with no extra payments. The cost is what you bring to closing, every payment in those years (both loans, taxes, insurance and dues) and what is still owed. The second loan’s own closing costs are not counted.' | t }}
       </p>
-      <button type="button" class="link" (click)="settingsChange.emit(null)" data-testid="second-loan-stop">Stop comparing</button>
+      <button type="button" class="link" (click)="settingsChange.emit(null)" data-testid="second-loan-stop">{{ 'Stop comparing' | t }}</button>
     }
   `,
   styleUrl: './second-loan.component.scss',

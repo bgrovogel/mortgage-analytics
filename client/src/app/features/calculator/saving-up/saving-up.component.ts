@@ -6,6 +6,7 @@ import { FieldRule, MAX_AMOUNT } from '../../../core/forms/field-rules';
 import { formatMonths } from '../../../core/formatting/duration';
 import { decimal, usd } from '../../../core/formatting/format';
 import { monthsToSave } from './saving-up';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 const RULES = {
   savedSoFar: { label: 'Saved so far', unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
@@ -19,9 +20,9 @@ const RULES = {
  */
 @Component({
   selector: 'app-saving-up',
-  imports: [NumberFieldComponent],
+  imports: [NumberFieldComponent, TPipe],
   template: `
-    <h2>How long to save it?</h2>
+    <h2>{{ 'How long to save it?' | t }}</h2>
     <div class="row">
       <app-number-field [control]="form.controls.savedSoFar" [rule]="rules.savedSoFar" testId="saved-so-far" />
       <app-number-field [control]="form.controls.monthly" [rule]="rules.monthly" testId="saved-monthly" />

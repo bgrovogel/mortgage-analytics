@@ -4,6 +4,7 @@ import { xlsx } from '../../../core/files/xlsx';
 import { CalculatorStore } from '../calculator.store';
 import { calculationWorkbook } from '../schedule-table/calculation-workbook';
 import { ScheduleTableComponent } from '../schedule-table/schedule-table.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The type a browser and an operating system know an Excel workbook by. */
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -11,14 +12,13 @@ const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.s
 /** Every payment, month by month or rolled up by year; and the whole calculation to take away as an Excel workbook. */
 @Component({
   selector: 'app-schedule-tab',
-  imports: [ScheduleTableComponent],
+  imports: [ScheduleTableComponent, TPipe],
   template: `
     <div class="panel workbook" data-testid="workbook">
       <p>
-        Want it in Excel? The whole calculation as a workbook: a summary, the home’s costs year by year, and every payment,
-        as numbers, money and dates you can add up, chart and sort.
+        {{ 'Want it in Excel? The whole calculation as a workbook: a summary, the home’s costs year by year, and every payment, as numbers, money and dates you can add up, chart and sort.' | t }}
       </p>
-      <button type="button" (click)="download()" data-testid="download-workbook">Download the workbook (.xlsx)</button>
+      <button type="button" (click)="download()" data-testid="download-workbook">{{ 'Download the workbook (.xlsx)' | t }}</button>
     </div>
     <div class="panel"><app-schedule-table [result]="result()" /></div>
   `,

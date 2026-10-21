@@ -9,6 +9,7 @@ import { LoanEstimateBoxComponent } from '../loan-estimate-box/loan-estimate-box
 import { SavingUpComponent } from '../saving-up/saving-up.component';
 import { SecondLoanComponent } from '../second-loan/second-loan.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Closing: the cash to close, line by line with what a seller or builder may pay, and how long it takes to save. What a
@@ -17,7 +18,7 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
  */
 @Component({
   selector: 'app-closing-tab',
-  imports: [CashToCloseComponent, DialogComponent, LoanEstimateBoxComponent, SavingUpComponent, SecondLoanComponent, SellerOfferComponent],
+  imports: [CashToCloseComponent, DialogComponent, LoanEstimateBoxComponent, SavingUpComponent, SecondLoanComponent, SellerOfferComponent, TPipe],
   template: `
     @if (result().cashToClose; as cash) {
       <div class="panel"><app-cash-to-close [cash]="cash" [program]="result().program" /></div>
@@ -25,22 +26,22 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
     }
 
     <section class="panel steps" aria-labelledby="closing-more">
-      <h2 id="closing-more">More about closing</h2>
+      <h2 id="closing-more">{{ 'More about closing' | t }}</h2>
       <ul>
         <li data-testid="loan-estimate-row">
           <div>
-            <h3>Comparing offers</h3>
+            <h3>{{ 'Comparing offers' | t }}</h3>
             <p data-testid="loan-estimate-summary">{{ estimateSummary() }}</p>
           </div>
-          <button type="button" (click)="estimate.open()" data-testid="open-loan-estimate">See the figures</button>
+          <button type="button" (click)="estimate.open()" data-testid="open-loan-estimate">{{ 'See the figures' | t }}</button>
         </li>
         <li data-testid="second-loan-row">
           <div>
-            <h3>A second loan instead of PMI</h3>
+            <h3>{{ 'A second loan instead of PMI' | t }}</h3>
             <p data-testid="second-loan-summary">{{ secondLoanSummary() }}</p>
           </div>
-          <button type="button" (click)="second.open()" data-testid="open-second-loan">{{ result().secondLoan ? 'See the figures' : 'Try it' }}</button>
-          <app-dialog #second heading="A second loan instead of PMI">
+          <button type="button" (click)="second.open()" data-testid="open-second-loan">{{ result().secondLoan ? ('See the figures' | t) : ('Try it' | t) }}</button>
+          <app-dialog #second [heading]="'A second loan instead of PMI' | t">
             <app-second-loan [comparison]="result().secondLoan ?? null" [settings]="store.secondLoanSettings()" [suggestion]="suggestedSecondLoan()"
                              (settingsChange)="store.setSecondLoanSettings($event)" />
           </app-dialog>
@@ -48,30 +49,29 @@ import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
         @if (result().sellerOffer; as offer) {
           <li data-testid="seller-offer-row">
             <div>
-              <h3>The seller’s money</h3>
-              <p>Taking the {{ money(offer.offer) }} four ways: off the price, toward closing, as a 2-1 buydown or as points.</p>
+              <h3>{{ 'The seller’s money' | t }}</h3>
+              <p>{{ 'Taking the {0} four ways: off the price, toward closing, as a 2-1 buydown or as points.' | t: [money(offer.offer)] }}</p>
             </div>
-            <button type="button" (click)="seller.open()" data-testid="open-seller-offer">See the best use</button>
-            <app-dialog #seller heading="The seller’s money, taken four ways">
+            <button type="button" (click)="seller.open()" data-testid="open-seller-offer">{{ 'See the best use' | t }}</button>
+            <app-dialog #seller [heading]="'The seller’s money, taken four ways' | t">
               <app-seller-offer [offer]="offer" [settings]="store.offerSettings()" (settingsChange)="store.setOfferSettings($event)" />
             </app-dialog>
           </li>
         } @else {
           <li data-testid="seller-offer-empty">
             <div>
-              <h3>Has the seller or builder offered money?</h3>
+              <h3>{{ 'Has the seller or builder offered money?' | t }}</h3>
               <p>
-                Enter it as seller credits (or choose a buydown the seller pays for), and this weighs the best way to take
-                it: off the price, toward closing, as a 2-1 buydown, or as points.
+                {{ 'Enter it as seller credits (or choose a buydown the seller pays for), and this weighs the best way to take it: off the price, toward closing, as a 2-1 buydown, or as points.' | t }}
               </p>
             </div>
-            <button type="button" (click)="addCredits()" data-testid="add-seller-credits">Add seller credits</button>
+            <button type="button" (click)="addCredits()" data-testid="add-seller-credits">{{ 'Add seller credits' | t }}</button>
           </li>
         }
       </ul>
     </section>
 
-    <app-dialog #estimate heading="Comparing offers" data-testid="loan-estimate-box">
+    <app-dialog #estimate [heading]="'Comparing offers' | t" data-testid="loan-estimate-box">
       <app-loan-estimate-box [result]="result()" />
     </app-dialog>
   `,

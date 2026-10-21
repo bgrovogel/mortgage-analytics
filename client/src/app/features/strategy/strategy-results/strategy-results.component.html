@@ -2,7 +2,7 @@
 @let rec = recommendation();
 
 <section class="hero" data-testid="strategy-verdict">
-  <p class="eyebrow">Recommended path</p>
+  <p class="eyebrow">{{ 'Recommended path' | t }}</p>
   <p class="headline" data-testid="recommended">{{ rec.headline }}</p>
   <p class="detail" data-testid="recommended-detail">{{ rec.detail }}</p>
   <!-- The one caution: amber on this line, not on the recommendation itself. -->
@@ -11,7 +11,7 @@
 
 <!-- How every number below is shown: in which market, and in today's or future dollars. -->
 <div class="view-options">
-  <div class="picker" role="radiogroup" aria-label="Market scenario" data-testid="scenario-picker">
+  <div class="picker" role="radiogroup" [attr.aria-label]="'Market scenario' | t" data-testid="scenario-picker">
     @for (option of scenarioLabels(); track option.value) {
       <label>
         <input type="radio" name="scenario" [value]="option.value" [checked]="scenario() === option.value"
@@ -22,7 +22,7 @@
   </div>
   <label class="toggle">
     <input type="checkbox" [checked]="todaysDollars()" (change)="todaysDollars.set(!todaysDollars())" data-testid="todays-dollars" />
-    In today's dollars
+    {{ "In today's dollars" | t }}
   </label>
 </div>
 
@@ -33,22 +33,22 @@
       <header>
         <h3>{{ strategies[card.strategy].name }}</h3>
         @if (card.recommended) {
-          <span class="badge">Recommended</span>
+          <span class="badge">{{ 'Recommended' | t }}</span>
         }
       </header>
       <p class="split">{{ card.split }}</p>
       <strong class="standing" [class.leads]="card.leads" data-testid="card-standing">{{ card.standing }}</strong>
-      <small data-testid="card-net-worth">{{ usd(card.netWorth) }} net worth · {{ card.payoff }}</small>
+      <small data-testid="card-net-worth">{{ '{0} net worth · {1}' | t: [usd(card.netWorth), card.payoff] }}</small>
     </article>
   }
 </div>
 
-<section class="panel details" aria-label="Details">
-  <app-detail-tabs label="Details" [tabs]="tabs" [(selected)]="tab">
+<section class="panel details" [attr.aria-label]="'Details' | t">
+  <app-detail-tabs [label]="'Details' | t" [tabs]="tabs" [(selected)]="tab">
     @switch (tab()) {
       @case ('overTime') {
         <div class="tools">
-          <div class="picker two" role="radiogroup" aria-label="Chart view" data-testid="view-picker">
+          <div class="picker two" role="radiogroup" [attr.aria-label]="'Chart view' | t" data-testid="view-picker">
             @for (option of views; track option.value) {
               <label>
                 <input type="radio" name="view" [value]="option.value" [checked]="view() === option.value"
@@ -62,11 +62,11 @@
       }
       @case ('milestones') {
         <p class="lead" data-testid="closeness">{{ closeness() }}</p>
-        <div class="table-wrap" tabindex="0" aria-label="Net worth at years 5, 10, 15 and 30">
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'Net worth at years 5, 10, 15 and 30' | t">
           <table data-testid="milestones">
             <thead>
               <tr>
-                <th scope="col">Net worth</th>
+                <th scope="col">{{ 'Net worth' | t }}</th>
                 @for (outcome of r.strategies; track outcome.strategy) {
                   <!-- The short name on a phone, where four columns must fit. -->
                   <th scope="col"><span class="long-name">{{ strategies[outcome.strategy].name }}</span><span class="short-name">{{ strategies[outcome.strategy].short }}</span></th>
@@ -76,7 +76,7 @@
             <tbody>
               @for (row of milestoneRows(); track row.year) {
                 <tr>
-                  <th scope="row">Year {{ row.year }}</th>
+                  <th scope="row">{{ 'Year {0}' | t: [row.year] }}</th>
                   @for (cell of row.cells; track $index) {
                     <td [class.best]="cell.best">
                       {{ usd(cell.value) }}
@@ -90,11 +90,11 @@
             </tbody>
           </table>
         </div>
-        <p class="note">Home equity plus investments, after the tax still owed on them. Under each value: the difference from Debt free ASAP.</p>
+        <p class="note">{{ 'Home equity plus investments, after the tax still owed on them. Under each value: the difference from Debt free ASAP.' | t }}</p>
       }
       @case ('crossover') {
         <div class="tools">
-          <div class="picker small" role="radiogroup" aria-label="Strategy to show" data-testid="crossover-picker">
+          <div class="picker small" role="radiogroup" [attr.aria-label]="'Strategy to show' | t" data-testid="crossover-picker">
             @for (outcome of r.strategies; track outcome.strategy) {
               <label>
                 <input type="radio" name="crossover" [value]="outcome.strategy" [checked]="crossoverStrategy() === outcome.strategy"
@@ -114,8 +114,7 @@
           }
         </ul>
         <p class="note">
-          Every strategy spends the same cash each month; only where the extra goes differs. Projections assume steady
-          returns, which markets never deliver, and leave out selling costs and early-withdrawal penalties.
+          {{ 'Every strategy spends the same cash each month; only where the extra goes differs. Projections assume steady returns, which markets never deliver, and leave out selling costs and early-withdrawal penalties.' | t }}
         </p>
       }
     }

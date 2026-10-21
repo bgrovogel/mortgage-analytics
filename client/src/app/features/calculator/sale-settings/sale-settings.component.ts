@@ -5,6 +5,7 @@ import { FieldRules, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { CalculatorStore } from '../calculator.store';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** What a sale costs and how its gain is taxed, with the limits the API enforces (AmortizationRequestValidator). */
 export const SALE_RULES = {
@@ -18,16 +19,16 @@ export const SALE_RULES = {
  */
 @Component({
   selector: 'app-sale-settings',
-  imports: [NumberFieldComponent, ReactiveFormsModule],
+  imports: [NumberFieldComponent, ReactiveFormsModule, TPipe],
   template: `
     <fieldset class="question" data-testid="sale-settings">
-      <legend>For this question</legend>
+      <legend>{{ 'For this question' | t }}</legend>
       <div class="pair">
-        <app-number-field [control]="form.controls.sellingCostPercent" [rule]="rules.sellingCostPercent" testId="sale-costs" label="Cost to sell" />
-        <app-number-field [control]="form.controls.gainsTaxRatePercent" [rule]="rules.gainsTaxRatePercent" testId="sale-tax-rate" label="Tax rate on the gain" />
+        <app-number-field [control]="form.controls.sellingCostPercent" [rule]="rules.sellingCostPercent" testId="sale-costs" [label]="'Cost to sell' | t" />
+        <app-number-field [control]="form.controls.gainsTaxRatePercent" [rule]="rules.gainsTaxRatePercent" testId="sale-tax-rate" [label]="'Tax rate on the gain' | t" />
       </div>
       <label class="status">
-        <span>Filing status</span>
+        <span>{{ 'Filing status' | t }}</span>
         <select [formControl]="form.controls.filingStatus" data-testid="sale-filing-status">
           @for (status of filingStatuses; track status.value) {
             <option [value]="status.value">{{ status.label }}</option>
@@ -35,8 +36,7 @@ export const SALE_RULES = {
         </select>
       </label>
       <p class="hint">
-        Selling costs are a share of the home's value then. A long-term gain is taxed at 0%, 15% or 20% (3.8% more at high
-        incomes). A home you live in shelters the first $250,000 of gain from tax, $500,000 for a couple filing jointly.
+        {{ "Selling costs are a share of the home's value then. A long-term gain is taxed at 0%, 15% or 20% (3.8% more at high incomes). A home you live in shelters the first $250,000 of gain from tax, $500,000 for a couple filing jointly." | t }}
       </p>
     </fieldset>
   `,

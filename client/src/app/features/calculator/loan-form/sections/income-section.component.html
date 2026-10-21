@@ -1,24 +1,21 @@
 <details class="section" data-testid="section-income">
   <summary>
-    <span class="section-title">Income &amp; debts</span>
+    <span class="section-title">{{ 'Income & debts' | t }}</span>
     <span class="section-summary"><span data-testid="income-summary">{{ f.incomeSummary() }}</span></span>
   </summary>
   <div class="section-body">
       <div class="row">
-        <app-number-field [control]="f.form.controls.annualIncome" [rule]="f.rules.annualIncome" testId="annual-income" label="Income a year" />
-        <app-number-field [control]="f.form.controls.monthlyDebts" [rule]="f.rules.monthlyDebts" testId="monthly-debts" label="Debts a month" />
+        <app-number-field [control]="f.form.controls.annualIncome" [rule]="f.rules.annualIncome" testId="annual-income" [label]="'Income a year' | t" />
+        <app-number-field [control]="f.form.controls.monthlyDebts" [rule]="f.rules.monthlyDebts" testId="monthly-debts" [label]="'Debts a month' | t" />
       </div>
       <p class="hint">
-        Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums,
-        support. Not rent or utilities. The Affordability tab then measures this home against them as a lender would,
-        and says the most you could pay.
+        {{ 'Your income before taxes, and what other debts take each month: car, student and personal loans, card minimums, support. Not rent or utilities. The Affordability tab then measures this home against them as a lender would, and says the most you could pay.' | t }}
       </p>
 
       <app-co-buyers />
-      <app-number-field [control]="f.form.controls.monthlyBudget" [rule]="f.rules.monthlyBudget" testId="monthly-budget" label="Or what you want to pay a month" />
+      <app-number-field [control]="f.form.controls.monthlyBudget" [rule]="f.rules.monthlyBudget" testId="monthly-budget" [label]="'Or what you want to pay a month' | t" />
       <p class="hint">
-        No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the Affordability
-        tab says the highest price that reaches, at this home's down payment share and rate.
+        {{ "No income to hand? Say what you want to pay each month, all in with taxes and insurance, and the Affordability tab says the highest price that reaches, at this home's down payment share and rate." | t }}
       </p>
   </div>
 </details>

@@ -8,6 +8,7 @@ import { PasskeyService } from '../../core/auth/passkey.service';
 import { safeReturnUrl } from '../../core/auth/signed-in.guard';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { DevMailboxHintComponent } from './dev-mailbox-hint.component';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 type Mode = 'sign-in' | 'create';
 
@@ -18,7 +19,7 @@ type Mode = 'sign-in' | 'create';
  */
 @Component({
   selector: 'app-sign-in-page',
-  imports: [ReactiveFormsModule, RouterLink, DevMailboxHintComponent],
+  imports: [ReactiveFormsModule, RouterLink, DevMailboxHintComponent, TPipe],
   templateUrl: './sign-in-page.component.html',
   styleUrl: './account-pages.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

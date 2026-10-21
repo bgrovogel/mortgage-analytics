@@ -31,6 +31,7 @@ import {
   CoBuyerForm, LoanForm, LumpSumForm, coBuyerGroup, coBuyerSharesProblem, RateChangeForm, chargedTaxes, conventionalDownProblem, fhaDownProblem, occupancyProblem, syncOccupancy, rateChangeGroup, rateChangesOf, POINTS_RATE_TOO_LOW, downPaymentAmountOf, loanForm, lumpSumGroup, pointsApply, restoreLoanForm, syncPoints, syncTaxMode, toLoanRequest,
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 const rules = LOAN_RULES;
 
@@ -85,7 +86,7 @@ function downProblemOf(v: ReturnType<LoanForm['getRawValue']>, adjustableRate: b
   selector: 'app-loan-form',
   imports: [
     ReactiveFormsModule, CurrencyPipe, DecimalPipe, NumberFieldComponent, NumberInputDirective, AverageRateComponent,
-    LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, CoBuyersComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent,
+    LoanTypeSectionComponent, CostsSectionComponent, ClosingSectionComponent, CoBuyersComponent, IncomeSectionComponent, ExtraPaymentsSectionComponent, GrowthSectionComponent, TPipe,
   ],
   // The sections read the form from here.
   providers: [{ provide: LOAN_FORM, useExisting: forwardRef(() => LoanFormComponent) }],

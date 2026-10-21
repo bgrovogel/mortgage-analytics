@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { SessionsApiService, UserSession } from '../../core/services/sessions-api.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * Where the account is signed in, on the account page: each browser or device with when it signed in and was last used,
@@ -10,13 +11,12 @@ import { SessionsApiService, UserSession } from '../../core/services/sessions-ap
  */
 @Component({
   selector: 'app-sessions',
-  imports: [DatePipe],
+  imports: [DatePipe, TPipe],
   template: `
     <div class="part" role="group" aria-labelledby="sessions-title">
-      <h3 id="sessions-title">Where you’re signed in</h3>
+      <h3 id="sessions-title">{{ 'Where you’re signed in' | t }}</h3>
       <p>
-        Each browser or device signed in to your account. If you don’t recognise one, or left yourself signed in on a shared
-        computer, sign it out here. A device you sign out is signed out at its next request.
+        {{ 'Each browser or device signed in to your account. If you don’t recognise one, or left yourself signed in on a shared computer, sign it out here. A device you sign out is signed out at its next request.' | t }}
       </p>
       @if (list().length > 0) {
         <ul class="session-list" data-testid="session-list">
@@ -25,21 +25,21 @@ import { SessionsApiService, UserSession } from '../../core/services/sessions-ap
               <span class="session-name">
                 <strong>{{ session.device }}</strong>
                 @if (session.current) {
-                  <span class="badge" data-testid="session-current">This device</span>
+                  <span class="badge" data-testid="session-current">{{ 'This device' | t }}</span>
                 }
-                <small>Signed in {{ session.createdAt | date: 'mediumDate' }} · Last active {{ session.lastSeenAt | date: 'MMM d, h:mm a' }}</small>
+                <small>{{ 'Signed in {0} · Last active {1}' | t: [(session.createdAt | date: 'mediumDate'), (session.lastSeenAt | date: ('MMM d, h:mm a' | t))] }}</small>
               </span>
               @if (!session.current) {
-                <button type="button" class="secondary" [attr.aria-label]="'Sign out ' + session.device" (click)="end(session)">Sign out</button>
+                <button type="button" class="secondary" [attr.aria-label]="'Sign out {0}' | t: [session.device]" (click)="end(session)">{{ 'Sign out' | t }}</button>
               }
             </li>
           }
         </ul>
         @if (others() > 0) {
-          <button type="button" class="secondary" (click)="endOthers()" [disabled]="busy()" data-testid="sessions-end-others">Sign out everywhere else</button>
+          <button type="button" class="secondary" (click)="endOthers()" [disabled]="busy()" data-testid="sessions-end-others">{{ 'Sign out everywhere else' | t }}</button>
         }
       } @else if (loaded()) {
-        <p class="hint" data-testid="sessions-none">Signed in on this device only, from before sessions were listed. Sign in again to see it here.</p>
+        <p class="hint" data-testid="sessions-none">{{ 'Signed in on this device only, from before sessions were listed. Sign in again to see it here.' | t }}</p>
       }
       @if (error(); as message) {
         <p class="alert" role="alert" data-testid="sessions-error">{{ message }}</p>

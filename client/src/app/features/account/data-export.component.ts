@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { AccountExportService } from '../../core/services/account-export.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * "Your data", on the account page: a copy of everything the account holds, as one file, so nothing here is only here.
@@ -8,18 +9,18 @@ import { AccountExportService } from '../../core/services/account-export.service
  * order and where the account is signed in, and never the password or a passkey's key.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-data-export',
   template: `
     <div class="part" role="group" aria-labelledby="data-title">
-      <h3 id="data-title">Your data</h3>
+      <h3 id="data-title">{{ 'Your data' | t }}</h3>
       <p>
-        Download a copy of what this account holds: your email, your saved calculations with all their inputs, the names
-        and dates of your passkeys, the order of your key figures, and where you are signed in (the browser and system, and when). It never includes your password or a passkey's key.
+        {{ "Download a copy of what this account holds: your email, your saved calculations with all their inputs, the names and dates of your passkeys, the order of your key figures, and where you are signed in (the browser and system, and when). It never includes your password or a passkey's key." | t }}
       </p>
       @if (error(); as message) {
         <p class="alert" role="alert" data-testid="data-error">{{ message }}</p>
       }
-      <button type="button" class="secondary" [disabled]="busy()" (click)="download()" data-testid="data-download">Download my data</button>
+      <button type="button" class="secondary" [disabled]="busy()" (click)="download()" data-testid="data-download">{{ 'Download my data' | t }}</button>
       <p class="visually-hidden" role="status" aria-live="polite">{{ status() }}</p>
       @if (status(); as message) {
         <p class="note" data-testid="data-status">{{ message }}</p>

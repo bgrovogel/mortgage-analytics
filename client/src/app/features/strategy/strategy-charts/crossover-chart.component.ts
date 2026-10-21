@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { PayoffStrategy, STRATEGIES, StrategyProjection } from '../../../core/models/strategy.models';
 import { yearLabel, yearTitle } from './net-worth-chart.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Debt against wealth for one strategy: what is owed on the mortgage and what the investments are worth
@@ -9,8 +10,8 @@ import { yearLabel, yearTitle } from './net-worth-chart.component';
  */
 @Component({
   selector: 'app-crossover-chart',
-  imports: [ScrubChartComponent],
-  template: `<app-scrub-chart [title]="'Mortgage owed vs. investments: ' + name()" [spec]="spec()" testId="crossover-chart" />`,
+  imports: [ScrubChartComponent, TPipe],
+  template: `<app-scrub-chart [title]="'Mortgage owed vs. investments: {0}' | t: [name()]" [spec]="spec()" testId="crossover-chart" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CrossoverChartComponent {

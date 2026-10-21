@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { decimal, usd } from '../../../core/formatting/format';
 import { Affordability, AffordabilityLimit, Buyer, LoanProgramType, QualifyingRateBasis } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** How a sentence names each program's loan. */
 const LOAN: Record<LoanProgramType, string> = { Conventional: 'a conventional loan', Fha: 'an FHA loan', Va: 'a VA loan' };
@@ -29,24 +30,25 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
  * allows for housing, the highest price it reaches, and whether this home fits.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-affordability',
   template: `
-    <h2 id="affordability-title" class="visually-hidden">Can you afford it?</h2>
+    <h2 id="affordability-title" class="visually-hidden">{{ 'Can you afford it?' | t }}</h2>
     <div class="stats">
       <div class="stat" data-testid="afford-stat-housing">
-        <span>Housing payment, as a share of income</span>
+        <span>{{ 'Housing payment, as a share of income' | t }}</span>
         <strong>{{ pct(affordability().housingPercent) }}</strong>
-        <small [class.ok]="stats().housingFits">{{ stats().housingFits ? 'Under' : 'Past' }} the {{ pct(affordability().comfortable.housingPercent ?? 28) }} guideline</small>
+        <small [class.ok]="stats().housingFits">{{ '{0} the {1} guideline' | t: [(stats().housingFits ? ('Under' | t) : ('Past' | t)), (pct(affordability().comfortable.housingPercent ?? 28))] }}</small>
       </div>
       <div class="stat" data-testid="afford-stat-total">
-        <span>With your other debts</span>
+        <span>{{ 'With your other debts' | t }}</span>
         <strong>{{ pct(affordability().totalPercent) }}</strong>
-        <small [class.ok]="stats().totalFits">{{ stats().totalFits ? 'Under' : 'Past' }} the {{ pct(affordability().comfortable.totalPercent) }} guideline</small>
+        <small [class.ok]="stats().totalFits">{{ '{0} the {1} guideline' | t: [(stats().totalFits ? ('Under' | t) : ('Past' | t)), pct(affordability().comfortable.totalPercent)] }}</small>
       </div>
       <div class="stat" data-testid="afford-stat-most">
-        <span>The most you could pay for a home</span>
-        <strong>{{ affordability().comfortable.maxHomePrice > 0 ? usd(affordability().comfortable.maxHomePrice) : 'None' }}</strong>
-        <small>Up to {{ usd(affordability().mostAllowed.maxHomePrice) }} if a lender stretches</small>
+        <span>{{ 'The most you could pay for a home' | t }}</span>
+        <strong>{{ affordability().comfortable.maxHomePrice > 0 ? usd(affordability().comfortable.maxHomePrice) : ('None' | t) }}</strong>
+        <small>{{ 'Up to {0} if a lender stretches' | t: [usd(affordability().mostAllowed.maxHomePrice)] }}</small>
       </div>
     </div>
     <div class="position" data-testid="afford-position" role="img" [attr.aria-label]="positionLabel()">
@@ -59,10 +61,10 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
       </div>
       <div class="labels">
         @if (homePrice() !== null) {
-          <span class="here">This home {{ usd(homePrice()!) }}</span>
+          <span class="here">{{ 'This home {0}' | t: [usd(homePrice()!)] }}</span>
         }
-        <span>Comfortable {{ usd(affordability().comfortable.maxHomePrice) }}</span>
-        <span>Most {{ usd(affordability().mostAllowed.maxHomePrice) }}</span>
+        <span>{{ 'Comfortable {0}' | t: [usd(affordability().comfortable.maxHomePrice)] }}</span>
+        <span>{{ 'Most {0}' | t: [usd(affordability().mostAllowed.maxHomePrice)] }}</span>
       </div>
     </div>
     <p class="budget" data-testid="afford-budget">{{ budget() }}</p>
@@ -72,10 +74,10 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
       <thead>
         <tr>
           <td></td>
-          <th scope="col" class="limit">Limit</th>
-          <th scope="col">Most for housing</th>
-          <th scope="col">Highest price</th>
-          <th scope="col">This home</th>
+          <th scope="col" class="limit">{{ 'Limit' | t }}</th>
+          <th scope="col">{{ 'Most for housing' | t }}</th>
+          <th scope="col">{{ 'Highest price' | t }}</th>
+          <th scope="col">{{ 'This home' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -85,22 +87,22 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
             <td class="limit">{{ row.limit }}</td>
             <td>{{ row.housing }}</td>
             <td>{{ row.price }}</td>
-            <td [class.fits]="row.fits" [class.past]="!row.fits">{{ row.fits ? 'Fits' : 'Past it' }}</td>
+            <td [class.fits]="row.fits" [class.past]="!row.fits">{{ row.fits ? ('Fits' | t) : ('Past it' | t) }}</td>
           </tr>
         }
       </tbody>
     </table>
     @if (buyers(); as who) {
-      <h3 id="buyers-title">Who pays what</h3>
+      <h3 id="buyers-title">{{ 'Who pays what' | t }}</h3>
       <div class="table-wrap">
         <table aria-labelledby="buyers-title" data-testid="afford-buyers">
           <thead>
             <tr>
-              <th scope="col" class="name">Buyer</th>
-              <th scope="col">Income a month</th>
-              <th scope="col">Debts a month</th>
-              <th scope="col">Down payment</th>
-              <th scope="col">Share of the payment</th>
+              <th scope="col" class="name">{{ 'Buyer' | t }}</th>
+              <th scope="col">{{ 'Income a month' | t }}</th>
+              <th scope="col">{{ 'Debts a month' | t }}</th>
+              <th scope="col">{{ 'Down payment' | t }}</th>
+              <th scope="col">{{ 'Share of the payment' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -116,7 +118,7 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
           </tbody>
           <tfoot>
             <tr>
-              <th scope="row" class="name">Together</th>
+              <th scope="row" class="name">{{ 'Together' | t }}</th>
               <td>{{ usd(who.together.monthlyIncome) }}</td>
               <td>{{ usd(who.together.monthlyDebts) }}</td>
               <td>{{ usd(who.together.downPayment) }}</td>
@@ -128,7 +130,7 @@ const percents = (l: AffordabilityLimit, join = ' and ') =>
       <p class="note" data-testid="afford-buyers-note">{{ who.note }}</p>
     }
     <p class="note" data-testid="afford-note">
-      The highest price keeps this home’s {{ downPercent() }}% down, rate, taxes and insurance. {{ stretch() }} {{ rateNote() }}
+      {{ 'The highest price keeps this home’s {0}% down, rate, taxes and insurance. {1} {2}' | t: [downPercent(), stretch(), rateNote()] }}
     </p>
   `,
   styleUrl: './affordability.component.scss',

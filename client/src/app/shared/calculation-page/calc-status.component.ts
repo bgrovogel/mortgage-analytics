@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { CalculationStore } from '../../core/state/calculation-store';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** How long a calculation takes before the page says so: a quick answer never flickers a "Calculating". */
 export const CALCULATING_AFTER_MS = 300;
@@ -11,6 +12,7 @@ export const CALCULATING_AFTER_MS = 300;
  * there is a first result.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-calc-status',
   template: `
     @if (state(); as s) {
@@ -18,24 +20,24 @@ export const CALCULATING_AFTER_MS = 300;
         @switch (s) {
           @case ('ok') {
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor" /></svg>
-            Up to date
+            {{ 'Up to date' | t }}
           }
           @case ('busy') {
             <svg class="spin" aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="20 18" stroke-linecap="round" /></svg>
-            Calculating
+            {{ 'Calculating' | t }}
           }
           @case ('offline') {
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 13 13 3" stroke="currentColor" stroke-width="2" /></svg>
-            Offline · last result kept
+            {{ 'Offline · last result kept' | t }}
           }
           @case ('stale') {
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><rect x="3" y="3" width="3.5" height="10" rx="1" fill="currentColor" /><rect x="9.5" y="3" width="3.5" height="10" rx="1" fill="currentColor" /></svg>
-            Last valid numbers
+            {{ 'Last valid numbers' | t }}
           }
           @case ('error') {
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><path d="M8 2 15 14H1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M8 6.5v3.5M8 12v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
-            Couldn't calculate ·
-            <button type="button" class="retry" data-testid="calc-status-retry" (click)="store().retry()">Retry</button>
+            {{ "Couldn't calculate ·" | t }}
+            <button type="button" class="retry" data-testid="calc-status-retry" (click)="store().retry()">{{ 'Retry' | t }}</button>
           }
         }
       </span>

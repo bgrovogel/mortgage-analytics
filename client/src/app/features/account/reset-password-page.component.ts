@@ -2,37 +2,38 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** Where the link in the reset email lands: choose a new password, then sign in with it. */
 @Component({
   selector: 'app-reset-password-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TPipe],
   template: `
     <section class="card" aria-labelledby="reset-title" aria-live="polite">
-      <h1 id="reset-title">Choose a new password</h1>
+      <h1 id="reset-title">{{ 'Choose a new password' | t }}</h1>
       @switch (status()) {
         @case ('done') {
-          <p class="note" role="status" data-testid="reset-done">Your password is changed. Sign in with the new one.</p>
-          <a class="primary" routerLink="/sign-in">Sign in</a>
+          <p class="note" role="status" data-testid="reset-done">{{ 'Your password is changed. Sign in with the new one.' | t }}</p>
+          <a class="primary" routerLink="/sign-in">{{ 'Sign in' | t }}</a>
         }
         @case ('invalid') {
           <p class="alert" role="alert" data-testid="reset-invalid">
-            This reset link is incomplete, already used or out of date.
+            {{ 'This reset link is incomplete, already used or out of date.' | t }}
           </p>
-          <div class="links"><a routerLink="/forgot-password">Ask for a new link</a></div>
+          <div class="links"><a routerLink="/forgot-password">{{ 'Ask for a new link' | t }}</a></div>
         }
         @default {
-          <p class="intro">For {{ email }}.</p>
+          <p class="intro">{{ 'For {0}.' | t: [email] }}</p>
           <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="reset-form">
             <label class="field">
-              <span>New password</span>
+              <span>{{ 'New password' | t }}</span>
               <input type="password" formControlName="password" autocomplete="new-password" data-testid="reset-password"
                      [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched" />
               @if (form.controls.password.invalid && form.controls.password.touched) {
-                <small class="error">At least 8 characters, with a number.</small>
+                <small class="error">{{ 'At least 8 characters, with a number.' | t }}</small>
               }
             </label>
-            <button type="submit" class="primary" [disabled]="status() === 'working'" data-testid="reset-submit">Change password</button>
+            <button type="submit" class="primary" [disabled]="status() === 'working'" data-testid="reset-submit">{{ 'Change password' | t }}</button>
           </form>
         }
       }

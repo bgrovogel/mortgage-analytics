@@ -4,11 +4,12 @@ import { NumberFieldComponent } from '../../../../core/forms/number-field.compon
 import { FhaCountyComponent } from '../fha-county.component';
 import { RateOptionsComponent } from '../../../../shared/rate-options/rate-options.component';
 import { LOAN_FORM } from '../loan-form.token';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 /** The loan form's Loan type & rate section: Conventional, FHA or VA, and the rate: fixed, a buydown, adjustable, or bought down with points. */
 @Component({
   selector: 'app-loan-type-section',
-  imports: [ReactiveFormsModule, NumberFieldComponent, FhaCountyComponent, RateOptionsComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, FhaCountyComponent, RateOptionsComponent, TPipe],
   templateUrl: './loan-type-section.component.html',
   styleUrls: ['../loan-form.component.scss', './section.component.scss'],
   // Its controls belong to the loan form's own form group.

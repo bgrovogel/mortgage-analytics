@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { THEME_CHOICES, ThemeChoice, applyTheme, loadTheme, saveTheme } from './theme';
+import { TPipe } from '../i18n/t.pipe';
 
 /**
  * Light, dark or the system's colours, chosen once and remembered: a few people want the page in a theme that is not
  * their system's. The app applies the remembered choice when it starts; this changes it.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-theme-switch',
   template: `
-    <div class="theme" role="group" aria-label="Colour theme">
+    <div class="theme" role="group" [attr.aria-label]="'Colour theme' | t">
       @for (choice of choices; track choice.value) {
         <button type="button" [attr.aria-pressed]="current() === choice.value" [attr.data-testid]="'theme-' + choice.value"
                 (click)="choose(choice.value)">{{ choice.label }}</button>

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { ShareLinkComponent } from '../share-link/share-link.component';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * One Share button holding what leaves the page: a link to these numbers, and a printout (or PDF). Out of sight
@@ -9,22 +10,22 @@ import { ShareLinkComponent } from '../share-link/share-link.component';
  */
 @Component({
   selector: 'app-share-menu',
-  imports: [ShareLinkComponent],
+  imports: [ShareLinkComponent, TPipe],
   host: { '(document:click)': 'closeOnOutsideClick($event)' },
   template: `
     <!-- Says what copying did, and offers the link to copy by hand when the clipboard cannot be used. -->
     <app-share-link #link [fragment]="fragment()" [note]="note()" [showButton]="false" />
     <div class="share">
       <button #trigger type="button" class="trigger" data-testid="share-menu" aria-haspopup="menu"
-              [attr.aria-expanded]="open()" (click)="toggle()">Share <span aria-hidden="true">▾</span></button>
+              [attr.aria-expanded]="open()" (click)="toggle()">{{ 'Share' | t }} <span aria-hidden="true">▾</span></button>
       @if (open()) {
         <div class="menu">
-          <div class="items" role="menu" aria-label="Share" aria-describedby="share-scope" tabindex="-1" (keydown)="onKeydown($event)">
-            <button #item type="button" role="menuitem" data-testid="share-copy" [disabled]="!fragment()" (click)="copyLink()">Copy link</button>
-            <button #item type="button" role="menuitem" data-testid="print" [disabled]="!canPrint()" (click)="printPage()">Print or save as PDF</button>
+          <div class="items" role="menu" [attr.aria-label]="'Share' | t" aria-describedby="share-scope" tabindex="-1" (keydown)="onKeydown($event)">
+            <button #item type="button" role="menuitem" data-testid="share-copy" [disabled]="!fragment()" (click)="copyLink()">{{ 'Copy link' | t }}</button>
+            <button #item type="button" role="menuitem" data-testid="print" [disabled]="!canPrint()" (click)="printPage()">{{ 'Print or save as PDF' | t }}</button>
           </div>
           <!-- Said before anything is copied: what a link carries, and what it never does. -->
-          <p class="scope" id="share-scope" data-testid="share-scope">A link holds these numbers only, never your name, email or saved list.</p>
+          <p class="scope" id="share-scope" data-testid="share-scope">{{ 'A link holds these numbers only, never your name, email or saved list.' | t }}</p>
         </div>
       }
     </div>

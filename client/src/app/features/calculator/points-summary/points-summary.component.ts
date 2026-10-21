@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { decimal, monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /**
  * Whether discount points pay: the payment without them beside the payment with them, what they cost, when the
@@ -8,14 +9,15 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
  * nothing without points. It looks like the rate plan beside it, so it shares that panel's styles.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-points-summary',
   template: `
     @if (summary(); as s) {
       <section class="panel" data-testid="points-summary">
-        <h3>Discount points</h3>
+        <h3>{{ 'Discount points' | t }}</h3>
         <ol class="steps">
-          <li><span class="when">Without points</span><span class="rate">{{ s.rateWithout }}</span><strong>{{ s.paymentWithout }}/mo</strong></li>
-          <li><span class="when">With {{ s.count }}</span><span class="rate">{{ s.rateWith }}</span><strong>{{ s.paymentWith }}/mo</strong></li>
+          <li><span class="when">{{ 'Without points' | t }}</span><span class="rate">{{ s.rateWithout }}</span><strong>{{ '{0}/mo' | t: [s.paymentWithout] }}</strong></li>
+          <li><span class="when">{{ 'With {0}' | t: [s.count] }}</span><span class="rate">{{ s.rateWith }}</span><strong>{{ '{0}/mo' | t: [s.paymentWith] }}</strong></li>
         </ol>
         <p class="note" data-testid="points-verdict">{{ s.verdict }}</p>
       </section>

@@ -1,23 +1,23 @@
 <div class="header">
-  <h2 id="schedule-title">Amortization schedule</h2>
+  <h2 id="schedule-title">{{ 'Amortization schedule' | t }}</h2>
   <div class="toggles">
-    <div class="toggle" role="group" aria-label="Rows">
+    <div class="toggle" role="group" [attr.aria-label]="'Rows' | t">
       <button type="button" [attr.aria-pressed]="period() === 'monthly'" (click)="period.set('monthly')"
-              data-testid="view-monthly">Monthly</button>
+              data-testid="view-monthly">{{ 'Monthly' | t }}</button>
       <button type="button" [attr.aria-pressed]="period() === 'yearly'" (click)="period.set('yearly')"
-              data-testid="view-yearly">Yearly</button>
+              data-testid="view-yearly">{{ 'Yearly' | t }}</button>
     </div>
-    <div class="toggle" role="group" aria-label="Schedule to show">
+    <div class="toggle" role="group" [attr.aria-label]="'Schedule to show' | t">
       <button type="button" [attr.aria-pressed]="view() === 'accelerated'" (click)="view.set('accelerated')"
-              data-testid="view-accelerated">With extra payments</button>
+              data-testid="view-accelerated">{{ 'With extra payments' | t }}</button>
       <button type="button" [attr.aria-pressed]="view() === 'baseline'" (click)="view.set('baseline')"
-              data-testid="view-baseline">Standard</button>
+              data-testid="view-baseline">{{ 'Standard' | t }}</button>
     </div>
-    <button type="button" class="download" data-testid="download-csv" (click)="download()">Download (CSV)</button>
+    <button type="button" class="download" data-testid="download-csv" (click)="download()">{{ 'Download (CSV)' | t }}</button>
     <details class="column-picker" data-testid="column-picker">
-      <summary>Columns</summary>
+      <summary>{{ 'Columns' | t }}</summary>
       <fieldset>
-        <legend>Show these columns</legend>
+        <legend>{{ 'Show these columns' | t }}</legend>
         @for (column of available(); track column.key) {
           <label>
             <input type="checkbox" [checked]="!hidden().has(column.key)" (change)="toggle(column.key)" />
@@ -43,13 +43,13 @@
     <table data-testid="schedule-table">
       <thead>
         <tr>
-          <th scope="col" class="pinned first">{{ period() === 'monthly' ? '#' : 'Year' }}</th>
-          <th scope="col" class="pinned second">{{ period() === 'monthly' ? 'Date' : 'Starts' }}</th>
-          <th scope="col">Payment</th>
+          <th scope="col" class="pinned first">{{ period() === 'monthly' ? '#' : ('Year' | t) }}</th>
+          <th scope="col" class="pinned second">{{ period() === 'monthly' ? ('Date' | t) : ('Starts' | t) }}</th>
+          <th scope="col">{{ 'Payment' | t }}</th>
           @for (column of columns(); track column.key) {
             <th scope="col">{{ column.label }}</th>
           }
-          <th scope="col">Balance</th>
+          <th scope="col">{{ 'Balance' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -64,7 +64,7 @@
                   <td class="extra">
                     {{ row.extraPrincipal > 0 ? (row.extraPrincipal | currency) : '—' }}
                     @if (row.recast) {
-                      <span class="tag" data-testid="recast-tag">recast</span>
+                      <span class="tag" data-testid="recast-tag">{{ 'recast' | t }}</span>
                     }
                   </td>
                 }
@@ -72,7 +72,7 @@
                   <td>
                     {{ row.housingCosts | currency }}
                     @if (row.pmiEnds) {
-                      <span class="tag" data-testid="pmi-ends-tag">{{ insuranceName() }} ends</span>
+                      <span class="tag" data-testid="pmi-ends-tag">{{ '{0} ends' | t: [insuranceName()] }}</span>
                     }
                   </td>
                 }
@@ -87,7 +87,7 @@
       </tbody>
       <tfoot>
         <tr>
-          <th scope="row" colspan="2" class="pinned first">Totals</th>
+          <th scope="row" colspan="2" class="pinned first">{{ 'Totals' | t }}</th>
           <td>{{ t.scheduledPayment | currency }}</td>
           @for (column of columns(); track column.key) {
             <td [attr.data-testid]="column.key === 'interest' ? 'table-total-interest' : null">{{ column.value(t) | currency }}</td>

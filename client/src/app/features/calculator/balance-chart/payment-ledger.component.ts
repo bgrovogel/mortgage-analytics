@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { monthOf } from '../../../core/formatting/format';
 import { Payment } from '../../../core/models/amortization.models';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** How many payments the ledger shows at once: enough to read what the next months look like. */
 export const LEDGER_ROWS = 6;
@@ -13,22 +14,22 @@ export const LEDGER_ROWS = 6;
  */
 @Component({
   selector: 'app-payment-ledger',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TPipe],
   template: `
     <div class="head">
-      <h3 id="ledger-title">Every payment</h3>
-      <span class="from">Follows the scrubber · {{ from() }} on</span>
+      <h3 id="ledger-title">{{ 'Every payment' | t }}</h3>
+      <span class="from">{{ 'Follows the scrubber · {0} on' | t: [from()] }}</span>
     </div>
     <div class="scroll" role="region" tabindex="0" aria-labelledby="ledger-title" data-testid="ledger">
       <table>
-        <caption class="visually-hidden">Payments from {{ from() }}, with extra principal where it is paid</caption>
+        <caption class="visually-hidden">{{ 'Payments from {0}, with extra principal where it is paid' | t: [from()] }}</caption>
         <thead>
           <tr>
-            <th scope="col" class="date">Date</th>
-            <th scope="col" class="paid">Payment</th>
-            <th scope="col">Principal</th>
-            <th scope="col">Interest</th>
-            <th scope="col">Balance</th>
+            <th scope="col" class="date">{{ 'Date' | t }}</th>
+            <th scope="col" class="paid">{{ 'Payment' | t }}</th>
+            <th scope="col">{{ 'Principal' | t }}</th>
+            <th scope="col">{{ 'Interest' | t }}</th>
+            <th scope="col">{{ 'Balance' | t }}</th>
           </tr>
         </thead>
         <tbody>

@@ -4,6 +4,7 @@ import { NonNullableFormBuilder } from '@angular/forms';
 import { FieldRules, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { CalculatorStore } from '../calculator.store';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** What letting the home out brings in and costs, with the limits the API enforces (AmortizationRequestValidator). */
 export const RENTAL_RULES = {
@@ -24,20 +25,19 @@ export const RENTAL_DEFAULTS = { vacancyPercent: 5, managementPercent: 8, mainte
  */
 @Component({
   selector: 'app-rental-settings',
-  imports: [NumberFieldComponent],
+  imports: [NumberFieldComponent, TPipe],
   template: `
     <fieldset class="question" data-testid="rental-settings">
-      <legend>For this question</legend>
-      <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="rental-rent" label="Rent the home would fetch, a month" placeholder="e.g. 2,500" />
+      <legend>{{ 'For this question' | t }}</legend>
+      <app-number-field [control]="form.controls.monthlyRent" [rule]="rules.monthlyRent" testId="rental-rent" [label]="'Rent the home would fetch, a month' | t" placeholder="e.g. 2,500" />
       <div class="pair">
-        <app-number-field [control]="form.controls.vacancyPercent" [rule]="rules.vacancyPercent" testId="rental-vacancy" label="Rent lost to vacancy" />
-        <app-number-field [control]="form.controls.managementPercent" [rule]="rules.managementPercent" testId="rental-management" label="Property manager" />
-        <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="rental-maintenance" label="Repairs and upkeep" />
-        <app-number-field [control]="form.controls.rentIncreasePercent" [rule]="rules.rentIncreasePercent" testId="rental-rise" label="Rent rises each year" />
+        <app-number-field [control]="form.controls.vacancyPercent" [rule]="rules.vacancyPercent" testId="rental-vacancy" [label]="'Rent lost to vacancy' | t" />
+        <app-number-field [control]="form.controls.managementPercent" [rule]="rules.managementPercent" testId="rental-management" [label]="'Property manager' | t" />
+        <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="rental-maintenance" [label]="'Repairs and upkeep' | t" />
+        <app-number-field [control]="form.controls.rentIncreasePercent" [rule]="rules.rentIncreasePercent" testId="rental-rise" [label]="'Rent rises each year' | t" />
       </div>
       <p class="hint">
-        Vacancy and the manager are shares of the rent; upkeep is a share of the home's value, a year. Taxes, insurance and
-        dues come from the costs you entered. A manager of 0% is an owner who looks after it.
+        {{ "Vacancy and the manager are shares of the rent; upkeep is a share of the home's value, a year. Taxes, insurance and dues come from the costs you entered. A manager of 0% is an owner who looks after it." | t }}
       </p>
     </fieldset>
   `,

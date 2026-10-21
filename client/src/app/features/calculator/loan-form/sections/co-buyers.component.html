@@ -2,25 +2,24 @@
     <div formArrayName="coBuyers" class="co-buyers" data-testid="co-buyers">
       @for (coBuyer of f.coBuyers.controls; track coBuyer; let i = $index) {
         <fieldset class="co-buyer" [formGroupName]="i" data-testid="co-buyer">
-          <legend>Co-buyer {{ i + 1 }}</legend>
+          <legend>{{ 'Co-buyer {0}' | t: [i + 1] }}</legend>
           <div class="row">
-            <app-number-field [control]="coBuyer.controls.annualIncome" [rule]="f.coBuyerRules.annualIncome" testId="co-buyer-income" label="Income a year" />
-            <app-number-field [control]="coBuyer.controls.monthlyDebts" [rule]="f.coBuyerRules.monthlyDebts" testId="co-buyer-debts" label="Debts a month" />
+            <app-number-field [control]="coBuyer.controls.annualIncome" [rule]="f.coBuyerRules.annualIncome" testId="co-buyer-income" [label]="'Income a year' | t" />
+            <app-number-field [control]="coBuyer.controls.monthlyDebts" [rule]="f.coBuyerRules.monthlyDebts" testId="co-buyer-debts" [label]="'Debts a month' | t" />
           </div>
           <div class="row co-buyer-share">
-            <app-number-field [control]="coBuyer.controls.downPaymentPercent" [rule]="f.coBuyerRules.downPaymentPercent" testId="co-buyer-share" label="Puts in this much of the down payment" />
-            <button type="button" class="icon-button" (click)="f.removeCoBuyer(i)" [attr.aria-label]="'Remove co-buyer ' + (i + 1)">
+            <app-number-field [control]="coBuyer.controls.downPaymentPercent" [rule]="f.coBuyerRules.downPaymentPercent" testId="co-buyer-share" [label]="'Puts in this much of the down payment' | t" />
+            <button type="button" class="icon-button" (click)="f.removeCoBuyer(i)" [attr.aria-label]="'Remove co-buyer {0}' | t: [(i + 1)]">
               ✕
             </button>
           </div>
         </fieldset>
       }
       @if (f.canAddCoBuyer()) {
-        <button type="button" class="link-button" (click)="f.addCoBuyer()" data-testid="add-co-buyer">+ Add a co-buyer</button>
+        <button type="button" class="link-button" (click)="f.addCoBuyer()" data-testid="add-co-buyer">{{ '+ Add a co-buyer' | t }}</button>
       }
     </div>
     <p class="hint">
-      Buying with someone? A lender counts everyone's income and debts together. Say what share of the down payment
-      each co-buyer puts in (you put in the rest), and the Affordability tab shows who pays what.
+      {{ "Buying with someone? A lender counts everyone's income and debts together. Say what share of the down payment each co-buyer puts in (you put in the rest), and the Affordability tab shows who pays what." | t }}
     </p>
   }

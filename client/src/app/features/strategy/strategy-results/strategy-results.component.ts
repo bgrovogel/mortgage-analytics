@@ -5,6 +5,7 @@ import { CrossoverChartComponent } from '../strategy-charts/crossover-chart.comp
 import { NetWorthChartComponent, NetWorthView } from '../strategy-charts/net-worth-chart.component';
 import { monthOf, pct, signedUsd, usd } from '../../../core/formatting/format';
 import { closeness, crossover, facts, recommendation, scenarioLabel } from '../strategy-text';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** The years the milestone table shows. */
 export const MILESTONES = [5, 10, 15, 30] as const;
@@ -28,7 +29,7 @@ export const DETAIL_TABS: readonly { value: DetailTab; label: string }[] = [
  */
 @Component({
   selector: 'app-strategy-results',
-  imports: [NetWorthChartComponent, CrossoverChartComponent, DetailTabsComponent],
+  imports: [NetWorthChartComponent, CrossoverChartComponent, DetailTabsComponent, TPipe],
   templateUrl: './strategy-results.component.html',
   styleUrl: './strategy-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

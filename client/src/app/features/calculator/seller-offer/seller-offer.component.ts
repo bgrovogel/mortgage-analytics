@@ -6,6 +6,7 @@ import { NumberFieldComponent } from '../../../core/forms/number-field.component
 import { decimal, pct, usd } from '../../../core/formatting/format';
 import { SellerOfferComparison, SellerOfferInput, SellerOfferOption, SellerOfferUse } from '../../../core/models/amortization.models';
 import { DEFAULT_OFFER_SETTINGS } from '../calculator.store';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 /** How the offer is weighed, with the limits the API enforces (AmortizationRequestValidator). */
 const OFFER_RULES = {
@@ -34,12 +35,11 @@ interface Row {
  */
 @Component({
   selector: 'app-seller-offer',
-  imports: [NumberFieldComponent],
+  imports: [NumberFieldComponent, TPipe],
   template: `
-    <h2 id="seller-offer-title" class="visually-hidden">Best use of the seller’s money</h2>
+    <h2 id="seller-offer-title" class="visually-hidden">{{ 'Best use of the seller’s money' | t }}</h2>
     <p class="intro" data-testid="offer-intro">
-      The seller’s {{ amount() }}, taken each way it can be, over the {{ years() }} you keep the loan: what you bring to
-      closing, pay each month, and still owe after.
+      {{ 'The seller’s {0}, taken each way it can be, over the {1} you keep the loan: what you bring to closing, pay each month, and still owe after.' | t: [amount(), years()] }}
     </p>
     <!-- How it is weighed, beside what it changes: the years kept, and the rate a point buys. -->
     <div class="settings" data-testid="offer-settings">
@@ -57,7 +57,7 @@ interface Row {
             <th scope="col"></th>
             @for (o of offer().options; track o.use) {
               <th scope="col" [class.best]="o.use === offer().best">
-                {{ heading(o) }} @if (o.use === offer().best) {<span class="badge">Least</span>}
+                {{ heading(o) }} @if (o.use === offer().best) {<span class="badge">{{ 'Least' | t }}</span>}
               </th>
             }
           </tr>
@@ -76,7 +76,7 @@ interface Row {
         </tbody>
         <tfoot>
           <tr>
-            <th scope="row">Cost over {{ years() }}</th>
+            <th scope="row">{{ 'Cost over {0}' | t: [years()] }}</th>
             @for (o of offer().options; track o.use) {
               <td [class.best]="o.use === offer().best">{{ usd(o.cost) }}</td>
             }
@@ -85,8 +85,7 @@ interface Row {
       </table>
     </div>
     <p class="note">
-      Payments include taxes, insurance, mortgage insurance and dues; a buydown’s first two years are partly paid by the
-      seller. What you still owe is paid when you sell or refinance.
+      {{ 'Payments include taxes, insurance, mortgage insurance and dues; a buydown’s first two years are partly paid by the seller. What you still owe is paid when you sell or refinance.' | t }}
     </p>
   `,
   styleUrl: './seller-offer.component.scss',

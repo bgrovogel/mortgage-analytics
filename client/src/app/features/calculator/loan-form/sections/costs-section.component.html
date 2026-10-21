@@ -1,121 +1,114 @@
 <details class="section" data-testid="section-costs">
   <summary>
-    <span class="section-title">Taxes, insurance, <abbr title="Homeowners association">HOA</abbr> &amp; <abbr title="Private mortgage insurance">PMI</abbr></span>
+    <span class="section-title">{{ 'Taxes, insurance,' | t }} <abbr [attr.title]="'Homeowners association' | t">{{ 'HOA' | t }}</abbr> &amp; <abbr [attr.title]="'Private mortgage insurance' | t">{{ 'PMI' | t }}</abbr></span>
     <span class="section-summary"><span data-testid="taxes-summary">{{ f.taxesSummary() }}</span> · <span data-testid="costs-summary">{{ f.costsSummary() }}</span></span>
   </summary>
   <div class="section-body">
-      <div class="segmented two" role="radiogroup" aria-label="How the taxes are given">
-        <label><input type="radio" formControlName="taxMode" value="single" data-testid="tax-mode-single" /> One tax rate</label>
-        <label><input type="radio" formControlName="taxMode" value="separate" data-testid="tax-mode-separate" /> Separate taxes</label>
+      <div class="segmented two" role="radiogroup" [attr.aria-label]="'How the taxes are given' | t">
+        <label><input type="radio" formControlName="taxMode" value="single" data-testid="tax-mode-single" /> {{ 'One tax rate' | t }}</label>
+        <label><input type="radio" formControlName="taxMode" value="separate" data-testid="tax-mode-separate" /> {{ 'Separate taxes' | t }}</label>
       </div>
 
       @if (f.taxMode() === 'single') {
-        <app-number-field [control]="f.form.controls.propertyTaxRate" [rule]="f.rules.propertyTaxRate" testId="property-tax-rate" label="Property tax rate (all taxes)" />
-        <p class="hint">Your total yearly rate, as on your tax bill. A rate of "$2.20 per $100 of value" is entered as 2.2.</p>
+        <app-number-field [control]="f.form.controls.propertyTaxRate" [rule]="f.rules.propertyTaxRate" testId="property-tax-rate" [label]="'Property tax rate (all taxes)' | t" />
+        <p class="hint">{{ 'Your total yearly rate, as on your tax bill. A rate of "$2.20 per $100 of value" is entered as 2.2.' | t }}</p>
         <label class="state-rate">
-          <span>No bill yet? Start from a state's typical rate</span>
+          <span>{{ "No bill yet? Start from a state's typical rate" | t }}</span>
           <select data-testid="state-tax-rate" (change)="useState($event)">
-            <option value="">Choose a state…</option>
+            <option value="">{{ 'Choose a state…' | t }}</option>
             @for (state of states; track state.name) {
               <option [value]="state.name">{{ state.name }}: {{ state.rate }}%</option>
             }
           </select>
         </label>
         <p class="hint">
-          The median tax paid over the median home value in each state (Census Bureau, 2024 American Community Survey), except California, which is the rate on a new buyer's price.
-          Your county, city and school district each set their own, so a tax bill, or a listing's tax, is better.
+          {{ "The median tax paid over the median home value in each state (Census Bureau, 2024 American Community Survey), except California, which is the rate on a new buyer's price. Your county, city and school district each set their own, so a tax bill, or a listing's tax, is better." | t }}
         </p>
         @if (rulesNote(); as note) {
           <p class="hint" data-testid="state-rules">{{ note }}</p>
         }
       } @else {
         <div class="row three">
-          <app-number-field [control]="f.form.controls.schoolTaxRate" [rule]="f.rules.schoolTaxRate" testId="school-tax-rate" label="School" />
-          <app-number-field [control]="f.form.controls.localTaxRate" [rule]="f.rules.localTaxRate" testId="local-tax-rate" label="County/city" />
-          <app-number-field [control]="f.form.controls.mudTaxRate" [rule]="f.rules.mudTaxRate" testId="mud-tax-rate"><abbr title="Municipal Utility District">MUD</abbr></app-number-field>
+          <app-number-field [control]="f.form.controls.schoolTaxRate" [rule]="f.rules.schoolTaxRate" testId="school-tax-rate" [label]="'School' | t" />
+          <app-number-field [control]="f.form.controls.localTaxRate" [rule]="f.rules.localTaxRate" testId="local-tax-rate" [label]="'County/city' | t" />
+          <app-number-field [control]="f.form.controls.mudTaxRate" [rule]="f.rules.mudTaxRate" testId="mud-tax-rate"><abbr [attr.title]="'Municipal Utility District' | t">{{ 'MUD' | t }}</abbr></app-number-field>
         </div>
-        <p class="hint">Annual rates, each with its own exemptions (as in Texas). "$0.85 per $100 of value" is entered as 0.85.</p>
+        <p class="hint">{{ 'Annual rates, each with its own exemptions (as in Texas). "$0.85 per $100 of value" is entered as 0.85.' | t }}</p>
       }
 
       <div class="row">
-        <app-number-field [control]="f.form.controls.pidAnnual" [rule]="f.rules.pidAnnual" testId="pid-annual"><abbr title="Public Improvement District">PID</abbr> per year</app-number-field>
-        <app-number-field [control]="f.form.controls.pidYears" [rule]="f.rules.pidYears" testId="pid-years" placeholder="No end" />
+        <app-number-field [control]="f.form.controls.pidAnnual" [rule]="f.rules.pidAnnual" testId="pid-annual"><abbr [attr.title]="'Public Improvement District' | t">{{ 'PID' | t }}</abbr> {{ 'per year' | t }}</app-number-field>
+        <app-number-field [control]="f.form.controls.pidYears" [rule]="f.rules.pidYears" testId="pid-years" [placeholder]="'No end' | t" />
       </div>
-      <p class="hint">A PID assessment is a fixed yearly charge that ends once the district's bonds are repaid.</p>
+      <p class="hint">{{ "A PID assessment is a fixed yearly charge that ends once the district's bonds are repaid." | t }}</p>
 
       <label class="checkbox">
         <input type="checkbox" formControlName="isHomestead" data-testid="is-homestead" />
-        <span><strong>Homestead</strong> (primary residence): exemptions and the appraisal cap</span>
+        <span><strong>{{ 'Homestead' | t }}</strong> {{ '(primary residence): exemptions and the appraisal cap' | t }}</span>
       </label>
       @if (f.occupancy() !== 'PrimaryResidence') {
-        <p class="hint" data-testid="homestead-hint">Only for the home you live in.</p>
+        <p class="hint" data-testid="homestead-hint">{{ 'Only for the home you live in.' | t }}</p>
       }
 
       @if (f.isHomestead() && f.taxMode() === 'single') {
         <div class="row">
-          <app-number-field [control]="f.form.controls.propertyTaxHomesteadExemption" [rule]="f.rules.propertyTaxHomesteadExemption" testId="homestead-exemption" label="Homestead exemption" />
-          <app-number-field [control]="f.form.controls.homesteadAssessmentCap" [rule]="f.rules.homesteadAssessmentCap" testId="assessment-cap" label="Value can rise / yr" />
+          <app-number-field [control]="f.form.controls.propertyTaxHomesteadExemption" [rule]="f.rules.propertyTaxHomesteadExemption" testId="homestead-exemption" [label]="'Homestead exemption' | t" />
+          <app-number-field [control]="f.form.controls.homesteadAssessmentCap" [rule]="f.rules.homesteadAssessmentCap" testId="assessment-cap" [label]="'Value can rise / yr' | t" />
         </div>
         @if (f.homesteadSavings(); as saved) {
           <p class="hint saved" data-testid="homestead-savings">
-            In year 1 the exemption saves <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> in tax.
+            {{ 'In year 1 the exemption saves' | t }} <strong>{{ saved.total | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong> {{ 'in tax.' | t }}
           </p>
         }
         <p class="hint">
-          The part of the home's value your taxes skip, in dollars: it comes off the value before the rate applies. Where
-          the homestead cap applies, the taxable value can also rise only so much a year (10% in Texas; leave it at 100 for none).
+          {{ "The part of the home's value your taxes skip, in dollars: it comes off the value before the rate applies. Where the homestead cap applies, the taxable value can also rise only so much a year (10% in Texas; leave it at 100 for none)." | t }}
         </p>
         <p class="hint" data-testid="over-65-pointer">
-          Over 65 or disabled? That relief (an extra exemption and a school tax ceiling) is set per tax: choose
-          <strong>Separate taxes</strong> above.
+          {{ 'Over 65 or disabled? That relief (an extra exemption and a school tax ceiling) is set per tax: choose' | t }}
+          <strong>{{ 'Separate taxes' | t }}</strong> {{ 'above.' | t }}
         </p>
       }
 
       @if (f.isHomestead() && f.taxMode() === 'separate') {
         <div class="row three">
-          <app-number-field [control]="f.form.controls.schoolHomesteadExemption" [rule]="f.rules.schoolHomesteadExemption" testId="school-exemption" label="School exempt" />
-          <app-number-field [control]="f.form.controls.localHomesteadExemptionPercent" [rule]="f.rules.localHomesteadExemptionPercent" testId="local-exemption" label="County/city" />
-          <app-number-field [control]="f.form.controls.mudHomesteadExemptionPercent" [rule]="f.rules.mudHomesteadExemptionPercent" testId="mud-exemption" label="MUD" />
+          <app-number-field [control]="f.form.controls.schoolHomesteadExemption" [rule]="f.rules.schoolHomesteadExemption" testId="school-exemption" [label]="'School exempt' | t" />
+          <app-number-field [control]="f.form.controls.localHomesteadExemptionPercent" [rule]="f.rules.localHomesteadExemptionPercent" testId="local-exemption" [label]="'County/city' | t" />
+          <app-number-field [control]="f.form.controls.mudHomesteadExemptionPercent" [rule]="f.rules.mudHomesteadExemptionPercent" testId="mud-exemption" [label]="'MUD' | t" />
         </div>
         <div class="row">
-          <app-number-field [control]="f.form.controls.homesteadAssessmentCap" [rule]="f.rules.homesteadAssessmentCap" testId="assessment-cap" label="Value can rise / yr" />
+          <app-number-field [control]="f.form.controls.homesteadAssessmentCap" [rule]="f.rules.homesteadAssessmentCap" testId="assessment-cap" [label]="'Value can rise / yr' | t" />
         </div>
         @if (f.homesteadSavings(); as saved) {
           <p class="hint saved" data-testid="homestead-savings">
-            In year 1 these save <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> in tax:
-            school {{ saved.school | currency: 'USD' : 'symbol' : '1.0-0' }} · county/city {{ saved.local | currency: 'USD' : 'symbol' : '1.0-0' }}
-            · MUD {{ saved.mud | currency: 'USD' : 'symbol' : '1.0-0' }}.
+            {{ 'In year 1 these save' | t }} <strong>{{ saved.total | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong> {{ 'in tax: school {0} · county/city {1} · MUD {2}.' | t: [(saved.school | currency: ('USD' | t) : 'symbol' : '1.0-0'), (saved.local | currency: ('USD' | t) : 'symbol' : '1.0-0'), (saved.mud | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
           </p>
         }
         <p class="hint">
-          Each exemption lowers only its own tax. Texas school districts exempt $140,000 of a homestead's value; a county,
-          city or MUD may exempt up to 20% (at least $5,000), and many exempt nothing. Taxable value can rise at most 10% a year.
+          {{ "Each exemption lowers only its own tax. Texas school districts exempt $140,000 of a homestead's value; a county, city or MUD may exempt up to 20% (at least $5,000), and many exempt nothing. Taxable value can rise at most 10% a year." | t }}
         </p>
 
         <label class="checkbox">
           <input type="checkbox" formControlName="isOver65" data-testid="is-over-65" />
-          <span><strong>Over 65 or disabled</strong>: extra exemption and a school tax ceiling</span>
+          <span><strong>{{ 'Over 65 or disabled' | t }}</strong>{{ ': extra exemption and a school tax ceiling' | t }}</span>
         </label>
 
         @if (f.isOver65()) {
           <div class="row three">
-            <app-number-field [control]="f.form.controls.over65Year" [rule]="f.rules.over65Year" testId="over-65-year" label="Qualifies in year" />
-            <app-number-field [control]="f.form.controls.over65SchoolExemption" [rule]="f.rules.over65SchoolExemption" testId="over-65-school-exemption" label="Extra school" />
-            <app-number-field [control]="f.form.controls.over65LocalExemption" [rule]="f.rules.over65LocalExemption" testId="over-65-local-exemption" label="Extra local" />
+            <app-number-field [control]="f.form.controls.over65Year" [rule]="f.rules.over65Year" testId="over-65-year" [label]="'Qualifies in year' | t" />
+            <app-number-field [control]="f.form.controls.over65SchoolExemption" [rule]="f.rules.over65SchoolExemption" testId="over-65-school-exemption" [label]="'Extra school' | t" />
+            <app-number-field [control]="f.form.controls.over65LocalExemption" [rule]="f.rules.over65LocalExemption" testId="over-65-local-exemption" [label]="'Extra local' | t" />
           </div>
           <label class="checkbox">
             <input type="checkbox" formControlName="over65LocalCeiling" data-testid="over-65-local-ceiling" />
-            <span>County/city has also adopted a tax ceiling</span>
+            <span>{{ 'County/city has also adopted a tax ceiling' | t }}</span>
           </label>
           <app-number-field [control]="f.form.controls.transferredCeilingPercent" [rule]="f.rules.transferredCeilingPercent" testId="transferred-ceiling"
-                            label="Moved with a ceiling? Share of school tax paid there" placeholder="Not moving" />
+                            [label]="'Moved with a ceiling? Share of school tax paid there' | t" [placeholder]="'Not moving' | t" />
           <p class="hint">
-            Texas lets the school tax ceiling move with you: the new home's ceiling is the same share of its school tax as
-            you paid at the old one (its ceiling over the tax without it). Leave blank for a ceiling set at this home.
+            {{ "Texas lets the school tax ceiling move with you: the new home's ceiling is the same share of its school tax as you paid at the old one (its ceiling over the tax without it). Leave blank for a ceiling set at this home." | t }}
           </p>
           <p class="hint">
-            From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise.
-            Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies.
+            {{ "From the qualifying year, school tax is frozen at that year's amount: it can fall, but never rise. Texas adds $60,000 to the school exemption. Year 1 means the owner already qualifies." | t }}
           </p>
         }
       }
@@ -124,55 +117,54 @@
         @for (change of f.rateChanges.controls; track change; let i = $index) {
           <div class="rate-change" [formGroupName]="i" data-testid="rate-change">
             <div class="row rate-change-year">
-              <app-number-field [control]="change.controls.fromYear" [rule]="f.rateChangeRules.fromYear" testId="rate-change-year" label="From year" />
-              <button type="button" class="icon-button" (click)="f.removeRateChange(i)" [attr.aria-label]="'Remove rate change ' + (i + 1)">✕</button>
+              <app-number-field [control]="change.controls.fromYear" [rule]="f.rateChangeRules.fromYear" testId="rate-change-year" [label]="'From year' | t" />
+              <button type="button" class="icon-button" (click)="f.removeRateChange(i)" [attr.aria-label]="'Remove rate change {0}' | t: [(i + 1)]">✕</button>
             </div>
             <div class="row" [class.three]="f.chargedTaxes().length > 1">
             @for (tax of f.chargedTaxes(); track tax) {
               @switch (tax) {
-                @case ('propertyTaxRate') { <app-number-field [control]="change.controls.propertyTaxRate" [rule]="f.rateChangeRules.propertyTaxRate" testId="rate-change-property" label="New rate" placeholder="Same" /> }
-                @case ('schoolTaxRate') { <app-number-field [control]="change.controls.schoolTaxRate" [rule]="f.rateChangeRules.schoolTaxRate" testId="rate-change-school" label="School" placeholder="Same" /> }
-                @case ('localTaxRate') { <app-number-field [control]="change.controls.localTaxRate" [rule]="f.rateChangeRules.localTaxRate" testId="rate-change-local" label="County/city" placeholder="Same" /> }
-                @case ('mudTaxRate') { <app-number-field [control]="change.controls.mudTaxRate" [rule]="f.rateChangeRules.mudTaxRate" testId="rate-change-mud" label="MUD" placeholder="Same" /> }
+                @case ('propertyTaxRate') { <app-number-field [control]="change.controls.propertyTaxRate" [rule]="f.rateChangeRules.propertyTaxRate" testId="rate-change-property" [label]="'New rate' | t" [placeholder]="'Same' | t" /> }
+                @case ('schoolTaxRate') { <app-number-field [control]="change.controls.schoolTaxRate" [rule]="f.rateChangeRules.schoolTaxRate" testId="rate-change-school" [label]="'School' | t" [placeholder]="'Same' | t" /> }
+                @case ('localTaxRate') { <app-number-field [control]="change.controls.localTaxRate" [rule]="f.rateChangeRules.localTaxRate" testId="rate-change-local" [label]="'County/city' | t" [placeholder]="'Same' | t" /> }
+                @case ('mudTaxRate') { <app-number-field [control]="change.controls.mudTaxRate" [rule]="f.rateChangeRules.mudTaxRate" testId="rate-change-mud" [label]="'MUD' | t" [placeholder]="'Same' | t" /> }
               }
             }
             </div>
           </div>
         }
         @if (f.chargedTaxes().length > 0) {
-          <button type="button" class="link-button" (click)="f.addRateChange()" data-testid="add-rate-change">+ Add a tax rate change</button>
-          <p class="hint">Each taxing unit adopts a rate every year. A change applies from its year until the next; a blank rate stays as it was.</p>
+          <button type="button" class="link-button" (click)="f.addRateChange()" data-testid="add-rate-change">{{ '+ Add a tax rate change' | t }}</button>
+          <p class="hint">{{ 'Each taxing unit adopts a rate every year. A change applies from its year until the next; a blank rate stays as it was.' | t }}</p>
         }
       </div>
     
 
       <div class="row">
-        <app-number-field [control]="f.form.controls.annualInsurance" [rule]="f.rules.annualInsurance" testId="annual-insurance" label="Home insurance per year" />
-        <app-number-field [control]="f.form.controls.monthlyHoa" [rule]="f.rules.monthlyHoa" testId="monthly-hoa" label="HOA dues per month" />
+        <app-number-field [control]="f.form.controls.annualInsurance" [rule]="f.rules.annualInsurance" testId="annual-insurance" [label]="'Home insurance per year' | t" />
+        <app-number-field [control]="f.form.controls.monthlyHoa" [rule]="f.rules.monthlyHoa" testId="monthly-hoa" [label]="'HOA dues per month' | t" />
       </div>
 
       @if (f.loanProgram() === 'Conventional') {
         <div class="row">
-          <app-number-field [control]="f.form.controls.pmiRate" [rule]="f.rules.pmiRate" testId="pmi-rate" label="PMI per year" />
+          <app-number-field [control]="f.form.controls.pmiRate" [rule]="f.rules.pmiRate" testId="pmi-rate" [label]="'PMI per year' | t" />
           <label class="field">
-            <span>PMI removal</span>
+            <span>{{ 'PMI removal' | t }}</span>
             <select formControlName="pmiCancellation" data-testid="pmi-cancellation">
-              <option value="BorrowerRequested">Ask at 80%</option>
-              <option value="Automatic">Auto at 78%</option>
+              <option value="BorrowerRequested">{{ 'Ask at 80%' | t }}</option>
+              <option value="Automatic">{{ 'Auto at 78%' | t }}</option>
             </select>
           </label>
         </div>
       }
       <p class="hint" data-testid="pmi-hint">
         @if (f.loanProgram() === 'Fha') {
-          No PMI: FHA charges its own mortgage insurance (MIP), worked out from the loan. See Loan type &amp; rate.
+          {{ 'No PMI: FHA charges its own mortgage insurance (MIP), worked out from the loan. See Loan type & rate.' | t }}
         } @else if (f.loanProgram() === 'Va') {
-          No PMI: VA loans have no mortgage insurance.
+          {{ 'No PMI: VA loans have no mortgage insurance.' | t }}
         } @else if (f.pmiApplies()) {
-          PMI applies because less than 20% is down. Ask your lender to remove it at 80% of the price, and extra
-          payments bring that sooner; left alone, it comes off at 78% on the original schedule.
+          {{ 'PMI applies because less than 20% is down. Ask your lender to remove it at 80% of the price, and extra payments bring that sooner; left alone, it comes off at 78% on the original schedule.' | t }}
         } @else {
-          No PMI: at least 20% is down.
+          {{ 'No PMI: at least 20% is down.' | t }}
         }
       </p>
     

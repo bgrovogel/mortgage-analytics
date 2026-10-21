@@ -9,6 +9,7 @@ import { scheduleCsv } from './schedule-csv';
 import type { CostKey, ScheduleColumn, ScheduleRow } from './schedule-model';
 import { SchedulePagerComponent, SchedulePage } from './schedule-pager.component';
 import { ScheduleTotalsComponent } from './schedule-totals.component';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 export type { ScheduleColumn, ScheduleRow } from './schedule-model';
 
@@ -44,7 +45,7 @@ const DEFAULT_HIDDEN: readonly string[] = COST_CATEGORIES.map((c) => c.key);
  */
 @Component({
   selector: 'app-schedule-table',
-  imports: [CurrencyPipe, SchedulePagerComponent, ScheduleTotalsComponent],
+  imports: [CurrencyPipe, SchedulePagerComponent, ScheduleTotalsComponent, TPipe],
   templateUrl: './schedule-table.component.html',
   styleUrl: './schedule-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

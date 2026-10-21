@@ -1,11 +1,11 @@
 <form [formGroup]="form" novalidate data-testid="strategy-form">
   <fieldset>
-    <legend class="title">Your numbers <span class="shared-tag" data-testid="shared-tag">Shared with the other pages</span></legend>
+    <legend class="title">{{ 'Your numbers' | t }} <span class="shared-tag" data-testid="shared-tag">{{ 'Shared with the other pages' | t }}</span></legend>
     @if (example()) {
-      <p class="example-note" data-testid="example-note"><strong>These are example numbers.</strong> Type your own: the results follow as you go.</p>
+      <p class="example-note" data-testid="example-note"><strong>{{ 'These are example numbers.' | t }}</strong> {{ 'Type your own: the results follow as you go.' | t }}</p>
     }
     @if (sharedFrom(); as from) {
-      <p class="hint" data-testid="loan-shared">Filled in from your loan on the {{ from }} page. Change it here and the other pages follow.</p>
+      <p class="hint" data-testid="loan-shared">{{ 'Filled in from your loan on the {0} page. Change it here and the other pages follow.' | t: [from] }}</p>
     }
 
     <div class="row">
@@ -19,29 +19,29 @@
     </div>
 
     <app-number-field [control]="form.controls.monthlyPmi" [rule]="rules.monthlyPmi" testId="monthly-pmi" />
-    <p class="hint" data-testid="pmi-hint">From your statement, if you pay any. It ends once you owe 80% of the home's value, so paying down ends it sooner.</p>
+    <p class="hint" data-testid="pmi-hint">{{ "From your statement, if you pay any. It ends once you owe 80% of the home's value, so paying down ends it sooner." | t }}</p>
   </fieldset>
 
   <details class="section" data-testid="section-rate">
     <summary>
-      <span class="section-title">Rate type</span>
+      <span class="section-title">{{ 'Rate type' | t }}</span>
       <span class="section-summary" data-testid="rate-summary">{{ rateSummary() }}</span>
     </summary>
     <div class="section-body">
       <app-rate-options [form]="form.controls.rate" mode="reset" [rate]="form.controls.annualInterestRate.value" />
-      <p class="hint">A buydown here starts with your next payment, as on a new loan; its subsidy is usually the seller's.</p>
+      <p class="hint">{{ "A buydown here starts with your next payment, as on a new loan; its subsidy is usually the seller's." | t }}</p>
     </div>
   </details>
 
   <fieldset>
-    <legend>Cash to put to work</legend>
-    <app-number-field [control]="form.controls.monthlyCashToPutToWork" [rule]="rules.monthlyCashToPutToWork" testId="monthly-cash" label="Each month" />
-    <p class="hint">Take-home pay left after the mortgage payment and living costs. Your 401(k) match comes out of it first.</p>
+    <legend>{{ 'Cash to put to work' | t }}</legend>
+    <app-number-field [control]="form.controls.monthlyCashToPutToWork" [rule]="rules.monthlyCashToPutToWork" testId="monthly-cash" [label]="'Each month' | t" />
+    <p class="hint">{{ 'Take-home pay left after the mortgage payment and living costs. Your 401(k) match comes out of it first.' | t }}</p>
   </fieldset>
 
   <fieldset>
-    <legend>Risk</legend>
-    <div class="segmented" role="radiogroup" aria-label="Risk profile" data-testid="risk-profile">
+    <legend>{{ 'Risk' | t }}</legend>
+    <div class="segmented" role="radiogroup" [attr.aria-label]="'Risk profile' | t" data-testid="risk-profile">
       @for (profile of riskProfiles; track profile.value) {
         <label>
           <input type="radio" formControlName="riskProfile" [value]="profile.value" [attr.data-testid]="'risk-' + profile.value" />
@@ -50,25 +50,25 @@
       }
     </div>
     <p class="hint" data-testid="counting-on">
-      Market returns are not guaranteed; paying down the mortgage is. Strategies are ranked counting on {{ countingOn() }} a year.
+      {{ 'Market returns are not guaranteed; paying down the mortgage is. Strategies are ranked counting on {0} a year.' | t: [countingOn()] }}
     </p>
   </fieldset>
 
   <section class="more-details" aria-labelledby="strategy-more-details" data-testid="more-details">
-  <h3 id="strategy-more-details">More details</h3>
+  <h3 id="strategy-more-details">{{ 'More details' | t }}</h3>
   <details class="section" data-testid="section-taxes">
     <summary>
-      <span class="section-title">Income &amp; taxes</span>
+      <span class="section-title">{{ 'Income & taxes' | t }}</span>
       <span class="section-summary" data-testid="taxes-summary">{{ taxesSummary() }}</span>
     </summary>
     <div class="section-body">
       <div class="row">
-        <app-number-field [control]="form.controls.grossAnnualIncome" [rule]="rules.grossAnnualIncome" testId="income" label="Gross income / year" />
-        <app-number-field [control]="form.controls.marginalTaxRate" [rule]="rules.marginalTaxRate" testId="tax-rate" label="Tax rate (federal + state)" />
+        <app-number-field [control]="form.controls.grossAnnualIncome" [rule]="rules.grossAnnualIncome" testId="income" [label]="'Gross income / year' | t" />
+        <app-number-field [control]="form.controls.marginalTaxRate" [rule]="rules.marginalTaxRate" testId="tax-rate" [label]="'Tax rate (federal + state)' | t" />
       </div>
       <!-- Its own row: "Married filing jointly" doesn't fit half the form's width. -->
       <label class="field">
-        <span>Filing status</span>
+        <span>{{ 'Filing status' | t }}</span>
         <select formControlName="filingStatus" data-testid="filing-status">
           @for (status of filingStatuses; track status.value) {
             <option [value]="status.value">{{ status.label }}</option>
@@ -77,25 +77,22 @@
       </label>
       @let rates = federalRates();
       <p class="hint" data-testid="tax-bracket-hint">
-        At this income: the {{ rates.bracket }}% federal bracket for 2026, on about {{ rates.taxable }} taxable after
-        deductions and the 401(k). Add your state's rate (0% to about 13%).
+        {{ "At this income: the {0}% federal bracket for 2026, on about {1} taxable after deductions and the 401(k). Add your state's rate (0% to about 13%)." | t: [rates.bracket, rates.taxable] }}
         @if (rates.taxTooLow; as entered) {
-          <strong class="mismatch">The {{ entered }}% entered is less than that alone.</strong>
+          <strong class="mismatch">{{ 'The {0}% entered is less than that alone.' | t: [entered] }}</strong>
         }
       </p>
       <div class="row">
-        <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" label="Other deductions / year" />
+        <app-number-field [control]="form.controls.otherItemizedDeductions" [rule]="rules.otherItemizedDeductions" testId="other-deductions" [label]="'Other deductions / year' | t" />
         <app-number-field [control]="form.controls.capitalGainsTaxRate" [rule]="rules.capitalGainsTaxRate" testId="capital-gains-rate" />
       </div>
       <p class="hint">
-        Other deductions: state and local taxes (up to the cap) and charity. Mortgage interest only saves tax on the
-        part of your deductions above the standard deduction, so this decides whether it saves anything at all.
+        {{ 'Other deductions: state and local taxes (up to the cap) and charity. Mortgage interest only saves tax on the part of your deductions above the standard deduction, so this decides whether it saves anything at all.' | t }}
       </p>
       <p class="hint" data-testid="gains-hint">
-        Long-term gains at this income: {{ rates.gains }}% federal{{ rates.withNiit ? ', with the 3.8% net investment income tax' : '' }}.
-        Add your state's rate.
+        {{ "Long-term gains at this income: {0}% federal{1}. Add your state's rate." | t: [rates.gains, (rates.withNiit ? (', with the 3.8% net investment income tax' | t) : '')] }}
         @if (rates.gainsTooLow; as entered) {
-          <strong class="mismatch">The {{ entered }}% entered is less than that alone.</strong>
+          <strong class="mismatch">{{ 'The {0}% entered is less than that alone.' | t: [entered] }}</strong>
         }
       </p>
     </div>
@@ -103,19 +100,19 @@
 
   <details class="section" data-testid="section-savings">
     <summary>
-      <span class="section-title">401(k), IRA &amp; savings</span>
+      <span class="section-title">{{ '401(k), IRA & savings' | t }}</span>
       <span class="section-summary" data-testid="savings-summary">{{ savingsSummary() }}</span>
     </summary>
     <div class="section-body">
       <div class="row">
         <app-number-field [control]="form.controls.employerMatchPercent" [rule]="rules.employerMatchPercent" testId="match-percent" />
-        <app-number-field [control]="form.controls.matchUpToPercentOfPay" [rule]="rules.matchUpToPercentOfPay" testId="match-up-to" label="On up to (% of pay)" />
+        <app-number-field [control]="form.controls.matchUpToPercentOfPay" [rule]="rules.matchUpToPercentOfPay" testId="match-up-to" [label]="'On up to (% of pay)' | t" />
       </div>
-      <p class="hint">E.g. 50% on up to 6%: put in 6% of pay, the employer adds 3%. Every strategy captures it first.</p>
-      <app-number-field [control]="form.controls.annualIraContribution" [rule]="rules.annualIraContribution" testId="ira" label="IRA contributions / year" />
-      <p class="hint">Invested cash fills the IRA first. Roth and traditional come out the same when your tax rate in retirement matches today's.</p>
+      <p class="hint">{{ 'E.g. 50% on up to 6%: put in 6% of pay, the employer adds 3%. Every strategy captures it first.' | t }}</p>
+      <app-number-field [control]="form.controls.annualIraContribution" [rule]="rules.annualIraContribution" testId="ira" [label]="'IRA contributions / year' | t" />
+      <p class="hint">{{ "Invested cash fills the IRA first. Roth and traditional come out the same when your tax rate in retirement matches today's." | t }}</p>
       <div class="row">
-        <app-number-field [control]="form.controls.currentRetirementSavings" [rule]="rules.currentRetirementSavings" testId="retirement-savings" label="In 401(k)s today" />
+        <app-number-field [control]="form.controls.currentRetirementSavings" [rule]="rules.currentRetirementSavings" testId="retirement-savings" [label]="'In 401(k)s today' | t" />
         <app-number-field [control]="form.controls.currentInvestments" [rule]="rules.currentInvestments" testId="current-investments" />
       </div>
     </div>
@@ -123,42 +120,41 @@
 
   <details class="section" data-testid="section-stock">
     <summary>
-      <span class="section-title">Company stock (RSUs, ESOP, ESPP)</span>
+      <span class="section-title">{{ 'Company stock (RSUs, ESOP, ESPP)' | t }}</span>
       <span class="section-summary" data-testid="stock-summary">{{ stockSummary() }}</span>
     </summary>
     <div class="section-body">
       <div class="row">
-        <app-number-field [control]="form.controls.annualRsuVesting" [rule]="rules.annualRsuVesting" testId="rsu" label="RSUs vesting / year" />
-        <app-number-field [control]="form.controls.annualEsopContribution" [rule]="rules.annualEsopContribution" testId="esop" label="ESOP / year" />
+        <app-number-field [control]="form.controls.annualRsuVesting" [rule]="rules.annualRsuVesting" testId="rsu" [label]="'RSUs vesting / year' | t" />
+        <app-number-field [control]="form.controls.annualEsopContribution" [rule]="rules.annualEsopContribution" testId="esop" [label]="'ESOP / year' | t" />
       </div>
-      <p class="hint">RSUs after the tax withheld at vest. Stock you already get counts toward the hybrid's market share, so it leans toward the mortgage.</p>
+      <p class="hint">{{ "RSUs after the tax withheld at vest. Stock you already get counts toward the hybrid's market share, so it leans toward the mortgage." | t }}</p>
       <label class="checkbox">
         <input type="checkbox" formControlName="sellRsusAtVest" data-testid="sell-rsus" />
-        <span><strong>Sell RSUs as they vest</strong> and use the cash like the rest</span>
+        <span><strong>{{ 'Sell RSUs as they vest' | t }}</strong> {{ 'and use the cash like the rest' | t }}</span>
       </label>
       <div class="row three">
-        <app-number-field [control]="form.controls.esppContributionPercent" [rule]="rules.esppContributionPercent" testId="espp-percent" label="ESPP (% of pay)" />
-        <app-number-field [control]="form.controls.esppDiscountPercent" [rule]="rules.esppDiscountPercent" testId="espp-discount" label="Discount" />
-        <app-number-field [control]="form.controls.esppPurchasePeriodMonths" [rule]="rules.esppPurchasePeriodMonths" testId="espp-period" label="Every (months)" />
+        <app-number-field [control]="form.controls.esppContributionPercent" [rule]="rules.esppContributionPercent" testId="espp-percent" [label]="'ESPP (% of pay)' | t" />
+        <app-number-field [control]="form.controls.esppDiscountPercent" [rule]="rules.esppDiscountPercent" testId="espp-discount" [label]="'Discount' | t" />
+        <app-number-field [control]="form.controls.esppPurchasePeriodMonths" [rule]="rules.esppPurchasePeriodMonths" testId="espp-period" [label]="'Every (months)' | t" />
       </div>
-      <p class="hint">Shares are sold as soon as they are bought, so the discount is a near-certain gain (taxed as income).</p>
+      <p class="hint">{{ 'Shares are sold as soon as they are bought, so the discount is a near-certain gain (taxed as income).' | t }}</p>
     </div>
   </details>
 
   <details class="section" data-testid="section-market">
     <summary>
-      <span class="section-title">Market &amp; home</span>
+      <span class="section-title">{{ 'Market & home' | t }}</span>
       <span class="section-summary" data-testid="market-summary">{{ marketSummary() }}</span>
     </summary>
     <div class="section-body">
       <div class="row three">
-        <app-number-field [control]="form.controls.expectedAnnualReturn" [rule]="rules.expectedAnnualReturn" testId="expected-return" label="Stocks / year" />
+        <app-number-field [control]="form.controls.expectedAnnualReturn" [rule]="rules.expectedAnnualReturn" testId="expected-return" [label]="'Stocks / year' | t" />
         <app-number-field [control]="form.controls.inflationRate" [rule]="rules.inflationRate" testId="inflation" />
-        <app-number-field [control]="form.controls.homeGrowthRate" [rule]="rules.homeGrowthRate" testId="home-growth" label="Home value" />
+        <app-number-field [control]="form.controls.homeGrowthRate" [rule]="rules.homeGrowthRate" testId="home-growth" [label]="'Home value' | t" />
       </div>
       <p class="hint">
-        Long-run averages: the S&amp;P 500 has returned about 10% a year with dividends since 1926, with whole
-        decades far below that; inflation about 3%; US home values 4.3% (FHFA, 1975–2025).
+        {{ 'Long-run averages: the S&P 500 has returned about 10% a year with dividends since 1926, with whole decades far below that; inflation about 3%; US home values 4.3% (FHFA, 1975–2025).' | t }}
       </p>
     </div>
   </details>

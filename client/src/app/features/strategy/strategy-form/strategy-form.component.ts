@@ -13,6 +13,7 @@ import { EMPLOYEE_DEFERRAL_LIMIT, IRA_LIMIT, STRATEGY_RULES } from './strategy-f
 import { TaxSituation, federalBracket, longTermGainsRate } from './tax-brackets';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 const rules = STRATEGY_RULES;
 
@@ -29,7 +30,7 @@ export const RISK_PROFILES: readonly { value: InvestorRiskProfile; label: string
  */
 @Component({
   selector: 'app-strategy-form',
-  imports: [ReactiveFormsModule, NumberFieldComponent, RateOptionsComponent],
+  imports: [ReactiveFormsModule, NumberFieldComponent, RateOptionsComponent, TPipe],
   templateUrl: './strategy-form.component.html',
   styleUrl: './strategy-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

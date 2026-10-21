@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { compactUsd, usd } from '../formatting/format';
+import { TPipe } from '../i18n/t.pipe';
 
 /** One line on a chart. */
 export interface ScrubSeries {
@@ -42,6 +43,7 @@ let nextId = 0;
  * reads the date and every figure), a tooltip for the point, and the series in a key.
  */
 @Component({
+  imports: [TPipe],
   selector: 'app-scrub-chart',
   template: `
     @let a = at();
@@ -50,7 +52,7 @@ let nextId = 0;
       <div class="head">
         <figcaption [id]="titleId" class="title">{{ title() }}</figcaption>
         <button type="button" class="as-table" data-testid="chart-as-table" [attr.aria-pressed]="asTable()" (click)="asTable.set(!asTable())">
-          {{ asTable() ? 'View as chart' : 'View as table' }}
+          {{ asTable() ? ('View as chart' | t) : ('View as table' | t) }}
         </button>
       </div>
       <ul class="key" aria-hidden="true">
@@ -64,7 +66,7 @@ let nextId = 0;
             <caption class="visually-hidden">{{ title() }}</caption>
             <thead>
               <tr>
-                <th scope="col">When</th>
+                <th scope="col">{{ 'When' | t }}</th>
                 @for (s of spec().series; track s.label) {
                   <th scope="col">{{ s.label }}</th>
                 }
@@ -114,7 +116,7 @@ let nextId = 0;
           @for (row of a.rows; track row.label; let i = $index) {
             <div class="row" [attr.data-testid]="'scrub-row-' + i">
               <span><span class="swatch small" [style.background]="'var(' + row.color + ')'"></span>{{ row.label }}</span>
-              &ngsp;<span class="figure">{{ row.value }}</span>
+              {{ '&ngsp;' | t }}<span class="figure">{{ row.value }}</span>
             </div>
           }
           @if (a.footer) {
@@ -134,7 +136,7 @@ let nextId = 0;
         }
       </div>
       <div class="scrub">
-        <label [for]="inputId">Scrub through the chart</label>
+        <label [for]="inputId">{{ 'Scrub through the chart' | t }}</label>
         <input [id]="inputId" data-testid="scrub-input" type="range" min="0" [max]="last()" step="1" [value]="index()"
                [attr.aria-valuetext]="a.valueText" (input)="scrub($event)" (keydown)="key($event)" />
       </div>

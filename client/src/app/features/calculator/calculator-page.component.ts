@@ -11,6 +11,7 @@ import { RentSettingsComponent } from './rent-settings/rent-settings.component';
 import { SaleSettingsComponent } from './sale-settings/sale-settings.component';
 import { CalculationPageComponent } from '../../shared/calculation-page/calculation-page.component';
 import { AmortizationResponse } from '../../core/models/amortization.models';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * The calculator: the form on the left, the routed result tabs on the right. The page wires the form
@@ -19,7 +20,7 @@ import { AmortizationResponse } from '../../core/models/amortization.models';
  */
 @Component({
   selector: 'app-calculator-page',
-  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, FirstVisitHintsComponent, LoanFormComponent, RentalSettingsComponent, RentSettingsComponent, RouterOutlet, SaleSettingsComponent],
+  imports: [BuyTabsComponent, CalculationPageComponent, CurrencyPipe, FirstVisitHintsComponent, LoanFormComponent, RentalSettingsComponent, RentSettingsComponent, RouterOutlet, SaleSettingsComponent, TPipe],
   templateUrl: './calculator-page.component.html',
   styleUrl: './calculator-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

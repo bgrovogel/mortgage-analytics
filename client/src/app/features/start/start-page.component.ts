@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /** One question a visitor may come with, and the page that answers it. */
 interface Question {
@@ -26,30 +27,30 @@ const QUESTIONS: readonly Question[] = [
  */
 @Component({
   selector: 'app-start-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TPipe],
   template: `
     <section class="start" aria-labelledby="start-title">
       @if (notFound) {
         <p class="not-found" role="status" data-testid="not-found">
-          That address is not a page here. These are the questions the app answers.
+          {{ 'That address is not a page here. These are the questions the app answers.' | t }}
         </p>
       }
       <header>
-        <h1 id="start-title">What do you want to figure out?</h1>
-        <p>Pick a question. You start with example numbers and replace them with yours; every answer updates as you type.</p>
+        <h1 id="start-title">{{ 'What do you want to figure out?' | t }}</h1>
+        <p>{{ 'Pick a question. You start with example numbers and replace them with yours; every answer updates as you type.' | t }}</p>
       </header>
       <div class="questions" data-testid="start-questions">
         @for (question of questions; track question.link) {
           <a class="question" [routerLink]="question.link">
             <h3>{{ question.title }}</h3>
             <p>{{ question.detail }}</p>
-            <p class="example">With the example: {{ question.example }}</p>
+            <p class="example">{{ 'With the example: {0}' | t: [question.example] }}</p>
           </a>
         }
       </div>
       <p class="promises" data-testid="start-promises">
-        <span><strong>No account needed.</strong> Sign in only to save a calculation and find it again.</span>
-        <span><strong>Nothing is saved unless you choose to save it.</strong></span>
+        <span><strong>{{ 'No account needed.' | t }}</strong> {{ 'Sign in only to save a calculation and find it again.' | t }}</span>
+        <span><strong>{{ 'Nothing is saved unless you choose to save it.' | t }}</strong></span>
       </p>
     </section>
   `,

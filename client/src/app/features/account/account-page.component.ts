@@ -7,6 +7,7 @@ import { CalculationStores } from '../calculation-stores';
 import { DataExportComponent } from './data-export.component';
 import { PasskeysComponent } from './passkeys.component';
 import { SessionsComponent } from './sessions.component';
+import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
  * The signed-in account: change its password, add passkeys to sign in with, or delete it. Changing the password needs the current one; the API
@@ -16,35 +17,35 @@ import { SessionsComponent } from './sessions.component';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [ReactiveFormsModule, RouterLink, PasskeysComponent, SessionsComponent, DataExportComponent],
+  imports: [ReactiveFormsModule, RouterLink, PasskeysComponent, SessionsComponent, DataExportComponent, TPipe],
   template: `
     <section class="card" aria-labelledby="account-page-title" aria-live="polite">
-      <h1 id="account-page-title">Your account</h1>
+      <h1 id="account-page-title">{{ 'Your account' | t }}</h1>
       @if (status() === 'done') {
         <p class="note" role="status" data-testid="delete-done">
-          Your account is deleted, with every calculation saved in it. The calculators still work without one.
+          {{ 'Your account is deleted, with every calculation saved in it. The calculators still work without one.' | t }}
         </p>
-        <a class="primary" routerLink="/calculator" data-testid="delete-done-continue">Carry on without an account</a>
+        <a class="primary" routerLink="/calculator" data-testid="delete-done-continue">{{ 'Carry on without an account' | t }}</a>
       } @else {
-        <p class="intro" data-testid="account-page-email">Signed in as <strong>{{ email }}</strong>.</p>
+        <p class="intro" data-testid="account-page-email">{{ 'Signed in as' | t }} <strong>{{ email }}</strong>.</p>
 
         <div class="part" role="group" aria-labelledby="password-title">
-          <h3 id="password-title">Change your password</h3>
+          <h3 id="password-title">{{ 'Change your password' | t }}</h3>
           <form [formGroup]="passwordForm" (submit)="$event.preventDefault(); changePassword()" novalidate data-testid="password-form">
             <label class="field">
-              <span>Current password</span>
+              <span>{{ 'Current password' | t }}</span>
               <input type="password" formControlName="current" autocomplete="current-password" data-testid="current-password"
                      [attr.aria-invalid]="passwordForm.controls.current.invalid && passwordForm.controls.current.touched" />
               @if (passwordForm.controls.current.invalid && passwordForm.controls.current.touched) {
-                <small class="error">Enter your password.</small>
+                <small class="error">{{ 'Enter your password.' | t }}</small>
               }
             </label>
             <label class="field">
-              <span>New password</span>
+              <span>{{ 'New password' | t }}</span>
               <input type="password" formControlName="next" autocomplete="new-password" data-testid="new-password"
                      [attr.aria-invalid]="passwordForm.controls.next.invalid && passwordForm.controls.next.touched" />
               @if (passwordForm.controls.next.invalid && passwordForm.controls.next.touched) {
-                <small class="error">At least 8 characters, with a number.</small>
+                <small class="error">{{ 'At least 8 characters, with a number.' | t }}</small>
               }
             </label>
             @if (passwordError(); as message) {
@@ -52,10 +53,10 @@ import { SessionsComponent } from './sessions.component';
             }
             @if (passwordStatus() === 'changed') {
               <p class="note" role="status" data-testid="password-changed">
-                Your password is changed. Any other device signed in to this account has been signed out.
+                {{ 'Your password is changed. Any other device signed in to this account has been signed out.' | t }}
               </p>
             }
-            <button type="submit" class="secondary" [disabled]="passwordStatus() === 'working'" data-testid="password-submit">Change password</button>
+            <button type="submit" class="secondary" [disabled]="passwordStatus() === 'working'" data-testid="password-submit">{{ 'Change password' | t }}</button>
           </form>
         </div>
 
@@ -66,21 +67,20 @@ import { SessionsComponent } from './sessions.component';
         <app-data-export />
 
         <div class="danger" role="group" aria-labelledby="delete-title">
-          <h3 id="delete-title">Delete your account</h3>
+          <h3 id="delete-title">{{ 'Delete your account' | t }}</h3>
           <p>
-            This deletes your account and every calculation saved in it, and signs you out on every device.
-            It cannot be undone.
+            {{ 'This deletes your account and every calculation saved in it, and signs you out on every device. It cannot be undone.' | t }}
           </p>
           @if (status() === 'idle') {
-            <button type="button" class="secondary destructive" (click)="start()" data-testid="delete-start">Delete my account…</button>
+            <button type="button" class="secondary destructive" (click)="start()" data-testid="delete-start">{{ 'Delete my account…' | t }}</button>
           } @else {
             <form [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate data-testid="delete-form">
               <label class="field">
-                <span>Your password, to confirm</span>
+                <span>{{ 'Your password, to confirm' | t }}</span>
                 <input type="password" formControlName="password" autocomplete="current-password" data-testid="delete-password"
                        [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched" />
                 @if (form.controls.password.invalid && form.controls.password.touched) {
-                  <small class="error">Enter your password.</small>
+                  <small class="error">{{ 'Enter your password.' | t }}</small>
                 }
               </label>
               @if (error(); as message) {
@@ -88,10 +88,10 @@ import { SessionsComponent } from './sessions.component';
               }
               <div class="actions">
                 <button type="submit" class="primary destructive" [disabled]="status() === 'working'" data-testid="delete-submit">
-                  Delete my account forever
+                  {{ 'Delete my account forever' | t }}
                 </button>
                 <button type="button" class="secondary" [disabled]="status() === 'working'" (click)="cancel()" data-testid="delete-cancel">
-                  Keep my account
+                  {{ 'Keep my account' | t }}
                 </button>
               </div>
             </form>
