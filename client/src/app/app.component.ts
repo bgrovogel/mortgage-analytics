@@ -6,6 +6,7 @@ import { BrandMarkComponent } from './core/layout/brand-mark.component';
 import { printInLightTheme } from './core/layout/print';
 import { applyTheme, loadTheme } from './core/layout/theme';
 import { ThemeSwitchComponent } from './core/layout/theme-switch.component';
+import { LanguageSwitchComponent } from './core/i18n/language-switch.component';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 
@@ -23,7 +24,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
 /** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent],
+  imports: [RouterLink, RouterOutlet, BrandMarkComponent, ThemeSwitchComponent, LanguageSwitchComponent],
   template: `
     <a class="skip-link" href="#main" (click)="skipToPage($event)">Skip to the page</a>
     @if (focused()) {
@@ -31,7 +32,10 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
       <header class="app-header focused">
         <div class="app-bar">
           <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
-          <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
+          <div class="header-actions">
+            <app-language-switch />
+            <a class="back" [routerLink]="back().path" data-testid="back-to-app">← Back to {{ back().name }}</a>
+          </div>
         </div>
       </header>
     } @else {
@@ -39,6 +43,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
         <div class="app-bar">
         <a class="brand" routerLink="/"><app-brand-mark /><span class="brand-name">Mortgage Analytics</span></a>
         <div class="header-actions">
+          <app-language-switch />
           <nav class="app-nav" aria-label="Pages">
             @for (page of pages; track page.path) {
               <a [routerLink]="page.path" [class.active]="isCurrent(page)" [attr.aria-current]="isCurrent(page) ? 'page' : null">{{ page.label }}</a>

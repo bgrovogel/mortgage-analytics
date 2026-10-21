@@ -443,10 +443,20 @@ select {
 @media (max-width: 640px) {
   .app-header:not(.focused) .app-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: 'brand account';
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: 'brand language account';
     gap: 0.35rem;
     padding-block: 0.5rem;
+  }
+
+  // The language switch sits between the app's name and Sign in, on the same line.
+  app-language-switch {
+    grid-area: language;
+  }
+
+  // With the switch beside it, the name needs a little less room to stay on one line on the narrowest screens.
+  .app-header:not(.focused) .brand-name {
+    font-size: 1rem;
   }
 
   body {
