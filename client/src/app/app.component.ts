@@ -75,6 +75,7 @@ const PAGES: readonly { path: string; label: string; also?: readonly string[] }[
           <a routerLink="/how-it-works">How it’s calculated</a>
           <a routerLink="/glossary">Glossary</a>
           <a routerLink="/privacy">Privacy</a>
+          <a routerLink="/terms">Terms</a>
         </nav>
         <a href="/swagger" target="_blank" rel="noopener">Developer API docs ↗</a>
         <app-theme-switch />

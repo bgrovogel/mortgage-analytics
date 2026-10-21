@@ -23,6 +23,16 @@ test.describe('How it is calculated and the glossary', () => {
     await expect(page.locator('#anonymous'), 'it says what happens without an account').toContainText('does not save them');
   });
 
+  test('the terms page is in the footer, and says it is an estimate and not advice', async ({ page }) => {
+    await page.goto('/strategy');
+
+    await page.getByRole('navigation', { name: 'About' }).getByRole('link', { name: 'Terms' }).click();
+
+    await expect(page, 'terms has its own address').toHaveURL(/\/terms$/);
+    await expect(page.locator('#what'), 'it says what the numbers are').toContainText('not a loan offer');
+    await expect(page.locator('#advice'), 'and what they are not').toContainText('not financial, tax or legal advice');
+  });
+
   test('a link can land on one term', async ({ page }) => {
     await page.goto('/glossary#term-pmi');
 
@@ -33,7 +43,7 @@ test.describe('How it is calculated and the glossary', () => {
   test('fits a phone: no page scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
 
-    for (const path of ['/how-it-works', '/glossary', '/privacy']) {
+    for (const path of ['/how-it-works', '/glossary', '/privacy', '/terms']) {
       await page.goto(path);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `${path} fits the screen`).toBeLessThanOrEqual(0);

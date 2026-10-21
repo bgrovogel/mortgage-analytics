@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { AuthService, User } from '../../core/auth/auth.service';
 import { PasskeyService } from '../../core/auth/passkey.service';
+import { AccountExportService } from '../../core/services/account-export.service';
 import { CalculatorStore } from '../calculator/calculator.store';
 import { AccountPageComponent } from './account-page.component';
 
@@ -21,6 +22,7 @@ describe('AccountPageComponent', () => {
         provideRouter([]),
         { provide: AuthService, useValue: { user: signal<User | null>({ email: 'alice@example.com' }), deleteAccount, changePassword } },
         { provide: PasskeyService, useValue: { supported: () => false } },
+        { provide: AccountExportService, useValue: { download: () => undefined } },
       ],
     });
     fixture = TestBed.createComponent(AccountPageComponent);

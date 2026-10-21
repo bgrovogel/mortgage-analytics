@@ -17,11 +17,12 @@ describe('ReadingNavComponent', () => {
         { path: 'glossary', component: HostComponent },
         { path: 'how-it-works', component: BlankComponent },
         { path: 'privacy', component: BlankComponent },
+        { path: 'terms', component: BlankComponent },
       ])],
     });
   });
 
-  it('links the three pages that explain the app, and marks the one open', async () => {
+  it('links the four pages that explain the app, and marks the one open', async () => {
     const harness = await RouterTestingHarness.create('/glossary');
     const root = harness.routeNativeElement as HTMLElement;
     const links = [...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Pages that explain it"] a')];
@@ -30,6 +31,7 @@ describe('ReadingNavComponent', () => {
       ['How it’s calculated', '/how-it-works', null],
       ['Glossary', '/glossary', 'page'],
       ['Privacy', '/privacy', null],
+      ['Terms', '/terms', null],
     ]);
   });
 });

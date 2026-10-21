@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { CalculationStores } from '../calculation-stores';
+import { DataExportComponent } from './data-export.component';
 import { PasskeysComponent } from './passkeys.component';
 
 /**
@@ -14,7 +15,7 @@ import { PasskeysComponent } from './passkeys.component';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [ReactiveFormsModule, RouterLink, PasskeysComponent],
+  imports: [ReactiveFormsModule, RouterLink, PasskeysComponent, DataExportComponent],
   template: `
     <section class="card" aria-labelledby="account-page-title" aria-live="polite">
       <h1 id="account-page-title">Your account</h1>
@@ -58,6 +59,8 @@ import { PasskeysComponent } from './passkeys.component';
         </div>
 
         <app-passkeys />
+
+        <app-data-export />
 
         <div class="danger" role="group" aria-labelledby="delete-title">
           <h3 id="delete-title">Delete your account</h3>

@@ -4,6 +4,7 @@ import { AmortizationResponse, HousingCosts, Payment } from '../../../core/model
 import { COST_CATEGORIES, CostCategory, costCategoriesFor, mortgageInsuranceName } from '../../../core/models/cost-categories';
 import { monthOf } from '../../../core/formatting/format';
 import { nextPayment } from '../answer-sentence';
+import { saveFile } from '../../../core/files/save-file';
 import { scheduleCsv } from './schedule-csv';
 import type { CostKey, ScheduleColumn, ScheduleRow } from './schedule-model';
 import { SchedulePagerComponent, SchedulePage } from './schedule-pager.component';
@@ -159,12 +160,7 @@ export class ScheduleTableComponent {
   download(): void {
     const csv = scheduleCsv(this.rows(), this.available(), this.period());
     const name = `payment-schedule-${this.period()}-${this.view() === 'accelerated' ? 'with-extra-payments' : 'standard'}.csv`;
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
+    saveFile(name, csv, 'text/csv;charset=utf-8');
   }
 
   /** Shows or hides a money column, and remembers the choice. */

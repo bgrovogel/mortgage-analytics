@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { PASSWORD, expect, test, uniqueEmail } from './fixtures';
 import { latestEmailTo, pathOf } from './mailbox';
 
@@ -71,6 +72,20 @@ test.describe('Accounts', () => {
     await expect(page.getByTestId('passkey-list'), 'its use is noted').toContainText('Last used');
     await page.getByRole('button', { name: 'Remove Test laptop' }).click();
     await expect(page.getByTestId('passkeys-none'), 'removed, so none is left').toHaveText('No passkeys yet.');
+  });
+
+  test('downloads a copy of the data the account holds: the email and every saved calculation', async ({ signedIn, account, page }) => {
+    await signedIn.saveAs('Oak St');
+    await page.goto('/account');
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('data-download').click()]);
+    const data = JSON.parse(await readFile((await download.path())!, 'utf-8'));
+
+    expect(download.suggestedFilename(), 'named for what it is, and dated').toMatch(/^mortgage-analytics-data-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(data.email, 'it is this account, not another').toBe(account.email);
+    expect(data.savedCalculations.map((c: { name: string }) => c.name), 'with what was saved').toEqual(['Oak St']);
+    expect(JSON.stringify(data), 'and no hash of a password').not.toMatch(/passwordHash/i);
+    await expect(page.getByTestId('data-status'), 'the page says it was downloaded').toHaveText('Your data was downloaded.');
   });
 
   test('an unconfirmed email cannot sign in, and can ask for the link again', async ({ page }) => {

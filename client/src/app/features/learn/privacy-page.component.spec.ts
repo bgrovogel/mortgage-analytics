@@ -41,6 +41,7 @@ describe('PrivacyPageComponent', () => {
     expect(text).toContain('public half');
     expect(text).toContain('order of your key figures');
     expect(text).toContain('deletes everything above');
+    expect(text).toContain('download a copy');
   });
 
   it('names every setting the browser keeps, and says clearing the site data removes them', () => {

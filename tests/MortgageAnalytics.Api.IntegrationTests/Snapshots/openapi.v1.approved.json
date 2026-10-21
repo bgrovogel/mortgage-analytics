@@ -5,6 +5,34 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/account/export": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "ExportAccountData",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/register": {
       "post": {
         "tags": [
@@ -1100,6 +1128,37 @@
           "refreshToken": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AccountExport": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "savedCalculations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedCalculationResponse"
+            },
+            "nullable": true
+          },
+          "passkeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PasskeyResponse"
+            },
+            "nullable": true
+          },
+          "keyFigures": {
+            "$ref": "#/components/schemas/KeyFigurePreferences"
           }
         },
         "additionalProperties": false

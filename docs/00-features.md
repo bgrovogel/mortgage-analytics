@@ -167,6 +167,8 @@ buy, refinancing, pay off or invest), worked through with the example loan, then
 names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
 loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term, and words in running text
 (the APR on the tiles, PMI and escrow on How it's calculated) link there themselves, with the meaning on hover.
+**Terms**, in the same footer, says what the numbers are (an estimate, not a loan offer, a Loan Estimate or a pre-approval) and
+what they are not (financial, tax or legal advice), how exact they are, and that this is a demonstration provided as it is.
 **Privacy**, in the same
 footer, says what happens to what you type: nothing is saved without an account, a share link keeps the numbers after
 its `#`, an account holds an email address, a scrambled password, the passkeys you add (their public halves only), the order of
@@ -505,6 +507,9 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   the public half, so there is no secret to guess or steal. Then **Sign in with a passkey** on the sign-in page signs
   in with no email and no password. Each passkey is listed with when it was added and last used, and can be removed;
   up to ten. Closing the device's prompt changes nothing, and the password still works.
+- **Download your data.** **Your data** on the account page saves one JSON file of everything the account holds: the
+  email, every saved calculation with all its inputs, the passkeys' names and dates, and the key figures' order. It never
+  holds the password or a passkey's key.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
   or searched by name. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved

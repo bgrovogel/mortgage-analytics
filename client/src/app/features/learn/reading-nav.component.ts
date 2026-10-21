@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
-/** The three pages that explain the app, as one row, so a reader moves between them without going back. */
+/** The four pages that explain the app, as one row, so a reader moves between them without going back. */
 @Component({
   selector: 'app-reading-nav',
   imports: [RouterLink, RouterLinkActive],
@@ -10,6 +10,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a routerLink="/how-it-works" routerLinkActive="active" ariaCurrentWhenActive="page">How it’s calculated</a>
       <a routerLink="/glossary" routerLinkActive="active" ariaCurrentWhenActive="page">Glossary</a>
       <a routerLink="/privacy" routerLinkActive="active" ariaCurrentWhenActive="page">Privacy</a>
+      <a routerLink="/terms" routerLinkActive="active" ariaCurrentWhenActive="page">Terms</a>
     </nav>
   `,
   styles: `

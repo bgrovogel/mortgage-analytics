@@ -41,8 +41,9 @@ import { ReadingNavComponent } from './reading-nav.component';
           <p>A passkey, if you add one, lets you sign in with your device's fingerprint, face or screen lock. Only its
             public half is kept here, with the name you gave it and when it was added and last used; the private half
             never leaves your device, so there is nothing to steal or to guess.</p>
-          <p>You can change your password, and remove any passkey, at any time. You can delete your account, which deletes
-            everything above: every saved calculation, every passkey and your arrangement.</p>
+          <p>You can change your password, and remove any passkey, at any time. You can download a copy of everything above
+            as a file, and you can delete your account, which deletes everything above: every saved calculation, every
+            passkey and your arrangement.</p>
           <p>Signing in puts a cookie in your browser that keeps you signed in. Scripts on the page cannot read it, and
             other sites cannot send it.</p>
         </section>

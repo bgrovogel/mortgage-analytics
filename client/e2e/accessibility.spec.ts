@@ -29,7 +29,7 @@ async function openView(page: Page, id: string) {
 /** Waits until a calculator page shows its first results, so the scan sees the finished page (the start page has none). */
 async function settled(page: Page) {
   // The start page and the reading pages have no results to wait for: their heading is the finished page.
-  if (['/', '/how-it-works', '/glossary', '/privacy'].includes(new URL(page.url()).pathname)) {
+  if (['/', '/how-it-works', '/glossary', '/privacy', '/terms'].includes(new URL(page.url()).pathname)) {
     await expect(page.locator('main h1').first(), 'the page has arrived').toBeVisible();
     return;
   }
@@ -216,7 +216,7 @@ for (const scheme of ['light', 'dark'] as const) {
 test.describe('Accessibility on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  for (const path of ['/', '/calculator/overview', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy']) {
+  for (const path of ['/', '/calculator/overview', '/refinance', '/strategy', '/how-it-works', '/glossary', '/privacy', '/terms']) {
     test(`${path}`, async ({ page }) => {
       await page.goto(path);
       await settled(page);
