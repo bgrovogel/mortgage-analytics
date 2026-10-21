@@ -3,6 +3,8 @@
  * The Swagger document at /swagger/v1/swagger.json is the source of truth.
  */
 
+import type { TaxFilingStatus } from './strategy.models';
+
 /** What the borrower does with extra principal. */
 export type ExtraPaymentStrategy = 'ShortenTerm' | 'Recast';
 
@@ -142,6 +144,19 @@ export interface RentOrBuyInput {
   maintenancePercent: number;
   /** What selling costs, as a percentage of the home's value then. */
   sellingCostPercent: number;
+  /** How the owner's federal income tax differs from a renter's; left out to leave tax out. */
+  ownerTaxes?: OwnerTaxesInput | null;
+}
+
+/** How a household files and what else it deducts, for the tax owning saves over renting. */
+export interface OwnerTaxesInput {
+  filingStatus: TaxFilingStatus;
+  /** The federal rate on the last dollars of income, as a percentage. */
+  marginalTaxRatePercent: number;
+  /** State and other local taxes a year besides this home's property tax, in today's dollars. */
+  otherStateAndLocalTaxes: number;
+  /** Charity and other itemized deductions a year, in today's dollars. */
+  otherItemizedDeductions: number;
 }
 
 /** One year of renting instead of buying. */
@@ -157,6 +172,8 @@ export interface RentOrBuyYear {
   renterNetWorth: number;
   /** How far buying is ahead; negative while renting is. */
   advantage: number;
+  /** The federal income tax owning saved that year, which the buyer invests; zero when tax is left out. */
+  taxSaved?: number;
 }
 
 /** Buying the home against renting a similar one, year by year. */
@@ -166,6 +183,8 @@ export interface RentOrBuyComparison extends RentOrBuyInput {
   /** The first year from which buying is ahead for good; null when it never is. */
   breakEvenYear: number | null;
   years: RentOrBuyYear[];
+  /** True when the tax owning saves is counted. */
+  countsTaxSavings?: boolean;
 }
 
 /** What a monthly budget buys: the highest price whose payment fits it, keeping the down payment share, rate and costs. */

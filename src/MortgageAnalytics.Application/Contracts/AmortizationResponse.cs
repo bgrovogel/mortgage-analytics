@@ -63,6 +63,7 @@ public sealed record InFiveYearsResponse(decimal TotalPaid, decimal PrincipalPai
 /// <param name="CashToClose">What buying takes at closing (the down payment alone without closing costs), which the renter invests.</param>
 /// <param name="BreakEvenYear">The first year from which buying is ahead for good; null when it never is within the years compared.</param>
 /// <param name="Years">Each year, up to 30 (or the loan's term when shorter).</param>
+/// <param name="CountsTaxSavings">True when the buyer's federal income tax saving (the interest and property tax deducted) is counted; false when the comparison leaves tax out.</param>
 public sealed record RentOrBuyResponse(
     decimal MonthlyRent,
     decimal RentIncreasePercent,
@@ -71,7 +72,8 @@ public sealed record RentOrBuyResponse(
     decimal SellingCostPercent,
     decimal CashToClose,
     int? BreakEvenYear,
-    IReadOnlyList<RentOrBuyYearResponse> Years);
+    IReadOnlyList<RentOrBuyYearResponse> Years,
+    bool CountsTaxSavings = false);
 
 /// <summary>One year of renting instead of buying.</summary>
 /// <param name="Year">The 1-based year.</param>
@@ -82,8 +84,10 @@ public sealed record RentOrBuyResponse(
 /// <param name="BuyerNetWorth">The equity and the buyer's investments.</param>
 /// <param name="RenterNetWorth">The renter's investments.</param>
 /// <param name="Advantage">How far buying is ahead; negative while renting is.</param>
+/// <param name="TaxSaved">The federal income tax owning saved that year, which the buyer invests as it is saved; zero when tax is left out.</param>
 public sealed record RentOrBuyYearResponse(
-    int Year, decimal OwnershipCost, decimal Rent, decimal HomeEquity, decimal BuyerInvestments, decimal BuyerNetWorth, decimal RenterNetWorth, decimal Advantage);
+    int Year, decimal OwnershipCost, decimal Rent, decimal HomeEquity, decimal BuyerInvestments, decimal BuyerNetWorth, decimal RenterNetWorth, decimal Advantage,
+    decimal TaxSaved = 0m);
 
 /// <summary>
 /// The home against a household's income and debts: its debt-to-income ratios, and for each limit, the most the housing

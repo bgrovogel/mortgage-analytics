@@ -27,6 +27,41 @@ public class RentOrBuyComparisonTests
             Schedules.Baseline, Schedules.BaselineCosts, null, new PropertyValuation(250_000m, growth));
 
     [Test]
+    public void TheTaxOwningSaves_IsCountedEachYear_AndInvestedByTheBuyerAsItIsSaved()
+    {
+        // 24% on the interest, which is all the home adds: the other deductions already beat the standard one.
+        var tax = new OwnerTaxProfile(MortgageAnalytics.Domain.Strategies.FilingStatus.SingleFiler, 24m, 10_000m, 10_000m);
+        var without = Compare();
+        var with = RentOrBuyComparison.Years(
+            new RentOrBuyAssumptions(1_200m, 0m, 0m, 0m, 0m), 50_000m, Loan, Schedules.Baseline, Schedules.BaselineCosts, null, new PropertyValuation(250_000m, 0m), tax);
+        var firstYearInterest = Schedules.Baseline.Payments.Take(12).Sum(p => p.Interest);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(with[0].TaxSaved, Is.EqualTo(Money.Round(firstYearInterest * 0.24m)), "24% of the first year's interest");
+            Assert.That(without[0].TaxSaved, Is.EqualTo(0m), "nothing when no tax profile is given");
+            Assert.That(with[0].BuyerInvestments - without[0].BuyerInvestments, Is.EqualTo(with[0].TaxSaved).Within(0.01m),
+                "with no return on investments, the buyer is exactly the year's saving better off");
+            Assert.That(with[0].OwnershipCost, Is.EqualTo(without[0].OwnershipCost), "what owning cost is the same: the saving is on the tax return, not the bills");
+            Assert.That(with[0].RenterInvestments, Is.EqualTo(without[0].RenterInvestments), "and the renter is unchanged");
+        });
+    }
+
+    [Test]
+    public void TheTaxSaving_FallsAsTheInterestFalls_ButNeverBelowNothing()
+    {
+        var tax = new OwnerTaxProfile(MortgageAnalytics.Domain.Strategies.FilingStatus.SingleFiler, 24m, 10_000m, 10_000m);
+        var years = RentOrBuyComparison.Years(
+            new RentOrBuyAssumptions(1_200m, 0m, 0m, 0m, 0m), 50_000m, Loan, Schedules.Baseline, Schedules.BaselineCosts, null, new PropertyValuation(250_000m, 0m), tax);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(years.Select(y => y.TaxSaved), Is.Ordered.Descending, "each year's interest is less than the last, so the saving is too");
+            Assert.That(years.All(y => y.TaxSaved >= 0m), Is.True, "and a saving is never negative");
+        });
+    }
+
+    [Test]
     public void TheBuyer_HasTheHomeLessWhatIsOwed_AndInvestsWhatOwningSaves()
     {
         var year = Compare()[0];

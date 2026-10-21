@@ -505,13 +505,42 @@ def annual_percentage_rate(out):
     return ((low + high) / 2 * 12 * 100).quantize(D('0.001'), rounding=ROUND_HALF_UP)
 
 
+# Federal income tax, 2026: the standard deduction by filing status, the most state and local taxes that can be deducted,
+# how fast prices (and the standard deduction) are taken to rise, and the mortgage debt interest can be deducted on.
+STANDARD_DEDUCTION = {'Single': D(16_100), 'MarriedFilingJointly': D(32_200), 'HeadOfHousehold': D(24_150)}
+SALT_LIMIT, DEDUCTION_INDEX, DEBT_LIMIT = D(40_400), D('2.5'), D(750_000)
+
+
+def tax_saved_by_owning(owner, year, payments):
+    """
+    What owning saves in federal income tax in a year over renting: the extra the owner deducts (mortgage interest, up to
+    the debt limit, and the property tax, within the limit on state and local taxes) beyond what the same person deducts
+    as a renter (the standard deduction, or their other deductions when larger), at their tax rate. The standard deduction
+    and the person's other amounts rise with prices; the limit on state and local taxes does not.
+    """
+    months = payments[(year - 1) * 12:year * 12]
+    # What was owed at the start of the year: the last year's end, or, in the first, what was borrowed.
+    opening = payments[(year - 1) * 12 - 1]['remainingBalance'] if year > 1 else payments[0]['remainingBalance'] + payments[0]['principal']
+    interest = sum((p['interest'] for p in months), D(0))
+    if opening > DEBT_LIMIT:
+        interest = money(interest * DEBT_LIMIT / opening)
+    prop = sum((p['costs']['propertyTax'] + p['costs']['schoolTax'] + p['costs']['localTax'] + p['costs']['mudTax'] for p in months), D(0))
+    standard = money(grow(STANDARD_DEDUCTION[owner['filingStatus']], DEDUCTION_INDEX, year - 1))
+    taxes = money(grow(D(str(owner['otherStateAndLocalTaxes'])), DEDUCTION_INDEX, year - 1))
+    other = money(grow(D(str(owner['otherItemizedDeductions'])), DEDUCTION_INDEX, year - 1))
+    renting = max(standard, other + min(taxes, SALT_LIMIT))
+    owning = max(standard, other + min(taxes + prop, SALT_LIMIT) + interest)
+    return money((owning - renting) * D(str(owner['marginalTaxRatePercent'])) / 100)
+
+
 def rent_or_buy(request, out):
     """
     Buying against renting a similar home, year by year, up to 30 years (or the loan's term): each month the cheaper of
     owning (the standard schedule's outlay, less any buydown subsidy, plus upkeep on that year's value) and renting (the
     rent, rising each year) invests the difference at the return a year compounded monthly; the renter also invests
     what buying takes to close. The buyer has the home after a sale (its value less what is owed and the selling
-    costs) and their investments; the renter, their investments.
+    costs) and their investments; the renter, their investments. With an owner's tax profile, the year's federal tax
+    saving is felt a twelfth a month, as owning costing that much less.
     """
     a = request.get('rentOrBuy')
     if not a:
@@ -524,27 +553,30 @@ def rent_or_buy(request, out):
     cash = out['cashToClose']['total'] if out['cashToClose'] else D(str(request['downPayment']))
     payments = out['baseline']['payments']
     monthly = 1 + ret / 100 / 12
+    owner = a.get('ownerTaxes')
     buyer, renter, years = D(0), cash, []
     for year in range(1, min(30, len(payments) // 12) + 1):
         upkeep = money(grow(price, growth, year - 1) * upkeep_pct / 100 / 12)
         rent = grow(rent0, rise, year - 1)
         owned = rented = D(0)
+        saved = tax_saved_by_owning(owner, year, payments) if owner else D(0)
         for p in payments[(year - 1) * 12:year * 12]:
             owning = p['totalOutlay'] + upkeep
-            buyer = buyer * monthly + max(D(0), rent - owning)
-            renter = renter * monthly + max(D(0), owning - rent)
+            felt = owning - saved / 12
+            buyer = buyer * monthly + max(D(0), rent - felt)
+            renter = renter * monthly + max(D(0), felt - rent)
             owned += owning
             rented += rent
         sold = grow(price, growth, year)
         equity = sold - payments[year * 12 - 1]['remainingBalance'] - money(sold * selling / 100)
         b, r = money(buyer), money(renter)
         years.append({'year': year, 'ownershipCost': owned, 'rent': rented, 'homeEquity': equity, 'buyerInvestments': b,
-                      'buyerNetWorth': equity + b, 'renterNetWorth': r, 'advantage': equity + b - r})
+                      'buyerNetWorth': equity + b, 'renterNetWorth': r, 'advantage': equity + b - r, 'taxSaved': saved})
     since = None
     for y in years:
         since = (since or y['year']) if y['advantage'] >= 0 else None
     return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
-            'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years}
+            'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner)}
 
 
 # Debt-to-income limits, as percentages of gross monthly income: (housing, total). Comfortable is the classic 28/36;

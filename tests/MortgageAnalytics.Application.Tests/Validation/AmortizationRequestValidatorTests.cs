@@ -287,6 +287,23 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
         AssertInvalid(request, path, "each closing-cost field has the range a Loan Estimate allows");
     }
 
+    [TestCase(-0.01, 0, 0, "RentOrBuy.OwnerTaxes.MarginalTaxRatePercent", TestName = "A tax rate below nothing")]
+    [TestCase(50.01, 0, 0, "RentOrBuy.OwnerTaxes.MarginalTaxRatePercent", TestName = "A tax rate past 50%")]
+    [TestCase(24, -1, 0, "RentOrBuy.OwnerTaxes.OtherStateAndLocalTaxes", TestName = "Other state and local taxes below nothing")]
+    [TestCase(24, 0.001, 0, "RentOrBuy.OwnerTaxes.OtherStateAndLocalTaxes", TestName = "Other state and local taxes to a fraction of a cent")]
+    [TestCase(24, 100_000_000.01, 0, "RentOrBuy.OwnerTaxes.OtherStateAndLocalTaxes", TestName = "Other state and local taxes past $100 million")]
+    [TestCase(24, 0, -1, "RentOrBuy.OwnerTaxes.OtherItemizedDeductions", TestName = "Other deductions below nothing")]
+    public void OwnerTaxes_OutOfRange_IsRejected(decimal rate, decimal stateAndLocal, decimal other, string path)
+    {
+        AssertInvalid(A.Request.WithRentOrBuy(2_000m).WithOwnerTaxes(TaxFilingStatus.Single, rate, stateAndLocal, other), path, "a tax profile is a rate and amounts a person could have");
+    }
+
+    [Test]
+    public void OwnerTaxes_AtTheEdgesOfTheirRanges_AreAccepted()
+    {
+        AssertValid(A.Request.WithRentOrBuy(2_000m).WithOwnerTaxes(TaxFilingStatus.HeadOfHousehold, 50m, 100_000_000m, 0m), "the edges are tax profiles");
+    }
+
     [TestCase(0, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "No rent")]
     [TestCase(2_000.001, 3.5, 7, 1, 6, "RentOrBuy.MonthlyRent", TestName = "Rent to a fraction of a cent")]
     [TestCase(2_000, 20.01, 7, 1, 6, "RentOrBuy.RentIncreasePercent", TestName = "Rent rising more than 20% a year")]

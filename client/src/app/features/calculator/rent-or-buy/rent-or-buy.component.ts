@@ -67,8 +67,7 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
       The renter invests the {{ usd(comparison().cashToClose) }} buying would take to close, and each month whichever costs
       less invests the difference, at {{ percent(comparison().investmentReturnPercent) }} a year. Owning includes
       {{ percent(comparison().maintenancePercent) }} of the home’s value a year in upkeep, and
-      {{ percent(comparison().sellingCostPercent) }} to sell. Taxes on investment gains, the mortgage interest deduction and
-      extra payments are left out.
+      {{ percent(comparison().sellingCostPercent) }} to sell. {{ taxNote() }}
     </p>
   `,
   styleUrl: './rent-or-buy.component.scss',
@@ -81,6 +80,16 @@ export class RentOrBuyComponent {
   protected readonly usd = usd;
   protected readonly abs = Math.abs;
   protected readonly percent = (value: number) => `${decimal(value)}%`;
+
+  /** What the note says of tax: that the saving of owning is counted, or that the deduction is left out. */
+  protected readonly taxNote = computed(() => {
+    const { countsTaxSavings, years } = this.comparison();
+    if (!countsTaxSavings) {
+      return 'Taxes on investment gains, the mortgage interest deduction and extra payments are left out.';
+    }
+    const total = years.reduce((sum, y) => sum + (y.taxSaved ?? 0), 0);
+    return `It counts the federal tax owning saves: ${usd(years[0]?.taxSaved ?? 0)} in year 1, and ${usd(total)} in the ${years.length} years compared. Taxes on investment gains and extra payments are left out.`;
+  });
 
 
   /** How long to stay for buying to come out ahead, or that renting stays ahead. */

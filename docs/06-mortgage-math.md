@@ -466,12 +466,20 @@ investments; the renter, their investments. Buying **breaks even** in the first 
 every year after; one good year followed by a bad one does not count.
 
 - It uses the loan's standard schedule: extra payments are an investment choice, like the renter's.
-- Left out: taxes on investment gains, the mortgage interest deduction (most households take the standard deduction),
-  and renters insurance.
+- Left out: taxes on investment gains and renters insurance. The mortgage interest deduction is left out unless the
+  owner's taxes are given (below).
+- **The tax owning saves** (only with `ownerTaxes`): each year the owner deducts the larger of the standard deduction
+  and `other + min(state and local taxes + property tax, $40,400) + mortgage interest`, where the interest is cut to
+  the share of a $750,000 debt limit when the loan is larger; the renter, the larger of the standard deduction and
+  `other + min(state and local taxes, $40,400)`. The saving is `(owning − renting) × tax rate`, to the cent, and each
+  month `owning` becomes `owning − saving ÷ 12` in the two lines above. The standard deduction and the other amounts
+  rise 2.5% a year (year 1 is 2026's figures); the $40,400 limit does not (it is scheduled to revert in 2030, which
+  this does not model).
 - On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
   else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
 - The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
-  Python model compares every year its own way: 300 of 300 random purchases match, 130 of them with a rent.
+  Python model compares every year its own way: 300 of 300 random purchases match, 130 of them with a rent, 58 of
+  those with the owner's taxes.
 
 ### The best use of the seller's money
 

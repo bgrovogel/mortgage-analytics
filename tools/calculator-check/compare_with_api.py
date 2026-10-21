@@ -53,6 +53,8 @@ def differences(expected, actual, path='$'):
     elif isinstance(expected, bool) or expected is None or isinstance(expected, str):
         if expected != actual:
             yield f'{path}: expected {expected!r}, got {actual!r}'
+    elif actual is None:
+        yield f'{path}: expected {expected}, got null'
     elif D(expected) != D(actual):
         yield f'{path}: expected {expected}, got {actual}'
 
@@ -160,6 +162,11 @@ def random_purchase(rng):
         request['rentOrBuy'] = {'monthlyRent': money(rng, int(price / 400), int(price / 120), 25),
                                 'rentIncreasePercent': rng.choice([0, 2.5, 3.5, 5]), 'investmentReturnPercent': rng.choice([4, 7, 10]),
                                 'maintenancePercent': rng.choice([0, 1, 1.5]), 'sellingCostPercent': rng.choice([0, 5, 6, 8])}
+        # Some count the federal tax owning saves: any filing status, from a low rate to a high one, with and without other deductions.
+        if rng.random() < 0.5:
+            request['rentOrBuy']['ownerTaxes'] = {
+                'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold']), 'marginalTaxRatePercent': rng.choice([10, 12, 22, 24, 32, 35, 37]),
+                'otherStateAndLocalTaxes': rng.choice([0, 0, 5_000, 12_000, 35_000]), 'otherItemizedDeductions': rng.choice([0, 0, 3_000, 15_000])}
     # Some measure the home against a household's income and debts, from modest to comfortably well off.
     if rng.random() < 0.4:
         request['affordability'] = {'annualIncome': money(rng, 40_000, 400_000, 500), 'monthlyDebts': rng.choice([0, 0, 250, 600, 1_200, 3_000])}

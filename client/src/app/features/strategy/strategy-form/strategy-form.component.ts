@@ -6,6 +6,7 @@ import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { setChanged } from '../../../core/forms/set-changed';
 import { decimal, usd } from '../../../core/formatting/format';
+import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { InvestorRiskProfile, StrategyRequest, TaxFilingStatus } from '../../../core/models/strategy.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { EMPLOYEE_DEFERRAL_LIMIT, IRA_LIMIT, STRATEGY_RULES } from './strategy-fields';
@@ -14,12 +15,6 @@ import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 
 const rules = STRATEGY_RULES;
-
-export const FILING_STATUSES: readonly { value: TaxFilingStatus; label: string }[] = [
-  { value: 'MarriedFilingJointly', label: 'Married filing jointly' },
-  { value: 'Single', label: 'Single' },
-  { value: 'HeadOfHousehold', label: 'Head of household' },
-];
 
 export const RISK_PROFILES: readonly { value: InvestorRiskProfile; label: string; margin: number }[] = [
   { value: 'Conservative', label: 'Conservative', margin: 4 },

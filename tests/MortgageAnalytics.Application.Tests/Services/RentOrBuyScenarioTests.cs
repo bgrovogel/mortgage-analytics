@@ -77,6 +77,53 @@ public class RentOrBuyScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void ThereIsNoTaxSaving_UnlessAsked_AndTheComparisonSaysSo()
+    {
+        var response = Service.Analyze(TexasPurchase().WithRentOrBuy(1_800m)).RentOrBuy!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.CountsTaxSavings, Is.False, "the interest deduction is left out");
+            Assert.That(response.Years.Select(y => y.TaxSaved), Is.All.EqualTo(0m), "so no year has a saving");
+        });
+    }
+
+    [Test]
+    public void TheTaxOwningSaves_IsTheDeductionAboveTheStandardOne_AtTheTaxRate()
+    {
+        // A single filer at 24%, with $8,000 of other state taxes: owning adds the interest and the property tax up to the limit.
+        var response = Service.Analyze(TexasPurchase().WithRentOrBuy(1_800m).WithOwnerTaxes(TaxFilingStatus.Single, 24m, 8_000m));
+        var interest = response.Baseline.Payments.Take(12).Sum(p => p.Interest);
+        var propertyTax = response.Projection[0].Costs.SchoolTax + response.Projection[0].Costs.LocalTax + response.Projection[0].Costs.MudTax + response.Projection[0].Costs.PropertyTax;
+        // Renting: the $8,000 is under the $16,100 standard deduction. Owning: 8,000 + the property tax + the interest.
+        var owning = 8_000m + propertyTax + interest;
+        var expected = Math.Round((owning - 16_100m) * 0.24m, 2);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.RentOrBuy!.CountsTaxSavings, Is.True, "the comparison counts it");
+            Assert.That(response.RentOrBuy.Years[0].TaxSaved, Is.EqualTo(expected).Within(0.01m), "the first year's deduction above the standard one, at 24%");
+            Assert.That(response.RentOrBuy.Years[0].TaxSaved, Is.GreaterThan(0m), "owning this home does save tax");
+        });
+    }
+
+    [Test]
+    public void CountingTheTaxSaving_ImprovesBuying_ThroughTheRentersSideHere_ButNotWhatOwningCosts()
+    {
+        var without = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_800m)).RentOrBuy!;
+        var with = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_800m).WithOwnerTaxes(TaxFilingStatus.Single, 24m, 8_000m)).RentOrBuy!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(with.Years[4].BuyerNetWorth, Is.GreaterThanOrEqualTo(without.Years[4].BuyerNetWorth), "the buyer is never worse off for a saving");
+            Assert.That(with.Years[4].RenterNetWorth, Is.LessThan(without.Years[4].RenterNetWorth),
+                "owning feels cheaper, so what the renter has left over to invest each month shrinks: whichever costs less invests the difference");
+            Assert.That(with.Years[4].Advantage, Is.GreaterThan(without.Years[4].Advantage), "buying comes out better");
+            Assert.That(with.Years[0].OwnershipCost, Is.EqualTo(without.Years[0].OwnershipCost), "the bills are the same; the saving is on the tax return");
+        });
+    }
+
+    [Test]
     public void CheapRent_KeepsRentingAhead_AndDearRent_MakesBuyingWinSooner()
     {
         var cheap = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_000m)).RentOrBuy!;

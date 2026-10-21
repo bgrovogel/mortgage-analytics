@@ -344,6 +344,19 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(r => r.InvestmentReturnPercent).InclusiveBetween(-20, 30).WithName("Investment return");
             RuleFor(r => r.MaintenancePercent).InclusiveBetween(0, 10).WithName("Upkeep");
             RuleFor(r => r.SellingCostPercent).InclusiveBetween(0, 20).WithName("Selling costs");
+            RuleFor(r => r.OwnerTaxes!).SetValidator(new OwnerTaxesValidator()).When(r => r.OwnerTaxes is not null);
+        }
+    }
+
+    /// <summary>The owner's tax profile: a rate and amounts a person could have, in dollars and cents.</summary>
+    private sealed class OwnerTaxesValidator : AbstractValidator<OwnerTaxesRequest>
+    {
+        public OwnerTaxesValidator()
+        {
+            RuleFor(t => t.FilingStatus).IsInEnum();
+            RuleFor(t => t.MarginalTaxRatePercent).InclusiveBetween(0, OwnerTaxProfile.MaxRate).WithName("Tax rate");
+            RuleFor(t => t.OtherStateAndLocalTaxes).InclusiveBetween(0, MaxIncome).WholeCents().WithName("State and local taxes");
+            RuleFor(t => t.OtherItemizedDeductions).InclusiveBetween(0, MaxIncome).WholeCents().WithName("Itemized deductions");
         }
     }
 

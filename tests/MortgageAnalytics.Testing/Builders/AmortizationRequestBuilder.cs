@@ -154,6 +154,23 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
+    /// <summary>
+    /// Counts the tax owning saves in the rent-or-buy comparison, for a household filing <paramref name="filingStatus"/> at a
+    /// <paramref name="marginalTaxRate"/> with other state and local taxes and itemized deductions. Needs <see cref="WithRentOrBuy"/> first.
+    /// </summary>
+    public AmortizationRequestBuilder WithOwnerTaxes(
+        TaxFilingStatus filingStatus = TaxFilingStatus.Single, decimal marginalTaxRate = 24m, decimal stateAndLocalTaxes = 0m, decimal otherDeductions = 0m) =>
+        With(r => r with
+        {
+            RentOrBuy = r.RentOrBuy! with
+            {
+                OwnerTaxes = new OwnerTaxesRequest
+                {
+                    FilingStatus = filingStatus, MarginalTaxRatePercent = marginalTaxRate, OtherStateAndLocalTaxes = stateAndLocalTaxes, OtherItemizedDeductions = otherDeductions,
+                },
+            },
+        });
+
     /// <summary>Asks for the most a home could cost for a total monthly payment of <paramref name="monthlyBudget"/>, at the same down payment share.</summary>
     public AmortizationRequestBuilder WithMonthlyBudget(decimal monthlyBudget) => With(r => r with { MonthlyBudget = monthlyBudget });
 

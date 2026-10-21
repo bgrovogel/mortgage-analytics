@@ -1,6 +1,7 @@
 using MortgageAnalytics.Domain.Amortization;
 using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Loans;
+using MortgageAnalytics.Domain.Strategies;
 
 namespace MortgageAnalytics.Domain.RentOrBuy;
 
@@ -43,7 +44,9 @@ public sealed record RentOrBuyAssumptions(
 /// <param name="HomeEquity">What selling would leave the buyer at the year's end: the home's value, less what is owed and selling costs.</param>
 /// <param name="BuyerInvestments">The buyer's savings by then: whatever owning cost less than renting, invested.</param>
 /// <param name="RenterInvestments">The renter's savings by then: the cash a purchase would have taken to close, and whatever renting cost less, invested.</param>
-public sealed record RentOrBuyYear(int Year, decimal OwnershipCost, decimal Rent, decimal HomeEquity, decimal BuyerInvestments, decimal RenterInvestments)
+/// <param name="TaxSaved">The federal income tax owning saved that year (see <see cref="OwnerTaxProfile"/>); the buyer invests it as it is saved. Zero when no tax profile was given.</param>
+public sealed record RentOrBuyYear(
+    int Year, decimal OwnershipCost, decimal Rent, decimal HomeEquity, decimal BuyerInvestments, decimal RenterInvestments, decimal TaxSaved = 0m)
 {
     /// <summary>What the buyer has: the home's equity after selling costs, and their investments.</summary>
     public decimal BuyerNetWorth => HomeEquity + BuyerInvestments;
@@ -59,8 +62,8 @@ public sealed record RentOrBuyYear(int Year, decimal OwnershipCost, decimal Rent
 /// Renting against buying, year by year, for households that spend the same: each month, whichever of owning and
 /// renting costs less invests the difference, and the renter also invests what buying would have taken to close.
 /// The buyer is worth the home (less what is owed and what selling costs) plus their investments; the renter, their
-/// investments. Taxes on investment gains and the mortgage interest deduction are left out, as are extra payments:
-/// they are an investment choice, like the renter's.
+/// investments. Taxes on investment gains are left out, as are extra payments: they are an investment choice, like the
+/// renter's. The mortgage interest deduction is counted only when an <see cref="OwnerTaxProfile"/> is given.
 /// </summary>
 public static class RentOrBuyComparison
 {
@@ -75,11 +78,13 @@ public static class RentOrBuyComparison
     /// <param name="costs">The housing costs charged with each payment.</param>
     /// <param name="buydown">A temporary buydown whose subsidy pays part of the early payments, or null.</param>
     /// <param name="valuation">The home's market value, year by year.</param>
+    /// <param name="tax">How the owner's income tax differs from a renter's, or null to leave tax out.</param>
     public static IReadOnlyList<RentOrBuyYear> Years(
         RentOrBuyAssumptions assumptions, decimal cashToClose, LoanTerms loan, AmortizationSchedule schedule, HousingCostSchedule costs,
-        TemporaryBuydown? buydown, PropertyValuation valuation)
+        TemporaryBuydown? buydown, PropertyValuation valuation, OwnerTaxProfile? tax = null)
     {
         assumptions.Validated();
+        tax?.Validated();
         var monthlyGrowth = 1m + assumptions.InvestmentReturnPercent / 100m / 12m;
         var (buyer, renter) = (0m, cashToClose);
         var years = new List<RentOrBuyYear>();
@@ -90,13 +95,16 @@ public static class RentOrBuyComparison
             var upkeep = Money.Round(value * assumptions.MaintenancePercent / 100m / 12m);
             var rent = Growth.Compound(assumptions.MonthlyRent, assumptions.RentIncreasePercent, year - 1);
             var (owned, rented) = (0m, 0m);
+            var taxSaved = tax is null ? 0m : TaxSavedIn(tax, year, loan, schedule, costs);
 
             foreach (var payment in schedule.Payments.Skip((year - 1) * 12).Take(12))
             {
                 var owning = payment.TotalPaid + costs.Periods[payment.PaymentNumber - 1].Total + upkeep
                     - (buydown?.SubsidyFor(loan, payment.PaymentNumber, payment.ScheduledAmount) ?? 0m);
-                buyer = buyer * monthlyGrowth + Math.Max(0m, rent - owning);
-                renter = renter * monthlyGrowth + Math.Max(0m, owning - rent);
+                // The year's tax saving is felt as the year goes: a twelfth of it each month the owner pays less than they would have.
+                var felt = owning - taxSaved / 12m;
+                buyer = buyer * monthlyGrowth + Math.Max(0m, rent - felt);
+                renter = renter * monthlyGrowth + Math.Max(0m, felt - rent);
                 owned += owning;
                 rented += rent;
             }
@@ -104,10 +112,23 @@ public static class RentOrBuyComparison
             var sold = valuation.MarketValueInYear(year);
             var owed = schedule.Payments[year * 12 - 1].RemainingBalance;
             years.Add(new RentOrBuyYear(
-                year, owned, rented, sold - owed - Money.Round(sold * assumptions.SellingCostPercent / 100m), Money.Round(buyer), Money.Round(renter)));
+                year, owned, rented, sold - owed - Money.Round(sold * assumptions.SellingCostPercent / 100m), Money.Round(buyer), Money.Round(renter), taxSaved));
         }
         return years;
     }
+
+    /// <summary>The tax owning saves in a year: the interest paid (up to the limit on the debt) and the property tax charged, against a renter's deductions.</summary>
+    private static decimal TaxSavedIn(OwnerTaxProfile tax, int year, LoanTerms loan, AmortizationSchedule schedule, HousingCostSchedule costs)
+    {
+        var months = schedule.Payments.Skip((year - 1) * 12).Take(12).ToList();
+        var balanceAtStart = year == 1 ? loan.Principal : schedule.Payments[(year - 1) * 12 - 1].RemainingBalance;
+        var interest = TaxDeductions.DeductibleInterest(months.Sum(p => p.Interest), balanceAtStart);
+        var propertyTax = months.Sum(p => PropertyTaxIn(costs.Periods[p.PaymentNumber - 1]));
+        return tax.TaxSavedByOwning(year, interest, propertyTax);
+    }
+
+    private static decimal PropertyTaxIn(HousingCostBreakdown month) =>
+        month[HousingCostCategory.PropertyTax] + month[HousingCostCategory.SchoolTax] + month[HousingCostCategory.LocalTax] + month[HousingCostCategory.MudTax];
 
     /// <summary>The first year from which buying is ahead (or level) every year after, or null when it never is for good.</summary>
     /// <param name="years">The years compared.</param>

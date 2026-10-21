@@ -118,6 +118,31 @@ public sealed record RentOrBuyRequest
     /// <summary>What selling costs, as a percentage of the home's value then: commissions and the seller's closing costs.</summary>
     /// <example>6</example>
     public decimal SellingCostPercent { get; init; } = 6m;
+
+    /// <summary>
+    /// How the owner's federal income tax differs from a renter's: the mortgage interest and property tax they can
+    /// itemize, against the standard deduction. Omit to leave tax out, as the comparison does by default.
+    /// </summary>
+    public OwnerTaxesRequest? OwnerTaxes { get; init; }
+}
+
+/// <summary>The tax side of owning against renting: who the owner is, for federal income tax, and what else they deduct.</summary>
+public sealed record OwnerTaxesRequest
+{
+    /// <summary>How the household files, which sets its standard deduction (2026).</summary>
+    public TaxFilingStatus FilingStatus { get; init; }
+
+    /// <summary>The federal rate on the last dollars of income, as a percentage.</summary>
+    /// <example>24</example>
+    public decimal MarginalTaxRatePercent { get; init; }
+
+    /// <summary>State income (or sales) and other local taxes paid a year besides this home's property tax, in today's dollars. State and local taxes are deductible up to $40,400.</summary>
+    /// <example>8000</example>
+    public decimal OtherStateAndLocalTaxes { get; init; }
+
+    /// <summary>Charity and other itemized deductions a year, in today's dollars.</summary>
+    /// <example>0</example>
+    public decimal OtherItemizedDeductions { get; init; }
 }
 
 /// <summary>

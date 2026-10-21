@@ -426,6 +426,24 @@ test.describe('Mortgage calculator', () => {
       .toHaveText(['$45,672', '$35,403', '$154,031', '$151,407', 'Buy by $2,623']);
   });
 
+  test('rent or buy: counting the federal tax owning saves, which only the ticked box brings in', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.calculate();
+    await calculator.showResults('rent-or-buy');
+    await page.getByTestId('monthly-rent').fill('2400');
+    await calculator.calculate();
+    await expect(page.getByTestId('rent-or-buy-note'), 'tax is left out until asked for').not.toContainText('counts the federal tax');
+
+    await page.getByTestId('count-tax').check();
+    await page.getByTestId('filing-status').selectOption('MarriedFilingJointly');
+    await page.getByTestId('other-deductions').fill('20000');
+    await calculator.calculate();
+    await expect(page.getByTestId('rent-or-buy-note'), 'the note says the saving is counted')
+      .toContainText('counts the federal tax owning saves');
+  });
+
   test('compares up to four homes: the cheapest named, each measured against Home A, the best on each line shaded', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 415_000, downPayment: 37_350, rate: 6.25, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

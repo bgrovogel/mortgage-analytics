@@ -311,7 +311,17 @@ their investments.
 The answer is how long you must stay for buying to come out ahead, with a chart of how far ahead it is each year
 (crossing zero where it breaks even) and a table of the years 1, 3, 5, 7, 10, 15, 20 and 30. On the example, renting a
 similar home for **$2,700** a month, buying comes out ahead **if you stay 4 years or more**; at **$2,100**, renting stays
-ahead for all 30 years. Taxes on investment gains, the mortgage interest deduction and extra payments are left out.
+ahead for all 30 years. Taxes on investment gains and extra payments are left out.
+
+Tick **Count the tax savings of owning** to add the federal income tax owning saves. Give your filing status, your
+tax rate (24% to start) and what else you pay in state and local taxes and deduct (charity and the like); each year, the
+mortgage interest (on up to $750,000 of debt) and this home's property tax, with your other amounts, are weighed against
+the standard deduction you would take as a renter. What owning adds beyond that, at your rate, is the year's saving,
+felt a twelfth a month as owning costing less. The figures are 2026's: standard deductions of $16,100 (single),
+$32,200 (married filing jointly) and $24,150 (head of household), and state and local taxes deductible up to $40,400.
+The deductions are taken to rise 2.5% a year, like prices; the limit on state and local taxes is held at $40,400. The
+note under the table says how much tax owning saved in year 1 and over the years compared. Most households take the
+standard deduction, so with a modest loan the saving can be nothing at all.
 
 ![Rent or buy: the example against $2,700 a month of rent; buying comes out ahead if you stay 4 years or more, the gap crossing zero in year 4](images/rent-or-buy.png)
 

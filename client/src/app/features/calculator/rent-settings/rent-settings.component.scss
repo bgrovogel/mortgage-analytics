@@ -19,6 +19,37 @@
   }
 }
 
+// Counting the tax savings of owning: a checkbox that opens the boxes it needs.
+.count-tax {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    accent-color: var(--accent);
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

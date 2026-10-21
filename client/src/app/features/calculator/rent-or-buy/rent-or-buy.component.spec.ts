@@ -81,6 +81,25 @@ describe('RentOrBuyComponent', () => {
     expect(spec.labels).toHaveLength(30);
   });
 
+  describe('counting the tax savings of owning', () => {
+    const counted = (): RentOrBuyComparison => ({
+      ...comparison([-5_000, -2_000, 1_000], 3),
+      countsTaxSavings: true,
+      years: [-5_000, -2_000, 1_000].map((a, i) => ({ ...year(i + 1, a), taxSaved: [2_400, 2_100, 1_800][i] })),
+    });
+
+    it('says how much tax owning saved in the first year, and over the years compared', () => {
+      const { text } = render(counted());
+
+      expect(text('rent-or-buy-note')).toContain('counts the federal tax owning saves: $2,400 in year 1, and $6,300 in the 3 years compared');
+    });
+
+    it('says the interest deduction is left out when it is not counted', () => {
+      expect(render(typical).text('rent-or-buy-note')).toContain('the mortgage interest deduction');
+      expect(render(typical).text('rent-or-buy-note')).not.toContain('counts the federal tax');
+    });
+  });
+
   it('says what is assumed and what is left out', () => {
     expect(render(typical).text('rent-or-buy-note')).toBe(
       'The renter invests the $48,129 buying would take to close, and each month whichever costs less invests the '
