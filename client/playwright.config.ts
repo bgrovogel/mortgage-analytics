@@ -14,6 +14,7 @@ import { APP_URL } from './e2e/env';
  * The test server's own outbox, emptied at the start of each run. Never the development one: the tests would fill
  * it, and the mailbox they poll would grow with every run.
  */
+const CROSS_BROWSER = /(cross-browser|layout|charts)\.spec\.ts/;
 const OUTBOX = join(tmpdir(), 'mortgage-analytics-e2e-outbox');
 rmSync(OUTBOX, { recursive: true, force: true });
 
@@ -29,7 +30,13 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // Chromium runs everything, and is the only browser CI installs. Firefox and WebKit run what differs between browsers:
+  // the cross-browser journeys, the layout rules and the charts' geometry (`npm run e2e:cross`).
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testMatch: CROSS_BROWSER },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] }, testMatch: CROSS_BROWSER },
+  ],
   webServer: [
     {
       command:

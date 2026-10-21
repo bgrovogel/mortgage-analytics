@@ -261,7 +261,7 @@ A calm fintech look, built from shared parts so every page stays consistent:
   ledger, all self-hosted (`@fontsource*`; the CSP allows fonts only from the app itself), with tabular figures
   everywhere, so amounts line up in tables and do not jitter while they update.
 - **Brand:** `BrandMarkComponent`, a roof over a balance falling to zero, in a full-width header bar; the same mark
-  is the browser-tab icon (`public/favicon.svg`, with a PNG for iOS home screens), and the toolbar colour follows the bar.
+  is the browser-tab icon (`public/favicon.svg`, with a PNG for iOS home screens), and the toolbar colour follows the bar. `public/manifest.webmanifest` makes the app installable (Add to Home Screen, or Install in a desktop browser): its name, a 192 and 512 icon and a maskable one, opening standalone on the start page, with shortcuts to the three questions. There is no service worker, so it is installable but not offline; the calculations are on the server.
 - **Charts in the same type:** they are SVG and HTML on the page, so they take its fonts and colours like everything else.
 
 The flows are designed around the people using it:

@@ -145,8 +145,8 @@ def count_tests() -> dict[str, int]:
     counts = {key: parse_dotnet_listing(_run(["dotnet", "test", project, "--list-tests"], ROOT))
               for key, project in DOTNET_PROJECTS.items()}
     counts["jest"] = json.loads(_run(["npx", "jest", "--json", "--silent", "--coverage=false"], client))["numTotalTests"]
-    counts["e2e"] = parse_playwright_listing(_run(["npx", "playwright", "test", "--list"], client))
-    counts["axe"] = parse_playwright_listing(_run(["npx", "playwright", "test", "--list", "e2e/accessibility.spec.ts"], client))
+    counts["e2e"] = parse_playwright_listing(_run(["npx", "playwright", "test", "--list", "--project=chromium"], client))
+    counts["axe"] = parse_playwright_listing(_run(["npx", "playwright", "test", "--list", "--project=chromium", "e2e/accessibility.spec.ts"], client))
     return with_totals(counts)
 
 

@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 2,990 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 3,000 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -18,8 +18,8 @@
 | Infrastructure | 57 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 139 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 1,318 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 236 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 1,319 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 243 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -117,6 +117,13 @@ Take the ARM margin floor as an example of the order of work:
   does not scroll sideways, no table is cut off at its edge (the payment schedule is the one that may scroll), no text is clipped
   with an ellipsis, no number reads `NaN` or `undefined`, there is one `h1`, and on a phone what is pressed is at least 40px
   tall. It was added after a page-by-page review found tables and filters cut off on a phone.
+- **Other browsers** (`e2e/cross-browser.spec.ts`, plus the layout and chart specs): Chromium runs everything and is the
+  only browser CI installs, so the other engines are run by hand with `npm run e2e:cross:install` and `npm run e2e:cross`
+  (Firefox and WebKit, two workers, since Firefox crashes under more). They cover what differs between engines: the
+  calculator and every results view without a script error, a chart read with the arrow keys, the native dialog and where
+  focus goes when it closes, a theme kept in storage, and the layout rules and chart geometry (the dots on their lines). The first
+  run found that Safari does not focus a button when it is clicked, so a dialog gave focus back to the page's main area
+  instead of the button that opened it; the dialog now remembers what was clicked. The counts in these docs are Chromium's.
 - **Accessibility** (`e2e/accessibility.spec.ts`): axe scans every page and results tab against WCAG 2.2 A and AA, in
   light and dark mode, on desktop and a phone, signed in and out, with every form section open, and with each rate plan (a buydown's year-by-year table, an
   adjustable rate's resets). A failure names

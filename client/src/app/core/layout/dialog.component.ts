@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, input, output, viewChild } from '@angular/core';
 
 let nextId = 0;
 
@@ -33,8 +33,18 @@ export class DialogComponent {
   protected readonly titleId = `dialog-title-${nextId++}`;
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
   private opener: HTMLElement | null = null;
+  /** What is being clicked, only while its click is handled: Safari does not focus a button when it is clicked, so focus is elsewhere. */
+  private clicking: HTMLElement | null = null;
 
   constructor() {
+    const remember = (event: Event) => {
+      this.clicking = event.target instanceof Element ? event.target.closest<HTMLElement>('button, a[href], [tabindex]') : null;
+      // The click's handlers run before this: a dialog opened from some other moment has no opener to remember but the focused one.
+      setTimeout(() => (this.clicking = null));
+    };
+    document.addEventListener('click', remember, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', remember, true));
+
     // The backdrop is the dialog element around its content, so a click that lands on it (not in the content) closes.
     afterNextRender(() => {
       const dialog = this.dialog().nativeElement;
@@ -48,7 +58,8 @@ export class DialogComponent {
   open(): void {
     const dialog = this.dialog().nativeElement;
     if (dialog.open) return;
-    this.opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focused = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    this.opener = this.clicking ?? focused;
     // Where the browser has no modal dialog (old engines, test DOMs), it is shown in place.
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');

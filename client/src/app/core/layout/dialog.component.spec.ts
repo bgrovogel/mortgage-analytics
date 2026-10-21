@@ -70,4 +70,18 @@ describe('DialogComponent', () => {
 
     expect(document.activeElement).toBe(opener);
   });
+
+  it('puts focus back on what was clicked even when the browser never focused it, as Safari does not for a button', () => {
+    const { fixture, dialog, opener } = render();
+    // A click that leaves nothing focused: the host's button runs open() on the click itself.
+    (document.activeElement as HTMLElement | null)?.blur();
+    opener.click();
+    // The click left focus elsewhere, as in Safari, where the page had put it on its main area.
+    expect(document.activeElement).not.toBe(opener);
+    (dialog.querySelector('button.close') as HTMLButtonElement).focus();
+
+    fixture.componentInstance.dialog().close();
+
+    expect(document.activeElement).toBe(opener);
+  });
 });
