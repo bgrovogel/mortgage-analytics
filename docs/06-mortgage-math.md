@@ -707,6 +707,30 @@ The choices behind the numbers, each pinned by a test:
 
 ---
 
+## Yearly figures
+
+Some figures are set by the year, and the app uses one year's at a time (2026 today) rather than offering a choice: a
+home decision is about the years ahead, and a year's figures are only worth putting in once they are published and checked.
+When a new year's arrive, change them in every place below together, then run the Python cross-checks and the tests; the
+docs' examples that quote them (a standard deduction, a limit) change with them.
+
+| Figure | Where it lives | Published by | When |
+|---|---|---|---|
+| Federal standard deductions, by filing status | `Domain/Strategies/TaxDeductions.cs`; `client/.../strategy-form/tax-brackets.ts`; `tools/strategy-check/strategy_model.py` and `tools/calculator-check/calculator_model.py` (`STANDARD_DEDUCTION`) | IRS revenue procedure on the year's inflation adjustments | Late October to early November |
+| Federal ordinary-income brackets and the long-term gains 15%/20% line | `client/.../strategy-form/tax-brackets.ts` | The same revenue procedure | The same |
+| 401(k) deferral and IRA limits | `Domain/Strategies/TaxLimits.cs` (the ESPP's $25,000 is in the law, not indexed) | IRS notice on retirement limits, which needs September's CPI | Early November |
+| The limit on state and local taxes ($40,400 in 2026) | `Domain/RentOrBuy/OwnerTaxProfile.cs`; `tools/calculator-check/calculator_model.py` (`SALT_LIMIT`) | Set by law, which raises it 1% a year to 2029 and reverts it in 2030 | The law |
+| Conforming loan limit | `Domain/Loans/GovernmentLoan.cs` (`Limits`, a row per year); `tools/calculator-check/calculator_model.py` (`CONFORMING_LIMITS`) | FHFA | Late November |
+| FHA county limits | `tools/fha-limits/build_fha_limits.py` writes `Application/Data` from HUD's file | HUD | Each December, for the new year |
+| Fannie Mae's loan-to-value and concession limits | `Domain/Loans`, `Domain/Closing`, with the date of the Selling Guide or matrix they were read from in the docs | Fannie Mae | When it revises them |
+
+The 2027 federal figures were not yet published on 21 October 2026, and none is in the app. Third-party projections exist
+(for example $16,600 single and $33,200 joint for the standard deduction), but a projection is not a figure to put in front of
+someone deciding on a home. The deductions in Rent or buy are indexed 2.5% a year from the year's figure to look ahead; that is
+a separate assumption from the year's own figures.
+
+---
+
 ## Why independent models
 
 The expected numbers in the tests don't come from this code. They come from Python `Decimal` models written from
