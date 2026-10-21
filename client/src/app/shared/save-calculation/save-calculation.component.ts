@@ -7,6 +7,7 @@ import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculati
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { t } from '../../core/i18n/i18n';
+import { parseTags, tagsText } from '../../core/state/tags';
 
 /**
  * Saves what a page is showing (calculator inputs, a refinance comparison, or a pay-off-or-invest comparison) under a name. A new save
@@ -35,7 +36,7 @@ export class SaveCalculationComponent {
   readonly suggestion = input('');
 
   /** The saved item the page is showing, if any, so it can be updated in place. */
-  readonly linked = input<Pick<SavedCalculation, 'id' | 'name' | 'note'> | null>(null);
+  readonly linked = input<Pick<SavedCalculation, 'id' | 'name' | 'note' | 'tags'> | null>(null);
 
   /** Emits what was saved or updated, so the page can link itself to it. */
   readonly saved = output<SavedCalculation>();
@@ -48,6 +49,9 @@ export class SaveCalculationComponent {
 
   /** The note being typed, to remind you what this was for. */
   readonly note = signal('');
+
+  /** The tags being typed, separated by commas: short handles to find it by in Saved. */
+  readonly tags = signal('');
 
   /** What went wrong with the last attempt, if anything. */
   readonly error = signal<string | null>(null);
@@ -83,6 +87,7 @@ export class SaveCalculationComponent {
     if (!this.payload()) return;
     this.name.set(this.linked()?.name ?? this.suggestion());
     this.note.set(this.linked()?.note ?? '');
+    this.tags.set(tagsText(this.linked()?.tags));
     this.error.set(null);
     this.status.set(null);
     this.editing.set(true);
@@ -95,15 +100,15 @@ export class SaveCalculationComponent {
 
   /** Saves as a new calculation. */
   saveNew(): void {
-    this.submit('Saved as', (name, payload, note) => this.api.save(name, payload, note));
+    this.submit('Saved as', (name, payload, note, tags) => this.api.save(name, payload, note, tags));
   }
 
   /** Replaces the linked saved calculation with the current inputs (and name). */
   update(id: string): void {
-    this.submit('Updated', (name, payload, note) => this.api.update(id, name, payload, note));
+    this.submit('Updated', (name, payload, note, tags) => this.api.update(id, name, payload, note, tags));
   }
 
-  private submit(verb: string, send: (name: string, payload: SavedInputs, note: string | null) => Observable<SavedCalculation>): void {
+  private submit(verb: string, send: (name: string, payload: SavedInputs, note: string | null, tags: string[]) => Observable<SavedCalculation>): void {
     const name = this.name().trim();
     const payload = this.payload();
     if (!name) {
@@ -113,7 +118,7 @@ export class SaveCalculationComponent {
     if (!payload || this.saving()) return;
 
     this.saving.set(true);
-    send(name, payload, this.note().trim() || null).subscribe({
+    send(name, payload, this.note().trim() || null, parseTags(this.tags())).subscribe({
       next: (saved) => {
         this.saved.emit(saved);
         this.status.set({ verb, name: saved.name });

@@ -11,6 +11,10 @@ public sealed record SaveCalculationRequest
     /// <example>Ask about the roof: 15 years old.</example>
     public string? Note { get; init; }
 
+    /// <summary>Up to 5 short tags to find it by, each up to 24 characters with no comma. Omit for none; an update without any clears them.</summary>
+    /// <example>["Oak St", "roof"]</example>
+    public IReadOnlyList<string>? Tags { get; init; }
+
     /// <summary>The calculator inputs, exactly as sent to the calculate endpoint. Give exactly one of the three kinds.</summary>
     public AmortizationRequest? Inputs { get; init; }
 
@@ -55,6 +59,9 @@ public sealed record SavedCalculationResponse
 
     /// <summary>The note it was saved with; null for none.</summary>
     public string? Note { get; init; }
+
+    /// <summary>The tags it was saved with, in the order given; empty for none.</summary>
+    public IReadOnlyList<string> Tags { get; init; } = [];
 
     /// <summary>Whether this is a purchase, two homes compared, a refinance comparison or a pay-off-or-invest comparison.</summary>
     public required SavedCalculationKind Kind { get; init; }

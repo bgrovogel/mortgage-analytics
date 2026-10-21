@@ -13,6 +13,7 @@ import { CalculationStores } from '../calculation-stores';
 import { ScenarioCoverComponent, coverShares } from './scenario-cover.component';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { t } from '../../core/i18n/i18n';
+import { parseTags, tagsText } from '../../core/state/tags';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -64,7 +65,7 @@ export class HistoryPageComponent {
   readonly error = signal<string | null>(null);
 
   /** The calculation being edited (renamed, or its note changed), and the name and note typed so far. */
-  readonly renaming = signal<{ id: string; name: string; note: string } | null>(null);
+  readonly renaming = signal<{ id: string; name: string; note: string; tags: string } | null>(null);
 
   /** The calculation waiting for a delete confirmation. */
   readonly confirmingDelete = signal<string | null>(null);
@@ -72,11 +73,27 @@ export class HistoryPageComponent {
   /** Which kinds are shown. */
   readonly kindFilter = signal<SavedCalculationKind | 'all'>('all');
 
-  /** The calculations shown: the search results, filtered by kind. */
+  /** The tag the list is narrowed to, or null for all of them. */
+  readonly tagFilter = signal<string | null>(null);
+
+  /** Every tag on the calculations listed, once each whatever its case (the first spelling stays), in alphabetical order. */
+  readonly tagChoices = computed(() => {
+    const seen = new Map<string, string>();
+    for (const tag of this.calculations().flatMap((c) => c.tags ?? [])) if (!seen.has(tag.toLowerCase())) seen.set(tag.toLowerCase(), tag);
+    return [...seen.values()].sort((a, b) => a.localeCompare(b));
+  });
+
+  /** The calculations shown: the search results, filtered by kind and by tag. */
   readonly shown = computed(() => {
     const kind = this.kindFilter();
-    return kind === 'all' ? this.calculations() : this.calculations().filter((c) => c.kind === kind);
+    const tag = this.tagFilter()?.toLowerCase();
+    return this.calculations().filter((c) => (kind === 'all' || c.kind === kind) && (!tag || (c.tags ?? []).some((t) => t.toLowerCase() === tag)));
   });
+
+  /** Chooses a tag to narrow the list to, or puts it back when it is the one chosen. */
+  protected toggleTag(tag: string): void {
+    this.tagFilter.update((current) => (current?.toLowerCase() === tag.toLowerCase() ? null : tag));
+  }
 
   /** What is shown, in a group for each page it opens on (the order the pages are in); one untitled group for a chosen kind. */
   readonly groups = computed(() => {
@@ -279,7 +296,7 @@ export class HistoryPageComponent {
   /** Starts editing, with the current name and note to change. */
   startRename(calculation: SavedCalculation): void {
     this.confirmingDelete.set(null);
-    this.renaming.set({ id: calculation.id, name: calculation.name, note: calculation.note ?? '' });
+    this.renaming.set({ id: calculation.id, name: calculation.name, note: calculation.note ?? '', tags: tagsText(calculation.tags) });
   }
 
   /** Asks to confirm deleting a calculation. */
@@ -292,12 +309,13 @@ export class HistoryPageComponent {
   saveRename(calculation: SavedCalculation): void {
     const name = this.renaming()?.name.trim();
     const note = this.renaming()?.note.trim() || null;
+    const tags = parseTags(this.renaming()?.tags ?? '');
     if (!name) {
       this.error.set(t('Give the calculation a name.'));
       return;
     }
 
-    this.api.update(calculation.id, name, savedInputsOf(calculation), note).subscribe({
+    this.api.update(calculation.id, name, savedInputsOf(calculation), note, tags).subscribe({
       next: (updated) => {
         this.calculations.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         // Keep whichever page shows this calculation linked to its new name.

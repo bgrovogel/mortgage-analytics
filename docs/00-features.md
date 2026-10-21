@@ -599,10 +599,12 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   account is signed in (the browser and system, and when). It never holds the password or a passkey's key.
 - **Save** any calculation, up to four homes compared, a refinance comparison or a pay-off-or-invest comparison under a name.
 - **Saved** (History) lists them in a group for each page they open on, newest first within a group, filtered by kind
-  or searched by name or note. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved
+  or searched by name, note or tag. A purchase or a refinance leads with the payment it comes to (principal and interest). **Set side by side** on two saved
   purchases puts their price, down payment, rate, term and payment in one table with the difference. Open one on its own page (every number
-  is restored), edit its name and **note**, or delete it. A note is up to 500 characters, an optional reminder of what the calculation
-  was for ("Ask about the roof"), written when saving or later in History, where it shows under the name. Each person sees only their own.
+  is restored), edit its name, **note** and **tags**, or delete it. A note is up to 500 characters, an optional reminder of what the calculation
+  was for ("Ask about the roof"), written when saving or later in History, where it shows under the name. **Tags** are up to five
+  short words (up to 24 characters each, typed separated by commas, repeats dropped) to find it by: they show as labels under the name,
+  a search finds them, and a row of tag buttons above the list narrows it to one. Each person sees only their own.
 
 ---
 

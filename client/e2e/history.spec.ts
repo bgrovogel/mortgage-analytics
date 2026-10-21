@@ -61,6 +61,40 @@ test.describe('History', () => {
     await expect(history.item(name), 'a word in the note finds it, whatever its case').toBeVisible();
   });
 
+  test('keeps tags with a saved calculation, shows them as labels, narrows the list by one, and finds it by one', async ({ signedIn: calculator, page }) => {
+    const mark = `m${Math.random().toString(36).slice(2, 8)}`;
+    const name = `Oak St ${tag}`;
+    const other = `Elm Ct ${tag}`;
+    await calculator.saveAs(other);
+    await calculator.set('home-price', 300_000);
+    await calculator.saveAs(name, undefined, `${mark}, second look`);
+
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await expect(history.item(name).getByTestId('history-tags').getByRole('listitem'), 'the tags are labels under the name').toHaveText([mark, 'second look']);
+    await expect(history.item(other).getByTestId('history-tags'), 'a calculation without any shows none').toHaveCount(0);
+
+    await page.getByTestId('tag-filters').getByRole('button', { name: mark, exact: true }).click();
+    await expect(history.item(other), 'choosing a tag leaves out what lacks it').toHaveCount(0);
+    await expect(history.item(name), 'and keeps what has it').toBeVisible();
+    await page.getByTestId('tag-filters').getByRole('button', { name: mark, exact: true }).click();
+    await expect(history.item(other), 'choosing it again shows everything').toBeVisible();
+
+    await history.searchFor('SECOND LOOK');
+    await expect(history.item(name), 'a tag finds it in a search, whatever its case').toBeVisible();
+
+    await history.searchFor(tag);
+    await history.act(name, 'Edit');
+    await page.getByRole('textbox', { name: `Tags for ${name}` }).fill('sold');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(history.item(name).getByTestId('history-tags').getByRole('listitem'), 'the new tags replace them').toHaveText(['sold']);
+
+    await page.reload();
+    await history.searchFor(tag);
+    await expect(history.item(name).getByTestId('history-tags').getByRole('listitem'), 'and are still there after a reload').toHaveText(['sold']);
+  });
+
   test('saves a calculation under a name, finds it again, and reopens it with every value', async ({ signedIn: calculator, page }) => {
     const name = `Oak St ${tag}`;
     await calculator.set('home-price', 432_100);

@@ -238,11 +238,12 @@ export class CalculatorPage {
     await expect(this.page.getByTestId('loan-heading'), `the form now edits the new Home ${house}`).toHaveText(`Home ${house}`);
   }
 
-  /** Saves the current calculation under `name`, as a new saved calculation, with a note when one is given. */
-  async saveAs(name: string, note?: string): Promise<void> {
+  /** Saves the current calculation under `name`, as a new saved calculation, with a note and tags (typed separated by commas) when given. */
+  async saveAs(name: string, note?: string, tags?: string): Promise<void> {
     await this.page.getByTestId('save-open').click();
     await this.page.getByTestId('save-name').fill(name);
     if (note) await this.page.getByTestId('save-note').fill(note);
+    if (tags) await this.page.getByTestId('save-tags').fill(tags);
     await this.page.getByTestId('save-new').click();
     await expect(this.page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
   }

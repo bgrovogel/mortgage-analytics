@@ -68,6 +68,31 @@ input {
   }
 }
 
+// The tags to narrow the list to: small toggles, a row under the heading.
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+
+  button {
+    padding: 0.2rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-height: 32px;
+
+    &[aria-pressed='true'] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+  }
+}
+
 .badge {
   display: inline-block;
   margin-right: 0.35rem;
@@ -137,6 +162,24 @@ input {
     font-size: 0.9rem;
   }
 
+  // A card's tags: small labels under the note.
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      padding: 0 0.55rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-text);
+      font-size: 0.8rem;
+    }
+  }
+
   .when {
     margin: 0.15rem 0 0;
     font-size: 0.85rem;
@@ -159,6 +202,12 @@ input {
   input {
     flex: 1;
     min-width: 12rem;
+  }
+
+  // The tags, like the note, take a line of their own under the name and the buttons beside it.
+  input[data-testid='edit-tags'] {
+    flex: 1 0 100%;
+    order: 2;
   }
 
   // The note takes its own line, under the name and the buttons beside it.

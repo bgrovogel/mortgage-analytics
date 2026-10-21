@@ -3541,6 +3541,13 @@
             "type": "string",
             "nullable": true
           },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "inputs": {
             "$ref": "#/components/schemas/AmortizationRequest"
           },
@@ -3593,6 +3600,13 @@
           },
           "note": {
             "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           },
           "kind": {

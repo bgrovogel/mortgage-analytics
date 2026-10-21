@@ -16,10 +16,18 @@
                   [attr.data-testid]="'kind-filter-' + kind.value">{{ kind.label }}</button>
         }
       </div>
-      <input class="search" type="search" [attr.placeholder]="'Search by name or note' | t" [attr.aria-label]="'Search saved calculations by name or note' | t"
+      <input class="search" type="search" [attr.placeholder]="'Search by name, note or tag' | t" [attr.aria-label]="'Search saved calculations by name, note or tag' | t"
              data-testid="history-search" (input)="onSearch($any($event.target).value)" />
     </div>
   </header>
+
+  @if (tagChoices().length > 0) {
+    <div class="tag-filters" role="group" [attr.aria-label]="'Tags' | t" data-testid="tag-filters">
+      @for (tag of tagChoices(); track tag) {
+        <button type="button" [attr.aria-pressed]="tagFilter()?.toLowerCase() === tag.toLowerCase()" (click)="toggleTag(tag)">{{ tag }}</button>
+      }
+    </div>
+  }
 
   @if (error(); as message) {
     <div class="alert" role="alert">{{ message }}</div>
@@ -66,6 +74,8 @@
                        [value]="renaming()!.name" (input)="renaming.set({ ...renaming()!, name: $any($event.target).value })" />
                 <textarea rows="2" maxlength="500" [attr.placeholder]="'A note: what it was for, or what to check' | t" [attr.aria-label]="'Note for {0}' | t: [c.name]"
                           data-testid="edit-note" [value]="renaming()!.note" (input)="renaming.set({ ...renaming()!, note: $any($event.target).value })"></textarea>
+                <input type="text" maxlength="125" autocomplete="off" [attr.placeholder]="'Tags, separated by commas' | t" [attr.aria-label]="'Tags for {0}' | t: [c.name]"
+                       data-testid="edit-tags" [value]="renaming()!.tags" (input)="renaming.set({ ...renaming()!, tags: $any($event.target).value })" />
                 <button type="submit" class="primary">{{ 'Save' | t }}</button>
                 <button type="button" (click)="renaming.set(null)">{{ 'Cancel' | t }}</button>
               </form>
@@ -85,6 +95,13 @@
                 </p>
                 @if (c.note) {
                   <p class="note" data-testid="history-note">{{ c.note }}</p>
+                }
+                @if (c.tags?.length) {
+                  <ul class="tags" data-testid="history-tags" [attr.aria-label]="'Tags' | t">
+                    @for (tag of c.tags; track tag) {
+                      <li>{{ tag }}</li>
+                    }
+                  </ul>
                 }
                 <p class="when">{{ when(c) }}</p>
                 @if (c.kind === 'Purchase' && c.inputs) {

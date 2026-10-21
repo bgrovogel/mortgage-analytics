@@ -51,6 +51,13 @@ public abstract class CalculationsDbContext(DbContextOptions options) : Identity
         calculation.Property(c => c.Name).HasMaxLength(SaveCalculationRequestValidator.MaxNameLength).IsRequired();
         calculation.Property(c => c.Note).HasMaxLength(SaveCalculationRequestValidator.MaxNoteLength);
 
+        // The tags are one short text column, separated by commas (a tag cannot hold one): they are read and written with the row,
+        // and a search looks in the text.
+        calculation.Ignore(c => c.Tags);
+        calculation.Property(c => c.TagsText).HasColumnName("Tags")
+            .HasMaxLength(SaveCalculationRequestValidator.MaxTags * (SaveCalculationRequestValidator.MaxTagLength + 1))
+            .IsRequired();
+
         // Each kind of inputs is one JSON column: they are always read and written whole, never queried by
         // field, and the contracts can grow without a schema change. A row holds one kind; the others are null
         // (a home comparison is the calculator's inputs and a list of other homes, of the same shape).

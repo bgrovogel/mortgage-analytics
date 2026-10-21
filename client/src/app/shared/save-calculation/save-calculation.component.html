@@ -35,6 +35,10 @@
     <textarea id="save-note" rows="2" maxlength="500" [attr.placeholder]="'What it was for, or what to check' | t" data-testid="save-note"
               [value]="note()" (input)="note.set($any($event.target).value)"></textarea>
 
+    <label for="save-tags">{{ 'Tags' | t }} <span class="optional">{{ '(optional)' | t }}</span></label>
+    <input id="save-tags" type="text" maxlength="125" autocomplete="off" data-testid="save-tags" [attr.placeholder]="'Words to find it by, separated by commas' | t"
+           [value]="tags()" (input)="tags.set($any($event.target).value)" (keydown.enter)="linked() ? update(linked()!.id) : saveNew()" />
+
     @if (error(); as message) {
       <p class="error" role="alert" data-testid="save-error">{{ message }}</p>
     }

@@ -324,6 +324,12 @@ namespace MortgageAnalytics.Infrastructure.Migrations
                     b.Property<string>("Strategy")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TagsText")
+                        .IsRequired()
+                        .HasMaxLength(125)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Tags");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
 

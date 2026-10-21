@@ -61,6 +61,23 @@ describe('SavedCalculationsApiService', () => {
     blank.flush({});
   });
 
+  it('sends tags with a save or an update, trimmed and without repeats, and leaves them out when there are none', () => {
+    service.save('Oak St', { inputs }, null, ['  Oak St ', 'roof', 'OAK ST', '']).subscribe();
+    const tagged = http.expectOne('/api/v1/calculations');
+    expect(tagged.request.body).toEqual({ name: 'Oak St', tags: ['Oak St', 'roof'], inputs });
+    tagged.flush({});
+
+    service.update('abc', 'Oak St', { inputs }, 'A note', ['sold']).subscribe();
+    const updated = http.expectOne('/api/v1/calculations/abc');
+    expect(updated.request.body).toEqual({ name: 'Oak St', note: 'A note', tags: ['sold'], inputs });
+    updated.flush({});
+
+    service.save('Oak St', { inputs }, null, [' ']).subscribe();
+    const none = http.expectOne('/api/v1/calculations');
+    expect(none.request.body).toEqual({ name: 'Oak St', inputs });
+    none.flush({});
+  });
+
   it('saves a refinance comparison the same way', () => {
     const refinance = { currentBalance: 300_000 } as RefinanceRequest;
     service.save('Refi', { refinance }).subscribe();

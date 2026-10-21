@@ -153,4 +153,33 @@ public class SaveCalculationRequestValidatorTests : ValidatorTestBase<SaveCalcul
     public void InvalidRefinanceInputs_AreRejectedWithTheRefinanceRules() =>
         AssertInvalid(new SaveCalculationRequest { Name = "Bad", Refinance = ARefinance() with { CurrentBalance = 0 } },
             "Refinance.CurrentBalance", "the comparison must be one the refinance endpoint would accept");
+
+    [Test]
+    public void Tags_AreOptional_AndTheMostAllowedIsValid()
+    {
+        AssertValid(Named("Oak St") with { Tags = null }, "most calculations have no tags");
+        AssertValid(Named("Oak St") with { Tags = ["a", "b", "c", "d", "e"] }, "five tags are the most");
+    }
+
+    [Test]
+    public void MoreThanTheMostTags_AreRejected() =>
+        AssertErrorMessage(Named("Oak St") with { Tags = ["a", "b", "c", "d", "e", "f"] }, "Tags",
+            "Use at most 5 tags.", "a tag is a handle to find it by, not a second note");
+
+    [Test]
+    public void BlanksAndRepeats_DoNotCountTowardsTheMost() =>
+        AssertValid(Named("Oak St") with { Tags = ["a", "A", "b", " ", "c", "d", "e", ""] }, "they are not kept, so they do not count");
+
+    [Test]
+    public void ATagOverTheLimit_IsRejected_AndOneAtTheLimitIsValid()
+    {
+        AssertValid(Named("Oak St") with { Tags = [new string('x', SaveCalculationRequestValidator.MaxTagLength)] }, "a tag at the limit is kept");
+        AssertErrorMessage(Named("Oak St") with { Tags = [new string('x', SaveCalculationRequestValidator.MaxTagLength + 1)] }, "Tags",
+            "Keep each tag to 24 characters or fewer.", "a tag is a word or two");
+    }
+
+    [Test]
+    public void ATagWithAComma_IsRejected() =>
+        AssertErrorMessage(Named("Oak St") with { Tags = ["roof, pool"] }, "Tags",
+            "A tag cannot contain a comma.", "tags are stored and typed separated by commas");
 }

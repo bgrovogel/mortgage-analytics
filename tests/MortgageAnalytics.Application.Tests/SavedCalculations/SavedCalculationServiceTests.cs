@@ -229,4 +229,44 @@ public class SavedCalculationServiceTests
 
         Assert.That(deleted, Is.EqualTo(existed), "false becomes a 404");
     }
+
+    [Test]
+    public async Task Save_KeepsTheTagsTrimmed_WithoutBlanksOrRepeats_InTheOrderGiven()
+    {
+        SavedCalculation? added = null;
+        await _repository.AddAsync(Arg.Do<SavedCalculation>(c => added = c), Arg.Any<CancellationToken>());
+
+        var response = await _service.SaveAsync(Owner, Request() with { Tags = ["  Oak St ", "", "roof", "OAK ST", "   "] }, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(added!.Tags, Is.EqualTo(new[] { "Oak St", "roof" }), "blanks go, a repeat (in any case) goes, and the first spelling stays");
+            Assert.That(response.Tags, Is.EqualTo(new[] { "Oak St", "roof" }), "and that is what comes back");
+        });
+    }
+
+    [Test]
+    public async Task Save_WithoutTags_ReturnsAnEmptyList_NeverNull()
+    {
+        var response = await _service.SaveAsync(Owner, Request(), CancellationToken.None);
+
+        Assert.That(response.Tags, Is.Empty, "a client can read the list without checking for null");
+    }
+
+    [Test]
+    public async Task Update_ReplacesTheTags_AndLeavingThemOutClearsThem()
+    {
+        var stored = Stored();
+        stored.Tags = ["old"];
+        _repository.FindAsync(Owner, stored.Id, Arg.Any<CancellationToken>()).Returns(stored);
+
+        var replaced = await _service.UpdateAsync(Owner, stored.Id, Request() with { Tags = ["new", "other"] }, CancellationToken.None);
+        var cleared = await _service.UpdateAsync(Owner, stored.Id, Request(), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(replaced!.Tags, Is.EqualTo(new[] { "new", "other" }), "the tags are replaced");
+            Assert.That(cleared!.Tags, Is.Empty, "a request without any clears them: an update replaces");
+        });
+    }
 }

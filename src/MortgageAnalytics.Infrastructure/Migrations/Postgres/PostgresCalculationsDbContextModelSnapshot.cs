@@ -335,6 +335,12 @@ namespace MortgageAnalytics.Infrastructure.Migrations.Postgres
                     b.Property<string>("Strategy")
                         .HasColumnType("text");
 
+                    b.Property<string>("TagsText")
+                        .IsRequired()
+                        .HasMaxLength(125)
+                        .HasColumnType("character varying(125)")
+                        .HasColumnName("Tags");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("bigint");
 

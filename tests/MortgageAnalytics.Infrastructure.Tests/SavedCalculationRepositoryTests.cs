@@ -246,4 +246,40 @@ public class SavedCalculationRepositoryTests : RepositoryTestBase
 
         Assert.That(left, Is.EqualTo(new[] { "Bob's" }), "a deleted user's calculations go with them, and everyone else's stay");
     }
+
+    [Test]
+    public async Task Tags_RoundTrip_InOrder_AndNoTagsComesBackEmpty()
+    {
+        var tagged = ACalculation("Has tags");
+        tagged.Tags = ["Oak St", "roof", "second look"];
+        var untagged = ACalculation("No tags", minutesLater: 1);
+        await SeedAsync(tagged, untagged);
+
+        var repository = NewRepository();
+
+        Assert.Multiple(async () =>
+        {
+            Assert.That((await repository.FindAsync(Alice, tagged.Id, CancellationToken.None))?.Tags, Is.EqualTo(new[] { "Oak St", "roof", "second look" }), "the tags are stored, in the order given");
+            Assert.That((await repository.FindAsync(Alice, untagged.Id, CancellationToken.None))?.Tags, Is.Empty, "a calculation without any has an empty list");
+        });
+    }
+
+    [Test]
+    public async Task List_AlsoFindsATag_IgnoringCase_AndOnlyInTheOwnersCalculations()
+    {
+        var tagged = ACalculation("Elm Ct", 0);
+        tagged.Tags = ["Second look", "ROOF"];
+        var bobs = ACalculation("Pine Rd", 1, owner: Bob);
+        bobs.Tags = ["roof"];
+        await SeedAsync(tagged, ACalculation("Oak St", 1), bobs);
+
+        var byTag = await NewRepository().ListAsync(Alice, "roof", CancellationToken.None);
+        var byPhrase = await NewRepository().ListAsync(Alice, "second look", CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(byTag.Select(c => c.Name), Is.EqualTo(new[] { "Elm Ct" }), "a tag finds the calculation, whatever its case, and only Alice's");
+            Assert.That(byPhrase.Select(c => c.Name), Is.EqualTo(new[] { "Elm Ct" }), "a tag of two words is found as typed");
+        });
+    }
 }

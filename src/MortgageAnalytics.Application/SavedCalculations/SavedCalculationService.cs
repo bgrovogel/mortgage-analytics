@@ -74,6 +74,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
             OwnerId = ownerId,
             Name = request.Name.Trim(),
             Note = NoteOf(request),
+            Tags = SavedCalculationTags.Normalize(request.Tags),
             Inputs = request.Inputs,
             OtherHomes = request.OtherHomes,
             Refinance = request.Refinance,
@@ -95,6 +96,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
 
         calculation.Name = request.Name.Trim();
         calculation.Note = NoteOf(request);
+        calculation.Tags = SavedCalculationTags.Normalize(request.Tags);
         calculation.Inputs = request.Inputs;
         calculation.OtherHomes = request.OtherHomes;
         calculation.Refinance = request.Refinance;
@@ -118,6 +120,7 @@ public sealed class SavedCalculationService(ISavedCalculationRepository reposito
         Id = calculation.Id,
         Name = calculation.Name,
         Note = calculation.Note,
+        Tags = calculation.Tags,
         Kind = calculation.Kind,
         Inputs = calculation.Inputs,
         OtherHomes = calculation.OtherHomes,

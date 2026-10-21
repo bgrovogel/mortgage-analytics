@@ -265,4 +265,32 @@ public class SavedCalculationApiTests : ApiTestBase
             Assert.That(mine.StatusCode, Is.EqualTo(HttpStatusCode.OK), "and it is still mine");
         });
     }
+
+    [Test]
+    public async Task Tags_AreSavedWithTheCalculation_ReturnedOnReading_AndReplacedOnUpdate()
+    {
+        var name = UniqueName("Has tags");
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, new { name, tags = new[] { "  Oak St ", "roof", "OAK ST" }, inputs = A.Request.Build() });
+        var saved = await ReadJsonAsync(response);
+        var id = saved.GetProperty("id").GetGuid();
+
+        var read = await ReadJsonAsync(await Me.GetAsync($"{CalculationsUrl}/{id}"));
+        var updated = await ReadJsonAsync(await Me.PutAsJsonAsync($"{CalculationsUrl}/{id}", new { name, tags = new[] { "sold" }, inputs = A.Request.Build() }));
+
+        static string[] TagsOf(System.Text.Json.JsonElement e) => e.GetProperty("tags").EnumerateArray().Select(t => t.GetString()!).ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(TagsOf(saved), Is.EqualTo(new[] { "Oak St", "roof" }), "the tags are trimmed and a repeat is dropped when saved");
+            Assert.That(TagsOf(read), Is.EqualTo(new[] { "Oak St", "roof" }), "and come back when read");
+            Assert.That(TagsOf(updated), Is.EqualTo(new[] { "sold" }), "and are replaced by an update");
+        });
+    }
+
+    [Test]
+    public async Task MoreThanFiveTags_Returns400()
+    {
+        var response = await Me.PostAsJsonAsync(CalculationsUrl, new { name = UniqueName("Too many tags"), tags = new[] { "a", "b", "c", "d", "e", "f" }, inputs = A.Request.Build() });
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "a tag is a handle, not a second note");
+    }
 }

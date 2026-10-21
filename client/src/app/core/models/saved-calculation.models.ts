@@ -19,6 +19,8 @@ export interface SavedCalculation {
   name: string;
   /** A few words to remind its owner what it was for, up to 500 characters; null or left out for none. */
   note?: string | null;
+  /** Up to five short tags to find it by, in the order given; left out or empty for none. */
+  tags?: string[];
   kind: SavedCalculationKind;
   /** Set for a purchase calculation, and for the first of the homes compared. */
   inputs: AmortizationRequest | null;

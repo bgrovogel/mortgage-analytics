@@ -21,7 +21,7 @@ describe('SaveCalculationComponent', () => {
     ({ id, name, kind: 'Purchase', inputs, otherHomes: null, refinance: null, strategy: null, createdAt: '', updatedAt: '' });
 
   /** Creates the control the way a page uses it: what to save, a suggested name, and what it is linked to. */
-  const create = (options: { payload?: SavedInputs | null; linked?: { id: string; name: string; note?: string | null } | null } = {}) => {
+  const create = (options: { payload?: SavedInputs | null; linked?: { id: string; name: string; note?: string | null; tags?: string[] } | null } = {}) => {
     fixture = TestBed.createComponent(SaveCalculationComponent);
     fixture.componentRef.setInput('payload', options.payload === undefined ? payload : options.payload);
     fixture.componentRef.setInput('suggestion', '$375,000 home, 20% down at 6.5%');
@@ -69,7 +69,7 @@ describe('SaveCalculationComponent', () => {
       typeNote('  Ask about the roof  ');
       click('save-new');
 
-      expect(api.save).toHaveBeenCalledWith('Oak St', payload, 'Ask about the roof');
+      expect(api.save).toHaveBeenCalledWith('Oak St', payload, 'Ask about the roof', []);
     });
 
     it('starts from the note of the saved calculation the page is linked to, and an update sends what is left', () => {
@@ -81,7 +81,41 @@ describe('SaveCalculationComponent', () => {
       typeNote('');
       click('save-update');
 
-      expect(api.update).toHaveBeenCalledWith('abc', 'Oak St', payload, null);
+      expect(api.update).toHaveBeenCalledWith('abc', 'Oak St', payload, null, []);
+    });
+  });
+
+  describe('tags', () => {
+    const typeTags = (text: string) => {
+      const box = el('save-tags') as HTMLInputElement;
+      box.value = text;
+      box.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+
+    it('are optional, typed separated by commas, and saved trimmed without repeats', () => {
+      create();
+      api.save.mockReturnValue(of(savedAs('Oak St')));
+      click('save-open');
+      expect((el('save-tags') as HTMLInputElement).value).toBe('');
+
+      typeName('Oak St');
+      typeTags(' Oak St , roof, OAK ST,');
+      click('save-new');
+
+      expect(api.save).toHaveBeenCalledWith('Oak St', payload, null, ['Oak St', 'roof']);
+    });
+
+    it('start from the tags of the saved calculation the page is linked to, and an update sends what is left', () => {
+      create({ linked: { id: 'abc', name: 'Oak St', tags: ['Oak St', 'roof'] } });
+      api.update.mockReturnValue(of(savedAs('Oak St', 'abc')));
+
+      click('save-open');
+      expect((el('save-tags') as HTMLInputElement).value).toBe('Oak St, roof');
+      typeTags('sold');
+      click('save-update');
+
+      expect(api.update).toHaveBeenCalledWith('abc', 'Oak St', payload, null, ['sold']);
     });
   });
 
@@ -109,7 +143,7 @@ describe('SaveCalculationComponent', () => {
 
     click('save-new');
 
-    expect(api.save).toHaveBeenCalledWith('Oak St', payload, null);
+    expect(api.save).toHaveBeenCalledWith('Oak St', payload, null, []);
     expect(saved.map((s) => s.name)).toEqual(['Oak St']);
     expect(el('save-name')).toBeNull();
     expect(el('save-status')!.textContent).toContain('Saved as “Oak St”');
@@ -153,7 +187,7 @@ describe('SaveCalculationComponent', () => {
     typeName('Oak St, refined');
     click('save-update');
 
-    expect(api.update).toHaveBeenCalledWith('abc', 'Oak St, refined', payload, null);
+    expect(api.update).toHaveBeenCalledWith('abc', 'Oak St, refined', payload, null, []);
     expect(saved.map((s) => s.id)).toEqual(['abc']);
     expect(el('save-status')!.textContent).toContain('Updated “Oak St, refined”');
   });

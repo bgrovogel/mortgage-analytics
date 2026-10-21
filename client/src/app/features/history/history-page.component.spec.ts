@@ -225,6 +225,32 @@ describe('HistoryPageComponent', () => {
       ]);
     });
 
+    describe('filtering by tag', () => {
+      const tagged = [{ ...oak, tags: ['roof', 'Oak St'] }, { ...maple, tags: ['ROOF'] }, aSaved('5', 'Elm Ct', { tags: ['pool'], updatedAt: '2026-10-01T09:00:00Z' }), refi];
+      const filters = () => [...root().querySelectorAll('[data-testid="tag-filters"] button')] as HTMLButtonElement[];
+
+      it('offers each tag once, whatever its case, and no row when nothing is tagged', () => {
+        create();
+        expect(root().querySelector('[data-testid="tag-filters"]')).toBeNull();
+
+        api.list.mockReturnValue(of(tagged));
+        create();
+        expect(filters().map((b) => b.textContent!.trim())).toEqual(['Oak St', 'pool', 'roof']);
+      });
+
+      it('shows only what carries the tag chosen, and everything again when it is chosen a second time', () => {
+        api.list.mockReturnValue(of(tagged));
+        create();
+
+        click(filters()[2]);
+        expect(names()).toEqual(['Oak St, 20% down', 'Maple Ave']);
+        expect(filters()[2].getAttribute('aria-pressed')).toBe('true');
+
+        click(filters()[2]);
+        expect(names()).toHaveLength(4);
+      });
+    });
+
     it('shows one group, without a title of its own, when a kind is chosen', () => {
       api.list.mockReturnValue(of([oak, refi, maple, payOff]));
       create();
@@ -301,7 +327,7 @@ describe('HistoryPageComponent', () => {
       box.dispatchEvent(new Event('input'));
       click(button(items()[0], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', { inputs: oak.inputs }, null);
+      expect(api.update).toHaveBeenCalledWith('1', 'Oak St, final', { inputs: oak.inputs }, null, []);
       expect(names()).toEqual(['Oak St, final', 'Maple Ave']);
     });
 
@@ -335,14 +361,44 @@ describe('HistoryPageComponent', () => {
       note.value = '  Roof checked  ';
       note.dispatchEvent(new Event('input'));
       click(button(items()[0], 'Save'));
-      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, 'Roof checked');
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, 'Roof checked', []);
 
       click(button(items()[0], 'Edit'));
       const again = items()[0].querySelector('[data-testid="edit-note"]') as HTMLTextAreaElement;
       again.value = '';
       again.dispatchEvent(new Event('input'));
       click(button(items()[0], 'Save'));
-      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null);
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null, []);
+    });
+
+    it('shows the tags a calculation was saved with, under its name', () => {
+      api.list.mockReturnValue(of([{ ...oak, tags: ['Oak St', 'roof'] }, maple]));
+      create();
+
+      const tags = [...items()[0].querySelectorAll('[data-testid="history-tags"] li')].map((t) => t.textContent!.trim());
+      expect(tags).toEqual(['Oak St', 'roof']);
+      expect(items()[1].querySelector('[data-testid="history-tags"]')).toBeNull();
+    });
+
+    it('changes the tags with the name, typed separated by commas, and clearing them sends none', () => {
+      api.list.mockReturnValue(of([{ ...oak, tags: ['Oak St', 'roof'] }, maple]));
+      create();
+      api.update.mockReturnValue(of({ ...oak, tags: ['sold'] }));
+
+      click(button(items()[0], 'Edit'));
+      const tags = items()[0].querySelector('[data-testid="edit-tags"]') as HTMLInputElement;
+      expect(tags.value).toBe('Oak St, roof');
+      tags.value = ' sold , SOLD,';
+      tags.dispatchEvent(new Event('input'));
+      click(button(items()[0], 'Save'));
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null, ['sold']);
+
+      click(button(items()[0], 'Edit'));
+      const again = items()[0].querySelector('[data-testid="edit-tags"]') as HTMLInputElement;
+      again.value = '';
+      again.dispatchEvent(new Event('input'));
+      click(button(items()[0], 'Save'));
+      expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null, []);
     });
 
     it('can be cancelled', () => {
@@ -433,7 +489,7 @@ describe('HistoryPageComponent', () => {
       click(button(items()[1], 'Edit'));
       click(button(items()[1], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('3', 'Refi at 6%', { refinance }, null);
+      expect(api.update).toHaveBeenCalledWith('3', 'Refi at 6%', { refinance }, null, []);
     });
 
     it('can be shown on their own, or hidden', () => {
@@ -480,7 +536,7 @@ describe('HistoryPageComponent', () => {
       click(button(items()[1], 'Edit'));
       click(button(items()[1], 'Save'));
 
-      expect(api.update).toHaveBeenCalledWith('4', 'Pay off or invest?', { strategy }, null);
+      expect(api.update).toHaveBeenCalledWith('4', 'Pay off or invest?', { strategy }, null, []);
       expect(TestBed.inject(StrategyStore).saved()).toEqual({ id: '4', name: 'Pay off, final' });
     });
 
