@@ -74,9 +74,9 @@
         <path class="extra" data-testid="balance-extra" [attr.d]="paths().extra" />
         <line class="cursor" [attr.x1]="c.x" y1="0" [attr.x2]="c.x" [attr.y2]="height" />
       </svg>
-      <span class="dot extra" aria-hidden="true" [style.left.%]="c.left" [style.top.%]="c.extraTop"></span>
+      <span class="dot extra" aria-hidden="true" [style.left.%]="c.left" [style.top]="'calc(' + c.extraTop + ' * var(--plot-h) / 100)'"></span>
       @if (series().hasExtra) {
-        <span class="dot scheduled" aria-hidden="true" [style.left.%]="c.left" [style.top.%]="c.scheduledTop"></span>
+        <span class="dot scheduled" aria-hidden="true" [style.left.%]="c.left" [style.top]="'calc(' + c.scheduledTop + ' * var(--plot-h) / 100)'"></span>
       }
       <div class="tip" aria-hidden="true" [class.on-right]="c.onRight" [style.left]="c.onRight ? 'auto' : 'calc(' + c.left + '% + 16px)'"
            [style.right]="c.onRight ? 'calc(' + (100 - c.left) + '% + 16px)' : 'auto'">

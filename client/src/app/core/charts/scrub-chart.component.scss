@@ -3,6 +3,9 @@
 :host {
   display: block;
   min-width: 0;
+  // The drawing's height: the dots are placed against it, not against the box around it, which grows on a phone
+  // when the tooltip becomes a card under the chart.
+  --plot-h: 320px;
 }
 
 figure {
@@ -70,7 +73,7 @@ figure {
 svg {
   display: block;
   width: 100%;
-  height: 320px;
+  height: var(--plot-h);
   overflow: visible;
 
   path,
@@ -123,7 +126,7 @@ svg {
   bottom: 0;
   left: 0;
   width: 3rem;
-  height: 320px;
+  height: var(--plot-h);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--text-muted);

@@ -106,7 +106,7 @@ let nextId = 0;
           <line class="cursor" [attr.x1]="c.x" y1="0" [attr.x2]="c.x" [attr.y2]="height" />
         </svg>
         @for (d of c.dots; track $index) {
-          <span class="dot" aria-hidden="true" [style.left.%]="c.left" [style.top.%]="d.top" [style.background]="'var(' + d.color + ')'"></span>
+          <span class="dot" aria-hidden="true" [style.left.%]="c.left" [style.top]="'calc(' + d.top + ' * var(--plot-h) / 100)'" [style.background]="'var(' + d.color + ')'"></span>
         }
         <div class="tip" aria-hidden="true" [class.on-right]="c.onRight" [style.left]="c.onRight ? 'auto' : 'calc(' + c.left + '% + 16px)'"
              [style.right]="c.onRight ? 'calc(' + (100 - c.left) + '% + 16px)' : 'auto'">
@@ -238,7 +238,8 @@ export class ScrubChartComponent {
       x: this.x(i),
       left,
       onRight: left > 64,
-      dots: this.spec().series.map((s) => ({ color: s.color, top: (this.y(s.data[i] ?? 0) / HEIGHT) * 100 })),
+      // On stacked areas each line is drawn at its running total, so that is where its dot goes.
+      dots: this.spec().series.map((s, k) => ({ color: s.color, top: (this.y(this.stack()[k]?.[i] ?? s.data[i] ?? 0) / HEIGHT) * 100 })),
     };
   });
 

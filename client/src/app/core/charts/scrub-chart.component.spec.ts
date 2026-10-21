@@ -88,6 +88,34 @@ describe('ScrubChartComponent', () => {
     expect(picks).toEqual([3]);
   });
 
+  describe('the dots', () => {
+    const heights = (root: HTMLElement) => [...root.querySelectorAll('.dot')].map((dot) => Number((dot as HTMLElement).getAttribute('style')!.match(/calc\(([\d.]+) /)![1]));
+
+    it('sit where the lines are: a lower series is lower on the page', () => {
+      const { root, scrub } = render(spec());
+
+      scrub(3); // 4,000 invested against 3,000 in the hybrid
+
+      const [invest, hybrid] = heights(root);
+      expect(hybrid).toBeGreaterThan(invest); // the smaller figure is further down
+    });
+
+    it('sit on the running total, when the series are stacked, so the second is above the first', () => {
+      const { root, scrub } = render(spec({ stacked: true }));
+
+      scrub(3); // 4,000, then 4,000 + 3,000
+
+      const [first, second] = heights(root);
+      expect(second).toBeLessThan(first); // the second series is drawn on top of the first, and its dot is on that edge
+    });
+
+    it('are placed against the height of the drawing, not of the box around it', () => {
+      const { root } = render(spec());
+
+      expect((root.querySelector('.dot') as HTMLElement).getAttribute('style')).toContain('var(--plot-h)'); // a share of the drawing's height
+    });
+  });
+
   it('adds the footer line for the point, when the chart has one', () => {
     const { text, scrub } = render(spec({ footer: (i) => `Total: ${i * 100}` }));
 

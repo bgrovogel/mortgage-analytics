@@ -219,7 +219,9 @@ scrubber under each is a native range input, so the arrow keys move a point, Pag
 reader hears the date and every figure (`aria-valuetext`); a tooltip (a card under the chart on a phone) says the same.
 Every chart also has **View as table**, which swaps the drawing for the same figures in a table that scrolls inside itself
 (the balance chart's is the balance after each year of payments); the mouse reads a point by hovering and chooses it by
-pressing.
+pressing. The dots that ride the lines are placed against the height of the drawing (`--plot-h`), not of the box around it (which grows on a
+phone, where the tooltip becomes a card under the chart), and on stacked areas against each series' running total; `charts.spec.ts` measures
+every chart's dots against its lines, on a desktop and a phone.
 Colors are read from the role tokens, so light and dark need nothing more, and jsdom (which has no canvas) tests the
 real thing: specs read each component's `spec()` and the rendered SVG. The page switches to the light theme to print
 (`core/layout/print.ts`, on the browser's `beforeprint` and back on `afterprint`). Every chart has a written takeaway,
