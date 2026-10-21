@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe } from '../../core/i18n/date.pipe';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DevMailboxService, OutboxEmail } from '../../core/dev/dev-mailbox.service';
 import { TPipe } from '../../core/i18n/t.pipe';

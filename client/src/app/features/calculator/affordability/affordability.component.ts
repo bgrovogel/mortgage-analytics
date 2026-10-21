@@ -2,23 +2,26 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { decimal, usd } from '../../../core/formatting/format';
 import { Affordability, AffordabilityLimit, Buyer, LoanProgramType, QualifyingRateBasis } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** How a sentence names each program's loan. */
-const LOAN: Record<LoanProgramType, string> = { Conventional: 'a conventional loan', Fha: 'an FHA loan', Va: 'a VA loan' };
+const loanOf = (program: LoanProgramType): string => ({ Conventional: t('a conventional loan'), Fha: t('an FHA loan'), Va: t('a VA loan') })[program];
 
 /** How far each program can go past its usual limit, and on what. */
-const STRETCH: Record<LoanProgramType, string> = {
-  Conventional: 'Fannie Mae allows 45% with good credit and reserves, and up to 50% through its automated underwriting.',
-  Fha: 'HUD allows up to 40% and 50% with compensating factors, such as cash reserves.',
-  Va: 'Past 41%, VA asks for 20% more residual income than its guideline.',
-};
+const stretchOf = (program: LoanProgramType): string =>
+  ({
+    Conventional: t('Fannie Mae allows 45% with good credit and reserves, and up to 50% through its automated underwriting.'),
+    Fha: t('HUD allows up to 40% and 50% with compensating factors, such as cash reserves.'),
+    Va: t('Past 41%, VA asks for 20% more residual income than its guideline.'),
+  })[program];
 
 /** Why an adjustable rate is qualified above where it starts, after its qualifying rate. */
-const ABOVE_START: Record<Exclude<QualifyingRateBasis, 'NoteRate'>, string> = {
-  MostInFirstFiveYears: 'the most it can reach in its first five years',
-  FirstResetOrFullyIndexed: 'the higher of its rate after the first change at the cap and the rate it is expected to reset to',
-  StartPlusOnePoint: 'a point above its starting rate, since it can change every year and less than 5% is down',
-};
+const aboveStart = (basis: Exclude<QualifyingRateBasis, 'NoteRate'>): string =>
+  ({
+    MostInFirstFiveYears: t('the most it can reach in its first five years'),
+    FirstResetOrFullyIndexed: t('the higher of its rate after the first change at the cap and the rate it is expected to reset to'),
+    StartPlusOnePoint: t('a point above its starting rate, since it can change every year and less than 5% is down'),
+  })[basis];
 
 /** "28% and 36%", or "45%" when only the total is limited. */
 const percents = (l: AffordabilityLimit, join = ' and ') =>
@@ -173,18 +176,19 @@ export class AffordabilityComponent {
   protected readonly positionLabel = computed(() => {
     const { comfortable, mostAllowed } = this.affordability();
     const home = this.homePrice();
-    return `${home === null ? '' : `This home ${usd(home)}. `}Comfortable up to ${usd(comfortable.maxHomePrice)}; most a lender allows ${usd(mostAllowed.maxHomePrice)}.`;
+    const range = t('Comfortable up to {0}; most a lender allows {1}.', [usd(comfortable.maxHomePrice), usd(mostAllowed.maxHomePrice)]);
+    return home === null ? range : `${t('This home {0}.', [usd(home)])} ${range}`;
   });
 
   protected readonly downPercent = computed(() => decimal(this.downPaymentPercent(), 1));
-  protected readonly stretch = computed(() => STRETCH[this.program()]);
+  protected readonly stretch = computed(() => stretchOf(this.program()));
 
   /** The rate the payment is counted at: the note rate, or an adjustable rate's qualifying rate and why. */
   protected readonly rateNote = computed(() => {
     const { qualifyingRate, qualifyingRateBasis } = this.affordability();
     return qualifyingRateBasis === 'NoteRate'
-      ? 'Lenders count the payment at the note rate, even with a buydown.'
-      : `Lenders count this adjustable rate’s payment at ${decimal(qualifyingRate, 3)}%, ${ABOVE_START[qualifyingRateBasis]}.`;
+      ? t('Lenders count the payment at the note rate, even with a buydown.')
+      : t('Lenders count this adjustable rate’s payment at {0}%, {1}.', [decimal(qualifyingRate, 3), aboveStart(qualifyingRateBasis)]);
   });
 
   /** Each buyer, the first as "You", and all of them together, when there are co-buyers; null for a buyer alone. */
@@ -198,51 +202,56 @@ export class AffordabilityComponent {
     };
     const yours = decimal((all[0].monthlyIncome / together.monthlyIncome) * 100, 1);
     return {
-      rows: all.map((b, i) => ({ ...b, name: i === 0 ? 'You' : `Co-buyer ${i}` })),
+      rows: all.map((b, i) => ({ ...b, name: i === 0 ? t('You') : t('Co-buyer {0}', [i]) })),
       together,
-      note: `Each share of the monthly payment follows income: you earn ${yours}% of what you earn together. A lender counts the income and debts `
-        + 'of everyone on the loan together, so these ratios are for all of you.',
+      note: t('Each share of the monthly payment follows income: you earn {0}% of what you earn together. A lender counts the income and debts of everyone on the loan together, so these ratios are for all of you.', [yours]),
     };
   });
 
   /** What the household could buy at all, before this home: the answer to "how much house can I afford?". */
   readonly budget = computed(() => {
     const { comfortable, mostAllowed } = this.affordability();
-    const loan = LOAN[this.program()];
-    const most = `the most ${loan} allows`;
+    const loan = loanOf(this.program());
     if (comfortable.maxHomePrice > 0 && mostAllowed.maxHomePrice > 0) {
-      return `You could buy a home up to ${usd(comfortable.maxHomePrice)} and stay within the comfortable limits, or up to ${usd(mostAllowed.maxHomePrice)} at ${most}.`;
+      return t('You could buy a home up to {0} and stay within the comfortable limits, or up to {1} at the most {2} allows.', [usd(comfortable.maxHomePrice), usd(mostAllowed.maxHomePrice), loan]);
     }
     if (mostAllowed.maxHomePrice > 0) {
-      return `Your debts leave no room for a home within the comfortable limits; ${most} is ${usd(mostAllowed.maxHomePrice)}.`;
+      return t('Your debts leave no room for a home within the comfortable limits; the most {0} allows is {1}.', [loan, usd(mostAllowed.maxHomePrice)]);
     }
-    return 'Your debts leave no room for a mortgage at these limits.';
+    return t('Your debts leave no room for a mortgage at these limits.');
   });
 
   readonly intro = computed(() => {
     const a = this.affordability();
-    const share = `This home’s payment, ${usd(a.housingPayment)} a month with taxes, insurance and mortgage insurance, is `
-      + `${decimal(a.housingPercent)}% of your ${a.buyers ? 'combined ' : ''}${usd(a.monthlyIncome)} monthly income`;
-    return a.monthlyDebts > 0 ? `${share}, and ${decimal(a.totalPercent)}% with your ${usd(a.monthlyDebts)} of other debts.` : `${share}.`;
+    const housing = [usd(a.housingPayment), decimal(a.housingPercent), usd(a.monthlyIncome)];
+    if (a.monthlyDebts > 0) {
+      const debts = [decimal(a.totalPercent), usd(a.monthlyDebts)];
+      return a.buyers
+        ? t('This home’s payment, {0} a month with taxes, insurance and mortgage insurance, is {1}% of your combined {2} monthly income, and {3}% with your {4} of other debts.', [...housing, ...debts])
+        : t('This home’s payment, {0} a month with taxes, insurance and mortgage insurance, is {1}% of your {2} monthly income, and {3}% with your {4} of other debts.', [...housing, ...debts]);
+    }
+    return a.buyers
+      ? t('This home’s payment, {0} a month with taxes, insurance and mortgage insurance, is {1}% of your combined {2} monthly income.', housing)
+      : t('This home’s payment, {0} a month with taxes, insurance and mortgage insurance, is {1}% of your {2} monthly income.', housing);
   });
 
   readonly verdict = computed(() => {
     const { comfortable, mostAllowed } = this.affordability();
-    const most = `the most ${LOAN[this.program()]} allows, ${percents(mostAllowed)}`;
-    if (comfortable.fits) return `This home is within the comfortable ${percents(comfortable)}.`;
-    if (mostAllowed.fits) return `This home is past the comfortable ${percents(comfortable)}, but within ${most}.`;
-    return `This home is past ${most}: a lender would not lend this much on this income.`;
+    const loan = loanOf(this.program());
+    if (comfortable.fits) return t('This home is within the comfortable {0}.', [percents(comfortable)]);
+    if (mostAllowed.fits) return t('This home is past the comfortable {0}, but within the most {1} allows, {2}.', [percents(comfortable), loan, percents(mostAllowed)]);
+    return t('This home is past the most {0} allows, {1}: a lender would not lend this much on this income.', [loan, percents(mostAllowed)]);
   });
 
   readonly rows = computed(() => {
     const { comfortable, mostAllowed } = this.affordability();
     const row = (name: string, l: AffordabilityLimit, limit: string) => ({
-      name, limit, housing: usd(l.maxHousingPayment), price: l.maxHomePrice > 0 ? usd(l.maxHomePrice) : 'None', fits: l.fits,
+      name, limit, housing: usd(l.maxHousingPayment), price: l.maxHomePrice > 0 ? usd(l.maxHomePrice) : t('None'), fits: l.fits,
     });
     return [
-      row('Comfortable', comfortable, percents(comfortable, ' · ')),
-      row(`Most ${LOAN[this.program()]} allows`, mostAllowed,
-        mostAllowed.housingPercent === null ? `${decimal(mostAllowed.totalPercent)}% in all` : percents(mostAllowed, ' · ')),
+      row(t('Comfortable'), comfortable, percents(comfortable, ' · ')),
+      row(t('Most {0} allows', [loanOf(this.program())]), mostAllowed,
+        mostAllowed.housingPercent === null ? t('{0}% in all', [decimal(mostAllowed.totalPercent)]) : percents(mostAllowed, ' · ')),
     ];
   });
 }

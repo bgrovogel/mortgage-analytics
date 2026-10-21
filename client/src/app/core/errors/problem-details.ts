@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { t } from '../i18n/i18n';
 
 /** RFC 9457 problem details, as returned by the API for every error. */
 interface ProblemDetails {
@@ -12,15 +13,15 @@ interface ProblemDetails {
 /** Flattens any HTTP failure into messages a person can act on. */
 export function toErrorMessages(error: unknown): string[] {
   if (!(error instanceof HttpErrorResponse)) {
-    return ['Something went wrong. Please try again.'];
+    return [t('Something went wrong. Please try again.')];
   }
 
   if (error.status === 0) {
-    return ["We couldn't reach the server. Check your connection, then try again."];
+    return [t("We couldn't reach the server. Check your connection, then try again.")];
   }
 
   if (error.status === 401) {
-    return ['Please sign in to continue.'];
+    return [t('Please sign in to continue.')];
   }
 
   const problem = (error.error ?? {}) as ProblemDetails;
@@ -29,7 +30,7 @@ export function toErrorMessages(error: unknown): string[] {
     return fieldErrors;
   }
 
-  const message = problem.detail ?? problem.title ?? `Request failed (${error.status}).`;
+  const message = problem.detail ?? problem.title ?? t('Request failed ({0}).', [error.status]);
   // A server error is ours to fix: its id finds it in the logs, so the user can quote it.
-  return [error.status >= 500 && problem.requestId ? `${message} Reference: ${problem.requestId}.` : message];
+  return [error.status >= 500 && problem.requestId ? t('{0} Reference: {1}.', [message, problem.requestId]) : message];
 }

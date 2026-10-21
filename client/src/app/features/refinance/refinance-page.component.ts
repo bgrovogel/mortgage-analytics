@@ -5,6 +5,7 @@ import { RefinanceFormComponent } from './refinance-form/refinance-form.componen
 import { RefinanceResultsComponent } from './refinance-results/refinance-results.component';
 import { RefinanceStore } from './refinance.store';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /** The refinance comparison: the form, and what refinancing would do. The store keeps it across pages. */
 @Component({
@@ -36,8 +37,8 @@ export class RefinancePageComponent {
   protected readonly verdict = computed(() => {
     const r = this.store.result();
     if (!r) return null;
-    const overall = r.lifetimeSavings >= 0 ? `Saves ${usd(r.lifetimeSavings)}` : `Costs ${usd(-r.lifetimeSavings)} more`;
-    return r.breakEvenDate ? `${overall} · break-even ${monthOf(r.breakEvenDate)}` : overall;
+    const overall = r.lifetimeSavings >= 0 ? t('Saves {0}', [usd(r.lifetimeSavings)]) : t('Costs {0} more', [usd(-r.lifetimeSavings)]);
+    return r.breakEvenDate ? t('{0} · break-even {1}', [overall, monthOf(r.breakEvenDate)]) : overall;
   });
 
   /** What is wrong with the form, if anything; while it is not empty the results are for the last valid inputs. */

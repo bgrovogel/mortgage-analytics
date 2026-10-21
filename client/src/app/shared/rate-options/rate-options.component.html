@@ -36,7 +36,7 @@
             </select>
           </label>
         } @else {
-          <app-number-field [control]="f.controls.armFixedMonths" [rule]="rules.armFixedMonths" [testId]="p + 'arm-fixed-months'" [label]="resetLabel()" />
+          <app-number-field [control]="f.controls.armFixedMonths" [rule]="rules.armFixedMonths" [testId]="p + 'arm-fixed-months'" [label]="resetLabel() | t" />
         }
         <app-number-field [control]="f.controls.armExpectedRate" [rule]="rules.armExpectedRate" [testId]="p + 'arm-expected-rate'" [label]="'Rate after that' | t" />
       </div>

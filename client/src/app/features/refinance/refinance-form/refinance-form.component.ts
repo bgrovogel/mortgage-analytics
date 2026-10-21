@@ -8,7 +8,7 @@ import { NumberFieldComponent } from '../../../core/forms/number-field.component
 import { setChanged } from '../../../core/forms/set-changed';
 import { formatMonths } from '../../../core/formatting/duration';
 import { usd as usdWhole } from '../../../core/formatting/format';
-import { PAID_OFF_ALREADY, balanceAfter, firstOfMonthFromNext, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
+import { balanceAfter, firstOfMonthFromNext, originalAmount, paidOffAlready, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { REFINANCE_RULES } from './refinance-fields';
@@ -16,6 +16,7 @@ import { AverageRateComponent } from '../../../shared/average-rate/average-rate.
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { msg, t } from '../../../core/i18n/i18n';
 
 /** The usual new terms, in years. "keep" means the new loan ends when the current one would. */
 const TERMS = [30, 25, 20, 15, 10] as const;
@@ -79,7 +80,7 @@ export class RefinanceFormComponent implements OnInit {
 
   protected readonly terms = TERMS;
   protected readonly rules = rules;
-  protected readonly paidOffAlready = PAID_OFF_ALREADY;
+  protected readonly paidOffAlready = paidOffAlready;
 
   readonly form = this.fb.group({
     loanEntry: this.fb.control<LoanEntry>('today'),
@@ -121,8 +122,8 @@ export class RefinanceFormComponent implements OnInit {
   /** The closed "Cash out and PMI" section's line: what is taken out, and the new loan's PMI rate. */
   readonly extrasSummary = computed(() => {
     const v = this.values();
-    const cash = v.cashOut ? `Cash out ${usdWhole(v.cashOut)}` : 'No cash out';
-    return v.newPmiRate ? `${cash} · PMI ${v.newPmiRate}%` : cash;
+    const cash = v.cashOut ? t('Cash out {0}', [usdWhole(v.cashOut)]) : t('No cash out');
+    return v.newPmiRate ? t('{0} · PMI {1}%', [cash, v.newPmiRate]) : cash;
   });
 
   /** True while the loan is described as it was taken out. */
@@ -156,7 +157,7 @@ export class RefinanceFormComponent implements OnInit {
   /** "25 years", or "22 yr 6 mo" for part years, for the line under "My payoff date". */
   readonly remainingLabel = computed(() => {
     const months = this.remainingMonths();
-    return months % 12 === 0 ? `${months / 12} years` : formatMonths(months);
+    return months % 12 === 0 ? t('{0} years', [months / 12]) : formatMonths(months);
   });
 
   constructor() {
@@ -267,7 +268,7 @@ export class RefinanceFormComponent implements OnInit {
       ...problemsIn(rules, this.form.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.currentRate.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.newRate.controls),
-      ...(this.loanToday()?.paidOff ? [PAID_OFF_ALREADY] : []),
+      ...(this.loanToday()?.paidOff ? [paidOffAlready()] : []),
     ];
   }
 
@@ -281,7 +282,7 @@ export class RefinanceFormComponent implements OnInit {
 
   /** What the current loan's fixed period counts from: the next payment, or the original first one. */
   protected currentResetLabel(): string {
-    return this.byOriginalLoan() ? 'Fixed for (payments from the first)' : 'Next reset in (payments)';
+    return this.byOriginalLoan() ? msg('Fixed for (payments from the first)') : msg('Next reset in (payments)');
   }
 
   private toRequest(): RefinanceRequest {

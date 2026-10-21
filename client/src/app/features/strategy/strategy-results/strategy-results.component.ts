@@ -6,6 +6,7 @@ import { NetWorthChartComponent, NetWorthView } from '../strategy-charts/net-wor
 import { monthOf, pct, signedUsd, usd } from '../../../core/formatting/format';
 import { closeness, crossover, facts, recommendation, scenarioLabel } from '../strategy-text';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** The years the milestone table shows. */
 export const MILESTONES = [5, 10, 15, 30] as const;
@@ -16,10 +17,10 @@ const SCENARIOS: readonly MarketScenario[] = ['riskAdjusted', 'expected', 'badDe
 export type DetailTab = 'overTime' | 'milestones' | 'crossover' | 'why';
 
 export const DETAIL_TABS: readonly { value: DetailTab; label: string }[] = [
-  { value: 'overTime', label: 'Over time' },
-  { value: 'milestones', label: 'Milestones' },
-  { value: 'crossover', label: 'Debt vs. investments' },
-  { value: 'why', label: 'Why' },
+  { value: 'overTime', get label() { return t('Over time'); } },
+  { value: 'milestones', get label() { return t('Milestones'); } },
+  { value: 'crossover', get label() { return t('Debt vs. investments'); } },
+  { value: 'why', get label() { return t('Why'); } },
 ];
 
 /**
@@ -58,8 +59,8 @@ export class StrategyResultsComponent {
 
   protected readonly tabs = DETAIL_TABS;
   protected readonly views: readonly { value: NetWorthView; label: string }[] = [
-    { value: 'gap', label: 'Difference' },
-    { value: 'total', label: 'Net worth' },
+    { value: 'gap', get label() { return t('Difference'); } },
+    { value: 'total', get label() { return t('Net worth'); } },
   ];
   protected readonly milestones = MILESTONES;
   protected readonly strategies = STRATEGIES;
@@ -88,13 +89,13 @@ export class StrategyResultsComponent {
       return {
         strategy: o.strategy,
         recommended: o.strategy === result.recommended,
-        split: o.investPercent === 0 ? 'All extra cash to the mortgage'
-          : o.investPercent === 100 ? 'All extra cash invested'
-            : `${pct(o.investPercent)} invested, ${pct(100 - o.investPercent)} to the mortgage`,
+        split: o.investPercent === 0 ? t('All extra cash to the mortgage')
+          : o.investPercent === 100 ? t('All extra cash invested')
+            : t('{0} invested, {1} to the mortgage', [pct(o.investPercent), pct(100 - o.investPercent)]),
         leads: Math.round(behind) === 0,
-        standing: Math.round(behind) === 0 ? 'Highest after 30 years' : `${usd(behind)} behind ${STRATEGIES[leader].short}`,
+        standing: Math.round(behind) === 0 ? t('Highest after 30 years') : t('{0} behind {1}', [usd(behind), STRATEGIES[leader].short]),
         netWorth: finals[i],
-        payoff: projection.payoffDate ? `mortgage-free ${monthOf(projection.payoffDate)}` : 'mortgage still owed at year 30',
+        payoff: projection.payoffDate ? t('mortgage-free {0}', [monthOf(projection.payoffDate)]) : t('mortgage still owed at year 30'),
       };
     });
   });

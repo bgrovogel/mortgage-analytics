@@ -5,6 +5,7 @@ import { RefinanceApiService } from '../../core/services/refinance-api.service';
 import { CalculationStore } from '../../core/state/calculation-store';
 import { paymentsMade } from '../../core/loans/loan-progress';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
+import { t } from '../../core/i18n/i18n';
 
 /** The refinance comparison's state. */
 @Injectable({ providedIn: 'root' })
@@ -13,7 +14,9 @@ export class RefinanceStore extends CalculationStore<RefinanceRequest, Refinance
 
   readonly kind = 'Refinance';
   readonly route = ['/refinance'];
-  readonly pageName = 'Refinance';
+  get pageName(): string {
+    return t('Refinance');
+  }
 
   describe = describeRefinance;
   suggestName = suggestRefinanceName;

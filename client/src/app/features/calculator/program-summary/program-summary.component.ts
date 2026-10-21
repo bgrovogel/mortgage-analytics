@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * An FHA or VA loan in two sentences: the upfront fee (FHA's upfront MIP, VA's funding fee), whether it is borrowed
@@ -31,21 +32,20 @@ export class ProgramSummaryComponent {
     if (!p || p.type === 'Conventional') return null;
 
     const fha = p.type === 'Fha';
-    const fee = fha ? 'upfront MIP' : 'funding fee';
-    const borrow = `so you borrow ${usdCents(p.loanAmount)}.`;
+    const borrowed = usdCents(p.loanAmount);
+    const fee = [pct(p.upfrontFeePercent), usdCents(p.upfrontFee), borrowed];
     const upfront = p.upfrontFee === 0
-      ? `No ${fee} (exempt), ${borrow}`
-      : `The ${pct(p.upfrontFeePercent)} ${fee}, ${usdCents(p.upfrontFee)}, is ${p.upfrontFeeFinanced ? 'added to the loan' : 'paid at closing'}, ${borrow}`;
-    if (!fha) return { title: 'VA loan', note: `${upfront} There is no mortgage insurance, whatever the down payment.` };
+      ? (fha ? t('No upfront MIP (exempt), so you borrow {0}.', [borrowed]) : t('No funding fee (exempt), so you borrow {0}.', [borrowed]))
+      : fha
+        ? (p.upfrontFeeFinanced ? t('The {0} upfront MIP, {1}, is added to the loan, so you borrow {2}.', fee) : t('The {0} upfront MIP, {1}, is paid at closing, so you borrow {2}.', fee))
+        : (p.upfrontFeeFinanced ? t('The {0} funding fee, {1}, is added to the loan, so you borrow {2}.', fee) : t('The {0} funding fee, {1}, is paid at closing, so you borrow {2}.', fee));
+    if (!fha) return { title: t('VA loan'), note: `${upfront} ${t('There is no mortgage insurance, whatever the down payment.')}` };
 
-    const forWhole = p.mipPayments === 132
-      ? 'for 11 years.'
-      : 'for the whole loan: with 10% or more down it would end after 11 years.';
-    const monthly = usdCents(result.baseline.monthlyHousingCosts.mortgageInsurance);
-    const county = p.countyName && p.countyLoanLimit ? ` FHA's ${p.loanLimitYear} limit in ${p.countyName} is ${usd(p.countyLoanLimit)}.` : '';
-    return {
-      title: 'FHA loan',
-      note: `${upfront} The annual MIP is ${p.annualMipPercent.toFixed(2)}% of the balance, ${monthly} a month in year 1, ${forWhole}${county}`,
-    };
+    const annual = [p.annualMipPercent.toFixed(2), usdCents(result.baseline.monthlyHousingCosts.mortgageInsurance)];
+    const mip = p.mipPayments === 132
+      ? t('The annual MIP is {0}% of the balance, {1} a month in year 1, for 11 years.', annual)
+      : t('The annual MIP is {0}% of the balance, {1} a month in year 1, for the whole loan: with 10% or more down it would end after 11 years.', annual);
+    const county = p.countyName && p.countyLoanLimit ? t("FHA's {0} limit in {1} is {2}.", [p.loanLimitYear, p.countyName, usd(p.countyLoanLimit)]) : '';
+    return { title: t('FHA loan'), note: [upfront, mip, county].filter(Boolean).join(' ') };
   });
 }

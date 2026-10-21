@@ -5,6 +5,7 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { balanceFrames, balanceSeries, pathThrough, resample } from './balance-series';
 import { PaymentLedgerComponent } from './payment-ledger.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** How long the ghost of the previous result stays before it fades away, unless it is pinned. */
 export const GHOST_MS = 4000;
@@ -60,8 +61,9 @@ export class BalanceChartComponent {
     if (!ghost) return null;
     const now = this.drawn();
     const interest = now.interest - ghost.interest;
-    const rate = ghost.rate !== now.rate ? `${decimal(ghost.rate)}% → ${decimal(now.rate)}% · ` : '';
-    return `${rate}${interest <= 0 ? '−' : '+'}${usd(Math.abs(interest))} interest`;
+    const rate = ghost.rate !== now.rate ? t('{0}% → {1}%', [decimal(ghost.rate), decimal(now.rate)]) : '';
+    const interestChange = t('{0} interest', [`${interest <= 0 ? '−' : '+'}${usd(Math.abs(interest))}`]);
+    return [rate, interestChange].filter(Boolean).join(' · ');
   });
   private readonly term = computed(() => this.result().baseline.payments.length);
 
@@ -103,7 +105,7 @@ export class BalanceChartComponent {
     const { extra, scheduled, interest } = this.series();
     const payments = this.result().baseline.payments;
     const months = payments.map((_, i) => i + 1).filter((m) => m % 12 === 0 || m === payments.length);
-    return months.map((m) => ({ when: `${monthOf(payments[m - 1].dueDate)} · payment ${m}`, extra: extra[m], scheduled: scheduled[m], interest: interest[m] }));
+    return months.map((m) => ({ when: t('{0} · payment {1}', [monthOf(payments[m - 1].dueDate), m]), extra: extra[m], scheduled: scheduled[m], interest: interest[m] }));
   });
 
   /** The paths, scaled to the largest balance. */
@@ -149,16 +151,16 @@ export class BalanceChartComponent {
     const payments = r.accelerated.payments;
     const clears = monthOf(payments[payments.length - 1]?.dueDate ?? r.baseline.payoffDate);
     return this.series().hasExtra && r.savings.paymentsSaved > 0
-      ? `Paying extra clears the loan in ${clears}, ${formatMonths(r.savings.paymentsSaved)} sooner than scheduled.`
-      : `The loan runs until ${clears}.`;
+      ? t('Paying extra clears the loan in {0}, {1} sooner than scheduled.', [clears, formatMonths(r.savings.paymentsSaved)])
+      : t('The loan runs until {0}.', [clears]);
   });
 
   /** What a screen reader says for the scrubber's position: the date and what is owed, never a bare number. */
   protected readonly valueText = computed(() => {
     const a = this.at();
     return this.series().hasExtra
-      ? `Payment ${a.month}, ${a.date}: you owe ${usd(a.extra)} with extra, ${usd(a.scheduled)} on schedule`
-      : `Payment ${a.month}, ${a.date}: you owe ${usd(a.extra)}`;
+      ? t('Payment {0}, {1}: you owe {2} with extra, {3} on schedule', [a.month, a.date, usd(a.extra), usd(a.scheduled)])
+      : t('Payment {0}, {1}: you owe {2}', [a.month, a.date, usd(a.extra)]);
   });
 
   /** The ghost's path, on the same scale as the curve it is a ghost of. */

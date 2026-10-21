@@ -1,4 +1,5 @@
 import { AmortizationResponse, Schedule } from '../../../core/models/amortization.models';
+import { t } from '../../../core/i18n/i18n';
 
 /** The balance, month by month, with and without extra payments, for the chart and its scrubber. Index 0 is the start. */
 export interface BalanceSeries {
@@ -44,10 +45,10 @@ export interface BalanceFrame {
 /** The frames worth offering: five years, ten, to payoff (when extra payments move it), and the full term. */
 export function balanceFrames(termMonths: number, payoffMonth: number): BalanceFrame[] {
   const frames: BalanceFrame[] = [];
-  if (termMonths > 60) frames.push({ value: '5y', label: '5Y', months: 60 });
-  if (termMonths > 120) frames.push({ value: '10y', label: '10Y', months: 120 });
-  if (payoffMonth < termMonths && payoffMonth > 0) frames.push({ value: 'payoff', label: 'To payoff', months: payoffMonth });
-  frames.push({ value: 'all', label: termMonths % 12 === 0 ? `${termMonths / 12}Y` : 'Full term', months: termMonths });
+  if (termMonths > 60) frames.push({ value: '5y', label: t('{0}Y', [5]), months: 60 });
+  if (termMonths > 120) frames.push({ value: '10y', label: t('{0}Y', [10]), months: 120 });
+  if (payoffMonth < termMonths && payoffMonth > 0) frames.push({ value: 'payoff', label: t('To payoff'), months: payoffMonth });
+  frames.push({ value: 'all', label: termMonths % 12 === 0 ? t('{0}Y', [termMonths / 12]) : t('Full term'), months: termMonths });
   return frames;
 }
 

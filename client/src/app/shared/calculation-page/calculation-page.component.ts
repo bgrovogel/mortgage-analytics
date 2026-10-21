@@ -6,12 +6,13 @@ import { CalcStatusComponent } from './calc-status.component';
 import { SaveCalculationComponent } from '../save-calculation/save-calculation.component';
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { dateText } from '../../core/formatting/format';
 
 /** How long the answer holds still before it is announced. */
 export const ANNOUNCE_AFTER_MS = 600;
 
 /** The date a printout was made, as people write it: "Oct 14, 2026". */
-const PRINTED = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
+const printed = () => dateText(new Date(), { dateStyle: 'medium' });
 
 /**
  * The layout every calculator page shares: the question the page answers and one line on how, then the form on the
@@ -91,7 +92,7 @@ export class CalculationPageComponent {
   protected readonly printSummary = computed(() => {
     const store = this.store();
     const request = store.request();
-    return request ? `Mortgage Analytics · ${store.pageName}: ${store.describe(request)} · ${PRINTED.format(new Date())}` : null;
+    return request ? `Mortgage Analytics · ${store.pageName}: ${store.describe(request)} · ${printed()}` : null;
   });
 
   /** Prints the page: the results, in the light theme, without the form or the page's controls (styles.scss). */

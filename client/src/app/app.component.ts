@@ -10,16 +10,17 @@ import { LanguageSwitchComponent } from './core/i18n/language-switch.component';
 import { AuthService } from './core/auth/auth.service';
 import { CalculationStores } from './features/calculation-stores';
 import { TPipe } from './core/i18n/t.pipe';
+import { t } from './core/i18n/i18n';
 
 /**
  * The pages in the top navigation: one for each thing a buyer is deciding. Buying a home also holds Compare, which is
  * a view of it, so that link stays marked while Compare is open.
  */
 const PAGES: readonly { path: string; label: string; also?: readonly string[] }[] = [
-  { path: '/calculator', label: 'Buy a home', also: ['/compare'] },
-  { path: '/refinance', label: 'Refinance' },
-  { path: '/strategy', label: 'Pay off or invest' },
-  { path: '/history', label: 'Saved' },
+  { path: '/calculator', get label() { return t('Buy a home'); }, also: ['/compare'] },
+  { path: '/refinance', get label() { return t('Refinance'); } },
+  { path: '/strategy', get label() { return t('Pay off or invest'); } },
+  { path: '/history', get label() { return t('Saved'); } },
 ];
 
 /** The app shell: title, page navigation and who is signed in; the API docs in the footer. Pages render in the outlet. */
@@ -142,7 +143,7 @@ export class AppComponent {
     const returnUrl = this.router.parseUrl(this.url()).queryParams['returnUrl'];
     const path = typeof returnUrl === 'string' ? returnUrl.split(/[?#]/)[0] : '';
     const page = PAGES.find((p) => (path === p.path || path.startsWith(`${p.path}/`)) && (p.path !== '/history' || this.auth.user()));
-    return page && page.path !== '/calculator' ? { path, name: page.label } : { path: page ? path : '/calculator', name: 'the calculator' };
+    return page && page.path !== '/calculator' ? { path, name: page.label } : { path: page ? path : '/calculator', name: t('the calculator') };
   });
 
   /** True on pages whose route asks for the focused layout (sign-in and the other account pages). */

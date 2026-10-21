@@ -1,4 +1,5 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
+import { DatePipe } from '../../../core/i18n/date.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TermComponent } from '../../../core/glossary/term.component';
@@ -13,13 +14,14 @@ import { KPI_LABELS, KpiKey, KpiPreferences } from './kpi-preferences';
 import { ProvenanceChipsComponent } from '../provenance/provenance-chips.component';
 import { buydownYears } from '../rate-plan/buydown-years';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { msg, t } from '../../../core/i18n/i18n';
 
 /** Each tax, as the payment tile names it when it is the only one. */
 const TAXES: readonly [keyof HousingCosts, string][] = [
-  ['propertyTax', 'property tax'],
-  ['schoolTax', 'school tax'],
-  ['localTax', 'county/city tax'],
-  ['mudTax', 'MUD tax'],
+  ['propertyTax', msg('property tax')],
+  ['schoolTax', msg('school tax')],
+  ['localTax', msg('county/city tax')],
+  ['mudTax', msg('MUD tax')],
 ];
 
 /**
@@ -34,18 +36,18 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
     @let r = result();
     @if (r.purchase.isJumbo) {
       <p class="notice" data-testid="jumbo-notice">
-        {{ 'This is a jumbo loan: above the {0} conforming limit. Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can differ more than usual.' | t: [(r.purchase.conformingLoanLimit | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+        {{ 'This is a jumbo loan: above the {0} conforming limit. Jumbo loans have stricter rules, often more down and more in reserve, and are priced on their own, so lenders’ quotes can differ more than usual.' | t: [(r.purchase.conformingLoanLimit | currency: 'USD' : 'symbol' : '1.0-0')] }}
       </p>
     }
     <!-- What each month is made of, in a line and as a bar: the hero figure above is its total. -->
     <section class="payment" [attr.aria-label]="'What each month is made of' | t" data-testid="payment-parts">
       <p class="parts">
-        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>{{ '&ngsp;' | t }}<abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr>
+        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr>
         @if (firstPayment().costs.total > 0) {
-          {{ '&ngsp;+ {0}' | t: [(firstPayment().costs.total | currency)] }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
+          &ngsp;{{ '+ {0}' | t: [(firstPayment().costs.total | currency)] }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
         }
         @if (r.annualPercentageRate; as apr) {
-          {{ '&ngsp;·' | t }} <span data-testid="apr"><app-term of="APR">{{ 'APR' | t }}</app-term> {{ percent(apr) }}%</span>
+          &ngsp;· <span data-testid="apr"><app-term of="APR">{{ 'APR' | t }}</app-term> {{ percent(apr) }}%</span>
         }
       </p>
       <app-provenance-chips [result]="r" />
@@ -53,7 +55,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
         <p class="extra" data-testid="buydown-first-year">{{ 'In year 1, with the buydown; {0}' | t: [fromNoteRate()] }}</p>
       }
       @if (withExtra(); as extra) {
-        <p class="extra" data-testid="with-extra">{{ '+ {0} extra = {1}' | t: [(extra.amount | currency: ('USD' | t) : 'symbol' : '1.0-0'), (extra.total | currency)] }}</p>
+        <p class="extra" data-testid="with-extra">{{ '+ {0} extra = {1}' | t: [(extra.amount | currency: 'USD' : 'symbol' : '1.0-0'), (extra.total | currency)] }}</p>
       }
       <!-- Where it goes: a bar of the parts, with each one's figure and share. -->
       <app-payment-breakdown [schedule]="r.accelerated" [principalAndInterest]="r.buydown?.years?.[0]?.monthlyPayment ?? null"
@@ -85,9 +87,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           <!-- When it is paid off, and how much sooner: one tile, so the date and the time saved are not said twice. -->
           <div class="tile">
             <dt>{{ 'Paid off' | t }}</dt>
-            <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: ('MMM yyyy' | t) }}</dd>
+            <dd data-testid="payoff-date">{{ r.savings.acceleratedPayoffDate | date: 'MMM yyyy' }}</dd>
             @if (r.savings.paymentsSaved > 0) {
-              <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> {{ 'sooner, instead of {0}' | t: [(r.savings.originalPayoffDate | date: ('MMM yyyy' | t))] }}</dd>
+              <dd class="note gain"><span data-testid="time-saved">{{ timeSaved() }}</span> {{ 'sooner, instead of {0}' | t: [(r.savings.originalPayoffDate | date: 'MMM yyyy')] }}</dd>
             } @else if (r.accelerated.recasts.length > 0) {
               <dd class="note" data-testid="same-payoff">{{ 'Same date: a recast lowers the payment instead' | t }}</dd>
             }
@@ -98,7 +100,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
             <div class="tile" data-testid="afford-tile">
               <dt>{{ 'Can you afford it?' | t }}</dt>
               @if (afford(); as a) {
-                <dd [class.gain]="a.answer === 'Yes'" data-testid="afford-tile-answer">{{ a.answer }}</dd>
+                <dd [class.gain]="a.good" data-testid="afford-tile-answer">{{ a.answer }}</dd>
                 <dd class="note" data-testid="afford-tile-note">{{ a.note }}</dd>
                 <dd class="link"><a routerLink="/calculator/affordability" data-testid="afford-tile-link">{{ 'How lenders see it →' | t }}</a></dd>
               } @else {
@@ -112,12 +114,12 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           @if (hasSavings()) {
             <div class="tile savings positive" data-testid="savings-tile">
               <dt>{{ 'Net savings from paying extra' | t }}</dt>
-              <dd data-testid="net-savings">{{ r.savings.netSavings | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</dd>
+              <dd data-testid="net-savings">{{ r.savings.netSavings | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
               @if (savingsDetail(); as detail) {
                 <dd class="note" data-testid="savings-detail">{{ detail }}</dd>
               }
               <!-- &ngsp; keeps the space between the two spans, which Angular would otherwise drop as whitespace-only. -->
-              <dd class="note">{{ 'Total interest' | t }} <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</span>{{ '&ngsp;' | t }}<span data-testid="total-interest-detail">{{ 'instead of {0}' | t: [(r.baseline.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</span></dd>
+              <dd class="note">{{ 'Total interest' | t }} <span data-testid="total-interest">{{ r.accelerated.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</span>&ngsp;<span data-testid="total-interest-detail">{{ 'instead of {0}' | t: [(r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0')] }}</span></dd>
               @if (buydownNote(); as note) {
                 <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
               }
@@ -126,7 +128,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
             <!-- Nothing extra is paid, so a $0 saving would say nothing: say what the loan costs instead. -->
             <div class="tile savings" data-testid="savings-tile">
               <dt>{{ 'Total interest over the loan' | t }}</dt>
-              <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</dd>
+              <dd data-testid="total-interest">{{ r.baseline.totalInterest | currency: 'USD' : 'symbol' : '1.0-0' }}</dd>
               <dd class="note" data-testid="total-interest-detail">{{ 'Add an extra payment to see how much you could save.' | t }}</dd>
               @if (buydownNote(); as note) {
                 <dd class="note" data-testid="interest-you-pay">{{ note }}</dd>
@@ -138,12 +140,12 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
           @if (r.accelerated.mortgageInsuranceEndDate; as pmiEnd) {
             <div class="tile">
               <dt>{{ '{0} ends' | t: [insuranceName()] }}</dt>
-              <dd data-testid="pmi-end">{{ pmiEnd | date: ('MMM yyyy' | t) }}</dd>
+              <dd data-testid="pmi-end">{{ pmiEnd | date: 'MMM yyyy' }}</dd>
               <!-- Kept for the life of the loan (FHA MIP with under 10% down), it ends with the payoff tile's date. -->
               @if (pmiEnd.slice(0, 7) === r.savings.acceleratedPayoffDate.slice(0, 7)) {
                 <dd class="note" data-testid="pmi-with-loan">{{ 'Lasts as long as the loan, so paying it off sooner ends it too' | t }}</dd>
               } @else if (r.baseline.mortgageInsuranceEndDate !== pmiEnd) {
-                <dd class="note gain" data-testid="pmi-sooner">{{ '{0} sooner, instead of {1}' | t: [pmiSooner(), (r.baseline.mortgageInsuranceEndDate | date: ('MMM yyyy' | t))] }}</dd>
+                <dd class="note gain" data-testid="pmi-sooner">{{ '{0} sooner, instead of {1}' | t: [pmiSooner(), (r.baseline.mortgageInsuranceEndDate | date: 'MMM yyyy')] }}</dd>
               } @else {
                 <dd class="note">{{ '{0}% down' | t: [r.purchase.downPaymentPercent] }}</dd>
               }
@@ -151,10 +153,10 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
               @if (r.pmiOtherChoice; as other) {
                 <dd class="note ask" data-testid="pmi-other-choice">
                   @if (other.removal === 'BorrowerRequested') {
-                    {{ 'Ask your lender at 80%: ends {0}, saving {1}' | t: [(other.endDate | date: ('MMM yyyy' | t)), (other.savedByAsking | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+                    {{ 'Ask your lender at 80%: ends {0}, saving {1}' | t: [(other.endDate | date: 'MMM yyyy'), (other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0')] }}
                   } @else {
                     <!-- Automatic removal is the latest the law requires; some servicers drop it sooner, but none has to. -->
-                    {{ "If you don't ask, your servicer only has to remove it in {0}, costing {1} more" | t: [(other.endDate | date: ('MMM yyyy' | t)), (other.savedByAsking | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+                    {{ "If you don't ask, your servicer only has to remove it in {0}, costing {1} more" | t: [(other.endDate | date: 'MMM yyyy'), (other.savedByAsking | currency: 'USD' : 'symbol' : '1.0-0')] }}
                   }
                 </dd>
               }
@@ -192,9 +194,9 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
       <ul class="recasts" data-testid="recasts">
         @for (recast of r.accelerated.recasts; track recast.afterPaymentNumber) {
           <li>
-            <strong>{{ 'Recast after payment {0}' | t: [recast.afterPaymentNumber] }}</strong>{{ ': payment drops from {0} to {1} starting {2}' | t: [(recast.previousPayment | currency), (recast.newPayment | currency), (recast.effectiveDate | date: ('MMM yyyy' | t))] }}
+            <strong>{{ 'Recast after payment {0}' | t: [recast.afterPaymentNumber] }}</strong>{{ ': payment drops from {0} to {1} starting {2}' | t: [(recast.previousPayment | currency), (recast.newPayment | currency), (recast.effectiveDate | date: 'MMM yyyy')] }}
             @if (recast.fee > 0) {
-              {{ '({0} fee)' | t: [(recast.fee | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+              {{ '({0} fee)' | t: [(recast.fee | currency: 'USD' : 'symbol' : '1.0-0')] }}
             }
           </li>
         }
@@ -225,7 +227,7 @@ export class SavingsSummaryComponent {
   protected moved(key: KpiKey, by: -1 | 1): void {
     this.preferences.move(key, by);
     const order = this.preferences.order();
-    this.arrangeStatus.set(`${KPI_LABELS[key]} is now ${order.indexOf(key) + 1} of ${order.length}.`);
+    this.arrangeStatus.set(t('{0} is now {1} of {2}.', [KPI_LABELS[key], order.indexOf(key) + 1, order.length]));
   }
 
   /** The cash to close, for a purchase still ahead; null for a loan already being paid, or without closing costs. */
@@ -238,10 +240,10 @@ export class SavingsSummaryComponent {
   readonly afford = computed(() => {
     const a = this.result().affordability;
     if (!a) return null;
-    const share = `${decimal(a.housingPercent)}% of your income, ${decimal(a.totalPercent)}% with your debts`;
-    if (a.comfortable.fits) return { answer: 'Yes', note: `${share}: within the comfortable 28% and 36%.` };
-    if (a.mostAllowed.fits) return { answer: 'A stretch', note: `${share}: past the comfortable 28% and 36%, within what lenders allow.` };
-    return { answer: 'Too much', note: `${share}: past what lenders allow.` };
+    const share = t('{0}% of your income, {1}% with your debts', [decimal(a.housingPercent), decimal(a.totalPercent)]);
+    if (a.comfortable.fits) return { answer: t('Yes'), good: true, note: t('{0}: within the comfortable 28% and 36%.', [share]) };
+    if (a.mostAllowed.fits) return { answer: t('A stretch'), good: false, note: t('{0}: past the comfortable 28% and 36%, within what lenders allow.', [share]) };
+    return { answer: t('Too much'), good: false, note: t('{0}: past what lenders allow.', [share]) };
   });
 
   /** Opens the form's income section with the cursor in the income field. */
@@ -301,15 +303,16 @@ export class SavingsSummaryComponent {
    */
   readonly housingCostsLabel = computed(() => {
     const c = this.firstPayment().costs;
-    const taxes = TAXES.filter(([key]) => c[key] > 0).map(([, words]) => words);
+    const taxes = TAXES.filter(([key]) => c[key] > 0).map(([, words]) => t(words));
     const parts = [
-      ...(taxes.length > 1 ? ['property taxes'] : taxes),
-      ...(c.pidAssessment > 0 ? ['PID'] : []),
-      ...(c.homeownersInsurance > 0 ? ['insurance'] : []),
+      ...(taxes.length > 1 ? [t('property taxes')] : taxes),
+      ...(c.pidAssessment > 0 ? [t('PID')] : []),
+      ...(c.homeownersInsurance > 0 ? [t('insurance')] : []),
       ...(c.mortgageInsurance > 0 ? [this.insuranceName()] : []),
-      ...(c.hoaDues > 0 ? ['HOA'] : []),
+      ...(c.hoaDues > 0 ? [t('HOA')] : []),
     ];
-    return parts.length > 2 ? 'housing costs' : parts.join(' & ');
+    if (parts.length > 2) return t('housing costs');
+    return parts.length === 2 ? t('{0} & {1}', parts) : parts.join('');
   });
 
   /**
@@ -320,9 +323,9 @@ export class SavingsSummaryComponent {
   readonly buydownNote = computed(() => {
     const r = this.result();
     if (!r.buydown) return null;
-    if (r.buydown.paidBy === 'Borrower') return 'Your buydown, paid for at closing, lowers the early payments, not the interest.';
+    if (r.buydown.paidBy === 'Borrower') return t('Your buydown, paid for at closing, lowers the early payments, not the interest.');
     const schedule = this.hasSavings() ? r.accelerated : r.baseline;
-    return `The seller's buydown pays ${usd(schedule.buydownSubsidy)} of it, so you pay ${usd(schedule.interestYouPay)}.`;
+    return t("The seller's buydown pays {0} of it, so you pay {1}.", [usd(schedule.buydownSubsidy), usd(schedule.interestYouPay)]);
   });
 
   /** True when extra payments change anything; otherwise savings tiles would only show zeros. */

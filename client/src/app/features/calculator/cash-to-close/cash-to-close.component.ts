@@ -3,14 +3,22 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { usd, usdCents } from '../../../core/formatting/format';
 import { CashToClose, LoanProgramType } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** The down payment that reaches each higher conventional limit, by that limit's percentage. */
 const DOWN_FOR_LIMIT: Record<number, number> = { 6: 10, 9: 25 };
 
-/** Why a conventional loan's limit is what it is, by its percentage: 2% is only ever an investment property's. */
-const CONVENTIONAL_TIER: Record<number, string> = {
-  2: ', for an investment property', 3: ', with less than 10% down', 6: ', with 10% to 25% down', 9: ', with 25% or more down',
-};
+/** The most a seller may pay and why it is that, by the conventional limit's percentage: 2% is only ever an investment property's. */
+function conventionalLimit(limitPercent: number, limit: string): string {
+  const args = [limit, limitPercent];
+  switch (limitPercent) {
+    case 2: return t('A seller or builder may pay up to {0} of your costs: {1}% of the price, for an investment property.', args);
+    case 3: return t('A seller or builder may pay up to {0} of your costs: {1}% of the price, with less than 10% down.', args);
+    case 6: return t('A seller or builder may pay up to {0} of your costs: {1}% of the price, with 10% to 25% down.', args);
+    case 9: return t('A seller or builder may pay up to {0} of your costs: {1}% of the price, with 25% or more down.', args);
+    default: return t('A seller or builder may pay up to {0} of your costs: {1}% of the price.', args);
+  }
+}
 
 /** One line of the cash to close: what it is, how it was worked out (when that helps), and the amount. */
 interface Line {
@@ -78,18 +86,22 @@ export class CashToCloseComponent {
   /** What closing adds to the down payment, and what credits take off, in one sentence. */
   readonly intro = computed(() => {
     const c = this.cash();
-    const credits = c.credits > 0 ? `; credits take ${usd(c.credits)} off` : '';
-    return `Closing costs add ${usd(c.closingCosts)} to the ${usd(c.downPayment)} down payment${credits}.`;
+    return c.credits > 0
+      ? t('Closing costs add {0} to the {1} down payment; credits take {2} off.', [usd(c.closingCosts), usd(c.downPayment), usd(c.credits)])
+      : t('Closing costs add {0} to the {1} down payment.', [usd(c.closingCosts), usd(c.downPayment)]);
   });
 
   /** The most the seller may pay, why, and what they pay of it here. */
   readonly concessionLimit = computed(() => {
     const c = this.cash().concessions;
-    const why = this.program()?.type === 'Fha' ? ' on an FHA loan'
-      : this.program()?.type === 'Va' ? ' on a VA loan, besides the normal closing costs and points'
-        : CONVENTIONAL_TIER[c.limitPercent];
-    const paid = c.total > 0 ? ` Here they pay ${usd(c.total)}${c.sellerBuydown > 0 ? ', with the buydown' : ''}.` : '';
-    return `A seller or builder may pay up to ${usd(c.limit)} of your costs: ${c.limitPercent}% of the price${why}.${paid}`;
+    const amount = usd(c.limit);
+    const args = [amount, c.limitPercent];
+    const type = this.program()?.type;
+    const limit = type === 'Fha' ? t('A seller or builder may pay up to {0} of your costs: {1}% of the price on an FHA loan.', args)
+      : type === 'Va' ? t('A seller or builder may pay up to {0} of your costs: {1}% of the price on a VA loan, besides the normal closing costs and points.', args)
+        : conventionalLimit(c.limitPercent, amount);
+    if (c.total <= 0) return limit;
+    return `${limit} ${c.sellerBuydown > 0 ? t('Here they pay {0}, with the buydown.', [usd(c.total)]) : t('Here they pay {0}.', [usd(c.total)])}`;
   });
 
   /** How far the seller's offer goes beyond the limit. */
@@ -99,7 +111,7 @@ export class CashToCloseComponent {
   readonly nextTier = computed(() => {
     const next = this.cash().concessions.nextTier;
     return next
-      ? `With ${usd(next.downPayment)} down (${DOWN_FOR_LIMIT[next.limitPercent]}%), it would be ${next.limitPercent}%: ${usd(next.limit)}.`
+      ? t('With {0} down ({1}%), it would be {2}%: {3}.', [usd(next.downPayment), DOWN_FOR_LIMIT[next.limitPercent], next.limitPercent, usd(next.limit)])
       : null;
   });
 
@@ -110,17 +122,17 @@ export class CashToCloseComponent {
   readonly lines = computed<Line[]>(() => {
     const c = this.cash();
     const all: Line[] = [
-      { label: 'Loan costs', detail: '', amount: c.loanCosts },
-      { label: 'Other fees', detail: '', amount: c.otherFees },
-      { label: 'Prepaid interest', detail: `${c.prepaidInterestDays} days at ${usdCents(c.dailyInterest)}`, amount: c.prepaidInterest },
-      { label: 'Homeowners insurance', detail: 'the first year', amount: c.homeownersInsurance },
-      { label: 'Escrow deposit', detail: `${c.escrowMonths} months at ${usdCents(c.monthlyEscrow)}`, amount: c.escrowDeposit },
-      { label: 'Temporary buydown', detail: 'you pay for it', amount: c.buydownCost },
-      { label: 'Discount points', detail: '', amount: c.discountPoints },
-      { label: this.program()?.type === 'Va' ? 'VA funding fee' : 'FHA upfront MIP', detail: 'not added to the loan', amount: c.upfrontMortgageFee },
-      { label: 'Seller credits', detail: c.concessions.overLimit > 0 ? 'up to the limit' : '', amount: c.sellerCredits, credit: true },
-      { label: 'Lender credits', detail: '', amount: c.lenderCredits, credit: true },
+      { label: t('Loan costs'), detail: '', amount: c.loanCosts },
+      { label: t('Other fees'), detail: '', amount: c.otherFees },
+      { label: t('Prepaid interest'), detail: t('{0} days at {1}', [c.prepaidInterestDays, usdCents(c.dailyInterest)]), amount: c.prepaidInterest },
+      { label: t('Homeowners insurance'), detail: t('the first year'), amount: c.homeownersInsurance },
+      { label: t('Escrow deposit'), detail: t('{0} months at {1}', [c.escrowMonths, usdCents(c.monthlyEscrow)]), amount: c.escrowDeposit },
+      { label: t('Temporary buydown'), detail: t('you pay for it'), amount: c.buydownCost },
+      { label: t('Discount points'), detail: '', amount: c.discountPoints },
+      { label: this.program()?.type === 'Va' ? t('VA funding fee') : t('FHA upfront MIP'), detail: t('not added to the loan'), amount: c.upfrontMortgageFee },
+      { label: t('Seller credits'), detail: c.concessions.overLimit > 0 ? t('up to the limit') : '', amount: c.sellerCredits, credit: true },
+      { label: t('Lender credits'), detail: '', amount: c.lenderCredits, credit: true },
     ];
-    return [{ label: 'Down payment', detail: '', amount: c.downPayment }, ...all.filter((line) => line.amount > 0)];
+    return [{ label: t('Down payment'), detail: '', amount: c.downPayment }, ...all.filter((line) => line.amount > 0)];
   });
 }

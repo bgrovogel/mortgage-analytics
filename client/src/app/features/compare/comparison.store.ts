@@ -6,6 +6,7 @@ import { AmortizationApiService } from '../../core/services/amortization-api.ser
 import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan } from '../../core/state/shared-loan.store';
 import { CalculatorStore, purchaseLoanOf, withoutIncome } from '../calculator/calculator.store';
+import { msg, t } from '../../core/i18n/i18n';
 
 /**
  * Up to four homes compared on the calculator's Compare tab. The first home is the calculator's own loan; each other
@@ -19,13 +20,15 @@ export class ComparisonStore extends CalculationStore<HomeComparisonRequest, Hom
 
   readonly kind = 'HomeComparison';
   readonly route = ['/compare'];
-  readonly pageName = 'Compare homes';
+  get pageName(): string {
+    return t('Compare homes');
+  }
 
   describe = describeComparison;
   suggestName = suggestComparisonName;
 
   /** A share link leaves out each home's income and debts. */
-  override readonly shareNote = 'Your income and debts are left out.';
+  override readonly shareNote = msg('Your income and debts are left out.');
 
   /**
    * Shows homes compared (saved or shared), with the first in the calculator as well: the first home is the

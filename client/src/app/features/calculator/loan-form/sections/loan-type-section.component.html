@@ -90,7 +90,7 @@
             <app-number-field [control]="f.form.controls.rateWithoutPoints" [rule]="f.rules.rateWithoutPoints" testId="rate-without-points" />
           </div>
           @if (f.pointsRateTooLow()) {
-            <small class="error" data-testid="points-rate-error">{{ f.pointsRateMessage }}</small>
+            <small class="error" data-testid="points-rate-error">{{ f.pointsRateMessage | t }}</small>
           }
           <p class="hint">
             {{ 'A point is 1% of the loan. The interest rate above is the rate with the points; enter the rate the same lender quotes without them. The results say when the points pay for themselves.' | t }}

@@ -2,6 +2,7 @@ import { ScrubSeries as LineSeries } from '../../../core/charts/scrub-chart.comp
 import { usd } from '../../../core/formatting/format';
 import { YearProjection } from '../../../core/models/amortization.models';
 import { COST_CATEGORIES } from '../../../core/models/cost-categories';
+import { t } from '../../../core/i18n/i18n';
 
 type TaxableKey = 'propertyTaxableValue' | 'schoolTaxableValue' | 'localTaxableValue' | 'mudTaxableValue';
 
@@ -11,11 +12,11 @@ type TaxableKey = 'propertyTaxableValue' | 'schoolTaxableValue' | 'localTaxableV
  * long-dashed and dotted lines (and the assessed value's short dashes) let each show through where they overlap.
  */
 const UNITS: readonly { key: TaxableKey; category: 'propertyTax' | 'schoolTax' | 'localTax' | 'mudTax'; name: string; label: string; style: Partial<LineSeries> }[] = [
-  { key: 'propertyTaxableValue', category: 'propertyTax', name: 'property tax', label: 'Taxable value', style: {} },
-  { key: 'schoolTaxableValue', category: 'schoolTax', name: 'school tax', label: 'School taxable value', style: {} },
+  { key: 'propertyTaxableValue', category: 'propertyTax', get name() { return t('property tax'); }, get label() { return t('Taxable value'); }, style: {} },
+  { key: 'schoolTaxableValue', category: 'schoolTax', get name() { return t('school tax'); }, get label() { return t('School taxable value'); }, style: {} },
   // Long dashes: unlike the assessed value's short ones, which this line can sit on.
-  { key: 'localTaxableValue', category: 'localTax', name: 'county & city tax', label: 'County & city taxable value', style: { dash: [12, 6] } },
-  { key: 'mudTaxableValue', category: 'mudTax', name: 'MUD tax', label: 'MUD taxable value', style: { dotted: true } },
+  { key: 'localTaxableValue', category: 'localTax', get name() { return t('county & city tax'); }, get label() { return t('County & city taxable value'); }, style: { dash: [12, 6] } },
+  { key: 'mudTaxableValue', category: 'mudTax', get name() { return t('MUD tax'); }, get label() { return t('MUD taxable value'); }, style: { dotted: true } },
 ];
 
 const sameLine = (a: number[], b: number[]) => a.every((value, i) => value === b[i]);
@@ -38,11 +39,11 @@ function chargedUnits(projection: YearProjection[]) {
 export function valueLines(projection: YearProjection[]): LineSeries[] {
   const market = projection.map((y) => y.marketValue);
   const assessed = projection.map((y) => y.assessedValue);
-  const lines: LineSeries[] = [{ label: 'Market value', color: '--series-1', data: market }];
+  const lines: LineSeries[] = [{ get label() { return t('Market value'); }, color: '--series-1', data: market }];
 
   if (!sameLine(assessed, market)) {
     // Right after market value, so the shading fills the gap the cap creates.
-    lines.push({ label: 'Assessed value (capped)', color: '--series-7', data: assessed, dashed: true, fillToPrevious: true });
+    lines.push({ get label() { return t('Assessed value (capped)'); }, color: '--series-7', data: assessed, dashed: true, fillToPrevious: true });
   }
 
   for (const unit of chargedUnits(projection)) {
@@ -64,43 +65,50 @@ export function valueNote(projection: YearProjection[]): string {
 
   const exempted = units.filter((u) => u.values[0] < first.assessedValue);
   if (exempted.length > 0) {
-    const parts = exempted.map((u, i) => `${u.name}${i === 0 ? ' is charged' : ''} on ${usd(u.values[0])}`);
-    sentences.push(`In year 1, after homestead exemptions, ${parts.join(' and ')}.`);
+    const parts = exempted.map((u, i) => (i === 0 ? t('{0} is charged on {1}', [u.name, usd(u.values[0])]) : t('{0} on {1}', [u.name, usd(u.values[0])])));
+    sentences.push(t('In year 1, after homestead exemptions, {0}.', [parts.join(` ${t('and')} `)]));
   }
 
   const full = units.filter((u) => u.values[0] === first.assessedValue);
   if (full.length > 0) {
-    const names = capitalized(full.map((u) => u.name).join(' and '));
+    const args = [capitalized(full.map((u) => u.name).join(` ${t('and')} `)), usd(first.assessedValue)];
     // Once the cap holds the assessed value below the market, these lines follow it, not the market.
-    const along = projection.every((y) => y.assessedValue === y.marketValue) ? 'the market value' : 'the assessed value';
-    const lineWord = full.length === 1 ? 'its line runs' : 'their lines run';
-    sentences.push(`${names} ${full.length === 1 ? 'is' : 'are'} charged on the full ${usd(first.assessedValue)} (no exemption entered), so ${lineWord} along ${along}.`);
+    const market = projection.every((y) => y.assessedValue === y.marketValue);
+    if (full.length === 1) {
+      sentences.push(market
+        ? t('{0} is charged on the full {1} (no exemption entered), so its line runs along the market value.', args)
+        : t('{0} is charged on the full {1} (no exemption entered), so its line runs along the assessed value.', args));
+    } else {
+      sentences.push(market
+        ? t('{0} are charged on the full {1} (no exemption entered), so their lines run along the market value.', args)
+        : t('{0} are charged on the full {1} (no exemption entered), so their lines run along the assessed value.', args));
+    }
   }
 
   // An over-65 ceiling freezes a bill: the line keeps rising, the tax does not. Say so, or the chart misleads.
   for (const unit of units) {
     const frozenFrom = ceilingYear(projection, unit);
     if (frozenFrom !== null) {
-      sentences.push(`From year ${frozenFrom}, a tax ceiling holds ${unit.name} at ${usd(last.costs[unit.category])} a year, even as its line keeps rising.`);
+      sentences.push(t('From year {0}, a tax ceiling holds {1} at {2} a year, even as its line keeps rising.', [frozenFrom, unit.name, usd(last.costs[unit.category])]));
     }
   }
 
   const gap = last.marketValue - last.assessedValue;
-  if (gap > 0) sentences.push(`By year ${last.year}, the homestead cap keeps ${usd(gap)} of value off the tax roll.`);
+  if (gap > 0) sentences.push(t('By year {0}, the homestead cap keeps {1} of value off the tax roll.', [last.year, usd(gap)]));
 
-  return sentences.length > 0 ? sentences.join(' ') : 'No property taxes are entered, so only the home value is shown.';
+  return sentences.length > 0 ? sentences.join(' ') : t('No property taxes are entered, so only the home value is shown.');
 }
 
 /** The tooltip footer: that year's bill for each tax, e.g. "Tax this year: school $2,350 · county & city $4,125". */
 export function valueBills(year: YearProjection): string {
   const bills = [
-    ['property', year.costs.propertyTax],
-    ['school', year.costs.schoolTax],
-    ['county & city', year.costs.localTax],
-    ['MUD', year.costs.mudTax],
+    [t('property'), year.costs.propertyTax],
+    [t('school'), year.costs.schoolTax],
+    [t('county & city'), year.costs.localTax],
+    [t('MUD'), year.costs.mudTax],
   ] as const;
   const charged = bills.filter(([, amount]) => amount > 0).map(([name, amount]) => `${name} ${usd(amount)}`);
-  return charged.length > 0 ? `Tax this year: ${charged.join(' · ')}` : '';
+  return charged.length > 0 ? t('Tax this year: {0}', [charged.join(' · ')]) : '';
 }
 
 /**

@@ -1,8 +1,9 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe } from '../../core/i18n/date.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { SessionsApiService, UserSession } from '../../core/services/sessions-api.service';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t, tp } from '../../core/i18n/i18n';
 
 /**
  * Where the account is signed in, on the account page: each browser or device with when it signed in and was last used,
@@ -27,7 +28,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
                 @if (session.current) {
                   <span class="badge" data-testid="session-current">{{ 'This device' | t }}</span>
                 }
-                <small>{{ 'Signed in {0} · Last active {1}' | t: [(session.createdAt | date: 'mediumDate'), (session.lastSeenAt | date: ('MMM d, h:mm a' | t))] }}</small>
+                <small>{{ 'Signed in {0} · Last active {1}' | t: [(session.createdAt | date: 'mediumDate'), (session.lastSeenAt | date: 'MMM d, h:mm a')] }}</small>
               </span>
               @if (!session.current) {
                 <button type="button" class="secondary" [attr.aria-label]="'Sign out {0}' | t: [session.device]" (click)="end(session)">{{ 'Sign out' | t }}</button>
@@ -83,7 +84,7 @@ export class SessionsComponent {
     this.error.set(null);
     this.api.end(session.id).subscribe({
       next: () => {
-        this.status.set(`${session.device} signed out.`);
+        this.status.set(t('{0} signed out.', [session.device]));
         this.reload();
       },
       error: (error: unknown) => this.error.set(toErrorMessages(error).join(' ')),
@@ -97,7 +98,7 @@ export class SessionsComponent {
     this.api.endOthers().subscribe({
       next: ({ ended }) => {
         this.busy.set(false);
-        this.status.set(ended === 1 ? '1 other device signed out.' : `${ended} other devices signed out.`);
+        this.status.set(tp(ended, '1 other device signed out.', '{n} other devices signed out.'));
         this.reload();
       },
       error: (error: unknown) => {

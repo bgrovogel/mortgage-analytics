@@ -5,6 +5,7 @@ import { switchMap } from 'rxjs';
 import { NumberFieldComponent } from '../../core/forms/number-field.component';
 import { ARM_TYPES, ArmMode, BUYDOWNS, RATE_OPTION_RULES, RateOptionsForm, buydownSteps } from './rate-options';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { msg } from '../../core/i18n/i18n';
 
 /**
  * How a loan's rate works, wherever a loan has one: fixed, a temporary buydown, or adjustable (an ARM, by its type
@@ -35,7 +36,7 @@ export class RateOptionsComponent {
   readonly rate = input(0, { transform: (value: number | null) => value ?? 0 });
 
   /** What the fixed period counts from, in 'reset' mode: "Next reset in (payments)" by default. */
-  readonly resetLabel = input('Next reset in (payments)');
+  readonly resetLabel = input(msg('Next reset in (payments)'));
 
   /** Put before each test id, so two loans on one page stay apart: 'new-' gives 'new-rate-type-arm'. */
   readonly idPrefix = input('');

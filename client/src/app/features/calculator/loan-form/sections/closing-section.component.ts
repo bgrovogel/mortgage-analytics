@@ -5,6 +5,7 @@ import { FieldRules, MAX_AMOUNT, validatorsFor } from '../../../../core/forms/fi
 import { NumberFieldComponent } from '../../../../core/forms/number-field.component';
 import { LOAN_FORM } from '../loan-form.token';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { t } from '../../../../core/i18n/i18n';
 
 /** The loan form's Closing costs & credits section: What is paid at closing besides the down payment, and the credits that pay it. */
 @Component({
@@ -22,11 +23,11 @@ export class ClosingSectionComponent {
 
   /** The lines of a Loan Estimate's closing costs: sections A, B and C make the loan costs, E and H the other fees. */
   protected readonly itemRules = {
-    origination: { label: 'Origination charges (A)', unit: '$', min: 0, max: MAX_AMOUNT },
-    cannotShop: { label: 'Services you cannot shop for (B)', unit: '$', min: 0, max: MAX_AMOUNT },
-    canShop: { label: 'Services you can shop for (C)', unit: '$', min: 0, max: MAX_AMOUNT },
-    recording: { label: 'Taxes and recording fees (E)', unit: '$', min: 0, max: MAX_AMOUNT },
-    other: { label: 'Other (H)', unit: '$', min: 0, max: MAX_AMOUNT },
+    origination: { get label() { return t('Origination charges (A)'); }, unit: '$', min: 0, max: MAX_AMOUNT },
+    cannotShop: { get label() { return t('Services you cannot shop for (B)'); }, unit: '$', min: 0, max: MAX_AMOUNT },
+    canShop: { get label() { return t('Services you can shop for (C)'); }, unit: '$', min: 0, max: MAX_AMOUNT },
+    recording: { get label() { return t('Taxes and recording fees (E)'); }, unit: '$', min: 0, max: MAX_AMOUNT },
+    other: { get label() { return t('Other (H)'); }, unit: '$', min: 0, max: MAX_AMOUNT },
   } as const satisfies FieldRules;
 
   /** True while the costs are entered line by line, and the two totals are what the lines add up to. */

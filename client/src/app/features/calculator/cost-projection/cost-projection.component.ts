@@ -5,16 +5,18 @@ import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
 import { equityFooter, equityLines, equityNote } from './equity-lines';
 import { valueBills, valueLines, valueNote } from './value-lines';
+import { t } from '../../../core/i18n/i18n';
 
 /** The three views of the projection. */
 export type ProjectionView = 'costs' | 'value' | 'equity';
 
 /** Each view's caption. */
-const CAPTIONS: Record<ProjectionView, string> = {
-  costs: 'Projected yearly taxes & costs',
-  value: 'Home value, and what each tax is charged on',
-  equity: 'Equity: what is yours, and what is owed',
-};
+const caption = (view: ProjectionView): string =>
+  ({
+    costs: t('Projected yearly taxes & costs'),
+    value: t('Home value, and what each tax is charged on'),
+    equity: t('Equity: what is yours, and what is owed'),
+  })[view];
 
 /**
  * The long-term picture, year by year over the full term:
@@ -47,7 +49,7 @@ export class CostProjectionComponent {
 
 
   /** The chart's caption. */
-  protected readonly caption = computed(() => CAPTIONS[this.view()]);
+  protected readonly caption = computed(() => caption(this.view()));
 
   /** A one-line takeaway under the chart, e.g. how much taxes rise from year 1 to the last year. */
   readonly note = computed(() => {
@@ -57,13 +59,13 @@ export class CostProjectionComponent {
     const last = projection[projection.length - 1];
     if (this.view() === 'value') return valueNote(projection);
     if (this.view() === 'equity') return equityNote(projection);
-    return `Yearly taxes & costs go from ${usd(first.costs.total)} in year 1 to ${usd(last.costs.total)} in year ${last.year}.`;
+    return t('Yearly taxes & costs go from {0} in year 1 to {1} in year {2}.', [usd(first.costs.total), usd(last.costs.total), last.year]);
   });
 
   /** What is drawn for the view shown. */
   readonly spec = computed<ScrubChartSpec>(() => {
     const projection = this.result().projection;
-    const labels = projection.map((y) => `Year ${y.year}`);
+    const labels = projection.map((y) => t('Year {0}', [y.year]));
     const startYear = (i: number) => new Date(projection[i].startDate).getUTCFullYear();
 
     if (this.view() === 'equity') {
@@ -71,7 +73,7 @@ export class CostProjectionComponent {
         labels,
         series: equityLines(projection),
         footer: (i) => equityFooter(projection[i]),
-        title: (i, label) => `${label} (from ${startYear(i)})`,
+        title: (i, label) => t('{0} (from {1})', [label, startYear(i)]),
         // Owed and yours add up to the home's value, which is the top edge.
         stacked: true,
         tickEvery: 5,
@@ -84,7 +86,7 @@ export class CostProjectionComponent {
         series: valueLines(projection),
         // Each year's bills, so every line can be checked against the tax it produces.
         footer: (i) => valueBills(projection[i]),
-        title: (i, label) => `${label} (from ${startYear(i)})`,
+        title: (i, label) => t('{0} (from {1})', [label, startYear(i)]),
         tickEvery: 5,
       };
     }
@@ -95,8 +97,8 @@ export class CostProjectionComponent {
     return {
       labels,
       series,
-      title: (i, label) => `${label} (from ${startYear(i)})`,
-      footer: (i) => `Total: ${usd(projection[i].costs.total)}`,
+      title: (i, label) => t('{0} (from {1})', [label, startYear(i)]),
+      footer: (i) => t('Total: {0}', [usd(projection[i].costs.total)]),
       // A part-to-whole over time: stacked areas show each cost and, along the top edge, the total.
       stacked: true,
       tickEvery: 5,

@@ -6,6 +6,7 @@ import { toErrorMessages } from '../../core/errors/problem-details';
 import { SavedCalculation, SavedInputs } from '../../core/models/saved-calculation.models';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /**
  * Saves what a page is showing (calculator inputs, a refinance comparison, or a pay-off-or-invest comparison) under a name. A new save
@@ -106,7 +107,7 @@ export class SaveCalculationComponent {
     const name = this.name().trim();
     const payload = this.payload();
     if (!name) {
-      this.error.set('Give the calculation a name.');
+      this.error.set(t('Give the calculation a name.'));
       return;
     }
     if (!payload || this.saving()) return;

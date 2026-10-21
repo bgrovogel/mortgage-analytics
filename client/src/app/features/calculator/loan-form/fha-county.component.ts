@@ -35,14 +35,14 @@ import { TPipe } from '../../../core/i18n/t.pipe';
         </label>
       </div>
       @if (chosen(); as c) {
-        <p class="hint" data-testid="fha-limit">{{ "FHA's {0} limit in {1}, {2}: {3}." | t: [l.year, c.name, c.state, (c.limit | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</p>
+        <p class="hint" data-testid="fha-limit">{{ "FHA's {0} limit in {1}, {2}: {3}." | t: [l.year, c.name, c.state, (c.limit | currency: 'USD' : 'symbol' : '1.0-0')] }}</p>
         @if (loanAmount() > c.limit) {
           <small class="error" data-testid="fha-over-limit">
-            {{ 'This loan, {0}, is over it: put more down, or choose another loan type.' | t: [(loanAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+            {{ 'This loan, {0}, is over it: put more down, or choose another loan type.' | t: [(loanAmount() | currency: 'USD' : 'symbol' : '1.0-0')] }}
           </small>
         }
       } @else {
-        <p class="hint">{{ 'Optional: the county sets the most FHA insures there ({0} in most).' | t: [(l.floor | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}</p>
+        <p class="hint">{{ 'Optional: the county sets the most FHA insures there ({0} in most).' | t: [(l.floor | currency: 'USD' : 'symbol' : '1.0-0')] }}</p>
       }
     }
   `,

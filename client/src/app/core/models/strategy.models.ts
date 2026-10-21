@@ -1,3 +1,4 @@
+import { t } from '../i18n/i18n';
 import { AdjustableRateInput, TemporaryBuydownInput } from './amortization.models';
 /** TypeScript mirrors of the strategy contracts (MortgageAnalytics.Application.Contracts). */
 
@@ -125,7 +126,7 @@ export interface StrategyComparison {
 
 /** How each strategy is named and drawn. The color follows the strategy, never its rank. */
 export const STRATEGIES: Record<PayoffStrategy, { name: string; short: string; color: string }> = {
-  PayOffFirst: { name: 'Debt free ASAP', short: 'Pay off first', color: '--series-3' },
-  InvestTheDifference: { name: 'Invest the difference', short: 'Invest', color: '--series-1' },
-  Hybrid: { name: 'Hybrid', short: 'Hybrid', color: '--series-2' },
+  PayOffFirst: { get name() { return t('Debt free ASAP'); }, get short() { return t('Pay off first'); }, color: '--series-3' },
+  InvestTheDifference: { get name() { return t('Invest the difference'); }, get short() { return t('Invest'); }, color: '--series-1' },
+  Hybrid: { get name() { return t('Hybrid'); }, get short() { return t('Hybrid'); }, color: '--series-2' },
 };

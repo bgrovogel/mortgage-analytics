@@ -3,6 +3,7 @@ import { ScrubChartComponent, ScrubChartSpec, ScrubSeries } from '../../../core/
 import { LoanPayment, RefinanceResponse } from '../../../core/models/refinance.models';
 import { monthOf } from '../../../core/formatting/format';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** Each option's balance after every payment, padded with $0 once it is paid off. */
 const balances = (payments: LoanPayment[], length: number) =>
@@ -25,16 +26,16 @@ export class RefinanceChartComponent {
     const longest = [current, refinanced, keepingCurrentPayment ?? current].reduce((a, b) => (b.payments.length > a.payments.length ? b : a));
     const length = longest.payments.length;
     const series: ScrubSeries[] = [
-      { label: 'Current loan', color: '--series-1', data: balances(current.payments, length) },
-      { label: 'Refinance', color: '--series-2', data: balances(refinanced.payments, length) },
+      { label: t('Current loan'), color: '--series-1', data: balances(current.payments, length) },
+      { label: t('Refinance'), color: '--series-2', data: balances(refinanced.payments, length) },
     ];
     if (keepingCurrentPayment) {
-      series.push({ label: 'Refinance, keep payment', color: '--series-3', data: balances(keepingCurrentPayment.payments, length), dashed: true });
+      series.push({ label: t('Refinance, keep payment'), color: '--series-3', data: balances(keepingCurrentPayment.payments, length), dashed: true });
     }
     return {
       labels: longest.payments.map((p) => monthOf(p.dueDate)),
       series,
-      title: (index, label) => `Payment ${index + 1} · ${label}`,
+      title: (index, label) => t('Payment {0} · {1}', [index + 1, label]),
       tickEvery: 12,
     };
   });

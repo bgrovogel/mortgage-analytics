@@ -5,14 +5,15 @@ import { FieldRules, validatorsFor } from '../../../core/forms/field-rules';
 import { NumberFieldComponent } from '../../../core/forms/number-field.component';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** What letting the home out brings in and costs, with the limits the API enforces (AmortizationRequestValidator). */
 export const RENTAL_RULES = {
-  monthlyRent: { label: 'Rent a month', unit: '$', min: 0.01, max: 1_000_000, optional: true },
-  vacancyPercent: { label: 'Vacancy', unit: '%', min: 0, max: 50, decimals: 2 },
-  managementPercent: { label: 'Property manager', unit: '%', min: 0, max: 25, decimals: 2 },
-  maintenancePercent: { label: 'Repairs and upkeep', unit: '%', min: 0, max: 10, decimals: 2 },
-  rentIncreasePercent: { label: 'Rent rises', unit: '%', min: -20, max: 20, decimals: 2 },
+  monthlyRent: { get label() { return t('Rent a month'); }, unit: '$', min: 0.01, max: 1_000_000, optional: true },
+  vacancyPercent: { get label() { return t('Vacancy'); }, unit: '%', min: 0, max: 50, decimals: 2 },
+  managementPercent: { get label() { return t('Property manager'); }, unit: '%', min: 0, max: 25, decimals: 2 },
+  maintenancePercent: { get label() { return t('Repairs and upkeep'); }, unit: '%', min: 0, max: 10, decimals: 2 },
+  rentIncreasePercent: { get label() { return t('Rent rises'); }, unit: '%', min: -20, max: 20, decimals: 2 },
 } as const satisfies FieldRules;
 
 /** The usual assumptions: 5% of the rent lost to vacancy, 8% to a manager, 1% of the value a year in upkeep, rent up 3% a year. */

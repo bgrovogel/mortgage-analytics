@@ -34,10 +34,10 @@
       @if (loanToday(); as today) {
         @if (!today.paidOff) {
           <p class="hint" data-testid="original-loan-today">
-            {{ "Payment {0} of {1} is next, with about {2} owed. The comparison starts from that loan's own schedule." | t: [today.next, today.termInMonths, (today.balance | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+            {{ "Payment {0} of {1} is next, with about {2} owed. The comparison starts from that loan's own schedule." | t: [today.next, today.termInMonths, (today.balance | currency: 'USD' : 'symbol' : '1.0-0')] }}
           </p>
         } @else {
-          <small class="error" data-testid="original-loan-today">{{ paidOffAlready }}</small>
+          <small class="error" data-testid="original-loan-today">{{ paidOffAlready() }}</small>
         }
       }
     } @else {

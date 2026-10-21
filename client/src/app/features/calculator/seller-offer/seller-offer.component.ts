@@ -7,19 +7,20 @@ import { decimal, pct, usd } from '../../../core/formatting/format';
 import { SellerOfferComparison, SellerOfferInput, SellerOfferOption, SellerOfferUse } from '../../../core/models/amortization.models';
 import { DEFAULT_OFFER_SETTINGS } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /** How the offer is weighed, with the limits the API enforces (AmortizationRequestValidator). */
 const OFFER_RULES = {
-  yearsKept: { label: 'Years you keep the loan', unit: 'years', min: 1, max: 50, whole: true },
-  rateCutPerPoint: { label: 'Rate cut per point', unit: '%', min: 0.001, max: 1, decimals: 3 },
+  yearsKept: { get label() { return t('Years you keep the loan'); }, unit: 'years', min: 1, max: 50, whole: true },
+  rateCutPerPoint: { get label() { return t('Rate cut per point'); }, unit: '%', min: 0.001, max: 1, decimals: 3 },
 } as const satisfies FieldRules;
 
 /** Each way's column heading, and how a sentence says taking the offer that way. */
 const WAYS: Record<SellerOfferUse, { heading: string; taking: string }> = {
-  PriceCut: { heading: 'Off the price', taking: 'off the price' },
-  ClosingCosts: { heading: 'Toward closing', taking: 'toward closing' },
-  TemporaryBuydown: { heading: '2-1 buydown', taking: 'as a 2-1 buydown' },
-  DiscountPoints: { heading: 'Points', taking: 'as points' },
+  PriceCut: { get heading() { return t('Off the price'); }, get taking() { return t('off the price'); } },
+  ClosingCosts: { get heading() { return t('Toward closing'); }, get taking() { return t('toward closing'); } },
+  TemporaryBuydown: { get heading() { return t('2-1 buydown'); }, get taking() { return t('as a 2-1 buydown'); } },
+  DiscountPoints: { get heading() { return t('Points'); }, get taking() { return t('as points'); } },
 };
 
 /** One row of the table: its label, and each way's figure with an optional line under it. */
@@ -123,17 +124,17 @@ export class SellerOfferComponent {
   readonly amount = computed(() => usd(this.offer().offer));
 
   /** "7 years", or "1 year". */
-  readonly years = computed(() => `${this.offer().yearsKept} year${this.offer().yearsKept === 1 ? '' : 's'}`);
+  readonly years = computed(() => tp(this.offer().yearsKept, '{n} year', '{n} years'));
 
   /** The way that costs the least, and how much less than the next. */
   readonly verdict = computed(() => {
     const { options, best } = this.offer();
     const winner = options.find((o) => o.use === best)!;
     const next = options.filter((o) => o !== winner).sort((a, b) => a.cost - b.cost)[0];
-    const lead = `Taking it ${WAYS[best].taking} costs the least`;
+    const lead = t('Taking it {0} costs the least', [WAYS[best].taking]);
     return next
-      ? `${lead}: ${usd(next.cost - winner.cost)} less over ${this.years()} than ${WAYS[next.use].taking}, the next best.`
-      : `${lead}.`;
+      ? t('{0}: {1} less over {2} than {3}, the next best.', [lead, usd(next.cost - winner.cost), this.years(), WAYS[next.use].taking])
+      : t('{0}.', [lead]);
   });
 
   /** When only part of the offer can pay costs (they are less, or the loan's limit is): how much, and that a price cut uses all of it. */
@@ -141,29 +142,30 @@ export class SellerOfferComponent {
     const { offer, options } = this.offer();
     const credited = options.find((o) => o.use === 'ClosingCosts');
     return credited && credited.notUsed > 0
-      ? `Only ${usd(offer - credited.notUsed)} of it can go toward closing: credits pay no more than your costs, within the loan’s limit. Off the price, all of it counts.`
+      ? t('Only {0} of it can go toward closing: credits pay no more than your costs, within the loan’s limit. Off the price, all of it counts.', [usd(offer - credited.notUsed)])
       : null;
   });
 
   readonly rows = computed<Row[]>(() => {
     const options = this.offer().options;
+    const years = this.years();
     const each = (cell: (o: SellerOfferOption) => Row['cells'][number]) => options.map(cell);
     return [
-      { label: 'Price', cells: each((o) => ({ value: usd(o.homePrice) })) },
+      { get label() { return t('Price'); }, cells: each((o) => ({ value: usd(o.homePrice) })) },
       {
-        label: 'Rate',
-        cells: each((o) => ({ value: pct(o.annualInterestRate, 3), under: o.points > 0 ? `${decimal(o.points, 3)} points` : undefined })),
+        get label() { return t('Rate'); },
+        cells: each((o) => ({ value: pct(o.annualInterestRate, 3), under: o.points > 0 ? t('{0} points', [decimal(o.points, 3)]) : undefined })),
       },
       {
-        label: 'Monthly payment',
+        get label() { return t('Monthly payment'); },
         cells: each((o) => ({
           value: usd(o.firstPayment),
-          under: o.laterPayment !== o.firstPayment ? `${usd(o.laterPayment)} from year 3` : undefined,
+          under: o.laterPayment !== o.firstPayment ? t('{0} from year 3', [usd(o.laterPayment)]) : undefined,
         })),
       },
-      { label: 'Cash to close', cells: each((o) => ({ value: usd(o.cashToClose) })) },
-      { label: `Payments, ${this.years()}`, cells: each((o) => ({ value: usd(o.payments) })) },
-      { label: `Owed after ${this.years()}`, cells: each((o) => ({ value: usd(o.balance) })) },
+      { get label() { return t('Cash to close'); }, cells: each((o) => ({ value: usd(o.cashToClose) })) },
+      { get label() { return t('Payments, {0}', [years]); }, cells: each((o) => ({ value: usd(o.payments) })) },
+      { get label() { return t('Owed after {0}', [years]); }, cells: each((o) => ({ value: usd(o.balance) })) },
     ];
   });
 

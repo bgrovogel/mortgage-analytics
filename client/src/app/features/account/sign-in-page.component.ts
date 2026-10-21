@@ -9,6 +9,7 @@ import { safeReturnUrl } from '../../core/auth/signed-in.guard';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { DevMailboxHintComponent } from './dev-mailbox-hint.component';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 type Mode = 'sign-in' | 'create';
 
@@ -98,7 +99,7 @@ export class SignInPageComponent {
       },
       error: () => {
         this.busy.set(false);
-        this.error.set('That passkey could not sign you in. Try your password instead.');
+        this.error.set(t('That passkey could not sign you in. Try your password instead.'));
       },
     });
   }
@@ -113,9 +114,9 @@ export class SignInPageComponent {
     if (!(error instanceof HttpErrorResponse) || error.status !== 401) return toErrorMessages(error).join(' ');
     if ((error.error as { detail?: string } | null)?.detail === 'NotAllowed') {
       this.needsConfirmation.set(true);
-      return 'Confirm your email first, with the link we sent when you created the account.';
+      return t('Confirm your email first, with the link we sent when you created the account.');
     }
-    return 'That email and password do not match.';
+    return t('That email and password do not match.');
   }
 
   /** True when a field should show its error. */

@@ -3,6 +3,7 @@ import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-
 import { decimal, usd } from '../../../core/formatting/format';
 import { RentalOutcome } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** The years the table shows, of those the loan runs. */
 const MILESTONES = [1, 2, 3, 5, 7, 10, 15, 20, 30];
@@ -95,29 +96,29 @@ export class RentalComponent {
   /** How well the rent covers the loan's payments, in the lender's terms. */
   protected readonly coverage = computed(() => {
     const ratio = this.rental().debtServiceCoverage;
-    if (ratio === null) return 'No loan to cover';
-    return `${decimal(ratio)} times${ratio >= LENDER_COVERAGE ? '' : ` (lenders ask ${LENDER_COVERAGE})`}`;
+    if (ratio === null) return t('No loan to cover');
+    return ratio >= LENDER_COVERAGE ? t('{0} times', [decimal(ratio)]) : t('{0} times (lenders ask {1})', [decimal(ratio), LENDER_COVERAGE]);
   });
 
   /** The one-sentence answer: whether the rent carries the home, and from when. */
   protected readonly verdict = computed(() => {
     const years = this.rental().years;
     const firstPositive = years.findIndex((y) => y.cashFlow >= 0);
-    if (firstPositive === 0) return 'The rent pays for the home from the first year, with something left over.';
-    if (firstPositive === -1) return `The rent never quite pays for the home in the ${years.length} years: you would add money every year.`;
-    return `The rent does not pay for the home at first; from year ${years[firstPositive].year} it does.`;
+    if (firstPositive === 0) return t('The rent pays for the home from the first year, with something left over.');
+    if (firstPositive === -1) return t('The rent never quite pays for the home in the {0} years: you would add money every year.', [years.length]);
+    return t('The rent does not pay for the home at first; from year {0} it does.', [years[firstPositive].year]);
   });
 
   /** What is drawn: the cash flow after the loan, for each year. */
   protected readonly chart = computed<ScrubChartSpec>(() => {
     const years = this.rental().years;
     return {
-      labels: years.map((y) => `Yr ${y.year}`),
-      series: [{ label: 'Cash flow', color: '--series-1', data: years.map((y) => y.cashFlow) }],
-      title: (index) => `Year ${years[index].year}`,
+      labels: years.map((y) => t('Yr {0}', [y.year])),
+      series: [{ label: t('Cash flow'), color: '--series-1', data: years.map((y) => y.cashFlow) }],
+      title: (index) => t('Year {0}', [years[index].year]),
       footer: (index) => {
         const y = years[index];
-        return `Rent ${usd(y.grossRent)} · earns ${usd(y.netOperatingIncome)} · loan ${usd(y.debtService)}`;
+        return t('Rent {0} · earns {1} · loan {2}', [usd(y.grossRent), usd(y.netOperatingIncome), usd(y.debtService)]);
       },
       tickEvery: 5,
     };
@@ -126,9 +127,8 @@ export class RentalComponent {
   /** What is assumed and what is left out. */
   protected readonly note = computed(() => {
     const r = this.rental();
-    return `Rent of ${usd(r.monthlyRent)} a month, rising ${this.percent(r.rentIncreasePercent)} a year, less ${this.percent(r.vacancyPercent)} lost to vacancy. `
-      + `A manager takes ${this.percent(r.managementPercent)} of what is collected, and upkeep is ${this.percent(r.maintenancePercent)} of the home's value a year, `
-      + `on top of the property taxes, insurance and dues you entered. The loan is the standard schedule, with its mortgage insurance: extra payments are left out. `
-      + `Income tax, depreciation and the home's growth in value are left out.`;
+    return t("Rent of {0} a month, rising {1} a year, less {2} lost to vacancy. A manager takes {3} of what is collected, and upkeep is {4} of the home's value a year, on top of the property taxes, insurance and dues you entered. The loan is the standard schedule, with its mortgage insurance: extra payments are left out. Income tax, depreciation and the home's growth in value are left out.", [
+      usd(r.monthlyRent), this.percent(r.rentIncreasePercent), this.percent(r.vacancyPercent), this.percent(r.managementPercent), this.percent(r.maintenancePercent),
+    ]);
   });
 }

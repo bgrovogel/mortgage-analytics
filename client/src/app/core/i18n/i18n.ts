@@ -1,4 +1,6 @@
+import { registerLocaleData } from '@angular/common';
 import { signal } from '@angular/core';
+import { Subject } from 'rxjs';
 
 /** The languages the app is in. The first is the one the text is written in; the rest are translations of it. */
 export type Language = 'en' | 'es';
@@ -20,6 +22,12 @@ const dictionary = signal<Dictionary | null>(null);
 /** The language the page is in now, as a signal: whatever reads it (a template, a computed) is redone when it changes. */
 export const currentLanguage = language.asReadonly();
 
+/**
+ * Emits when the page's language has changed, for what keeps a message in a stream (a form's list of problems) rather than
+ * in a template or a computed, which follow the language signal themselves.
+ */
+export const languageChanged = new Subject<void>();
+
 /** The values a message's {0}, {1} (or {name}) stand for. */
 export type MessageParams = readonly MessageValue[] | Readonly<Record<string, MessageValue>>;
 
@@ -40,6 +48,14 @@ function fill(message: string, params: MessageParams): string {
 export function t(message: string, params?: MessageParams): string {
   const translated = language() === 'en' ? message : (dictionary()?.[message] ?? message);
   return params ? fill(translated, params) : translated;
+}
+
+/**
+ * Marks a message that is kept as data (a field's label, a table of choices) to be translated where it is shown, with
+ * the `t` pipe or `t()`. It returns the message as it is; its use is what lets the translations be checked for completeness.
+ */
+export function msg(message: string): string {
+  return message;
 }
 
 /**
@@ -67,8 +83,14 @@ export function initialLanguage(win: Pick<Window, 'localStorage' | 'navigator'>)
  * half-translated moment), tells the document, and remembers the choice for the next visit.
  */
 export async function chooseLanguage(code: Language, win: Window = window): Promise<void> {
-  if (code !== 'en' && !dictionary()) dictionary.set((await import('./es')).ES);
+  if (code !== 'en' && !dictionary()) {
+    // The translations, and the names of months and days (for the date pipe), arrive together.
+    const [translations, locale] = await Promise.all([import('./es'), import('@angular/common/locales/es-US')]);
+    registerLocaleData(locale.default, 'es-US');
+    dictionary.set(translations.ES);
+  }
   language.set(code);
+  languageChanged.next();
   win.document.documentElement.lang = code;
   try {
     win.localStorage.setItem(STORAGE_KEY, code);

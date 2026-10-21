@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { t } from '../../../core/i18n/i18n';
 
 /** The figures of the rail under the headline, by what they are. */
 export const KPI_KEYS = ['cash', 'payoff', 'afford', 'savings', 'pmi'] as const;
@@ -6,11 +7,11 @@ export type KpiKey = (typeof KPI_KEYS)[number];
 
 /** What each figure is called when the rail is arranged. */
 export const KPI_LABELS: Record<KpiKey, string> = {
-  cash: 'Cash to close',
-  payoff: 'Paid off',
-  afford: 'Can you afford it?',
-  savings: 'Savings from paying extra, or the interest',
-  pmi: 'When the mortgage insurance ends',
+  get cash() { return t('Cash to close'); },
+  get payoff() { return t('Paid off'); },
+  get afford() { return t('Can you afford it?'); },
+  get savings() { return t('Savings from paying extra, or the interest'); },
+  get pmi() { return t('When the mortgage insurance ends'); },
 };
 
 /** Where the arrangement is remembered, per browser. */

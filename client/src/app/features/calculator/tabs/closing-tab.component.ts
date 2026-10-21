@@ -10,6 +10,7 @@ import { SavingUpComponent } from '../saving-up/saving-up.component';
 import { SecondLoanComponent } from '../second-loan/second-loan.component';
 import { SellerOfferComponent } from '../seller-offer/seller-offer.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * Closing: the cash to close, line by line with what a seller or builder may pay, and how long it takes to save. What a
@@ -90,8 +91,8 @@ export class ClosingTabComponent {
   /** What the Loan Estimate comparison holds, in a line, so the way into it says what is there. */
   protected readonly estimateSummary = computed(() => {
     const { annualPercentageRate: apr, inFiveYears: five } = this.result();
-    const parts = [apr != null ? `APR ${decimal(apr, 3)}%` : null, five ? `${usd(five.totalPaid)} paid in 5 years` : null];
-    return `The figures a lender's Loan Estimate lists${parts.some(Boolean) ? `: ${parts.filter(Boolean).join(', ')}` : ''}.`;
+    const parts = [apr != null ? t('APR {0}%', [decimal(apr, 3)]) : null, five ? t('{0} paid in 5 years', [usd(five.totalPaid)]) : null].filter(Boolean);
+    return parts.length > 0 ? t("The figures a lender's Loan Estimate lists: {0}.", [parts.join(', ')]) : t("The figures a lender's Loan Estimate lists.");
   });
 
   /** What the second-loan comparison holds, in a line, so the way into it says what is there. */
@@ -99,12 +100,12 @@ export class ClosingTabComponent {
     const c = this.result().secondLoan;
     if (c) {
       return c.saved >= 0
-        ? `A ${usd(c.amount)} second loan costs ${usd(c.saved)} less than PMI over ${c.yearsKept} years.`
-        : `A ${usd(c.amount)} second loan costs ${usd(-c.saved)} more than PMI over ${c.yearsKept} years.`;
+        ? t('A {0} second loan costs {1} less than PMI over {2} years.', [usd(c.amount), usd(c.saved), c.yearsKept])
+        : t('A {0} second loan costs {1} more than PMI over {2} years.', [usd(c.amount), usd(-c.saved), c.yearsKept]);
     }
     return this.suggestedSecondLoan()
-      ? 'Paying PMI? Compare it with a smaller first loan and a second loan for the rest.'
-      : 'No PMI here: at least 20% is put down.';
+      ? t('Paying PMI? Compare it with a smaller first loan and a second loan for the rest.')
+      : t('No PMI here: at least 20% is put down.');
   });
 
   /**

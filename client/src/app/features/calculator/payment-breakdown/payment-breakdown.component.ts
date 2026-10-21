@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { LoanProgramType, Payment, Schedule } from '../../../core/models/amortization.models';
 import { costCategoriesFor } from '../../../core/models/cost-categories';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** One slice of the monthly payment. */
 interface Slice {
@@ -79,7 +80,7 @@ export class PaymentBreakdownComponent {
   readonly slices = computed<Slice[]>(() => {
     const { loan, costs: c } = this.payment();
     const all: Omit<Slice, 'share'>[] = [
-      { label: 'Principal & interest', amount: loan, color: '--series-1' },
+      { label: t('Principal & interest'), amount: loan, color: '--series-1' },
       ...costCategoriesFor(this.program()).map((cat) => ({ label: cat.label, amount: c[cat.key], color: cat.color })),
     ];
     const total = this.total() || 1;
@@ -89,7 +90,7 @@ export class PaymentBreakdownComponent {
   /** A text alternative for the bar, read by screen readers. */
   readonly ariaLabel = computed(() =>
     this.slices()
-      .map((s) => `${s.label} ${Math.round(s.share * 100)}%`)
+      .map((s) => t('{0} {1}%', [s.label, Math.round(s.share * 100)]))
       .join(', '),
   );
 }

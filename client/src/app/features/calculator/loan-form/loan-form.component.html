@@ -36,7 +36,7 @@
     </div>
     @if (loanAmount() > 0) {
       <p class="summary-chip" data-testid="loan-summary">
-        {{ '{0} down ({1}%) · Loan {2}' | t: [(downPaymentAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0'), (downPaymentPercent() | number: '1.0-2'), (loanAmount() | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+        {{ '{0} down ({1}%) · Loan {2}' | t: [(downPaymentAmount() | currency: 'USD' : 'symbol' : '1.0-0'), (downPaymentPercent() | number: '1.0-2'), (loanAmount() | currency: 'USD' : 'symbol' : '1.0-0')] }}
       </p>
     } @else {
       <small class="error">{{ 'The down payment must be less than the home price.' | t }}</small>
@@ -54,7 +54,7 @@
     <app-number-field [control]="form.controls.monthlyExtra" [rule]="rules.monthlyExtra" testId="monthly-extra" />
     @if (biweekly(); as extra) {
       <p class="biweekly" data-testid="biweekly-extra">
-        {{ 'Paying every two weeks adds {0} a month' | t: [(extra | currency: ('USD' | t) : 'symbol' : '1.2-2')] }}
+        {{ 'Paying every two weeks adds {0} a month' | t: [(extra | currency: 'USD' : 'symbol' : '1.2-2')] }}
         <button type="button" class="link-button" data-testid="biweekly-use" (click)="useBiweekly()">{{ 'Use it' | t }}</button>
       </p>
     }
@@ -66,10 +66,10 @@
     @if (existingLoan(); as existing) {
       @if (!existing.paidOff) {
         <p class="hint" data-testid="existing-loan">
-          {{ 'A loan you already have: payment {0} of {1} is next, with about {2} owed. Extra payments start there; PMI follows the original loan.' | t: [existing.next, existing.termInMonths, (existing.balance | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+          {{ 'A loan you already have: payment {0} of {1} is next, with about {2} owed. Extra payments start there; PMI follows the original loan.' | t: [existing.next, existing.termInMonths, (existing.balance | currency: 'USD' : 'symbol' : '1.0-0')] }}
         </p>
       } @else {
-        <small class="error" data-testid="existing-loan">{{ paidOffAlready }}</small>
+        <small class="error" data-testid="existing-loan">{{ paidOffAlready() }}</small>
       }
     } @else {
       <details class="help" data-testid="first-payment-help">

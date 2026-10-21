@@ -2,6 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import type { ScheduleColumn, ScheduleRow } from './schedule-model';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * What the whole schedule adds up to, so the table need not be scrolled to its foot to know: the three figures that
@@ -17,8 +18,8 @@ import { TPipe } from '../../../core/i18n/t.pipe';
       {{ 'Totals until the loan is paid off, after {0} payments. Taxes and insurance are counted to that date only.' | t: [payments()] }}
     </p>
     <p class="headline" data-testid="lifetime-headline">
-      <span>{{ 'Loan repaid' | t }} <strong>{{ t.principal + t.extraPrincipal | currency }}</strong></span>{{ '&ngsp;' | t }}
-      <span>{{ 'Interest' | t }} <strong>{{ t.interest | currency }}</strong></span>{{ '&ngsp;' | t }}
+      <span>{{ 'Loan repaid' | t }} <strong>{{ t.principal + t.extraPrincipal | currency }}</strong></span>&ngsp;
+      <span>{{ 'Interest' | t }} <strong>{{ t.interest | currency }}</strong></span>&ngsp;
       <span class="all">{{ 'Everything paid' | t }} <strong>{{ t.totalOutlay | currency }}</strong></span>
     </p>
     <details class="every" data-testid="lifetime-more">
@@ -52,8 +53,8 @@ export class ScheduleTotalsComponent {
    * payments, which the "Loan repaid" total beside it adds back.
    */
   protected label(column: ScheduleColumn): string {
-    if (column.key === 'principal') return 'Principal, as scheduled';
-    if (column.key === 'extraPrincipal') return 'Extra principal';
+    if (column.key === 'principal') return t('Principal, as scheduled');
+    if (column.key === 'extraPrincipal') return t('Extra principal');
     return column.label;
   }
 }

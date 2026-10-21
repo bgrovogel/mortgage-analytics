@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { AccountExportService } from '../../core/services/account-export.service';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /**
  * "Your data", on the account page: a copy of everything the account holds, as one file, so nothing here is only here.
@@ -50,7 +51,7 @@ export class DataExportComponent {
     this.exporter.download().subscribe({
       next: () => {
         this.busy.set(false);
-        this.status.set('Your data was downloaded.');
+        this.status.set(t('Your data was downloaded.'));
       },
       error: (error: unknown) => {
         this.busy.set(false);

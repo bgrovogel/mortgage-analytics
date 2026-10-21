@@ -18,20 +18,20 @@ import { TPipe } from '../../../core/i18n/t.pipe';
     <dl>
       @if (r.annualPercentageRate !== null && r.annualPercentageRate !== undefined) {
         <div>
-          <dt data-testid="le-apr"><span class="label"><app-term of="APR">{{ 'APR' | t }}</app-term></span>{{ '&ngsp;' | t }}<span class="value">{{ percent(r.annualPercentageRate) }}%</span></dt>
+          <dt data-testid="le-apr"><span class="label"><app-term of="APR">{{ 'APR' | t }}</app-term></span>&ngsp;<span class="value">{{ percent(r.annualPercentageRate) }}%</span></dt>
           <dd data-testid="le-apr-note">{{ 'The yearly rate counting the lender’s fees as well as the interest, so offers with different fees compare fairly.' | t }}</dd>
         </div>
       }
       @if (r.inFiveYears; as five) {
         <div>
-          <dt data-testid="le-paid"><span class="label">{{ 'In 5 years, you will have paid' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ five.totalPaid | currency }}</span></dt>
+          <dt data-testid="le-paid"><span class="label">{{ 'In 5 years, you will have paid' | t }}</span>&ngsp;<span class="value">{{ five.totalPaid | currency }}</span></dt>
           <dd data-testid="le-paid-note">{{ 'The first 60 payments of principal, interest, mortgage insurance and the lender’s loan costs, without extra payments.' | t }}</dd>
-          <dt data-testid="le-principal"><span class="label">{{ 'and paid off' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ five.principalPaidOff | currency }}</span>{{ '&ngsp;' | t }}<span class="label">{{ 'of the principal' | t }}</span></dt>
+          <dt data-testid="le-principal"><span class="label">{{ 'and paid off' | t }}</span>&ngsp;<span class="value">{{ five.principalPaidOff | currency }}</span>&ngsp;<span class="label">{{ 'of the principal' | t }}</span></dt>
         </div>
       }
       @if (r.totalInterestPercentage !== null && r.totalInterestPercentage !== undefined) {
         <div>
-          <dt data-testid="le-tip"><span class="label">{{ 'Total interest percentage' | t }}</span>{{ '&ngsp;' | t }}<span class="value">{{ percent(r.totalInterestPercentage) }}%</span></dt>
+          <dt data-testid="le-tip"><span class="label">{{ 'Total interest percentage' | t }}</span>&ngsp;<span class="value">{{ percent(r.totalInterestPercentage) }}%</span></dt>
           <dd data-testid="le-tip-note">{{ 'The interest over the whole loan as a share of the amount borrowed: how much you pay for the loan for each dollar of it.' | t }}</dd>
         </div>
       }

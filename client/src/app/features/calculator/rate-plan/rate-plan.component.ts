@@ -3,6 +3,7 @@ import { monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { buydownYears } from './buydown-years';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /** One line of the payment timeline: when, at what rate, and what principal and interest come to. */
 interface Step {
@@ -37,12 +38,12 @@ interface Step {
                 <td class="num">
                   <strong>{{ usdCents(y.monthlyTotal) }}</strong>
                   @if (y.monthlyTotal !== y.loanPayment) {
-                    {{ '&ngsp;' | t }}<small>{{ usdCents(y.loanPayment) }} <abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr></small>
+                    &ngsp;<small>{{ usdCents(y.loanPayment) }} <abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr></small>
                   }
                 </td>
                 <td class="num">
                   @if (y.subsidy > 0) {
-                    <strong>{{ usd(y.subsidy) }}</strong>{{ '&ngsp;' | t }}<small>{{ '{0}/mo' | t: [usdCents(y.monthlySubsidy)] }}</small>
+                    <strong>{{ usd(y.subsidy) }}</strong>&ngsp;<small>{{ '{0}/mo' | t: [usdCents(y.monthlySubsidy)] }}</small>
                   } @else {
                     <span class="none">{{ 'Nothing' | t }}</span>
                   }
@@ -93,12 +94,12 @@ export class RatePlanComponent {
     if (!b) return null;
     const last = b.years.length;
     return {
-      title: `${b.years.slice(0, -1).map((y) => decimalPoints(b.noteRate - y.annualInterestRate)).join('-')} buydown`,
+      title: t('{0} buydown', [b.years.slice(0, -1).map((y) => decimalPoints(b.noteRate - y.annualInterestRate)).join('-')]),
       rows: buydownYears(this.result())!,
       cost: usd(b.totalSubsidy),
       noteRate: pct(b.noteRate),
       sellerPays: b.paidBy === 'Seller',
-      years: last - 1 === 1 ? '1 year' : `${last - 1} years`,
+      years: tp(last - 1, '{n} year', '{n} years'),
     };
   });
 
@@ -112,18 +113,18 @@ export class RatePlanComponent {
     const changes = schedule.rateChanges;
     const steps: Step[] = [
       {
-        when: changes.length > 0 ? `${monthOf(first.dueDate)} to ${monthOf(previousMonth(changes[0].effectiveDate))}` : 'The whole loan',
+        when: changes.length > 0 ? t('{0} to {1}', [monthOf(first.dueDate), monthOf(previousMonth(changes[0].effectiveDate))]) : t('The whole loan'),
         rate: pct(first.annualInterestRate),
-        payment: `${usdCents(schedule.monthlyPayment)}/mo`,
+        payment: t('{0}/mo', [usdCents(schedule.monthlyPayment)]),
       },
-      ...changes.map((c): Step => ({ when: `From ${monthOf(c.effectiveDate)}`, rate: pct(c.newRate), payment: `${usdCents(c.newPayment)}/mo` })),
+      ...changes.map((c): Step => ({ when: t('From {0}', [monthOf(c.effectiveDate)]), rate: pct(c.newRate), payment: t('{0}/mo', [usdCents(c.newPayment)]) })),
     ];
     const peak = worst.worstCaseRateChanges.at(-1);
     const worstCase = peak
-      ? `If rates rise as far as the caps allow, the rate reaches ${pct(peak.newRate)} by ${monthOf(peak.effectiveDate)} and the payment `
-        + `${usdCents(worst.worstCasePeakPayment)} a month (without extra payments): ${usd(worst.worstCaseTotalInterest)} of interest over the `
-        + `loan, against ${usd(r.baseline.totalInterest)} on the path you expect.`
-      : 'The caps allow no change in the rate, so this works like a fixed rate.';
+      ? t('If rates rise as far as the caps allow, the rate reaches {0} by {1} and the payment {2} a month (without extra payments): {3} of interest over the loan, against {4} on the path you expect.', [
+          pct(peak.newRate), monthOf(peak.effectiveDate), usdCents(worst.worstCasePeakPayment), usd(worst.worstCaseTotalInterest), usd(r.baseline.totalInterest),
+        ])
+      : t('The caps allow no change in the rate, so this works like a fixed rate.');
     return { steps, worstCase };
   });
 }

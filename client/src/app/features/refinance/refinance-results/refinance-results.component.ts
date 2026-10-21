@@ -6,6 +6,7 @@ import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinan
 import { RateWhatIfComponent } from '../../calculator/rate-what-if/rate-what-if.component';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** One column of the comparison table. */
 interface TableColumn {
@@ -49,9 +50,9 @@ export class RefinanceResultsComponent {
 
   /** The views the details have; the rate what-if only when the new loan has one rate to vary. */
   protected readonly tabs = computed<readonly DetailTab[]>(() => [
-    { value: 'table', label: 'Side by side' },
-    { value: 'time', label: 'Over time' },
-    ...(this.rateLoan() ? [{ value: 'rate', label: 'If the rate changes' }] : []),
+    { value: 'table', label: t('Side by side') },
+    { value: 'time', label: t('Over time') },
+    ...(this.rateLoan() ? [{ value: 'rate', label: t('If the rate changes') }] : []),
   ]);
 
   protected readonly dollars = usd;
@@ -68,20 +69,30 @@ export class RefinanceResultsComponent {
   readonly rates = computed(() => {
     const r = this.result();
     const resets = (option: RefinanceOption, loan: string) => option.rateChanges.map((c) =>
-      `${loan} resets from ${monthOf(c.effectiveDate)}: ${pct(c.previousRate)} → ${pct(c.newRate)}, ${usdCents(c.previousPayment)} → ${usdCents(c.newPayment)} a month.`);
-    const lines = [...resets(r.current, 'Your loan'), ...resets(r.refinanced, 'The new loan')];
+      t('{0} resets from {1}: {2} → {3}, {4} → {5} a month.', [loan, monthOf(c.effectiveDate), pct(c.previousRate), pct(c.newRate), usdCents(c.previousPayment), usdCents(c.newPayment)]));
+    const lines = [...resets(r.current, t('Your loan')), ...resets(r.refinanced, t('The new loan'))];
     const b = r.newBuydown;
     const buydown = b
-      ? `The ${b.years.slice(0, -1).map((y) => Math.round((b.noteRate - y.annualInterestRate) * 100) / 100).join('-')} buydown costs `
-        + `${usd(r.buydownCost)} at closing (in the cash at closing) and pays it back as lower payments: `
-        + `${b.years.map((y, i) => `${usdCents(y.monthlyPayment)}${i === b.years.length - 1 ? ` from year ${y.year}` : ` in year ${y.year}`}`).join(', ')}. `
-        + 'It changes when you pay, not how much.'
+      ? t('The {0} buydown costs {1} at closing (in the cash at closing) and pays it back as lower payments: {2}. It changes when you pay, not how much.', [
+          b.years.slice(0, -1).map((y) => Math.round((b.noteRate - y.annualInterestRate) * 100) / 100).join('-'),
+          usd(r.buydownCost),
+          b.years.map((y, i) => (i === b.years.length - 1 ? t('{0} from year {1}', [usdCents(y.monthlyPayment), y.year]) : t('{0} in year {1}', [usdCents(y.monthlyPayment), y.year]))).join(', '),
+        ])
       : null;
     const worst = r.worstCaseLifetimeSavings;
-    const worstCase = worst === null
-      ? null
-      : `If rates rise as far as the caps allow, refinancing would ${worst >= 0 ? 'save' : 'cost'} ${usd(Math.abs(worst))} over the life of the loan`
-        + ` (on the path you expect, it ${r.lifetimeSavings >= 0 ? 'saves' : 'costs'} ${usd(Math.abs(r.lifetimeSavings))}).`;
+    let worstCase: string | null = null;
+    if (worst !== null) {
+      const args = [usd(Math.abs(worst)), usd(Math.abs(r.lifetimeSavings))];
+      if (worst >= 0) {
+        worstCase = r.lifetimeSavings >= 0
+          ? t('If rates rise as far as the caps allow, refinancing would save {0} over the life of the loan (on the path you expect, it saves {1}).', args)
+          : t('If rates rise as far as the caps allow, refinancing would save {0} over the life of the loan (on the path you expect, it costs {1}).', args);
+      } else {
+        worstCase = r.lifetimeSavings >= 0
+          ? t('If rates rise as far as the caps allow, refinancing would cost {0} over the life of the loan (on the path you expect, it saves {1}).', args)
+          : t('If rates rise as far as the caps allow, refinancing would cost {0} over the life of the loan (on the path you expect, it costs {1}).', args);
+      }
+    }
     return lines.length > 0 || buydown || worstCase ? { resets: lines, buydown, worstCase } : null;
   });
 
@@ -118,18 +129,18 @@ export class RefinanceResultsComponent {
   readonly cashDetail = computed(() => {
     const r = this.result();
     return r.upfrontCosts > 0
-      ? `${usd(r.cashOut)} out, less ${usd(r.upfrontCosts)} paid at closing`
-      : `${usd(r.cashOut)} out, nothing paid at closing`;
+      ? t('{0} out, less {1} paid at closing', [usd(r.cashOut), usd(r.upfrontCosts)])
+      : t('{0} out, nothing paid at closing', [usd(r.cashOut)]);
   });
 
   /** Where the new loan stands against the most a cash-out refinance may borrow; null without cash out or a home value. */
   readonly cashLimit = computed(() => {
     const r = this.result();
     if (r.cashOut <= 0 || r.newLoanToValuePercent === null) return null;
-    const share = `The new loan is ${pct(r.newLoanToValuePercent)} of the home's value`;
+    const share = pct(r.newLoanToValuePercent);
     return r.exceedsCashOutLimit
-      ? `${share}. Lenders cap a cash-out refinance at 80%, so this one may not be offered.`
-      : `${share}, within the 80% a cash-out refinance allows.`;
+      ? t("The new loan is {0} of the home's value. Lenders cap a cash-out refinance at 80%, so this one may not be offered.", [share])
+      : t("The new loan is {0} of the home's value, within the 80% a cash-out refinance allows.", [share]);
   });
 
   /** One sentence on the payment and the term, e.g. "The payment drops $321.69 a month, but the loan runs 5 yr longer." */
@@ -137,21 +148,27 @@ export class RefinanceResultsComponent {
     const r = this.result();
     if (this.keepsPayment()) {
       const keep = r.keepingCurrentPayment!;
-      return `The payment stays at ${usdCents(r.current.monthlyPayment + r.current.monthlyPmi)}, and the extra ${usdCents(keep.extraMonthlyPrincipal)} a month goes to principal, so it is paid off ${formatMonths(this.keepingMonthsSooner())} sooner.`;
+      return t('The payment stays at {0}, and the extra {1} a month goes to principal, so it is paid off {2} sooner.', [
+        usdCents(r.current.monthlyPayment + r.current.monthlyPmi), usdCents(keep.extraMonthlyPrincipal), formatMonths(this.keepingMonthsSooner()),
+      ]);
     }
-    const change = r.monthlySavings >= 0
-      ? `The payment drops ${usdCents(r.monthlySavings)} a month`
-      : `The payment rises ${usdCents(-r.monthlySavings)} a month`;
-    return r.monthsAdded > 0 ? `${change}, but the loan runs ${formatMonths(r.monthsAdded)} longer.` : `${change}.`;
+    if (r.monthlySavings >= 0) {
+      return r.monthsAdded > 0
+        ? t('The payment drops {0} a month, but the loan runs {1} longer.', [usdCents(r.monthlySavings), formatMonths(r.monthsAdded)])
+        : t('The payment drops {0} a month.', [usdCents(r.monthlySavings)]);
+    }
+    return r.monthsAdded > 0
+      ? t('The payment rises {0} a month, but the loan runs {1} longer.', [usdCents(-r.monthlySavings), formatMonths(r.monthsAdded)])
+      : t('The payment rises {0} a month.', [usdCents(-r.monthlySavings)]);
   });
 
   /** "5 yr later than now (Dec 2050)", "1 yr 2 mo sooner than now", or "same as now". */
   readonly payoffChange = computed(() => {
     const r = this.result();
-    if (this.keepsPayment()) return `${formatMonths(this.keepingMonthsSooner())} sooner than now`;
-    if (r.monthsAdded > 0) return `${formatMonths(r.monthsAdded)} later than now (${monthOf(r.current.payoffDate)})`;
-    if (r.monthsAdded < 0) return `${formatMonths(-r.monthsAdded)} sooner than now`;
-    return 'same as now';
+    if (this.keepsPayment()) return t('{0} sooner than now', [formatMonths(this.keepingMonthsSooner())]);
+    if (r.monthsAdded > 0) return t('{0} later than now ({1})', [formatMonths(r.monthsAdded), monthOf(r.current.payoffDate)]);
+    if (r.monthsAdded < 0) return t('{0} sooner than now', [formatMonths(-r.monthsAdded)]);
+    return t('same as now');
   });
 
   /** Interest in the new loan's first payment: high again, because the clock restarted. */
@@ -167,14 +184,14 @@ export class RefinanceResultsComponent {
   readonly columns = computed<TableColumn[]>(() => {
     const r = this.result();
     const financed = r.refinanced.loanAmount - r.current.loanAmount - r.cashOut;
-    const closing = r.upfrontCosts > 0 ? usd(r.upfrontCosts) : financed > 0 ? `${usd(financed)} in the loan` : '$0';
+    const closing = r.upfrontCosts > 0 ? usd(r.upfrontCosts) : financed > 0 ? t('{0} in the loan', [usd(financed)]) : '$0';
     const columns: TableColumn[] = [
-      { label: 'Keep current loan', option: r.current, closing: '—', totalCost: r.current.totalPaid + r.current.totalPmi },
-      { label: 'Refinance', option: r.refinanced, closing, totalCost: r.refinanced.totalPaid + r.refinanced.totalPmi + r.upfrontCosts },
+      { label: t('Keep current loan'), option: r.current, closing: '—', totalCost: r.current.totalPaid + r.current.totalPmi },
+      { label: t('Refinance'), option: r.refinanced, closing, totalCost: r.refinanced.totalPaid + r.refinanced.totalPmi + r.upfrontCosts },
     ];
     if (r.keepingCurrentPayment) {
       const keep = r.keepingCurrentPayment;
-      columns.push({ label: 'Refinance, keep payment', option: keep, closing, totalCost: keep.totalPaid + keep.totalPmi + r.upfrontCosts });
+      columns.push({ label: t('Refinance, keep payment'), option: keep, closing, totalCost: keep.totalPaid + keep.totalPmi + r.upfrontCosts });
     }
     return columns;
   });

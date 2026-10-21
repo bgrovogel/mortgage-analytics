@@ -7,11 +7,12 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { decimal, usd } from '../../../core/formatting/format';
 import { monthsToSave } from './saving-up';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 const RULES = {
-  savedSoFar: { label: 'Saved so far', unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
-  monthly: { label: 'You can save a month', unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
-  rate: { label: 'Savings earn a year', unit: '%', min: 0, max: 30, optional: true },
+  savedSoFar: { get label() { return t('Saved so far'); }, unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
+  monthly: { get label() { return t('You can save a month'); }, unit: '$', min: 0, max: MAX_AMOUNT, optional: true },
+  rate: { get label() { return t('Savings earn a year'); }, unit: '%', min: 0, max: 30, optional: true },
 } as const satisfies Record<string, FieldRule>;
 
 /**
@@ -72,15 +73,15 @@ export class SavingUpComponent {
   protected readonly answer = computed(() => {
     const { savedSoFar, monthly, rate } = this.values();
     const target = this.target();
-    if (monthly === null || monthly === undefined) return 'Enter what you can save each month.';
+    if (monthly === null || monthly === undefined) return t('Enter what you can save each month.');
     const saved = savedSoFar ?? 0;
-    if (saved >= target) return `You already have it: ${usd(saved)} saved covers the ${usd(target)} to close.`;
+    if (saved >= target) return t('You already have it: {0} saved covers the {1} to close.', [usd(saved), usd(target)]);
     const months = monthsToSave(target, saved, monthly, rate ?? 0);
     if (months === null) {
       return monthly === 0
-        ? 'Saving nothing a month, you would not get there in fifty years.'
-        : `At ${usd(monthly)} a month, you would not get there in fifty years.`;
+        ? t('Saving nothing a month, you would not get there in fifty years.')
+        : t('At {0} a month, you would not get there in fifty years.', [usd(monthly)]);
     }
-    return `At ${usd(monthly)} a month, earning ${decimal(rate ?? 0)}%, you would have ${usd(target)} in ${formatMonths(months)}.`;
+    return t('At {0} a month, earning {1}%, you would have {2} in {3}.', [usd(monthly), decimal(rate ?? 0), usd(target), formatMonths(months)]);
   });
 }

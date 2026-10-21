@@ -6,13 +6,14 @@ import { NumberFieldComponent } from '../../../core/forms/number-field.component
 import { decimal, usd } from '../../../core/formatting/format';
 import { SecondLoanComparison, SecondLoanInput } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /** The second loan, with the limits the API enforces (AmortizationRequestValidator). */
 const SECOND_LOAN_RULES = {
-  amount: { label: 'Second loan', unit: '$', min: 0.01, max: 100_000_000 },
-  annualInterestRate: { label: 'Its rate', unit: '%', min: 0, max: 30, decimals: 3 },
-  termYears: { label: 'Its term', unit: 'years', min: 1, max: 30, whole: true },
-  yearsKept: { label: 'Years you keep the loans', unit: 'years', min: 1, max: 30, whole: true },
+  amount: { get label() { return t('Second loan'); }, unit: '$', min: 0.01, max: 100_000_000 },
+  annualInterestRate: { get label() { return t('Its rate'); }, unit: '%', min: 0, max: 30, decimals: 3 },
+  termYears: { get label() { return t('Its term'); }, unit: 'years', min: 1, max: 30, whole: true },
+  yearsKept: { get label() { return t('Years you keep the loans'); }, unit: 'years', min: 1, max: 30, whole: true },
 } as const satisfies FieldRules;
 
 /**
@@ -103,7 +104,7 @@ export class SecondLoanComponent {
     yearsKept: [7, validatorsFor(SECOND_LOAN_RULES.yearsKept)],
   });
 
-  protected readonly years = computed(() => `${this.comparison()?.yearsKept ?? 0} years`);
+  protected readonly years = computed(() => tp(this.comparison()?.yearsKept ?? 0, '{n} year', '{n} years'));
 
   /** True when the second loan costs less over the years kept. */
   protected readonly cheaper = computed(() => (this.comparison()?.saved ?? 0) > 0);
@@ -113,10 +114,10 @@ export class SecondLoanComponent {
     const c = this.comparison();
     if (!c) return '';
     const saved = Math.abs(c.saved);
-    if (c.saved === 0) return `Over ${this.years()}, the two cost the same.`;
+    if (c.saved === 0) return t('Over {0}, the two cost the same.', [this.years()]);
     return c.saved > 0
-      ? `Over ${this.years()}, the second loan costs ${usd(saved)} less than paying PMI.`
-      : `Over ${this.years()}, the second loan costs ${usd(saved)} more than paying PMI.`;
+      ? t('Over {0}, the second loan costs {1} less than paying PMI.', [this.years(), usd(saved)])
+      : t('Over {0}, the second loan costs {1} more than paying PMI.', [this.years(), usd(saved)]);
   });
 
   /** One row of the table, for each way. */
@@ -126,13 +127,13 @@ export class SecondLoanComponent {
     const { withMortgageInsurance: a, withSecondLoan: b } = c;
     const row = (label: string, pick: (o: typeof a) => string) => ({ label, without: pick(a), with: pick(b) });
     return [
-      row('First loan', (o) => usd(o.firstLoan)),
-      row('Second loan', (o) => (o.secondLoan ? usd(o.secondLoan) : 'None')),
-      row('Each month, all in', (o) => usd(o.monthlyPayment)),
-      row('Of which PMI', (o) => (o.mortgageInsurance ? usd(o.mortgageInsurance) : 'None')),
-      row('Cash to close', (o) => usd(o.cashToClose)),
-      row(`Paid in ${this.years()}`, (o) => usd(o.payments)),
-      row(`Still owed after ${this.years()}`, (o) => usd(o.balance)),
+      row(t('First loan'), (o) => usd(o.firstLoan)),
+      row(t('Second loan'), (o) => (o.secondLoan ? usd(o.secondLoan) : t('None'))),
+      row(t('Each month, all in'), (o) => usd(o.monthlyPayment)),
+      row(t('Of which PMI'), (o) => (o.mortgageInsurance ? usd(o.mortgageInsurance) : t('None'))),
+      row(t('Cash to close'), (o) => usd(o.cashToClose)),
+      row(t('Paid in {0}', [this.years()]), (o) => usd(o.payments)),
+      row(t('Still owed after {0}', [this.years()]), (o) => usd(o.balance)),
     ];
   });
 

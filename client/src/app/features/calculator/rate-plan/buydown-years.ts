@@ -1,5 +1,6 @@
 import { toCents } from '../../../core/loans/loan-progress';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
+import { t } from '../../../core/i18n/i18n';
 
 /** One year of a buydown, as the page shows it. */
 export interface BuydownYearView {
@@ -27,7 +28,7 @@ export function buydownYears(r: AmortizationResponse): BuydownYearView[] | null 
   const last = b.years[b.years.length - 1];
   const housingIn = (year: number) => r.baseline.payments[(year - 1) * 12]?.housingCosts ?? r.baseline.monthlyHousingCosts.total;
   return b.years.map((y) => ({
-    label: y.year === last.year ? `From year ${y.year}` : `Year ${y.year}`,
+    label: y.year === last.year ? t('From year {0}', [y.year]) : t('Year {0}', [y.year]),
     rate: y.annualInterestRate,
     loanPayment: y.monthlyPayment,
     monthlyTotal: toCents(y.monthlyPayment + housingIn(y.year)),

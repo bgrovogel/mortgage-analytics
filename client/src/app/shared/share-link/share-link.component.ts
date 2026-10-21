@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { t } from '../../core/i18n/i18n';
 import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
@@ -46,7 +47,7 @@ export class ShareLinkComponent {
   /** The link to copy by hand, when the clipboard could not take it. */
   protected readonly manual = signal<string | null>(null);
 
-  protected readonly noteAfter = computed(() => (this.note() ? ` ${this.note()}` : ''));
+  protected readonly noteAfter = computed(() => (this.note() ? ` ${t(this.note()!)}` : ''));
 
   private readonly urlInput = viewChild<ElementRef<HTMLInputElement>>('urlInput');
 

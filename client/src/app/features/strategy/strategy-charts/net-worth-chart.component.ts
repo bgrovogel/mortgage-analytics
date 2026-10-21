@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { MarketScenario, STRATEGIES, StrategyComparison, StrategyOutcome } from '../../../core/models/strategy.models';
+import { t } from '../../../core/i18n/i18n';
 
 /** Axis labels: "Now", "Yr 1", "Yr 2"... short enough for a phone. */
-export const yearLabel = (year: number) => (year === 0 ? 'Now' : `Yr ${year}`);
+export const yearLabel = (year: number) => (year === 0 ? t('Now') : t('Yr {0}', [year]));
 
 /** Tooltip titles: "Today", "Year 1"... */
-export const yearTitle = (year: number) => (year === 0 ? 'Today' : `Year ${year}`);
+export const yearTitle = (year: number) => (year === 0 ? t('Today') : t('Year {0}', [year]));
 
 /** What the net worth chart plots: each strategy's net worth, or how far each is ahead of paying off first. */
 export type NetWorthView = 'total' | 'gap';
@@ -37,8 +38,14 @@ export class NetWorthChartComponent {
    */
   readonly view = input<NetWorthView>('total');
 
-  protected readonly caption = computed(() =>
-    `${this.view() === 'gap' ? 'How far each strategy is ahead of Debt free ASAP' : 'Net worth over 30 years'}${this.todaysDollars() ? ", in today's dollars" : ''}`);
+  protected readonly caption = computed(() => {
+    if (this.view() === 'gap') {
+      return this.todaysDollars()
+        ? t("How far each strategy is ahead of Debt free ASAP, in today's dollars")
+        : t('How far each strategy is ahead of Debt free ASAP');
+    }
+    return this.todaysDollars() ? t("Net worth over 30 years, in today's dollars") : t('Net worth over 30 years');
+  });
 
   /** What is drawn: each strategy's net worth, or its lead over paying off first. */
   readonly spec = computed<ScrubChartSpec>(() => {

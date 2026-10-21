@@ -3,6 +3,7 @@ import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-
 import { decimal, usd } from '../../../core/formatting/format';
 import { RentOrBuyComparison } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** The years the table shows, of those compared. */
 const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
@@ -83,22 +84,22 @@ export class RentOrBuyComponent {
   protected readonly taxNote = computed(() => {
     const { countsTaxSavings, years } = this.comparison();
     if (!countsTaxSavings) {
-      return 'Taxes on investment gains, the mortgage interest deduction and extra payments are left out.';
+      return t('Taxes on investment gains, the mortgage interest deduction and extra payments are left out.');
     }
     const total = years.reduce((sum, y) => sum + (y.taxSaved ?? 0), 0);
-    return `It counts the federal tax owning saves: ${usd(years[0]?.taxSaved ?? 0)} in year 1, and ${usd(total)} in the ${years.length} years compared. Taxes on investment gains and extra payments are left out.`;
+    return t('It counts the federal tax owning saves: {0} in year 1, and {1} in the {2} years compared. Taxes on investment gains and extra payments are left out.', [usd(years[0]?.taxSaved ?? 0), usd(total), years.length]);
   });
 
 
   /** How long to stay for buying to come out ahead, or that renting stays ahead. */
   readonly verdict = computed(() => {
     const { breakEvenYear, years } = this.comparison();
-    if (breakEvenYear === 1) return 'Buying comes out ahead from the first year.';
+    if (breakEvenYear === 1) return t('Buying comes out ahead from the first year.');
     if (breakEvenYear !== null) {
-      return `Buying comes out ahead if you stay ${breakEvenYear} years or more; before that, renting leaves you better off.`;
+      return t('Buying comes out ahead if you stay {0} years or more; before that, renting leaves you better off.', [breakEvenYear]);
     }
     const last = years[years.length - 1];
-    return `Renting stays ahead for all ${years.length} years: by the end, it leaves you ${usd(-last.advantage)} better off.`;
+    return t('Renting stays ahead for all {0} years: by the end, it leaves you {1} better off.', [years.length, usd(-last.advantage)]);
   });
 
   /** The three figures above the verdict: when buying pulls ahead, and where each side stands at 10 years and at the end. */
@@ -106,16 +107,16 @@ export class RentOrBuyComponent {
     const { breakEvenYear, years } = this.comparison();
     const standing = (y: { advantage: number; buyerNetWorth: number; renterNetWorth: number }) => ({
       advantage: y.advantage,
-      lead: `${y.advantage >= 0 ? 'Buy' : 'Rent'} by ${usd(Math.abs(y.advantage))}`,
-      detail: `${usd(y.buyerNetWorth)} bought vs ${usd(y.renterNetWorth)} rented`,
+      lead: t('{0} by {1}', [y.advantage >= 0 ? t('Buy') : t('Rent'), usd(Math.abs(y.advantage))]),
+      detail: t('{0} bought vs {1} rented', [usd(y.buyerNetWorth), usd(y.renterNetWorth)]),
     });
     const ten = years.find((y) => y.year === 10);
     const last = years[years.length - 1];
     return {
-      year: breakEvenYear === null ? 'Never' : `Year ${breakEvenYear}`,
+      year: breakEvenYear === null ? t('Never') : t('Year {0}', [breakEvenYear]),
       yearNote: breakEvenYear === null
-        ? `Renting is ahead in all ${years.length} years`
-        : breakEvenYear === 1 ? 'Ahead from the start' : 'And stays ahead every year after',
+        ? t('Renting is ahead in all {0} years', [years.length])
+        : breakEvenYear === 1 ? t('Ahead from the start') : t('And stays ahead every year after'),
       ten: ten ? standing(ten) : null,
       end: last ? standing(last) : null,
     };
@@ -128,13 +129,13 @@ export class RentOrBuyComponent {
   readonly chart = computed<ScrubChartSpec>(() => {
     const years = this.comparison().years;
     return {
-      labels: years.map((y) => `Yr ${y.year}`),
+      labels: years.map((y) => t('Yr {0}', [y.year])),
       // The two households' worth grow so large that the gap between them, the answer, is lost: plot the gap.
-      series: [{ label: 'Buying ahead by', color: '--series-1', data: years.map((y) => y.advantage) }],
-      title: (index) => `Year ${years[index].year}`,
+      series: [{ label: t('Buying ahead by'), color: '--series-1', data: years.map((y) => y.advantage) }],
+      title: (index) => t('Year {0}', [years[index].year]),
       footer: (index) => {
         const y = years[index];
-        return `If you buy ${usd(y.buyerNetWorth)} · if you rent ${usd(y.renterNetWorth)}`;
+        return t('If you buy {0} · if you rent {1}', [usd(y.buyerNetWorth), usd(y.renterNetWorth)]);
       },
       tickEvery: 5,
     };

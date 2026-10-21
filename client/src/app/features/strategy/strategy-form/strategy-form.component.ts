@@ -14,6 +14,7 @@ import { TaxSituation, federalBracket, longTermGainsRate } from './tax-brackets'
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 const rules = STRATEGY_RULES;
 
@@ -154,24 +155,24 @@ export class StrategyFormComponent implements OnInit {
   readonly savingsSummary = computed(() => {
     const v = this.values();
     const match = (v.employerMatchPercent ?? 0) > 0 && (v.matchUpToPercentOfPay ?? 0) > 0
-      ? `${decimal(v.employerMatchPercent ?? 0)}% match on ${decimal(v.matchUpToPercentOfPay ?? 0)}% of pay`
-      : 'No match';
-    return `${match} · IRA ${usd(v.annualIraContribution ?? 0)}/yr`;
+      ? t('{0}% match on {1}% of pay', [decimal(v.employerMatchPercent ?? 0), decimal(v.matchUpToPercentOfPay ?? 0)])
+      : t('No match');
+    return t('{0} · IRA {1}/yr', [match, usd(v.annualIraContribution ?? 0)]);
   });
 
   readonly stockSummary = computed(() => {
     const v = this.values();
     const parts = [
-      (v.annualRsuVesting ?? 0) > 0 ? `RSUs ${usd(v.annualRsuVesting ?? 0)}/yr` : '',
-      (v.annualEsopContribution ?? 0) > 0 ? `ESOP ${usd(v.annualEsopContribution ?? 0)}/yr` : '',
-      (v.esppContributionPercent ?? 0) > 0 ? `ESPP ${decimal(v.esppContributionPercent ?? 0)}% of pay` : '',
+      (v.annualRsuVesting ?? 0) > 0 ? t('RSUs {0}/yr', [usd(v.annualRsuVesting ?? 0)]) : '',
+      (v.annualEsopContribution ?? 0) > 0 ? t('ESOP {0}/yr', [usd(v.annualEsopContribution ?? 0)]) : '',
+      (v.esppContributionPercent ?? 0) > 0 ? t('ESPP {0}% of pay', [decimal(v.esppContributionPercent ?? 0)]) : '',
     ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : 'None';
+    return parts.length > 0 ? parts.join(' · ') : t('None');
   });
 
   readonly marketSummary = computed(() => {
     const v = this.values();
-    return `Stocks ${decimal(v.expectedAnnualReturn ?? 0)}% · Inflation ${decimal(v.inflationRate ?? 0)}% · Home ${decimal(v.homeGrowthRate ?? 0)}%`;
+    return t('Stocks {0}% · Inflation {1}% · Home {2}%', [decimal(v.expectedAnnualReturn ?? 0), decimal(v.inflationRate ?? 0), decimal(v.homeGrowthRate ?? 0)]);
   });
 
   constructor() {

@@ -10,6 +10,7 @@ import type { CostKey, ScheduleColumn, ScheduleRow } from './schedule-model';
 import { SchedulePagerComponent, SchedulePage } from './schedule-pager.component';
 import { ScheduleTotalsComponent } from './schedule-totals.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 export type { ScheduleColumn, ScheduleRow } from './schedule-model';
 
@@ -23,16 +24,16 @@ const utcDate = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`);
 const sum = <T>(items: T[], pick: (item: T) => number) => items.reduce((total, item) => total + pick(item), 0);
 
 const LOAN_COLUMNS: ScheduleColumn[] = [
-  { key: 'principal', label: 'Principal', value: (r) => r.principal },
-  { key: 'interest', label: 'Interest', value: (r) => r.interest },
-  { key: 'extraPrincipal', label: 'Extra', value: (r) => r.extraPrincipal },
+  { key: 'principal', get label() { return t('Principal'); }, value: (r) => r.principal },
+  { key: 'interest', get label() { return t('Interest'); }, value: (r) => r.interest },
+  { key: 'extraPrincipal', get label() { return t('Extra'); }, value: (r) => r.extraPrincipal },
 ];
 /** One column per cost, named for the loan (an FHA loan's mortgage insurance is MIP). */
 const costColumns = (categories: readonly CostCategory[]): ScheduleColumn[] =>
   categories.map((c) => ({ key: c.key, label: c.label, value: (r) => r.costs[c.key] }));
 const SUMMARY_COLUMNS: ScheduleColumn[] = [
-  { key: 'housingCosts', label: 'Housing costs', value: (r) => r.housingCosts },
-  { key: 'totalOutlay', label: 'Total', value: (r) => r.totalOutlay },
+  { key: 'housingCosts', get label() { return t('Housing costs'); }, value: (r) => r.housingCosts },
+  { key: 'totalOutlay', get label() { return t('Total'); }, value: (r) => r.totalOutlay },
 ];
 
 /** Shown until the user chooses: everything except the separate cost categories, which "Housing costs" sums up. */
@@ -136,9 +137,9 @@ export class ScheduleTableComponent {
   readonly pageCaption = computed(() => {
     const page = this.page();
     const count = this.schedule().payments.length;
-    if (page === 'all') return `All ${count} payments`;
+    if (page === 'all') return t('All {0} payments', [count]);
     const last = Math.min(page * 12, count);
-    return `Payments ${(page - 1) * 12 + 1}–${last} of ${count}, loan year ${page}`;
+    return t('Payments {0}–{1} of {2}, loan year {3}', [(page - 1) * 12 + 1, last, count, page]);
   });
 
   /** Shows the loan year (or all of them) the pager asked for. */

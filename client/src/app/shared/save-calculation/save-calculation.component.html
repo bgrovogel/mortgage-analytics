@@ -4,7 +4,12 @@
       @if (changedSinceSave()) {
         {{ 'Changed since you saved “{0}”: Save to update it.' | t: [s.name] }}
       } @else {
-        {{ s.verb }} “{{ s.name }}”. <a routerLink="/history">{{ 'View history' | t }}</a>
+        @if (s.verb === 'Updated') {
+          {{ 'Updated “{0}”.' | t: [s.name] }}
+        } @else {
+          {{ 'Saved as “{0}”.' | t: [s.name] }}
+        }
+        <a routerLink="/history">{{ 'View history' | t }}</a>
       }
     </p>
   }

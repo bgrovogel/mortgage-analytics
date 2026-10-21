@@ -33,7 +33,7 @@
       @if (leadParts(); as part) {
         <p class="lead" [class.money]="part.money" data-testid="page-lead">
           @if (part.money) {
-            <span class="amount" data-testid="lead-amount"><span class="dollars">{{ part.dollars }}</span><span class="cents">{{ part.cents }}</span></span>@if (part.unit) {{{ '&ngsp;' | t }}<span class="unit">{{ part.unit }}</span>}
+            <span class="amount" data-testid="lead-amount"><span class="dollars">{{ part.dollars }}</span><span class="cents">{{ part.cents }}</span></span>@if (part.unit) {&ngsp;<span class="unit">{{ part.unit }}</span>}
           } @else {
             {{ part.text }}
           }

@@ -6,6 +6,7 @@ import { CalculationStore } from '../../core/state/calculation-store';
 import { SharedLoan, sharedRateFrom } from '../../core/state/shared-loan.store';
 import { loanToday, toCents } from '../../core/loans/loan-progress';
 import { wholeYearsOf } from './loan-form/loan-fields';
+import { msg, t } from '../../core/i18n/i18n';
 
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 
@@ -22,7 +23,9 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
 
   readonly kind = 'Purchase';
   readonly route = ['/calculator', 'overview'];
-  readonly pageName = 'Calculator';
+  get pageName(): string {
+    return t('Calculator');
+  }
 
   /** What the affordability question starts from: a home in mind, or the budget (the most that could be bought). */
   readonly affordStart = signal<'home' | 'budget'>('home');
@@ -116,7 +119,7 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   suggestName = suggestName;
 
   /** A share link leaves out the household's income and debts. */
-  override readonly shareNote = 'Your income and debts are left out.';
+  override readonly shareNote = msg('Your income and debts are left out.');
 
   protected override shareable(request: AmortizationRequest): AmortizationRequest {
     return withoutIncome(request);

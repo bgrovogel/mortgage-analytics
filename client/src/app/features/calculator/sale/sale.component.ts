@@ -3,6 +3,7 @@ import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-
 import { decimal, usd } from '../../../core/formatting/format';
 import { SaleOutcome } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /** The years the table shows, of those the loan runs. */
 const MILESTONES = [1, 2, 3, 5, 7, 10, 15, 20, 30];
@@ -112,33 +113,37 @@ export class SaleComponent {
   protected readonly shelter = computed(() => {
     const { exclusionPerSale } = this.sale();
     const { year, taxFreeGain, gain } = this.chosen();
-    if (gain <= 0) return 'A loss is not taxed';
-    if (exclusionPerSale === 0) return 'A home you do not live in has no tax-free gain';
-    if (year < 2) return 'Tax-free only after two years in the home';
-    return taxFreeGain >= gain ? `All of it is tax-free (up to ${usd(exclusionPerSale)})` : `${usd(taxFreeGain)} of it is tax-free`;
+    if (gain <= 0) return t('A loss is not taxed');
+    if (exclusionPerSale === 0) return t('A home you do not live in has no tax-free gain');
+    if (year < 2) return t('Tax-free only after two years in the home');
+    return taxFreeGain >= gain ? t('All of it is tax-free (up to {0})', [usd(exclusionPerSale)]) : t('{0} of it is tax-free', [usd(taxFreeGain)]);
   });
 
   /** What the note says: how the gain is figured and taxed, and what it leaves out. */
   protected readonly note = computed(() => {
     const { gainsTaxRatePercent, exclusionPerSale } = this.sale();
-    const tax = `Any gain over that is taxed at ${this.percent(gainsTaxRatePercent)}.`;
+    const rate = this.percent(gainsTaxRatePercent);
     const shelter = exclusionPerSale > 0
-      ? `A home you live in shelters the first ${usd(exclusionPerSale)} of gain from tax once you have owned it two years. ${tax}`
-      : `A home you do not live in has no tax-free gain, so all of it is taxed at ${this.percent(gainsTaxRatePercent)}.`;
-    return `The gain is the sale price less the costs of selling, over the price you paid. ${shelter} What you owe is on your plan, with any extra payments. `
-      + `Improvements and the costs of buying would lower the gain, so the tax shown leans high. State tax, and a loss against other income, are left out.`;
+      ? `${t('A home you live in shelters the first {0} of gain from tax once you have owned it two years.', [usd(exclusionPerSale)])} ${t('Any gain over that is taxed at {0}.', [rate])}`
+      : t('A home you do not live in has no tax-free gain, so all of it is taxed at {0}.', [rate]);
+    return [
+      t('The gain is the sale price less the costs of selling, over the price you paid.'),
+      shelter,
+      t('What you owe is on your plan, with any extra payments.'),
+      t('Improvements and the costs of buying would lower the gain, so the tax shown leans high. State tax, and a loss against other income, are left out.'),
+    ].join(' ');
   });
 
   /** What is drawn: what a sale would leave, for each year it might be made. */
   protected readonly chart = computed<ScrubChartSpec>(() => {
     const years = this.sale().years;
     return {
-      labels: years.map((y) => `Yr ${y.year}`),
-      series: [{ label: 'You walk away with', color: '--series-1', data: years.map((y) => y.netProceeds) }],
-      title: (index) => `Selling after ${years[index].year} ${years[index].year === 1 ? 'year' : 'years'}`,
+      labels: years.map((y) => t('Yr {0}', [y.year])),
+      series: [{ label: t('You walk away with'), color: '--series-1', data: years.map((y) => y.netProceeds) }],
+      title: (index) => tp(years[index].year, 'Selling after {n} year', 'Selling after {n} years'),
       footer: (index) => {
         const y = years[index];
-        return `Sells for ${usd(y.homeValue)} · owe ${usd(y.loanBalance)} · costs ${usd(y.sellingCosts)} · tax ${usd(y.taxOnGain)}`;
+        return t('Sells for {0} · owe {1} · costs {2} · tax {3}', [usd(y.homeValue), usd(y.loanBalance), usd(y.sellingCosts), usd(y.taxOnGain)]);
       },
       tickEvery: 5,
     };

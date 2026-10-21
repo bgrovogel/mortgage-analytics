@@ -8,17 +8,18 @@ import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { TaxFilingStatus } from '../../../core/models/strategy.models';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** Renting's cost and what money earns, with the limits the API enforces (AmortizationRequestValidator). */
 export const RENT_RULES = {
-  monthlyRent: { label: 'Rent a month', unit: '$', min: 0.01, max: 1_000_000, optional: true },
-  rentIncreasePercent: { label: 'Rent rises', unit: '%', min: -20, max: 20, decimals: 2 },
-  investmentReturnPercent: { label: 'Investments earn', unit: '%', min: -20, max: 30, decimals: 2 },
-  maintenancePercent: { label: 'Upkeep', unit: '%', min: 0, max: 10, decimals: 2 },
-  sellingCostPercent: { label: 'Selling costs', unit: '%', min: 0, max: 20, decimals: 2 },
-  marginalTaxRatePercent: { label: 'Your federal tax rate', unit: '%', min: 0, max: 50, decimals: 2 },
-  otherStateAndLocalTaxes: { label: 'Other state and local taxes', unit: '$', min: 0, max: 100_000_000, optional: true },
-  otherItemizedDeductions: { label: 'Other itemized deductions', unit: '$', min: 0, max: 100_000_000, optional: true },
+  monthlyRent: { get label() { return t('Rent a month'); }, unit: '$', min: 0.01, max: 1_000_000, optional: true },
+  rentIncreasePercent: { get label() { return t('Rent rises'); }, unit: '%', min: -20, max: 20, decimals: 2 },
+  investmentReturnPercent: { get label() { return t('Investments earn'); }, unit: '%', min: -20, max: 30, decimals: 2 },
+  maintenancePercent: { get label() { return t('Upkeep'); }, unit: '%', min: 0, max: 10, decimals: 2 },
+  sellingCostPercent: { get label() { return t('Selling costs'); }, unit: '%', min: 0, max: 20, decimals: 2 },
+  marginalTaxRatePercent: { get label() { return t('Your federal tax rate'); }, unit: '%', min: 0, max: 50, decimals: 2 },
+  otherStateAndLocalTaxes: { get label() { return t('Other state and local taxes'); }, unit: '$', min: 0, max: 100_000_000, optional: true },
+  otherItemizedDeductions: { get label() { return t('Other itemized deductions'); }, unit: '$', min: 0, max: 100_000_000, optional: true },
 } as const satisfies FieldRules;
 
 /** The usual assumptions: rent up 3.5% a year, investments earning 7%, 1% upkeep, 6% to sell. */

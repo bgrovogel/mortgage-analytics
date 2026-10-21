@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * The views of buying a home, each its own URL so it can be bookmarked, shared and reached with the back button.
@@ -11,19 +12,19 @@ import { TPipe } from '../../../core/i18n/t.pipe';
  * payment, are one step down: a second row shown with Cost, so the first row stays four questions, not seven tabs.
  */
 export const BUY_VIEWS = [
-  { id: 'overview', link: '/calculator/overview', label: 'Cost' },
-  { id: 'affordability', link: '/calculator/affordability', label: 'Can I afford it?' },
-  { id: 'rent-or-buy', link: '/calculator/rent-or-buy', label: 'Rent or buy?' },
-  { id: 'compare', link: '/compare', label: 'Compare' },
+  { id: 'overview', link: '/calculator/overview', get label() { return t('Cost'); } },
+  { id: 'affordability', link: '/calculator/affordability', get label() { return t('Can I afford it?'); } },
+  { id: 'rent-or-buy', link: '/calculator/rent-or-buy', get label() { return t('Rent or buy?'); } },
+  { id: 'compare', link: '/compare', get label() { return t('Compare'); } },
 ] as const;
 
 /** Under Cost, in the order a buyer goes deeper. */
 export const BUY_DEPTH = [
-  { id: 'closing', link: '/calculator/closing', label: 'Closing costs' },
-  { id: 'projection', link: '/calculator/projection', label: 'Year by year' },
-  { id: 'sale', link: '/calculator/sale', label: 'If you sell' },
-  { id: 'rental', link: '/calculator/rental', label: 'As a rental' },
-  { id: 'schedule', link: '/calculator/schedule', label: 'Every payment' },
+  { id: 'closing', link: '/calculator/closing', get label() { return t('Closing costs'); } },
+  { id: 'projection', link: '/calculator/projection', get label() { return t('Year by year'); } },
+  { id: 'sale', link: '/calculator/sale', get label() { return t('If you sell'); } },
+  { id: 'rental', link: '/calculator/rental', get label() { return t('As a rental'); } },
+  { id: 'schedule', link: '/calculator/schedule', get label() { return t('Every payment'); } },
 ] as const;
 
 /** Every view's id, in the order a buyer meets them. */

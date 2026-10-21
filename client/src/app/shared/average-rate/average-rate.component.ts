@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe } from '../../core/i18n/date.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { decimal } from '../../core/formatting/format';
 import { AverageRatesService } from '../../core/services/average-rates.service';
@@ -15,7 +15,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
   template: `
     @if (average(); as a) {
       <p class="average" data-testid="average-rate">
-        {{ 'This week’s average {0}-year fixed rate: {1}% ({2}, {3}).' | t: [a.years, decimal(a.rate), a.source, (a.asOf | date: ('MMM d' | t))] }}
+        {{ 'This week’s average {0}-year fixed rate: {1}% ({2}, {3}).' | t: [a.years, decimal(a.rate), a.source, (a.asOf | date: 'MMM d')] }}
         @if (a.rate !== current()) {
           <button type="button" class="link-button" (click)="use.emit(a.rate)" data-testid="use-average-rate">{{ 'Use {0}%' | t: [decimal(a.rate)] }}</button>
         } @else {

@@ -1,5 +1,6 @@
 import { pct, signedPct, usd } from '../../../core/formatting/format';
 import { LoanForm } from './loan-form.model';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /**
  * The one-line summaries a collapsed form section shows, as pure functions of the form's values. The component
@@ -23,43 +24,43 @@ export function taxesSummary(v: LoanFormValues, relief: { homestead: boolean; ov
   const single = v.taxMode === 'single';
   const taxes = joined([
     ...(single
-      ? [v.propertyTaxRate ? `Tax ${percent(v.propertyTaxRate)}` : '']
+      ? [v.propertyTaxRate ? t('Tax {0}', [percent(v.propertyTaxRate)]) : '']
       : [
-          v.schoolTaxRate ? `School ${percent(v.schoolTaxRate)}` : '',
-          v.localTaxRate ? `County/city ${percent(v.localTaxRate)}` : '',
-          v.mudTaxRate ? `MUD ${percent(v.mudTaxRate)}` : '',
+          v.schoolTaxRate ? t('School {0}', [percent(v.schoolTaxRate)]) : '',
+          v.localTaxRate ? t('County/city {0}', [percent(v.localTaxRate)]) : '',
+          v.mudTaxRate ? t('MUD {0}', [percent(v.mudTaxRate)]) : '',
         ]),
-    v.pidAnnual ? `PID ${usd(v.pidAnnual)}/yr` : '',
+    v.pidAnnual ? t('PID {0}/yr', [usd(v.pidAnnual)]) : '',
   ]);
-  if (!taxes) return 'No property taxes';
+  if (!taxes) return t('No property taxes');
 
   return joined([
     taxes,
-    relief.homestead ? (single && v.propertyTaxHomesteadExemption ? `Homestead ${usd(v.propertyTaxHomesteadExemption)} off` : 'Homestead') : '',
-    relief.over65 ? 'Over 65' : '',
-    relief.rateChanges ? `${relief.rateChanges} rate change${relief.rateChanges === 1 ? '' : 's'}` : '',
+    relief.homestead ? (single && v.propertyTaxHomesteadExemption ? t('Homestead {0} off', [usd(v.propertyTaxHomesteadExemption)]) : t('Homestead')) : '',
+    relief.over65 ? t('Over 65') : '',
+    relief.rateChanges ? tp(relief.rateChanges, '{n} rate change', '{n} rate changes') : '',
   ]);
 }
 
 /** The insurance, HOA and PMI section. PMI is named only when the down payment requires it. */
 export function costsSummary(v: LoanFormValues, { pmiApplies }: { pmiApplies: boolean }): string {
   return joined([
-    v.annualInsurance ? `Insurance ${usd(v.annualInsurance)}/yr` : '',
-    v.monthlyHoa ? `HOA ${usd(v.monthlyHoa)}/mo` : '',
-    pmiApplies && v.pmiRate ? `PMI ${percent(v.pmiRate)}` : '',
-  ]) || 'None';
+    v.annualInsurance ? t('Insurance {0}/yr', [usd(v.annualInsurance)]) : '',
+    v.monthlyHoa ? t('HOA {0}/mo', [usd(v.monthlyHoa)]) : '',
+    pmiApplies && v.pmiRate ? t('PMI {0}', [percent(v.pmiRate)]) : '',
+  ]) || t('None');
 }
 
 /** The closing-costs section: the fees together, the prepaid interest and escrow, and any credits. */
 export function closingSummary(v: LoanFormValues): string {
   const fees = (v.loanCosts ?? 0) + (v.otherFees ?? 0);
   return joined([
-    fees ? `Fees ${usd(fees)}` : '',
-    v.prepaidInterestDays ? `${v.prepaidInterestDays} days interest` : '',
-    v.escrowMonths ? `${v.escrowMonths} mo escrow` : '',
-    v.closingCredits ? `Seller credits ${usd(v.closingCredits)}` : '',
-    v.lenderCredits ? `Lender credits ${usd(v.lenderCredits)}` : '',
-  ]) || 'No fees';
+    fees ? t('Fees {0}', [usd(fees)]) : '',
+    v.prepaidInterestDays ? t('{0} days interest', [v.prepaidInterestDays]) : '',
+    v.escrowMonths ? t('{0} mo escrow', [v.escrowMonths]) : '',
+    v.closingCredits ? t('Seller credits {0}', [usd(v.closingCredits)]) : '',
+    v.lenderCredits ? t('Lender credits {0}', [usd(v.lenderCredits)]) : '',
+  ]) || t('No fees');
 }
 
 /** The buyers' income a year and debts a month added together, with how many there are, and the monthly budget, or that none is given. */
@@ -69,18 +70,18 @@ export function incomeSummary(v: LoanFormValues): string {
   const income = (v.annualIncome ?? 0) + coBuyers.reduce((sum, c) => sum + (c.annualIncome ?? 0), 0);
   const debts = (v.monthlyDebts ?? 0) + coBuyers.reduce((sum, c) => sum + (c.monthlyDebts ?? 0), 0);
   const parts = [
-    ...(v.annualIncome ? [...(coBuyers.length > 0 ? [`${coBuyers.length + 1} buyers`] : []), `Income ${usd(income)}/yr`, `Debts ${usd(debts)}/mo`] : []),
-    ...(v.monthlyBudget ? [`Budget ${usd(v.monthlyBudget)}/mo`] : []),
+    ...(v.annualIncome ? [...(coBuyers.length > 0 ? [t('{0} buyers', [coBuyers.length + 1])] : []), t('Income {0}/yr', [usd(income)]), t('Debts {0}/mo', [usd(debts)])] : []),
+    ...(v.monthlyBudget ? [t('Budget {0}/mo', [usd(v.monthlyBudget)])] : []),
   ];
-  return parts.length > 0 ? joined(parts) : 'Add yours to see what you can afford';
+  return parts.length > 0 ? joined(parts) : t('Add yours to see what you can afford');
 }
 
 /** The yearly-increase assumptions, each signed; a blank counts as no change. */
 export function growthSummary(v: LoanFormValues): string {
   return joined([
-    `Home ${signedPercent(v.homeValueGrowthRate ?? 0)}`,
-    `Insurance ${signedPercent(v.insuranceIncreaseRate ?? 0)}`,
-    `HOA ${signedPercent(v.hoaIncreaseRate ?? 0)}`,
+    t('Home {0}', [signedPercent(v.homeValueGrowthRate ?? 0)]),
+    t('Insurance {0}', [signedPercent(v.insuranceIncreaseRate ?? 0)]),
+    t('HOA {0}', [signedPercent(v.hoaIncreaseRate ?? 0)]),
   ]);
 }
 
@@ -88,8 +89,8 @@ export function growthSummary(v: LoanFormValues): string {
 export function optionsSummary(v: LoanFormValues): string {
   const lumpSums = v.lumpSums?.length ?? 0;
   return joined([
-    v.annualExtra ? `${usd(v.annualExtra)} yearly` : '',
-    lumpSums ? `${lumpSums} lump sum${lumpSums === 1 ? '' : 's'}` : '',
-    v.strategy === 'Recast' ? `Recast (min ${usd(v.recastMinimum ?? 0)})` : 'Pay off sooner',
+    v.annualExtra ? t('{0} yearly', [usd(v.annualExtra)]) : '',
+    lumpSums ? tp(lumpSums, '{n} lump sum', '{n} lump sums') : '',
+    v.strategy === 'Recast' ? t('Recast (min {0})', [usd(v.recastMinimum ?? 0)]) : t('Pay off sooner'),
   ]);
 }

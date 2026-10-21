@@ -4,6 +4,8 @@
  * the cent each month, so its balance can differ from these by a few cents.
  */
 
+import { t } from '../i18n/i18n';
+
 /**
  * Payments already made on a loan whose first payment was due on `firstPayment` (yyyy-MM-dd), as of `today`:
  * every due date before today. A payment due today counts as not yet made. 0 for a loan that has not started.
@@ -78,7 +80,7 @@ export function loanToday(
 }
 
 /** Shown when a loan's first payment is so long ago that the whole term is behind it. */
-export const PAID_OFF_ALREADY = 'With that first payment, the whole term is already behind you: pick a later date or a longer term.';
+export const paidOffAlready = () => t('With that first payment, the whole term is already behind you: pick a later date or a longer term.');
 
 /**
  * The first of the month `months` after the first of next month (before it, when negative), as yyyy-MM-dd. With 0,

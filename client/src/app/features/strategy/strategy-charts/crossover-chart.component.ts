@@ -3,6 +3,7 @@ import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-
 import { PayoffStrategy, STRATEGIES, StrategyProjection } from '../../../core/models/strategy.models';
 import { yearLabel, yearTitle } from './net-worth-chart.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * Debt against wealth for one strategy: what is owed on the mortgage and what the investments are worth
@@ -29,8 +30,8 @@ export class CrossoverChartComponent {
     return {
       labels: years.map((y) => yearLabel(y.year)),
       series: [
-        { label: 'Mortgage owed', color: '--series-8', data: years.map((y) => y.mortgageBalance) },
-        { label: 'Investments (after tax)', color: STRATEGIES[this.strategy()].color, data: years.map((y) => y.investments) },
+        { label: t('Mortgage owed'), color: '--series-8', data: years.map((y) => y.mortgageBalance) },
+        { label: t('Investments (after tax)'), color: STRATEGIES[this.strategy()].color, data: years.map((y) => y.investments) },
       ],
       title: (index) => yearTitle(years[index].year),
       tickEvery: 5,

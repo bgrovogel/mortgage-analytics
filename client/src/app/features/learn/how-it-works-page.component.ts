@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TermComponent } from '../../core/glossary/term.component';
 import { ReadingNavComponent } from './reading-nav.component';
+import { t } from '../../core/i18n/i18n';
 
 /**
  * How each answer is worked out, in the order a buyer meets them, with the example loan ($415,000, 9% down, 6.25%,
@@ -156,16 +157,16 @@ import { ReadingNavComponent } from './reading-nav.component';
 export class HowItWorksPageComponent {
   /** The sections, in the order they are written, for the contents at the top. */
   protected readonly contents = [
-    { id: 'payment', label: 'Your monthly payment' },
-    { id: 'taxes', label: 'Taxes and insurance' },
-    { id: 'insurance', label: 'Mortgage insurance' },
-    { id: 'closing', label: 'Cash to close' },
-    { id: 'apr', label: 'The APR' },
-    { id: 'afford', label: 'What you can afford' },
-    { id: 'rent', label: 'Rent or buy' },
-    { id: 'sell', label: 'If you sell' },
-    { id: 'rental', label: 'As a rental' },
-    { id: 'refinance', label: 'Refinancing' },
-    { id: 'invest', label: 'Pay off or invest' },
+    { id: 'payment', get label() { return t('Your monthly payment'); } },
+    { id: 'taxes', get label() { return t('Taxes and insurance'); } },
+    { id: 'insurance', get label() { return t('Mortgage insurance'); } },
+    { id: 'closing', get label() { return t('Cash to close'); } },
+    { id: 'apr', get label() { return t('The APR'); } },
+    { id: 'afford', get label() { return t('What you can afford'); } },
+    { id: 'rent', get label() { return t('Rent or buy'); } },
+    { id: 'sell', get label() { return t('If you sell'); } },
+    { id: 'rental', get label() { return t('As a rental'); } },
+    { id: 'refinance', get label() { return t('Refinancing'); } },
+    { id: 'invest', get label() { return t('Pay off or invest'); } },
   ];
 }

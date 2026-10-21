@@ -17,7 +17,7 @@
           <select data-testid="state-tax-rate" (change)="useState($event)">
             <option value="">{{ 'Choose a state…' | t }}</option>
             @for (state of states; track state.name) {
-              <option [value]="state.name">{{ state.name }}: {{ state.rate }}%</option>
+              <option [value]="state.name">{{ state.name | t }}: {{ state.rate }}%</option>
             }
           </select>
         </label>
@@ -57,7 +57,7 @@
         </div>
         @if (f.homesteadSavings(); as saved) {
           <p class="hint saved" data-testid="homestead-savings">
-            {{ 'In year 1 the exemption saves' | t }} <strong>{{ saved.total | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong> {{ 'in tax.' | t }}
+            {{ 'In year 1 the exemption saves' | t }} <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> {{ 'in tax.' | t }}
           </p>
         }
         <p class="hint">
@@ -80,7 +80,7 @@
         </div>
         @if (f.homesteadSavings(); as saved) {
           <p class="hint saved" data-testid="homestead-savings">
-            {{ 'In year 1 these save' | t }} <strong>{{ saved.total | currency: ('USD' | t) : 'symbol' : '1.0-0' }}</strong> {{ 'in tax: school {0} · county/city {1} · MUD {2}.' | t: [(saved.school | currency: ('USD' | t) : 'symbol' : '1.0-0'), (saved.local | currency: ('USD' | t) : 'symbol' : '1.0-0'), (saved.mud | currency: ('USD' | t) : 'symbol' : '1.0-0')] }}
+            {{ 'In year 1 these save' | t }} <strong>{{ saved.total | currency: 'USD' : 'symbol' : '1.0-0' }}</strong> {{ 'in tax: school {0} · county/city {1} · MUD {2}.' | t: [(saved.school | currency: 'USD' : 'symbol' : '1.0-0'), (saved.local | currency: 'USD' : 'symbol' : '1.0-0'), (saved.mud | currency: 'USD' : 'symbol' : '1.0-0')] }}
           </p>
         }
         <p class="hint">

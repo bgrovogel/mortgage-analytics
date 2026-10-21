@@ -6,11 +6,12 @@ import { NumberFieldComponent } from '../../../core/forms/number-field.component
 import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** What a sale costs and how its gain is taxed, with the limits the API enforces (AmortizationRequestValidator). */
 export const SALE_RULES = {
-  sellingCostPercent: { label: 'Cost to sell', unit: '%', min: 0, max: 20, decimals: 2 },
-  gainsTaxRatePercent: { label: 'Tax rate on the gain', unit: '%', min: 0, max: 40, decimals: 2 },
+  sellingCostPercent: { get label() { return t('Cost to sell'); }, unit: '%', min: 0, max: 20, decimals: 2 },
+  gainsTaxRatePercent: { get label() { return t('Tax rate on the gain'); }, unit: '%', min: 0, max: 40, decimals: 2 },
 } as const satisfies FieldRules;
 
 /**

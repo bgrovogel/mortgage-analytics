@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, map, startWith, switchMap } from 'rxjs';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { purchaseFigure, refinanceFigure } from '../../core/formatting/describe-inputs';
-import { decimal, usd, usdCents } from '../../core/formatting/format';
+import { dateText, decimal, usd, usdCents } from '../../core/formatting/format';
 import { maskAmounts } from '../../core/formatting/mask-amounts';
 import { monthlyPayment } from '../../core/loans/loan-progress';
 import { SavedCalculation, SavedCalculationKind, savedInputsOf } from '../../core/models/saved-calculation.models';
@@ -12,6 +12,7 @@ import { SavedCalculationsApiService } from '../../core/services/saved-calculati
 import { CalculationStores } from '../calculation-stores';
 import { ScenarioCoverComponent, coverShares } from './scenario-cover.component';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DELAY_MS = 300;
@@ -30,7 +31,7 @@ const loadHidden = (): boolean => {
   }
 };
 
-const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const day = (value: string) => dateText(new Date(value), { month: 'short', day: 'numeric', year: 'numeric' });
 
 /**
  * Every saved calculation (purchases, refinance and pay-off-or-invest comparisons), newest first, searchable by
@@ -264,8 +265,8 @@ export class HistoryPageComponent {
   /** "Saved Oct 9, 2026", or "Updated …" once it has been changed. */
   when(calculation: SavedCalculation): string {
     return calculation.updatedAt === calculation.createdAt
-      ? `Saved ${day.format(new Date(calculation.createdAt))}`
-      : `Updated ${day.format(new Date(calculation.updatedAt))}`;
+      ? t('Saved {0}', [day(calculation.createdAt)])
+      : t('Updated {0}', [day(calculation.updatedAt)]);
   }
 
   /** Loads the calculation on its own page (the calculator, refinance or pay-off-or-invest) and goes there. */

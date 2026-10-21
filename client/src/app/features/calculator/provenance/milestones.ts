@@ -2,6 +2,7 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { usd } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { mortgageInsuranceName } from '../../../core/models/cost-categories';
+import { t } from '../../../core/i18n/i18n';
 
 /** A date a buyer acts on or looks forward to. */
 export interface Milestone {
@@ -26,7 +27,7 @@ export function milestones(result: AmortizationResponse): Milestone[] {
   const other = result.pmiOtherChoice;
   if (ask && other?.removal === 'Automatic' && other.savedByAsking > 0) {
     out.push({
-      id: 'pmi', title: `Ask to drop ${insurance}`, detail: `Saves ${usd(other.savedByAsking)} against waiting for it to come off by itself`, date: ask,
+      id: 'pmi', title: t('Ask to drop {0}', [insurance]), detail: t('Saves {0} against waiting for it to come off by itself', [usd(other.savedByAsking)]), date: ask,
     });
   }
 
@@ -34,13 +35,13 @@ export function milestones(result: AmortizationResponse): Milestone[] {
   if (first) {
     const opening = first.remainingBalance + first.principal + first.extraPrincipal;
     const half = schedule.payments.find((p) => p.remainingBalance <= opening / 2);
-    if (half) out.push({ id: 'half', title: 'Half paid', detail: 'What you own passes what you owe', date: half.dueDate });
+    if (half) out.push({ id: 'half', title: t('Half paid'), detail: t('What you own passes what you owe'), date: half.dueDate });
   }
 
   const sooner = result.savings.paymentsSaved;
   out.push({
-    id: 'paid', title: 'Free and clear',
-    detail: sooner > 0 ? `${formatMonths(sooner)} sooner than scheduled` : 'The last payment',
+    id: 'paid', title: t('Free and clear'),
+    detail: sooner > 0 ? t('{0} sooner than scheduled', [formatMonths(sooner)]) : t('The last payment'),
     date: result.savings.acceleratedPayoffDate,
   });
   return out;

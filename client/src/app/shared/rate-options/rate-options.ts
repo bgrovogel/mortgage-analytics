@@ -5,6 +5,7 @@ import { FieldRules, validatorsFor } from '../../core/forms/field-rules';
 import { pct } from '../../core/formatting/format';
 import { AdjustableRateInput, TemporaryBuydownInput } from '../../core/models/amortization.models';
 import { SharedRate } from '../../core/state/shared-loan.store';
+import { t } from '../../core/i18n/i18n';
 
 /** How a loan's rate works: fixed for the whole loan, bought down for the first years, or adjustable. */
 export type RateType = 'fixed' | 'buydown' | 'arm';
@@ -17,10 +18,10 @@ export type ArmMode = 'type' | 'reset';
 
 /** The usual temporary buydowns: points off the note rate in each year, year 1 first. */
 export const BUYDOWNS = [
-  { value: '1-0', label: '1-0 (1 point off in year 1)', reductions: [1] },
-  { value: '2-1', label: '2-1 (2 points off, then 1)', reductions: [2, 1] },
-  { value: '3-2-1', label: '3-2-1 (3, 2, then 1 off)', reductions: [3, 2, 1] },
-  { value: '1-1', label: '1-1 (1 point off for 2 years)', reductions: [1, 1] },
+  { value: '1-0', get label() { return t('1-0 (1 point off in year 1)'); }, reductions: [1] },
+  { value: '2-1', get label() { return t('2-1 (2 points off, then 1)'); }, reductions: [2, 1] },
+  { value: '3-2-1', get label() { return t('3-2-1 (3, 2, then 1 off)'); }, reductions: [3, 2, 1] },
+  { value: '1-1', get label() { return t('1-1 (1 point off for 2 years)'); }, reductions: [1, 1] },
 ] as const;
 
 export type BuydownPlan = (typeof BUYDOWNS)[number]['value'];
@@ -41,12 +42,12 @@ export type ArmType = (typeof ARM_TYPES)[number]['value'];
 
 /** The adjustable rate's numbers, with the limits the API enforces (AdjustableRateRequestValidator). */
 export const RATE_OPTION_RULES = {
-  armFixedMonths: { label: 'Payments until the next reset', unit: 'number', min: 1, max: 599, whole: true },
-  armExpectedRate: { label: 'Rate after the fixed period', unit: '%', min: 0, max: 30, decimals: 4 },
-  armInitialCap: { label: 'First reset cap', unit: '%', min: 0, max: 10 },
-  armPeriodicCap: { label: 'Later reset cap', unit: '%', min: 0, max: 10 },
-  armLifetimeCap: { label: 'Lifetime cap', unit: '%', min: 0, max: 10 },
-  armMargin: { label: 'Margin', unit: '%', min: 0, max: 30, decimals: 4, optional: true },
+  armFixedMonths: { get label() { return t('Payments until the next reset'); }, unit: 'number', min: 1, max: 599, whole: true },
+  armExpectedRate: { get label() { return t('Rate after the fixed period'); }, unit: '%', min: 0, max: 30, decimals: 4 },
+  armInitialCap: { get label() { return t('First reset cap'); }, unit: '%', min: 0, max: 10 },
+  armPeriodicCap: { get label() { return t('Later reset cap'); }, unit: '%', min: 0, max: 10 },
+  armLifetimeCap: { get label() { return t('Lifetime cap'); }, unit: '%', min: 0, max: 10 },
+  armMargin: { get label() { return t('Margin'); }, unit: '%', min: 0, max: 30, decimals: 4, optional: true },
 } as const satisfies FieldRules;
 
 const ARM_NUMBERS = ['armFixedMonths', 'armExpectedRate', 'armInitialCap', 'armPeriodicCap', 'armLifetimeCap', 'armMargin'] as const;
@@ -173,20 +174,22 @@ export function applySharedRate(form: RateOptionsForm, rate: SharedRate | null |
 
 /** "4.5% in year 1, 5.5% in year 2, then 6.5%": the rate each year of a buydown is paid at. */
 export function buydownSteps(plan: BuydownPlan, rate: number): string {
-  const years = BUYDOWNS.find((b) => b.value === plan)!.reductions.map((r, i) => `${pct(Math.max(0, rate - r))} in year ${i + 1}`);
-  return `${years.join(', ')}, then ${pct(rate)}`;
+  const years = BUYDOWNS.find((b) => b.value === plan)!.reductions.map((r, i) => t('{0} in year {1}', [pct(Math.max(0, rate - r)), i + 1]));
+  return t('{0}, then {1}', [years.join(', '), pct(rate)]);
 }
 
 /** One line for a closed section: "Fixed for the whole loan", "2-1 buydown: …", or "7/1 ARM: 6.5% for 7 yr, then toward 7.5% (caps 5/2/5)". */
 export function rateSummary(form: RateOptionsForm, mode: ArmMode, rate: number): string {
   const v = form.getRawValue();
-  if (v.rateType === 'buydown') return `${v.buydownPlan} buydown: ${buydownSteps(v.buydownPlan, rate)}`;
+  if (v.rateType === 'buydown') return t('{0} buydown: {1}', [v.buydownPlan, buydownSteps(v.buydownPlan, rate)]);
   if (v.rateType === 'arm') {
-    const caps = `(caps ${v.armInitialCap}/${v.armPeriodicCap}/${v.armLifetimeCap}${v.armMargin === null ? '' : `, floor ${pct(v.armMargin)}`})`;
-    if (mode === 'reset') return `Adjustable: ${pct(rate)} for ${v.armFixedMonths} more payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
-    if (v.armType === 'other') return `ARM: ${pct(rate)} for ${v.armFixedMonths} payments, then toward ${pct(v.armExpectedRate)} ${caps}`;
-    const type = ARM_TYPES.find((t) => t.value === v.armType)!;
-    return `${v.armType} ARM: ${pct(rate)} for ${type.fixedMonths / 12} yr, then toward ${pct(v.armExpectedRate)} ${caps}`;
+    const caps = v.armMargin === null
+      ? t('(caps {0}/{1}/{2})', [v.armInitialCap, v.armPeriodicCap, v.armLifetimeCap])
+      : t('(caps {0}/{1}/{2}, floor {3})', [v.armInitialCap, v.armPeriodicCap, v.armLifetimeCap, pct(v.armMargin)]);
+    if (mode === 'reset') return t('Adjustable: {0} for {1} more payments, then toward {2} {3}', [pct(rate), v.armFixedMonths, pct(v.armExpectedRate), caps]);
+    if (v.armType === 'other') return t('ARM: {0} for {1} payments, then toward {2} {3}', [pct(rate), v.armFixedMonths, pct(v.armExpectedRate), caps]);
+    const type = ARM_TYPES.find((a) => a.value === v.armType)!;
+    return t('{0} ARM: {1} for {2} yr, then toward {3} {4}', [v.armType, pct(rate), type.fixedMonths / 12, pct(v.armExpectedRate), caps]);
   }
-  return 'Fixed for the whole loan';
+  return t('Fixed for the whole loan');
 }

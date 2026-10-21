@@ -1,9 +1,10 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe } from '../../core/i18n/date.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toErrorMessages } from '../../core/errors/problem-details';
 import { Passkey, PasskeyService } from '../../core/auth/passkey.service';
 import { TPipe } from '../../core/i18n/t.pipe';
+import { t } from '../../core/i18n/i18n';
 
 /**
  * Passkeys, on the account page: sign in with the device's fingerprint, face or screen lock instead of a password. Each
@@ -76,7 +77,7 @@ export class PasskeysComponent {
   readonly busy = signal(false);
 
   /** The name box, starting with something so a name is never in the way. */
-  readonly form = inject(NonNullableFormBuilder).group({ name: ['This device'] });
+  readonly form = inject(NonNullableFormBuilder).group({ name: [t('This device')] });
 
   constructor() {
     if (this.passkeys.supported()) this.reload();
@@ -97,7 +98,7 @@ export class PasskeysComponent {
       next: (added) => {
         this.busy.set(false);
         if (!added) return;
-        this.status.set('Passkey added.');
+        this.status.set(t('Passkey added.'));
         this.reload();
       },
       error: (error: unknown) => {
@@ -112,7 +113,7 @@ export class PasskeysComponent {
     this.error.set(null);
     this.passkeys.remove(passkey.id).subscribe({
       next: () => {
-        this.status.set(`${passkey.name} removed.`);
+        this.status.set(t('{0} removed.', [passkey.name]));
         this.reload();
       },
       error: (error: unknown) => this.error.set(toErrorMessages(error).join(' ')),

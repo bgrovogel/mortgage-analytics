@@ -15,7 +15,7 @@ import { formatMonths } from '../../../core/formatting/duration';
 import { decimal } from '../../../core/formatting/format';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
 import { AmortizationRequest, OccupancyType, YearProjection } from '../../../core/models/amortization.models';
-import { PAID_OFF_ALREADY, balanceAfter, biweeklyExtra, monthlyPayment, originalAmount, paymentsMade, toCents } from '../../../core/loans/loan-progress';
+import { balanceAfter, biweeklyExtra, monthlyPayment, originalAmount, paidOffAlready, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { CO_BUYER_RULES, LOAN_RULES, LUMP_SUM_RULES, MAX_CO_BUYERS, RATE_CHANGE_RULES, wholeYearsOf } from './loan-fields';
 import { currentBuyView } from '../buy-tabs/buy-tabs.component';
 import { LOAN_FORM } from './loan-form.token';
@@ -32,18 +32,19 @@ import {
 } from './loan-form.model';
 import { closingSummary, costsSummary, growthSummary, incomeSummary, optionsSummary, taxesSummary } from './loan-form.summaries';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { msg, t, tp } from '../../../core/i18n/i18n';
 
 const rules = LOAN_RULES;
 
 /** Shown while the down payment leaves nothing to borrow. */
-export const NOTHING_TO_BORROW = 'The down payment must be less than the home price.';
+export const NOTHING_TO_BORROW = msg('The down payment must be less than the home price.');
 
 /** Shown for a lump sum on a payment already made. */
 const lumpSumInThePast = (paymentNumber: number, next: number) =>
-  `A lump sum with payment #${paymentNumber} is in the past: payment #${next} is next.`;
+  t('A lump sum with payment #{0} is in the past: payment #{1} is next.', [paymentNumber, next]);
 
 /** Shown in a section's summary when one of its fields is invalid, so the problem is not hidden by collapsing. */
-const CHECK_SECTION = 'Check the values in this section';
+const checkSection = () => t('Check the values in this section');
 
 /** Controls inside each collapsible section, used to flag a closed section that holds an invalid value. */
 const SECTION_CONTROLS = {
@@ -68,7 +69,8 @@ const SECTION_CONTROLS = {
  * each summarized in one line while closed.
  */
 /** How the loan's summary names a home not lived in. */
-const USE_SUFFIX: Record<OccupancyType, string> = { PrimaryResidence: '', SecondHome: ' · second home', InvestmentProperty: ' · investment property' };
+const conventionalFor = (occupancy: OccupancyType): string =>
+  ({ PrimaryResidence: t('Conventional'), SecondHome: t('Conventional · second home'), InvestmentProperty: t('Conventional · investment property') })[occupancy];
 
 /**
  * An FHA loan's down-payment problem by credit score, or a conventional loan's by the home's use; null for VA, and
@@ -159,7 +161,7 @@ export class LoanFormComponent implements OnInit {
   readonly coBuyerRules = CO_BUYER_RULES;
   readonly rateChangeRules = RATE_CHANGE_RULES;
   protected readonly nothingToBorrow = NOTHING_TO_BORROW;
-  protected readonly paidOffAlready = PAID_OFF_ALREADY;
+  protected readonly paidOffAlready = paidOffAlready;
   readonly pointsRateMessage = POINTS_RATE_TOO_LOW;
 
   readonly form = loanForm(this.fb);
@@ -228,11 +230,12 @@ export class LoanFormComponent implements OnInit {
   /** One-line summary of the loan type, and for FHA or VA how its fee is paid. */
   readonly programSummary = computed(() => {
     const v = this.values();
-    const paid = v.financeUpfrontFee === false ? 'paid at closing' : 'added to the loan';
-    if (v.loanProgram === 'Fha') return `FHA · upfront MIP ${paid}`;
-    if (v.loanProgram !== 'Va') return `Conventional${USE_SUFFIX[v.occupancy ?? 'PrimaryResidence']}`;
-    if (v.vaUse === 'Exempt') return 'VA · exempt from the funding fee';
-    return `VA · ${v.vaUse === 'SubsequentUse' ? 'used before' : 'first use'} · funding fee ${paid}`;
+    const atClosing = v.financeUpfrontFee === false;
+    if (v.loanProgram === 'Fha') return atClosing ? t('FHA · upfront MIP paid at closing') : t('FHA · upfront MIP added to the loan');
+    if (v.loanProgram !== 'Va') return conventionalFor(v.occupancy ?? 'PrimaryResidence');
+    if (v.vaUse === 'Exempt') return t('VA · exempt from the funding fee');
+    if (v.vaUse === 'SubsequentUse') return atClosing ? t('VA · used before · funding fee paid at closing') : t('VA · used before · funding fee added to the loan');
+    return atClosing ? t('VA · first use · funding fee paid at closing') : t('VA · first use · funding fee added to the loan');
   });
 
   readonly isRecast = computed(() => this.values().strategy === 'Recast');
@@ -249,7 +252,7 @@ export class LoanFormComponent implements OnInit {
   /** One-line summary of the property-tax section. */
   readonly taxesSummary = computed(() =>
     this.sectionInvalid('taxes')
-      ? CHECK_SECTION
+      ? checkSection()
       : taxesSummary(this.values(), { homestead: this.isHomestead(), over65: this.isOver65(), rateChanges: rateChangesOf(this.values()).length }));
 
   /** The taxes charged, whose rates a rate change can change. */
@@ -257,14 +260,14 @@ export class LoanFormComponent implements OnInit {
 
   /** One-line summary of the insurance, HOA and PMI section. */
   readonly costsSummary = computed(() =>
-    this.sectionInvalid('costs') ? CHECK_SECTION : costsSummary(this.values(), { pmiApplies: this.pmiApplies() }));
+    this.sectionInvalid('costs') ? checkSection() : costsSummary(this.values(), { pmiApplies: this.pmiApplies() }));
 
   /** One-line summary of the closing-costs section. */
-  readonly closingSummary = computed(() => (this.sectionInvalid('closing') ? CHECK_SECTION : closingSummary(this.values())));
+  readonly closingSummary = computed(() => (this.sectionInvalid('closing') ? checkSection() : closingSummary(this.values())));
 
   /** One-line summary of the yearly-increase assumptions. */
-  readonly incomeSummary = computed(() => (this.sectionInvalid('income') ? CHECK_SECTION : incomeSummary(this.values())));
-  readonly growthSummary = computed(() => (this.sectionInvalid('growth') ? CHECK_SECTION : growthSummary(this.values())));
+  readonly incomeSummary = computed(() => (this.sectionInvalid('income') ? checkSection() : incomeSummary(this.values())));
+  readonly growthSummary = computed(() => (this.sectionInvalid('growth') ? checkSection() : growthSummary(this.values())));
 
   /**
    * A loan already being paid (its first payment is in the past): the payments behind it, the next one, and about
@@ -289,11 +292,11 @@ export class LoanFormComponent implements OnInit {
   /** One-line summary of the rate type: fixed, a buydown, or an ARM and its caps. */
   readonly rateSummary = computed(() => {
     const v = this.values();
-    if (this.sectionInvalid('rate')) return CHECK_SECTION;
+    if (this.sectionInvalid('rate')) return checkSection();
     const summary = rateSummary(this.form.controls.rate, 'type', v.annualInterestRate ?? 0);
-    const paidBy = v.rate?.rateType === 'buydown' ? ` · ${v.buydownPaidBy === 'Borrower' ? 'you pay for it' : 'the seller pays for it'}` : '';
-    const points = pointsApply(v) ? ` · ${decimal(v.points ?? 0, 3)} point${v.points === 1 ? '' : 's'}` : '';
-    return summary + paidBy + points;
+    const paidBy = v.rate?.rateType === 'buydown' ? (v.buydownPaidBy === 'Borrower' ? t('you pay for it') : t('the seller pays for it')) : '';
+    const points = pointsApply(v) ? tp(v.points ?? 0, '{p} point', '{p} points', { p: decimal(v.points ?? 0, 3) }) : '';
+    return [summary, paidBy, points].filter(Boolean).join(' · ');
   });
 
   /** True when points are chosen but their rate without them is not the higher one. */
@@ -306,7 +309,7 @@ export class LoanFormComponent implements OnInit {
   readonly pointsOffered = computed(() => this.values().rate?.rateType !== 'arm');
 
   /** One-line summary of the extra payments beyond monthly, and what they are applied to. */
-  readonly optionsSummary = computed(() => (this.sectionInvalid('options') ? CHECK_SECTION : optionsSummary(this.values())));
+  readonly optionsSummary = computed(() => (this.sectionInvalid('options') ? checkSection() : optionsSummary(this.values())));
 
   constructor() {
     // Only the chosen way of entering taxes is checked and sent.
@@ -527,15 +530,15 @@ export class LoanFormComponent implements OnInit {
       ...this.coBuyers.controls.flatMap((row) => problemsIn(CO_BUYER_RULES, row.controls)),
       ...coBuyerSharesProblem(v.coBuyers),
       ...this.rateChanges.controls.flatMap((row) => problemsIn(RATE_CHANGE_RULES, row.controls)),
-      ...(v.rateChanges.some((c) => c.fromYear > v.termYears) ? [`A tax rate change must start within the loan's ${v.termYears} years.`] : []),
+      ...(v.rateChanges.some((c) => c.fromYear > v.termYears) ? [t("A tax rate change must start within the loan's {0} years.", [v.termYears])] : []),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) <= 0
-        ? [NOTHING_TO_BORROW] : []),
-      ...(existing?.paidOff ? [PAID_OFF_ALREADY] : []),
+        ? [t(NOTHING_TO_BORROW)] : []),
+      ...(existing?.paidOff ? [paidOffAlready()] : []),
       ...(this.form.controls.homePrice.valid && this.form.controls.downPayment.valid && v.homePrice - downPaymentAmountOf(v) > 0
         ? [downProblemOf(v, v.rate.rateType === 'arm')].filter((p): p is string => p !== null) : []),
       ...[occupancyProblem(v.loanProgram, v.occupancy)].filter((p): p is string => p !== null),
       ...(pointsApply(v) && this.form.controls.rateWithoutPoints.valid && this.form.controls.annualInterestRate.valid
-        && v.rateWithoutPoints <= v.annualInterestRate ? [POINTS_RATE_TOO_LOW] : []),
+        && v.rateWithoutPoints <= v.annualInterestRate ? [t(POINTS_RATE_TOO_LOW)] : []),
       ...(existing && !existing.paidOff
         ? v.lumpSums.filter((l) => l.paymentNumber < existing.next).map((l) => lumpSumInThePast(l.paymentNumber, existing.next))
         : []),

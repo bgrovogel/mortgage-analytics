@@ -14,7 +14,7 @@
           <app-number-field [control]="items.controls.other" [rule]="itemRules.other" testId="item-other" />
         </div>
         <p class="hint" data-testid="item-totals">
-          {{ 'Loan costs {0} · Other fees {1}' | t: [(totals().loanCosts | currency: ('USD' | t) : 'symbol' : '1.0-2'), (totals().otherFees | currency: ('USD' | t) : 'symbol' : '1.0-2')] }}
+          {{ 'Loan costs {0} · Other fees {1}' | t: [(totals().loanCosts | currency: 'USD' : 'symbol' : '1.0-2'), (totals().otherFees | currency: 'USD' : 'symbol' : '1.0-2')] }}
         </p>
         <button type="button" class="link-button" data-testid="stop-itemizing" (click)="stopItemizing()">{{ 'Back to two totals' | t }}</button>
       } @else {

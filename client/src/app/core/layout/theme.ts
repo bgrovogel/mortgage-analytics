@@ -1,12 +1,13 @@
 import { THEME_CHANGE } from './print';
+import { t } from '../i18n/i18n';
 
 /** What a visitor chooses: the colours of their system, or light or dark whatever it uses. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
 export const THEME_CHOICES: readonly { value: ThemeChoice; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+  { value: 'system', get label() { return t('System'); } },
+  { value: 'light', get label() { return t('Light'); } },
+  { value: 'dark', get label() { return t('Dark'); } },
 ];
 
 /** Where the choice is remembered, per browser. */

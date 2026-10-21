@@ -116,7 +116,7 @@ let nextId = 0;
           @for (row of a.rows; track row.label; let i = $index) {
             <div class="row" [attr.data-testid]="'scrub-row-' + i">
               <span><span class="swatch small" [style.background]="'var(' + row.color + ')'"></span>{{ row.label }}</span>
-              {{ '&ngsp;' | t }}<span class="figure">{{ row.value }}</span>
+              &ngsp;<span class="figure">{{ row.value }}</span>
             </div>
           }
           @if (a.footer) {

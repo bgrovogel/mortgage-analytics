@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { pct, usd, usdCents } from '../../../core/formatting/format';
 import { RateWhatIfLoan, whatIf } from './rate-what-if';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /** How far the slider reaches either way, and how finely: eighths of a point, as lenders quote rates. */
 const REACH = 1.5;
@@ -81,12 +82,12 @@ export class RateWhatIfComponent {
 
   protected readonly paymentChange = computed(() => {
     const change = this.scenario().paymentChange;
-    return change === 0 ? 'As it is now' : `${signed(change, usdCents)} a month`;
+    return change === 0 ? t('As it is now') : t('{0} a month', [signed(change, usdCents)]);
   });
 
   protected readonly interestChange = computed(() => {
     const change = this.scenario().interestChange;
-    return change === 0 ? 'As it is now' : `${signed(change, usd)} over the loan`;
+    return change === 0 ? t('As it is now') : t('{0} over the loan', [signed(change, usd)]);
   });
 
   protected readonly reach = REACH;

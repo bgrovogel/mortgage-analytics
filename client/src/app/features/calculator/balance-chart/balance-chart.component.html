@@ -8,7 +8,7 @@
       <p id="balance-summary" data-testid="balance-summary">{{ summary() }}</p>
       @if (delta(); as change) {
         <button type="button" class="delta" [attr.aria-pressed]="pinned()" data-testid="ghost-chip" (click)="togglePin()">
-          <span>{{ change }}</span>{{ '&ngsp;' | t }}<span class="pin">{{ pinned() ? ('Pinned · Unpin' | t) : ('Pin' | t) }}</span>
+          <span>{{ change }}</span>&ngsp;<span class="pin">{{ pinned() ? ('Pinned · Unpin' | t) : ('Pin' | t) }}</span>
         </button>
       }
     </div>

@@ -7,6 +7,7 @@ import {
 } from '../../../core/models/amortization.models';
 import { rateOptionsForm, rateOptionsRequest, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { CO_BUYER_RULES, LOAN_RULES as rules, LUMP_SUM_RULES, RATE_CHANGE_RULES } from './loan-fields';
+import { msg, t } from '../../../core/i18n/i18n';
 
 /**
  * The calculator's form as data: its controls and defaults, and the conversions between its values and the API's
@@ -165,7 +166,7 @@ function coBuyersOf(v: ReturnType<LoanForm['getRawValue']>): CoBuyerInput[] {
 /** Shown when the co-buyers put in more of the down payment between them than there is, leaving the first buyer less than none. */
 export function coBuyerSharesProblem(coBuyers: { downPaymentPercent: number | null }[]): string[] {
   const total = coBuyers.reduce((sum, c) => sum + (c.downPaymentPercent ?? 0), 0);
-  return total > 100 ? [`The co-buyers' shares of the down payment add up to ${pct(total, 2)}: at most 100% can be shared out.`] : [];
+  return total > 100 ? [t("The co-buyers' shares of the down payment add up to {0}: at most 100% can be shared out.", [pct(total, 2)])] : [];
 }
 
 /** One lump-sum row. */
@@ -226,22 +227,22 @@ export function downPaymentAmountOf(v: { homePrice?: number; downPayment?: numbe
 export const belowFhaMinimum = (down: number, price: number) => down * 1_000 < price * 35;
 
 /** Shown while an FHA loan has less than 3.5% down. */
-export const FHA_DOWN_TOO_LOW = 'An FHA loan needs at least 3.5% down.';
+export const FHA_DOWN_TOO_LOW = msg('An FHA loan needs at least 3.5% down.');
 
 /** Shown while an FHA loan with a credit score from 500 to 579 has less than 10% down. */
-export const FHA_LOW_SCORE_DOWN_TOO_LOW = 'With a credit score below 580, an FHA loan needs at least 10% down.';
+export const FHA_LOW_SCORE_DOWN_TOO_LOW = msg('With a credit score below 580, an FHA loan needs at least 10% down.');
 
 /** Shown for an FHA loan with a credit score below 500. */
-export const FHA_SCORE_TOO_LOW = 'FHA insures loans only for credit scores of 500 or more.';
+export const FHA_SCORE_TOO_LOW = msg('FHA insures loans only for credit scores of 500 or more.');
 
 /**
  * What stops an FHA loan from being sent, by the borrower's credit score (blank counts as 580 or more): below 500,
  * none is insured; from 500 to 579 it needs 10% down; otherwise 3.5%. Null when nothing does.
  */
 export function fhaDownProblem(down: number, price: number, creditScore: number | null | undefined): string | null {
-  if (creditScore !== null && creditScore !== undefined && creditScore < 500) return FHA_SCORE_TOO_LOW;
-  if (creditScore !== null && creditScore !== undefined && creditScore < 580) return down * 10 < price ? FHA_LOW_SCORE_DOWN_TOO_LOW : null;
-  return belowFhaMinimum(down, price) ? FHA_DOWN_TOO_LOW : null;
+  if (creditScore !== null && creditScore !== undefined && creditScore < 500) return t(FHA_SCORE_TOO_LOW);
+  if (creditScore !== null && creditScore !== undefined && creditScore < 580) return down * 10 < price ? t(FHA_LOW_SCORE_DOWN_TOO_LOW) : null;
+  return belowFhaMinimum(down, price) ? t(FHA_DOWN_TOO_LOW) : null;
 }
 
 /** The most a conventional loan may be, as a percentage of the price: Fannie Mae's Eligibility Matrix (Domain/Loans/Occupancy.cs). */
@@ -252,9 +253,8 @@ export function maxConventionalLoanToValue(occupancy: OccupancyType, adjustableR
 }
 
 /** How each use names the home in a sentence. */
-const HOME: Record<OccupancyType, string> = {
-  PrimaryResidence: 'a home you live in', SecondHome: 'a second home', InvestmentProperty: 'an investment property',
-};
+const homeOf = (occupancy: OccupancyType): string =>
+  ({ PrimaryResidence: t('a home you live in'), SecondHome: t('a second home'), InvestmentProperty: t('an investment property') })[occupancy];
 
 /**
  * What stops a conventional loan from being sent: a loan past the most the home's use allows, as the API words it.
@@ -263,16 +263,16 @@ const HOME: Record<OccupancyType, string> = {
 export function conventionalDownProblem(down: number, price: number, occupancy: OccupancyType, adjustableRate: boolean): string | null {
   const most = maxConventionalLoanToValue(occupancy, adjustableRate);
   if (Math.round((price - down) * 100) * 100 <= Math.round(price * 100) * most) return null;
-  const loan = occupancy === 'PrimaryResidence' && adjustableRate ? 'A conventional loan with an adjustable rate' : 'A conventional loan';
-  return `${loan} can be at most ${most}% of the price of ${HOME[occupancy]}: put at least ${100 - most}% down.`;
+  const loan = occupancy === 'PrimaryResidence' && adjustableRate ? t('A conventional loan with an adjustable rate') : t('A conventional loan');
+  return t('{0} can be at most {1}% of the price of {2}: put at least {3}% down.', [loan, most, homeOf(occupancy), 100 - most]);
 }
 
 /** Shown for an FHA or VA loan on a home the buyer will not live in. */
-export const GOVERNMENT_LOAN_NOT_LIVED_IN = 'FHA and VA loans are only for a home you will live in.';
+export const GOVERNMENT_LOAN_NOT_LIVED_IN = msg('FHA and VA loans are only for a home you will live in.');
 
 /** What stops the loan's program for this home's use: FHA and VA are only for a home lived in. Null otherwise. */
 export function occupancyProblem(program: LoanProgramType, occupancy: OccupancyType): string | null {
-  return program !== 'Conventional' && occupancy !== 'PrimaryResidence' ? GOVERNMENT_LOAN_NOT_LIVED_IN : null;
+  return program !== 'Conventional' && occupancy !== 'PrimaryResidence' ? t(GOVERNMENT_LOAN_NOT_LIVED_IN) : null;
 }
 
 /** True when discount points are chosen, on a rate they can be compared on (not an adjustable one). */
@@ -281,7 +281,7 @@ export function pointsApply(v: { usePoints?: boolean; rate?: { rateType?: string
 }
 
 /** The problem with discount points' rates, if any: the rate without them must be the higher one. */
-export const POINTS_RATE_TOO_LOW = 'The rate without points must be higher than the rate with them.';
+export const POINTS_RATE_TOO_LOW = msg('The rate without points must be higher than the rate with them.');
 
 /**
  * Checks the points' fields only while points apply, and starts the rate without them a quarter point above the

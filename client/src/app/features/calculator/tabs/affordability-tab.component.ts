@@ -5,6 +5,7 @@ import { BudgetAnswer } from '../../../core/models/amortization.models';
 import { AffordabilityComponent } from '../affordability/affordability.component';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t } from '../../../core/i18n/i18n';
 
 /**
  * Can you afford it: the home against the household's income and debts, as a lender measures it. Until an income is
@@ -64,10 +65,9 @@ export class AffordabilityTabComponent {
 
   /** What the monthly budget reaches, in a sentence. */
   protected budgetSentence(budget: BudgetAnswer): string {
-    const payment = `A payment of ${usd(budget.monthlyBudget)} a month`;
     return budget.maxHomePrice > 0
-      ? `${payment}, with taxes and insurance, reaches a home up to ${usd(budget.maxHomePrice)}, with ${usd(budget.downPayment)} down.`
-      : `${payment} does not reach a home: the taxes and insurance alone come to more.`;
+      ? t('A payment of {0} a month, with taxes and insurance, reaches a home up to {1}, with {2} down.', [usd(budget.monthlyBudget), usd(budget.maxHomePrice), usd(budget.downPayment)])
+      : t('A payment of {0} a month does not reach a home: the taxes and insurance alone come to more.', [usd(budget.monthlyBudget)]);
   }
 
   /** Opens the form's income section with the cursor in the income field. */

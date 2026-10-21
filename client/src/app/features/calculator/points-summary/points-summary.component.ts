@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { decimal, monthOf, pct, usd, usdCents } from '../../../core/formatting/format';
 import { AmortizationResponse } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { t, tp } from '../../../core/i18n/i18n';
 
 /**
  * Whether discount points pay: the payment without them beside the payment with them, what they cost, when the
@@ -37,15 +38,22 @@ export class PointsSummaryComponent {
     if (!p) return null;
 
     const one = p.points === 1;
-    const count = `${decimal(p.points, 3)} point${one ? '' : 's'}`;
-    const [it, its, costs, lowers] = one ? ['it', 'its', 'costs', 'lowers'] : ['they', 'their', 'cost', 'lower'];
-    const opening = `${count} ${costs} ${usd(p.cost)} at closing and ${lowers} the payment ${usdCents(p.monthlySaving)} a month.`;
-    const verdict = p.breakEvenPayment && p.breakEvenDate
-      ? `${opening} The interest ${it} save${one ? 's' : ''} covers that by payment ${p.breakEvenPayment} (${monthOf(p.breakEvenDate)}), `
-        + `and over the whole loan ${it} save${one ? 's' : ''} ${usd(p.netSaving)} after ${its} cost. Sell or refinance before then, `
-        + `and ${it} cost${one ? 's' : ''} more than ${it} saved.`
-      : `${opening} At this price ${it} never pay${one ? 's' : ''} for ${one ? 'itself' : 'themselves'}: over the whole loan ${it} `
-        + `save${one ? 's' : ''} ${usd(p.interestSaved)} of interest, less than ${it} cost${one ? 's' : ''}.`;
+    const count = tp(p.points, '{p} point', '{p} points', { p: decimal(p.points, 3) });
+    const opening = one
+      ? t('{0} costs {1} at closing and lowers the payment {2} a month.', [count, usd(p.cost), usdCents(p.monthlySaving)])
+      : t('{0} cost {1} at closing and lower the payment {2} a month.', [count, usd(p.cost), usdCents(p.monthlySaving)]);
+    let rest: string;
+    if (p.breakEvenPayment && p.breakEvenDate) {
+      const args = [p.breakEvenPayment, monthOf(p.breakEvenDate), usd(p.netSaving)];
+      rest = one
+        ? t('The interest it saves covers that by payment {0} ({1}), and over the whole loan it saves {2} after its cost. Sell or refinance before then, and it costs more than it saved.', args)
+        : t('The interest they save covers that by payment {0} ({1}), and over the whole loan they save {2} after their cost. Sell or refinance before then, and they cost more than they saved.', args);
+    } else {
+      rest = one
+        ? t('At this price it never pays for itself: over the whole loan it saves {0} of interest, less than it costs.', [usd(p.interestSaved)])
+        : t('At this price they never pay for themselves: over the whole loan they save {0} of interest, less than they cost.', [usd(p.interestSaved)]);
+    }
+    const verdict = `${opening} ${rest}`;
 
     return {
       count,
