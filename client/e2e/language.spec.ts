@@ -93,6 +93,26 @@ test.describe('Spanish, on every page', () => {
       expect(broken, 'no accessibility rule is broken').toEqual([]);
     });
   }
+
+  test('/refinance with a home-equity loan compared is in Spanish, fits a phone, and breaks no accessibility rule', async ({ page }) => {
+    await page.goto('/refinance');
+    await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
+    // On a phone the form is a sheet that opens from the results, with the new loan one step in.
+    await page.getByTestId('edit-inputs').click();
+    await page.getByTestId('refi-next').click();
+    await page.getByTestId('section-new-extras').locator('summary').click();
+    await page.getByTestId('cash-out').fill('50000');
+    await page.getByTestId('compare-equity-loan').check();
+    await page.getByTestId('close-sheet').click();
+    await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
+    for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
+
+    await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(1);
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+    expect(results.violations.map((v) => v.id), 'no accessibility rule is broken').toEqual([]);
+  });
 });
 
 /** The same check after switching with the page open: everything on it follows, not only what is drawn afresh. */
