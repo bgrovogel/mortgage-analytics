@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ReadingNavComponent } from './reading-nav.component';
+import { RichTextComponent } from '../../shared/rich-text/rich-text.component';
 import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
@@ -9,13 +9,13 @@ import { TPipe } from '../../core/i18n/t.pipe';
  */
 @Component({
   selector: 'app-privacy-page',
-  imports: [ReadingNavComponent, RouterLink, TPipe],
+  imports: [ReadingNavComponent, RichTextComponent, TPipe],
   template: `
     <section class="reading" aria-labelledby="privacy-title">
       <app-reading-nav />
       <header>
         <h1 id="privacy-title">{{ 'Privacy' | t }}</h1>
-        <p>{{ 'What happens to the numbers you type, and to your account if you make one. How each answer is worked out is in' | t }} <a routerLink="/how-it-works">{{ "How it's calculated" | t }}</a>.</p>
+        <p><app-rich [message]='"What happens to the numbers you type, and to your account if you make one. How each answer is worked out is in [link:/how-it-works]How it&#39;s calculated[/link]." | t' /></p>
       </header>
 
       <article>
@@ -26,7 +26,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
 
         <section id="links">
           <h3>{{ 'Share links' | t }}</h3>
-          <p>{{ 'A share link holds your numbers in the part of the address after the' | t }} <strong>#</strong>{{ ', which a browser keeps to itself and never sends to a server. Whoever opens the link sees those numbers; nothing is stored for them anywhere. A link to a home purchase leaves out your income and debts. Pay off or invest needs them, so its link includes them and says so before you copy it.' | t }}</p>
+          <p><app-rich [message]="'A share link holds your numbers in the part of the address after the [b]#[/b], which a browser keeps to itself and never sends to a server. Whoever opens the link sees those numbers; nothing is stored for them anywhere. A link to a home purchase leaves out your income and debts. Pay off or invest needs them, so its link includes them and says so before you copy it.' | t" /></p>
         </section>
 
         <section id="account">

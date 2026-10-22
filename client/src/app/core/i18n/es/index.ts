@@ -5,6 +5,7 @@ import { ES_CALCFORM } from './calcform';
 import { CHROME } from './chrome';
 import { ES_LEARN } from './learn';
 import { ES_REFINANCE } from './refinance';
+import { ES_RICH } from './rich';
 import { ES_SHELL } from './shell';
 import { ES_STRATEGY } from './strategy';
 
@@ -23,4 +24,5 @@ export const ES: Readonly<Record<string, string>> = {
   ...ES_REFINANCE,
   ...ES_STRATEGY,
   ...ES_LEARN,
+  ...ES_RICH,
 };

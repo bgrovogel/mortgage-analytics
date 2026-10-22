@@ -31,7 +31,7 @@ function found(): { keys: Found[]; backticked: string[] } {
   for (const path of sources(ROOT)) {
     const text = readFileSync(path, 'utf8');
     const file = relative(ROOT, path).replace(/\\/g, '/');
-    const add = (raw: string) => keys.push({ key: raw.replace(/&quot;/g, '"'), file });
+    const add = (raw: string) => keys.push({ key: raw.replace(/&quot;/g, '"').replace(/&#39;/g, "'"), file });
     for (const m of text.matchAll(PIPED)) add(m[2]);
     for (const m of text.matchAll(CALLED)) add(m[2]);
     for (const m of text.matchAll(PLURAL)) {

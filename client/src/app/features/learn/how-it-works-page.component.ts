@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TermComponent } from '../../core/glossary/term.component';
+import { RichTextComponent } from '../../shared/rich-text/rich-text.component';
 import { ReadingNavComponent } from './reading-nav.component';
 import { t } from '../../core/i18n/i18n';
 import { TPipe } from '../../core/i18n/t.pipe';
@@ -11,13 +11,13 @@ import { TPipe } from '../../core/i18n/t.pipe';
  */
 @Component({
   selector: 'app-how-it-works-page',
-  imports: [ReadingNavComponent, RouterLink, TermComponent, TPipe],
+  imports: [ReadingNavComponent, RichTextComponent, RouterLink, TPipe],
   template: `
     <section class="reading" aria-labelledby="how-title">
       <app-reading-nav />
       <header>
         <h1 id="how-title">{{ "How it's calculated" | t }}</h1>
-        <p>{{ 'Every number comes from a formula or a rule you can read here, worked through with the example loan. Words you may not know are in the' | t }} <a routerLink="/glossary">{{ 'glossary' | t }}</a>.</p>
+        <p><app-rich [message]="'Every number comes from a formula or a rule you can read here, worked through with the example loan. Words you may not know are in the [link:/glossary]glossary[/link].' | t" /></p>
       </header>
 
       <nav class="contents" [attr.aria-label]="'On this page' | t" data-testid="contents">
@@ -30,39 +30,37 @@ import { TPipe } from '../../core/i18n/t.pipe';
       <article>
         <section id="payment">
           <h3>{{ 'Your monthly payment' | t }}</h3>
-          <p>{{ 'The principal-and-interest part is the same every month, chosen so the loan is exactly repaid on the last payment. With a loan of' | t }} <strong>P</strong>{{ ', a monthly rate' | t }} <strong>i</strong> {{ '(the yearly rate divided by 12) and' | t }} <strong>n</strong> {{ 'payments:' | t }}</p>
+          <p><app-rich [message]="'The principal-and-interest part is the same every month, chosen so the loan is exactly repaid on the last payment. With a loan of [b]P[/b], a monthly rate [b]i[/b] (the yearly rate divided by 12) and [b]n[/b] payments:' | t" /></p>
           <pre class="formula" tabindex="0">payment = P × i ÷ (1 − (1 + i)^−n)</pre>
-          <p>{{ 'On the example, P is $377,650, i is 0.0052083 (6.25% ÷ 12) and n is 360, so the payment is' | t }}
-            <strong>$2,325.26</strong>{{ ". Each month, interest is the balance times i, rounded to the cent; what is left of the payment pays principal. The first month's interest is $1,966.93, so $358.33 goes to principal." | t }}</p>
+          <p><app-rich [message]='"On the example, P is $377,650, i is 0.0052083 (6.25% ÷ 12) and n is 360, so the payment is [b]$2,325.26[/b]. Each month, interest is the balance times i, rounded to the cent; what is left of the payment pays principal. The first month&#39;s interest is $1,966.93, so $358.33 goes to principal." | t' /></p>
           <p>{{ "Your lender's figure may differ a little: taxes and insurance are estimates until you enter your own, and lenders round and count prepaid days in their own ways." | t }}</p>
         </section>
 
         <section id="taxes">
           <h3>{{ 'Taxes and insurance' | t }}</h3>
-          <p>{{ "Property tax is the rate times the taxable value: the home's value less any" | t }} <app-term of="Exemption">{{ 'exemption' | t }}</app-term>{{ ', and the value grows by the yearly increase you set (a' | t }} <app-term of="Homestead">{{ 'homestead' | t }}</app-term>{{ "'s can rise only so fast, held by the" | t }} <app-term of="Appraisal cap">{{ 'appraisal cap' | t }}</app-term>{{ '). Homeowners insurance and' | t }}
-            <app-term of="HOA">{{ 'HOA' | t }}</app-term> {{ 'dues are what you enter, rising at the rates you give them. They are collected with each payment into' | t }} <app-term of="Escrow">{{ 'escrow' | t }}</app-term>{{ ", so the first month's total is the loan's payment plus a twelfth of each." | t }}</p>
+          <p><app-rich [message]='"Property tax is the rate times the taxable value: the home&#39;s value less any [term:Exemption]exemption[/term], and the value grows by the yearly increase you set (a [term:Homestead]homestead[/term]&#39;s can rise only so fast, held by the [term:Appraisal cap]appraisal cap[/term]). Homeowners insurance and [term:HOA]HOA[/term] dues are what you enter, rising at the rates you give them. They are collected with each payment into [term:Escrow]escrow[/term], so the first month&#39;s total is the loan&#39;s payment plus a twelfth of each." | t' /></p>
         </section>
 
         <section id="insurance">
           <h3>{{ 'Mortgage insurance' | t }}</h3>
-          <p>{{ 'A conventional loan with less than 20% down carries' | t }} <strong><app-term of="PMI">{{ 'PMI' | t }}</app-term></strong>{{ ": its yearly rate on the amount borrowed, a twelfth each month. It ends when the balance reaches 80% of the home's value if you ask, or 78% of the original value on the original schedule, automatically. Extra payments bring the first date forward but not the second, and the app shows both." | t }}</p>
-          <p>{{ 'An' | t }} <strong><app-term of="FHA loan">{{ 'FHA' | t }}</app-term></strong> {{ "loan has an upfront premium of 1.75% of the loan (added to it, unless you pay it at closing) and a yearly premium from HUD's table, which lasts 11 years with 10% or more down and otherwise the whole loan. A" | t }} <strong><app-term of="VA loan">{{ 'VA' | t }}</app-term></strong> {{ 'loan has no mortgage insurance but a one-time funding fee, from 1.25% to 3.3% of the loan by down payment and prior use.' | t }}</p>
+          <p><app-rich [message]='"A conventional loan with less than 20% down carries [b][term:PMI]PMI[/term][/b]: its yearly rate on the amount borrowed, a twelfth each month. It ends when the balance reaches 80% of the home&#39;s value if you ask, or 78% of the original value on the original schedule, automatically. Extra payments bring the first date forward but not the second, and the app shows both." | t' /></p>
+          <p><app-rich [message]='"An [b][term:FHA loan]FHA[/term][/b] loan has an upfront premium of 1.75% of the loan (added to it, unless you pay it at closing) and a yearly premium from HUD&#39;s table, which lasts 11 years with 10% or more down and otherwise the whole loan. A [b][term:VA loan]VA[/term][/b] loan has no mortgage insurance but a one-time funding fee, from 1.25% to 3.3% of the loan by down payment and prior use." | t' /></p>
         </section>
 
         <section id="closing">
           <h3>{{ 'Cash to close' | t }}</h3>
           <p>{{ "The down payment, plus the lender's costs and other fees, plus prepaid interest (a day's interest at the note rate, over a 365-day year, for the days from closing to month end), the first year's insurance and a few months of taxes and insurance into escrow, less credits. Credits can pay costs but never the down payment." | t }}</p>
-          <p>{{ 'A seller or builder may pay only so much: for a conventional loan 3% of the price above 90%' | t }} <app-term of="Loan-to-value">{{ 'loan-to-value' | t }}</app-term>{{ ', 6% to 75% and 9% below (2% on an investment property); for FHA 6%; for VA 4%, besides the normal closing costs.' | t }}</p>
+          <p><app-rich [message]="'A seller or builder may pay only so much: for a conventional loan 3% of the price above 90% [term:Loan-to-value]loan-to-value[/term], 6% to 75% and 9% below (2% on an investment property); for FHA 6%; for VA 4%, besides the normal closing costs.' | t" /></p>
         </section>
 
         <section id="apr">
           <h3>{{ 'The APR' | t }}</h3>
-          <p>{{ "The rate at which the payments, each discounted by a month's interest, add up to what you actually received: the loan less the lender's costs, prepaid interest, discount points and an FHA or VA upfront fee, with each month's mortgage insurance in the payments. On the example it is" | t }} <strong>6.687%</strong> {{ 'against a 6.25% rate: the fees alone make it 6.376%, and the PMI paid for the first six years or so adds the rest.' | t }}</p>
+          <p><app-rich [message]='"The rate at which the payments, each discounted by a month&#39;s interest, add up to what you actually received: the loan less the lender&#39;s costs, prepaid interest, discount points and an FHA or VA upfront fee, with each month&#39;s mortgage insurance in the payments. On the example it is [b]6.687%[/b] against a 6.25% rate: the fees alone make it 6.376%, and the PMI paid for the first six years or so adds the rest." | t' /></p>
         </section>
 
         <section id="afford">
           <h3>{{ 'What you can afford' | t }}</h3>
-          <p>{{ "Lenders measure your housing payment, and it with your other debts, as a share of gross monthly income. The comfortable limits are 28% and 36%; the most a conventional loan allows is 45% of income in all, FHA 31% and 43%, VA 41%. The highest price keeps your down payment's share, rate and costs and changes only the price, found by searching since taxes and insurance do not rise in a straight line. An adjustable rate is counted at the rate its program says, not its starting one. With a" | t }} <app-term of="Co-buyer">{{ 'co-buyer' | t }}</app-term>{{ ", a lender counts everyone's income and debts together, so the answer is for all of you; the first month's payment is then shared in proportion to income, and the down payment by what each puts in." | t }}</p>
+          <p><app-rich [message]='"Lenders measure your housing payment, and it with your other debts, as a share of gross monthly income. The comfortable limits are 28% and 36%; the most a conventional loan allows is 45% of income in all, FHA 31% and 43%, VA 41%. The highest price keeps your down payment&#39;s share, rate and costs and changes only the price, found by searching since taxes and insurance do not rise in a straight line. An adjustable rate is counted at the rate its program says, not its starting one. With a [term:Co-buyer]co-buyer[/term], a lender counts everyone&#39;s income and debts together, so the answer is for all of you; the first month&#39;s payment is then shared in proportion to income, and the down payment by what each puts in." | t' /></p>
         </section>
 
         <section id="rent">

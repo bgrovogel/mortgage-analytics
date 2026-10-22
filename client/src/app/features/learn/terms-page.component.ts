@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ReadingNavComponent } from './reading-nav.component';
+import { RichTextComponent } from '../../shared/rich-text/rich-text.component';
 import { TPipe } from '../../core/i18n/t.pipe';
 
 /**
@@ -9,20 +9,19 @@ import { TPipe } from '../../core/i18n/t.pipe';
  */
 @Component({
   selector: 'app-terms-page',
-  imports: [ReadingNavComponent, RouterLink, TPipe],
+  imports: [ReadingNavComponent, RichTextComponent, TPipe],
   template: `
     <section class="reading" aria-labelledby="terms-title">
       <app-reading-nav />
       <header>
         <h1 id="terms-title">{{ 'Terms' | t }}</h1>
-        <p>{{ 'What these numbers are, and what they are not. How each one is worked out is in' | t }}
-          <a routerLink="/how-it-works">{{ "How it's calculated" | t }}</a>.</p>
+        <p><app-rich [message]='"What these numbers are, and what they are not. How each one is worked out is in [link:/how-it-works]How it&#39;s calculated[/link]." | t' /></p>
       </header>
 
       <article>
         <section id="what">
           <h3>{{ 'What this is' | t }}</h3>
-          <p>{{ 'Mortgage Analytics works out an' | t }} <strong>{{ 'estimate' | t }}</strong> {{ 'from the figures you type and the rules it knows: what a home may cost each month, what you could borrow, what a refinance or an extra payment may save. It is not a loan offer, a quote, a Loan Estimate or a pre-approval, and no lender has seen your numbers.' | t }}</p>
+          <p><app-rich [message]="'Mortgage Analytics works out an [b]estimate[/b] from the figures you type and the rules it knows: what a home may cost each month, what you could borrow, what a refinance or an extra payment may save. It is not a loan offer, a quote, a Loan Estimate or a pre-approval, and no lender has seen your numbers.' | t" /></p>
         </section>
 
         <section id="advice">
@@ -32,7 +31,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
 
         <section id="exact">
           <h3>{{ 'How exact it is' | t }}</h3>
-          <p>{{ "The arithmetic is exact to the cent, and an independent model written separately from the app's code is checked against it. But an estimate can still be off: your lender rounds, counts prepaid days and charges fees in its own ways, and a county sets your tax bill, not a rate you typed. The rules (loan limits, deductions, exemptions, retirement limits) are for the tax year" | t }} <strong>2026</strong> {{ 'and change from year to year; where they cannot be known, such as future home values or market returns, the answer is only as good as what you assume.' | t }}</p>
+          <p><app-rich [message]='"The arithmetic is exact to the cent, and an independent model written separately from the app&#39;s code is checked against it. But an estimate can still be off: your lender rounds, counts prepaid days and charges fees in its own ways, and a county sets your tax bill, not a rate you typed. The rules (loan limits, deductions, exemptions, retirement limits) are for the tax year [b]2026[/b] and change from year to year; where they cannot be known, such as future home values or market returns, the answer is only as good as what you assume." | t' /></p>
         </section>
 
         <section id="promises">
@@ -42,8 +41,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
 
         <section id="privacy">
           <h3>{{ 'Your numbers and your account' | t }}</h3>
-          <p>{{ 'What happens to what you type, and to an account if you make one, is on the' | t }}
-            <a routerLink="/privacy">{{ 'Privacy' | t }}</a> {{ 'page.' | t }}</p>
+          <p><app-rich [message]="'What happens to what you type, and to an account if you make one, is on the [link:/privacy]Privacy[/link] page.' | t" /></p>
         </section>
       </article>
     </section>

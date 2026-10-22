@@ -316,6 +316,9 @@ The app is in English and Spanish, switched at run time with no reload. The desi
 - **Spanish is a lazy chunk.** `es/` holds the dictionary, one file for each area of the app, merged in `es/index.ts`; it is
   fetched the first time Spanish is chosen, together with Angular's Spanish locale data, so English visitors never pay for it.
   `chooseLanguage` loads before it switches, so the page never shows a half-translated moment.
+- **A sentence with a link in it is one message.** The reading pages write `<app-rich [message]="'… [link:/glossary]glossary[/link].' | t" />`:
+  `[b]…[/b]` is bold, `[link:/page]…[/link]` a link and `[term:Name]…[/term]` a glossary term, so a translation puts them where its
+  own word order wants them, instead of the sentence being cut into pieces around each one (`shared/rich-text/`).
 - **Dates follow the language.** The `date` pipe in `core/i18n/date.pipe.ts` has the name and arguments of Angular's and
   replaces it where imported; `dateText` and `monthOf` do the same for code. Numbers stay as US English writes them.
 - **Page titles** are translated by `TranslatedTitleStrategy`: the routes keep the English name and the title is written
