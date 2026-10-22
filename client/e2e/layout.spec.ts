@@ -84,16 +84,16 @@ for (const { name, viewport, phone } of SIZES) {
     test('/refinance with a home-equity loan compared breaks no layout rule', async ({ page }) => {
       await page.goto('/refinance');
       await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
-      // Below desktop width the form is a sheet that opens from the results, with the new loan one step in on a phone.
-      const edit = page.getByTestId('edit-inputs');
-      if (await edit.isVisible()) await edit.click();
-      const next = page.getByTestId('refi-next');
-      if (await next.isVisible()) await next.click();
+      // Up to 860px the form is a sheet that opens from the results, with the new loan one step in.
+      const sheet = viewport.width <= 860;
+      if (sheet) {
+        await page.getByTestId('edit-inputs').click();
+        await page.getByTestId('refi-next').click();
+      }
       await page.getByTestId('section-new-extras').locator('summary').click();
       await page.getByTestId('cash-out').fill('50000');
       await page.getByTestId('compare-equity-loan').check();
-      const close = page.getByTestId('close-sheet');
-      if (await close.isVisible()) await close.click();
+      if (sheet) await page.getByTestId('close-sheet').click();
       await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
 
       expect(await layoutProblems(page, phone), `/refinance with a home-equity loan on ${name}`).toEqual([]);
