@@ -120,7 +120,7 @@
         @if (values().cashOut) {
           <label class="checkbox">
             <input type="checkbox" formControlName="compareEquityLoan" data-testid="compare-equity-loan" />
-            <span><strong>{{ 'Compare with a home-equity loan' | t }}</strong> {{ 'keep your loan and borrow the cash separately' | t }}</span>
+            <span><strong>{{ 'Compare with a home-equity loan' | t }}</strong> {{ '(keep your loan, borrow the cash separately)' | t }}</span>
           </label>
           @if (comparesEquityLoan()) {
             <div class="row">

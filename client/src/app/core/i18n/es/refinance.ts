@@ -110,7 +110,7 @@ export const ES_REFINANCE: Record<string, string> = {
   'Borrow the cash instead': 'Pedir el efectivo prestado aparte',
   'Both ways are costed over the years you keep the home or the loans: what you pay in them, plus what you still owe after.': 'Las dos formas se calculan durante los años que conservas la casa o los préstamos: lo que pagas en ellos, más lo que aún debes después.',
   'Compare with a home-equity loan': 'Comparar con un préstamo sobre el patrimonio de la casa',
-  'Home-equity loan': 'Préstamo sobre el patrimonio',
+  'Keep + home-equity loan': 'Conservar + préstamo sobre el patrimonio',
   'Home-equity loan rate': 'Tasa del préstamo sobre el patrimonio',
   'Home-equity loan term': 'Plazo del préstamo sobre el patrimonio',
   'Keeping your loan and borrowing {0} separately costs {1} less over {2} than refinancing.': 'Conservar tu préstamo y pedir {0} aparte cuesta {1} menos en {2} que refinanciar.',
@@ -124,5 +124,5 @@ export const ES_REFINANCE: Record<string, string> = {
   'Years kept': 'Años conservados',
   'You could borrow up to {0} against your home. With this cash, your loans would be {1} of its value, above the 80% lenders allow, so this may not be offered.': 'Podrías pedir prestado hasta {0} sobre tu casa. Con este efectivo, tus préstamos serían el {1} de su valor, por encima del 80% que permiten los prestamistas, así que quizá no lo ofrezcan.',
   'You could borrow up to {0} against your home. With this cash, your loans would be {1} of its value, within the 80% lenders allow.': 'Podrías pedir prestado hasta {0} sobre tu casa. Con este efectivo, tus préstamos serían el {1} de su valor, dentro del 80% que permiten los prestamistas.',
-  'keep your loan and borrow the cash separately': 'conserva tu préstamo y pide el efectivo aparte',
+  '(keep your loan, borrow the cash separately)': '(conserva tu préstamo, pide el efectivo aparte)',
 };
