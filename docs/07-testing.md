@@ -180,8 +180,8 @@ inside `Assert.Multiple`.
   `ApiTestBase`.
 - **NSubstitute for every double**, `FakeTimeProvider` for the clock: no hand-written fakes.
 - **A size budget, enforced by the build:** the first download (the app's scripts and styles before any page loads) is
-  766 kB today (178 kB over the wire); the production build warns at 800 kB and fails at 900 kB, and no single script,
-  pages loaded on demand included, may pass 450 kB (warning at 350 kB; the largest, the app's own code, is 330 kB). A component's styles warn at 6 kB and fail at 8 kB.
+  794 kB today (185 kB over the wire; Spanish is a separate chunk, fetched only when chosen); the production build warns at 800 kB and fails at 900 kB, and no single script,
+  pages loaded on demand included, may pass 450 kB (warning at 400 kB; the largest, the app's own code, is 354 kB). A component's styles warn at 6 kB and fail at 8 kB.
   CI builds the app, so a change that bloats it fails there instead of slowly slowing every first visit.
 - **No retries in Playwright:** a flaky test should fail loudly and be fixed, not be hidden by a second attempt.
 
