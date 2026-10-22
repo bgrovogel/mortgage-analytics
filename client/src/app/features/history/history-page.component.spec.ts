@@ -401,6 +401,21 @@ describe('HistoryPageComponent', () => {
       expect(api.update).toHaveBeenLastCalledWith('1', 'Oak St, 20% down', { inputs: oak.inputs }, null, []);
     });
 
+    it('is not turned back by a search that was already on its way when it was changed', () => {
+      create();
+      const onItsWay = new Subject<SavedCalculation[]>();
+      api.list.mockReturnValueOnce(onItsWay);
+      api.update.mockReturnValue(of({ ...oak, name: 'Oak St, final' }));
+      search('a');
+
+      click(button(items()[0], 'Edit'));
+      click(button(items()[0], 'Save'));
+      onItsWay.next([oak, maple]); // the answer to a search the server worked out before the change
+      fixture.detectChanges();
+
+      expect(names()).toEqual(['Oak St, final', 'Maple Ave']);
+    });
+
     it('can be cancelled', () => {
       create();
 
@@ -424,6 +439,21 @@ describe('HistoryPageComponent', () => {
       click(button(items()[0], 'Yes, delete'));
 
       expect(api.delete).toHaveBeenCalledWith('1');
+      expect(names()).toEqual(['Maple Ave']);
+    });
+
+    it('is not brought back by a search that was already on its way when it was deleted', () => {
+      create();
+      const onItsWay = new Subject<SavedCalculation[]>();
+      api.list.mockReturnValueOnce(onItsWay);
+      api.delete.mockReturnValue(of(undefined));
+      search('a');
+
+      click(button(items()[0], 'Delete'));
+      click(button(items()[0], 'Yes, delete'));
+      onItsWay.next([oak, maple]); // the answer to a search the server worked out before the delete
+      fixture.detectChanges();
+
       expect(names()).toEqual(['Maple Ave']);
     });
 

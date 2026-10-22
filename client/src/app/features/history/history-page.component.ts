@@ -52,6 +52,10 @@ export class HistoryPageComponent {
   private readonly router = inject(Router);
   private readonly searches = new Subject<string>();
 
+  /** What has been deleted or edited from this page, so a late search result cannot bring it back or put it back as it was. */
+  private readonly deleted = new Set<string>();
+  private readonly edited = new Map<string, SavedCalculation>();
+
   /** The calculations shown: the current search's results. */
   readonly calculations = signal<SavedCalculation[]>([]);
 
@@ -136,7 +140,9 @@ export class HistoryPageComponent {
         takeUntilDestroyed(),
       )
       .subscribe(({ term, list }) => {
-        this.calculations.set(list);
+        // A search the server answered before a delete or an edit went through can arrive after it: what was deleted stays
+        // gone, and what was edited stays as edited.
+        this.calculations.set(list.filter((c) => !this.deleted.has(c.id)).map((c) => this.edited.get(c.id) ?? c));
         this.searched.set(term);
         this.error.set(null);
         this.loaded.set(true);
@@ -317,6 +323,7 @@ export class HistoryPageComponent {
 
     this.api.update(calculation.id, name, savedInputsOf(calculation), note, tags).subscribe({
       next: (updated) => {
+        this.edited.set(updated.id, updated);
         this.calculations.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         // Keep whichever page shows this calculation linked to its new name.
         this.stores.renamed(updated);
@@ -331,6 +338,7 @@ export class HistoryPageComponent {
   remove(calculation: SavedCalculation): void {
     this.api.delete(calculation.id).subscribe({
       next: () => {
+        this.deleted.add(calculation.id);
         this.calculations.update((list) => list.filter((c) => c.id !== calculation.id));
         this.stores.deleted(calculation.id);
         this.confirmingDelete.set(null);
