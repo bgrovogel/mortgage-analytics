@@ -20,8 +20,9 @@ client/src/app/
     charts/                 ScrubChartComponent: SVG lines and areas with a scrubber
     errors/                 toErrorMessages: any HTTP failure → readable lines
     files/                  saveFile (the browser's own download), and the writers for an Excel workbook: xlsx.ts (the sheets' XML) in zip.ts (a stored ZIP with CRC-32), no library
-    formatting/             format.ts (usd, pct, monthOf…), duration, describe-inputs (names for saved items)
+    formatting/             format.ts (usd, pct, monthOf, dateText…), duration, describe-inputs (names for saved items)
     forms/                  FieldRule tables, app-number-field, the appNumber directive, setChanged
+    i18n/                   English and Spanish: t, tp and msg, the t and date pipes, the language switch, es/ (the Spanish, a lazy chunk)
     layout/                 header-height and in-view directives
     loans/                  loan-progress: payments made, balance after n payments, the date helpers
     models/                 TypeScript mirrors of the API contracts
@@ -31,6 +32,7 @@ client/src/app/
     calculation-page/       the layout every calculator page shares
     rate-options/           fixed / buydown / ARM controls, used by all three forms
     save-calculation/       the Save button and dialog
+    rich-text/              app-rich: a message with bold words, links and glossary terms in it, drawn in place
   features/                 one folder per page
     calculator/             page, store, loan-form (+ loan-form.model.ts, loan-fields.ts, sections/), result tabs and charts
     compare/                Compare homes: the page, its store, the results table and the figures it compares
