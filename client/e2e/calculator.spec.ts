@@ -232,6 +232,7 @@ test.describe('Mortgage calculator', () => {
     await calculator.compareHomes();
     await calculator.calculate();
     await expect(page.getByTestId('compare-headline'), 'a copy costs the same').toHaveText('Home B costs the same a month, needs the same at closing, and costs the same over the first 5 years.');
+    await expect(page.getByTestId('compare-hint'), 'and says what to change to see a difference').toContainText('Change a price, a down payment or a rate');
 
     await calculator.editHome('B');
     await calculator.set('home-price', 450_000);
@@ -241,6 +242,7 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('compare-headline'), 'the second home, with 20% down and no PMI, costs less a month but more at closing')
       // $108.68 less principal and interest (on $17,650 less), $157.35 of PMI gone, $26.25 more property tax.
       .toHaveText('Home B costs $239.78 a month less, needs $52,683 more at closing, and costs $13,115 less over the first 5 years.');
+    await expect(page.getByTestId('compare-hint'), 'and the hint goes once they differ').toHaveCount(0);
     await calculator.editHome('A');
     await expect(calculator.field('home-price'), 'Home A is as it was').toHaveValue('415,000');
   });

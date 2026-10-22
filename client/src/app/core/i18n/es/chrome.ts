@@ -17,5 +17,6 @@ export const CHROME: Record<string, string> = {
   '1 yr': '1 año',
   '1 mo': '1 mes',
   'P&I': 'C e I',
+  'These homes are still the same. Change a price, a down payment or a rate to see what differs.': 'Estas casas siguen siendo iguales. Cambia un precio, un pago inicial o una tasa para ver qué difiere.',
   '{0} · Mortgage Analytics': '{0} · Mortgage Analytics',
 };

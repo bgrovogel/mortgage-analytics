@@ -23,6 +23,12 @@
   text-wrap: balance;
 }
 
+// What to do next while the homes are still the same: a quiet line under the verdict, ahead of the table.
+.hint {
+  margin: -0.5rem 0 1rem;
+  color: var(--text-secondary);
+}
+
 // The table is the one surface: bordered, the rows hairline-divided.
 .table-wrap {
   border: 1px solid var(--border);

@@ -158,6 +158,18 @@ describe('CompareResultsComponent', () => {
     });
   });
 
+  it('says what to do when the homes are still the same', () => {
+    const { text } = render(400_000, 400_000);
+
+    expect(text('compare-hint')).toBe('These homes are still the same. Change a price, a down payment or a rate to see what differs.');
+  });
+
+  it('says nothing of the kind once the homes differ', () => {
+    const { text } = render(400_000, 450_000);
+
+    expect(text('compare-hint')).toBeUndefined();
+  });
+
   it('leaves out the home-by-home list when every home costs the same', () => {
     const { text } = render(400_000, 400_000, 400_000);
 

@@ -106,6 +106,9 @@ interface Row {
     @if (figures(); as homes) {
       <section class="panel compare">
         <p class="headline" data-testid="compare-headline">{{ headline() }}</p>
+        @if (identical()) {
+          <p class="hint" data-testid="compare-hint">{{ 'These homes are still the same. Change a price, a down payment or a rate to see what differs.' | t }}</p>
+        }
         @if (homes.length > 2 && !allTheSame()) {
           <ul class="each" data-testid="compare-each">
             @for (sentence of eachAgainstA(); track $index) {
@@ -163,6 +166,13 @@ export class CompareResultsComponent {
     const homes = this.figures();
     if (!homes || homes.length < 2) return '';
     return homes.length === 2 ? comparisonHeadline(homes[0], homes[1]) : cheapestHome(homes);
+  });
+
+  /** True when the homes are alike in what a month, closing and the first years cost: a copy nobody has changed yet. */
+  protected readonly identical = computed(() => {
+    const homes = this.figures() ?? [];
+    const key = (f: (typeof homes)[number]) => [Math.round(f.monthlyPayment * 100), f.cashToClose === null ? null : Math.round(f.cashToClose * 100), Math.round(f.fiveYearCost * 100)].join('|');
+    return homes.length > 1 && homes.every((f) => key(f) === key(homes[0]));
   });
 
   /** True when every home costs the same over the first years: then a line each would only repeat it. */

@@ -441,7 +441,7 @@ all of it.
 - **Schedule:** every payment, monthly or by year, with or without the extra payments, totals for every cost, and a
   **Columns** picker to show any cost as its own column. Recasts and the end of PMI are tagged on their row.
 - **Compare** (the last view of Buy a home, on a page of its own): up to **four homes** side by side. **Home A** is the
-  calculator's loan; **Home B** starts as a copy of it, and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
+  calculator's loan; **Home B** starts as a copy of it (and says to change a price, a down payment or a rate while it is still the same), and **Add a home** adds Home C and Home D the same way. A switch above the form edits any one of them, so any
   input can differ: price, down payment, rate, loan type, taxes, closing costs. **Remove** takes out the home being
   edited, down to two. A table shows each home's price, down payment, loan, rate, first payment (principal and
   interest, and housing costs; with extra principal too, once any home pays extra), cash to close, when mortgage
