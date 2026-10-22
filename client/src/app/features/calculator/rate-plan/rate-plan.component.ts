@@ -38,7 +38,7 @@ interface Step {
                 <td class="num">
                   <strong>{{ usdCents(y.monthlyTotal) }}</strong>
                   @if (y.monthlyTotal !== y.loanPayment) {
-                    &ngsp;<small>{{ usdCents(y.loanPayment) }} <abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr></small>
+                    &ngsp;<small>{{ usdCents(y.loanPayment) }} <abbr [attr.title]="'principal and interest' | t">{{ 'P&I' | t }}</abbr></small>
                   }
                 </td>
                 <td class="num">

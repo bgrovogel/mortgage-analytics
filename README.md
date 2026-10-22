@@ -43,7 +43,7 @@ A loan typed on one page is carried to the others. **Every rule, in detail: [Wha
 - **Money math you can trust.** `decimal` throughout, every schedule ends at exactly $0.00, and the expected values
   in the tests come from independent Python models, not from this code. Scripts compare 300 random purchases, 300
   refinances and 300 households with the live API, field by field. They have caught real bugs.
-- **Tested from the domain to the browser.** 1,541 .NET, 1,420 Jest and 283 Playwright tests, written test-first. An 85%
+- **Tested from the domain to the browser.** 1,541 .NET, 1,421 Jest and 283 Playwright tests, written test-first. An 85%
   coverage gate, a mutation-score gate on the domain (Stryker.NET, and StrykerJS locally on the Angular logic), a snapshot of the whole API contract, and
   assertion standards enforced at build time with Roslyn.
 - **Built like it will be attacked.** Cookie-only sessions, account attempt limits, a Content-Security-Policy that
@@ -104,7 +104,7 @@ dotnet test                       # 1,541 NUnit tests, including the convention 
 cd client
 npm run lint                      # angular-eslint: TypeScript and template rules
 npm run typecheck                 # tsc over the test code, which Jest and Playwright run without checking types
-npm test                          # 1,420 Jest unit tests; fails below 85% coverage
+npm test                          # 1,421 Jest unit tests; fails below 85% coverage
 npm run e2e:install               # first time only: downloads Chromium
 npm run e2e                       # 283 Playwright tests (29 are axe accessibility scans); builds the app and serves it from the API, as in production
 ```
@@ -182,7 +182,7 @@ The [developer guide](docs/README.md) explains how the app is built, and why, in
 |---|---|
 | **Backend** | ASP.NET Core 10 minimal APIs · FluentValidation · EF Core + SQLite or PostgreSQL (migrations) · ASP.NET Core Identity (cookie sessions, email confirmation, password reset) · passkeys (WebAuthn, Fido2) · MailKit · Swagger / OpenAPI · RFC 9457 ProblemDetails |
 | **Frontend** | Angular 22 (standalone components, signals, typed reactive forms, OnPush, router) · SVG charts · self-hosted Instrument Sans, Serif and IBM Plex Mono |
-| **Tests** | NUnit + NSubstitute: 1,541 backend tests · Jest: 1,420 Angular unit tests · Playwright: 283 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
+| **Tests** | NUnit + NSubstitute: 1,541 backend tests · Jest: 1,421 Angular unit tests · Playwright: 283 E2E tests, including axe accessibility scans · Stryker.NET and StrykerJS · coverage gated at 85% |
 | **Delivery** | Multi-stage Dockerfile (one container) · GitHub Actions CI |
 
 Versions, and why each was picked: [Tech stack](docs/01-tech-stack.md).

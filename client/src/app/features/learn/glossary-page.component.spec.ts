@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { GLOSSARY } from '../../core/glossary/glossary';
+import { chooseLanguage } from '../../core/i18n/i18n';
 import { GlossaryPageComponent } from './glossary-page.component';
 
 describe('GlossaryPageComponent', () => {
@@ -17,6 +18,19 @@ describe('GlossaryPageComponent', () => {
 
     expect(terms).toEqual([...terms].sort((a, b) => a.localeCompare(b)));
     expect(new Set(terms).size).toBe(terms.length);
+  });
+
+  it('puts the terms in the alphabetical order of the language it is in', async () => {
+    await chooseLanguage('es');
+    try {
+      const shown = [...render().querySelectorAll('dt')].map((dt) => dt.textContent!.trim());
+
+      // The Spanish names, in the order Spanish sorts them: not the order of the English terms.
+      expect(shown).toEqual([...shown].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' })));
+      expect(shown[0]).toBe('Amortización');
+    } finally {
+      await chooseLanguage('en');
+    }
   });
 
   it('defines every term in a sentence of its own, and none is empty', () => {

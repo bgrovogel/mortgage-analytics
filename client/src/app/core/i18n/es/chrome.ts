@@ -14,5 +14,8 @@ export const CHROME: Record<string, string> = {
   "We couldn't compare those homes.": 'No pudimos comparar esas casas.',
   'We could not compare those loans.': 'No pudimos comparar esos préstamos.',
   'We could not compare those strategies.': 'No pudimos comparar esas estrategias.',
+  '1 yr': '1 año',
+  '1 mo': '1 mes',
+  'P&I': 'C e I',
   '{0} · Mortgage Analytics': '{0} · Mortgage Analytics',
 };

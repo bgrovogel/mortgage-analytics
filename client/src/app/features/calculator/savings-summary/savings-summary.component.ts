@@ -42,7 +42,7 @@ const TAXES: readonly [keyof HousingCosts, string][] = [
     <!-- What each month is made of, in a line and as a bar: the hero figure above is its total. -->
     <section class="payment" [attr.aria-label]="'What each month is made of' | t" data-testid="payment-parts">
       <p class="parts">
-        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr [attr.title]="'principal and interest' | t">P&amp;I</abbr>
+        <span data-testid="monthly-payment">{{ firstPayment().loan | currency }}</span>&ngsp;<abbr [attr.title]="'principal and interest' | t">{{ 'P&I' | t }}</abbr>
         @if (firstPayment().costs.total > 0) {
           &ngsp;{{ '+ {0}' | t: [(firstPayment().costs.total | currency)] }} <span data-testid="housing-costs-label">{{ housingCostsLabel() }}</span>
         }
