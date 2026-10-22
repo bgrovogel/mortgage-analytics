@@ -722,6 +722,8 @@ docs' examples that quote them (a standard deduction, a limit) change with them.
 | The limit on state and local taxes ($40,400 in 2026) | `Domain/RentOrBuy/OwnerTaxProfile.cs`; `tools/calculator-check/calculator_model.py` (`SALT_LIMIT`) | Set by law, which raises it 1% a year to 2029 and reverts it in 2030 | The law |
 | Conforming loan limit | `Domain/Loans/GovernmentLoan.cs` (`Limits`, a row per year); `tools/calculator-check/calculator_model.py` (`CONFORMING_LIMITS`) | FHFA | Late November |
 | FHA county limits | `tools/fha-limits/build_fha_limits.py` writes `Application/Data` from HUD's file | HUD | Each December, for the new year |
+| Michigan's yearly cap on taxed value (the lesser of inflation or 5%: 2.7% for 2026) | `client/.../loan-form/state-property-tax.ts` (Michigan's `assessmentCap` and its note) | Michigan State Tax Commission, a bulletin with the next year's inflation rate multiplier | Before March 1 |
+| Oklahoma's homestead cap (3%; State Question 847 on the 3 November 2026 ballot would make it 1.75% from tax year 2027) | `client/.../loan-form/state-property-tax.ts` (Oklahoma's `assessmentCap` and its note) | The ballot result | After 3 November 2026: change the cap and the note if it passes |
 | Fannie Mae's loan-to-value and concession limits | `Domain/Loans`, `Domain/Closing`, with the date of the Selling Guide or matrix they were read from in the docs | Fannie Mae | When it revises them |
 
 The 2027 federal figures were not yet published on 21 October 2026, and none is in the app. Third-party projections exist

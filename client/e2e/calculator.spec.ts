@@ -464,6 +464,16 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('state-rules'), 'the form is still beside the results').toBeVisible();
   });
 
+  test('Michigan starts its cap at the inflation figure of the year, and says it is reset by a sale', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 300_000, downPayment: 60_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
+    await calculator.openSection('section-costs');
+    await page.getByTestId('state-tax-rate').selectOption('Michigan');
+
+    await expect(page.getByTestId('property-tax-rate'), 'the typical rate').toHaveValue('1.19');
+    await expect(page.getByTestId('assessment-cap'), 'the lesser of inflation (2.7% for 2026) or 5%').toHaveValue('2.7');
+    await expect(page.getByTestId('state-rules'), 'the note says a sale resets it').toContainText('until the home is sold');
+  });
+
   test('the whole calculation downloads as an Excel workbook: a summary, the years, and every payment', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 75_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

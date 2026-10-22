@@ -63,7 +63,15 @@ export const STATE_PROPERTY_TAX_RATES: readonly StateTaxRate[] = [
   { name: msg('Maine'), rate: 0.91 },
   { name: msg('Maryland'), rate: 0.95 },
   { name: msg('Massachusetts'), rate: 0.99 },
-  { name: msg('Michigan'), rate: 1.19 },
+  {
+    name: msg('Michigan'),
+    rate: 1.19,
+    rules: {
+      // 2026's inflation rate multiplier (State Tax Commission Bulletin 14 of 2025); the law is the lesser of that or 5%.
+      assessmentCap: 2.7,
+      get note() { return t('In Michigan the taxed value of a home can rise each year by the lesser of inflation or 5%: 2.7% for 2026 (an inflation rate multiplier of 1.027), the figure used here, which changes every year. It holds only until the home is sold: the year after a purchase the taxed value is reset to half the market value, and the cap starts again the year after. The typical rate is what is paid after the Principal Residence Exemption from school operating taxes, so none is added.'); },
+    },
+  },
   { name: msg('Minnesota'), rate: 1.02 },
   { name: msg('Mississippi'), rate: 0.64 },
   { name: msg('Missouri'), rate: 0.82 },
@@ -77,7 +85,14 @@ export const STATE_PROPERTY_TAX_RATES: readonly StateTaxRate[] = [
   { name: msg('North Carolina'), rate: 0.63 },
   { name: msg('North Dakota'), rate: 0.98 },
   { name: msg('Ohio'), rate: 1.23 },
-  { name: msg('Oklahoma'), rate: 0.84 },
+  {
+    name: msg('Oklahoma'),
+    rate: 0.84,
+    rules: {
+      assessmentCap: 3,
+      get note() { return t('In Oklahoma the value a homestead is taxed on can rise at most 3% a year, but only until the home is sold: in the year of a purchase it is set at market value. The $1,000 homestead exemption comes off the assessed value and saves about $80 to $120 a year; it is already in the typical rate, so none is added. State Question 847, on the November 3, 2026 ballot, would lower the cap to 1.75% from tax year 2027; this does not assume it passes.'); },
+    },
+  },
   { name: msg('Oregon'), rate: 0.77 },
   { name: msg('Pennsylvania'), rate: 1.18 },
   { name: msg('Rhode Island'), rate: 1.1 },
