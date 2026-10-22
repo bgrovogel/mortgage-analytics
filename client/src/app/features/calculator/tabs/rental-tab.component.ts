@@ -21,9 +21,11 @@ import { TPipe } from '../../../core/i18n/t.pipe';
       } @else {
         <p class="prompt" data-testid="rental-empty">
           {{ 'What this home would earn if you let it out: its cash flow, cap rate and cash-on-cash return, year by year. Put the rent in the form. No rent in mind?' | t }}
-          <button type="button" class="try" (click)="tryRent()" data-testid="try-rental-rent">{{ 'Try {0} a month' | t: [(suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0')] }}</button>
-          {{ '(about 0.8% of the price, a common rule of thumb).' | t }}
         </p>
+        <div class="try-row">
+          <button type="button" class="try" (click)="tryRent()" data-testid="try-rental-rent">{{ 'Try {0} a month' | t: [(suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0')] }}</button>
+          <span class="prompt">{{ '(about 0.8% of the price, a common rule of thumb).' | t }}</span>
+        </div>
       }
     </div>
   `,

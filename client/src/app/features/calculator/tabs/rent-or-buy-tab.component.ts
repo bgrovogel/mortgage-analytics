@@ -22,9 +22,11 @@ import { TPipe } from '../../../core/i18n/t.pipe';
         <!-- The answer above already asks for the rent; this offers one to try. -->
         <p class="prompt" data-testid="rent-or-buy-empty">
           {{ 'Buying this home against renting a similar one, year by year. Put the rent in the form. No rent in mind?' | t }}
-          <button type="button" class="try" (click)="tryRent()" data-testid="try-rent">{{ 'Try {0} a month' | t: [(suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0')] }}</button>
-          {{ '(about 0.65% of the price, a common rule of thumb).' | t }}
         </p>
+        <div class="try-row">
+          <button type="button" class="try" (click)="tryRent()" data-testid="try-rent">{{ 'Try {0} a month' | t: [(suggestedRent() | currency: 'USD' : 'symbol' : '1.0-0')] }}</button>
+          <span class="prompt">{{ '(about 0.65% of the price, a common rule of thumb).' | t }}</span>
+        </div>
       }
     </div>
   `,
