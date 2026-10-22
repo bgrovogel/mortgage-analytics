@@ -106,6 +106,7 @@
 
 .restart,
 .keep,
+.equity,
 .limit {
   background: var(--surface-2);
   box-shadow: none;
@@ -114,6 +115,25 @@
 // "The clock restarts": brass, because it changes the verdict. It is open, not behind a click.
 .restart h3 {
   color: var(--warning-text);
+}
+
+// Borrowing the cash separately, against refinancing for it: the verdict first, then the figures.
+.equity {
+  .verdict-line {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+
+  .hint,
+  .equity-limit {
+    margin: 0.75rem 0 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .equity-limit.warning {
+    color: var(--warning-text);
+  }
 }
 
 // Where the new loan stands against what a cash-out refinance may borrow.

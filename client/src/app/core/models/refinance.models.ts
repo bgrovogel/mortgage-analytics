@@ -34,6 +34,16 @@ export interface RefinanceRequest {
   currentMonthlyPmi?: number;
   /** The new loan's yearly PMI rate, should it be above 80% of the value. */
   newPmiRate?: number;
+  /** A home-equity loan for the cash out, to compare with refinancing to take it out. Needs cashOut. */
+  homeEquityLoan?: HomeEquityLoan | null;
+}
+
+/** A fixed-rate home-equity loan: the cash out borrowed as a second loan (mirrors HomeEquityLoanRequest). */
+export interface HomeEquityLoan {
+  annualInterestRate: number;
+  termInMonths: number;
+  /** The years both ways are costed over, 1 to 30. */
+  yearsKept: number;
 }
 
 /** One payment on a loan, without housing costs. */
@@ -90,4 +100,33 @@ export interface RefinanceResponse {
   newLoanToValuePercent: number | null;
   /** Cash is taken out and the new loan is above the 80% of the home's value that a cash-out refinance allows. */
   exceedsCashOutLimit: boolean;
+  /** The home-equity loan compared with the cash-out refinance, when the request asked for it. */
+  homeEquity?: HomeEquityComparison | null;
+}
+
+/** Taking the cash out as a home-equity loan beside the current loan, against refinancing to take it out. */
+export interface HomeEquityComparison {
+  amount: number;
+  annualInterestRate: number;
+  termInMonths: number;
+  yearsKept: number;
+  /** What could be borrowed against the home: 80% of its value less what is owed; null without a home value. */
+  availableEquity: number | null;
+  /** What is owed plus the cash, as a percentage of the home's value; null without a home value. */
+  combinedLoanToValuePercent: number | null;
+  exceedsLimit: boolean;
+  keepAndBorrow: HomeEquityOption;
+  cashOutRefinance: HomeEquityOption;
+  /** What the home-equity loan saves against the refinance; negative when it costs more. */
+  savedByEquityLoan: number;
+}
+
+/** One way of getting the cash, costed over the years kept. */
+export interface HomeEquityOption {
+  monthlyPayment: number;
+  equityLoanPayment: number;
+  payments: number;
+  stillOwed: number;
+  upfrontCosts: number;
+  cost: number;
 }

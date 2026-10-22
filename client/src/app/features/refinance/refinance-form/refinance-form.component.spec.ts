@@ -249,6 +249,59 @@ describe('RefinanceFormComponent', () => {
     expect(controls().newTerm.value).toBe('keep');
   });
 
+  describe('a home-equity loan for the cash out', () => {
+    it('offers the comparison only once cash is taken out, and sends nothing for it until asked', () => {
+      create();
+      expect(el('compare-equity-loan')).toBeNull();
+
+      controls().cashOut.setValue(50_000);
+      fixture.detectChanges();
+
+      expect(el('compare-equity-loan')).not.toBeNull();
+      expect(el('equity-rate')).toBeNull();
+      expect(last().homeEquityLoan).toBeUndefined();
+    });
+
+    it('sends the loan to compare once asked: its rate, its term in months and the years kept', () => {
+      create();
+      controls().cashOut.setValue(50_000);
+      controls().compareEquityLoan.setValue(true);
+      fixture.detectChanges();
+      expect(el('equity-rate')).not.toBeNull();
+
+      controls().equityRate.setValue(8.5);
+      controls().equityTermYears.setValue(10);
+      controls().equityYearsKept.setValue(5);
+
+      expect(last().homeEquityLoan).toEqual({ annualInterestRate: 8.5, termInMonths: 120, yearsKept: 5 });
+    });
+
+    it('drops the loan again when the cash out goes back to nothing', () => {
+      create();
+      controls().cashOut.setValue(50_000);
+      controls().compareEquityLoan.setValue(true);
+      controls().cashOut.setValue(0);
+
+      expect(last().homeEquityLoan).toBeUndefined();
+    });
+
+    it('reopens a saved comparison with its home-equity loan, asked for again', () => {
+      const saved: RefinanceRequest = {
+        currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+        newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 50_000,
+        originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+        homeValue: 500_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+        homeEquityLoan: { annualInterestRate: 8, termInMonths: 180, yearsKept: 7 },
+      };
+
+      create(saved);
+
+      expect(controls().compareEquityLoan.value).toBe(true);
+      expect(controls().equityTermYears.value).toBe(15);
+      expect(emitted).toEqual([saved]);
+    });
+  });
+
   describe('PMI', () => {
     it("takes the home's value and today's PMI from another page's loan", () => {
       fixture = TestBed.createComponent(RefinanceFormComponent);

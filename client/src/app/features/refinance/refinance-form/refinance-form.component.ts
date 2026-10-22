@@ -101,6 +101,11 @@ export class RefinanceFormComponent implements OnInit {
     homeValue: [400_000, validatorsFor(rules.homeValue)],
     currentMonthlyPmi: [0, validatorsFor(rules.currentMonthlyPmi)],
     newPmiRate: [0.5, validatorsFor(rules.newPmiRate)],
+    // A home-equity loan for the cash out, to compare with refinancing for it: about today's rate on one, 15 years, kept 7.
+    compareEquityLoan: [false],
+    equityRate: [8, validatorsFor(rules.equityRate)],
+    equityTermYears: [15, validatorsFor(rules.equityTermYears)],
+    equityYearsKept: [7, validatorsFor(rules.equityYearsKept)],
     // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
     // the new one may adjust (a 7/1 by default) or be bought down.
     currentRate: rateOptionsForm(this.fb, 9, 24),
@@ -125,6 +130,9 @@ export class RefinanceFormComponent implements OnInit {
     const cash = v.cashOut ? t('Cash out {0}', [usdWhole(v.cashOut)]) : t('No cash out');
     return v.newPmiRate ? t('{0} · PMI {1}%', [cash, v.newPmiRate]) : cash;
   });
+
+  /** True when the home-equity loan's fields are shown and sent: cash is taken out and the comparison is asked for. */
+  readonly comparesEquityLoan = computed(() => !!this.values().cashOut && !!this.values().compareEquityLoan);
 
   /** True while the loan is described as it was taken out. */
   readonly byOriginalLoan = computed(() => this.values().loanEntry === 'original');
@@ -196,6 +204,10 @@ export class RefinanceFormComponent implements OnInit {
           ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
           currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
           newPmiRate: initial.newPmiRate ?? 0.5,
+          compareEquityLoan: !!initial.homeEquityLoan,
+          ...(initial.homeEquityLoan
+            ? { equityRate: initial.homeEquityLoan.annualInterestRate, equityTermYears: initial.homeEquityLoan.termInMonths / 12, equityYearsKept: initial.homeEquityLoan.yearsKept }
+            : {}),
         },
         { emitEvent: false },
       );
@@ -310,6 +322,10 @@ export class RefinanceFormComponent implements OnInit {
       homeValue: v.homeValue,
       currentMonthlyPmi: v.currentMonthlyPmi,
       newPmiRate: v.newPmiRate,
+      // Only when asked for, so a comparison without one is the same request as before.
+      ...(v.cashOut > 0 && v.compareEquityLoan
+        ? { homeEquityLoan: { annualInterestRate: v.equityRate, termInMonths: Math.round(v.equityTermYears * 12), yearsKept: v.equityYearsKept } }
+        : {}),
     };
   }
 }

@@ -6,7 +6,10 @@ import { RefinanceOption, RefinanceResponse } from '../../../core/models/refinan
 import { RateWhatIfComponent } from '../../calculator/rate-what-if/rate-what-if.component';
 import { RefinanceChartComponent } from '../refinance-chart/refinance-chart.component';
 import { TPipe } from '../../../core/i18n/t.pipe';
-import { t } from '../../../core/i18n/i18n';
+import { t, tp } from '../../../core/i18n/i18n';
+
+/** "7 years", or "1 year". */
+const yearsOf = (years: number): string => tp(years, '{n} year', '{n} years');
 
 /** One column of the comparison table. */
 interface TableColumn {
@@ -141,6 +144,29 @@ export class RefinanceResultsComponent {
     return r.exceedsCashOutLimit
       ? t("The new loan is {0} of the home's value. Lenders cap a cash-out refinance at 80%, so this one may not be offered.", [share])
       : t("The new loan is {0} of the home's value, within the 80% a cash-out refinance allows.", [share]);
+  });
+
+  /** The home-equity loan compared with the cash-out refinance, or null when the request did not ask for it. */
+  protected readonly equity = computed(() => this.result().homeEquity ?? null);
+
+  /** What the comparison says: which way costs less over the years kept, and by how much. */
+  readonly equityVerdict = computed(() => {
+    const e = this.equity();
+    if (!e) return null;
+    const saved = e.savedByEquityLoan;
+    return saved >= 0
+      ? t('Keeping your loan and borrowing {0} separately costs {1} less over {2} than refinancing.', [usd(e.amount), usd(saved), yearsOf(e.yearsKept)])
+      : t('Keeping your loan and borrowing {0} separately costs {1} more over {2} than refinancing.', [usd(e.amount), usd(-saved), yearsOf(e.yearsKept)]);
+  });
+
+  /** How much could be borrowed against the home and where the loans together stand against the 80% lenders allow; null without a home value. */
+  readonly equityLimit = computed(() => {
+    const e = this.equity();
+    if (!e || e.availableEquity === null || e.combinedLoanToValuePercent === null) return null;
+    const args = [usd(e.availableEquity), pct(e.combinedLoanToValuePercent)];
+    return e.exceedsLimit
+      ? t("You could borrow up to {0} against your home. With this cash, your loans would be {1} of its value, above the 80% lenders allow, so this may not be offered.", args)
+      : t("You could borrow up to {0} against your home. With this cash, your loans would be {1} of its value, within the 80% lenders allow.", args);
   });
 
   /** One sentence on the payment and the term, e.g. "The payment drops $321.69 a month, but the loan runs 5 yr longer." */

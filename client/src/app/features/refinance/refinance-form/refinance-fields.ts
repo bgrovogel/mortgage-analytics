@@ -14,4 +14,7 @@ export const REFINANCE_RULES = {
   homeValue: { get label() { return t('Home value'); }, unit: '$', min: 0.01, max: MAX_AMOUNT },
   currentMonthlyPmi: { get label() { return t('PMI per month'); }, unit: '$', min: 0, max: 10_000 },
   newPmiRate: { get label() { return t('PMI on the new loan'); }, unit: '%', min: 0, max: 5 },
+  equityRate: { get label() { return t('Home-equity loan rate'); }, unit: '%', min: 0, max: 30, decimals: 4 },
+  equityTermYears: { get label() { return t('Home-equity loan term'); }, unit: 'years', min: 1 / 12, max: 30 },
+  equityYearsKept: { get label() { return t('Years kept'); }, unit: 'years', min: 1, max: 30, whole: true },
 } as const satisfies FieldRules;

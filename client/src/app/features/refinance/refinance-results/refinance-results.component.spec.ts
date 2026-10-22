@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aRefinanceOption, aRefinanceResponse } from '../../../../testing/builders';
-import { RefinanceResponse } from '../../../core/models/refinance.models';
+import { HomeEquityComparison, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceResultsComponent } from './refinance-results.component';
 
 describe('RefinanceResultsComponent', () => {
@@ -40,6 +40,69 @@ describe('RefinanceResultsComponent', () => {
       render(aRefinanceResponse({ lifetimeSavings: 42_000, monthsAdded: 0 }));
 
       expect(text('refi-verdict')).toContain('Refinancing saves $42,000');
+    });
+  });
+
+  describe('a home-equity loan for the cash', () => {
+    /** The reference scenario of the API's tests: $50,000 on a $300,000 loan, as a home-equity loan at 8% for 15 years, or a refinance to 6%. */
+    const equity = (overrides: Partial<HomeEquityComparison> = {}): RefinanceResponse => aRefinanceResponse({
+      cashOut: 50_000, netCash: 44_000,
+      homeEquity: {
+        amount: 50_000, annualInterestRate: 8, termInMonths: 180, yearsKept: 7, availableEquity: 100_000, combinedLoanToValuePercent: 70, exceedsLimit: false,
+        keepAndBorrow: { monthlyPayment: 2_598.17, equityLoanPayment: 477.83, payments: 218_246.28, stillOwed: 293_803.71, upfrontCosts: 0, cost: 512_049.99 },
+        cashOutRefinance: { monthlyPayment: 2_098.43, equityLoanPayment: 0, payments: 176_268.12, stillOwed: 313_737.59, upfrontCosts: 6_000, cost: 496_005.71 },
+        savedByEquityLoan: -16_044.28,
+        ...overrides,
+      },
+    });
+
+    it('says which way costs less over the years kept, and by how much', () => {
+      render(equity());
+      expect(text('refi-equity-verdict')).toBe('Keeping your loan and borrowing $50,000 separately costs $16,044 more over 7 years than refinancing.');
+
+      render(equity({ savedByEquityLoan: 4_321.5 }));
+      expect(text('refi-equity-verdict')).toBe('Keeping your loan and borrowing $50,000 separately costs $4,322 less over 7 years than refinancing.');
+    });
+
+    it('says "1 year" for a single year', () => {
+      render(equity({ yearsKept: 1 }));
+
+      expect(text('refi-equity-verdict')).toContain('over 1 year than');
+    });
+
+    it('lays the two ways side by side: payment, what is paid, what is still owed, closing and the total', () => {
+      render(equity());
+      const rows = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-equity-table"] tbody tr')]
+        .map((tr) => [...(tr as HTMLElement).children].map((cell) => cell.textContent!.trim()).join(' | '));
+
+      expect(rows).toEqual([
+        'Monthly payment | $2,598.17 | $2,098.43',
+        'Of which the home-equity loan | $477.83 | —',
+        'Paid in the years kept | $218,246 | $176,268',
+        'Still owed after | $293,804 | $313,738',
+        'Paid at closing | $0 | $6,000',
+        'Total cost | $512,050 | $496,006',
+      ]);
+    });
+
+    it('says how much could be borrowed and where the loans together stand, within the limit', () => {
+      render(equity());
+
+      expect(text('refi-equity-limit')).toBe('You could borrow up to $100,000 against your home. With this cash, your loans would be 70% of its value, within the 80% lenders allow.');
+    });
+
+    it('warns when the loans together would be above the limit', () => {
+      render(equity({ availableEquity: 20_000, combinedLoanToValuePercent: 87.5, exceedsLimit: true }));
+
+      expect(text('refi-equity-limit')).toContain('above the 80% lenders allow, so this may not be offered.');
+    });
+
+    it('leaves the limit out without a home value, and the whole panel out when not asked for', () => {
+      render(equity({ availableEquity: null, combinedLoanToValuePercent: null }));
+      expect(text('refi-equity-limit')).toBeUndefined();
+
+      render(aRefinanceResponse({ cashOut: 50_000 }));
+      expect(text('refi-home-equity')).toBeUndefined();
     });
   });
 

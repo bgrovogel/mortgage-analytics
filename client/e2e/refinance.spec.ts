@@ -56,6 +56,32 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-break-even'), 'the break-even is back').toBeVisible();
   });
 
+  test('borrowing the cash as a home-equity loan instead: the two ways side by side, over the years kept', async ({ page }) => {
+    await reference(page);
+    await page.getByTestId('home-value').fill('500000'); // within 80%, so neither loan carries PMI and the figures are the independent ones
+    await page.getByTestId('section-new-extras').locator('summary').click();
+    await page.getByTestId('cash-out').fill('50000');
+    await expect(page.getByTestId('refi-home-equity'), 'not shown until asked for').toHaveCount(0);
+
+    await page.getByTestId('compare-equity-loan').check();
+
+    // $300,000 at 7% with 25 years left; $50,000 at 8% over 15 years, or a refinance to 6%; 7 years: worked out independently.
+    await expect(page.getByTestId('refi-equity-verdict'), 'the home-equity loan costs more, as the API works it out')
+      .toContainText('costs $16,044 more over 7 years than refinancing');
+    await expect(page.getByTestId('refi-equity-cost'), 'the totals, to the dollar: keeping the loan and borrowing').toContainText('$512,050');
+    await expect(page.getByTestId('refi-equity-cost'), 'against the cash-out refinance').toContainText('$496,006');
+    await expect(page.getByTestId('refi-equity-limit'), '$350,000 of the $500,000 home is within 80%')
+      .toContainText('70% of its value, within the 80%');
+
+    await page.getByTestId('equity-years-kept').fill('30');
+
+    await expect(page.getByTestId('refi-equity-verdict'), 'over 30 years, the answer is costed again').toContainText('over 30 years');
+
+    await page.getByTestId('compare-equity-loan').uncheck();
+
+    await expect(page.getByTestId('refi-home-equity'), 'switching it off takes the panel away').toHaveCount(0);
+  });
+
   test('keeping the payoff date stops the clock restarting', async ({ page }) => {
     await reference(page);
     await page.getByTestId('new-term').selectOption('keep');

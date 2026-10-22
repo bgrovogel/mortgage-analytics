@@ -117,6 +117,21 @@
         <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
         <p class="hint" data-testid="cash-out-hint">{{ "Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow." | t }}</p>
 
+        @if (values().cashOut) {
+          <label class="checkbox">
+            <input type="checkbox" formControlName="compareEquityLoan" data-testid="compare-equity-loan" />
+            <span><strong>{{ 'Compare with a home-equity loan' | t }}</strong> {{ 'keep your loan and borrow the cash separately' | t }}</span>
+          </label>
+          @if (comparesEquityLoan()) {
+            <div class="row">
+              <app-number-field [control]="form.controls.equityRate" [rule]="rules.equityRate" testId="equity-rate" [label]="'Interest rate' | t" />
+              <app-number-field [control]="form.controls.equityTermYears" [rule]="rules.equityTermYears" testId="equity-term" [label]="'Term (years)' | t" />
+            </div>
+            <app-number-field [control]="form.controls.equityYearsKept" [rule]="rules.equityYearsKept" testId="equity-years-kept" />
+            <p class="hint" data-testid="equity-hint">{{ 'Both ways are costed over the years you keep the home or the loans: what you pay in them, plus what you still owe after.' | t }}</p>
+          }
+        }
+
         <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
         <p class="hint" data-testid="new-pmi-hint">{{ "A yearly share of the new loan, charged only while it is more than 80% of the home's value." | t }}</p>
       </div>

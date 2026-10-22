@@ -624,6 +624,15 @@ Key ideas:
   out at 6% for 30 years, a $350,000 loan at $2,098.43. The break-even stops being the question, so the page shows the
   cash in hand ($50,000 less closing costs paid up front). A conventional cash-out refinance may borrow at most 80% of
   the home's value, so the response says what share of the value the new loan is and whether it is over.
+- **Borrowing the cash instead** keeps the current loan and adds a fixed-rate home-equity loan for the cash, on its own
+  schedule. Each way is costed over the years kept (84 payments for 7 years) as **what is paid in them (PMI included)
+  plus what is still owed after, plus what is paid at closing**: counting only payments would call a way that borrows
+  for longer cheaper. $50,000 at 8% over 15 years beside the $300,000 loan at 7% (25 years left) is $2,120.34 + $477.83 =
+  $2,598.17 a month and 218,246.28 paid with 293,803.71 still owed, 512,049.99 in all; the refinance to 6% over 30 years
+  with $6,000 of closing costs is $2,098.43 a month, 176,268.12 paid, 313,737.59 owed and 6,000 at closing, 496,005.71
+  in all: the home-equity loan costs **$16,044.28 more** here, because keeping the 7% loan costs more than refinancing
+  to 6%. Equity available is 80% of the home's value less what is owed ($100,000 at $500,000); the combined
+  loan-to-value is (owed + cash) ÷ value (70%), and it is flagged over 80%.
 
 ---
 

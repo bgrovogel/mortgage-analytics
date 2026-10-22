@@ -72,6 +72,61 @@
   <p class="panel limit" [class.warning]="r.exceedsCashOutLimit" data-testid="refi-cash-limit">{{ limit }}</p>
 }
 
+@if (equity(); as e) {
+  <!-- Two ways to get the same cash, costed over the years kept: what is paid in them, what is still owed, what is paid at closing. -->
+  <section class="panel equity" data-testid="refi-home-equity">
+    <h3>{{ 'Borrow the cash instead' | t }}</h3>
+    <p class="verdict-line" data-testid="refi-equity-verdict">{{ equityVerdict() }}</p>
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'The two ways of getting the cash, side by side' | t">
+      <table data-testid="refi-equity-table">
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col">{{ 'Home-equity loan' | t }}</th>
+            <th scope="col">{{ 'Cash-out refinance' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">{{ 'Monthly payment' | t }}</th>
+            <td>{{ cents(e.keepAndBorrow.monthlyPayment) }}</td>
+            <td>{{ cents(e.cashOutRefinance.monthlyPayment) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Of which the home-equity loan' | t }}</th>
+            <td>{{ cents(e.keepAndBorrow.equityLoanPayment) }}</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Paid in the years kept' | t }}</th>
+            <td>{{ dollars(e.keepAndBorrow.payments) }}</td>
+            <td>{{ dollars(e.cashOutRefinance.payments) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Still owed after' | t }}</th>
+            <td>{{ dollars(e.keepAndBorrow.stillOwed) }}</td>
+            <td>{{ dollars(e.cashOutRefinance.stillOwed) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Paid at closing' | t }}</th>
+            <td>{{ dollars(e.keepAndBorrow.upfrontCosts) }}</td>
+            <td>{{ dollars(e.cashOutRefinance.upfrontCosts) }}</td>
+          </tr>
+          <tr class="total" data-testid="refi-equity-cost">
+            <th scope="row">{{ 'Total cost' | t }}</th>
+            <td>{{ dollars(e.keepAndBorrow.cost) }}</td>
+            <td>{{ dollars(e.cashOutRefinance.cost) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">{{ "The total is what you pay in those years plus what you still owe, so a way that borrows for longer is not mistaken for a cheaper one. A home-equity loan's own fees are not counted." | t }}</p>
+    @if (equityLimit(); as limit) {
+      <p class="equity-limit" [class.warning]="e.exceedsLimit" data-testid="refi-equity-limit">{{ limit }}</p>
+    }
+  </section>
+}
+
 @if (r.monthsAdded > 0) {
   <section class="panel restart" data-testid="refi-restart">
     <h3>{{ 'The clock restarts' | t }}</h3>

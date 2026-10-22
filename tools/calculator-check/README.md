@@ -27,7 +27,7 @@ path, the expected and actual values, and the request that produced it.
 | **Each monthly row** | Principal, interest, extra principal, each cost, the outlay, the balance, the rate, the buydown subsidy and the due date |
 | **Each schedule** | Every total, the interest you pay after a buydown subsidy, PMI's end, the payoff, the recasts and the rate changes |
 | **The rest** | The savings, every year of the projection (with what is owed and the equity), the buydown table (with who pays), the ARM's worst case, discount points, FHA and VA, and the cash to close (with the seller's limit, 2% on an investment property), the best use of the seller's money, what a household can afford (with co-buyers), and rent or buy |
-| **Refinance** | Both loans, PMI on each (half the cases give a home value), keeping today's payment, lifetime savings, months added and the break-even payment |
+| **Refinance** | Both loans, PMI on each (half the cases give a home value), keeping today's payment, lifetime savings, months added and the break-even payment, and (when cash is taken out) the home-equity loan beside it: both ways' payments, what is owed after the years kept, the equity available and the combined loan-to-value |
 
 ## What the model covers
 
