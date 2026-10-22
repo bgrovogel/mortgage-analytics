@@ -81,6 +81,28 @@ public sealed record RefinanceRequest
     /// <summary>The new loan's yearly PMI rate, as a percentage of the loan, should it be above 80% of the value.</summary>
     /// <example>0.5</example>
     public decimal NewPmiRate { get; init; } = 0.5m;
+
+    /// <summary>
+    /// A home-equity loan for the <see cref="CashOut"/>, kept beside the current loan, to compare with refinancing to take
+    /// the cash out. Needs <see cref="CashOut"/>. Omit for no comparison.
+    /// </summary>
+    public HomeEquityLoanRequest? HomeEquityLoan { get; init; }
+}
+
+/// <summary>A fixed-rate home-equity loan: the cash taken out, borrowed as a second loan and repaid on its own schedule.</summary>
+public sealed record HomeEquityLoanRequest
+{
+    /// <summary>The home-equity loan's annual interest rate, as a percentage.</summary>
+    /// <example>8</example>
+    public decimal AnnualInterestRate { get; init; }
+
+    /// <summary>Its term in months, up to 30 years.</summary>
+    /// <example>180</example>
+    public int TermInMonths { get; init; }
+
+    /// <summary>How many years the two ways are costed over, from 1 to 30: what is paid in them and what is still owed after.</summary>
+    /// <example>7</example>
+    public int YearsKept { get; init; } = 7;
 }
 
 /// <summary>A loan as it was taken out.</summary>
@@ -118,6 +140,7 @@ public sealed record OriginalLoanRequest
 /// <param name="NetCash">The cash in hand after closing: <paramref name="CashOut"/> less what is paid at closing. Negative when more is paid than received.</param>
 /// <param name="NewLoanToValuePercent">The new loan as a percentage of the home's value; null without a home value.</param>
 /// <param name="ExceedsCashOutLimit">True when cash is taken out and the new loan is above 80% of the home's value.</param>
+/// <param name="HomeEquity">The home-equity loan compared with the cash-out refinance, when the request asked for it; otherwise null.</param>
 public sealed record RefinanceResponse(
     RefinanceOptionResponse Current,
     RefinanceOptionResponse Refinanced,
@@ -136,7 +159,46 @@ public sealed record RefinanceResponse(
     decimal CashOut = 0m,
     decimal NetCash = 0m,
     decimal? NewLoanToValuePercent = null,
-    bool ExceedsCashOutLimit = false);
+    bool ExceedsCashOutLimit = false,
+    HomeEquityResponse? HomeEquity = null);
+
+/// <summary>Taking the cash out as a home-equity loan beside the current loan, against refinancing to take it out.</summary>
+/// <param name="Amount">The cash borrowed.</param>
+/// <param name="AnnualInterestRate">The home-equity loan's rate.</param>
+/// <param name="TermInMonths">Its term.</param>
+/// <param name="YearsKept">The years both ways are costed over.</param>
+/// <param name="AvailableEquity">What could be borrowed against the home: 80% of its value less what is owed; 0 when there is none. Null without a home value.</param>
+/// <param name="CombinedLoanToValuePercent">What is owed plus the cash, as a percentage of the home's value. Null without a home value.</param>
+/// <param name="ExceedsLimit">True when what is owed plus the cash is above 80% of the home's value.</param>
+/// <param name="KeepAndBorrow">Keeping the current loan and borrowing the cash as a home-equity loan.</param>
+/// <param name="CashOutRefinance">Refinancing to take the cash out, as the rest of this response prices it.</param>
+/// <param name="SavedByEquityLoan">What the home-equity loan saves: the refinance's cost less the other way's. Negative when it costs more.</param>
+public sealed record HomeEquityResponse(
+    decimal Amount,
+    decimal AnnualInterestRate,
+    int TermInMonths,
+    int YearsKept,
+    decimal? AvailableEquity,
+    decimal? CombinedLoanToValuePercent,
+    bool ExceedsLimit,
+    HomeEquityOptionResponse KeepAndBorrow,
+    HomeEquityOptionResponse CashOutRefinance,
+    decimal SavedByEquityLoan);
+
+/// <summary>One way of getting the cash, costed over the years kept.</summary>
+/// <param name="MonthlyPayment">What is paid each month at first: every loan's payment, PMI included.</param>
+/// <param name="EquityLoanPayment">Of which the home-equity loan's; 0 for the refinance.</param>
+/// <param name="Payments">Everything paid in the years kept, PMI included.</param>
+/// <param name="StillOwed">What is still owed on every loan after them.</param>
+/// <param name="UpfrontCosts">Cash paid at closing: a refinance's closing costs; none are counted for a home-equity loan.</param>
+/// <param name="Cost">Payments, plus what is still owed, plus the upfront costs: what getting the cash comes to.</param>
+public sealed record HomeEquityOptionResponse(
+    decimal MonthlyPayment,
+    decimal EquityLoanPayment,
+    decimal Payments,
+    decimal StillOwed,
+    decimal UpfrontCosts,
+    decimal Cost);
 
 /// <summary>One way of repaying: its loan, payment and totals, and (optionally) every payment.</summary>
 /// <param name="LoanAmount">The amount being repaid.</param>

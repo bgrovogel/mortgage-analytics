@@ -130,4 +130,39 @@ public class RefinanceApiTests : ApiTestBase
             Assert.That(errors.TryGetProperty("newTermInMonths", out _), Is.True, $"and the term; errors: {errors}");
         });
     }
+
+    [Test]
+    public async Task AHomeEquityLoan_IsComparedWithTheCashOutRefinance_WhenAskedFor()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            closingCosts = 6_000, cashOut = 50_000, homeValue = 500_000,
+            homeEquityLoan = new { annualInterestRate = 8, termInMonths = 180, yearsKept = 7 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze?includePayments=false", request);
+        var equity = (await ReadJsonAsync(response)).GetProperty("homeEquity");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the request is valid");
+            Assert.That(equity.GetProperty("availableEquity").GetDecimal(), Is.EqualTo(100_000m), "80% of the home's value less what is owed");
+            Assert.That(equity.GetProperty("savedByEquityLoan").GetDecimal(), Is.EqualTo(-16_044.28m), "the comparison, as the service works it out");
+        });
+    }
+
+    [Test]
+    public async Task AHomeEquityLoan_WithoutCashOut_Returns400()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            homeEquityLoan = new { annualInterestRate = 8, termInMonths = 180, yearsKept = 7 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze", request);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "there is no cash to borrow against the home");
+    }
 }

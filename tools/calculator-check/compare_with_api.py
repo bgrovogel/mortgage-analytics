@@ -250,13 +250,28 @@ def random_refinance(rng):
         request['homeValue'] = int(request['currentBalance'] / rng.choice([0.6, 0.75, 0.79, 0.82, 0.9, 0.97]))
         request['currentMonthlyPmi'] = rng.choice([0, 0, 85.5, 150, 240])
         request['newPmiRate'] = rng.choice([0.3, 0.5, 0.85])
+    # Half of those taking cash out also price a home-equity loan for it, kept 1 to 30 years.
+    if request.get('cashOut') and rng.random() < 0.5:
+        request['homeEquityLoan'] = {'annualInterestRate': float(D(rng.randrange(400, 1200)) / 100), 'termInMonths': rng.choice([60, 120, 180, 240, 360]),
+                                     'yearsKept': rng.randint(1, 30)}
     return request
 
 
 def refinance_view(r):
     """The refinance response in the model's shape."""
     keep = r.get('keepingCurrentPayment')
+    heq = r.get('homeEquity')
     return {
+        'homeEquity': heq and {
+            'amount': heq['amount'], 'equityPayment': heq['keepAndBorrow']['equityLoanPayment'],
+            'keepMonthly': heq['keepAndBorrow']['monthlyPayment'], 'keepPayments': heq['keepAndBorrow']['payments'],
+            'keepOwed': heq['keepAndBorrow']['stillOwed'], 'keepCost': heq['keepAndBorrow']['cost'],
+            'refiMonthly': heq['cashOutRefinance']['monthlyPayment'], 'refiPayments': heq['cashOutRefinance']['payments'],
+            'refiOwed': heq['cashOutRefinance']['stillOwed'], 'refiUpfront': heq['cashOutRefinance']['upfrontCosts'],
+            'refiCost': heq['cashOutRefinance']['cost'], 'saved': heq['savedByEquityLoan'],
+            'availableEquity': heq['availableEquity'], 'combinedLoanToValuePercent': heq['combinedLoanToValuePercent'],
+            'exceedsLimit': heq['exceedsLimit'],
+        },
         'currentPayment': r['current']['monthlyPayment'], 'currentInterest': r['current']['totalInterest'],
         'currentPayments': r['current']['numberOfPayments'],
         'newPayment': r['refinanced']['monthlyPayment'], 'newInterest': r['refinanced']['totalInterest'],

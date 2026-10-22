@@ -1074,7 +1074,35 @@ def refinance(request):
         k = amortize(principal, new_rate, new_term, extra=lambda p: (monthly, monthly))
         keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k),
                 'lifetimeSavings': current_all - (total(k) + pmi_total(new_pmi, k) + upfront) + cash_out}
+    # A home-equity loan for the cash, beside the current loan, against refinancing to take it out; both costed over the
+    # years kept as what is paid (PMI included) plus what is still owed plus what is paid at closing.
+    home_equity = None
+    heq = request.get('homeEquityLoan')
+    if heq and cash_out > 0:
+        k = heq['yearsKept'] * 12
+        equity = amortize(cash_out, D(str(heq['annualInterestRate'])), heq['termInMonths'])
+        paid = lambda s, pmi: (sum((r['scheduled'] + r['extra'] for r in s['rows'][:k]), D(0))  # noqa: E731
+                               + sum((pmi_of(pmi, r) for r in s['rows'][:k]), D(0)))
+        owed = lambda s: D(0) if len(s['rows']) <= k else s['rows'][k - 1]['balance']  # noqa: E731
+        keep_cost = paid(current, cur_pmi) + paid(equity, no_pmi) + owed(current) + owed(equity)
+        refi_cost = paid(new, new_pmi) + owed(new) + upfront
+        owed_now = bal
+        home_equity = {
+            'amount': cash_out,
+            'equityPayment': equity['initial'],
+            'keepMonthly': current['initial'] + first_pmi(cur_pmi, current) + equity['initial'],
+            'keepPayments': paid(current, cur_pmi) + paid(equity, no_pmi),
+            'keepOwed': owed(current) + owed(equity),
+            'keepCost': keep_cost,
+            'refiMonthly': new['initial'] + first_pmi(new_pmi, new),
+            'refiPayments': paid(new, new_pmi), 'refiOwed': owed(new), 'refiUpfront': upfront, 'refiCost': refi_cost,
+            'saved': refi_cost - keep_cost,
+            'availableEquity': max(D(0), money(value * D('0.8') - owed_now)) if value is not None else None,
+            'combinedLoanToValuePercent': ((owed_now + cash_out) / value * 100).quantize(D('0.01'), rounding=ROUND_HALF_EVEN) if value is not None else None,
+            'exceedsLimit': value is not None and owed_now + cash_out > value * D('0.8'),
+        }
     return {
+        'homeEquity': home_equity,
         'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),
         'newPayment': new['initial'], 'newInterest': interest(new), 'newPayments': len(new['rows']),
         'currentPmi': pmi_total(cur_pmi, current), 'newPmi': pmi_total(new_pmi, new),

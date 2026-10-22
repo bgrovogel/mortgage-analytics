@@ -35,5 +35,10 @@
       2,
       1
     ]
+  },
+  "homeEquityLoan": {
+    "annualInterestRate": 8,
+    "termInMonths": 180,
+    "yearsKept": 7
   }
 }

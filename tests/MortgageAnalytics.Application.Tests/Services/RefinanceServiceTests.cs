@@ -296,4 +296,77 @@ public class RefinanceServiceTests
             Assert.That(response.Current.TotalPmi, Is.EqualTo((last + 1) * 120m), "$120 with each payment until then");
         });
     }
+
+    // The scenario below was computed independently in Python Decimal (interest = balance x rate / 1,200 to the cent):
+    // $300,000 at 7% with 25 years to go; $50,000 taken out either as an 8% home-equity loan over 15 years beside it, or
+    // in a refinance to 6% for 30 years ($350,000, $6,000 of closing costs); both costed over 7 years (84 payments).
+    private static RefinanceRequest WithAHomeEquityLoan(decimal? homeValue = 500_000m) => Request() with
+    {
+        CashOut = 50_000m,
+        HomeValue = homeValue,
+        HomeEquityLoan = new HomeEquityLoanRequest { AnnualInterestRate = 8m, TermInMonths = 180, YearsKept = 7 },
+    };
+
+    [Test]
+    public void Analyze_WithoutAHomeEquityLoan_HasNoHomeEquityComparison() =>
+        Assert.That(_service.Analyze(Request() with { CashOut = 50_000m }).HomeEquity, Is.Null, "it is only worked out when asked for");
+
+    [Test]
+    public void Analyze_ComparesBorrowingTheCashAsAHomeEquityLoanWithRefinancingToTakeItOut()
+    {
+        var equity = _service.Analyze(WithAHomeEquityLoan()).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.Amount, Is.EqualTo(50_000m), "the cash taken out is what is borrowed");
+            Assert.That(equity.KeepAndBorrow.MonthlyPayment, Is.EqualTo(2_598.17m), "today's 2,120.34 and the home-equity loan's 477.83");
+            Assert.That(equity.KeepAndBorrow.EquityLoanPayment, Is.EqualTo(477.83m), "of which the home-equity loan");
+            Assert.That(equity.KeepAndBorrow.Payments, Is.EqualTo(218_246.28m), "84 payments on both loans");
+            Assert.That(equity.KeepAndBorrow.StillOwed, Is.EqualTo(293_803.71m), "what is left on both after 7 years");
+            Assert.That(equity.KeepAndBorrow.UpfrontCosts, Is.Zero, "a home-equity loan's own costs are not counted");
+            Assert.That(equity.KeepAndBorrow.Cost, Is.EqualTo(512_049.99m), "paid and still owed");
+            Assert.That(equity.CashOutRefinance.MonthlyPayment, Is.EqualTo(2_098.43m), "one new loan of $350,000 at 6%");
+            Assert.That(equity.CashOutRefinance.Payments, Is.EqualTo(176_268.12m), "84 payments on it");
+            Assert.That(equity.CashOutRefinance.StillOwed, Is.EqualTo(313_737.59m), "what is left on it after 7 years");
+            Assert.That(equity.CashOutRefinance.UpfrontCosts, Is.EqualTo(6_000m), "paid at closing");
+            Assert.That(equity.CashOutRefinance.Cost, Is.EqualTo(496_005.71m), "paid, still owed and the closing costs");
+            Assert.That(equity.SavedByEquityLoan, Is.EqualTo(-16_044.28m), "the home-equity loan costs this much more: keeping the 7% loan costs more than refinancing to 6%");
+            Assert.That(equity.YearsKept, Is.EqualTo(7), "the years it is costed over");
+        });
+    }
+
+    [Test]
+    public void Analyze_SaysHowMuchEquityCouldBeBorrowed_AndWhereTheCombinedLoansStand()
+    {
+        var within = _service.Analyze(WithAHomeEquityLoan(500_000m)).HomeEquity!;
+        var over = _service.Analyze(WithAHomeEquityLoan(400_000m)).HomeEquity!;
+        var unknown = _service.Analyze(WithAHomeEquityLoan(null)).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(within.AvailableEquity, Is.EqualTo(100_000m), "80% of $500,000 less the $300,000 owed");
+            Assert.That(within.CombinedLoanToValuePercent, Is.EqualTo(70m), "$350,000 of $500,000");
+            Assert.That(within.ExceedsLimit, Is.False, "within the 80% lenders allow");
+            Assert.That(over.AvailableEquity, Is.EqualTo(20_000m), "80% of $400,000 less the $300,000 owed");
+            Assert.That(over.CombinedLoanToValuePercent, Is.EqualTo(87.5m), "$350,000 of $400,000");
+            Assert.That(over.ExceedsLimit, Is.True, "more than that is not offered");
+            Assert.That(unknown.AvailableEquity, Is.Null, "nothing is known of the equity without a home value");
+            Assert.That(unknown.CombinedLoanToValuePercent, Is.Null, "nor of the loan to value");
+            Assert.That(unknown.ExceedsLimit, Is.False, "and nothing is said to be over a limit");
+        });
+    }
+
+    [Test]
+    public void Analyze_CountsPmiOnBothWays_WhileTheLoanIsAbove80PercentOfTheHome()
+    {
+        // $300,000 owed on a $360,000 home is 83.3%: the current loan carries its PMI, $120 a month, until it is at 80%.
+        var request = WithAHomeEquityLoan(360_000m) with { CurrentMonthlyPmi = 120m };
+        var equity = _service.Analyze(request).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.KeepAndBorrow.MonthlyPayment, Is.GreaterThan(2_598.17m + 119m), "today's PMI is part of keeping the loan");
+            Assert.That(equity.CashOutRefinance.MonthlyPayment, Is.GreaterThan(2_098.43m), "and the new loan, at 97% of the home's value, carries its own");
+        });
+    }
 }

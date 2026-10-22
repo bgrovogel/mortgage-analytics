@@ -2144,6 +2144,99 @@
         },
         "additionalProperties": false
       },
+      "HomeEquityLoanRequest": {
+        "type": "object",
+        "properties": {
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HomeEquityOptionResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "equityLoanPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "payments": {
+            "type": "number",
+            "format": "double"
+          },
+          "stillOwed": {
+            "type": "number",
+            "format": "double"
+          },
+          "upfrontCosts": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HomeEquityResponse": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "termInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableEquity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "combinedLoanToValuePercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "exceedsLimit": {
+            "type": "boolean"
+          },
+          "keepAndBorrow": {
+            "$ref": "#/components/schemas/HomeEquityOptionResponse"
+          },
+          "cashOutRefinance": {
+            "$ref": "#/components/schemas/HomeEquityOptionResponse"
+          },
+          "savedByEquityLoan": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "HousingCostsRequest": {
         "type": "object",
         "properties": {
@@ -3052,6 +3145,9 @@
           "newPmiRate": {
             "type": "number",
             "format": "double"
+          },
+          "homeEquityLoan": {
+            "$ref": "#/components/schemas/HomeEquityLoanRequest"
           }
         },
         "additionalProperties": false
@@ -3130,6 +3226,9 @@
           },
           "exceedsCashOutLimit": {
             "type": "boolean"
+          },
+          "homeEquity": {
+            "$ref": "#/components/schemas/HomeEquityResponse"
           }
         },
         "additionalProperties": false

@@ -242,4 +242,30 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
                 "a one-year buydown, its reduction written with trailing zeros");
         });
     }
+
+    private static readonly HomeEquityLoanRequest Equity = new() { AnnualInterestRate = 8m, TermInMonths = 180, YearsKept = 7 };
+
+    [Test]
+    public void AHomeEquityLoan_NeedsCashToBeTakenOut_AndIsOtherwiseValid()
+    {
+        AssertValid(Valid with { CashOut = 50_000m, HomeEquityLoan = Equity }, "the cash taken out is what it lends");
+        AssertErrorMessage(Valid with { HomeEquityLoan = Equity }, "HomeEquityLoan", "Enter the cash to take out to compare it with a home-equity loan.",
+            "without cash there is nothing to borrow");
+    }
+
+    [Test]
+    public void AHomeEquityLoan_IsCheckedLikeAnyLoan()
+    {
+        var withCash = Valid with { CashOut = 50_000m };
+
+        Assert.Multiple(() =>
+        {
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { AnnualInterestRate = -0.01m } }, "HomeEquityLoan.AnnualInterestRate", "a rate is not negative");
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { AnnualInterestRate = 30.01m } }, "HomeEquityLoan.AnnualInterestRate", "and has a ceiling");
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { TermInMonths = 0 } }, "HomeEquityLoan.TermInMonths", "it takes at least a month");
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { TermInMonths = 361 } }, "HomeEquityLoan.TermInMonths", "and at most 30 years");
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { YearsKept = 0 } }, "HomeEquityLoan.YearsKept", "at least a year is kept");
+            AssertInvalid(withCash with { HomeEquityLoan = Equity with { YearsKept = 31 } }, "HomeEquityLoan.YearsKept", "and at most 30");
+        });
+    }
 }

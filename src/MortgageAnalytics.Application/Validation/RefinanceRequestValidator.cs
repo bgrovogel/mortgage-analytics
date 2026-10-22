@@ -98,6 +98,18 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .WholeCents()
             .WithName("Cash out");
 
+        RuleFor(r => r.HomeEquityLoan)
+            .Must((request, _) => request.CashOut > 0)
+            .WithMessage("Enter the cash to take out to compare it with a home-equity loan.")
+            .When(r => r.HomeEquityLoan is not null);
+
+        When(r => r.HomeEquityLoan is not null, () =>
+        {
+            RuleFor(r => r.HomeEquityLoan!.AnnualInterestRate).InclusiveBetween(0m, 30m).WithName("Home-equity loan rate");
+            RuleFor(r => r.HomeEquityLoan!.TermInMonths).InclusiveBetween(1, 360).WithName("Home-equity loan term");
+            RuleFor(r => r.HomeEquityLoan!.YearsKept).InclusiveBetween(1, 30).WithName("Years kept");
+        });
+
         RuleFor(r => (r.OriginalLoan == null ? r.CurrentBalance : r.OriginalLoan.Amount) + r.CashOut + (r.FinanceClosingCosts ? r.ClosingCosts : 0m))
             .LessThanOrEqualTo(LoanTerms.MaxPrincipal)
             .WithMessage($"The new loan (balance plus cash out and any financed closing costs) cannot exceed {LoanTerms.MaxPrincipal:N0}.")
