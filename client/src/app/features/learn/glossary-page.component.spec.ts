@@ -47,6 +47,14 @@ describe('GlossaryPageComponent', () => {
     expect(root.querySelectorAll('dt').length).toBe(GLOSSARY.length);
   });
 
+  it('defines the words for borrowing against the home that the refinance page uses', () => {
+    const terms = GLOSSARY.map((entry) => entry.term);
+
+    for (const term of ['Cash-out refinance', 'Draw period', 'HELOC', 'Home-equity loan']) {
+      expect(terms).toContain(term);
+    }
+  });
+
   it('covers the terms the app uses without saying what they are', () => {
     const terms = GLOSSARY.map((entry) => entry.term);
 

@@ -81,6 +81,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
         <section id="refinance">
           <h3>{{ 'Refinancing' | t }}</h3>
           <p>{{ "The new loan's payment and total interest against the loan you have, with closing costs included. The break-even is the payment by which the interest saved covers those costs. A new 30-year loan restarts the clock, so a lower payment can cost more overall; “keep paying today’s payment” shows what the same money does to the new loan." | t }}</p>
+          <p><app-rich [message]="'With [term:Cash-out refinance]cash out[/term], the cash is borrowed on top of the balance and counted as money in hand. The other way to get it is to keep your loan and borrow the cash separately, as a [term:Home-equity loan]home-equity loan[/term] or a [term:HELOC]line of credit[/term], which is drawn in full at once and pays interest only for its [term:Draw period]draw period[/term], then is repaid at the rate you expect by then. Each way is costed over the years you keep it as what you pay in them, plus what you still owe after, plus what is paid at closing, so one that borrows for longer is not mistaken for a cheaper one.' | t" /></p>
         </section>
 
         <section id="invest">
@@ -102,6 +103,8 @@ import { TPipe } from '../../core/i18n/t.pipe';
           <li>{{ 'VA: 38 CFR 36.4340 and Pamphlet 26-7.' | t }}</li>
           <li>{{ 'Regulation Z (12 CFR 1026, Appendix J) for the APR.' | t }}</li>
           <li>{{ 'Texas Tax Code 11.13 for homestead exemptions.' | t }}</li>
+          <li>{{ 'Internal Revenue Code section 121 for the home-sale exclusion.' | t }}</li>
+          <li>{{ 'Each state’s own property tax rules, as its tax authority publishes them: California’s 1% and 2% cap, Florida’s Save Our Homes, Michigan’s inflation cap and Oklahoma’s 3% cap.' | t }}</li>
         </ul>
       </aside>
     </section>

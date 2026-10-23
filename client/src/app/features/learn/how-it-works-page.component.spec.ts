@@ -28,6 +28,16 @@ describe('HowItWorksPageComponent', () => {
     ]));
   });
 
+  it('explains taking cash out and the home-equity comparison under Refinancing, linking the words it uses', () => {
+    const section = render().querySelector('#refinance')!;
+
+    expect(section.textContent).toContain('cash out');
+    expect(section.textContent).toContain('interest only');
+    expect([...section.querySelectorAll<HTMLAnchorElement>('a.term')].map((a) => a.getAttribute('href'))).toEqual(expect.arrayContaining([
+      '/glossary#term-cash-out-refinance', '/glossary#term-home-equity-loan', '/glossary#term-heloc',
+    ]));
+  });
+
   it('lists its sections at the top, each a link to its place on the page', () => {
     const root = render();
     const sections = [...root.querySelectorAll('article section[id]')].map((s) => s.id);
@@ -51,7 +61,7 @@ describe('HowItWorksPageComponent', () => {
   it('names the sources behind the rules', () => {
     const text = render().querySelector('[data-testid="sources"]')!.textContent!;
 
-    for (const source of ['Fannie Mae', 'HUD Handbook 4000.1', '38 CFR 36.4340', 'Regulation Z', 'Texas Tax Code']) {
+    for (const source of ['Fannie Mae', 'HUD Handbook 4000.1', '38 CFR 36.4340', 'Regulation Z', 'Texas Tax Code', 'Internal Revenue Code section 121', 'Save Our Homes']) {
       expect(text).toContain(source);
     }
   });

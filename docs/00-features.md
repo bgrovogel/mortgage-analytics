@@ -175,9 +175,9 @@ on the example, **$41,500 down (10%) raises the limit from $12,450 to $24,900**.
 
 Two pages in the footer of every page explain the numbers. **How it's calculated** takes each answer in the order a
 buyer meets it (the payment, taxes and insurance, mortgage insurance, cash to close, the APR, what you can afford, rent or
-buy, refinancing, pay off or invest), worked through with the example loan, then says how the numbers are checked and
-names the rules behind them. The **glossary** defines the words the app uses (PMI, MIP, escrow, APR, points, buydown,
-loan-to-value) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term, and words in running text
+buy, refinancing (with cash out and the home-equity comparison), pay off or invest), worked through with the example loan,
+then says how the numbers are checked and names the rules behind them. The **glossary** defines the words the app uses
+(PMI, MIP, escrow, APR, points, buydown, loan-to-value, cash-out refinance, HELOC) in a sentence or two; a link such as `/glossary#term-pmi` lands on one term, and words in running text
 (the APR on the tiles, PMI and escrow on How it's calculated) link there themselves, with the meaning on hover.
 **Terms**, in the same footer, says what the numbers are (an estimate, not a loan offer, a Loan Estimate or a pre-approval) and
 what they are not (financial, tax or legal advice), how exact they are, and that this is a demonstration provided as it is.
