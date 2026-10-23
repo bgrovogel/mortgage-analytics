@@ -197,7 +197,7 @@ public class RefinanceApiTests : ApiTestBase
         {
             currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
             closingCosts = 6_000, cashOut = 50_000, homeValue = 500_000,
-            debtPayoff = new { balance = 20_000, annualInterestRate = 22, monthlyPayment = 600, yearsKept = 7 },
+            debtPayoff = new { balance = 20_000, annualInterestRate = 22, monthlyPayment = 600, yearsKept = 7, annualIncome = 120_000, otherMonthlyDebts = 500 },
         };
 
         var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze?includePayments=false", request);
@@ -210,6 +210,8 @@ public class RefinanceApiTests : ApiTestBase
             Assert.That(debt.GetProperty("keepDebt").GetProperty("cost").GetDecimal(), Is.EqualTo(31_192.21m), "keeping it, paid and still owed");
             Assert.That(debt.GetProperty("payItOff").GetProperty("monthlyPayment").GetDecimal(), Is.EqualTo(119.91m), "what it adds to the mortgage");
             Assert.That(debt.GetProperty("savedByPayingOff").GetDecimal(), Is.EqualTo(3_191.82m), "the comparison, as the service works it out");
+            Assert.That(debt.GetProperty("debtToIncome").GetProperty("beforePercent").GetDecimal(), Is.EqualTo(32.20m), "the loan payments and debts over a $10,000 month, before");
+            Assert.That(debt.GetProperty("debtToIncome").GetProperty("afterPercent").GetDecimal(), Is.EqualTo(25.98m), "and after, the card gone");
         });
     }
 

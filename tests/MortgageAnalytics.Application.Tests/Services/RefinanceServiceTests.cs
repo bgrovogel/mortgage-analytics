@@ -494,6 +494,37 @@ public class RefinanceServiceTests
     }
 
     [Test]
+    public void Analyze_ADebtWithAnIncome_SaysWhatItDoesToDebtToIncome()
+    {
+        var request = WithADebt(20_000m, 22m, 600m);
+        var debt = _service.Analyze(request with { DebtPayoff = request.DebtPayoff! with { AnnualIncome = 120_000m, OtherMonthlyDebts = 500m } }).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.DebtToIncome!.MonthlyIncome, Is.EqualTo(10_000m), "$120,000 a year");
+            Assert.That(debt.DebtToIncome.BeforePercent, Is.EqualTo(32.20m), "today's 2,120.34, the card's 600 and 500 of other debts, over 10,000");
+            Assert.That(debt.DebtToIncome.AfterPercent, Is.EqualTo(25.98m), "the new loan's 2,098.43 and the 500, the card gone: over 10,000");
+        });
+    }
+
+    [Test]
+    public void Analyze_ADebtOnALowerIncome_TakesMoreOfIt_AndOtherDebtsDefaultToNone()
+    {
+        var request = WithADebt(20_000m, 22m, 600m);
+        var debt = _service.Analyze(request with { DebtPayoff = request.DebtPayoff! with { AnnualIncome = 72_000m } }).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.DebtToIncome!.BeforePercent, Is.EqualTo(45.34m), "(2,120.34 + 600) over 6,000");
+            Assert.That(debt.DebtToIncome.AfterPercent, Is.EqualTo(34.97m), "2,098.43 over 6,000");
+        });
+    }
+
+    [Test]
+    public void Analyze_ADebtWithoutAnIncome_HasNoDebtToIncome() =>
+        Assert.That(_service.Analyze(WithADebt(20_000m, 22m, 600m)).DebtPayoff!.DebtToIncome, Is.Null, "nothing to measure it against");
+
+    [Test]
     public void Analyze_PayingOffACheapDebtWithTheMortgage_CostsMore_BecauseItIsSpreadOverThirtyYears()
     {
         var debt = _service.Analyze(WithADebt(20_000m, 4m, 450m)).DebtPayoff!;

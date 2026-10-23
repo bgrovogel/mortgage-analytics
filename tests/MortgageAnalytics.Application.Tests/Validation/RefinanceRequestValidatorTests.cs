@@ -185,6 +185,11 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
             AssertInvalid(withCash with { DebtPayoff = debt with { AnnualInterestRate = 40.01m } }, "DebtPayoff.AnnualInterestRate", "and has a ceiling");
             AssertInvalid(withCash with { DebtPayoff = debt with { MonthlyPayment = 0m } }, "DebtPayoff.MonthlyPayment", "something is paid");
             AssertInvalid(withCash with { DebtPayoff = debt with { MonthlyPayment = 366.67m } }, "DebtPayoff.MonthlyPayment", "a payment that does not cover a month's interest never pays the debt off");
+            AssertValid(withCash with { DebtPayoff = debt with { AnnualIncome = 120_000m, OtherMonthlyDebts = 500m } }, "an income and other debts to measure it against");
+            AssertInvalid(withCash with { DebtPayoff = debt with { AnnualIncome = 0m } }, "DebtPayoff.AnnualIncome", "an income, when given, is something");
+            AssertInvalid(withCash with { DebtPayoff = debt with { AnnualIncome = 100_000_000.01m } }, "DebtPayoff.AnnualIncome", "and within limits");
+            AssertInvalid(withCash with { DebtPayoff = debt with { AnnualIncome = 120_000.001m } }, "DebtPayoff.AnnualIncome", "to the cent");
+            AssertInvalid(withCash with { DebtPayoff = debt with { OtherMonthlyDebts = -1m } }, "DebtPayoff.OtherMonthlyDebts", "other debts are not negative");
             AssertInvalid(withCash with { DebtPayoff = debt with { YearsKept = 0 } }, "DebtPayoff.YearsKept", "at least a year is kept");
             AssertInvalid(withCash with { DebtPayoff = debt with { YearsKept = 31 } }, "DebtPayoff.YearsKept", "and at most 30");
         });

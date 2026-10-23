@@ -49,9 +49,14 @@ export interface DebtPayoffInput {
   monthlyPayment: number;
   /** The years both ways are costed over, 1 to 30. */
   yearsKept: number;
+  /** The household's income a year; with it the response says what paying the debt off does to debt-to-income. */
+  annualIncome?: number;
+  /** Other debts paid each month, counted in debt-to-income. */
+  otherMonthlyDebts?: number;
 }
 
-/** A fixed-rate home-equity loan:: a fixed-rate home-equity loan, or, with a draw
+/**
+ * The cash out borrowed as a second loan (mirrors HomeEquityLoanRequest): a fixed-rate home-equity loan, or, with a draw
  * period, a line of credit that is drawn at once, pays only interest while drawn, then is repaid over its term.
  */
 export interface HomeEquityLoan {
@@ -145,6 +150,15 @@ export interface DebtPayoff {
   savedByPayingOff: number;
   /** How much less is paid each month while the debt would last; negative when more. */
   monthlyChange: number;
+  /** What paying the debt off does to debt-to-income, when an income was given. */
+  debtToIncome?: DebtToIncome | null;
+}
+
+/** The loan payments and other debts as a share of income, before the refinance and after it; taxes and insurance are left out. */
+export interface DebtToIncome {
+  monthlyIncome: number;
+  beforePercent: number;
+  afterPercent: number;
 }
 
 /** One way of dealing with the debt, costed over the years kept. */

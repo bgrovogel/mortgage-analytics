@@ -1113,7 +1113,17 @@ def refinance(request, horizon=None):
         extra_owed = owed_after(new, k) - without_debt['owed']
         extra_monthly = new['initial'] + first_pmi(new_pmi, new) - without_debt['monthly']
         keep_cost, pay_cost = debt_paid + debt_owed, extra_paid + extra_owed
+        # With an income: what the loan payments (PMI included, taxes and insurance not) and the other debts are of it, now and after.
+        income = D(str(debt['annualIncome'])) if debt.get('annualIncome') else None
+        dti = None
+        if income:
+            other_debts = D(str(debt.get('otherMonthlyDebts', 0)))
+            share = lambda monthly: (monthly * 1200 / income).quantize(D('0.01'), rounding=ROUND_HALF_EVEN)  # noqa: E731
+            dti = {'monthlyIncome': money(income / 12),
+                   'beforePercent': share(current['initial'] + first_pmi(cur_pmi, current) + debt_pay + other_debts),
+                   'afterPercent': share(new['initial'] + first_pmi(new_pmi, new) + other_debts)}
         debt_payoff = {
+            'debtToIncome': dti,
             'monthsToPayOff': len(schedule), 'totalInterest': sum((i for _, i, _ in schedule), D(0)),
             'keepPayments': debt_paid, 'keepOwed': debt_owed, 'keepCost': keep_cost,
             'extraMonthly': extra_monthly, 'extraPayments': extra_paid, 'extraOwed': extra_owed, 'extraCost': pay_cost,

@@ -279,7 +279,7 @@ describe('RefinanceFormComponent', () => {
 
       controls().equityRate.setValue(8.5);
       controls().equityTermYears.setValue(10);
-      controls().equityYearsKept.setValue(5);
+      controls().yearsKept.setValue(5);
 
       expect(last().homeEquityLoan).toEqual({ annualInterestRate: 8.5, termInMonths: 120, yearsKept: 5 });
     });
@@ -422,7 +422,7 @@ describe('RefinanceFormComponent', () => {
       controls().debtBalance.setValue(20_000);
       controls().debtRate.setValue(22);
       controls().debtPayment.setValue(600);
-      controls().debtYearsKept.setValue(5);
+      controls().yearsKept.setValue(5);
 
       expect(last().debtPayoff).toEqual({ balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 5 });
     });
@@ -454,6 +454,54 @@ describe('RefinanceFormComponent', () => {
 
       expect(emitted).toHaveLength(before);
       expect(problems[problems.length - 1]).toContain("The payment must be more than a month's interest, or the debt never shrinks.");
+    });
+
+    it('asks for an income and other debts, and sends them with the debt only when an income is given', () => {
+      askToPayOffADebt();
+      expect(el('debt-income')).not.toBeNull();
+      expect(last().debtPayoff).toEqual({ balance: 10_000, annualInterestRate: 22, monthlyPayment: 400, yearsKept: 7 });
+
+      controls().debtIncome.setValue(120_000);
+      controls().debtOtherDebts.setValue(500);
+
+      expect(last().debtPayoff).toEqual({ balance: 10_000, annualInterestRate: 22, monthlyPayment: 400, yearsKept: 7, annualIncome: 120_000, otherMonthlyDebts: 500 });
+    });
+
+    it('counts no other debts when only an income is given', () => {
+      askToPayOffADebt();
+
+      controls().debtIncome.setValue(72_000);
+
+      expect(last().debtPayoff).toEqual(expect.objectContaining({ annualIncome: 72_000, otherMonthlyDebts: 0 }));
+    });
+
+    it('reopens a saved debt with its income and other debts', () => {
+      const saved: RefinanceRequest = {
+        currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+        newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 50_000,
+        originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+        homeValue: 500_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+        debtPayoff: { balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 7, annualIncome: 120_000, otherMonthlyDebts: 500 },
+      };
+
+      create(saved);
+
+      expect(controls().debtIncome.value).toBe(120_000);
+      expect(controls().debtOtherDebts.value).toBe(500);
+      expect(emitted).toEqual([saved]);
+    });
+
+    it('keeps one years kept for the debt and the home-equity loan, and shows one box for it', () => {
+      askToPayOffADebt();
+      expect(el('years-kept')).not.toBeNull();
+      controls().compareEquityLoan.setValue(true);
+      fixture.detectChanges();
+
+      controls().yearsKept.setValue(12);
+
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="years-kept"]')).toHaveLength(1);
+      expect(last().debtPayoff!.yearsKept).toBe(12);
+      expect(last().homeEquityLoan!.yearsKept).toBe(12);
     });
 
     it('drops the debt again when the cash out goes back to nothing', () => {

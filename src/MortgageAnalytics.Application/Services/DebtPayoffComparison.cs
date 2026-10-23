@@ -1,4 +1,5 @@
 using MortgageAnalytics.Application.Contracts;
+using MortgageAnalytics.Domain;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Refinancing;
 
@@ -37,7 +38,21 @@ internal static class DebtPayoffComparison
         var payOff = new DebtPayoffOptionResponse(extraMonthly, extraPaid, extraOwed, extraPaid + extraOwed);
         return new DebtPayoffResponse(
             debt.Balance, debt.AnnualInterestRate, debt.MonthlyPayment, debt.YearsKept, schedule.Count, schedule.Sum(month => month.Interest),
-            keep, payOff, keep.Cost - payOff.Cost, debt.MonthlyPayment - extraMonthly);
+            keep, payOff, keep.Cost - payOff.Cost, debt.MonthlyPayment - extraMonthly, DebtToIncomeOf(debt, refinance));
+    }
+
+    /// <summary>What the loan payments and other debts are of the income, now and after: PMI counts, taxes and insurance are left out. Null without an income.</summary>
+    private static DebtToIncomeResponse? DebtToIncomeOf(DebtPayoffRequest debt, RefinanceAnalysis refinance)
+    {
+        if (debt.AnnualIncome is not { } income)
+            return null;
+
+        var today = refinance.Current.InitialMonthlyPayment + refinance.CurrentPmi.FirstOn(refinance.Current);
+        var after = refinance.Refinanced.InitialMonthlyPayment + refinance.NewPmi.FirstOn(refinance.Refinanced);
+        decimal Share(decimal monthlyDebts) => Math.Round(monthlyDebts * 1_200m / income, 2, MidpointRounding.ToEven);
+
+        return new DebtToIncomeResponse(
+            Money.Round(income / 12m), Share(today + debt.MonthlyPayment + debt.OtherMonthlyDebts), Share(after + debt.OtherMonthlyDebts));
     }
 
     /// <summary>Each month until the debt is paid: interest on what is owed to the cent, the payment (the last is smaller), and what is owed after.</summary>

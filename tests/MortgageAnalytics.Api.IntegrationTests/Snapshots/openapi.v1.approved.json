@@ -2004,6 +2004,15 @@
           "yearsKept": {
             "type": "integer",
             "format": "int32"
+          },
+          "annualIncome": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "otherMonthlyDebts": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -2046,6 +2055,27 @@
             "format": "double"
           },
           "monthlyChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "debtToIncome": {
+            "$ref": "#/components/schemas/DebtToIncomeResponse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DebtToIncomeResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyIncome": {
+            "type": "number",
+            "format": "double"
+          },
+          "beforePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "afterPercent": {
             "type": "number",
             "format": "double"
           }

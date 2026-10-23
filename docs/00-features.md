@@ -513,7 +513,13 @@ The rest of the current loan against a new one, with closing costs paid at closi
   is gone in 52 payments and costs $31,192 in all; moved onto the reference refinance it adds $119.91 a month, but after 7
   years most of it ($17,928) is still owed, so it comes to $28,000: **$3,192 less**, and the monthly payments fall by
   $480.09. The same $20,000 as a 4% car loan costs $21,682 kept against $28,000 moved: **$6,318 more**, though the
-  payment still falls. A lower payment is the temptation, and the page says plainly when it is not a saving.
+  payment still falls. A lower payment is the temptation, and the page says plainly when it is not a saving. Given a
+  household income and other monthly debts (both optional), it also says what paying the debt off does to **debt-to-income**:
+  the loan payments (PMI included, taxes and insurance not) and the other debts as a share of income, now and after. With a
+  $120,000 income and $500 of other debts, the reference refinance takes it from 32.2% to 25.98%. The debt and a
+  home-equity comparison share one **Years kept** box when both are asked for.
+- **The headline counts the points.** With points bought, the verdict says "Closing costs and $3,000 of points are included",
+  and the break-even says it is the closing costs and points that the interest saved has to cover.
 - **Points on the new loan.** For a fixed rate, **Pay points for this rate** takes the number of points and the rate the
   lender offers without them (the new rate above is then the rate with them). The points are paid with the closing costs
   (financed with them when those are), so every figure on the page counts them, and **Do the points pay?** sets the loan

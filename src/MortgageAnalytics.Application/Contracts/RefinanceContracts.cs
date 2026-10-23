@@ -153,6 +153,14 @@ public sealed record DebtPayoffRequest
     /// <summary>How many years the two ways are costed over, from 1 to 30: what is paid in them and what is still owed after.</summary>
     /// <example>7</example>
     public int YearsKept { get; init; } = 7;
+
+    /// <summary>The household's income a year. With it the response says what paying the debt off does to debt-to-income. Omit for none.</summary>
+    /// <example>120000</example>
+    public decimal? AnnualIncome { get; init; }
+
+    /// <summary>Other debts paid each month besides the home loan and this debt (cars, cards, student loans), counted in debt-to-income. Needs <see cref="AnnualIncome"/>.</summary>
+    /// <example>500</example>
+    public decimal OtherMonthlyDebts { get; init; }
 }
 
 /// <summary>A loan as it was taken out.</summary>
@@ -231,6 +239,7 @@ public sealed record RefinanceResponse(
 /// <param name="PayItOff">Paying it off with the cash out, so the new loan carries it.</param>
 /// <param name="SavedByPayingOff">What paying it off saves: keeping the debt's cost less the other way's. Negative when paying it off costs more.</param>
 /// <param name="MonthlyChange">How much less is paid each month while the debt would last: its payment less what it adds to the new loan's. Negative when more.</param>
+/// <param name="DebtToIncome">What paying the debt off does to debt-to-income, when the request gave an income; otherwise null.</param>
 public sealed record DebtPayoffResponse(
     decimal Balance,
     decimal AnnualInterestRate,
@@ -241,7 +250,18 @@ public sealed record DebtPayoffResponse(
     DebtPayoffOptionResponse KeepDebt,
     DebtPayoffOptionResponse PayItOff,
     decimal SavedByPayingOff,
-    decimal MonthlyChange);
+    decimal MonthlyChange,
+    DebtToIncomeResponse? DebtToIncome = null);
+
+/// <summary>
+/// The loan payments and other debts as a share of income, before the refinance (with the debt) and after it (the debt gone, its
+/// balance in the new loan). The loan payment is principal and interest and PMI: taxes and insurance are left out, so a lender's
+/// own ratio is higher.
+/// </summary>
+/// <param name="MonthlyIncome">The income a month.</param>
+/// <param name="BeforePercent">Today's payment on the loan, the debt's payment and the other debts, over income.</param>
+/// <param name="AfterPercent">The new loan's payment and the other debts, over income.</param>
+public sealed record DebtToIncomeResponse(decimal MonthlyIncome, decimal BeforePercent, decimal AfterPercent);
 
 /// <summary>One way of dealing with the debt, costed over the years kept.</summary>
 /// <param name="MonthlyPayment">What it costs each month: the debt's payment, or what the debt adds to the new loan's payment (PMI included).</param>

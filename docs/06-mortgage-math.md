@@ -638,7 +638,11 @@ Key ideas:
   31,192.21 − 28,000.39 = **$3,191.82**, and the monthly payments fall by 600 − 119.91 = **$480.09** while the card would
   have lasted. The same $20,000 as a 4% car loan (49 payments, 21,682.43) costs **$6,317.96 more** moved onto the mortgage,
   because spread over 30 years most of it is still owed after 7: a lower payment is not a saving. The validator needs the
-  cash out to cover the balance and a payment above a month's interest, or the debt would never shrink.
+  cash out to cover the balance and a payment above a month's interest, or the debt would never shrink. With an income, the
+  **debt-to-income** is (monthly debts × 1,200) ÷ annual income, to two places (half to even): before = today's loan payment
+  with PMI + the debt's payment + other debts; after = the new loan's payment with PMI + other debts. Taxes and insurance
+  are left out, so a lender's own ratio is higher. On a $120,000 income with $500 of other debts, (2,120.34 + 600 + 500) ÷
+  10,000 = **32.20%** becomes (2,098.43 + 500) ÷ 10,000 = **25.98%**; on $72,000 with none, 45.34% becomes 34.97%.
 - **Points on the new loan** (`DiscountPoints`, as on a purchase) cost a percentage of what is borrowed before any financed
   costs, to the cent, and are added to the closing costs (so financed with them when those are); the rate asked is the
   rate with the points. They are then weighed on their own, as two loans of the same size (the other financed costs in

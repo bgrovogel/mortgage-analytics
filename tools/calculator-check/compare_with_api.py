@@ -269,6 +269,10 @@ def random_refinance(rng):
         rate = rng.choice([0, 4.5, 9.99, 22.99, 29.99])
         payment = round(balance * rate / 1200 + rng.choice([25, 120, 350, 1_500]) + 0.01, 2)
         request['debtPayoff'] = {'balance': balance, 'annualInterestRate': rate, 'monthlyPayment': payment, 'yearsKept': rng.randint(1, 30)}
+        # Half also give an income and other debts, for the debt-to-income before and after.
+        if rng.random() < 0.5:
+            request['debtPayoff']['annualIncome'] = rng.choice([48_000, 90_000, 150_000, 400_000])
+            request['debtPayoff']['otherMonthlyDebts'] = rng.choice([0, 350, 1_200])
     # A third buy discount points on the new loan: the rate asked is the rate with them, the lender's rate without is higher.
     if rng.random() < 1 / 3:
         request['newDiscountPoints'] = {'points': rng.choice([0.5, 1, 1.5, 2, 3]),
@@ -290,6 +294,7 @@ def refinance_view(r):
             'extraMonthly': dp['payItOff']['monthlyPayment'], 'extraPayments': dp['payItOff']['payments'],
             'extraOwed': dp['payItOff']['stillOwed'], 'extraCost': dp['payItOff']['cost'],
             'saved': dp['savedByPayingOff'], 'monthlyChange': dp['monthlyChange'],
+            'debtToIncome': dp.get('debtToIncome'),
         },
         'points': pts and {k: pts[k] for k in ('points', 'cost', 'rateWithoutPoints', 'paymentWithPoints', 'paymentWithoutPoints', 'monthlySaving',
                                               'interestSaved', 'netSaving', 'breakEvenPayment')},

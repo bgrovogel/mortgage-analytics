@@ -90,6 +90,12 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
                 .GreaterThan(r => decimal.Round(r.DebtPayoff!.Balance * r.DebtPayoff.AnnualInterestRate / 1_200m, 2, MidpointRounding.AwayFromZero))
                 .WithMessage("The payment must be more than a month's interest, or the debt never shrinks.")
                 .OverridePropertyName("DebtPayoff.MonthlyPayment").WithName("Debt payment");
+            RuleFor(r => r.DebtPayoff!.AnnualIncome).GreaterThan(0m).LessThanOrEqualTo(100_000_000m)
+                .Must(income => decimal.Round(income!.Value, 2) == income).WithMessage("'Income' cannot include fractions of a cent.")
+                .OverridePropertyName("DebtPayoff.AnnualIncome").WithName("Income")
+                .When(r => r.DebtPayoff!.AnnualIncome is not null);
+            RuleFor(r => r.DebtPayoff!.OtherMonthlyDebts).InclusiveBetween(0m, 8_333_333m).WholeCents()
+                .OverridePropertyName("DebtPayoff.OtherMonthlyDebts").WithName("Other debts");
             RuleFor(r => r.DebtPayoff!.YearsKept).InclusiveBetween(1, 30)
                 .OverridePropertyName("DebtPayoff.YearsKept").WithName("Years kept");
             RuleFor(r => r.DebtPayoff)

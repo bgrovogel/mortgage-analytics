@@ -167,6 +167,14 @@ export class RefinanceResultsComponent {
       : t('Each month you pay {0} more while the debt would have lasted ({1}).', monthly)}`;
   });
 
+  /** What paying the debt off does to the share of income that goes to loan payments and debts; null without an income. */
+  readonly debtToIncome = computed(() => {
+    const dti = this.debt()?.debtToIncome;
+    return dti
+      ? t('With your income, your loan payments and other debts go from {0} to {1} of it, before taxes and insurance. Lenders call 36% or less comfortable and may allow up to 45%.', [pct(dti.beforePercent), pct(dti.afterPercent)])
+      : null;
+  });
+
   /** Why a lower payment is not the whole answer: the debt would be gone sooner than the mortgage it is moved onto. */
   readonly debtSpread = computed(() => {
     const d = this.debt();

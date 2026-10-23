@@ -200,6 +200,19 @@ describe('RefinanceResultsComponent', () => {
       expect(text('refi-debt')).toContain('Kept, the debt is gone in 4 yr 4 mo. Paid off with the cash out, it is spread over the new loan, which runs 30 yr.');
     });
 
+    it('says what paying the debt off does to debt-to-income, when an income was given', () => {
+      render(debt({ debtToIncome: { monthlyIncome: 10_000, beforePercent: 32.2, afterPercent: 25.98 } }));
+
+      expect(text('refi-debt-dti')).toBe(
+        'With your income, your loan payments and other debts go from 32.2% to 25.98% of it, before taxes and insurance. Lenders call 36% or less comfortable and may allow up to 45%.');
+    });
+
+    it('says nothing of debt-to-income without an income', () => {
+      render(debt());
+
+      expect(text('refi-debt-dti')).toBeUndefined();
+    });
+
     it('is left out when no debt was paid off', () => {
       render(aRefinanceResponse({ cashOut: 50_000 }));
 
@@ -209,8 +222,9 @@ describe('RefinanceResultsComponent', () => {
 
   describe('points on the new loan', () => {
     /** The API's scenario: 1 point on $300,000, 6% with them and 6.25% without, $6,000 of other closing costs. */
-    const bought = (overrides: Partial<RefinancePoints> = {}): RefinanceResponse => aRefinanceResponse({
+    const bought = (overrides: Partial<RefinancePoints> = {}, response: Partial<RefinanceResponse> = {}): RefinanceResponse => aRefinanceResponse({
       upfrontCosts: 9_000,
+      ...response,
       points: {
         points: 1, cost: 3_000, rateWithPoints: 6, rateWithoutPoints: 6.25, paymentWithPoints: 1_798.65, paymentWithoutPoints: 1_847.15,
         monthlySaving: 48.5, interestSaved: 17_460.36, netSaving: 14_460.36, breakEvenPayment: 48, breakEvenDate: '2030-12-01', ...overrides,
@@ -254,6 +268,28 @@ describe('RefinanceResultsComponent', () => {
       render(bought());
 
       expect(text('refi-points')).toContain('The points are paid with the closing costs, so every figure on this page already counts them.');
+    });
+
+    it('says in the headline that the points are in the figures, and in the break-even that they are covered', () => {
+      render(bought());
+
+      expect(text('refi-verdict')).toContain('Closing costs and $3,000 of points are included.');
+      expect(text('refi-break-even')).toContain('after 25 payments, the interest saved covers the closing costs and points');
+    });
+
+    it('says the break-even is never reached for the closing costs and points together', () => {
+      render(bought({}, { breakEvenDate: null, breakEvenPaymentNumber: null }));
+
+      expect(text('refi-break-even')).toContain('the interest saved never covers the closing costs and points');
+    });
+
+    it('leaves the points out of the headline and the break-even when none were bought', () => {
+      render(aRefinanceResponse());
+
+      expect(text('refi-verdict')).toContain('Closing costs are included.');
+      expect(text('refi-verdict')).not.toContain('points');
+      expect(text('refi-break-even')).toContain('the interest saved covers the closing costs');
+      expect(text('refi-break-even')).not.toContain('and points');
     });
 
     it('is left out when no points were bought', () => {

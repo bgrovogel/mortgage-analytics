@@ -143,8 +143,16 @@
             </div>
             <div class="row">
               <app-number-field [control]="form.controls.debtPayment" [rule]="rules.debtPayment" testId="debt-payment" [label]="'Debt payment a month' | t" />
-              <app-number-field [control]="form.controls.debtYearsKept" [rule]="rules.debtYearsKept" testId="debt-years-kept" />
+              <!-- Asked once: with a home-equity loan too, its box below does for both. -->
+              @if (!comparesEquityLoan()) {
+                <app-number-field [control]="form.controls.yearsKept" [rule]="rules.yearsKept" testId="years-kept" />
+              }
             </div>
+            <div class="row">
+              <app-number-field [control]="form.controls.debtIncome" [rule]="rules.debtIncome" testId="debt-income" />
+              <app-number-field [control]="form.controls.debtOtherDebts" [rule]="rules.debtOtherDebts" testId="debt-other-debts" />
+            </div>
+            <p class="hint" data-testid="debt-income-hint">{{ 'Optional: add your income to see your debt-to-income ratio before and after.' | t }}</p>
             <p class="hint" data-testid="debt-hint">{{ 'The cash pays the debt off and the new loan carries it. Each way is costed over the years you keep them: what you pay, plus what you still owe after.' | t }}</p>
           }
           <label class="checkbox">
@@ -171,7 +179,7 @@
                 <app-number-field [control]="form.controls.equityTermYears" [rule]="rules.equityTermYears" testId="equity-term" [label]="'Term (years)' | t" />
               </div>
             }
-            <app-number-field [control]="form.controls.equityYearsKept" [rule]="rules.equityYearsKept" testId="equity-years-kept" />
+            <app-number-field [control]="form.controls.yearsKept" [rule]="rules.yearsKept" testId="years-kept" />
             @if (comparesEquityLine()) {
               <p class="hint" data-testid="equity-line-hint">{{ "The line is drawn all at once and pays only interest for the draw period, then is repaid. Its rate moves with the market, so enter the rate you expect once it is being repaid." | t }}</p>
             }

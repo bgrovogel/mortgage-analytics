@@ -129,7 +129,8 @@ test.describe('Spanish, on every page', () => {
     await page.getByTestId('cash-out').fill('50000');
     await page.getByTestId('compare-equity-loan').check();
     await page.getByTestId('equity-kind-line').check(); // a line asks for the most words: its fields, its note and its verdict
-    await page.getByTestId('pay-off-debt').check(); // and a debt: a checkbox, four fields, a hint, a verdict, a table and a note
+    await page.getByTestId('pay-off-debt').check(); // and a debt: a checkbox, its fields, hints, a verdict, a table, a note and debt-to-income
+    await page.getByTestId('debt-income').fill('120000');
     await page.getByTestId('buy-points').check(); // and the points: a checkbox, two fields, a hint, a verdict and a table
     await page.getByTestId('close-sheet').click();
     await expect(page.getByTestId('refi-equity-line-note'), 'the home-equity line comparison has arrived').toBeVisible();

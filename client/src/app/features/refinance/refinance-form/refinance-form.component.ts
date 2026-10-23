@@ -112,7 +112,9 @@ export class RefinanceFormComponent implements OnInit {
     debtBalance: [{ value: 10_000, disabled: true }, validatorsFor(rules.debtBalance)],
     debtRate: [{ value: 22, disabled: true }, validatorsFor(rules.debtRate)],
     debtPayment: [{ value: 400, disabled: true }, validatorsFor(rules.debtPayment)],
-    debtYearsKept: [{ value: 7, disabled: true }, validatorsFor(rules.debtYearsKept)],
+    // Optional: with an income, the debt-to-income before and after.
+    debtIncome: [{ value: null as number | null, disabled: true }, validatorsFor(rules.debtIncome)],
+    debtOtherDebts: [{ value: null as number | null, disabled: true }, validatorsFor(rules.debtOtherDebts)],
     // Discount points on the new loan, for a fixed rate: about one point, the lender's rate without them a quarter above the one asked.
     buyPoints: [false],
     points: [{ value: 1, disabled: true }, validatorsFor(rules.points)],
@@ -121,7 +123,8 @@ export class RefinanceFormComponent implements OnInit {
     equityKind: ['loan' as EquityKind],
     equityRate: [{ value: 8, disabled: true }, validatorsFor(rules.equityRate)],
     equityTermYears: [{ value: 15, disabled: true }, validatorsFor(rules.equityTermYears)],
-    equityYearsKept: [{ value: 7, disabled: true }, validatorsFor(rules.equityYearsKept)],
+    // The years both are costed over, asked once however many of them are compared.
+    yearsKept: [{ value: 7, disabled: true }, validatorsFor(rules.yearsKept)],
     equityDrawYears: [{ value: 10, disabled: true }, validatorsFor(rules.equityDrawYears)],
     equityRepaymentRate: [{ value: 8, disabled: true }, validatorsFor(rules.equityRepaymentRate)],
     // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
@@ -232,9 +235,10 @@ export class RefinanceFormComponent implements OnInit {
           ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
           currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
           newPmiRate: initial.newPmiRate ?? 0.5,
+          ...(initial.homeEquityLoan || initial.debtPayoff ? { yearsKept: initial.homeEquityLoan?.yearsKept ?? initial.debtPayoff!.yearsKept } : {}),
           payOffDebt: !!initial.debtPayoff,
           ...(initial.debtPayoff
-            ? { debtBalance: initial.debtPayoff.balance, debtRate: initial.debtPayoff.annualInterestRate, debtPayment: initial.debtPayoff.monthlyPayment, debtYearsKept: initial.debtPayoff.yearsKept }
+            ? { debtBalance: initial.debtPayoff.balance, debtRate: initial.debtPayoff.annualInterestRate, debtPayment: initial.debtPayoff.monthlyPayment, debtIncome: initial.debtPayoff.annualIncome ?? null, debtOtherDebts: initial.debtPayoff.otherMonthlyDebts ?? null }
             : {}),
           buyPoints: !!initial.newDiscountPoints,
           ...(initial.newDiscountPoints ? { points: initial.newDiscountPoints.points, rateWithoutPoints: initial.newDiscountPoints.rateWithoutPoints } : {}),
@@ -244,7 +248,6 @@ export class RefinanceFormComponent implements OnInit {
               equityKind: initial.homeEquityLoan.drawPeriodInMonths ? ('line' as const) : ('loan' as const),
               equityRate: initial.homeEquityLoan.annualInterestRate,
               equityTermYears: initial.homeEquityLoan.termInMonths / 12,
-              equityYearsKept: initial.homeEquityLoan.yearsKept,
               ...(initial.homeEquityLoan.drawPeriodInMonths ? { equityDrawYears: initial.homeEquityLoan.drawPeriodInMonths / 12 } : {}),
               equityRepaymentRate: initial.homeEquityLoan.repaymentRate ?? initial.homeEquityLoan.annualInterestRate,
             }
@@ -322,11 +325,12 @@ export class RefinanceFormComponent implements OnInit {
       if (shown && control.disabled) control.enable({ emitEvent: false });
       else if (!shown && control.enabled) control.disable({ emitEvent: false });
     };
-    for (const control of [c.equityRate, c.equityTermYears, c.equityYearsKept]) show(control, asked);
+    for (const control of [c.equityRate, c.equityTermYears]) show(control, asked);
+    show(c.yearsKept, asked || (v.cashOut > 0 && v.payOffDebt));
     for (const control of [c.equityDrawYears, c.equityRepaymentRate]) show(control, asked && v.equityKind === 'line');
 
     // A debt's fields count only while cash is taken out and a debt is to be paid off with it.
-    for (const control of [c.debtBalance, c.debtRate, c.debtPayment, c.debtYearsKept]) show(control, v.cashOut > 0 && v.payOffDebt);
+    for (const control of [c.debtBalance, c.debtRate, c.debtPayment, c.debtIncome, c.debtOtherDebts]) show(control, v.cashOut > 0 && v.payOffDebt);
 
     // The points' fields count only while points are asked for on a fixed rate; the rate without them starts a quarter above the new rate.
     const pointsAsked = this.pointsApply();
@@ -415,7 +419,7 @@ export class RefinanceFormComponent implements OnInit {
       newPmiRate: v.newPmiRate,
       // Only when asked for, so a comparison without one is the same request as before.
       ...(v.cashOut > 0 && v.payOffDebt
-        ? { debtPayoff: { balance: v.debtBalance, annualInterestRate: v.debtRate, monthlyPayment: v.debtPayment, yearsKept: v.debtYearsKept } }
+        ? { debtPayoff: { balance: v.debtBalance, annualInterestRate: v.debtRate, monthlyPayment: v.debtPayment, yearsKept: v.yearsKept, ...(v.debtIncome ? { annualIncome: v.debtIncome, otherMonthlyDebts: v.debtOtherDebts ?? 0 } : {}) } }
         : {}),
       ...(this.pointsApply() ? { newDiscountPoints: { points: v.points, rateWithoutPoints: v.rateWithoutPoints } } : {}),
       ...(v.cashOut > 0 && v.compareEquityLoan
@@ -423,7 +427,7 @@ export class RefinanceFormComponent implements OnInit {
           homeEquityLoan: {
             annualInterestRate: v.equityRate,
             termInMonths: Math.round(v.equityTermYears * 12),
-            yearsKept: v.equityYearsKept,
+            yearsKept: v.yearsKept,
             ...(v.equityKind === 'line' ? { drawPeriodInMonths: Math.round(v.equityDrawYears * 12), repaymentRate: v.equityRepaymentRate } : {}),
           },
         }

@@ -14,7 +14,7 @@
     <p class="eyebrow">{{ 'Over the life of the loan' | t }}</p>
     <p class="headline">{{ 'Refinancing saves {0}' | t: [dollars(lifetime())] }}</p>
   }
-  <p class="detail">{{ '{0} Closing costs are included.' | t: [paymentSentence()] }}</p>
+  <p class="detail">{{ points() ? ('{0} Closing costs and {1} of points are included.' | t: [paymentSentence(), dollars(points()!.cost)]) : ('{0} Closing costs are included.' | t: [paymentSentence()]) }}</p>
 </section>
 
 <div class="tiles">
@@ -49,10 +49,14 @@
       <span class="label">{{ 'Break-even' | t }}</span>
       @if (r.breakEvenDate) {
         <strong>{{ date(r.breakEvenDate) }}</strong>
-        <small>{{ 'after {0} payments, {1} the closing costs' | t: [r.breakEvenPaymentNumber, (hasPmi() ? ('the interest and PMI saved cover' | t) : ('the interest saved covers' | t))] }}</small>
+        <small>{{ points()
+          ? ('after {0} payments, {1} the closing costs and points' | t: [r.breakEvenPaymentNumber, (hasPmi() ? ('the interest and PMI saved cover' | t) : ('the interest saved covers' | t))])
+          : ('after {0} payments, {1} the closing costs' | t: [r.breakEvenPaymentNumber, (hasPmi() ? ('the interest and PMI saved cover' | t) : ('the interest saved covers' | t))]) }}</small>
       } @else {
         <strong>{{ 'Never' | t }}</strong>
-        <small>{{ '{0} the closing costs' | t: [(hasPmi() ? ('the interest and PMI saved never cover' | t) : ('the interest saved never covers' | t))] }}</small>
+        <small>{{ points()
+          ? ('{0} the closing costs and points' | t: [(hasPmi() ? ('the interest and PMI saved never cover' | t) : ('the interest saved never covers' | t))])
+          : ('{0} the closing costs' | t: [(hasPmi() ? ('the interest and PMI saved never cover' | t) : ('the interest saved never covers' | t))]) }}</small>
       }
     </div>
   }
@@ -148,6 +152,9 @@
       </table>
     </div>
     <p class="hint">{{ debtSpread() }}</p>
+    @if (debtToIncome(); as dti) {
+      <p class="hint" data-testid="refi-debt-dti">{{ dti }}</p>
+    }
   </section>
 }
 

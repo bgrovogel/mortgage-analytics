@@ -73,7 +73,7 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-equity-limit'), '$350,000 of the $500,000 home is within 80%')
       .toContainText('70% of its value, within the 80%');
 
-    await page.getByTestId('equity-years-kept').fill('30');
+    await page.getByTestId('years-kept').fill('30');
 
     await expect(page.getByTestId('refi-equity-verdict'), 'over 30 years, the answer is costed again').toContainText('over 30 years');
 
@@ -103,7 +103,7 @@ test.describe('Refinance', () => {
       .toContainText('interest only for 10 yr, then $449.86 a month for 20 yr at 9%');
     await expect(page.getByTestId('refi-equity-cost'), 'the totals, to the dollar: the line and the current loan').toContainText('$516,112');
 
-    await page.getByTestId('equity-years-kept').fill('12');
+    await page.getByTestId('years-kept').fill('12');
 
     await expect(page.getByTestId('refi-equity-verdict'), 'kept past the draw period, the repayment is costed too')
       .toContainText('costs $36,000 more over 12 years');
@@ -132,6 +132,12 @@ test.describe('Refinance', () => {
       .toContainText('Each month you pay $480.09 less');
     await expect(page.getByTestId('refi-debt-table'), 'keeping it costs $31,192 in all').toContainText('$31,192');
     await expect(page.getByTestId('refi-debt-table'), 'moving it onto the mortgage $28,000, most of it still owed').toContainText('$28,000');
+
+    // With a $120,000 income and $500 of other debts: (2,120.34 + 600 + 500) over 10,000, then (2,098.43 + 500) over 10,000.
+    await page.getByTestId('debt-income').fill('120000');
+    await page.getByTestId('debt-other-debts').fill('500');
+    await expect(page.getByTestId('refi-debt-dti'), 'the loan payments and debts fall from 32.2% to 25.98% of income')
+      .toContainText('go from 32.2% to 25.98% of it');
 
     await page.getByTestId('debt-rate').fill('4');
     await page.getByTestId('debt-payment').fill('450');
