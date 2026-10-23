@@ -123,11 +123,29 @@
             <span><strong>{{ 'Compare with a home-equity loan' | t }}</strong> {{ '(keep your loan, borrow the cash separately)' | t }}</span>
           </label>
           @if (comparesEquityLoan()) {
-            <div class="row">
-              <app-number-field [control]="form.controls.equityRate" [rule]="rules.equityRate" testId="equity-rate" [label]="'Interest rate' | t" />
-              <app-number-field [control]="form.controls.equityTermYears" [rule]="rules.equityTermYears" testId="equity-term" [label]="'Term (years)' | t" />
+            <div class="segmented" role="radiogroup" [attr.aria-label]="'Borrow the cash with' | t" data-testid="equity-kind">
+              <label><input type="radio" formControlName="equityKind" value="loan" data-testid="equity-kind-loan" /> {{ 'A loan' | t }}</label>
+              <label><input type="radio" formControlName="equityKind" value="line" data-testid="equity-kind-line" /> {{ 'A line of credit' | t }}</label>
             </div>
+            @if (comparesEquityLine()) {
+              <div class="row">
+                <app-number-field [control]="form.controls.equityRate" [rule]="rules.equityRate" testId="equity-rate" [label]="'Rate while drawing' | t" />
+                <app-number-field [control]="form.controls.equityDrawYears" [rule]="rules.equityDrawYears" testId="equity-draw-years" [label]="'Draw period (years)' | t" />
+              </div>
+              <div class="row">
+                <app-number-field [control]="form.controls.equityRepaymentRate" [rule]="rules.equityRepaymentRate" testId="equity-repayment-rate" />
+                <app-number-field [control]="form.controls.equityTermYears" [rule]="rules.equityTermYears" testId="equity-term" [label]="'Repayment term (years)' | t" />
+              </div>
+            } @else {
+              <div class="row">
+                <app-number-field [control]="form.controls.equityRate" [rule]="rules.equityRate" testId="equity-rate" [label]="'Interest rate' | t" />
+                <app-number-field [control]="form.controls.equityTermYears" [rule]="rules.equityTermYears" testId="equity-term" [label]="'Term (years)' | t" />
+              </div>
+            }
             <app-number-field [control]="form.controls.equityYearsKept" [rule]="rules.equityYearsKept" testId="equity-years-kept" />
+            @if (comparesEquityLine()) {
+              <p class="hint" data-testid="equity-line-hint">{{ "The line is drawn all at once and pays only interest for the draw period, then is repaid. Its rate moves with the market, so enter the rate you expect once it is being repaid." | t }}</p>
+            }
             <p class="hint" data-testid="equity-hint">{{ 'Both ways are costed over the years you keep the home or the loans: what you pay in them, plus what you still owe after.' | t }}</p>
           }
         }

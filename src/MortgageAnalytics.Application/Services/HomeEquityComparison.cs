@@ -7,8 +7,10 @@ using MortgageAnalytics.Domain.Refinancing;
 namespace MortgageAnalytics.Application.Services;
 
 /// <summary>
-/// Cash from the home's equity, two ways. Keep the current loan and borrow the cash as a home-equity loan beside it, or
-/// refinance with the cash added: one new loan, replacing the one that is kept in the first way. Each is costed over the
+/// Cash from the home's equity, two ways. Keep the current loan and borrow the cash as a home-equity loan (or a line of
+/// credit) beside it, or refinance with the cash added: one new loan, replacing the one that is kept in the first way. A
+/// line is drawn in full at once and pays only interest for its draw period, then is repaid over its term at the rate
+/// expected by then, so what it costs in the years kept depends on where they fall against the draw period. Each is costed over the
 /// years kept as everything paid in them (PMI included) plus what is still owed after, plus what is paid at closing, so a
 /// way that borrows more cheaply for longer is not mistaken for one that costs less.
 /// </summary>
@@ -30,15 +32,23 @@ internal static class HomeEquityComparison
         var months = equity.YearsKept * 12;
         var amount = request.CashOut;
         var firstPayment = analysis.Current.Payments[0].DueDate;
-        var schedule = Calculator.Generate(new LoanTerms(amount, equity.AnnualInterestRate, equity.TermInMonths, firstPayment), ExtraPaymentPlan.None, RecastPolicy.Never);
+        var drawMonths = equity.DrawPeriodInMonths;
+        var repaymentRate = drawMonths > 0 ? equity.RepaymentRate ?? equity.AnnualInterestRate : equity.AnnualInterestRate;
+        var schedule = Calculator.Generate(new LoanTerms(amount, repaymentRate, equity.TermInMonths, firstPayment), ExtraPaymentPlan.None, RecastPolicy.Never);
 
+        // A line pays interest only while it is drawn; a loan has no such months, so its schedule is the whole of it.
+        var interestOnly = drawMonths > 0 ? LoanTerms.MonthlyInterestOn(amount, equity.AnnualInterestRate) : 0m;
+        var drawn = Math.Min(months, drawMonths);
+        var repayingMonths = months - drawn;
         var currentPayments = Paid(analysis.Current, analysis.CurrentPmi.ChargesOn(analysis.Current), months);
-        var equityPayments = Paid(schedule, [], months);
+        var equityPayments = drawn * interestOnly + Paid(schedule, [], repayingMonths);
+        var equityOwed = months <= drawMonths ? amount : OwedAfter(schedule, repayingMonths);
+        var equityFirstPayment = drawMonths > 0 ? interestOnly : schedule.InitialMonthlyPayment;
         var keep = new HomeEquityOptionResponse(
-            analysis.Current.InitialMonthlyPayment + analysis.CurrentPmi.FirstOn(analysis.Current) + schedule.InitialMonthlyPayment,
-            schedule.InitialMonthlyPayment,
+            analysis.Current.InitialMonthlyPayment + analysis.CurrentPmi.FirstOn(analysis.Current) + equityFirstPayment,
+            equityFirstPayment,
             currentPayments + equityPayments,
-            OwedAfter(analysis.Current, months) + OwedAfter(schedule, months),
+            OwedAfter(analysis.Current, months) + equityOwed,
             0m,
             0m);
         var refinance = new HomeEquityOptionResponse(
@@ -58,7 +68,8 @@ internal static class HomeEquityComparison
             home is { } value ? Math.Max(0m, Math.Round(value * MaxCombinedLoanToValue - owed, 2)) : null,
             home is { } v ? Math.Round((owed + amount) / v * 100m, 2) : null,
             home is { } h && owed + amount > h * MaxCombinedLoanToValue,
-            keep, refinance, refinance.Cost - keep.Cost);
+            keep, refinance, refinance.Cost - keep.Cost,
+            drawMonths, repaymentRate, schedule.InitialMonthlyPayment);
     }
 
     /// <summary>What is paid in the first <paramref name="months"/> payments: principal and interest, extra principal, and the PMI charged with them.</summary>

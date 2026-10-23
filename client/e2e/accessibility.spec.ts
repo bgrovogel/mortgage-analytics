@@ -128,6 +128,11 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
       await settled(page);
       expect(await violations(page), 'Refinance with a home-equity loan compared breaks no accessibility rule').toEqual([]);
+
+      await page.getByTestId('equity-kind-line').check();
+      await expect(page.getByTestId('refi-equity-line-note'), 'the line is compared').toBeVisible();
+      await settled(page);
+      expect(await violations(page), 'Refinance with a home-equity line compared breaks no accessibility rule').toEqual([]);
     });
 
     test('pay off or invest: every results tab', async ({ page }) => {

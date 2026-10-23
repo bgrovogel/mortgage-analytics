@@ -268,4 +268,21 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
             AssertInvalid(withCash with { HomeEquityLoan = Equity with { YearsKept = 31 } }, "HomeEquityLoan.YearsKept", "and at most 30");
         });
     }
+
+    [Test]
+    public void ALineOfCredit_NeedsADrawPeriodAndARepaymentRateWithinLimits()
+    {
+        var line = Valid with { CashOut = 50_000m, HomeEquityLoan = Equity with { DrawPeriodInMonths = 120, RepaymentRate = 9m } };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(line, "ten years of interest only, then repaid at 9%");
+            AssertValid(Valid with { CashOut = 50_000m, HomeEquityLoan = Equity with { DrawPeriodInMonths = 120 } }, "no expected repayment rate keeps the line's rate");
+            AssertValid(Valid with { CashOut = 50_000m, HomeEquityLoan = Equity with { DrawPeriodInMonths = 360, RepaymentRate = 0m } }, "30 years drawn, and a 0% rate is allowed");
+            AssertInvalid(line with { HomeEquityLoan = line.HomeEquityLoan! with { DrawPeriodInMonths = -1 } }, "HomeEquityLoan.DrawPeriodInMonths", "a draw period is not negative");
+            AssertInvalid(line with { HomeEquityLoan = line.HomeEquityLoan! with { DrawPeriodInMonths = 361 } }, "HomeEquityLoan.DrawPeriodInMonths", "and is at most 30 years");
+            AssertInvalid(line with { HomeEquityLoan = line.HomeEquityLoan! with { RepaymentRate = -0.01m } }, "HomeEquityLoan.RepaymentRate", "a rate is not negative");
+            AssertInvalid(line with { HomeEquityLoan = line.HomeEquityLoan! with { RepaymentRate = 30.01m } }, "HomeEquityLoan.RepaymentRate", "and has a ceiling");
+        });
+    }
 }

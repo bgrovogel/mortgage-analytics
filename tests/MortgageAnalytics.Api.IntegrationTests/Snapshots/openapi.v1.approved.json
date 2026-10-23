@@ -2155,6 +2155,15 @@
             "type": "integer",
             "format": "int32"
           },
+          "drawPeriodInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repaymentRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "yearsKept": {
             "type": "integer",
             "format": "int32"
@@ -2231,6 +2240,18 @@
             "$ref": "#/components/schemas/HomeEquityOptionResponse"
           },
           "savedByEquityLoan": {
+            "type": "number",
+            "format": "double"
+          },
+          "drawPeriodInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repaymentRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "repaymentPayment": {
             "type": "number",
             "format": "double"
           }

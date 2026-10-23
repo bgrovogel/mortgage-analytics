@@ -1080,19 +1080,33 @@ def refinance(request):
     heq = request.get('homeEquityLoan')
     if heq and cash_out > 0:
         k = heq['yearsKept'] * 12
-        equity = amortize(cash_out, D(str(heq['annualInterestRate'])), heq['termInMonths'])
+        rate_now = D(str(heq['annualInterestRate']))
+        draw = heq.get('drawPeriodInMonths') or 0
+        # A line of credit draws the cash on day one and pays only interest for the draw period, then repays it over the
+        # term at the rate expected by then (the same rate unless one is given); a loan repays from the start.
+        repay_rate = rate_now if heq.get('repaymentRate') is None else D(str(heq['repaymentRate']))
+        interest_only = money(cash_out * rate_now / 1200) if draw > 0 else None
+        equity = amortize(cash_out, repay_rate if draw > 0 else rate_now, heq['termInMonths'])
         paid = lambda s, pmi: (sum((r['scheduled'] + r['extra'] for r in s['rows'][:k]), D(0))  # noqa: E731
                                + sum((pmi_of(pmi, r) for r in s['rows'][:k]), D(0)))
         owed = lambda s: D(0) if len(s['rows']) <= k else s['rows'][k - 1]['balance']  # noqa: E731
-        keep_cost = paid(current, cur_pmi) + paid(equity, no_pmi) + owed(current) + owed(equity)
+        if draw > 0:
+            after = max(0, k - draw)
+            equity_paid = min(k, draw) * interest_only + sum((r['scheduled'] + r['extra'] for r in equity['rows'][:after]), D(0))
+            equity_owed = cash_out if k <= draw else (D(0) if len(equity['rows']) <= after else equity['rows'][after - 1]['balance'])
+            equity_first = interest_only
+        else:
+            equity_paid, equity_owed, equity_first = paid(equity, no_pmi), owed(equity), equity['initial']
+        keep_cost = paid(current, cur_pmi) + equity_paid + owed(current) + equity_owed
         refi_cost = paid(new, new_pmi) + owed(new) + upfront
         owed_now = bal
         home_equity = {
             'amount': cash_out,
-            'equityPayment': equity['initial'],
-            'keepMonthly': current['initial'] + first_pmi(cur_pmi, current) + equity['initial'],
-            'keepPayments': paid(current, cur_pmi) + paid(equity, no_pmi),
-            'keepOwed': owed(current) + owed(equity),
+            'equityPayment': equity_first, 'repaymentPayment': equity['initial'],
+            'drawPeriodInMonths': draw, 'repaymentRate': repay_rate if draw > 0 else rate_now,
+            'keepMonthly': current['initial'] + first_pmi(cur_pmi, current) + equity_first,
+            'keepPayments': paid(current, cur_pmi) + equity_paid,
+            'keepOwed': owed(current) + equity_owed,
             'keepCost': keep_cost,
             'refiMonthly': new['initial'] + first_pmi(new_pmi, new),
             'refiPayments': paid(new, new_pmi), 'refiOwed': owed(new), 'refiUpfront': upfront, 'refiCost': refi_cost,

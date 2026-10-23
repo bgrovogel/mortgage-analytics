@@ -107,6 +107,8 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
         {
             RuleFor(r => r.HomeEquityLoan!.AnnualInterestRate).InclusiveBetween(0m, 30m).WithName("Home-equity loan rate");
             RuleFor(r => r.HomeEquityLoan!.TermInMonths).InclusiveBetween(1, 360).WithName("Home-equity loan term");
+            RuleFor(r => r.HomeEquityLoan!.DrawPeriodInMonths).InclusiveBetween(0, 360).WithName("Draw period");
+            RuleFor(r => r.HomeEquityLoan!.RepaymentRate).InclusiveBetween(0m, 30m).When(r => r.HomeEquityLoan!.RepaymentRate is not null).WithName("Repayment rate");
             RuleFor(r => r.HomeEquityLoan!.YearsKept).InclusiveBetween(1, 30).WithName("Years kept");
         });
 

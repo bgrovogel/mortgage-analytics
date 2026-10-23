@@ -81,7 +81,7 @@ for (const { name, viewport, phone } of SIZES) {
       });
     }
 
-    test('/refinance with a home-equity loan compared breaks no layout rule', async ({ page }) => {
+    test('/refinance with a home-equity line compared breaks no layout rule', async ({ page }) => {
       await page.goto('/refinance');
       await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
       // Up to 860px the form is a sheet that opens from the results, with the new loan one step in.
@@ -93,10 +93,12 @@ for (const { name, viewport, phone } of SIZES) {
       await page.getByTestId('section-new-extras').locator('summary').click();
       await page.getByTestId('cash-out').fill('50000');
       await page.getByTestId('compare-equity-loan').check();
+      await page.getByTestId('equity-kind-line').check(); // the line asks for the most: two more fields, and a note
       if (sheet) await page.getByTestId('close-sheet').click();
       await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
+      await expect(page.getByTestId('refi-equity-line-note'), 'as a line of credit').toBeVisible();
 
-      expect(await layoutProblems(page, phone), `/refinance with a home-equity loan on ${name}`).toEqual([]);
+      expect(await layoutProblems(page, phone), `/refinance with a home-equity line on ${name}`).toEqual([]);
     });
   });
 }

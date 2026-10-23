@@ -17,4 +17,6 @@ export const REFINANCE_RULES = {
   equityRate: { get label() { return t('Home-equity loan rate'); }, unit: '%', min: 0, max: 30, decimals: 4 },
   equityTermYears: { get label() { return t('Home-equity loan term'); }, unit: 'years', min: 1 / 12, max: 30 },
   equityYearsKept: { get label() { return t('Years kept'); }, unit: 'years', min: 1, max: 30, whole: true },
+  equityDrawYears: { get label() { return t('Draw period'); }, unit: 'years', min: 1 / 12, max: 30 },
+  equityRepaymentRate: { get label() { return t('Rate once repaying'); }, unit: '%', min: 0, max: 30, decimals: 4 },
 } as const satisfies FieldRules;

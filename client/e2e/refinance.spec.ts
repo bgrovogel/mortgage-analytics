@@ -82,6 +82,36 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-home-equity'), 'switching it off takes the panel away').toHaveCount(0);
   });
 
+  test('borrowing the cash as a home-equity line instead: interest only while it is drawn, then repaid', async ({ page }) => {
+    await reference(page);
+    await page.getByTestId('home-value').fill('500000');
+    await page.getByTestId('section-new-extras').locator('summary').click();
+    await page.getByTestId('cash-out').fill('50000');
+    await page.getByTestId('compare-equity-loan').check();
+    await expect(page.getByTestId('equity-draw-years'), 'a loan has no draw period to ask for').toHaveCount(0);
+
+    await page.getByTestId('equity-kind-line').check();
+    await page.getByTestId('equity-term').fill('20');
+    await page.getByTestId('equity-repayment-rate').fill('9');
+
+    // 8% interest only for 10 years, then 20 years at an expected 9%, kept 7 years: worked out independently in Python Decimal.
+    await expect(page.getByTestId('refi-equity-verdict'), 'the line costs more than the refinance, as the API works it out')
+      .toContainText('on a home-equity line costs $20,106 more over 7 years than refinancing');
+    await expect(page.getByTestId('refi-equity-line-note'), 'the line is interest only, then repaid at the rate expected')
+      .toContainText('interest only for 10 yr, then $449.86 a month for 20 yr at 9%');
+    await expect(page.getByTestId('refi-equity-cost'), 'the totals, to the dollar: the line and the current loan').toContainText('$516,112');
+
+    await page.getByTestId('equity-years-kept').fill('12');
+
+    await expect(page.getByTestId('refi-equity-verdict'), 'kept past the draw period, the repayment is costed too')
+      .toContainText('costs $36,000 more over 12 years');
+
+    await page.getByTestId('equity-kind-loan').check();
+
+    await expect(page.getByTestId('refi-equity-verdict'), 'back to a plain loan').toContainText('borrowing $50,000 separately');
+    await expect(page.getByTestId('refi-equity-line-note'), 'with no line note').toHaveCount(0);
+  });
+
   test('keeping the payoff date stops the clock restarting', async ({ page }) => {
     await reference(page);
     await page.getByTestId('new-term').selectOption('keep');

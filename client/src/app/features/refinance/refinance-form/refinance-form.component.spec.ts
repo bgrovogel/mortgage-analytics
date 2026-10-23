@@ -293,6 +293,91 @@ describe('RefinanceFormComponent', () => {
       expect(last().homeEquityLoan).toBeUndefined();
     });
 
+    describe('as a line of credit', () => {
+      const askForALine = () => {
+        create();
+        controls().cashOut.setValue(50_000);
+        controls().compareEquityLoan.setValue(true);
+        fixture.detectChanges();
+      };
+      const pick = (kind: 'loan' | 'line') => {
+        (el(`equity-kind-${kind}`) as HTMLInputElement).click();
+        fixture.detectChanges();
+      };
+
+      it('is a loan until a line is chosen, with the line fields kept out of the way', () => {
+        askForALine();
+
+        expect((el('equity-kind-loan') as HTMLInputElement).checked).toBe(true);
+        expect(el('equity-draw-years')).toBeNull();
+        expect(el('equity-repayment-rate')).toBeNull();
+        expect(last().homeEquityLoan).toEqual({ annualInterestRate: 8, termInMonths: 180, yearsKept: 7 });
+      });
+
+      it('asks for the draw period and the rate once repaying, and sends them in months and percent', () => {
+        askForALine();
+
+        pick('line');
+        expect(el('equity-draw-years')).not.toBeNull();
+        expect(el('equity-repayment-rate')).not.toBeNull();
+        controls().equityRate.setValue(8);
+        controls().equityDrawYears.setValue(10);
+        controls().equityTermYears.setValue(20);
+        controls().equityRepaymentRate.setValue(9);
+
+        expect(last().homeEquityLoan).toEqual({ annualInterestRate: 8, termInMonths: 240, yearsKept: 7, drawPeriodInMonths: 120, repaymentRate: 9 });
+      });
+
+      it('goes back to a plain loan, sending neither of the line fields', () => {
+        askForALine();
+        pick('line');
+        pick('loan');
+
+        expect(last().homeEquityLoan).toEqual({ annualInterestRate: 8, termInMonths: 180, yearsKept: 7 });
+        expect(el('equity-draw-years')).toBeNull();
+      });
+
+      it('is invalid with a draw period above 30 years, and sends nothing until it is fixed', () => {
+        askForALine();
+        pick('line');
+        const sent = emitted.length;
+
+        controls().equityDrawYears.setValue(31);
+
+        expect(controls().equityDrawYears.valid).toBe(false);
+        expect(emitted.length).toBe(sent);
+      });
+
+      it('reopens a saved line as a line, with its draw period in years and its rate once repaying', () => {
+        const saved: RefinanceRequest = {
+          currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+          newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 50_000,
+          originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+          homeValue: 500_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+          homeEquityLoan: { annualInterestRate: 8, termInMonths: 240, yearsKept: 7, drawPeriodInMonths: 120, repaymentRate: 9 },
+        };
+
+        create(saved);
+
+        expect(controls().equityKind.value).toBe('line');
+        expect(controls().equityDrawYears.value).toBe(10);
+        expect(controls().equityRepaymentRate.value).toBe(9);
+        expect(emitted).toEqual([saved]);
+      });
+
+      it('reopens a saved line with no expected rate as one repaid at its own rate', () => {
+        create({
+          currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+          newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 50_000,
+          originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+          homeValue: 500_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+          homeEquityLoan: { annualInterestRate: 8, termInMonths: 240, yearsKept: 7, drawPeriodInMonths: 120 },
+        });
+
+        expect(controls().equityRepaymentRate.value).toBe(8);
+      });
+    });
+
     it('reopens a saved comparison with its home-equity loan, asked for again', () => {
       const saved: RefinanceRequest = {
         currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,

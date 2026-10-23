@@ -633,6 +633,16 @@ Key ideas:
   in all: the home-equity loan costs **$16,044.28 more** here, because keeping the 7% loan costs more than refinancing
   to 6%. Equity available is 80% of the home's value less what is owed ($100,000 at $500,000); the combined
   loan-to-value is (owed + cash) ÷ value (70%), and it is flagged over 80%.
+- **A line of credit instead of a loan** (a HELOC) is drawn in full at once and pays **interest only** for its draw
+  period: balance × rate ÷ 1,200 a month, to the cent, with nothing paid down. When the draw period ends it is repaid
+  like a loan over its term, at the rate expected by then (a line's rate moves with the market, so the rate while it is
+  drawn is not assumed to be the rate it is repaid at; with none given, its own rate is kept). $50,000 at 8% interest
+  only for 120 months is 50,000 × 8% ÷ 12 = **$333.33** a month; repaid over 240 months at an expected 9% it is
+  **$449.86**. Kept 7 years, inside the draw period: 206,108.28 paid (84 payments on the current loan and 84 of interest
+  on the line) and 310,003.67 still owed, **all $50,000 of the line** and 260,003.67 of the current loan, 516,111.95 in
+  all against the refinance's 496,005.71: the line costs **$20,106.24 more**. Kept 12 years, past the draw period: 120
+  interest-only payments, then 24 of repayment, 356,125.20 paid and 264,825.95 owed, 620,951.15 in all against 584,951.36:
+  **$35,999.79 more**.
 
 ---
 

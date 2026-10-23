@@ -153,6 +153,44 @@ public class RefinanceApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task AHomeEquityLine_IsComparedAsInterestOnlyThenRepaid_WhenADrawPeriodIsGiven()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            closingCosts = 6_000, cashOut = 50_000, homeValue = 500_000,
+            homeEquityLoan = new { annualInterestRate = 8, termInMonths = 240, yearsKept = 7, drawPeriodInMonths = 120, repaymentRate = 9 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze?includePayments=false", request);
+        var equity = (await ReadJsonAsync(response)).GetProperty("homeEquity");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the request is valid");
+            Assert.That(equity.GetProperty("drawPeriodInMonths").GetInt32(), Is.EqualTo(120), "the draw period is echoed");
+            Assert.That(equity.GetProperty("repaymentPayment").GetDecimal(), Is.EqualTo(449.86m), "the payment once it is being repaid, at 9%");
+            Assert.That(equity.GetProperty("keepAndBorrow").GetProperty("equityLoanPayment").GetDecimal(), Is.EqualTo(333.33m), "interest only while drawn");
+            Assert.That(equity.GetProperty("savedByEquityLoan").GetDecimal(), Is.EqualTo(-20_106.24m), "the comparison, as the service works it out");
+        });
+    }
+
+    [Test]
+    public async Task AHomeEquityLine_WithADrawPeriodOverThirtyYears_Returns400()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            cashOut = 50_000,
+            homeEquityLoan = new { annualInterestRate = 8, termInMonths = 240, yearsKept = 7, drawPeriodInMonths = 361 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze", request);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "a draw period is at most 30 years");
+    }
+
+    [Test]
     public async Task AHomeEquityLoan_WithoutCashOut_Returns400()
     {
         var request = new

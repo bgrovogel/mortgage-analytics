@@ -38,10 +38,19 @@ export interface RefinanceRequest {
   homeEquityLoan?: HomeEquityLoan | null;
 }
 
-/** A fixed-rate home-equity loan: the cash out borrowed as a second loan (mirrors HomeEquityLoanRequest). */
+/**
+ * The cash out borrowed as a second loan (mirrors HomeEquityLoanRequest): a fixed-rate home-equity loan, or, with a draw
+ * period, a line of credit that is drawn at once, pays only interest while drawn, then is repaid over its term.
+ */
 export interface HomeEquityLoan {
+  /** A loan's rate; a line's rate while it is drawn. */
   annualInterestRate: number;
+  /** A loan's term; the months a line is repaid over once the draw period ends. */
   termInMonths: number;
+  /** For a line of credit: the months it is drawn, interest only. Absent (or 0) for a loan. */
+  drawPeriodInMonths?: number;
+  /** For a line of credit: the rate expected once repayment begins. Absent keeps annualInterestRate. */
+  repaymentRate?: number | null;
   /** The years both ways are costed over, 1 to 30. */
   yearsKept: number;
 }
@@ -119,6 +128,12 @@ export interface HomeEquityComparison {
   cashOutRefinance: HomeEquityOption;
   /** What the home-equity loan saves against the refinance; negative when it costs more. */
   savedByEquityLoan: number;
+  /** The months a line of credit is drawn, interest only; 0 for a loan. */
+  drawPeriodInMonths: number;
+  /** The rate it is repaid at: a loan's rate, or the rate expected once a line's repayment begins. */
+  repaymentRate: number;
+  /** Its monthly payment once repaid: a loan's from the start, a line's after the draw period. */
+  repaymentPayment: number;
 }
 
 /** One way of getting the cash, costed over the years kept. */

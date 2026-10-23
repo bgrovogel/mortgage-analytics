@@ -154,9 +154,24 @@ export class RefinanceResultsComponent {
     const e = this.equity();
     if (!e) return null;
     const saved = e.savedByEquityLoan;
+    const args = [usd(e.amount), usd(Math.abs(saved)), yearsOf(e.yearsKept)];
+    if (e.drawPeriodInMonths > 0) {
+      return saved >= 0
+        ? t('Keeping your loan and borrowing {0} on a home-equity line costs {1} less over {2} than refinancing.', args)
+        : t('Keeping your loan and borrowing {0} on a home-equity line costs {1} more over {2} than refinancing.', args);
+    }
     return saved >= 0
-      ? t('Keeping your loan and borrowing {0} separately costs {1} less over {2} than refinancing.', [usd(e.amount), usd(saved), yearsOf(e.yearsKept)])
-      : t('Keeping your loan and borrowing {0} separately costs {1} more over {2} than refinancing.', [usd(e.amount), usd(-saved), yearsOf(e.yearsKept)]);
+      ? t('Keeping your loan and borrowing {0} separately costs {1} less over {2} than refinancing.', args)
+      : t('Keeping your loan and borrowing {0} separately costs {1} more over {2} than refinancing.', args);
+  });
+
+  /** For a line of credit, how long it is interest only, what it is repaid at after, and that its rate is an expectation; null for a loan. */
+  readonly equityLineNote = computed(() => {
+    const e = this.equity();
+    if (!e || e.drawPeriodInMonths <= 0) return null;
+    return `${t('The line is interest only for {0}, then {1} a month for {2} at {3}.', [
+      formatMonths(e.drawPeriodInMonths), usdCents(e.repaymentPayment), formatMonths(e.termInMonths), pct(e.repaymentRate),
+    ])} ${t("A line's rate moves with the market, so this rests on the rate you expect once it is being repaid.")}`;
   });
 
   /** How much could be borrowed against the home and where the loans together stand against the 80% lenders allow; null without a home value. */

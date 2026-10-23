@@ -89,16 +89,33 @@ public sealed record RefinanceRequest
     public HomeEquityLoanRequest? HomeEquityLoan { get; init; }
 }
 
-/// <summary>A fixed-rate home-equity loan: the cash taken out, borrowed as a second loan and repaid on its own schedule.</summary>
+/// <summary>
+/// The cash taken out, borrowed as a second loan and repaid on its own schedule: a fixed-rate home-equity loan, or, with a
+/// <see cref="DrawPeriodInMonths"/>, a home-equity line of credit (drawn at once, interest only, then repaid).
+/// </summary>
 public sealed record HomeEquityLoanRequest
 {
-    /// <summary>The home-equity loan's annual interest rate, as a percentage.</summary>
+    /// <summary>The home-equity loan's annual interest rate, as a percentage. For a line of credit, the rate while it is drawn.</summary>
     /// <example>8</example>
     public decimal AnnualInterestRate { get; init; }
 
-    /// <summary>Its term in months, up to 30 years.</summary>
+    /// <summary>Its term in months, up to 30 years. For a line of credit, the months it is repaid over once the draw period ends.</summary>
     /// <example>180</example>
     public int TermInMonths { get; init; }
+
+    /// <summary>
+    /// For a line of credit, the months it is drawn, paying only interest, before repayment begins, up to 30 years. 0 for a
+    /// loan, which is repaid from the start.
+    /// </summary>
+    /// <example>0</example>
+    public int DrawPeriodInMonths { get; init; }
+
+    /// <summary>
+    /// For a line of credit, the rate expected once repayment begins, as a percentage: a line's rate moves with the market, so
+    /// the rate while it is drawn is not necessarily the one it is repaid at. Omit to keep <see cref="AnnualInterestRate"/>.
+    /// </summary>
+    /// <example>9</example>
+    public decimal? RepaymentRate { get; init; }
 
     /// <summary>How many years the two ways are costed over, from 1 to 30: what is paid in them and what is still owed after.</summary>
     /// <example>7</example>
@@ -173,6 +190,9 @@ public sealed record RefinanceResponse(
 /// <param name="KeepAndBorrow">Keeping the current loan and borrowing the cash as a home-equity loan.</param>
 /// <param name="CashOutRefinance">Refinancing to take the cash out, as the rest of this response prices it.</param>
 /// <param name="SavedByEquityLoan">What the home-equity loan saves: the refinance's cost less the other way's. Negative when it costs more.</param>
+/// <param name="DrawPeriodInMonths">The months a line of credit is drawn, interest only; 0 for a loan.</param>
+/// <param name="RepaymentRate">The rate it is repaid at: a loan's rate, or the rate expected once a line's repayment begins.</param>
+/// <param name="RepaymentPayment">Its monthly payment once it is being repaid: a loan's payment from the start, a line's after the draw period.</param>
 public sealed record HomeEquityResponse(
     decimal Amount,
     decimal AnnualInterestRate,
@@ -183,11 +203,14 @@ public sealed record HomeEquityResponse(
     bool ExceedsLimit,
     HomeEquityOptionResponse KeepAndBorrow,
     HomeEquityOptionResponse CashOutRefinance,
-    decimal SavedByEquityLoan);
+    decimal SavedByEquityLoan,
+    int DrawPeriodInMonths,
+    decimal RepaymentRate,
+    decimal RepaymentPayment);
 
 /// <summary>One way of getting the cash, costed over the years kept.</summary>
 /// <param name="MonthlyPayment">What is paid each month at first: every loan's payment, PMI included.</param>
-/// <param name="EquityLoanPayment">Of which the home-equity loan's; 0 for the refinance.</param>
+/// <param name="EquityLoanPayment">Of which the home-equity loan's (a line's, while it is drawn: interest only); 0 for the refinance.</param>
 /// <param name="Payments">Everything paid in the years kept, PMI included.</param>
 /// <param name="StillOwed">What is still owed on every loan after them.</param>
 /// <param name="UpfrontCosts">Cash paid at closing: a refinance's closing costs; none are counted for a home-equity loan.</param>

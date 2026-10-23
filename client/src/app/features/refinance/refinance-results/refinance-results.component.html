@@ -82,7 +82,7 @@
         <thead>
           <tr>
             <td></td>
-            <th scope="col">{{ 'Keep + home-equity loan' | t }}</th>
+            <th scope="col">{{ e.drawPeriodInMonths > 0 ? ('Keep + home-equity line' | t) : ('Keep + home-equity loan' | t) }}</th>
             <th scope="col">{{ 'Cash-out refinance' | t }}</th>
           </tr>
         </thead>
@@ -93,7 +93,7 @@
             <td>{{ cents(e.cashOutRefinance.monthlyPayment) }}</td>
           </tr>
           <tr>
-            <th scope="row">{{ 'Of which the home-equity loan' | t }}</th>
+            <th scope="row">{{ e.drawPeriodInMonths > 0 ? ('Of which the home-equity line (interest only)' | t) : ('Of which the home-equity loan' | t) }}</th>
             <td>{{ cents(e.keepAndBorrow.equityLoanPayment) }}</td>
             <td>—</td>
           </tr>
@@ -120,6 +120,9 @@
         </tbody>
       </table>
     </div>
+    @if (equityLineNote(); as note) {
+      <p class="hint" data-testid="refi-equity-line-note">{{ note }}</p>
+    }
     <p class="hint">{{ "The total is what you pay in those years plus what you still owe, so a way that borrows for longer is not mistaken for a cheaper one. A home-equity loan's own fees are not counted." | t }}</p>
     @if (equityLimit(); as limit) {
       <p class="equity-limit" [class.warning]="e.exceedsLimit" data-testid="refi-equity-limit">{{ limit }}</p>

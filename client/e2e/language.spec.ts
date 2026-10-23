@@ -119,7 +119,7 @@ test.describe('Spanish, on every page', () => {
     });
   }
 
-  test('/refinance with a home-equity loan compared is in Spanish, fits a phone, and breaks no accessibility rule', async ({ page }) => {
+  test('/refinance with a home-equity line compared is in Spanish, fits a phone, and breaks no accessibility rule', async ({ page }) => {
     await page.goto('/refinance');
     await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
     // On a phone the form is a sheet that opens from the results, with the new loan one step in.
@@ -128,8 +128,9 @@ test.describe('Spanish, on every page', () => {
     await page.getByTestId('section-new-extras').locator('summary').click();
     await page.getByTestId('cash-out').fill('50000');
     await page.getByTestId('compare-equity-loan').check();
+    await page.getByTestId('equity-kind-line').check(); // a line asks for the most words: its fields, its note and its verdict
     await page.getByTestId('close-sheet').click();
-    await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
+    await expect(page.getByTestId('refi-equity-line-note'), 'the home-equity line comparison has arrived').toBeVisible();
     for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
 
     await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);

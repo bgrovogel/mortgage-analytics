@@ -496,6 +496,11 @@ The rest of the current loan against a new one, with closing costs paid at closi
   total of those, so a way that borrows for longer is not mistaken for a cheaper one. It says which costs less and by how
   much, how much could be borrowed against the home (80% of its value less what is owed), and whether the loans together
   would be over that 80%. A home-equity loan's own fees are not counted.
+- **Or as a line of credit.** The cash can instead be borrowed as a **home-equity line (HELOC)**: drawn in full at once,
+  paying only interest for its draw period, then repaid over its term. A line's rate moves with the market, so the form
+  asks for the rate while it is drawn and the rate you expect once repayment begins. The comparison shows the interest-only
+  payment, what it becomes, and how long each lasts; kept inside the draw period, the line still owes all of the cash,
+  which the total counts.
 - **Keep paying today's payment.** When the new payment is lower, the new loan is also shown paid at today's payment:
   how to refinance without restarting the clock.
 - **Your loan today, either way:** as what is owed now, or as the **original loan** (amount, term, first payment), from

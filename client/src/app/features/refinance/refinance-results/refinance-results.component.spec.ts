@@ -51,7 +51,7 @@ describe('RefinanceResultsComponent', () => {
         amount: 50_000, annualInterestRate: 8, termInMonths: 180, yearsKept: 7, availableEquity: 100_000, combinedLoanToValuePercent: 70, exceedsLimit: false,
         keepAndBorrow: { monthlyPayment: 2_598.17, equityLoanPayment: 477.83, payments: 218_246.28, stillOwed: 293_803.71, upfrontCosts: 0, cost: 512_049.99 },
         cashOutRefinance: { monthlyPayment: 2_098.43, equityLoanPayment: 0, payments: 176_268.12, stillOwed: 313_737.59, upfrontCosts: 6_000, cost: 496_005.71 },
-        savedByEquityLoan: -16_044.28,
+        savedByEquityLoan: -16_044.28, drawPeriodInMonths: 0, repaymentRate: 8, repaymentPayment: 477.83,
         ...overrides,
       },
     });
@@ -95,6 +95,49 @@ describe('RefinanceResultsComponent', () => {
       render(equity({ availableEquity: 20_000, combinedLoanToValuePercent: 87.5, exceedsLimit: true }));
 
       expect(text('refi-equity-limit')).toContain('above the 80% lenders allow, so this may not be offered.');
+    });
+
+    describe('as a line of credit', () => {
+      /** The API's scenario for a line: 8% interest only for 10 years, then 20 years at an expected 9%, kept 7 years. */
+      const line = (overrides: Partial<HomeEquityComparison> = {}): RefinanceResponse => equity({
+        termInMonths: 240, drawPeriodInMonths: 120, repaymentRate: 9, repaymentPayment: 449.86,
+        keepAndBorrow: { monthlyPayment: 2_453.67, equityLoanPayment: 333.33, payments: 206_108.28, stillOwed: 310_003.67, upfrontCosts: 0, cost: 516_111.95 },
+        savedByEquityLoan: -20_106.24,
+        ...overrides,
+      });
+
+      it('says which way costs less, naming the line', () => {
+        render(line());
+        expect(text('refi-equity-verdict')).toBe('Keeping your loan and borrowing $50,000 on a home-equity line costs $20,106 more over 7 years than refinancing.');
+
+        render(line({ savedByEquityLoan: 4_321.5 }));
+        expect(text('refi-equity-verdict')).toBe('Keeping your loan and borrowing $50,000 on a home-equity line costs $4,322 less over 7 years than refinancing.');
+      });
+
+      it('calls the column and the payment a line, and says the payment is interest only', () => {
+        render(line());
+        const heads = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-equity-table"] thead th')].map((th) => (th as HTMLElement).textContent!.trim());
+        const rows = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-equity-table"] tbody tr')]
+          .map((tr) => [...(tr as HTMLElement).children].map((cell) => cell.textContent!.trim()).join(' | '));
+
+        expect(heads).toEqual(['Keep + home-equity line', 'Cash-out refinance']);
+        expect(rows.slice(0, 2)).toEqual(['Monthly payment | $2,453.67 | $2,098.43', 'Of which the home-equity line (interest only) | $333.33 | —']);
+        expect(rows[5]).toBe('Total cost | $516,112 | $496,006');
+      });
+
+      it('says how long it is drawn, what it is repaid at and for how long, and that its rate moves', () => {
+        render(line());
+
+        expect(text('refi-equity-line-note')).toBe(
+          "The line is interest only for 10 yr, then $449.86 a month for 20 yr at 9%. A line's rate moves with the market, so this rests on the rate you expect once it is being repaid.");
+      });
+
+      it('says nothing of a draw period for a loan', () => {
+        render(equity());
+
+        expect(text('refi-equity-line-note')).toBeUndefined();
+        expect(text('refi-equity-verdict')).not.toContain('line');
+      });
     });
 
     it('leaves the limit out without a home value, and the whole panel out when not asked for', () => {

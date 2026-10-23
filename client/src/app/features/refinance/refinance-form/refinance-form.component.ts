@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, Signal, computed, inject, input, output, signal } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { exampleUntilEdited } from '../../../core/forms/example-until-edited';
 import { problemsIn, problemsOf, validatorsFor } from '../../../core/forms/field-rules';
@@ -26,6 +26,9 @@ type NewTerm = `${(typeof TERMS)[number]}` | 'keep';
 export type LoanEntry = 'today' | 'original';
 
 const rules = REFINANCE_RULES;
+
+/** What the cash out is borrowed as: a fixed-rate loan, or a line of credit (drawn, interest only, then repaid). */
+type EquityKind = 'loan' | 'line';
 
 /** The controls each way of describing the loan uses; the other way's are disabled, so they are not checked. */
 const ENTRY_CONTROLS = {
@@ -102,10 +105,15 @@ export class RefinanceFormComponent implements OnInit {
     currentMonthlyPmi: [0, validatorsFor(rules.currentMonthlyPmi)],
     newPmiRate: [0.5, validatorsFor(rules.newPmiRate)],
     // A home-equity loan for the cash out, to compare with refinancing for it: about today's rate on one, 15 years, kept 7.
+    // Or a line of credit: drawn (interest only) for 10 years, then repaid over the term at the rate expected by then.
+    // The fields of a comparison that is not asked for, and a line's when it is a loan, are disabled so they are not checked.
     compareEquityLoan: [false],
-    equityRate: [8, validatorsFor(rules.equityRate)],
-    equityTermYears: [15, validatorsFor(rules.equityTermYears)],
-    equityYearsKept: [7, validatorsFor(rules.equityYearsKept)],
+    equityKind: ['loan' as EquityKind],
+    equityRate: [{ value: 8, disabled: true }, validatorsFor(rules.equityRate)],
+    equityTermYears: [{ value: 15, disabled: true }, validatorsFor(rules.equityTermYears)],
+    equityYearsKept: [{ value: 7, disabled: true }, validatorsFor(rules.equityYearsKept)],
+    equityDrawYears: [{ value: 10, disabled: true }, validatorsFor(rules.equityDrawYears)],
+    equityRepaymentRate: [{ value: 8, disabled: true }, validatorsFor(rules.equityRepaymentRate)],
     // Each loan's rate: the current one may adjust (its next reset two years off, expected two points higher);
     // the new one may adjust (a 7/1 by default) or be bought down.
     currentRate: rateOptionsForm(this.fb, 9, 24),
@@ -133,6 +141,9 @@ export class RefinanceFormComponent implements OnInit {
 
   /** True when the home-equity loan's fields are shown and sent: cash is taken out and the comparison is asked for. */
   readonly comparesEquityLoan = computed(() => !!this.values().cashOut && !!this.values().compareEquityLoan);
+
+  /** True when what is compared is a line of credit, whose draw period and repayment rate are shown and sent. */
+  readonly comparesEquityLine = computed(() => this.comparesEquityLoan() && this.values().equityKind === 'line');
 
   /** True while the loan is described as it was taken out. */
   readonly byOriginalLoan = computed(() => this.values().loanEntry === 'original');
@@ -175,6 +186,7 @@ export class RefinanceFormComponent implements OnInit {
     keepArmFieldsInStep(this.form.controls.newRate);
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.checkEquityFieldsShown();
       if (!this.restoring && this.canSend()) this.analyze.emit(this.toRequest());
     });
   }
@@ -206,13 +218,21 @@ export class RefinanceFormComponent implements OnInit {
           newPmiRate: initial.newPmiRate ?? 0.5,
           compareEquityLoan: !!initial.homeEquityLoan,
           ...(initial.homeEquityLoan
-            ? { equityRate: initial.homeEquityLoan.annualInterestRate, equityTermYears: initial.homeEquityLoan.termInMonths / 12, equityYearsKept: initial.homeEquityLoan.yearsKept }
+            ? {
+              equityKind: initial.homeEquityLoan.drawPeriodInMonths ? ('line' as const) : ('loan' as const),
+              equityRate: initial.homeEquityLoan.annualInterestRate,
+              equityTermYears: initial.homeEquityLoan.termInMonths / 12,
+              equityYearsKept: initial.homeEquityLoan.yearsKept,
+              ...(initial.homeEquityLoan.drawPeriodInMonths ? { equityDrawYears: initial.homeEquityLoan.drawPeriodInMonths / 12 } : {}),
+              equityRepaymentRate: initial.homeEquityLoan.repaymentRate ?? initial.homeEquityLoan.annualInterestRate,
+            }
             : {}),
         },
         { emitEvent: false },
       );
     }
     this.startFromSharedLoan();
+    this.checkEquityFieldsShown();
     // Let everything derived from the values (payments left, the original loan today, the problems) see them.
     this.restoring = true;
     this.form.updateValueAndValidity();
@@ -266,6 +286,22 @@ export class RefinanceFormComponent implements OnInit {
       }
     }
     this.enableFor(entry);
+  }
+
+  /**
+   * Checks only the home-equity fields that are shown: none until the comparison is asked for, and a line's draw period and
+   * repayment rate only for a line, so a field that is out of sight cannot hold up the comparison.
+   */
+  private checkEquityFieldsShown(): void {
+    const v = this.form.getRawValue();
+    const asked = v.cashOut > 0 && v.compareEquityLoan;
+    const c = this.form.controls;
+    const show = (control: AbstractControl, shown: boolean) => {
+      if (shown && control.disabled) control.enable({ emitEvent: false });
+      else if (!shown && control.enabled) control.disable({ emitEvent: false });
+    };
+    for (const control of [c.equityRate, c.equityTermYears, c.equityYearsKept]) show(control, asked);
+    for (const control of [c.equityDrawYears, c.equityRepaymentRate]) show(control, asked && v.equityKind === 'line');
   }
 
   /** Enables the controls for one way of describing the loan, and disables the other's. */
@@ -324,7 +360,14 @@ export class RefinanceFormComponent implements OnInit {
       newPmiRate: v.newPmiRate,
       // Only when asked for, so a comparison without one is the same request as before.
       ...(v.cashOut > 0 && v.compareEquityLoan
-        ? { homeEquityLoan: { annualInterestRate: v.equityRate, termInMonths: Math.round(v.equityTermYears * 12), yearsKept: v.equityYearsKept } }
+        ? {
+          homeEquityLoan: {
+            annualInterestRate: v.equityRate,
+            termInMonths: Math.round(v.equityTermYears * 12),
+            yearsKept: v.equityYearsKept,
+            ...(v.equityKind === 'line' ? { drawPeriodInMonths: Math.round(v.equityDrawYears * 12), repaymentRate: v.equityRepaymentRate } : {}),
+          },
+        }
         : {}),
     };
   }

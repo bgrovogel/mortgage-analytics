@@ -356,6 +356,77 @@ public class RefinanceServiceTests
         });
     }
 
+    // The same cash as a home-equity line of credit, drawn at once: 8% interest only for 120 months, then repaid over 240 months at
+    // the rate expected by then. Computed independently in Python Decimal (tools/calculator-check), costed over `yearsKept` years.
+    private static RefinanceRequest WithALine(int yearsKept, decimal? repaymentRate) => WithAHomeEquityLoan() with
+    {
+        HomeEquityLoan = new HomeEquityLoanRequest
+        {
+            AnnualInterestRate = 8m, TermInMonths = 240, YearsKept = yearsKept, DrawPeriodInMonths = 120, RepaymentRate = repaymentRate,
+        },
+    };
+
+    [Test]
+    public void Analyze_CostsALineOfCredit_AsInterestOnlyWhileItIsDrawn()
+    {
+        var equity = _service.Analyze(WithALine(yearsKept: 7, repaymentRate: 9m)).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.KeepAndBorrow.EquityLoanPayment, Is.EqualTo(333.33m), "$50,000 at 8% a year, interest only: 50,000 x 8% / 12");
+            Assert.That(equity.KeepAndBorrow.MonthlyPayment, Is.EqualTo(2_453.67m), "today's 2,120.34 and the line's 333.33");
+            Assert.That(equity.RepaymentPayment, Is.EqualTo(449.86m), "$50,000 over 240 months at 9%, once repayment begins");
+            Assert.That(equity.RepaymentRate, Is.EqualTo(9m), "the rate expected by then");
+            Assert.That(equity.DrawPeriodInMonths, Is.EqualTo(120), "ten years of drawing");
+            Assert.That(equity.KeepAndBorrow.Payments, Is.EqualTo(206_108.28m), "84 payments on today's loan, and 84 of interest on the line");
+            Assert.That(equity.KeepAndBorrow.StillOwed, Is.EqualTo(310_003.67m), "what is left of today's loan, and all $50,000 of the line: none of it is paid down while drawing");
+            Assert.That(equity.KeepAndBorrow.Cost, Is.EqualTo(516_111.95m), "paid and still owed");
+            Assert.That(equity.CashOutRefinance.Cost, Is.EqualTo(496_005.71m), "the refinance is priced as for a loan");
+            Assert.That(equity.SavedByEquityLoan, Is.EqualTo(-20_106.24m), "the line costs this much more than refinancing");
+        });
+    }
+
+    [Test]
+    public void Analyze_CostsALineOfCredit_AcrossTheEndOfItsDrawPeriod()
+    {
+        // 12 years kept: 120 months of interest only, then 24 of repayment at 9%.
+        var equity = _service.Analyze(WithALine(yearsKept: 12, repaymentRate: 9m)).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.KeepAndBorrow.Payments, Is.EqualTo(356_125.20m), "144 payments on today's loan, 120 of interest only on the line, then 24 of its repayment");
+            Assert.That(equity.KeepAndBorrow.StillOwed, Is.EqualTo(264_825.95m), "the line has begun to be paid down");
+            Assert.That(equity.KeepAndBorrow.Cost, Is.EqualTo(620_951.15m), "paid and still owed");
+            Assert.That(equity.SavedByEquityLoan, Is.EqualTo(-35_999.79m), "the refinance, over the same years, costs 584,951.36");
+        });
+    }
+
+    [Test]
+    public void Analyze_KeepsALinesRate_WhenNoRepaymentRateIsExpected()
+    {
+        var equity = _service.Analyze(WithALine(yearsKept: 12, repaymentRate: null)).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.RepaymentRate, Is.EqualTo(8m), "the rate it has");
+            Assert.That(equity.RepaymentPayment, Is.EqualTo(418.22m), "$50,000 over 240 months at 8%");
+            Assert.That(equity.KeepAndBorrow.Cost, Is.EqualTo(619_950.91m), "paid and still owed");
+        });
+    }
+
+    [Test]
+    public void Analyze_TreatsALoanAsRepayingFromTheStart()
+    {
+        var equity = _service.Analyze(WithAHomeEquityLoan()).HomeEquity!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(equity.DrawPeriodInMonths, Is.Zero, "a loan has no draw period");
+            Assert.That(equity.RepaymentPayment, Is.EqualTo(equity.KeepAndBorrow.EquityLoanPayment), "its payment is the same throughout");
+            Assert.That(equity.RepaymentRate, Is.EqualTo(8m), "and its rate");
+        });
+    }
+
     [Test]
     public void Analyze_CountsPmiOnBothWays_WhileTheLoanIsAbove80PercentOfTheHome()
     {
