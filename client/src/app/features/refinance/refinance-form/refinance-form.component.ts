@@ -146,6 +146,20 @@ export class RefinanceFormComponent implements OnInit {
   readonly newRateSummary = computed(() => rateSummary(this.form.controls.newRate, 'type', this.values().newAnnualInterestRate ?? 0));
 
   /** The closed "Cash out and PMI" section's line: what is taken out, and the new loan's PMI rate. */
+  /** True while the section of other ways is open: closed to start, open for a saved comparison that used one. */
+  protected readonly compareWaysOpen = signal(false);
+
+  /** One line on what is compared besides the refinance itself: points, a debt, a home-equity loan or line; or none. */
+  readonly compareWaysSummary = computed(() => {
+    const v = this.values();
+    const ways = [
+      ...(this.buysPoints() ? [t('Points')] : []),
+      ...(v.cashOut && v.payOffDebt ? [t('A debt')] : []),
+      ...(this.comparesEquityLoan() ? [v.equityKind === 'line' ? t('A home-equity line') : t('A home-equity loan')] : []),
+    ];
+    return ways.length > 0 ? ways.join(' · ') : t('None');
+  });
+
   readonly extrasSummary = computed(() => {
     const v = this.values();
     const cash = v.cashOut ? t('Cash out {0}', [usdWhole(v.cashOut)]) : t('No cash out');
@@ -257,6 +271,7 @@ export class RefinanceFormComponent implements OnInit {
       );
     }
     this.startFromSharedLoan();
+    this.compareWaysOpen.set(!!(initial?.debtPayoff || initial?.newDiscountPoints || initial?.homeEquityLoan));
     this.checkEquityFieldsShown();
     // Let everything derived from the values (payments left, the original loan today, the problems) see them.
     this.restoring = true;

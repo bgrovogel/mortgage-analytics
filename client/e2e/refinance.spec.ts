@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { openOtherWays } from './refinance-options';
 
 /**
  * The refinance comparison against the real API. The worked example is the reference refinance
@@ -63,6 +64,7 @@ test.describe('Refinance', () => {
     await page.getByTestId('cash-out').fill('50000');
     await expect(page.getByTestId('refi-home-equity'), 'not shown until asked for').toHaveCount(0);
 
+    await openOtherWays(page);
     await page.getByTestId('compare-equity-loan').check();
 
     // $300,000 at 7% with 25 years left; $50,000 at 8% over 15 years, or a refinance to 6%; 7 years: worked out independently.
@@ -87,6 +89,7 @@ test.describe('Refinance', () => {
     await page.getByTestId('home-value').fill('500000');
     await page.getByTestId('section-new-extras').locator('summary').click();
     await page.getByTestId('cash-out').fill('50000');
+    await openOtherWays(page);
     await page.getByTestId('compare-equity-loan').check();
     await expect(page.getByTestId('equity-draw-years'), 'a loan has no draw period to ask for').toHaveCount(0);
 
@@ -121,6 +124,7 @@ test.describe('Refinance', () => {
     await page.getByTestId('cash-out').fill('50000');
     await expect(page.getByTestId('refi-debt'), 'not shown until asked for').toHaveCount(0);
 
+    await openOtherWays(page);
     await page.getByTestId('pay-off-debt').check();
     await page.getByTestId('debt-balance').fill('20000');
     await page.getByTestId('debt-payment').fill('600');
@@ -155,6 +159,7 @@ test.describe('Refinance', () => {
     await reference(page);
     await expect(page.getByTestId('refi-points'), 'not shown until asked for').toHaveCount(0);
 
+    await openOtherWays(page);
     await page.getByTestId('buy-points').check();
     await page.getByTestId('rate-without-points').fill('6.25');
 

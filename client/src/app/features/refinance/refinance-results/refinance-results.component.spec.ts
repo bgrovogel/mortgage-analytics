@@ -149,6 +149,56 @@ describe('RefinanceResultsComponent', () => {
     });
   });
 
+  describe('your options', () => {
+    const points = { points: 1, cost: 3_000, rateWithPoints: 6, rateWithoutPoints: 6.25, paymentWithPoints: 1_798.65, paymentWithoutPoints: 1_847.15, monthlySaving: 48.5, interestSaved: 17_460.36, netSaving: 14_460.36, breakEvenPayment: 48, breakEvenDate: '2030-12-01' };
+    const debtPayoff = {
+      balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 7, monthsToPayOff: 52, totalInterest: 11_192.21,
+      keepDebt: { monthlyPayment: 600, payments: 31_192.21, stillOwed: 0, cost: 31_192.21 },
+      payItOff: { monthlyPayment: 119.91, payments: 10_072.44, stillOwed: 17_927.95, cost: 28_000.39 }, savedByPayingOff: 3_191.82, monthlyChange: 480.09,
+    };
+    const open = (id: string) => (fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLDetailsElement).open;
+    const summary = (id: string) => (fixture.nativeElement.querySelector(`[data-testid="${id}"] > summary`) as HTMLElement).textContent!.replace(/\s+/g, ' ').trim();
+
+    it('gathers the ways asked for in one card, and leaves it out when none was', () => {
+      render(aRefinanceResponse({ points }));
+      expect(text('refi-options')).toContain('Your options');
+
+      render(aRefinanceResponse());
+      expect(text('refi-options')).toBeUndefined();
+    });
+
+    it('makes each way one line: its question and its answer, with the table inside', () => {
+      render(aRefinanceResponse({ points, cashOut: 50_000, debtPayoff }));
+
+      expect(summary('refi-points')).toBe(
+        'Do the points pay? Buying 1 point for $3,000 lowers the payment by $48.50 a month. They pay for themselves after 48 payments (Dec 2030); keep the loan longer than that and they save you money.');
+      expect(summary('refi-debt')).toContain('Paying off a debt with the cash Paying off the $20,000 debt with the cash costs $3,192 less');
+      expect(fixture.nativeElement.querySelector('[data-testid="refi-points"] [data-testid="refi-points-table"]')).not.toBeNull();
+    });
+
+    it('opens the table when there is one way only, and keeps them closed when there are several', () => {
+      render(aRefinanceResponse({ points }));
+      expect(open('refi-points')).toBe(true);
+
+      render(aRefinanceResponse({ points, cashOut: 50_000, debtPayoff }));
+      expect([open('refi-points'), open('refi-debt')]).toEqual([false, false]);
+    });
+
+    it('flags a home-equity loan that may not be offered, beside its answer', () => {
+      render(aRefinanceResponse({
+        cashOut: 50_000,
+        homeEquity: {
+          amount: 50_000, annualInterestRate: 8, termInMonths: 180, yearsKept: 7, availableEquity: 20_000, combinedLoanToValuePercent: 87.5, exceedsLimit: true,
+          keepAndBorrow: { monthlyPayment: 2_598.17, equityLoanPayment: 477.83, payments: 218_246.28, stillOwed: 293_803.71, upfrontCosts: 0, cost: 512_049.99 },
+          cashOutRefinance: { monthlyPayment: 2_098.43, equityLoanPayment: 0, payments: 176_268.12, stillOwed: 313_737.59, upfrontCosts: 6_000, cost: 496_005.71 },
+          savedByEquityLoan: -16_044.28, drawPeriodInMonths: 0, repaymentRate: 8, repaymentPayment: 477.83,
+        },
+      }));
+
+      expect(text('refi-equity-badge')).toBe('May not be offered');
+    });
+  });
+
   describe('a debt paid off with the cash', () => {
     /** The API's scenario: a $20,000 card at 22% with $600 a month, paid off with $20,000 of a $50,000 cash out; kept 7 years. */
     const debt = (overrides: Partial<DebtPayoff> = {}): RefinanceResponse => aRefinanceResponse({

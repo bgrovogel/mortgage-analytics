@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { openOptions, openOtherWays } from './refinance-options';
 
 /**
  * Automated accessibility checks with axe-core: every page and result view, against WCAG 2.2 A and AA, in light and
@@ -124,6 +125,7 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await violations(page), 'Refinance, every section open, breaks no accessibility rule').toEqual([]);
 
       await page.getByTestId('cash-out').fill('50000');
+      await openOtherWays(page);
       await page.getByTestId('compare-equity-loan').check();
       await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
       await settled(page);
@@ -141,6 +143,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
       await page.getByTestId('buy-points').check();
       await expect(page.getByTestId('refi-points'), 'the points are compared').toBeVisible();
+      await openOptions(page, 3); // all three open, so what is read is scanned too
       await settled(page);
       expect(await violations(page), 'Refinance with points bought breaks no accessibility rule').toEqual([]);
     });

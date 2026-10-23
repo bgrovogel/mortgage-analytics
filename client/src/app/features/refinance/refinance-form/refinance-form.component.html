@@ -107,20 +107,6 @@
       <span><strong>{{ 'Add them to the loan' | t }}</strong> {{ 'instead of paying at closing' | t }}</span>
     </label>
 
-    @if (newRateFixed()) {
-      <label class="checkbox">
-        <input type="checkbox" formControlName="buyPoints" data-testid="buy-points" />
-        <span><strong>{{ 'Pay points for this rate' | t }}</strong> {{ '(the new rate above is then the rate with them)' | t }}</span>
-      </label>
-      @if (buysPoints()) {
-        <div class="row">
-          <app-number-field [control]="form.controls.points" [rule]="rules.points" testId="points" />
-          <app-number-field [control]="form.controls.rateWithoutPoints" [rule]="rules.rateWithoutPoints" testId="rate-without-points" />
-        </div>
-        <p class="hint" data-testid="points-hint">{{ 'One point is 1% of the loan, paid with the closing costs. The rate without points is what the lender offers if you pay none.' | t }}</p>
-      }
-    }
-
     <!-- Not every refinance takes cash out or carries PMI: one line says where each stands, and opens to change it. -->
     <details class="section" data-testid="section-new-extras">
       <summary>
@@ -131,6 +117,35 @@
         <app-number-field [control]="form.controls.cashOut" [rule]="rules.cashOut" testId="cash-out" />
         <p class="hint" data-testid="cash-out-hint">{{ "Cash to take out of your home's equity, on top of what you owe. Leave it at $0 to change only the rate or term. Enter the home's value to see whether the new loan is within what lenders allow." | t }}</p>
 
+        <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
+        <p class="hint" data-testid="new-pmi-hint">{{ "A yearly share of the new loan, charged only while it is more than 80% of the home's value." | t }}</p>
+      </div>
+    </details>
+
+    <!-- The ways to weigh the refinance against something else: points on the rate, a debt the cash would pay off, borrowing the cash apart. -->
+    <details class="section" data-testid="section-compare-ways" [attr.open]="compareWaysOpen() ? '' : null">
+      <summary>
+        <span class="section-title">{{ 'Compare other ways' | t }}</span>
+        <span class="section-summary" data-testid="compare-ways-summary">{{ compareWaysSummary() }}</span>
+      </summary>
+      <div class="section-body">
+        @if (newRateFixed()) {
+          <label class="checkbox">
+            <input type="checkbox" formControlName="buyPoints" data-testid="buy-points" />
+            <span><strong>{{ 'Pay points for this rate' | t }}</strong> {{ '(the new rate above is then the rate with them)' | t }}</span>
+          </label>
+          @if (buysPoints()) {
+            <div class="row">
+              <app-number-field [control]="form.controls.points" [rule]="rules.points" testId="points" />
+              <app-number-field [control]="form.controls.rateWithoutPoints" [rule]="rules.rateWithoutPoints" testId="rate-without-points" />
+            </div>
+            <p class="hint" data-testid="points-hint">{{ 'One point is 1% of the loan, paid with the closing costs. The rate without points is what the lender offers if you pay none.' | t }}</p>
+          }
+        }
+
+        @if (!values().cashOut) {
+          <p class="hint" data-testid="compare-ways-need-cash">{{ 'To compare paying off a debt, or borrowing the cash separately, take out some cash first (under Cash out and PMI).' | t }}</p>
+        }
         @if (values().cashOut) {
           <label class="checkbox">
             <input type="checkbox" formControlName="payOffDebt" data-testid="pay-off-debt" />
@@ -187,8 +202,6 @@
           }
         }
 
-        <app-number-field [control]="form.controls.newPmiRate" [rule]="rules.newPmiRate" testId="new-pmi-rate" />
-        <p class="hint" data-testid="new-pmi-hint">{{ "A yearly share of the new loan, charged only while it is more than 80% of the home's value." | t }}</p>
       </div>
     </details>
   </fieldset>

@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { ES } from '../src/app/core/i18n/es';
 import { expect, test } from './fixtures';
+import { openOptions, openOtherWays } from './refinance-options';
 
 /** The language switch: one press in the header, on every page, remembered for the next visit. */
 test.describe('Language', () => {
@@ -127,12 +128,14 @@ test.describe('Spanish, on every page', () => {
     await page.getByTestId('refi-next').click();
     await page.getByTestId('section-new-extras').locator('summary').click();
     await page.getByTestId('cash-out').fill('50000');
+    await openOtherWays(page);
     await page.getByTestId('compare-equity-loan').check();
     await page.getByTestId('equity-kind-line').check(); // a line asks for the most words: its fields, its note and its verdict
     await page.getByTestId('pay-off-debt').check(); // and a debt: a checkbox, its fields, hints, a verdict, a table, a note and debt-to-income
     await page.getByTestId('debt-income').fill('120000');
     await page.getByTestId('buy-points').check(); // and the points: a checkbox, two fields, a hint, a verdict and a table
     await page.getByTestId('close-sheet').click();
+    await openOptions(page, 3); // with three ways listed, each starts closed
     await expect(page.getByTestId('refi-equity-line-note'), 'the home-equity line comparison has arrived').toBeVisible();
     await expect(page.getByTestId('refi-points'), 'the points comparison has arrived').toBeVisible();
     await expect(page.getByTestId('refi-debt'), 'the debt comparison has arrived').toBeVisible();

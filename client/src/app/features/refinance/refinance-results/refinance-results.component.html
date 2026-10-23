@@ -76,143 +76,167 @@
   <p class="panel limit" [class.warning]="r.exceedsCashOutLimit" data-testid="refi-cash-limit">{{ limit }}</p>
 }
 
-@if (points(); as p) {
-  <!-- Whether the points on the new loan pay: the loan with them beside the same loan at the rate without. -->
-  <section class="panel points" data-testid="refi-points">
-    <h3>{{ 'Do the points pay?' | t }}</h3>
-    <p class="verdict-line" data-testid="refi-points-verdict">{{ pointsVerdict() }}</p>
-    <div class="table-wrap" tabindex="0" [attr.aria-label]="'The new loan with the points and without them, side by side' | t">
-      <table data-testid="refi-points-table">
-        <thead>
-          <tr>
-            <td></td>
-            <th scope="col">{{ 'With the points' | t }}</th>
-            <th scope="col">{{ 'Without them' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">{{ 'Rate' | t }}</th>
-            <td>{{ pct(p.rateWithPoints) }}</td>
-            <td>{{ pct(p.rateWithoutPoints) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Monthly principal and interest' | t }}</th>
-            <td>{{ cents(p.paymentWithPoints) }}</td>
-            <td>{{ cents(p.paymentWithoutPoints) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Paid at closing for the points' | t }}</th>
-            <td>{{ dollars(p.cost) }}</td>
-            <td>—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint">{{ 'The points are paid with the closing costs, so every figure on this page already counts them.' | t }}</p>
-  </section>
-}
+@if (optionCount() > 0) {
+  <!-- What the refinance is weighed against besides its own figures: each way asked for is one line, opened for its table. -->
+  <section class="panel options" data-testid="refi-options" aria-labelledby="refi-options-heading">
+    <h3 id="refi-options-heading">{{ 'Your options' | t }}</h3>
+  @if (points(); as p) {
+    <!-- Whether the points on the new loan pay: the loan with them beside the same loan at the rate without. -->
+    <details class="option" data-testid="refi-points" [attr.open]="onlyOneOption() ? '' : null">
+      <summary>
+        <span class="option-title">{{ 'Do the points pay?' | t }}</span>
+        {{ ' ' }}
+        <span class="option-verdict" data-testid="refi-points-verdict">{{ pointsVerdict() }}</span>
+      </summary>
+      <div class="option-body">
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'The new loan with the points and without them, side by side' | t">
+          <table data-testid="refi-points-table">
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">{{ 'With the points' | t }}</th>
+                <th scope="col">{{ 'Without them' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{{ 'Rate' | t }}</th>
+                <td>{{ pct(p.rateWithPoints) }}</td>
+                <td>{{ pct(p.rateWithoutPoints) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Monthly principal and interest' | t }}</th>
+                <td>{{ cents(p.paymentWithPoints) }}</td>
+                <td>{{ cents(p.paymentWithoutPoints) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Paid at closing for the points' | t }}</th>
+                <td>{{ dollars(p.cost) }}</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint">{{ 'The points are paid with the closing costs, so every figure on this page already counts them.' | t }}</p>
+      </div>
+    </details>
+  }
 
-@if (debt(); as d) {
-  <!-- A debt paid off with the cash out against kept as it is, each costed as what is paid plus what is still owed. -->
-  <section class="panel debt" data-testid="refi-debt">
-    <h3>{{ 'Paying off a debt with the cash' | t }}</h3>
-    <p class="verdict-line" data-testid="refi-debt-verdict">{{ debtVerdict() }}</p>
-    <div class="table-wrap" tabindex="0" [attr.aria-label]="'Keeping the debt and paying it off with the cash, side by side' | t">
-      <table data-testid="refi-debt-table">
-        <thead>
-          <tr>
-            <td></td>
-            <th scope="col">{{ 'Keep the debt' | t }}</th>
-            <th scope="col">{{ 'Pay it off with the cash' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">{{ 'Each month' | t }}</th>
-            <td>{{ cents(d.keepDebt.monthlyPayment) }}</td>
-            <td>{{ cents(d.payItOff.monthlyPayment) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Paid in the years kept' | t }}</th>
-            <td>{{ dollars(d.keepDebt.payments) }}</td>
-            <td>{{ dollars(d.payItOff.payments) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Still owed after' | t }}</th>
-            <td>{{ dollars(d.keepDebt.stillOwed) }}</td>
-            <td>{{ dollars(d.payItOff.stillOwed) }}</td>
-          </tr>
-          <tr class="total">
-            <th scope="row">{{ 'Total cost' | t }}</th>
-            <td>{{ dollars(d.keepDebt.cost) }}</td>
-            <td>{{ dollars(d.payItOff.cost) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint">{{ debtSpread() }}</p>
-    @if (debtToIncome(); as dti) {
-      <p class="hint" data-testid="refi-debt-dti">{{ dti }}</p>
-    }
-  </section>
-}
+  @if (debt(); as d) {
+    <!-- A debt paid off with the cash out against kept as it is, each costed as what is paid plus what is still owed. -->
+    <details class="option" data-testid="refi-debt" [attr.open]="onlyOneOption() ? '' : null">
+      <summary>
+        <span class="option-title">{{ 'Paying off a debt with the cash' | t }}</span>
+        {{ ' ' }}
+        <span class="option-verdict" data-testid="refi-debt-verdict">{{ debtVerdict() }}</span>
+      </summary>
+      <div class="option-body">
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'Keeping the debt and paying it off with the cash, side by side' | t">
+          <table data-testid="refi-debt-table">
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">{{ 'Keep the debt' | t }}</th>
+                <th scope="col">{{ 'Pay it off with the cash' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{{ 'Each month' | t }}</th>
+                <td>{{ cents(d.keepDebt.monthlyPayment) }}</td>
+                <td>{{ cents(d.payItOff.monthlyPayment) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Paid in the years kept' | t }}</th>
+                <td>{{ dollars(d.keepDebt.payments) }}</td>
+                <td>{{ dollars(d.payItOff.payments) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Still owed after' | t }}</th>
+                <td>{{ dollars(d.keepDebt.stillOwed) }}</td>
+                <td>{{ dollars(d.payItOff.stillOwed) }}</td>
+              </tr>
+              <tr class="total">
+                <th scope="row">{{ 'Total cost' | t }}</th>
+                <td>{{ dollars(d.keepDebt.cost) }}</td>
+                <td>{{ dollars(d.payItOff.cost) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint">{{ debtSpread() }}</p>
+        @if (debtToIncome(); as dti) {
+          <p class="hint" data-testid="refi-debt-dti">{{ dti }}</p>
+        }
+      </div>
+    </details>
+  }
 
-@if (equity(); as e) {
-  <!-- Two ways to get the same cash, costed over the years kept: what is paid in them, what is still owed, what is paid at closing. -->
-  <section class="panel equity" data-testid="refi-home-equity">
-    <h3>{{ 'Borrow the cash instead' | t }}</h3>
-    <p class="verdict-line" data-testid="refi-equity-verdict">{{ equityVerdict() }}</p>
-    <div class="table-wrap" tabindex="0" [attr.aria-label]="'The two ways of getting the cash, side by side' | t">
-      <table data-testid="refi-equity-table">
-        <thead>
-          <tr>
-            <td></td>
-            <th scope="col">{{ e.drawPeriodInMonths > 0 ? ('Keep + home-equity line' | t) : ('Keep + home-equity loan' | t) }}</th>
-            <th scope="col">{{ 'Cash-out refinance' | t }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">{{ 'Monthly payment' | t }}</th>
-            <td>{{ cents(e.keepAndBorrow.monthlyPayment) }}</td>
-            <td>{{ cents(e.cashOutRefinance.monthlyPayment) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ e.drawPeriodInMonths > 0 ? ('Of which the home-equity line (interest only)' | t) : ('Of which the home-equity loan' | t) }}</th>
-            <td>{{ cents(e.keepAndBorrow.equityLoanPayment) }}</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Paid in the years kept' | t }}</th>
-            <td>{{ dollars(e.keepAndBorrow.payments) }}</td>
-            <td>{{ dollars(e.cashOutRefinance.payments) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Still owed after' | t }}</th>
-            <td>{{ dollars(e.keepAndBorrow.stillOwed) }}</td>
-            <td>{{ dollars(e.cashOutRefinance.stillOwed) }}</td>
-          </tr>
-          <tr>
-            <th scope="row">{{ 'Paid at closing' | t }}</th>
-            <td>{{ dollars(e.keepAndBorrow.upfrontCosts) }}</td>
-            <td>{{ dollars(e.cashOutRefinance.upfrontCosts) }}</td>
-          </tr>
-          <tr class="total" data-testid="refi-equity-cost">
-            <th scope="row">{{ 'Total cost' | t }}</th>
-            <td>{{ dollars(e.keepAndBorrow.cost) }}</td>
-            <td>{{ dollars(e.cashOutRefinance.cost) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    @if (equityLineNote(); as note) {
-      <p class="hint" data-testid="refi-equity-line-note">{{ note }}</p>
-    }
-    <p class="hint">{{ "The total is what you pay in those years plus what you still owe, so a way that borrows for longer is not mistaken for a cheaper one. A home-equity loan's own fees are not counted." | t }}</p>
-    @if (equityLimit(); as limit) {
-      <p class="equity-limit" [class.warning]="e.exceedsLimit" data-testid="refi-equity-limit">{{ limit }}</p>
-    }
+  @if (equity(); as e) {
+    <!-- Two ways to get the same cash, costed over the years kept: what is paid in them, what is still owed, what is paid at closing. -->
+    <details class="option" data-testid="refi-home-equity" [attr.open]="onlyOneOption() ? '' : null">
+      <summary>
+        <span class="option-title">{{ 'Borrow the cash instead' | t }}</span>
+        {{ ' ' }}
+        <span class="option-verdict" data-testid="refi-equity-verdict">{{ equityVerdict() }}</span>
+        @if (e.exceedsLimit) {
+          <span class="option-badge" data-testid="refi-equity-badge">{{ 'May not be offered' | t }}</span>
+        }
+      </summary>
+      <div class="option-body">
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'The two ways of getting the cash, side by side' | t">
+          <table data-testid="refi-equity-table">
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">{{ e.drawPeriodInMonths > 0 ? ('Keep + home-equity line' | t) : ('Keep + home-equity loan' | t) }}</th>
+                <th scope="col">{{ 'Cash-out refinance' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{{ 'Monthly payment' | t }}</th>
+                <td>{{ cents(e.keepAndBorrow.monthlyPayment) }}</td>
+                <td>{{ cents(e.cashOutRefinance.monthlyPayment) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ e.drawPeriodInMonths > 0 ? ('Of which the home-equity line (interest only)' | t) : ('Of which the home-equity loan' | t) }}</th>
+                <td>{{ cents(e.keepAndBorrow.equityLoanPayment) }}</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Paid in the years kept' | t }}</th>
+                <td>{{ dollars(e.keepAndBorrow.payments) }}</td>
+                <td>{{ dollars(e.cashOutRefinance.payments) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Still owed after' | t }}</th>
+                <td>{{ dollars(e.keepAndBorrow.stillOwed) }}</td>
+                <td>{{ dollars(e.cashOutRefinance.stillOwed) }}</td>
+              </tr>
+              <tr>
+                <th scope="row">{{ 'Paid at closing' | t }}</th>
+                <td>{{ dollars(e.keepAndBorrow.upfrontCosts) }}</td>
+                <td>{{ dollars(e.cashOutRefinance.upfrontCosts) }}</td>
+              </tr>
+              <tr class="total" data-testid="refi-equity-cost">
+                <th scope="row">{{ 'Total cost' | t }}</th>
+                <td>{{ dollars(e.keepAndBorrow.cost) }}</td>
+                <td>{{ dollars(e.cashOutRefinance.cost) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        @if (equityLineNote(); as note) {
+          <p class="hint" data-testid="refi-equity-line-note">{{ note }}</p>
+        }
+        <p class="hint">{{ "The total is what you pay in those years plus what you still owe, so a way that borrows for longer is not mistaken for a cheaper one. A home-equity loan's own fees are not counted." | t }}</p>
+        @if (equityLimit(); as limit) {
+          <p class="equity-limit" [class.warning]="e.exceedsLimit" data-testid="refi-equity-limit">{{ limit }}</p>
+        }
+      </div>
+    </details>
+  }
   </section>
 }
 

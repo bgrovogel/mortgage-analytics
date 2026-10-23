@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { HistoryPage } from './history.page';
+import { openOptions, openOtherWays } from './refinance-options';
 
 /**
  * Saving, finding, reopening, renaming and deleting calculations, against the real API and database.
@@ -181,6 +182,7 @@ test.describe('History', () => {
     await expect(page.getByTestId('results'), 'the example has arrived').toHaveAttribute('aria-busy', 'false');
     await page.getByTestId('section-new-extras').locator('summary').click();
     await page.getByTestId('cash-out').fill('50000');
+    await openOtherWays(page);
     await page.getByTestId('pay-off-debt').check();
     await page.getByTestId('debt-balance').fill('20000');
     await page.getByTestId('debt-payment').fill('600');
@@ -188,6 +190,7 @@ test.describe('History', () => {
     await page.getByTestId('points').fill('1.5');
     await page.getByTestId('compare-equity-loan').check();
     await page.getByTestId('equity-kind-line').check();
+    await openOptions(page, 3); // with three ways listed, each starts closed
     await expect(page.getByTestId('refi-equity-line-note'), 'the line is compared').toBeVisible();
     await page.getByTestId('save-open').click();
     await page.getByTestId('save-name').fill(name);
@@ -204,6 +207,7 @@ test.describe('History', () => {
     await expect(page, 'it opens on the Refinance page').toHaveURL(/\/refinance$/);
     await expect(page.getByTestId('refi-debt'), 'the debt is compared again').toBeVisible();
     await expect(page.getByTestId('refi-points-verdict'), 'with the points saved, 1.5 of them').toContainText('Buying 1.5 points');
+    await openOptions(page, 3);
     await expect(page.getByTestId('refi-equity-line-note'), 'and the home-equity line').toBeVisible();
     await expect(page.getByTestId('debt-balance'), 'the debt form is filled in').toHaveValue('20,000');
   });

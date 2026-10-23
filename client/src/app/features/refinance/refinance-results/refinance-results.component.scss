@@ -106,9 +106,7 @@
 
 .restart,
 .keep,
-.equity,
-.points,
-.debt,
+.options,
 .limit {
   background: var(--surface-2);
   box-shadow: none;
@@ -119,18 +117,89 @@
   color: var(--warning-text);
 }
 
-// Borrowing the cash separately, against refinancing for it, or buying points for a lower rate: the verdict first, then the figures.
-.equity,
-.points,
-.debt {
-  .verdict-line {
-    margin: 0 0 0.75rem;
+// What the refinance is weighed against besides itself (points, a debt, borrowing the cash apart): one line each, the figures a click away.
+.options {
+  .option + .option {
+    margin-top: 0.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .option {
+    padding: 0.7rem 0;
+  }
+
+  summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.2rem 0.75rem;
+    align-items: start;
+    cursor: pointer;
+    list-style: none;
+    border-radius: var(--radius-md);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    // The chevron: points right when closed and down when open.
+    &::after {
+      content: '';
+      grid-row: 1;
+      grid-column: 3;
+      width: 0.5rem;
+      height: 0.5rem;
+      margin-top: 0.35rem;
+      border-right: 2px solid var(--text-secondary);
+      border-bottom: 2px solid var(--text-secondary);
+      transform: rotate(-45deg);
+      transition: transform 0.15s ease;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+  }
+
+  details[open] > summary::after {
+    margin-top: 0.2rem;
+    transform: rotate(45deg);
+  }
+
+  .option-title {
+    grid-column: 1;
     font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .option-badge {
+    grid-row: 1;
+    grid-column: 2;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--warning-soft, transparent);
+    color: var(--warning-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .option-verdict {
+    grid-column: 1 / -1;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .option-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
   }
 
   .hint,
   .equity-limit {
-    margin: 0.75rem 0 0;
+    margin: 0.25rem 0 0;
     font-size: 0.9rem;
     color: var(--text-secondary);
   }

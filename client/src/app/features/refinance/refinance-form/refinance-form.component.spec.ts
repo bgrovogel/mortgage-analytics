@@ -395,6 +395,50 @@ describe('RefinanceFormComponent', () => {
     });
   });
 
+  describe('the section that compares other ways', () => {
+    it('says what is compared, and that nothing is until something is asked for', () => {
+      create();
+      expect(el('compare-ways-summary')!.textContent).toBe('None');
+
+      controls().buyPoints.setValue(true);
+      fixture.detectChanges();
+      expect(el('compare-ways-summary')!.textContent).toBe('Points');
+
+      controls().cashOut.setValue(50_000);
+      controls().payOffDebt.setValue(true);
+      controls().compareEquityLoan.setValue(true);
+      controls().equityKind.setValue('line');
+      fixture.detectChanges();
+      expect(el('compare-ways-summary')!.textContent).toBe('Points · A debt · A home-equity line');
+    });
+
+    it('says to take out cash first, for a debt or the home-equity loan, while there is none', () => {
+      create();
+      expect(el('compare-ways-need-cash')).not.toBeNull();
+      expect(el('pay-off-debt')).toBeNull();
+
+      controls().cashOut.setValue(50_000);
+      fixture.detectChanges();
+
+      expect(el('compare-ways-need-cash')).toBeNull();
+      expect(el('pay-off-debt')).not.toBeNull();
+    });
+
+    it('starts closed, and open when a saved comparison used one of the ways', () => {
+      create();
+      expect((el('section-compare-ways') as HTMLDetailsElement).open).toBe(false);
+
+      create({
+        currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+        newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 0,
+        originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+        homeValue: 400_000, currentMonthlyPmi: 0, newPmiRate: 0.5, newDiscountPoints: { points: 1, rateWithoutPoints: 6.25 },
+      });
+
+      expect((el('section-compare-ways') as HTMLDetailsElement).open).toBe(true);
+    });
+  });
+
   describe('a debt paid off with the cash out', () => {
     const askToPayOffADebt = () => {
       create();

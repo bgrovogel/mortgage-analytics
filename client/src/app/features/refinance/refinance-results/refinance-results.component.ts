@@ -181,6 +181,12 @@ export class RefinanceResultsComponent {
     return d ? t('Kept, the debt is gone in {0}. Paid off with the cash out, it is spread over the new loan, which runs {1}.', [formatMonths(d.monthsToPayOff), formatMonths(this.result().refinanced.numberOfPayments)]) : null;
   });
 
+  /** How many ways the refinance is weighed against something else: points, a debt, borrowing the cash apart. */
+  protected readonly optionCount = computed(() => [this.points(), this.debt(), this.equity()].filter((way) => way !== null).length);
+
+  /** True when there is one way only: its table is open, since there is nothing else to read first. */
+  protected readonly onlyOneOption = computed(() => this.optionCount() === 1);
+
   /** What the new loan's discount points are worth, or null when none were bought. */
   protected readonly points = computed(() => this.result().points ?? null);
 

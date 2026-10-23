@@ -495,6 +495,12 @@ The rest of the current loan against a new one, with closing costs paid at closi
   way to the cash in hand after closing costs. $50,000 out on the reference loan, at 6% for 30 years, makes a $350,000
   loan at $2,098.43 a month. Given the home's value, it says what share of it the new loan is and warns when that is
   over the 80% a cash-out refinance allows.
+- **Where the extras live.** The form keeps the loan today, the new loan and **Cash out and PMI** to what a refinance needs;
+  points, a debt to pay off and borrowing the cash separately are together in **Compare other ways**, closed to start, with a
+  line saying what is on ("Points · A debt · A home-equity line"). The debt and the home-equity comparison need cash out, and
+  say so while there is none. In the results each way asked for is one line under **Your options**: its question and its
+  answer, opening to its table (open already when it is the only one), so the main comparison stays in view however many are
+  on. A home-equity loan that may not be offered carries a badge on its line.
 - **Borrow the cash instead.** With cash out, one more tick compares the refinance with **keeping your loan and
   borrowing the cash as a home-equity loan** (its rate, its term, and the years kept). The two ways are laid side by
   side: the monthly payment, what is paid in the years kept, what is still owed after, what is paid at closing, and the
