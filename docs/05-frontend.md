@@ -326,9 +326,14 @@ The app is in English and Spanish, switched at run time with no reload. The desi
 - **Page titles** are translated by `TranslatedTitleStrategy`: the routes keep the English name and the title is written
   again when the language changes.
 - **It is checked.** `translations.spec.ts` finds every message in the source (`'…' | t`, `t('…')`, `tp(n, '…', '…')`, `msg('…')`)
-  and fails on a message with no Spanish, a Spanish that loses a placeholder, a Spanish entry nothing uses, or a message that
-  is not a plain string literal. The end-to-end `language.spec.ts` opens every page in Spanish on a phone, looking for lines
-  still in English, sideways scrolling and accessibility-rule breaks, and again after switching on an open page.
+  and fails on a message with no Spanish, a Spanish that loses a placeholder or the spaces a joining word needs, a Spanish
+  entry nothing uses, an English message spelled the British way, or a message that is not a plain string literal. The
+  end-to-end `language.spec.ts` opens every page in Spanish on a phone (Saved and the account page once signed in), looking
+  for lines still in English, sideways scrolling and accessibility-rule breaks, and again after switching on an open page.
+  A line is "still in English" when it holds an English function word, or when a label, button, heading, placeholder or title
+  is exactly one of the app's English messages: a one-word label that never went through `t` has no function word to give it
+  away. A list of choices that is built once (a filter's tabs) must name each choice when it is drawn, not when it is built,
+  or it will not follow a language chosen after the page opened.
 
 Adding a screen means writing its text through `t` and adding the Spanish to the area's file in `core/i18n/es/`; the test says
 which messages are missing.
