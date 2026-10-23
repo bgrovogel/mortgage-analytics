@@ -591,6 +591,18 @@ select {
     break-after: avoid;
   }
 
+  // "Print a short summary" (core/layout/print.ts): the headline, the figures and the lines that answer, without what is long:
+  // tables, charts, the page's detail tabs and whatever a card opens to. The homes' table on Compare is the answer there, so it stays.
+  html[data-print='short'] .results {
+    :is(table, .table-wrap, .table-frame, canvas, figure, app-scrub-chart, app-balance-chart, app-refinance-chart, app-detail-tabs, app-rate-what-if):not([data-short-keep], [data-short-keep] *) {
+      display: none !important;
+    }
+
+    details > :not(summary) {
+      display: none !important;
+    }
+  }
+
   // Whatever scrolls on the screen prints in full: the schedule, and wide tables.
   .table-wrap,
   .table-frame {

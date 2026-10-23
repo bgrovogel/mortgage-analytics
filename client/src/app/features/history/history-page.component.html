@@ -122,6 +122,7 @@
                 <div class="actions">
                   <button type="button" class="primary" [attr.aria-label]="'Open {0}' | t: [c.name]" (click)="open(c)">{{ 'Open' | t }}</button>
                   <button type="button" [attr.aria-label]="'Edit {0}' | t: [c.name]" (click)="startRename(c)">{{ 'Edit' | t }}</button>
+                  <button type="button" [attr.aria-label]="'Print a short summary of {0}' | t: [c.name]" (click)="printShort(c)" data-testid="print-summary-of">{{ 'Print' | t }}</button>
                   <button type="button" [attr.aria-label]="'Delete {0}' | t: [c.name]" (click)="askToDelete(c)">{{ 'Delete' | t }}</button>
                   @if (amountsHidden()) {
                     <button type="button" class="reveal" [attr.aria-pressed]="!isMasked(c)"

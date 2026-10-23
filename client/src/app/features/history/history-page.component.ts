@@ -301,6 +301,13 @@ export class HistoryPageComponent {
     void this.router.navigate([...store.route]);
   }
 
+  /** Opens the calculation as `open` does, and has its short summary printed once its results are in: Saved to a printout in one step. */
+  printShort(calculation: SavedCalculation): void {
+    const store = this.stores.of(calculation.kind);
+    store.open(calculation);
+    void this.router.navigate([...store.route], { state: { printShort: true } });
+  }
+
   /** Starts editing, with the current name and note to change. */
   startRename(calculation: SavedCalculation): void {
     this.confirmingDelete.set(null);

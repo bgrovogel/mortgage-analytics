@@ -23,6 +23,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
           <div class="items" role="menu" [attr.aria-label]="'Share' | t" aria-describedby="share-scope" tabindex="-1" (keydown)="onKeydown($event)">
             <button #item type="button" role="menuitem" data-testid="share-copy" [disabled]="!fragment()" (click)="copyLink()">{{ 'Copy link' | t }}</button>
             <button #item type="button" role="menuitem" data-testid="print" [disabled]="!canPrint()" (click)="printPage()">{{ 'Print or save as PDF' | t }}</button>
+            <button #item type="button" role="menuitem" data-testid="print-short" [disabled]="!canPrint()" (click)="printShortPage()">{{ 'Print a short summary' | t }}</button>
           </div>
           <!-- Said before anything is copied: what a link carries, and what it never does. -->
           <p class="scope" id="share-scope" data-testid="share-scope">{{ 'A link holds these numbers only, never your name, email or saved list.' | t }}</p>
@@ -52,6 +53,9 @@ export class ShareMenuComponent {
   /** The visitor asked to print. */
   readonly print = output<void>();
 
+  /** The visitor asked for a short summary: the figures and what they say, without the tables and charts. */
+  readonly printShort = output<void>();
+
   protected readonly open = signal(false);
 
   protected toggle(): void {
@@ -72,6 +76,11 @@ export class ShareMenuComponent {
   protected printPage(): void {
     this.open.set(false);
     this.print.emit();
+  }
+
+  protected printShortPage(): void {
+    this.open.set(false);
+    this.printShort.emit();
   }
 
   protected onKeydown(event: KeyboardEvent): void {

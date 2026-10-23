@@ -89,6 +89,12 @@ describe('SaleComponent', () => {
       ]);
     });
 
+    it('says the cases are illustrations and not forecasts, and where the fall is set', () => {
+      const { text } = render(withScenarios());
+
+      expect(text('sale-scenarios-note')).toBe('These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers.');
+    });
+
     it('says what it is for, in a heading the table is named by', () => {
       const { text } = render(withScenarios());
 

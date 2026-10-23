@@ -151,6 +151,29 @@ test.describe('History', () => {
     await expect(history.empty, 'and nothing else matches the search').toContainText('Nothing matches');
   });
 
+  test('prints a short summary of a saved calculation straight from History, once its results are in', async ({ signedIn: calculator, page }) => {
+    const name = `Birch ${tag}`;
+    await calculator.saveAs(name);
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await page.evaluate(() => {
+      const seen = window as unknown as { printed: (string | undefined)[] };
+      seen.printed = [];
+      window.print = () => { seen.printed.push(document.documentElement.dataset['print']); };
+    });
+
+    await history.item(name).getByRole('button', { name: `Print a short summary of ${name}` }).click();
+
+    await expect(page, 'the calculation opens on its own page').toHaveURL(/\/calculator\/overview/);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { printed: unknown[] }).printed.length), 'the print dialog opens once the results are in').toBe(1);
+    expect(await page.evaluate(() => (window as unknown as { printed: unknown[] }).printed), 'in short mode').toEqual(['short']);
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await calculator.set('home-price', 410_000);
+    await calculator.calculate();
+    expect(await page.evaluate(() => (window as unknown as { printed: unknown[] }).printed.length), 'a later change does not print again').toBe(1);
+  });
+
   test('saves a refinance comparison and reopens it on the Refinance page', async ({ account, page }) => {
     expect(account.email, 'signed in').toBeTruthy();
     const name = `Refi ${tag}`;

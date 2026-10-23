@@ -33,4 +33,43 @@ test.describe('Print', () => {
     await expect(page.locator('html'), 'back to the screen’s theme after').not.toHaveAttribute('data-theme', 'light');
     await expect(page.getByTestId('print-summary'), 'the line is for paper only').toBeHidden();
   });
+
+  test('prints a short summary without the tables and charts, and a full printout again after', async ({ page }) => {
+    await page.goto('/refinance');
+    await expect(page.getByTestId('results'), 'the example has arrived').toHaveAttribute('aria-busy', 'false');
+    await page.evaluate(() => {
+      (window as unknown as { during: string | undefined }).during = undefined;
+      window.print = () => { (window as unknown as { during: string | undefined }).during = document.documentElement.dataset['print']; };
+    });
+
+    await page.getByTestId('share-menu').click();
+    await page.getByTestId('print-short').click();
+    expect(await page.evaluate(() => (window as unknown as { during: string | undefined }).during), 'the page is in short mode while the dialog is open').toBe('short');
+
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByTestId('refi-verdict'), 'the headline prints').toBeVisible();
+    await expect(page.getByTestId('refi-payment'), 'with the figures').toBeVisible();
+    await expect(page.getByTestId('refi-table'), 'but not the comparison table').toBeHidden();
+
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await expect(page.locator('html'), 'short mode is over once it has printed').not.toHaveAttribute('data-print', 'short');
+
+    await page.getByTestId('share-menu').click();
+    await page.getByTestId('print').click();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByTestId('refi-table'), 'the full printout keeps the table').toBeVisible();
+  });
+
+  test('keeps the homes table in a short summary of Compare, since it is the answer there', async ({ page }) => {
+    await page.goto('/compare');
+    await expect(page.getByTestId('results'), 'the example has arrived').toHaveAttribute('aria-busy', 'false');
+    await page.evaluate(() => { window.print = () => undefined; });
+
+    await page.getByTestId('share-menu').click();
+    await page.getByTestId('print-short').click();
+    await page.emulateMedia({ media: 'print' });
+
+    await expect(page.getByTestId('compare-table'), 'the homes side by side stay').toBeVisible();
+  });
 });

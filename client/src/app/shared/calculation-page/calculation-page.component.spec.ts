@@ -50,7 +50,10 @@ describe('CalculationPageComponent', () => {
       providers: [provideRouter([]), { provide: SavedCalculationsApiService, useValue: {} }, { provide: AuthService, useValue: { user: signal(null) } }],
     });
   });
-  afterEach(() => jest.useRealTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   const render = () => {
     const fixture = TestBed.createComponent(HostComponent);
@@ -148,6 +151,67 @@ describe('CalculationPageComponent', () => {
 
     expect(print).toHaveBeenCalled();
     expect(text('print-summary')).toBe('Mortgage Analytics · Test: 375000 · Oct 14, 2026');
+  });
+
+  it('prints a short summary: the page is in short print mode while the dialog is open', () => {
+    let during: string | undefined;
+    const print = jest.spyOn(window, 'print').mockImplementation(() => { during = document.documentElement.dataset['print']; });
+    const { host, fixture } = render();
+    host.store.send(375_000);
+    jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+    host.store.responses.next('done');
+    fixture.detectChanges();
+    openShare(fixture);
+
+    item(fixture, 'print-short').click();
+
+    expect(print).toHaveBeenCalled();
+    expect(during).toBe('short');
+    window.dispatchEvent(new Event('afterprint'));
+    expect(document.documentElement.dataset['print']).toBeUndefined();
+  });
+
+  describe('opened from Saved to print', () => {
+    afterEach(() => window.history.replaceState({}, ''));
+
+    it('prints the short summary once, when the first results are in, and not again', () => {
+      window.history.replaceState({ printShort: true }, '');
+      const print = jest.spyOn(window, 'print').mockImplementation(() => undefined);
+      const { host, fixture } = render();
+      expect(print).not.toHaveBeenCalled();
+
+      host.store.send(375_000);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      host.store.responses.next('done');
+      fixture.detectChanges();
+      jest.runOnlyPendingTimers();
+      fixture.detectChanges();
+
+      expect(print).toHaveBeenCalledTimes(1);
+      expect(window.history.state.printShort).toBe(false);
+
+      host.store.send(400_000);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      host.store.responses.next('again');
+      fixture.detectChanges();
+      jest.runOnlyPendingTimers();
+
+      expect(print).toHaveBeenCalledTimes(1);
+      window.dispatchEvent(new Event('afterprint'));
+    });
+
+    it('does not print when it was not asked to', () => {
+      const print = jest.spyOn(window, 'print').mockImplementation(() => undefined);
+      const { host, fixture } = render();
+
+      host.store.send(375_000);
+      jest.advanceTimersByTime(RECALCULATE_DELAY_MS);
+      host.store.responses.next('done');
+      fixture.detectChanges();
+      jest.runOnlyPendingTimers();
+
+      expect(print).not.toHaveBeenCalled();
+    });
   });
 
   it('says when a share link could not be opened, until it is dismissed', () => {

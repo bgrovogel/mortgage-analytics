@@ -77,6 +77,7 @@ const STARTING_YEAR = 5;
             </tbody>
           </table>
         </div>
+        <p class="note" data-testid="sale-scenarios-note">{{ 'These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers.' | t }}</p>
       </section>
     }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Injector, afterNextRender, afterRenderEffect, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
 import { CalculationStore } from '../../core/state/calculation-store';
@@ -7,6 +7,7 @@ import { SaveCalculationComponent } from '../save-calculation/save-calculation.c
 import { ShareMenuComponent } from '../share-menu/share-menu.component';
 import { TPipe } from '../../core/i18n/t.pipe';
 import { dateText } from '../../core/formatting/format';
+import { printShortSummary } from '../../core/layout/print';
 
 /** How long the answer holds still before it is announced. */
 export const ANNOUNCE_AFTER_MS = 600;
@@ -100,12 +101,30 @@ export class CalculationPageComponent {
     window.print();
   }
 
+  /** Opened from Saved with Print: once the first results are in, the short summary is printed, then asked for no more. */
+  private readonly injector = inject(Injector);
+  private printOnArrival = window.history.state?.['printShort'] === true;
+
+  /** Prints a short summary: the same, without the tables and charts, so what it says fits a page (styles.scss, `data-print="short"`). */
+  printShort(): void {
+    printShortSummary(window);
+  }
+
   /** On a phone the form is a sheet over the results: open while the visitor edits, out of the way otherwise. */
   protected readonly sheetOpen = signal(false);
 
   private readonly panel = viewChild<ElementRef<HTMLElement>>('formPanel');
 
   constructor() {
+    effect(() => {
+      const store = this.store();
+      if (!this.printOnArrival || !store.result() || store.busy()) return;
+      this.printOnArrival = false;
+      window.history.replaceState({ ...window.history.state, printShort: false }, '');
+      // The results are drawn after this change; the printout is of what is on the page.
+      afterNextRender(() => this.printShort(), { injector: this.injector });
+    });
+
     // The page behind a sheet does not scroll while it is open.
     effect(() => document.body.classList.toggle('sheet-open', this.sheetOpen()));
     inject(DestroyRef).onDestroy(() => document.body.classList.remove('sheet-open'));

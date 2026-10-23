@@ -120,7 +120,7 @@ interface Row {
           <input type="checkbox" data-testid="only-differences" [checked]="onlyDifferences()" (change)="onlyDifferences.set(!onlyDifferences())" />
           {{ 'Only the rows that differ' | t }}
         </label>
-        <div class="table-wrap" tabindex="0" [attr.aria-label]="'The homes side by side' | t">
+        <div class="table-wrap" data-short-keep tabindex="0" [attr.aria-label]="'The homes side by side' | t">
           <table data-testid="compare-table" [class]="'homes-' + homes.length" [style.--homes]="homes.length">
             <thead>
               <tr>

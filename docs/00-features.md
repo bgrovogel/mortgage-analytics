@@ -270,6 +270,12 @@ saying what they are for: "Mortgage Analytics · Calculator: $415,000 home · 9%
 The header, the form and the page's controls stay on the screen, and the page prints in the light theme even when the
 screen is dark, charts included; the browser's own Print does the same.
 
+**Print a short summary**, beside it, prints the same page without what is long: the tables, the charts, the detail tabs and
+whatever a card opens to. The headline, the figures and the lines that answer stay, so it fits a page to hand over (on Compare,
+the homes side by side are the answer, so that table stays). It is the same page in a print mode that ends when the dialog closes.
+On **Saved**, each calculation has a **Print** button that opens it and prints this summary once its results are in, so a saved
+comparison is one click from a page on paper.
+
 #### Can you afford it?
 
 Add your income a year and your other debts a month (**Income & debts**), and the **Affordability** tab
@@ -393,7 +399,8 @@ raise what you paid and lower the gain, so the tax shown leans high; state tax i
 The answer depends on what the home is worth then, which nobody knows, so a small table, **If prices differ**, sets the
 chosen year under three cases: prices falling a given amount a year (**3%** to start, set with the other numbers), prices
 standing still, and the plan's own yearly rise. The loan owes the same in each; only the price, the costs, the gain and the
-tax change. A fall can leave a shortfall to bring to closing, which the table shows as a negative amount.
+tax change. A fall can leave a shortfall to bring to closing, which the table shows as a negative amount. A line under it says
+these are illustrations, not forecasts.
 
 #### The best use of the seller's money
 
@@ -647,7 +654,8 @@ Three ways to use the same spare cash, played out month by month for 30 years.
   is restored), edit its name, **note** and **tags**, or delete it. A note is up to 500 characters, an optional reminder of what the calculation
   was for ("Ask about the roof"), written when saving or later in History, where it shows under the name. **Tags** are up to five
   short words (up to 24 characters each, typed separated by commas, repeats dropped) to find it by: they show as labels under the name,
-  a search finds them, and a row of tag buttons above the list narrows it to one. Each person sees only their own.
+  a search finds them, and a row of tag buttons above the list narrows it to one. **Print** on an entry opens it and prints a short
+  summary of it (see Print a short summary). Each person sees only their own.
 
 ---
 

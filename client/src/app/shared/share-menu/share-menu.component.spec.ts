@@ -4,7 +4,7 @@ import { ShareMenuComponent } from './share-menu.component';
 
 @Component({
   imports: [ShareMenuComponent],
-  template: `<app-share-menu [fragment]="fragment()" [note]="note" [canPrint]="canPrint()" (print)="printed = printed + 1" />
+  template: `<app-share-menu [fragment]="fragment()" [note]="note" [canPrint]="canPrint()" (print)="printed = printed + 1" (printShort)="printedShort = printedShort + 1" />
              <button type="button" data-testid="elsewhere">elsewhere</button>`,
 })
 class HostComponent {
@@ -12,6 +12,7 @@ class HostComponent {
   readonly canPrint = signal(true);
   note: string | null = 'Your income and debts are left out.';
   printed = 0;
+  printedShort = 0;
 }
 
 describe('ShareMenuComponent', () => {
@@ -40,7 +41,26 @@ describe('ShareMenuComponent', () => {
     open();
 
     expect(find('share-menu')!.getAttribute('aria-expanded')).toBe('true');
-    expect([...root().querySelectorAll('[role="menuitem"]')].map((i) => i.textContent!.trim())).toEqual(['Copy link', 'Print or save as PDF']);
+    expect([...root().querySelectorAll('[role="menuitem"]')].map((i) => i.textContent!.trim())).toEqual(['Copy link', 'Print or save as PDF', 'Print a short summary']);
+  });
+
+  it('prints a short summary as its own choice, and closes', () => {
+    open();
+
+    find('print-short')!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.printedShort).toBe(1);
+    expect(fixture.componentInstance.printed).toBe(0);
+    expect(root().querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('cannot print a short summary while there is no result, like the full printout', () => {
+    fixture.componentInstance.canPrint.set(false);
+    fixture.detectChanges();
+    open();
+
+    expect((find('print-short') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('puts focus on the first choice when it opens, and closes on Escape with focus back on the button', () => {

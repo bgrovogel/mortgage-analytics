@@ -92,6 +92,7 @@ export const ES_CALCB: Record<string, string> = {
   'Selling costs ({0})': 'Costos de venta ({0})',
   'Sells for': 'Se vende por',
   'If prices differ': 'Si los precios cambian',
+  'These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers.': 'Son ilustraciones, no pronósticos: nadie sabe hacia dónde irán los precios. Fija la baja con tus números.',
   'If prices fall by (a year)': 'Si los precios bajan (al año)',
   'The sale if prices differ, for the year chosen': 'La venta si los precios cambian, para el año elegido',
   'Prices fall {0} a year': 'Los precios bajan {0} al año',

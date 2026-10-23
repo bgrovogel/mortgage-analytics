@@ -1,4 +1,37 @@
-import { THEME_CHANGE, printInLightTheme } from './print';
+import { THEME_CHANGE, printInLightTheme, printShortSummary } from './print';
+
+describe('printShortSummary', () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    window.dispatchEvent(new Event('afterprint'));
+    delete root.dataset['print'];
+  });
+
+  it('prints in short mode, which is on while the dialog is open, and off after', () => {
+    let during: string | undefined;
+    const print = jest.spyOn(window, 'print').mockImplementation(() => { during = root.dataset['print']; });
+
+    printShortSummary(window);
+
+    expect(print).toHaveBeenCalledTimes(1);
+    expect(during).toBe('short');
+    expect(root.dataset['print']).toBe('short');
+
+    window.dispatchEvent(new Event('afterprint'));
+
+    expect(root.dataset['print']).toBeUndefined();
+    print.mockRestore();
+  });
+
+  it('goes back to a normal printout if printing fails', () => {
+    const print = jest.spyOn(window, 'print').mockImplementation(() => { throw new Error('blocked'); });
+
+    expect(() => printShortSummary(window)).toThrow('blocked');
+
+    expect(root.dataset['print']).toBeUndefined();
+    print.mockRestore();
+  });
+});
 
 describe('printInLightTheme', () => {
   const root = document.documentElement;

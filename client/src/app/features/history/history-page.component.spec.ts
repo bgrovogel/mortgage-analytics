@@ -333,6 +333,26 @@ describe('HistoryPageComponent', () => {
     });
   });
 
+  describe('printing a short summary', () => {
+    it('opens the calculation and asks for its short summary to be printed once the results are in', () => {
+      const navigate = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      create();
+
+      click(button(items()[0], 'Print'));
+
+      expect(store.saved()).toEqual({ id: '1', name: 'Oak St, 20% down' });
+      expect(navigate).toHaveBeenCalledWith(['/calculator', 'overview'], { state: { printShort: true } });
+    });
+
+    it('says which calculation it prints, for a screen reader', () => {
+      create();
+
+      const printButton = button(items()[0], 'Print');
+
+      expect(printButton.getAttribute('aria-label')).toBe('Print a short summary of Oak St, 20% down');
+    });
+  });
+
   describe('editing', () => {
     it('renames in place, keeping the inputs', () => {
       create();
