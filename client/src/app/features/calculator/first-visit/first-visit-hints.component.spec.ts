@@ -20,6 +20,12 @@ describe('FirstVisitHintsComponent', () => {
     expect(root.querySelector('[data-testid="first-visit"]')).not.toBeNull();
   });
 
+  it('does not say where the form is: on a phone it is behind a button, not on the left', () => {
+    const { root } = render();
+
+    expect(root.querySelector('[data-testid="first-visit"]')!.textContent).not.toMatch(/\b(left|right|above|below)\b/);
+  });
+
   it('is dismissed for good with one tap', () => {
     const { fixture, root } = render();
 

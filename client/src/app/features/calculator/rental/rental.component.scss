@@ -102,13 +102,13 @@ tbody th {
   // The year stays put while a narrow screen scrolls the figures under it.
   position: sticky;
   left: 0;
-  background: var(--surface-1);
+  background: var(--page); // the table sits on the page, not on a card
 }
 
 thead td {
   position: sticky;
   left: 0;
-  background: var(--surface-1);
+  background: var(--page); // the table sits on the page, not on a card
 }
 
 td.short {

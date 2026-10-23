@@ -23,7 +23,7 @@ function dismissedBefore(): boolean {
     @if (!dismissed()) {
       <section class="hints" [attr.aria-label]="'How this page works' | t" data-testid="first-visit">
         <ol>
-          <li><strong>{{ 'Your numbers' | t }}</strong> {{ 'are on the left, starting from an example: type your own and everything follows.' | t }}</li>
+          <li><strong>{{ 'Your numbers' | t }}</strong> {{ 'start from an example: type your own and everything follows.' | t }}</li>
           <li><strong>{{ 'The answer' | t }}</strong> {{ 'is at the top, in a line, with what is behind it under it.' | t }}</li>
           <li><strong>{{ 'The views' | t }}</strong> {{ 'answer the next question: can you afford it, rent or buy, compare. Closing costs and every payment are under Cost.' | t }}</li>
         </ol>

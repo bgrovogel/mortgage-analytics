@@ -100,3 +100,28 @@ for (const { name, viewport, phone } of SIZES) {
     });
   });
 }
+
+/**
+ * The year tables of the sale, rent-or-buy and rental views sit straight on the page, and their first column stays put while
+ * a narrow screen scrolls the figures. That column must be the page's colour, or it shows as a white strip down a grey page.
+ */
+test.describe('The year tables', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  for (const { tab, table, rent } of [
+    { tab: 'sale', table: 'sale-table', rent: null },
+    { tab: 'rent-or-buy', table: 'rent-or-buy', rent: 'monthly-rent' },
+    { tab: 'rental', table: 'rental-table', rent: 'rental-rent' },
+  ]) {
+    test(`the ${table} table keeps its first column the colour of the page`, async ({ page }) => {
+      await page.goto(`/calculator/${tab}`);
+      await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
+      if (rent) await page.getByTestId(rent).fill('2800');
+
+      const first = page.getByTestId(table).locator('tbody th').first();
+      await expect(first, 'the table is shown').toBeVisible();
+      const colours = await first.evaluate((el) => ({ column: getComputedStyle(el).backgroundColor, page: getComputedStyle(document.body).backgroundColor }));
+      expect(colours.column, 'the first column is the page colour').toBe(colours.page);
+    });
+  }
+});

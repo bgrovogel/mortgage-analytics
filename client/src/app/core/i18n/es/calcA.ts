@@ -173,7 +173,7 @@ export const ES_CALCA: Record<string, string> = {
   'The views': 'Las vistas',
   'Your numbers': 'Tus números',
   'answer the next question: can you afford it, rent or buy, compare. Closing costs and every payment are under Cost.': 'responden la siguiente pregunta: si puedes pagarla, rentar o comprar, comparar. Los costos de cierre y cada pago están en Costo.',
-  'are on the left, starting from an example: type your own and everything follows.': 'están a la izquierda, a partir de un ejemplo: escribe los tuyos y todo los sigue.',
+  'start from an example: type your own and everything follows.': 'parten de un ejemplo: escribe los tuyos y todo los sigue.',
   'is at the top, in a line, with what is behind it under it.': 'está arriba, en una línea, con lo que la respalda debajo.',
   'In 5 years, you will have paid': 'En 5 años, habrás pagado',
   "The figures a lender's Loan Estimate lists to compare one loan with another.": 'Las cifras que lista el Loan Estimate de un prestamista para comparar un préstamo con otro.',
