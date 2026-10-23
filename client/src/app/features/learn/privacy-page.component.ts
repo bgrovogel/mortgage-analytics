@@ -40,7 +40,7 @@ import { TPipe } from '../../core/i18n/t.pipe';
 
         <section id="browser">
           <h3>{{ 'In your browser' | t }}</h3>
-          <p>{{ "The page remembers a few small things in your browser, only on your device: your colour theme if you picked one, your language, which columns you chose for the payment schedule, the order of your key figures (also kept in your account when you are signed in), whether you chose to hide amounts on Saved, and that you have seen the first-visit tips. Clearing the site's data removes them." | t }}</p>
+          <p>{{ "The page remembers a few small things in your browser, only on your device: your color theme if you picked one, your language, which columns you chose for the payment schedule, the order of your key figures (also kept in your account when you are signed in), whether you chose to hide amounts on Saved, and that you have seen the first-visit tips. Clearing the site's data removes them." | t }}</p>
         </section>
 
         <section id="none">

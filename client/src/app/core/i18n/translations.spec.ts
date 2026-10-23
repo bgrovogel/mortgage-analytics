@@ -69,6 +69,20 @@ describe('Spanish translations', () => {
     expect(wrong).toEqual([]);
   });
 
+  it('keeps the spaces a message begins and ends with, as a joining word needs them', () => {
+    const edge = (text: string) => `${/^\s/.test(text) ? 'begins' : ''}${/\s$/.test(text) ? 'ends' : ''}`;
+    const wrong = [...used].filter((key) => ES[key] && edge(key) !== edge(ES[key])).sort();
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('spells every message the American way, as the rest of the app does', () => {
+    const british = /\b(colours?|recognis\w*|organis\w*|behaviour\w*|favourite\w*|centre\w*|licence\w*|analys(e|ed|es|ing)|grey|whilst|programme\w*|honour\w*|neighbour\w*)\b/i;
+    const spelled = [...used].filter((key) => british.test(key));
+
+    expect(spelled).toEqual([]);
+  });
+
   it('has no translation for a message that is no longer used', () => {
     const stale = Object.keys(ES).filter((key) => !used.has(key)).sort();
     expect(stale).toEqual([]);

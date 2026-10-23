@@ -1,6 +1,6 @@
 # 7. Testing and quality
 
-> **About 3,310 automated tests in seven suites, written test-first, with the standards enforced by the build.**
+> **About 3,320 automated tests in seven suites, written test-first, with the standards enforced by the build.**
 
 **Read time:** 12 min · **Best for:** how quality is kept, and proved · **Code:** `tests/`, `client/e2e/`, `.github/workflows/ci.yml`
 
@@ -18,8 +18,8 @@
 | Infrastructure | 71 | NUnit, SQLite in memory; 3 on a real PostgreSQL (Testcontainers, run locally) | ~1 s, ~5 s with PostgreSQL |
 | API integration | 168 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
-| Angular unit | 1,460 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 293 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| Angular unit | 1,464 | Jest, jest-preset-angular | ~10 s |
+| End-to-end | 295 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
@@ -116,8 +116,10 @@ Take the ARM margin floor as an example of the order of work:
   starts in it. Every page is then opened in Spanish on a phone and must have no line left in English (a line with an English
   function word, or a label, button or heading that is exactly one of the app's English messages, which is how a single-word
   label that never went through the translation shows itself), no sideways scroll and no axe violation, and the calculator,
-  refinance and pay-off pages are checked again after switching on an open page.
-  In Jest, `translations.spec.ts` fails on any message with no Spanish, a Spanish that loses a placeholder, or a stale entry.
+  refinance and pay-off pages are checked again after switching on an open page. Saved (with something saved) and the account
+  page are checked the same way once signed in.
+  In Jest, `translations.spec.ts` fails on any message with no Spanish, a Spanish that loses a placeholder or the spaces a
+  joining word needs, a stale entry, or an English message spelled the British way.
 - **Layout rules** (`e2e/layout.spec.ts`): the bugs a screenshot comparison would catch, written as what must be true, so there
   are no baseline images to keep in step across operating systems. On every page, on a desktop, a tablet and a phone: the page
   does not scroll sideways, no table is cut off at its edge (the payment schedule is the one that may scroll), no text is clipped

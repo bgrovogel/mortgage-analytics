@@ -10,7 +10,7 @@ import { TPipe } from '../i18n/t.pipe';
   imports: [TPipe],
   selector: 'app-theme-switch',
   template: `
-    <div class="theme" role="group" [attr.aria-label]="'Colour theme' | t">
+    <div class="theme" role="group" [attr.aria-label]="'Color theme' | t">
       @for (choice of choices; track choice.value) {
         <button type="button" [attr.aria-pressed]="current() === choice.value" [attr.data-testid]="'theme-' + choice.value"
                 (click)="choose(choice.value)">{{ choice.label }}</button>

@@ -45,7 +45,8 @@ input {
 }
 
 .search {
-  width: 15rem;
+  // Wide enough for its placeholder in Spanish, which runs longer ("Buscar por nombre, nota o etiqueta").
+  width: 20rem;
   max-width: 100%;
 }
 

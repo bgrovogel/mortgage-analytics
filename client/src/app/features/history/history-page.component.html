@@ -11,9 +11,9 @@
         {{ 'Hide amounts' | t }} <kbd>⇧H</kbd>
       </label>
       <div class="toggle" role="group" [attr.aria-label]="'Show' | t">
-        @for (kind of kinds; track kind.value) {
-          <button type="button" [attr.aria-pressed]="kindFilter() === kind.value" (click)="kindFilter.set(kind.value)"
-                  [attr.data-testid]="'kind-filter-' + kind.value">{{ kind.label }}</button>
+        @for (kind of kinds; track kind) {
+          <button type="button" [attr.aria-pressed]="kindFilter() === kind" (click)="kindFilter.set(kind)"
+                  [attr.data-testid]="'kind-filter-' + kind">{{ kindName(kind) }}</button>
         }
       </div>
       <input class="search" type="search" [attr.placeholder]="'Search by name, note or tag' | t" [attr.aria-label]="'Search saved calculations by name, note or tag' | t"
@@ -125,7 +125,7 @@
                   <button type="button" [attr.aria-label]="'Delete {0}' | t: [c.name]" (click)="askToDelete(c)">{{ 'Delete' | t }}</button>
                   @if (amountsHidden()) {
                     <button type="button" class="reveal" [attr.aria-pressed]="!isMasked(c)"
-                            [attr.aria-label]="(isMasked(c) ? ('Show amount for ' | t) : 'Hide amount for ') + c.name" (click)="toggleReveal(c)"
+                            [attr.aria-label]="(isMasked(c) ? ('Show amount for ' | t) : ('Hide amount for ' | t)) + c.name" (click)="toggleReveal(c)"
                             data-testid="reveal">{{ isMasked(c) ? ('Show' | t) : ('Hide' | t) }}</button>
                   }
                 </div>

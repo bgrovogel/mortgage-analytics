@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
+import { chooseLanguage } from '../../core/i18n/i18n';
 import { AmortizationRequest } from '../../core/models/amortization.models';
 import { SavedCalculation } from '../../core/models/saved-calculation.models';
 import { AmortizationApiService } from '../../core/services/amortization-api.service';
@@ -71,6 +72,23 @@ describe('HistoryPageComponent', () => {
     jest.advanceTimersByTime(SEARCH_DELAY_MS);
     fixture.detectChanges();
   };
+
+  describe('the filter', () => {
+    it('names each kind in the language the page is in, also when the language is changed after the page is open', async () => {
+      create();
+      const labels = () => [...root().querySelectorAll('[data-testid^="kind-filter-"]')].map((b) => b.textContent!.trim());
+      expect(labels()).toEqual(['All', 'Calculator', 'Compare homes', 'Refinance', 'Pay off or invest']);
+
+      await chooseLanguage('es');
+      try {
+        fixture.detectChanges();
+
+        expect(labels()).toEqual(['Todos', 'Calculadora', 'Comparar casas', 'Refinanciar', 'Pagar o invertir']);
+      } finally {
+        await chooseLanguage('en');
+      }
+    });
+  });
 
   describe('the list', () => {
     it('shows every saved calculation, with a one-line summary and when it was saved', () => {

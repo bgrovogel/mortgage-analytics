@@ -108,11 +108,13 @@ export class HistoryPageComponent {
       .filter((group) => group.items.length > 0);
   });
 
-  /** The filter's choices: all, then each kind by the name of the page it opens on. */
-  protected readonly kinds: { value: SavedCalculationKind | 'all'; label: string }[] = [
-    { value: 'all', get label() { return t('All'); } },
-    ...this.stores.pages().map(({ kind }) => ({ value: kind, label: this.kindLabel(kind) })),
-  ];
+  /** The filter's choices: all, then each kind; `kindName` says each in the page's language as it stands when it is drawn. */
+  protected readonly kinds: (SavedCalculationKind | 'all')[] = ['all', ...this.stores.pages().map(({ kind }) => kind)];
+
+  /** A choice's name: "All", or the kind's. */
+  protected kindName(kind: SavedCalculationKind | 'all'): string {
+    return kind === 'all' ? t('All') : this.kindLabel(kind);
+  }
 
   /** A kind's name, as the navigation shows its page: "Calculator", "Refinance", "Pay off or invest". */
   protected kindLabel(kind: SavedCalculationKind): string {

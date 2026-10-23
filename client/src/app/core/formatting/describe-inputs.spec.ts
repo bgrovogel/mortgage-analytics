@@ -49,6 +49,15 @@ describe('a comparison of homes', () => {
       .toBe('$415,000 home, 9% down at 6.25% vs $450,000 home, 20% down at 6% vs $380,000 home, 20% down at 6.5%');
   });
 
+  it('keeps a space on both sides of "vs" in Spanish, so the homes do not run together', async () => {
+    await chooseLanguage('es');
+    try {
+      expect(describeComparison({ homes: [first, second] })).toBe('Casa de $415,000, 9% de pago inicial a 6.25% vs Casa de $450,000, 20% de pago inicial a 6%');
+    } finally {
+      await chooseLanguage('en');
+    }
+  });
+
   it('suggests a name from the prices', () => {
     expect(suggestComparisonName({ homes: [first, second] })).toBe('$415,000 or $450,000 home');
     expect(suggestComparisonName({ homes: [first, second, third] })).toBe('$415,000, $450,000 or $380,000 home');

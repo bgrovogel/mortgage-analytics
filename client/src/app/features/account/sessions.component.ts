@@ -17,7 +17,7 @@ import { t, tp } from '../../core/i18n/i18n';
     <div class="part" role="group" aria-labelledby="sessions-title">
       <h3 id="sessions-title">{{ 'Where you’re signed in' | t }}</h3>
       <p>
-        {{ 'Each browser or device signed in to your account. If you don’t recognise one, or left yourself signed in on a shared computer, sign it out here. A device you sign out is signed out at its next request.' | t }}
+        {{ 'Each browser or device signed in to your account. If you don’t recognize one, or left yourself signed in on a shared computer, sign it out here. A device you sign out is signed out at its next request.' | t }}
       </p>
       @if (list().length > 0) {
         <ul class="session-list" data-testid="session-list">

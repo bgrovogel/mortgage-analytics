@@ -66,7 +66,7 @@ const ENGLISH = /(?<!\p{L})(the|your|you|with|and|of|is|for|to|in|this|that|are|
  * The app's own messages that read differently in Spanish. A word of one of these, shown as it is in English on a Spanish page,
  * was written by the app and never put through the translation: a single-word label has none of the words above to give it away.
  */
-const ENGLISH_MESSAGES = Object.entries(ES).filter(([english, spanish]) => english !== spanish && !english.includes('{')).map(([english]) => english);
+const ENGLISH_MESSAGES = Object.entries(ES).filter(([english, spanish]) => english !== spanish && !english.includes('{')).map(([english]) => english.trim());
 
 /** The texts in `main` (an element's own words, or its label, placeholder or title) that are exactly one of the English messages. */
 async function untranslatedTexts(page: Page): Promise<string[]> {
@@ -139,6 +139,36 @@ test.describe('Spanish, on every page', () => {
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
     expect(results.violations.map((v) => v.id), 'no accessibility rule is broken').toEqual([]);
   });
+});
+
+/** The pages behind sign-in, in Spanish: Saved with something saved (its filter, summaries and buttons), and the account page. */
+test.describe('Spanish, signed in', () => {
+  test.use({ locale: 'es-MX', viewport: { width: 390, height: 844 } });
+  test.slow();
+
+  for (const path of ['/history', '/account']) {
+    test(`${path} is in Spanish, fits a phone, and breaks no accessibility rule`, async ({ account, page }) => {
+      expect(account.email, 'signed in before the page opens').toBeTruthy();
+      // Something saved, under a Spanish name so that only the app's own words can be left in English.
+      await page.goto('/calculator');
+      await expect(page.getByTestId('results'), 'the results have arrived').toHaveAttribute('aria-busy', 'false');
+      await page.getByTestId('save-open').click();
+      await page.getByTestId('save-name').fill('Casa Arce');
+      await page.getByTestId('save-new').click();
+      await expect(page.getByTestId('save-status'), 'the save is confirmed').toBeVisible();
+
+      await page.goto(path);
+      await expect(page.locator('html'), 'the page is in Spanish').toHaveAttribute('lang', 'es');
+      await expect(page.locator('main h1').first(), 'the page has arrived').toBeVisible();
+      for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
+
+      await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, 'the page does not scroll sideways').toBeLessThanOrEqual(1);
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+      expect(results.violations.map((v) => v.id), 'no accessibility rule is broken').toEqual([]);
+    });
+  }
 });
 
 /** The same check after switching with the page open: everything on it follows, not only what is drawn afresh. */
