@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
+import { ES } from '../src/app/core/i18n/es';
 import { expect, test } from './fixtures';
 
 /** The language switch: one press in the header, on every page, remembered for the next visit. */
@@ -61,10 +62,34 @@ const PAGES = [
 /** Words that only English text has, found in the page's main content as whole words (letters with accents count as letters). */
 const ENGLISH = /(?<!\p{L})(the|your|you|with|and|of|is|for|to|in|this|that|are|from|not|all|by|per|each|than)(?!\p{L})/iu;
 
-/** The lines of the page's main content that still hold an English word, other than the names that stay as they are. */
+/**
+ * The app's own messages that read differently in Spanish. A word of one of these, shown as it is in English on a Spanish page,
+ * was written by the app and never put through the translation: a single-word label has none of the words above to give it away.
+ */
+const ENGLISH_MESSAGES = Object.entries(ES).filter(([english, spanish]) => english !== spanish && !english.includes('{')).map(([english]) => english);
+
+/** The texts in `main` (an element's own words, or its label, placeholder or title) that are exactly one of the English messages. */
+async function untranslatedTexts(page: Page): Promise<string[]> {
+  return page.locator('main').evaluate((main, english) => {
+    const known = new Set(english);
+    const found = new Set<string>();
+    const note = (raw: string | null) => {
+      const text = (raw ?? '').replace(/\s+/g, ' ').trim();
+      if (known.has(text)) found.add(text);
+    };
+    for (const el of [main, ...main.querySelectorAll('*')]) {
+      note([...el.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent).join(' '));
+      for (const name of ['aria-label', 'placeholder', 'title']) note(el.getAttribute(name));
+    }
+    return [...found];
+  }, ENGLISH_MESSAGES);
+}
+
+/** The lines of the page's main content that still hold an English word, other than the names that stay as they are, and any text left untranslated. */
 async function englishLines(page: Page): Promise<string[]> {
   const text = await page.locator('main').innerText();
-  return text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line)).slice(0, 6);
+  const lines = text.split('\n').filter((line) => ENGLISH.test(line) && !/Loan Estimate|Mortgage Analytics|Fannie Mae|Save Our Homes/.test(line));
+  return [...lines, ...(await untranslatedTexts(page))].slice(0, 6);
 }
 
 test.describe('Spanish, on every page', () => {

@@ -1,3 +1,4 @@
+import { chooseLanguage } from '../i18n/i18n';
 import { compactUsd, decimal, money, monthOf, pct, signedPct, signedUsd, usd, usdCents } from './format';
 
 describe('format', () => {
@@ -10,6 +11,7 @@ describe('format', () => {
     expect(compactUsd(1_250_000)).toBe('$1.3M');
     expect(compactUsd(90_000)).toBe('$90K'); // never "$90.0K", whichever ICU data the runtime ships
     expect(compactUsd(-20_000)).toBe('-$20K');
+    expect(compactUsd(0)).toBe('$0'); // never "$0.0"
   });
 
   it('signs a difference, and calls a rounding-sized one $0', () => {
@@ -30,6 +32,17 @@ describe('format', () => {
 
   it('writes a date as its month, whatever the local time zone', () => {
     expect(monthOf('2033-09-01')).toBe('Sep 2033');
+  });
+});
+
+describe('compactUsd in Spanish', () => {
+  afterEach(() => chooseLanguage('en'));
+
+  it('writes thousands as "mil" and millions as "M", the way a Spanish reader expects on a chart axis', async () => {
+    await chooseLanguage('es');
+
+    expect([compactUsd(134_600), compactUsd(90_000), compactUsd(1_250_000), compactUsd(-20_000), compactUsd(0)])
+      .toEqual(['$134.6 mil', '$90 mil', '$1.3 M', '-$20 mil', '$0']);
   });
 });
 
