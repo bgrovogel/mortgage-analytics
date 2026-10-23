@@ -73,6 +73,16 @@ on http://localhost:8025. Stop any `dotnet run` or `npm start` first, so the por
 | 6 | **Sign up**, open Mailpit on :8025 to confirm, sign in, save a result, open **Saved** and reopen it. | A cookie session (HttpOnly, SameSite=Strict, no bearer tokens). Saves belong to the user; someone else's id is a 404, not a 403. |
 | 7 | Open **/swagger** and try `POST /api/v1/amortization/calculate`. | The same API the calculator uses, documented from the code's own comments. |
 
+Optional, after step 4, if the room owns a home: on that refinance, open **Cash out and PMI**, set the home's value to
+$500,000, take out $50,000 and tick **Compare with a home-equity loan** (8% over 15 years, kept 7 years). Keeping
+the 7% loan and borrowing the cash separately costs **$16,044 more over 7 years** than refinancing: $512,050
+against $496,006, at $2,598.17 a month against $2,098.43, with the refinance's $6,000 paid at closing. The point to
+make is the yardstick: each way is costed as what is paid plus what is still owed, so the loan that is repaid
+sooner is not mistaken for the cheaper one. It also says $100,000 could be borrowed and the loans together would be
+70% of the home's value. Put the value back to $400,000 and they would be 87.5%, above the 80% lenders allow, with
+only $20,000 of equity available: the app says so, and the refinance now carries PMI, which narrows the gap to
+$5,545.
+
 Then, if there is time, the offer the deck closes on: *name a feature and I'll show the rule, the test that pins
 it, and a change with the test going red, then green.* Choose that change before you present, for example the ARM
 margin floor ($881.34 a month, [Testing → TDD](07-testing.md#how-a-feature-gets-built-tdd)), so you are not
