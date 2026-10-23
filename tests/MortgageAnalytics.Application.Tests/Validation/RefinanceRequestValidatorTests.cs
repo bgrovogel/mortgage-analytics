@@ -167,6 +167,26 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
         });
     }
 
+    [Test]
+    public void PointsOnTheNewLoan_AreWithinWhatALenderOffers()
+    {
+        var points = new DiscountPointsRequest { Points = 1m, RateWithoutPoints = 6.25m };
+        var arm = new AdjustableRateRequest { InitialFixedMonths = 24, AdjustmentIntervalMonths = 12, ExpectedRate = 9m, InitialCap = 2m, PeriodicCap = 2m, LifetimeCap = 5m };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(Valid with { NewDiscountPoints = points }, "one point against the rate without it");
+            AssertValid(Valid with { NewDiscountPoints = points with { Points = 5m } }, "five points are the most");
+            AssertInvalid(Valid with { NewDiscountPoints = points with { Points = 0m } }, "NewDiscountPoints.Points", "no points is no offer");
+            AssertInvalid(Valid with { NewDiscountPoints = points with { Points = 5.001m } }, "NewDiscountPoints.Points", "more than five is not offered");
+            AssertInvalid(Valid with { NewDiscountPoints = points with { Points = 1.0005m } }, "NewDiscountPoints.Points", "thousandths of a point at most");
+            AssertInvalid(Valid with { NewDiscountPoints = points with { RateWithoutPoints = 6m } }, "NewDiscountPoints.RateWithoutPoints", "the rate without points is higher than the rate with them");
+            AssertInvalid(Valid with { NewDiscountPoints = points with { RateWithoutPoints = 30.01m } }, "NewDiscountPoints.RateWithoutPoints", "and a rate a loan may have");
+            AssertInvalid(Valid with { NewDiscountPoints = points, NewAdjustableRate = arm }, "NewDiscountPoints", "points are compared on a fixed rate");
+            AssertInvalid(Valid with { NewDiscountPoints = points, NewBuydown = new TemporaryBuydownRequest { YearlyReductions = [2m, 1m] } }, "NewDiscountPoints", "and not on a buydown");
+        });
+    }
+
     /// <summary>The validator on the test clock: today is 9 October 2026.</summary>
     private static RefinanceRequestValidator OnTestClock() => new(TestClock.Create());
 

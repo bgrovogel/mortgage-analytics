@@ -191,6 +191,44 @@ public class RefinanceApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task APointsOffer_IsWorkedOutAgainstTheRateWithoutPoints_WhenAskedFor()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            closingCosts = 6_000, newDiscountPoints = new { points = 1, rateWithoutPoints = 6.25 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze?includePayments=false", request);
+        var json = await ReadJsonAsync(response);
+        var points = json.GetProperty("points");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the request is valid");
+            Assert.That(points.GetProperty("cost").GetDecimal(), Is.EqualTo(3_000m), "1% of the $300,000 borrowed");
+            Assert.That(points.GetProperty("monthlySaving").GetDecimal(), Is.EqualTo(48.50m), "the lower payment, as the service works it out");
+            Assert.That(points.GetProperty("breakEvenPayment").GetInt32(), Is.EqualTo(48), "when the interest saved covers the points");
+            Assert.That(json.GetProperty("upfrontCosts").GetDecimal(), Is.EqualTo(9_000m), "the points are paid with the $6,000 of closing costs");
+        });
+    }
+
+    [Test]
+    public async Task APointsOffer_OnAnAdjustableRate_Returns400()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            newAdjustableRate = new { initialFixedMonths = 60, adjustmentIntervalMonths = 12, expectedRate = 8, initialCap = 2, periodicCap = 2, lifetimeCap = 5 },
+            newDiscountPoints = new { points = 1, rateWithoutPoints = 6.25 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze", request);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "points are compared on a fixed rate");
+    }
+
+    [Test]
     public async Task AHomeEquityLoan_WithoutCashOut_Returns400()
     {
         var request = new

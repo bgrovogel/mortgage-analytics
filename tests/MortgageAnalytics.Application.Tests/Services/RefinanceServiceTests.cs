@@ -440,4 +440,80 @@ public class RefinanceServiceTests
             Assert.That(equity.CashOutRefinance.MonthlyPayment, Is.GreaterThan(2_098.43m), "and the new loan, at 97% of the home's value, carries its own");
         });
     }
+
+    // The scenarios below were computed independently in Python Decimal (tools/calculator-check): $300,000 at 7% with 25 years to go,
+    // refinanced to 6% over 30 years with $6,000 of closing costs, the 6% being the rate with the points and the lender's offer
+    // without them 6.25%. The points are a percentage of what is borrowed before any financed costs, paid with the closing costs.
+    private static RefinanceRequest WithPoints(decimal points = 1m, decimal rateWithoutPoints = 6.25m) => Request() with
+    {
+        NewDiscountPoints = new DiscountPointsRequest { Points = points, RateWithoutPoints = rateWithoutPoints },
+    };
+
+    [Test]
+    public void Analyze_WithoutPoints_HasNoPointsComparison() =>
+        Assert.That(_service.Analyze(Request()).Points, Is.Null, "it is only worked out when asked for");
+
+    [Test]
+    public void Analyze_PointsOnTheNewLoan_AreWorkedOutAgainstTheRateWithoutThem()
+    {
+        var points = _service.Analyze(WithPoints()).Points!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(points.Points, Is.EqualTo(1m), "the points asked");
+            Assert.That(points.Cost, Is.EqualTo(3_000m), "1% of the $300,000 borrowed");
+            Assert.That(points.RateWithoutPoints, Is.EqualTo(6.25m), "the lender's rate without them");
+            Assert.That(points.PaymentWithPoints, Is.EqualTo(1_798.65m), "$300,000 at 6% for 30 years");
+            Assert.That(points.PaymentWithoutPoints, Is.EqualTo(1_847.15m), "the same loan at 6.25%");
+            Assert.That(points.MonthlySaving, Is.EqualTo(48.50m), "the points lower the payment by this");
+            Assert.That(points.InterestSaved, Is.EqualTo(17_460.36m), "over the whole loan");
+            Assert.That(points.NetSaving, Is.EqualTo(14_460.36m), "less what they cost");
+            Assert.That(points.BreakEvenPayment, Is.EqualTo(48), "the payment by which the interest saved covers the $3,000");
+        });
+    }
+
+    [Test]
+    public void Analyze_PointsOnTheNewLoan_ArePaidWithTheClosingCosts_AndSoCountInTheRefinance()
+    {
+        var response = _service.Analyze(WithPoints());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.UpfrontCosts, Is.EqualTo(9_000m), "$6,000 of closing costs and $3,000 of points");
+            Assert.That(response.LifetimeSavings, Is.EqualTo(-20_415.28m), "$3,000 worse than without them (-17,415.28)");
+            Assert.That(response.BreakEvenPaymentNumber, Is.EqualTo(39), "the interest saved takes longer to cover $9,000 (25 payments cover $6,000)");
+            Assert.That(response.Points!.BreakEvenDate, Is.EqualTo(response.Refinanced.Payments[47].DueDate), "the due date of the 48th payment");
+        });
+    }
+
+    [Test]
+    public void Analyze_PointsWithFinancedCosts_AreFinancedToo_ButComparedOnLoansOfTheSameSize()
+    {
+        var response = _service.Analyze(WithPoints() with { FinanceClosingCosts = true });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.UpfrontCosts, Is.Zero, "everything is in the loan");
+            Assert.That(response.Refinanced.MonthlyPayment, Is.EqualTo(1_852.61m), "$309,000 at 6%: the points are borrowed with the rest");
+            Assert.That(response.Points!.Cost, Is.EqualTo(3_000m), "1% of the $300,000, not of the loan with the costs added");
+            Assert.That(response.Points.PaymentWithPoints, Is.EqualTo(1_834.62m), "the comparison is of $306,000 at 6%, the other costs financed and the points not");
+            Assert.That(response.Points.PaymentWithoutPoints, Is.EqualTo(1_884.09m), "against the same $306,000 at 6.25%");
+            Assert.That(response.Points.BreakEvenPayment, Is.EqualTo(47), "the payment by which the interest saved covers the points");
+        });
+    }
+
+    [Test]
+    public void Analyze_PointsWithCashOut_AreAPercentageOfWhatIsBorrowedWithIt()
+    {
+        var points = _service.Analyze(WithPoints(points: 2m, rateWithoutPoints: 6.5m) with { CashOut = 50_000m }).Points!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(points.Cost, Is.EqualTo(7_000m), "2% of the $350,000 borrowed, the cash out included");
+            Assert.That(points.PaymentWithPoints, Is.EqualTo(2_098.43m), "$350,000 at 6%");
+            Assert.That(points.PaymentWithoutPoints, Is.EqualTo(2_212.24m), "at 6.5%");
+            Assert.That(points.InterestSaved, Is.EqualTo(40_972.21m), "over the whole loan");
+            Assert.That(points.BreakEvenPayment, Is.EqualTo(48), "the payment by which they pay for themselves");
+        });
+    }
 }

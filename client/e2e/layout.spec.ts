@@ -94,9 +94,11 @@ for (const { name, viewport, phone } of SIZES) {
       await page.getByTestId('cash-out').fill('50000');
       await page.getByTestId('compare-equity-loan').check();
       await page.getByTestId('equity-kind-line').check(); // the line asks for the most: two more fields, and a note
+      await page.getByTestId('buy-points').check(); // and the points, with their own fields and table
       if (sheet) await page.getByTestId('close-sheet').click();
       await expect(page.getByTestId('refi-home-equity'), 'the home-equity comparison has arrived').toBeVisible();
       await expect(page.getByTestId('refi-equity-line-note'), 'as a line of credit').toBeVisible();
+      await expect(page.getByTestId('refi-points'), 'with points bought').toBeVisible();
 
       expect(await layoutProblems(page, phone), `/refinance with a home-equity line on ${name}`).toEqual([]);
     });

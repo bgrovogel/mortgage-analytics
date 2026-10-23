@@ -107,6 +107,7 @@
 .restart,
 .keep,
 .equity,
+.points,
 .limit {
   background: var(--surface-2);
   box-shadow: none;
@@ -117,8 +118,9 @@
   color: var(--warning-text);
 }
 
-// Borrowing the cash separately, against refinancing for it: the verdict first, then the figures.
-.equity {
+// Borrowing the cash separately, against refinancing for it, or buying points for a lower rate: the verdict first, then the figures.
+.equity,
+.points {
   .verdict-line {
     margin: 0 0 0.75rem;
     font-weight: 600;

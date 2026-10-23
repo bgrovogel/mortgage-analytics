@@ -100,12 +100,26 @@
     </details>
 
     <app-number-field [control]="form.controls.closingCosts" [rule]="rules.closingCosts" testId="closing-costs" />
-    <p class="hint">{{ 'Lender fees, points, appraisal and title. Often 2% to 5% of the loan.' | t }}</p>
+    <p class="hint">{{ 'Lender fees, appraisal and title. Often 2% to 5% of the loan. Discount points are asked for below.' | t }}</p>
 
     <label class="checkbox">
       <input type="checkbox" formControlName="financeClosingCosts" data-testid="finance-closing-costs" />
       <span><strong>{{ 'Add them to the loan' | t }}</strong> {{ 'instead of paying at closing' | t }}</span>
     </label>
+
+    @if (newRateFixed()) {
+      <label class="checkbox">
+        <input type="checkbox" formControlName="buyPoints" data-testid="buy-points" />
+        <span><strong>{{ 'Pay points for this rate' | t }}</strong> {{ '(the new rate above is then the rate with them)' | t }}</span>
+      </label>
+      @if (buysPoints()) {
+        <div class="row">
+          <app-number-field [control]="form.controls.points" [rule]="rules.points" testId="points" />
+          <app-number-field [control]="form.controls.rateWithoutPoints" [rule]="rules.rateWithoutPoints" testId="rate-without-points" />
+        </div>
+        <p class="hint" data-testid="points-hint">{{ 'One point is 1% of the loan, paid with the closing costs. The rate without points is what the lender offers if you pay none.' | t }}</p>
+      }
+    }
 
     <!-- Not every refinance takes cash out or carries PMI: one line says where each stands, and opens to change it. -->
     <details class="section" data-testid="section-new-extras">

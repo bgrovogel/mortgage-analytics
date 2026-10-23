@@ -262,6 +262,10 @@ def random_refinance(rng):
             request['homeEquityLoan']['drawPeriodInMonths'] = rng.choice([12, 60, 120, 180])
             if rng.random() < 0.7:
                 request['homeEquityLoan']['repaymentRate'] = float(D(rng.randrange(400, 1400)) / 100)
+    # A third buy discount points on the new loan: the rate asked is the rate with them, the lender's rate without is higher.
+    if rng.random() < 1 / 3:
+        request['newDiscountPoints'] = {'points': rng.choice([0.5, 1, 1.5, 2, 3]),
+                                        'rateWithoutPoints': float(D(str(request['newAnnualInterestRate'])) + D(rng.choice(['0.125', '0.25', '0.375', '0.5'])))}
     return request
 
 
@@ -269,7 +273,10 @@ def refinance_view(r):
     """The refinance response in the model's shape."""
     keep = r.get('keepingCurrentPayment')
     heq = r.get('homeEquity')
+    pts = r.get('points')
     return {
+        'points': pts and {k: pts[k] for k in ('points', 'cost', 'rateWithoutPoints', 'paymentWithPoints', 'paymentWithoutPoints', 'monthlySaving',
+                                              'interestSaved', 'netSaving', 'breakEvenPayment')},
         'homeEquity': heq and {
             'amount': heq['amount'], 'equityPayment': heq['keepAndBorrow']['equityLoanPayment'], 'repaymentPayment': heq['repaymentPayment'],
             'drawPeriodInMonths': heq['drawPeriodInMonths'], 'repaymentRate': heq['repaymentRate'],

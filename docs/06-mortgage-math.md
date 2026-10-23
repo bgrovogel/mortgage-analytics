@@ -628,6 +628,19 @@ Key ideas:
 - The loan today can be entered as **what's owed now**, or as **the original loan** (amount, term, first
   payment), from which the server works out the balance on that loan's own schedule.
 - A buydown on the new loan is paid at closing, so it changes **when** you pay, not how much.
+- **Points on the new loan** (`DiscountPoints`, as on a purchase) cost a percentage of what is borrowed before any financed
+  costs, to the cent, and are added to the closing costs (so financed with them when those are); the rate asked is the
+  rate with the points. They are then weighed on their own, as two loans of the same size (the other financed costs in
+  both, the points paid at closing), one at the rate with and one at the rate without, each on its standard schedule: the
+  payment saved, the interest saved over the whole loan, and the first payment by which the interest saved covers the cost
+  (interest only, as for the refinance's own break-even). On the reference refinance ($300,000 at 7% with 25 years left,
+  to 6% over 30 years, $6,000 of closing costs), one point against a 6.25% rate without is **$3,000**; $300,000 over 30 years
+  is $1,798.65 at 6% and $1,847.15 at 6.25%, a saving of **$48.50** a month and **$17,460.36** of interest, which covers the
+  $3,000 by the **48th** payment, so the points save **$14,460.36** over the whole loan. In the refinance the same
+  $3,000 is part of the $9,000 paid at closing: the lifetime figure is −$20,415.28 against −$17,415.28 without them, and the
+  refinance's own break-even moves from the 25th payment to the 39th. With the costs financed the new loan is $309,000
+  ($1,852.61), while the comparison is of $306,000 loans ($1,834.62 and $1,884.09, break-even 47) so that it is about the
+  points alone. A fixed rate only: the validator rejects points with an adjustable rate or a buydown.
 - **Cash out** is borrowed on top of the balance, so the new loan is balance + cash (+ financed costs). The cash is
   money in hand, so lifetime savings add it: 636,100.16 − (755,431.84 + 6,000) + 50,000 = **−$75,331.68** for $50,000
   out at 6% for 30 years, a $350,000 loan at $2,098.43. The break-even stops being the question, so the page shows the

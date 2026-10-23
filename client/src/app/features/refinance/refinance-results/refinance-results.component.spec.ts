@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aRefinanceOption, aRefinanceResponse } from '../../../../testing/builders';
-import { HomeEquityComparison, RefinanceResponse } from '../../../core/models/refinance.models';
+import { HomeEquityComparison, RefinancePoints, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceResultsComponent } from './refinance-results.component';
 
 describe('RefinanceResultsComponent', () => {
@@ -146,6 +146,62 @@ describe('RefinanceResultsComponent', () => {
 
       render(aRefinanceResponse({ cashOut: 50_000 }));
       expect(text('refi-home-equity')).toBeUndefined();
+    });
+  });
+
+  describe('points on the new loan', () => {
+    /** The API's scenario: 1 point on $300,000, 6% with them and 6.25% without, $6,000 of other closing costs. */
+    const bought = (overrides: Partial<RefinancePoints> = {}): RefinanceResponse => aRefinanceResponse({
+      upfrontCosts: 9_000,
+      points: {
+        points: 1, cost: 3_000, rateWithPoints: 6, rateWithoutPoints: 6.25, paymentWithPoints: 1_798.65, paymentWithoutPoints: 1_847.15,
+        monthlySaving: 48.5, interestSaved: 17_460.36, netSaving: 14_460.36, breakEvenPayment: 48, breakEvenDate: '2030-12-01', ...overrides,
+      },
+    });
+
+    it('says what the points cost, what they save a month, and when they pay for themselves', () => {
+      render(bought());
+
+      expect(text('refi-points-verdict')).toBe(
+        'Buying 1 point for $3,000 lowers the payment by $48.50 a month. They pay for themselves after 48 payments (Dec 2030); keep the loan longer than that and they save you money.');
+    });
+
+    it('says so when the interest saved never covers what they cost', () => {
+      render(bought({ breakEvenPayment: null, breakEvenDate: null, netSaving: -500 }));
+
+      expect(text('refi-points-verdict')).toBe('Buying 1 point for $3,000 lowers the payment by $48.50 a month, but the interest saved never covers what they cost.');
+    });
+
+    it('says "points" for more than one, and for part of one', () => {
+      render(bought({ points: 2 }));
+      expect(text('refi-points-verdict')).toContain('Buying 2 points for');
+
+      render(bought({ points: 1.5 }));
+      expect(text('refi-points-verdict')).toContain('Buying 1.5 points for');
+    });
+
+    it('lays the loan with the points beside the loan without them', () => {
+      render(bought());
+      const rows = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-points-table"] tbody tr')]
+        .map((tr) => [...(tr as HTMLElement).children].map((cell) => cell.textContent!.trim()).join(' | '));
+
+      expect(rows).toEqual([
+        'Rate | 6% | 6.25%',
+        'Monthly principal and interest | $1,798.65 | $1,847.15',
+        'Paid at closing for the points | $3,000 | —',
+      ]);
+    });
+
+    it('says the points are in the closing costs the rest of the page counts', () => {
+      render(bought());
+
+      expect(text('refi-points')).toContain('The points are paid with the closing costs, so every figure on this page already counts them.');
+    });
+
+    it('is left out when no points were bought', () => {
+      render(aRefinanceResponse());
+
+      expect(text('refi-points')).toBeUndefined();
     });
   });
 

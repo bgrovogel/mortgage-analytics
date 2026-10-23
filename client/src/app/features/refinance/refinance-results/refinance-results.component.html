@@ -72,6 +72,43 @@
   <p class="panel limit" [class.warning]="r.exceedsCashOutLimit" data-testid="refi-cash-limit">{{ limit }}</p>
 }
 
+@if (points(); as p) {
+  <!-- Whether the points on the new loan pay: the loan with them beside the same loan at the rate without. -->
+  <section class="panel points" data-testid="refi-points">
+    <h3>{{ 'Do the points pay?' | t }}</h3>
+    <p class="verdict-line" data-testid="refi-points-verdict">{{ pointsVerdict() }}</p>
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'The new loan with the points and without them, side by side' | t">
+      <table data-testid="refi-points-table">
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col">{{ 'With the points' | t }}</th>
+            <th scope="col">{{ 'Without them' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">{{ 'Rate' | t }}</th>
+            <td>{{ pct(p.rateWithPoints) }}</td>
+            <td>{{ pct(p.rateWithoutPoints) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Monthly principal and interest' | t }}</th>
+            <td>{{ cents(p.paymentWithPoints) }}</td>
+            <td>{{ cents(p.paymentWithoutPoints) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Paid at closing for the points' | t }}</th>
+            <td>{{ dollars(p.cost) }}</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">{{ 'The points are paid with the closing costs, so every figure on this page already counts them.' | t }}</p>
+  </section>
+}
+
 @if (equity(); as e) {
   <!-- Two ways to get the same cash, costed over the years kept: what is paid in them, what is still owed, what is paid at closing. -->
   <section class="panel equity" data-testid="refi-home-equity">

@@ -83,6 +83,13 @@ public sealed record RefinanceRequest
     public decimal NewPmiRate { get; init; } = 0.5m;
 
     /// <summary>
+    /// Discount points bought on the new loan: a fee, a percentage of what is borrowed before any financed costs, paid with the
+    /// closing costs (financed with them when they are) for a lower rate. <see cref="NewAnnualInterestRate"/> is then the rate
+    /// with the points, and these say the rate the lender offers without them. Only for a fixed rate. Omit for none.
+    /// </summary>
+    public DiscountPointsRequest? NewDiscountPoints { get; init; }
+
+    /// <summary>
     /// A home-equity loan for the <see cref="CashOut"/>, kept beside the current loan, to compare with refinancing to take
     /// the cash out. Needs <see cref="CashOut"/>. Omit for no comparison.
     /// </summary>
@@ -158,6 +165,7 @@ public sealed record OriginalLoanRequest
 /// <param name="NewLoanToValuePercent">The new loan as a percentage of the home's value; null without a home value.</param>
 /// <param name="ExceedsCashOutLimit">True when cash is taken out and the new loan is above 80% of the home's value.</param>
 /// <param name="HomeEquity">The home-equity loan compared with the cash-out refinance, when the request asked for it; otherwise null.</param>
+/// <param name="Points">What the new loan's discount points are worth against the rate without them, when the request bought some; otherwise null.</param>
 public sealed record RefinanceResponse(
     RefinanceOptionResponse Current,
     RefinanceOptionResponse Refinanced,
@@ -177,7 +185,37 @@ public sealed record RefinanceResponse(
     decimal NetCash = 0m,
     decimal? NewLoanToValuePercent = null,
     bool ExceedsCashOutLimit = false,
-    HomeEquityResponse? HomeEquity = null);
+    HomeEquityResponse? HomeEquity = null,
+    RefinancePointsResponse? Points = null);
+
+/// <summary>
+/// Whether the new loan's discount points pay: two loans of the same size (any other financed costs in both, the points paid
+/// at closing), one at the rate with the points and one at the rate without, each on its standard schedule. About the points
+/// alone, so PMI and extra payments are left out.
+/// </summary>
+/// <param name="Points">The points bought, as a percentage of what is borrowed.</param>
+/// <param name="Cost">What they cost at closing.</param>
+/// <param name="RateWithPoints">The new loan's rate, with the points.</param>
+/// <param name="RateWithoutPoints">The rate the lender offers without them.</param>
+/// <param name="PaymentWithPoints">The monthly principal and interest with the points.</param>
+/// <param name="PaymentWithoutPoints">The same without them.</param>
+/// <param name="MonthlySaving">How much lower the payment is with the points.</param>
+/// <param name="InterestSaved">The interest the points save over the whole loan.</param>
+/// <param name="NetSaving">The interest saved, less what the points cost; negative when they lose money.</param>
+/// <param name="BreakEvenPayment">The payment by which the interest saved covers the cost, or null when it never does.</param>
+/// <param name="BreakEvenDate">The due date of that payment, or null.</param>
+public sealed record RefinancePointsResponse(
+    decimal Points,
+    decimal Cost,
+    decimal RateWithPoints,
+    decimal RateWithoutPoints,
+    decimal PaymentWithPoints,
+    decimal PaymentWithoutPoints,
+    decimal MonthlySaving,
+    decimal InterestSaved,
+    decimal NetSaving,
+    int? BreakEvenPayment,
+    DateOnly? BreakEvenDate);
 
 /// <summary>Taking the cash out as a home-equity loan beside the current loan, against refinancing to take it out.</summary>
 /// <param name="Amount">The cash borrowed.</param>

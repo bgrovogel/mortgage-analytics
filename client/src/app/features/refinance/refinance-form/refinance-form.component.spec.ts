@@ -395,6 +395,83 @@ describe('RefinanceFormComponent', () => {
     });
   });
 
+  describe('discount points on the new loan', () => {
+    const buy = () => {
+      controls().buyPoints.setValue(true);
+      fixture.detectChanges();
+    };
+
+    it('offers them for a fixed rate, and sends nothing for them until asked', () => {
+      create();
+
+      expect(el('buy-points')).not.toBeNull();
+      expect(el('points')).toBeNull();
+      expect(last().newDiscountPoints).toBeUndefined();
+    });
+
+    it('sends the points and the rate without them once asked', () => {
+      create();
+      controls().newAnnualInterestRate.setValue(6);
+      buy();
+      expect(el('points')).not.toBeNull();
+
+      controls().points.setValue(1.5);
+      controls().rateWithoutPoints.setValue(6.375);
+
+      expect(last().newDiscountPoints).toEqual({ points: 1.5, rateWithoutPoints: 6.375 });
+    });
+
+    it('starts the rate without points a quarter above the new rate, and keeps it above as the rate moves, until it is typed', () => {
+      create();
+      buy();
+      expect(controls().rateWithoutPoints.value).toBe(6.5); // the example's 6.25% and a quarter
+
+      controls().newAnnualInterestRate.setValue(7);
+      expect(controls().rateWithoutPoints.value).toBe(7.25);
+    });
+
+    it('sends nothing while the rate without points is not above the new rate, and says so', () => {
+      create();
+      buy();
+      controls().rateWithoutPoints.setValue(6.5);
+      controls().rateWithoutPoints.markAsDirty();
+      const before = emitted.length;
+
+      controls().newAnnualInterestRate.setValue(6.75);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(before);
+    });
+
+    it('is not offered for an adjustable rate or a buydown, and is dropped from what is sent', () => {
+      create();
+      buy();
+      expect(last().newDiscountPoints).toBeDefined();
+
+      controls().newRate.controls.rateType.setValue('buydown');
+      fixture.detectChanges();
+
+      expect(el('buy-points')).toBeNull();
+      expect(last().newDiscountPoints).toBeUndefined();
+    });
+
+    it('reopens a saved comparison with its points, asked for again', () => {
+      const saved: RefinanceRequest = {
+        currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+        newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false,
+        originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null, cashOut: 0,
+        homeValue: 400_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+        newDiscountPoints: { points: 1, rateWithoutPoints: 6.25 },
+      };
+
+      create(saved);
+
+      expect(controls().buyPoints.value).toBe(true);
+      expect(controls().rateWithoutPoints.value).toBe(6.25);
+      expect(emitted).toEqual([saved]);
+    });
+  });
+
   describe('PMI', () => {
     it("takes the home's value and today's PMI from another page's loan", () => {
       fixture = TestBed.createComponent(RefinanceFormComponent);

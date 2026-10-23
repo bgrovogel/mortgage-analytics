@@ -84,7 +84,10 @@ only $20,000 of equity available: the app says so, and the refinance now carries
 $5,545. Switch **A loan** to **A line of credit** (a HELOC) for the other half of the question: 8% interest only for
 10 years, then 20 years at an expected 9%, is $333.33 a month at first and $449.86 later, and over 7 years costs
 **$20,106 more** than refinancing, because none of the cash is paid down while it is drawn. The line's rate moves with the
-market, so the page asks for the rate you expect rather than assuming it.
+market, so the page asks for the rate you expect rather than assuming it. One more tick on the same refinance, **Pay points
+for this rate** (1 point, with the lender's rate without them at 6.25%), shows whether points pay: $3,000 for a payment that
+is $48.50 lower, which the interest saved covers by the **48th payment**; they are paid with the closing costs, so the
+refinance's own verdict moves by the same $3,000.
 
 Then, if there is time, the offer the deck closes on: *name a feature and I'll show the rule, the test that pins
 it, and a change with the test going red, then green.* Choose that change before you present, for example the ARM
@@ -555,7 +558,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,563 .NET · 1,471 Jest · 296 Playwright (29 axe scans); 85% coverage gate |
+| Tests | 1,571 .NET · 1,483 Jest · 297 Playwright (29 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, SVG charts · Docker, GitHub Actions |
 
 ---

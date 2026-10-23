@@ -114,6 +114,32 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-equity-line-note'), 'with no line note').toHaveCount(0);
   });
 
+  test('buying points for a lower rate: what they cost, what they save, and when they pay for themselves', async ({ page }) => {
+    await reference(page);
+    await expect(page.getByTestId('refi-points'), 'not shown until asked for').toHaveCount(0);
+
+    await page.getByTestId('buy-points').check();
+    await page.getByTestId('rate-without-points').fill('6.25');
+
+    // $300,000 refinanced to 6% (the rate with the points) against the lender's 6.25% without them, 1 point: worked out independently.
+    await expect(page.getByTestId('refi-points-verdict'), 'a point on $300,000, and what it buys')
+      .toContainText('Buying 1 point for $3,000 lowers the payment by $48.50 a month');
+    await expect(page.getByTestId('refi-points-verdict'), 'the interest saved covers it by the 48th payment')
+      .toContainText('pay for themselves after 48 payments');
+    await expect(page.getByTestId('refi-points-table'), 'the payment at each rate').toContainText('$1,847.15');
+    await expect(page.getByTestId('refi-verdict'), 'the points are paid with the $6,000 of closing costs, so the refinance costs $3,000 more')
+      .toContainText('Refinancing costs $20,415 more');
+
+    await page.getByTestId('points').fill('2');
+
+    await expect(page.getByTestId('refi-points-verdict'), 'two points cost twice as much').toContainText('Buying 2 points for $6,000');
+
+    await page.getByTestId('buy-points').uncheck();
+
+    await expect(page.getByTestId('refi-points'), 'switching them off takes the panel away').toHaveCount(0);
+    await expect(page.getByTestId('refi-verdict'), 'and the cost of the points with it').toContainText('Refinancing costs $17,415 more');
+  });
+
   test('keeping the payoff date stops the clock restarting', async ({ page }) => {
     await reference(page);
     await page.getByTestId('new-term').selectOption('keep');

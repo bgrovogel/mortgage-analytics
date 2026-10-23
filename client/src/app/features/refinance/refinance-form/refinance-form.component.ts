@@ -11,7 +11,7 @@ import { usd as usdWhole } from '../../../core/formatting/format';
 import { balanceAfter, firstOfMonthFromNext, originalAmount, paidOffAlready, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { REFINANCE_RULES } from './refinance-fields';
+import { POINTS_RATE_TOO_LOW, REFINANCE_RULES } from './refinance-fields';
 import { AverageRateComponent } from '../../../shared/average-rate/average-rate.component';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
@@ -107,6 +107,10 @@ export class RefinanceFormComponent implements OnInit {
     // A home-equity loan for the cash out, to compare with refinancing for it: about today's rate on one, 15 years, kept 7.
     // Or a line of credit: drawn (interest only) for 10 years, then repaid over the term at the rate expected by then.
     // The fields of a comparison that is not asked for, and a line's when it is a loan, are disabled so they are not checked.
+    // Discount points on the new loan, for a fixed rate: about one point, the lender's rate without them a quarter above the one asked.
+    buyPoints: [false],
+    points: [{ value: 1, disabled: true }, validatorsFor(rules.points)],
+    rateWithoutPoints: [{ value: 6.5, disabled: true }, validatorsFor(rules.rateWithoutPoints)],
     compareEquityLoan: [false],
     equityKind: ['loan' as EquityKind],
     equityRate: [{ value: 8, disabled: true }, validatorsFor(rules.equityRate)],
@@ -138,6 +142,12 @@ export class RefinanceFormComponent implements OnInit {
     const cash = v.cashOut ? t('Cash out {0}', [usdWhole(v.cashOut)]) : t('No cash out');
     return v.newPmiRate ? t('{0} · PMI {1}%', [cash, v.newPmiRate]) : cash;
   });
+
+  /** True when the new loan has a fixed rate: the only one discount points are compared on. */
+  readonly newRateFixed = computed(() => this.values().newRate?.rateType === 'fixed');
+
+  /** True when the points' fields are shown and sent: a fixed rate, and points asked for. */
+  readonly buysPoints = computed(() => this.newRateFixed() && !!this.values().buyPoints);
 
   /** True when the home-equity loan's fields are shown and sent: cash is taken out and the comparison is asked for. */
   readonly comparesEquityLoan = computed(() => !!this.values().cashOut && !!this.values().compareEquityLoan);
@@ -216,6 +226,8 @@ export class RefinanceFormComponent implements OnInit {
           ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
           currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
           newPmiRate: initial.newPmiRate ?? 0.5,
+          buyPoints: !!initial.newDiscountPoints,
+          ...(initial.newDiscountPoints ? { points: initial.newDiscountPoints.points, rateWithoutPoints: initial.newDiscountPoints.rateWithoutPoints } : {}),
           compareEquityLoan: !!initial.homeEquityLoan,
           ...(initial.homeEquityLoan
             ? {
@@ -302,6 +314,25 @@ export class RefinanceFormComponent implements OnInit {
     };
     for (const control of [c.equityRate, c.equityTermYears, c.equityYearsKept]) show(control, asked);
     for (const control of [c.equityDrawYears, c.equityRepaymentRate]) show(control, asked && v.equityKind === 'line');
+
+    // The points' fields count only while points are asked for on a fixed rate; the rate without them starts a quarter above the new rate.
+    const pointsAsked = this.pointsApply();
+    for (const control of [c.points, c.rateWithoutPoints]) show(control, pointsAsked);
+    if (pointsAsked && v.rateWithoutPoints <= v.newAnnualInterestRate && !c.rateWithoutPoints.dirty) {
+      c.rateWithoutPoints.setValue(Math.round((v.newAnnualInterestRate + 0.25) * 10_000) / 10_000, { emitEvent: false });
+    }
+  }
+
+  /** True when points are asked for on a fixed rate. */
+  private pointsApply(): boolean {
+    const v = this.form.getRawValue();
+    return v.buyPoints && v.newRate.rateType === 'fixed';
+  }
+
+  /** True when the rate without points is not above the new rate, which is what makes them points. */
+  private pointsRateTooLow(): boolean {
+    const v = this.form.getRawValue();
+    return this.pointsApply() && v.rateWithoutPoints <= v.newAnnualInterestRate;
   }
 
   /** Enables the controls for one way of describing the loan, and disables the other's. */
@@ -316,6 +347,7 @@ export class RefinanceFormComponent implements OnInit {
       ...problemsIn(rules, this.form.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.currentRate.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.newRate.controls),
+      ...(this.pointsRateTooLow() && this.form.controls.rateWithoutPoints.valid ? [t(POINTS_RATE_TOO_LOW)] : []),
       ...(this.loanToday()?.paidOff ? [paidOffAlready()] : []),
     ];
   }
@@ -325,7 +357,7 @@ export class RefinanceFormComponent implements OnInit {
    * list, because the first payment date (required while it is shown) is not a numeric field with a rule.
    */
   private canSend(): boolean {
-    return this.form.valid && !this.loanToday()?.paidOff;
+    return this.form.valid && !this.loanToday()?.paidOff && !this.pointsRateTooLow();
   }
 
   /** What the current loan's fixed period counts from: the next payment, or the original first one. */
@@ -359,6 +391,7 @@ export class RefinanceFormComponent implements OnInit {
       currentMonthlyPmi: v.currentMonthlyPmi,
       newPmiRate: v.newPmiRate,
       // Only when asked for, so a comparison without one is the same request as before.
+      ...(this.pointsApply() ? { newDiscountPoints: { points: v.points, rateWithoutPoints: v.rateWithoutPoints } } : {}),
       ...(v.cashOut > 0 && v.compareEquityLoan
         ? {
           homeEquityLoan: {

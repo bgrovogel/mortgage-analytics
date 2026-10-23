@@ -506,6 +506,13 @@ The rest of the current loan against a new one, with closing costs paid at closi
   asks for the rate while it is drawn and the rate you expect once repayment begins. The comparison shows the interest-only
   payment, what it becomes, and how long each lasts; kept inside the draw period, the line still owes all of the cash,
   which the total counts.
+- **Points on the new loan.** For a fixed rate, **Pay points for this rate** takes the number of points and the rate the
+  lender offers without them (the new rate above is then the rate with them). The points are paid with the closing costs
+  (financed with them when those are), so every figure on the page counts them, and **Do the points pay?** sets the loan
+  with the points beside the same loan at the rate without: the two payments, what the points cost, the interest they save
+  over the whole loan, and the payment by which that interest has covered the cost (never, when it does not). On the
+  reference refinance, one point ($3,000) takes the payment from $1,847.15 to $1,798.65 and pays for itself by the 48th
+  payment. It is not offered for an adjustable rate or a buydown, whose resets and lower years would differ.
 - **Keep paying today's payment.** When the new payment is lower, the new loan is also shown paid at today's payment:
   how to refinance without restarting the clock.
 - **Your loan today, either way:** as what is owed now, or as the **original loan** (amount, term, first payment), from

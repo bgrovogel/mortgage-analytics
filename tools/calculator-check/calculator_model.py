@@ -1043,6 +1043,12 @@ def refinance(request):
     new_rate, new_term, closing = D(str(request['newAnnualInterestRate'])), request['newTermInMonths'], D(str(request['closingCosts']))
     financed = request['financeClosingCosts']
     cash_out = D(str(request.get('cashOut', 0)))
+    # Discount points on the new loan: a percentage of what is borrowed before any financed costs, added to the closing costs
+    # (so financed with them when the costs are). The rate asked is the rate with the points.
+    pts = request.get('newDiscountPoints')
+    points_cost = money((bal + cash_out) * D(str(pts['points'])) / 100) if pts else D(0)
+    other_closing = closing
+    closing += points_cost
     current = amortize(bal, cur_rate, left)
     principal = bal + cash_out + (closing if financed else D(0))
     new = amortize(principal, new_rate, new_term)
@@ -1122,7 +1128,25 @@ def refinance(request):
             'combinedLoanToValuePercent': ((owed_now + cash_out) / value * 100).quantize(D('0.01'), rounding=ROUND_HALF_EVEN) if value is not None else None,
             'exceedsLimit': value is not None and owed_now + cash_out > value * D('0.8'),
         }
+    # The points on their own: two loans of the same size (the other financed costs in both, the points paid at closing), one at
+    # the rate with the points and one at the rate without, each on its standard schedule.
+    points = None
+    if pts:
+        same = bal + cash_out + (other_closing if financed else D(0))
+        with_pts, without_pts = amortize(same, new_rate, new_term), amortize(same, D(str(pts['rateWithoutPoints'])), new_term)
+        saved_so_far, points_break_even = D(0), None
+        for n in range(1, len(with_pts['rows']) + 1):
+            saved_so_far += (without_pts['rows'][n - 1]['interest'] if n <= len(without_pts['rows']) else D(0)) - with_pts['rows'][n - 1]['interest']
+            if saved_so_far >= points_cost:
+                points_break_even = n
+                break
+        points_saved = interest(without_pts) - interest(with_pts)
+        points = {'points': D(str(pts['points'])), 'cost': points_cost, 'rateWithoutPoints': D(str(pts['rateWithoutPoints'])),
+                  'paymentWithPoints': with_pts['initial'], 'paymentWithoutPoints': without_pts['initial'],
+                  'monthlySaving': without_pts['initial'] - with_pts['initial'], 'interestSaved': points_saved,
+                  'netSaving': points_saved - points_cost, 'breakEvenPayment': points_break_even}
     return {
+        'points': points,
         'homeEquity': home_equity,
         'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),
         'newPayment': new['initial'], 'newInterest': interest(new), 'newPayments': len(new['rows']),

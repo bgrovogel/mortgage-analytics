@@ -1,6 +1,7 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
 using MortgageAnalytics.Domain.Amortization;
+using MortgageAnalytics.Domain.ExtraPayments;
 using MortgageAnalytics.Domain.Loans;
 using MortgageAnalytics.Domain.Refinancing;
 
@@ -28,13 +29,44 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
     public RefinanceResponse Analyze(RefinanceRequest request)
     {
         var pmi = request.ToPmi();
-        var analysis = analyzer.Analyze(CurrentLoan(request, worstCase: false), request.ToOffer(), pmi);
+        var currentLoan = CurrentLoan(request, worstCase: false);
+
+        // Points are paid with the closing costs, so every figure below counts them; they are a share of what is borrowed before any financed costs.
+        var points = request.NewDiscountPoints is { } bought ? new DiscountPoints(bought.Points, bought.RateWithoutPoints) : null;
+        var pointsBase = currentLoan.Principal + request.CashOut;
+        var analysis = analyzer.Analyze(currentLoan, request.ToOffer(extraClosingCosts: points?.CostFor(pointsBase) ?? 0m), pmi);
 
         // When either loan adjusts, the comparison also runs with rates rising as far as the caps allow.
         var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
         var worst = adjusts ? analyzer.Analyze(CurrentLoan(request, worstCase: true), request.ToOffer(worstCase: true), pmi).LifetimeSavings : (decimal?)null;
 
-        return analysis.ToResponse(worst, request.HomeValue) with { HomeEquity = HomeEquityComparison.For(request, analysis) };
+        return analysis.ToResponse(worst, request.HomeValue) with
+        {
+            HomeEquity = HomeEquityComparison.For(request, analysis),
+            Points = PointsOn(request, analysis, points, pointsBase),
+        };
+    }
+
+    /// <summary>
+    /// What the points are worth: two loans of the same size, the new loan's with any other financed costs in it and the points paid
+    /// at closing, at the rate with the points and at the rate without. Null when no points were bought.
+    /// </summary>
+    private RefinancePointsResponse? PointsOn(RefinanceRequest request, RefinanceAnalysis analysis, DiscountPoints? points, decimal pointsBase)
+    {
+        if (points is null)
+            return null;
+
+        var principal = pointsBase + (request.FinanceClosingCosts ? request.ClosingCosts : 0m);
+        var firstPayment = analysis.Refinanced.Payments[0].DueDate;
+        var withPoints = calculator.Generate(new LoanTerms(principal, request.NewAnnualInterestRate, request.NewTermInMonths, firstPayment), ExtraPaymentPlan.None, RecastPolicy.Never);
+        var withoutPoints = calculator.Generate(new LoanTerms(principal, points.RateWithoutPoints, request.NewTermInMonths, firstPayment), ExtraPaymentPlan.None, RecastPolicy.Never);
+        var comparison = points.Compare(pointsBase, withPoints, withoutPoints);
+
+        return new RefinancePointsResponse(
+            points.Points, comparison.Cost, request.NewAnnualInterestRate, points.RateWithoutPoints,
+            withPoints.InitialMonthlyPayment, withoutPoints.InitialMonthlyPayment, comparison.MonthlySaving, comparison.InterestSaved,
+            comparison.NetSaving, comparison.BreakEvenPayment,
+            comparison.BreakEvenPayment is { } number ? withPoints.Payments[number - 1].DueDate : null);
     }
 
     /// <summary>

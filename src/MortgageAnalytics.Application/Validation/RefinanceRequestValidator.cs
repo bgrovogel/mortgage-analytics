@@ -80,6 +80,20 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .Null().WithMessage("Choose a buydown or an adjustable rate for the new loan, not both.")
             .When(r => r.NewBuydown is not null);
 
+        RuleFor(r => r.NewDiscountPoints!.Points)
+            .GreaterThan(0).LessThanOrEqualTo(DiscountPoints.MaxPoints)
+            .Must(points => decimal.Round(points, 3) == points).WithMessage("'Points' can have at most 3 decimal places.")
+            .OverridePropertyName("NewDiscountPoints.Points").WithName("Points")
+            .When(r => r.NewDiscountPoints is not null);
+        RuleFor(r => r.NewDiscountPoints!.RateWithoutPoints)
+            .Percentage(max: LoanTerms.MaxAnnualInterestRate)
+            .GreaterThan(r => r.NewAnnualInterestRate).WithMessage("The rate without points must be higher than the new rate.")
+            .OverridePropertyName("NewDiscountPoints.RateWithoutPoints").WithName("Rate without points")
+            .When(r => r.NewDiscountPoints is not null);
+        RuleFor(r => r.NewDiscountPoints)
+            .Null().WithMessage("Points are compared on a fixed rate; an adjustable rate's resets or a buydown's lower years would differ.")
+            .When(r => r.NewAdjustableRate is not null || r.NewBuydown is not null);
+
         RuleFor(r => r.NewAnnualInterestRate)
             .Percentage(max: LoanTerms.MaxAnnualInterestRate)
             .WithName("New interest rate");

@@ -26,8 +26,9 @@ public static class RefinanceMapper
     /// <summary>The refinance offer as a domain value, with any adjustable rate (or its worst case) and buydown.</summary>
     /// <param name="request">A validated request.</param>
     /// <param name="worstCase">True to take an adjustable rate at the worst its caps allow.</param>
-    public static RefinanceOffer ToOffer(this RefinanceRequest request, bool worstCase = false) =>
-        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts, request.FinanceClosingCosts, request.CashOut)
+    /// <param name="extraClosingCosts">What is paid with the closing costs besides them: the new loan's discount points.</param>
+    public static RefinanceOffer ToOffer(this RefinanceRequest request, bool worstCase = false, decimal extraClosingCosts = 0m) =>
+        new(request.NewAnnualInterestRate, request.NewTermInMonths, request.ClosingCosts + extraClosingCosts, request.FinanceClosingCosts, request.CashOut)
         {
             AdjustableRate = request.NewAdjustableRate.ToDomain(request.NewAnnualInterestRate, worstCase),
             Buydown = request.NewBuydown.ToDomain(),

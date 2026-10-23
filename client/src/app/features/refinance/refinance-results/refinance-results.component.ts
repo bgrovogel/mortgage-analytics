@@ -62,6 +62,7 @@ export class RefinanceResultsComponent {
   protected readonly cents = usdCents;
   protected readonly money = money;
   protected readonly date = monthOf;
+  protected readonly pct = pct;
   protected readonly months = formatMonths;
 
   /**
@@ -148,6 +149,20 @@ export class RefinanceResultsComponent {
 
   /** The home-equity loan compared with the cash-out refinance, or null when the request did not ask for it. */
   protected readonly equity = computed(() => this.result().homeEquity ?? null);
+
+  /** What the new loan's discount points are worth, or null when none were bought. */
+  protected readonly points = computed(() => this.result().points ?? null);
+
+  /** What the points say: what they cost, the lower payment they buy, and when they pay for themselves, if they do. */
+  readonly pointsVerdict = computed(() => {
+    const p = this.points();
+    if (!p) return null;
+    const args = [tp(p.points, '{n} point', '{n} points'), usd(p.cost), usdCents(p.monthlySaving)];
+    return p.breakEvenPayment === null || p.breakEvenDate === null
+      ? t('Buying {0} for {1} lowers the payment by {2} a month, but the interest saved never covers what they cost.', args)
+      : t('Buying {0} for {1} lowers the payment by {2} a month. They pay for themselves after {3} payments ({4}); keep the loan longer than that and they save you money.',
+        [...args, p.breakEvenPayment, monthOf(p.breakEvenDate)]);
+  });
 
   /** What the comparison says: which way costs less over the years kept, and by how much. */
   readonly equityVerdict = computed(() => {

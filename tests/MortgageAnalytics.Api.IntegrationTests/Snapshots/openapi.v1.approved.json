@@ -3103,6 +3103,58 @@
         },
         "additionalProperties": false
       },
+      "RefinancePointsResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateWithPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateWithoutPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentWithPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "paymentWithoutPoints": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlySaving": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestSaved": {
+            "type": "number",
+            "format": "double"
+          },
+          "netSaving": {
+            "type": "number",
+            "format": "double"
+          },
+          "breakEvenPayment": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "breakEvenDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RefinanceRequest": {
         "type": "object",
         "properties": {
@@ -3166,6 +3218,9 @@
           "newPmiRate": {
             "type": "number",
             "format": "double"
+          },
+          "newDiscountPoints": {
+            "$ref": "#/components/schemas/DiscountPointsRequest"
           },
           "homeEquityLoan": {
             "$ref": "#/components/schemas/HomeEquityLoanRequest"
@@ -3250,6 +3305,9 @@
           },
           "homeEquity": {
             "$ref": "#/components/schemas/HomeEquityResponse"
+          },
+          "points": {
+            "$ref": "#/components/schemas/RefinancePointsResponse"
           }
         },
         "additionalProperties": false

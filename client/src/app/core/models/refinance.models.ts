@@ -1,5 +1,5 @@
 /** TypeScript mirrors of the refinance contracts (MortgageAnalytics.Application.Contracts). */
-import { AdjustableRateInput, BuydownSummary, RateChange, TemporaryBuydownInput } from './amortization.models';
+import { AdjustableRateInput, BuydownSummary, DiscountPointsInput, RateChange, TemporaryBuydownInput } from './amortization.models';
 
 /** A loan as it was taken out (mirrors OriginalLoanRequest). */
 export interface OriginalLoan {
@@ -34,6 +34,8 @@ export interface RefinanceRequest {
   currentMonthlyPmi?: number;
   /** The new loan's yearly PMI rate, should it be above 80% of the value. */
   newPmiRate?: number;
+  /** Discount points bought on the new loan, whose rate is then the rate with them. Only for a fixed rate. */
+  newDiscountPoints?: DiscountPointsInput | null;
   /** A home-equity loan for the cash out, to compare with refinancing to take it out. Needs cashOut. */
   homeEquityLoan?: HomeEquityLoan | null;
 }
@@ -111,6 +113,25 @@ export interface RefinanceResponse {
   exceedsCashOutLimit: boolean;
   /** The home-equity loan compared with the cash-out refinance, when the request asked for it. */
   homeEquity?: HomeEquityComparison | null;
+  /** What the new loan's discount points are worth against the rate without them, when the request bought some. */
+  points?: RefinancePoints | null;
+}
+
+/** Whether the new loan's points pay: two loans of the same size, the points paid at closing, at the rate with them and without. */
+export interface RefinancePoints {
+  points: number;
+  cost: number;
+  rateWithPoints: number;
+  rateWithoutPoints: number;
+  paymentWithPoints: number;
+  paymentWithoutPoints: number;
+  monthlySaving: number;
+  interestSaved: number;
+  /** The interest saved, less what the points cost; negative when they lose money. */
+  netSaving: number;
+  /** The payment by which the interest saved covers the cost, or null when it never does. */
+  breakEvenPayment: number | null;
+  breakEvenDate: string | null;
 }
 
 /** Taking the cash out as a home-equity loan beside the current loan, against refinancing to take it out. */
