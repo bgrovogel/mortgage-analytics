@@ -90,6 +90,12 @@ public sealed record RefinanceRequest
     public DiscountPointsRequest? NewDiscountPoints { get; init; }
 
     /// <summary>
+    /// A debt (a credit card, a car loan) the <see cref="CashOut"/> would pay off, to compare with keeping it. The cash out must
+    /// be at least its balance; what is left over is cash in hand. Omit for none.
+    /// </summary>
+    public DebtPayoffRequest? DebtPayoff { get; init; }
+
+    /// <summary>
     /// A home-equity loan for the <see cref="CashOut"/>, kept beside the current loan, to compare with refinancing to take
     /// the cash out. Needs <see cref="CashOut"/>. Omit for no comparison.
     /// </summary>
@@ -123,6 +129,26 @@ public sealed record HomeEquityLoanRequest
     /// </summary>
     /// <example>9</example>
     public decimal? RepaymentRate { get; init; }
+
+    /// <summary>How many years the two ways are costed over, from 1 to 30: what is paid in them and what is still owed after.</summary>
+    /// <example>7</example>
+    public int YearsKept { get; init; } = 7;
+}
+
+/// <summary>A debt paid on its own, with a fixed payment each month until it is gone.</summary>
+public sealed record DebtPayoffRequest
+{
+    /// <summary>What is owed on the debt now.</summary>
+    /// <example>20000</example>
+    public decimal Balance { get; init; }
+
+    /// <summary>The debt's annual interest rate, as a percentage.</summary>
+    /// <example>22</example>
+    public decimal AnnualInterestRate { get; init; }
+
+    /// <summary>What is paid on it each month: more than a month's interest, or it never shrinks.</summary>
+    /// <example>600</example>
+    public decimal MonthlyPayment { get; init; }
 
     /// <summary>How many years the two ways are costed over, from 1 to 30: what is paid in them and what is still owed after.</summary>
     /// <example>7</example>
@@ -166,6 +192,7 @@ public sealed record OriginalLoanRequest
 /// <param name="ExceedsCashOutLimit">True when cash is taken out and the new loan is above 80% of the home's value.</param>
 /// <param name="HomeEquity">The home-equity loan compared with the cash-out refinance, when the request asked for it; otherwise null.</param>
 /// <param name="Points">What the new loan's discount points are worth against the rate without them, when the request bought some; otherwise null.</param>
+/// <param name="DebtPayoff">Paying off a debt with the cash out, compared with keeping it, when the request asked; otherwise null.</param>
 public sealed record RefinanceResponse(
     RefinanceOptionResponse Current,
     RefinanceOptionResponse Refinanced,
@@ -186,7 +213,42 @@ public sealed record RefinanceResponse(
     decimal? NewLoanToValuePercent = null,
     bool ExceedsCashOutLimit = false,
     HomeEquityResponse? HomeEquity = null,
-    RefinancePointsResponse? Points = null);
+    RefinancePointsResponse? Points = null,
+    DebtPayoffResponse? DebtPayoff = null);
+
+/// <summary>
+/// Paying off a debt with the cash out, against keeping it. Each way is costed over the years kept as what is paid in them plus
+/// what is still owed after: keeping the debt, and what the debt adds to the new loan (that loan less the same refinance with the
+/// debt's balance out of the cash), which is spread over the new loan's whole term.
+/// </summary>
+/// <param name="Balance">What the debt owes now.</param>
+/// <param name="AnnualInterestRate">The debt's rate.</param>
+/// <param name="MonthlyPayment">What is paid on it each month.</param>
+/// <param name="YearsKept">The years both ways are costed over.</param>
+/// <param name="MonthsToPayOff">How many payments the debt takes to pay off at its payment.</param>
+/// <param name="TotalInterest">All the interest the debt would charge.</param>
+/// <param name="KeepDebt">Keeping the debt and paying it as it is.</param>
+/// <param name="PayItOff">Paying it off with the cash out, so the new loan carries it.</param>
+/// <param name="SavedByPayingOff">What paying it off saves: keeping the debt's cost less the other way's. Negative when paying it off costs more.</param>
+/// <param name="MonthlyChange">How much less is paid each month while the debt would last: its payment less what it adds to the new loan's. Negative when more.</param>
+public sealed record DebtPayoffResponse(
+    decimal Balance,
+    decimal AnnualInterestRate,
+    decimal MonthlyPayment,
+    int YearsKept,
+    int MonthsToPayOff,
+    decimal TotalInterest,
+    DebtPayoffOptionResponse KeepDebt,
+    DebtPayoffOptionResponse PayItOff,
+    decimal SavedByPayingOff,
+    decimal MonthlyChange);
+
+/// <summary>One way of dealing with the debt, costed over the years kept.</summary>
+/// <param name="MonthlyPayment">What it costs each month: the debt's payment, or what the debt adds to the new loan's payment (PMI included).</param>
+/// <param name="Payments">Everything paid in the years kept for it.</param>
+/// <param name="StillOwed">What is still owed on it after them.</param>
+/// <param name="Cost">Payments plus what is still owed.</param>
+public sealed record DebtPayoffOptionResponse(decimal MonthlyPayment, decimal Payments, decimal StillOwed, decimal Cost);
 
 /// <summary>
 /// Whether the new loan's discount points pay: two loans of the same size (any other financed costs in both, the points paid

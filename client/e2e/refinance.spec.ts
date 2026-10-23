@@ -114,6 +114,37 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('refi-equity-line-note'), 'with no line note').toHaveCount(0);
   });
 
+  test('paying off a debt with the cash out: the card kept, against the mortgage it is moved onto', async ({ page }) => {
+    await reference(page);
+    await page.getByTestId('home-value').fill('500000'); // within 80%, so neither loan carries PMI and the figures are the independent ones
+    await page.getByTestId('section-new-extras').locator('summary').click();
+    await page.getByTestId('cash-out').fill('50000');
+    await expect(page.getByTestId('refi-debt'), 'not shown until asked for').toHaveCount(0);
+
+    await page.getByTestId('pay-off-debt').check();
+    await page.getByTestId('debt-balance').fill('20000');
+    await page.getByTestId('debt-payment').fill('600');
+
+    // A $20,000 card at 22% with $600 a month, paid off with $20,000 of the $50,000, over 7 years: worked out independently.
+    await expect(page.getByTestId('refi-debt-verdict'), 'paying off an expensive card is cheaper, and the payment falls')
+      .toContainText('costs $3,192 less over 7 years than keeping it');
+    await expect(page.getByTestId('refi-debt-verdict'), 'the $600 card payment less the $119.91 it adds to the mortgage')
+      .toContainText('Each month you pay $480.09 less');
+    await expect(page.getByTestId('refi-debt-table'), 'keeping it costs $31,192 in all').toContainText('$31,192');
+    await expect(page.getByTestId('refi-debt-table'), 'moving it onto the mortgage $28,000, most of it still owed').toContainText('$28,000');
+
+    await page.getByTestId('debt-rate').fill('4');
+    await page.getByTestId('debt-payment').fill('450');
+
+    await expect(page.getByTestId('refi-debt-verdict'), 'a cheap car loan is dearer on the mortgage, though the payment still falls')
+      .toContainText('costs $6,318 more over 7 years than keeping it');
+    await expect(page.getByTestId('refi-debt-verdict'), 'which is what makes it tempting').toContainText('Each month you pay $330.09 less');
+
+    await page.getByTestId('pay-off-debt').uncheck();
+
+    await expect(page.getByTestId('refi-debt'), 'switching it off takes the panel away').toHaveCount(0);
+  });
+
   test('buying points for a lower rate: what they cost, what they save, and when they pay for themselves', async ({ page }) => {
     await reference(page);
     await expect(page.getByTestId('refi-points'), 'not shown until asked for').toHaveCount(0);

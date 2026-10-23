@@ -34,7 +34,7 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
         // Points are paid with the closing costs, so every figure below counts them; they are a share of what is borrowed before any financed costs.
         var points = request.NewDiscountPoints is { } bought ? new DiscountPoints(bought.Points, bought.RateWithoutPoints) : null;
         var pointsBase = currentLoan.Principal + request.CashOut;
-        var analysis = analyzer.Analyze(currentLoan, request.ToOffer(extraClosingCosts: points?.CostFor(pointsBase) ?? 0m), pmi);
+        var analysis = AnalyzeOffer(request, currentLoan, pmi);
 
         // When either loan adjusts, the comparison also runs with rates rising as far as the caps allow.
         var adjusts = request.CurrentAdjustableRate is not null || request.NewAdjustableRate is not null;
@@ -44,7 +44,18 @@ public sealed class RefinanceService(IRefinanceAnalyzer analyzer, IAmortizationC
         {
             HomeEquity = HomeEquityComparison.For(request, analysis),
             Points = PointsOn(request, analysis, points, pointsBase),
+            // What the debt adds to the new loan is that loan less the same refinance with the debt's balance out of the cash.
+            DebtPayoff = request.DebtPayoff is { } debt
+                ? DebtPayoffComparison.For(debt, analysis, AnalyzeOffer(request with { CashOut = request.CashOut - debt.Balance, DebtPayoff = null }, currentLoan, pmi))
+                : null,
         };
+    }
+
+    /// <summary>The refinance as the request asks it: points are paid with the closing costs, a share of what is borrowed before any financed costs.</summary>
+    private RefinanceAnalysis AnalyzeOffer(RefinanceRequest request, LoanTerms currentLoan, RefinancePmi? pmi)
+    {
+        var points = request.NewDiscountPoints is { } bought ? new DiscountPoints(bought.Points, bought.RateWithoutPoints) : null;
+        return analyzer.Analyze(currentLoan, request.ToOffer(extraClosingCosts: points?.CostFor(currentLoan.Principal + request.CashOut) ?? 0m), pmi);
     }
 
     /// <summary>

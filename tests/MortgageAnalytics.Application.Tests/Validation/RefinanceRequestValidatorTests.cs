@@ -168,6 +168,29 @@ public class RefinanceRequestValidatorTests : ValidatorTestBase<RefinanceRequest
     }
 
     [Test]
+    public void ADebtToPayOff_NeedsCashToCoverIt_AndAPaymentThatWouldPayItOff()
+    {
+        var debt = new DebtPayoffRequest { Balance = 20_000m, AnnualInterestRate = 22m, MonthlyPayment = 600m, YearsKept = 7 };
+        var withCash = Valid with { CashOut = 50_000m };
+
+        Assert.Multiple(() =>
+        {
+            AssertValid(withCash with { DebtPayoff = debt }, "$20,000 of the $50,000 pays off the card");
+            AssertValid(withCash with { DebtPayoff = debt with { Balance = 50_000m, AnnualInterestRate = 0m, MonthlyPayment = 1m } }, "a debt as large as the cash, interest free");
+            AssertInvalid(Valid with { DebtPayoff = debt }, "DebtPayoff", "with no cash out there is nothing to pay it with");
+            AssertInvalid(withCash with { DebtPayoff = debt with { Balance = 50_000.01m } }, "DebtPayoff", "a debt larger than the cash cannot be paid off by it");
+            AssertInvalid(withCash with { DebtPayoff = debt with { Balance = 0m } }, "DebtPayoff.Balance", "there is something owed");
+            AssertInvalid(withCash with { DebtPayoff = debt with { Balance = 20_000.001m } }, "DebtPayoff.Balance", "to the cent");
+            AssertInvalid(withCash with { DebtPayoff = debt with { AnnualInterestRate = -0.01m } }, "DebtPayoff.AnnualInterestRate", "a rate is not negative");
+            AssertInvalid(withCash with { DebtPayoff = debt with { AnnualInterestRate = 40.01m } }, "DebtPayoff.AnnualInterestRate", "and has a ceiling");
+            AssertInvalid(withCash with { DebtPayoff = debt with { MonthlyPayment = 0m } }, "DebtPayoff.MonthlyPayment", "something is paid");
+            AssertInvalid(withCash with { DebtPayoff = debt with { MonthlyPayment = 366.67m } }, "DebtPayoff.MonthlyPayment", "a payment that does not cover a month's interest never pays the debt off");
+            AssertInvalid(withCash with { DebtPayoff = debt with { YearsKept = 0 } }, "DebtPayoff.YearsKept", "at least a year is kept");
+            AssertInvalid(withCash with { DebtPayoff = debt with { YearsKept = 31 } }, "DebtPayoff.YearsKept", "and at most 30");
+        });
+    }
+
+    [Test]
     public void PointsOnTheNewLoan_AreWithinWhatALenderOffers()
     {
         var points = new DiscountPointsRequest { Points = 1m, RateWithoutPoints = 6.25m };

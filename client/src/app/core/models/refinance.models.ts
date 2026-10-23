@@ -34,14 +34,24 @@ export interface RefinanceRequest {
   currentMonthlyPmi?: number;
   /** The new loan's yearly PMI rate, should it be above 80% of the value. */
   newPmiRate?: number;
+  /** A debt the cash out pays off, to compare with keeping it. Needs cashOut of at least its balance. */
+  debtPayoff?: DebtPayoffInput | null;
   /** Discount points bought on the new loan, whose rate is then the rate with them. Only for a fixed rate. */
   newDiscountPoints?: DiscountPointsInput | null;
   /** A home-equity loan for the cash out, to compare with refinancing to take it out. Needs cashOut. */
   homeEquityLoan?: HomeEquityLoan | null;
 }
 
-/**
- * The cash out borrowed as a second loan (mirrors HomeEquityLoanRequest): a fixed-rate home-equity loan, or, with a draw
+/** A debt paid on its own with a fixed payment until it is gone (mirrors DebtPayoffRequest). */
+export interface DebtPayoffInput {
+  balance: number;
+  annualInterestRate: number;
+  monthlyPayment: number;
+  /** The years both ways are costed over, 1 to 30. */
+  yearsKept: number;
+}
+
+/** A fixed-rate home-equity loan:: a fixed-rate home-equity loan, or, with a draw
  * period, a line of credit that is drawn at once, pays only interest while drawn, then is repaid over its term.
  */
 export interface HomeEquityLoan {
@@ -115,6 +125,34 @@ export interface RefinanceResponse {
   homeEquity?: HomeEquityComparison | null;
   /** What the new loan's discount points are worth against the rate without them, when the request bought some. */
   points?: RefinancePoints | null;
+  /** Paying off a debt with the cash out, compared with keeping it, when the request asked. */
+  debtPayoff?: DebtPayoff | null;
+}
+
+/** Paying off a debt with the cash out, against keeping it, each costed over the years kept. */
+export interface DebtPayoff {
+  balance: number;
+  annualInterestRate: number;
+  monthlyPayment: number;
+  yearsKept: number;
+  /** How many payments the debt takes at its payment. */
+  monthsToPayOff: number;
+  /** All the interest the debt would charge. */
+  totalInterest: number;
+  keepDebt: DebtPayoffOption;
+  payItOff: DebtPayoffOption;
+  /** What paying it off saves; negative when it costs more. */
+  savedByPayingOff: number;
+  /** How much less is paid each month while the debt would last; negative when more. */
+  monthlyChange: number;
+}
+
+/** One way of dealing with the debt, costed over the years kept. */
+export interface DebtPayoffOption {
+  monthlyPayment: number;
+  payments: number;
+  stillOwed: number;
+  cost: number;
 }
 
 /** Whether the new loan's points pay: two loans of the same size, the points paid at closing, at the rate with them and without. */

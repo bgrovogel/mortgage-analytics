@@ -442,6 +442,87 @@ public class RefinanceServiceTests
     }
 
     // The scenarios below were computed independently in Python Decimal (tools/calculator-check): $300,000 at 7% with 25 years to go,
+    // refinanced to 6% over 30 years with $6,000 of closing costs and $50,000 taken out of a $500,000 home (so no PMI), the cash
+    // paying off a debt. Each way is costed over the years kept as what is paid plus what is still owed: keeping the debt, against
+    // what the debt adds to the new loan (that loan less the same refinance with the debt's balance out of the cash).
+    private static RefinanceRequest WithADebt(decimal balance, decimal rate, decimal payment, int yearsKept = 7) => Request() with
+    {
+        CashOut = 50_000m,
+        HomeValue = 500_000m,
+        DebtPayoff = new DebtPayoffRequest { Balance = balance, AnnualInterestRate = rate, MonthlyPayment = payment, YearsKept = yearsKept },
+    };
+
+    [Test]
+    public void Analyze_WithoutADebt_HasNoDebtComparison() =>
+        Assert.That(_service.Analyze(Request() with { CashOut = 50_000m }).DebtPayoff, Is.Null, "it is only worked out when asked for");
+
+    [Test]
+    public void Analyze_PayingOffACreditCardWithTheCash_CostsLessThanKeepingIt()
+    {
+        var debt = _service.Analyze(WithADebt(20_000m, 22m, 600m)).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.MonthsToPayOff, Is.EqualTo(52), "$20,000 at 22% with $600 a month");
+            Assert.That(debt.TotalInterest, Is.EqualTo(11_192.21m), "all the interest the card would charge");
+            Assert.That(debt.KeepDebt.MonthlyPayment, Is.EqualTo(600m), "what is paid on the card each month");
+            Assert.That(debt.KeepDebt.Payments, Is.EqualTo(31_192.21m), "all 52 payments, the last a smaller one, inside the 7 years");
+            Assert.That(debt.KeepDebt.StillOwed, Is.Zero, "it is paid off by then");
+            Assert.That(debt.KeepDebt.Cost, Is.EqualTo(31_192.21m), "paid and still owed");
+            Assert.That(debt.PayItOff.MonthlyPayment, Is.EqualTo(119.91m), "what $20,000 more adds to the new loan: $350,000 less $330,000 at 6% for 30 years");
+            Assert.That(debt.PayItOff.Payments, Is.EqualTo(10_072.44m), "84 payments of it");
+            Assert.That(debt.PayItOff.StillOwed, Is.EqualTo(17_927.95m), "what is left of the $20,000 after 7 years: it is paid slowly");
+            Assert.That(debt.PayItOff.Cost, Is.EqualTo(28_000.39m), "paid and still owed");
+            Assert.That(debt.SavedByPayingOff, Is.EqualTo(3_191.82m), "paying it off costs this much less");
+            Assert.That(debt.MonthlyChange, Is.EqualTo(480.09m), "the payment falls by the card's $600 less the $119.91 added to the mortgage");
+        });
+    }
+
+    [Test]
+    public void Analyze_ADebtStillOwedWhenTheYearsEnd_CountsWhatIsLeft()
+    {
+        var debt = _service.Analyze(WithADebt(20_000m, 22m, 600m, yearsKept: 2)).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.KeepDebt.Payments, Is.EqualTo(14_400m), "24 payments of $600");
+            Assert.That(debt.KeepDebt.StillOwed, Is.EqualTo(13_044.15m), "the card still owes this after two years");
+            Assert.That(debt.KeepDebt.Cost, Is.EqualTo(27_444.15m), "paid and still owed");
+            Assert.That(debt.PayItOff.Cost, Is.EqualTo(22_371.50m), "2,877.84 paid on the extra loan and 19,493.66 still owed");
+            Assert.That(debt.SavedByPayingOff, Is.EqualTo(5_072.65m), "it saves more over the shorter span, while the card is dear");
+        });
+    }
+
+    [Test]
+    public void Analyze_PayingOffACheapDebtWithTheMortgage_CostsMore_BecauseItIsSpreadOverThirtyYears()
+    {
+        var debt = _service.Analyze(WithADebt(20_000m, 4m, 450m)).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.MonthsToPayOff, Is.EqualTo(49), "a $20,000 car loan at 4% with $450 a month");
+            Assert.That(debt.KeepDebt.Cost, Is.EqualTo(21_682.43m), "paid, none still owed");
+            Assert.That(debt.PayItOff.Cost, Is.EqualTo(28_000.39m), "the same $119.91 a month for 84 payments, with most of it still owed");
+            Assert.That(debt.SavedByPayingOff, Is.EqualTo(-6_317.96m), "negative: paying it off costs more, though the monthly payment falls");
+            Assert.That(debt.MonthlyChange, Is.EqualTo(330.09m), "the payment still falls, which is what makes it tempting");
+        });
+    }
+
+    [Test]
+    public void Analyze_ADebtThatTakesAllTheCash_IsStillOwedWhenTheYearsEnd()
+    {
+        var debt = _service.Analyze(WithADebt(50_000m, 9m, 800m)).DebtPayoff!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(debt.MonthsToPayOff, Is.EqualTo(85), "a little is left after 7 years");
+            Assert.That(debt.KeepDebt.StillOwed, Is.EqualTo(518.64m), "what is left after 84 payments");
+            Assert.That(debt.PayItOff.MonthlyPayment, Is.EqualTo(299.78m), "$50,000 more on the new loan");
+            Assert.That(debt.SavedByPayingOff, Is.EqualTo(-2_282.21m), "a loan at 9% is dearer than the mortgage, but not by enough to pay back being spread over 30 years");
+        });
+    }
+
+    // The scenarios below were computed independently in Python Decimal (tools/calculator-check): $300,000 at 7% with 25 years to go,
     // refinanced to 6% over 30 years with $6,000 of closing costs, the 6% being the rate with the points and the lender's offer
     // without them 6.25%. The points are a percentage of what is borrowed before any financed costs, paid with the closing costs.
     private static RefinanceRequest WithPoints(decimal points = 1m, decimal rateWithoutPoints = 6.25m) => Request() with

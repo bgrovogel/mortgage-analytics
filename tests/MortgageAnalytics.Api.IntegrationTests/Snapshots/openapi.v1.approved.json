@@ -1964,6 +1964,94 @@
         },
         "additionalProperties": false
       },
+      "DebtPayoffOptionResponse": {
+        "type": "object",
+        "properties": {
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "payments": {
+            "type": "number",
+            "format": "double"
+          },
+          "stillOwed": {
+            "type": "number",
+            "format": "double"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DebtPayoffRequest": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DebtPayoffResponse": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "annualInterestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyPayment": {
+            "type": "number",
+            "format": "double"
+          },
+          "yearsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monthsToPayOff": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalInterest": {
+            "type": "number",
+            "format": "double"
+          },
+          "keepDebt": {
+            "$ref": "#/components/schemas/DebtPayoffOptionResponse"
+          },
+          "payItOff": {
+            "$ref": "#/components/schemas/DebtPayoffOptionResponse"
+          },
+          "savedByPayingOff": {
+            "type": "number",
+            "format": "double"
+          },
+          "monthlyChange": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "DeleteAccountRequest": {
         "type": "object",
         "properties": {
@@ -3222,6 +3310,9 @@
           "newDiscountPoints": {
             "$ref": "#/components/schemas/DiscountPointsRequest"
           },
+          "debtPayoff": {
+            "$ref": "#/components/schemas/DebtPayoffRequest"
+          },
           "homeEquityLoan": {
             "$ref": "#/components/schemas/HomeEquityLoanRequest"
           }
@@ -3308,6 +3399,9 @@
           },
           "points": {
             "$ref": "#/components/schemas/RefinancePointsResponse"
+          },
+          "debtPayoff": {
+            "$ref": "#/components/schemas/DebtPayoffResponse"
           }
         },
         "additionalProperties": false

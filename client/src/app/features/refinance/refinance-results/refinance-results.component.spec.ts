@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { aRefinanceOption, aRefinanceResponse } from '../../../../testing/builders';
-import { HomeEquityComparison, RefinancePoints, RefinanceResponse } from '../../../core/models/refinance.models';
+import { DebtPayoff, HomeEquityComparison, RefinancePoints, RefinanceResponse } from '../../../core/models/refinance.models';
 import { RefinanceResultsComponent } from './refinance-results.component';
 
 describe('RefinanceResultsComponent', () => {
@@ -146,6 +146,64 @@ describe('RefinanceResultsComponent', () => {
 
       render(aRefinanceResponse({ cashOut: 50_000 }));
       expect(text('refi-home-equity')).toBeUndefined();
+    });
+  });
+
+  describe('a debt paid off with the cash', () => {
+    /** The API's scenario: a $20,000 card at 22% with $600 a month, paid off with $20,000 of a $50,000 cash out; kept 7 years. */
+    const debt = (overrides: Partial<DebtPayoff> = {}): RefinanceResponse => aRefinanceResponse({
+      cashOut: 50_000, netCash: 44_000,
+      debtPayoff: {
+        balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 7, monthsToPayOff: 52, totalInterest: 11_192.21,
+        keepDebt: { monthlyPayment: 600, payments: 31_192.21, stillOwed: 0, cost: 31_192.21 },
+        payItOff: { monthlyPayment: 119.91, payments: 10_072.44, stillOwed: 17_927.95, cost: 28_000.39 },
+        savedByPayingOff: 3_191.82, monthlyChange: 480.09, ...overrides,
+      },
+    });
+
+    it('says what paying it off saves over the years kept, and what it does to the monthly payments', () => {
+      render(debt());
+
+      expect(text('refi-debt-verdict')).toBe(
+        'Paying off the $20,000 debt with the cash costs $3,192 less over 7 years than keeping it. Each month you pay $480.09 less while the debt would have lasted (4 yr 4 mo).');
+    });
+
+    it('says so when paying it off costs more, though the payment falls', () => {
+      render(debt({ savedByPayingOff: -6_317.96, monthlyChange: 330.09 }));
+
+      expect(text('refi-debt-verdict')).toContain('costs $6,318 more over 7 years than keeping it');
+      expect(text('refi-debt-verdict')).toContain('Each month you pay $330.09 less');
+    });
+
+    it('says when the payment goes up instead', () => {
+      render(debt({ monthlyChange: -15.5 }));
+
+      expect(text('refi-debt-verdict')).toContain('Each month you pay $15.50 more while the debt would have lasted');
+    });
+
+    it('lays keeping the debt beside paying it off: the monthly payment, what is paid, what is still owed and the total', () => {
+      render(debt());
+      const rows = [...fixture.nativeElement.querySelectorAll('[data-testid="refi-debt-table"] tbody tr')]
+        .map((tr) => [...(tr as HTMLElement).children].map((cell) => cell.textContent!.trim()).join(' | '));
+
+      expect(rows).toEqual([
+        'Each month | $600.00 | $119.91',
+        'Paid in the years kept | $31,192 | $10,072',
+        'Still owed after | $0 | $17,928',
+        'Total cost | $31,192 | $28,000',
+      ]);
+    });
+
+    it('says how long the debt would last, against the new loan it is spread over', () => {
+      render(debt());
+
+      expect(text('refi-debt')).toContain('Kept, the debt is gone in 4 yr 4 mo. Paid off with the cash out, it is spread over the new loan, which runs 30 yr.');
+    });
+
+    it('is left out when no debt was paid off', () => {
+      render(aRefinanceResponse({ cashOut: 50_000 }));
+
+      expect(text('refi-debt')).toBeUndefined();
     });
   });
 

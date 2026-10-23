@@ -80,6 +80,23 @@ public sealed class RefinanceRequestValidator : AbstractValidator<RefinanceReque
             .Null().WithMessage("Choose a buydown or an adjustable rate for the new loan, not both.")
             .When(r => r.NewBuydown is not null);
 
+        When(r => r.DebtPayoff is not null, () =>
+        {
+            RuleFor(r => r.DebtPayoff!.Balance).GreaterThan(0).LessThanOrEqualTo(LoanTerms.MaxPrincipal).WholeCents()
+                .OverridePropertyName("DebtPayoff.Balance").WithName("Debt balance");
+            RuleFor(r => r.DebtPayoff!.AnnualInterestRate).InclusiveBetween(0m, 40m)
+                .OverridePropertyName("DebtPayoff.AnnualInterestRate").WithName("Debt rate");
+            RuleFor(r => r.DebtPayoff!.MonthlyPayment).GreaterThan(0m).WholeCents()
+                .GreaterThan(r => decimal.Round(r.DebtPayoff!.Balance * r.DebtPayoff.AnnualInterestRate / 1_200m, 2, MidpointRounding.AwayFromZero))
+                .WithMessage("The payment must be more than a month's interest, or the debt never shrinks.")
+                .OverridePropertyName("DebtPayoff.MonthlyPayment").WithName("Debt payment");
+            RuleFor(r => r.DebtPayoff!.YearsKept).InclusiveBetween(1, 30)
+                .OverridePropertyName("DebtPayoff.YearsKept").WithName("Years kept");
+            RuleFor(r => r.DebtPayoff)
+                .Must((r, _) => r.CashOut >= r.DebtPayoff!.Balance)
+                .WithMessage("Take out at least the debt's balance for the cash to pay it off.");
+        });
+
         RuleFor(r => r.NewDiscountPoints!.Points)
             .GreaterThan(0).LessThanOrEqualTo(DiscountPoints.MaxPoints)
             .Must(points => decimal.Round(points, 3) == points).WithMessage("'Points' can have at most 3 decimal places.")

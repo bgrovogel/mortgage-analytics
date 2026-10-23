@@ -134,6 +134,11 @@ for (const scheme of ['light', 'dark'] as const) {
       await settled(page);
       expect(await violations(page), 'Refinance with a home-equity line compared breaks no accessibility rule').toEqual([]);
 
+      await page.getByTestId('pay-off-debt').check();
+      await expect(page.getByTestId('refi-debt'), 'the debt is compared').toBeVisible();
+      await settled(page);
+      expect(await violations(page), 'Refinance with a debt paid off breaks no accessibility rule').toEqual([]);
+
       await page.getByTestId('buy-points').check();
       await expect(page.getByTestId('refi-points'), 'the points are compared').toBeVisible();
       await settled(page);

@@ -109,6 +109,48 @@
   </section>
 }
 
+@if (debt(); as d) {
+  <!-- A debt paid off with the cash out against kept as it is, each costed as what is paid plus what is still owed. -->
+  <section class="panel debt" data-testid="refi-debt">
+    <h3>{{ 'Paying off a debt with the cash' | t }}</h3>
+    <p class="verdict-line" data-testid="refi-debt-verdict">{{ debtVerdict() }}</p>
+    <div class="table-wrap" tabindex="0" [attr.aria-label]="'Keeping the debt and paying it off with the cash, side by side' | t">
+      <table data-testid="refi-debt-table">
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col">{{ 'Keep the debt' | t }}</th>
+            <th scope="col">{{ 'Pay it off with the cash' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">{{ 'Each month' | t }}</th>
+            <td>{{ cents(d.keepDebt.monthlyPayment) }}</td>
+            <td>{{ cents(d.payItOff.monthlyPayment) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Paid in the years kept' | t }}</th>
+            <td>{{ dollars(d.keepDebt.payments) }}</td>
+            <td>{{ dollars(d.payItOff.payments) }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{{ 'Still owed after' | t }}</th>
+            <td>{{ dollars(d.keepDebt.stillOwed) }}</td>
+            <td>{{ dollars(d.payItOff.stillOwed) }}</td>
+          </tr>
+          <tr class="total">
+            <th scope="row">{{ 'Total cost' | t }}</th>
+            <td>{{ dollars(d.keepDebt.cost) }}</td>
+            <td>{{ dollars(d.payItOff.cost) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">{{ debtSpread() }}</p>
+  </section>
+}
+
 @if (equity(); as e) {
   <!-- Two ways to get the same cash, costed over the years kept: what is paid in them, what is still owed, what is paid at closing. -->
   <section class="panel equity" data-testid="refi-home-equity">

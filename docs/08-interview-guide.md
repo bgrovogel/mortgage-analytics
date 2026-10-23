@@ -87,7 +87,10 @@ $5,545. Switch **A loan** to **A line of credit** (a HELOC) for the other half o
 market, so the page asks for the rate you expect rather than assuming it. One more tick on the same refinance, **Pay points
 for this rate** (1 point, with the lender's rate without them at 6.25%), shows whether points pay: $3,000 for a payment that
 is $48.50 lower, which the interest saved covers by the **48th payment**; they are paid with the closing costs, so the
-refinance's own verdict moves by the same $3,000.
+refinance's own verdict moves by the same $3,000. And **Use some of it to pay off a debt** (a $20,000 card at 22% with
+$600 a month) shows the trap in the other direction: moved onto the mortgage it costs **$3,192 less** over 7 years and the
+payments fall by $480.09 a month, but the same $20,000 as a 4% car loan costs **$6,318 more**, with the payment still
+falling, because spread over 30 years most of it is still owed.
 
 Then, if there is time, the offer the deck closes on: *name a feature and I'll show the rule, the test that pins
 it, and a change with the test going red, then green.* Choose that change before you present, for example the ARM
@@ -558,7 +561,7 @@ that: pick any feature, explain the rule, open the test that pins it, and change
 | Affordability | The example with **$150,000** a year and **$600** of debts: **24.82%** and **29.62%**; comfortable reaches **$474,091**, a conventional loan's 45% **$700,615** |
 | Compare, 3 homes | The example, a **$450,000** home with 20% down and a **$380,000** home with the same $37,350 down: the $380,000 home costs the least over 5 years, **$165** less than the $450,000 one, which needs **$52,683** more at closing |
 | Builder's money, 4 ways | The example with **$8,000** over 7 years: points **$642,209** (2.118 points, 5.721%); off the price $644,043; toward closing or a buydown $648,276 |
-| Tests | 1,571 .NET · 1,483 Jest · 297 Playwright (29 axe scans); 85% coverage gate |
+| Tests | 1,579 .NET · 1,495 Jest · 298 Playwright (29 axe scans); 85% coverage gate |
 | Stack | .NET 10, EF Core 10, SQLite or PostgreSQL, Identity · Angular 22, signals, RxJS, SVG charts · Docker, GitHub Actions |
 
 ---

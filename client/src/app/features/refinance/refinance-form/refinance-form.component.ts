@@ -11,7 +11,7 @@ import { usd as usdWhole } from '../../../core/formatting/format';
 import { balanceAfter, firstOfMonthFromNext, originalAmount, paidOffAlready, paymentsMade, toCents } from '../../../core/loans/loan-progress';
 import { RefinanceRequest } from '../../../core/models/refinance.models';
 import { SharedLoanChange } from '../../../core/state/shared-loan.store';
-import { POINTS_RATE_TOO_LOW, REFINANCE_RULES } from './refinance-fields';
+import { DEBT_PAYMENT_TOO_LOW, DEBT_TOO_BIG, POINTS_RATE_TOO_LOW, REFINANCE_RULES } from './refinance-fields';
 import { AverageRateComponent } from '../../../shared/average-rate/average-rate.component';
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
@@ -107,6 +107,12 @@ export class RefinanceFormComponent implements OnInit {
     // A home-equity loan for the cash out, to compare with refinancing for it: about today's rate on one, 15 years, kept 7.
     // Or a line of credit: drawn (interest only) for 10 years, then repaid over the term at the rate expected by then.
     // The fields of a comparison that is not asked for, and a line's when it is a loan, are disabled so they are not checked.
+    // A debt to pay off with the cash out, to compare with keeping it: a card's balance, rate and payment, kept 7 years.
+    payOffDebt: [false],
+    debtBalance: [{ value: 10_000, disabled: true }, validatorsFor(rules.debtBalance)],
+    debtRate: [{ value: 22, disabled: true }, validatorsFor(rules.debtRate)],
+    debtPayment: [{ value: 400, disabled: true }, validatorsFor(rules.debtPayment)],
+    debtYearsKept: [{ value: 7, disabled: true }, validatorsFor(rules.debtYearsKept)],
     // Discount points on the new loan, for a fixed rate: about one point, the lender's rate without them a quarter above the one asked.
     buyPoints: [false],
     points: [{ value: 1, disabled: true }, validatorsFor(rules.points)],
@@ -226,6 +232,10 @@ export class RefinanceFormComponent implements OnInit {
           ...(initial.homeValue == null ? {} : { homeValue: initial.homeValue }),
           currentMonthlyPmi: initial.currentMonthlyPmi ?? 0,
           newPmiRate: initial.newPmiRate ?? 0.5,
+          payOffDebt: !!initial.debtPayoff,
+          ...(initial.debtPayoff
+            ? { debtBalance: initial.debtPayoff.balance, debtRate: initial.debtPayoff.annualInterestRate, debtPayment: initial.debtPayoff.monthlyPayment, debtYearsKept: initial.debtPayoff.yearsKept }
+            : {}),
           buyPoints: !!initial.newDiscountPoints,
           ...(initial.newDiscountPoints ? { points: initial.newDiscountPoints.points, rateWithoutPoints: initial.newDiscountPoints.rateWithoutPoints } : {}),
           compareEquityLoan: !!initial.homeEquityLoan,
@@ -315,12 +325,24 @@ export class RefinanceFormComponent implements OnInit {
     for (const control of [c.equityRate, c.equityTermYears, c.equityYearsKept]) show(control, asked);
     for (const control of [c.equityDrawYears, c.equityRepaymentRate]) show(control, asked && v.equityKind === 'line');
 
+    // A debt's fields count only while cash is taken out and a debt is to be paid off with it.
+    for (const control of [c.debtBalance, c.debtRate, c.debtPayment, c.debtYearsKept]) show(control, v.cashOut > 0 && v.payOffDebt);
+
     // The points' fields count only while points are asked for on a fixed rate; the rate without them starts a quarter above the new rate.
     const pointsAsked = this.pointsApply();
     for (const control of [c.points, c.rateWithoutPoints]) show(control, pointsAsked);
     if (pointsAsked && v.rateWithoutPoints <= v.newAnnualInterestRate && !c.rateWithoutPoints.dirty) {
       c.rateWithoutPoints.setValue(Math.round((v.newAnnualInterestRate + 0.25) * 10_000) / 10_000, { emitEvent: false });
     }
+  }
+
+  /** What is wrong with the debt to pay off, if anything: the cash out is not enough for it, or its payment would never pay it off. */
+  private debtProblem(): string | null {
+    const v = this.form.getRawValue();
+    if (!(v.cashOut > 0 && v.payOffDebt)) return null;
+    if (v.debtBalance > v.cashOut) return DEBT_TOO_BIG;
+    const monthlyInterest = Math.round((v.debtBalance * v.debtRate) / 12) / 100;
+    return v.debtPayment <= monthlyInterest ? DEBT_PAYMENT_TOO_LOW : null;
   }
 
   /** True when points are asked for on a fixed rate. */
@@ -348,6 +370,7 @@ export class RefinanceFormComponent implements OnInit {
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.currentRate.controls),
       ...problemsIn(RATE_OPTION_RULES, this.form.controls.newRate.controls),
       ...(this.pointsRateTooLow() && this.form.controls.rateWithoutPoints.valid ? [t(POINTS_RATE_TOO_LOW)] : []),
+      ...(this.debtProblem() ? [t(this.debtProblem()!)] : []),
       ...(this.loanToday()?.paidOff ? [paidOffAlready()] : []),
     ];
   }
@@ -357,7 +380,7 @@ export class RefinanceFormComponent implements OnInit {
    * list, because the first payment date (required while it is shown) is not a numeric field with a rule.
    */
   private canSend(): boolean {
-    return this.form.valid && !this.loanToday()?.paidOff && !this.pointsRateTooLow();
+    return this.form.valid && !this.loanToday()?.paidOff && !this.pointsRateTooLow() && !this.debtProblem();
   }
 
   /** What the current loan's fixed period counts from: the next payment, or the original first one. */
@@ -391,6 +414,9 @@ export class RefinanceFormComponent implements OnInit {
       currentMonthlyPmi: v.currentMonthlyPmi,
       newPmiRate: v.newPmiRate,
       // Only when asked for, so a comparison without one is the same request as before.
+      ...(v.cashOut > 0 && v.payOffDebt
+        ? { debtPayoff: { balance: v.debtBalance, annualInterestRate: v.debtRate, monthlyPayment: v.debtPayment, yearsKept: v.debtYearsKept } }
+        : {}),
       ...(this.pointsApply() ? { newDiscountPoints: { points: v.points, rateWithoutPoints: v.rateWithoutPoints } } : {}),
       ...(v.cashOut > 0 && v.compareEquityLoan
         ? {

@@ -133,6 +133,21 @@
 
         @if (values().cashOut) {
           <label class="checkbox">
+            <input type="checkbox" formControlName="payOffDebt" data-testid="pay-off-debt" />
+            <span><strong>{{ 'Use some of it to pay off a debt' | t }}</strong> {{ '(a card or a loan: is that better than keeping it?)' | t }}</span>
+          </label>
+          @if (values().payOffDebt) {
+            <div class="row">
+              <app-number-field [control]="form.controls.debtBalance" [rule]="rules.debtBalance" testId="debt-balance" />
+              <app-number-field [control]="form.controls.debtRate" [rule]="rules.debtRate" testId="debt-rate" />
+            </div>
+            <div class="row">
+              <app-number-field [control]="form.controls.debtPayment" [rule]="rules.debtPayment" testId="debt-payment" [label]="'Debt payment a month' | t" />
+              <app-number-field [control]="form.controls.debtYearsKept" [rule]="rules.debtYearsKept" testId="debt-years-kept" />
+            </div>
+            <p class="hint" data-testid="debt-hint">{{ 'The cash pays the debt off and the new loan carries it. Each way is costed over the years you keep them: what you pay, plus what you still owe after.' | t }}</p>
+          }
+          <label class="checkbox">
             <input type="checkbox" formControlName="compareEquityLoan" data-testid="compare-equity-loan" />
             <span><strong>{{ 'Compare with a home-equity loan' | t }}</strong> {{ '(keep your loan, borrow the cash separately)' | t }}</span>
           </label>

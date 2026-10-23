@@ -150,6 +150,29 @@ export class RefinanceResultsComponent {
   /** The home-equity loan compared with the cash-out refinance, or null when the request did not ask for it. */
   protected readonly equity = computed(() => this.result().homeEquity ?? null);
 
+  /** Paying off a debt with the cash against keeping it, or null when the request asked for none. */
+  protected readonly debt = computed(() => this.result().debtPayoff ?? null);
+
+  /** What paying the debt off does to the cost over the years kept, and to the monthly payments while the debt would have lasted. */
+  readonly debtVerdict = computed(() => {
+    const d = this.debt();
+    if (!d) return null;
+    const args = [usd(d.balance), usd(Math.abs(d.savedByPayingOff)), yearsOf(d.yearsKept)];
+    const cost = d.savedByPayingOff >= 0
+      ? t('Paying off the {0} debt with the cash costs {1} less over {2} than keeping it.', args)
+      : t('Paying off the {0} debt with the cash costs {1} more over {2} than keeping it.', args);
+    const monthly = [usdCents(Math.abs(d.monthlyChange)), formatMonths(d.monthsToPayOff)];
+    return `${cost} ${d.monthlyChange >= 0
+      ? t('Each month you pay {0} less while the debt would have lasted ({1}).', monthly)
+      : t('Each month you pay {0} more while the debt would have lasted ({1}).', monthly)}`;
+  });
+
+  /** Why a lower payment is not the whole answer: the debt would be gone sooner than the mortgage it is moved onto. */
+  readonly debtSpread = computed(() => {
+    const d = this.debt();
+    return d ? t('Kept, the debt is gone in {0}. Paid off with the cash out, it is spread over the new loan, which runs {1}.', [formatMonths(d.monthsToPayOff), formatMonths(this.result().refinanced.numberOfPayments)]) : null;
+  });
+
   /** What the new loan's discount points are worth, or null when none were bought. */
   protected readonly points = computed(() => this.result().points ?? null);
 

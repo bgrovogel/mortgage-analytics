@@ -506,6 +506,14 @@ The rest of the current loan against a new one, with closing costs paid at closi
   asks for the rate while it is drawn and the rate you expect once repayment begins. The comparison shows the interest-only
   payment, what it becomes, and how long each lasts; kept inside the draw period, the line still owes all of the cash,
   which the total counts.
+- **Pay off a debt with the cash.** With cash out, **Use some of it to pay off a debt** takes a card's or a loan's balance,
+  rate and monthly payment (the cash out must cover the balance). It sets keeping the debt, paid at its payment until it is
+  gone, against what it adds to the new loan, which is that loan less the same refinance without the debt in the cash,
+  each costed over the years kept as what is paid in them plus what is still owed. A $20,000 card at 22% with $600 a month
+  is gone in 52 payments and costs $31,192 in all; moved onto the reference refinance it adds $119.91 a month, but after 7
+  years most of it ($17,928) is still owed, so it comes to $28,000: **$3,192 less**, and the monthly payments fall by
+  $480.09. The same $20,000 as a 4% car loan costs $21,682 kept against $28,000 moved: **$6,318 more**, though the
+  payment still falls. A lower payment is the temptation, and the page says plainly when it is not a saving.
 - **Points on the new loan.** For a fixed rate, **Pay points for this rate** takes the number of points and the rate the
   lender offers without them (the new rate above is then the rate with them). The points are paid with the closing costs
   (financed with them when those are), so every figure on the page counts them, and **Do the points pay?** sets the loan

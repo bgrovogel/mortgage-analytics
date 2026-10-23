@@ -628,6 +628,17 @@ Key ideas:
 - The loan today can be entered as **what's owed now**, or as **the original loan** (amount, term, first
   payment), from which the server works out the balance on that loan's own schedule.
 - A buydown on the new loan is paid at closing, so it changes **when** you pay, not how much.
+- **A debt paid off with the cash out** (`DebtPayoffComparison`, `Application/Services`) is costed two ways over the years kept
+  (84 payments for 7 years) as **what is paid in them plus what is still owed after**. Keeping the debt is its own schedule:
+  each month interest = balance × rate ÷ 1,200 to the cent, the payment, and the last one smaller; $20,000 at 22% with
+  $600 a month takes **52** payments and charges **$11,192.21** of interest, so 31,192.21 is paid and nothing is owed. Paying
+  it off adds its balance to the new loan, and what that costs is the new loan less **the same refinance with the balance out
+  of the cash** (PMI included, and the points, which are a share of a smaller loan): $350,000 less $330,000 at 6% over 30
+  years adds **$119.91** a month, **10,072.44** paid in 84 payments and **17,927.95** still owed, 28,000.39 in all. It saves
+  31,192.21 − 28,000.39 = **$3,191.82**, and the monthly payments fall by 600 − 119.91 = **$480.09** while the card would
+  have lasted. The same $20,000 as a 4% car loan (49 payments, 21,682.43) costs **$6,317.96 more** moved onto the mortgage,
+  because spread over 30 years most of it is still owed after 7: a lower payment is not a saving. The validator needs the
+  cash out to cover the balance and a payment above a month's interest, or the debt would never shrink.
 - **Points on the new loan** (`DiscountPoints`, as on a purchase) cost a percentage of what is borrowed before any financed
   costs, to the cent, and are added to the closing costs (so financed with them when those are); the rate asked is the
   rate with the points. They are then weighed on their own, as two loans of the same size (the other financed costs in

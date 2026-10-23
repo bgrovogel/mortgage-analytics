@@ -262,6 +262,13 @@ def random_refinance(rng):
             request['homeEquityLoan']['drawPeriodInMonths'] = rng.choice([12, 60, 120, 180])
             if rng.random() < 0.7:
                 request['homeEquityLoan']['repaymentRate'] = float(D(rng.randrange(400, 1400)) / 100)
+    # A third of those taking cash out use some of it to pay off a debt, kept 1 to 30 years: its payment is always more than a month's
+    # interest, so it shrinks.
+    if request.get('cashOut') and rng.random() < 1 / 3:
+        balance = round(min(float(request['cashOut']), rng.choice([3_000, 8_000, 20_000, 60_000, float(request['cashOut'])])), 2)
+        rate = rng.choice([0, 4.5, 9.99, 22.99, 29.99])
+        payment = round(balance * rate / 1200 + rng.choice([25, 120, 350, 1_500]) + 0.01, 2)
+        request['debtPayoff'] = {'balance': balance, 'annualInterestRate': rate, 'monthlyPayment': payment, 'yearsKept': rng.randint(1, 30)}
     # A third buy discount points on the new loan: the rate asked is the rate with them, the lender's rate without is higher.
     if rng.random() < 1 / 3:
         request['newDiscountPoints'] = {'points': rng.choice([0.5, 1, 1.5, 2, 3]),
@@ -274,7 +281,16 @@ def refinance_view(r):
     keep = r.get('keepingCurrentPayment')
     heq = r.get('homeEquity')
     pts = r.get('points')
+    dp = r.get('debtPayoff')
     return {
+        'newLoanAt': None,  # only the model's own internal, for working a debt out
+        'debtPayoff': dp and {
+            'monthsToPayOff': dp['monthsToPayOff'], 'totalInterest': dp['totalInterest'],
+            'keepPayments': dp['keepDebt']['payments'], 'keepOwed': dp['keepDebt']['stillOwed'], 'keepCost': dp['keepDebt']['cost'],
+            'extraMonthly': dp['payItOff']['monthlyPayment'], 'extraPayments': dp['payItOff']['payments'],
+            'extraOwed': dp['payItOff']['stillOwed'], 'extraCost': dp['payItOff']['cost'],
+            'saved': dp['savedByPayingOff'], 'monthlyChange': dp['monthlyChange'],
+        },
         'points': pts and {k: pts[k] for k in ('points', 'cost', 'rateWithoutPoints', 'paymentWithPoints', 'paymentWithoutPoints', 'monthlySaving',
                                               'interestSaved', 'netSaving', 'breakEvenPayment')},
         'homeEquity': heq and {

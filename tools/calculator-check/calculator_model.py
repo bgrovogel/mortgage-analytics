@@ -1030,7 +1030,7 @@ def cash_to_close(closing, down, loan, rate, year_one, buydown_cost, points_cost
 
 # ---------------------------------------------------------------------------------------------- refinancing
 
-def refinance(request):
+def refinance(request, horizon=None):
     """
     Keep the current loan, or refinance it: the rest of the current loan, the new loan (closing costs financed or
     paid up front, and any cash taken out borrowed with it), the new loan at today's payment when that is higher,
@@ -1087,6 +1087,38 @@ def refinance(request):
         k = amortize(principal, new_rate, new_term, extra=lambda p: (monthly, monthly))
         keep = {'numberOfPayments': len(k['rows']), 'totalInterest': interest(k),
                 'lifetimeSavings': current_all - (total(k) + pmi_total(new_pmi, k) + upfront) + cash_out}
+    # What the new loan costs over `months`: everything paid on it (PMI included) and what is still owed after.
+    paid_in = lambda s, pmi, months: (sum((r['scheduled'] + r['extra'] for r in s['rows'][:months]), D(0))  # noqa: E731
+                                      + sum((pmi_of(pmi, r) for r in s['rows'][:months]), D(0)))
+    owed_after = lambda s, months: D(0) if len(s['rows']) <= months else s['rows'][months - 1]['balance']  # noqa: E731
+
+    # A debt paid off with the cash out, against keeping it: the debt on its own (a fixed payment until it is paid) beside what the
+    # cash out adds to the new loan, which is that loan less the same refinance with the debt's balance out of the cash, both costed
+    # over the years kept as what is paid plus what is still owed.
+    debt_payoff = None
+    debt = request.get('debtPayoff')
+    if debt and cash_out > 0:
+        k = debt['yearsKept'] * 12
+        debt_balance, debt_rate, debt_pay = D(str(debt['balance'])), D(str(debt['annualInterestRate'])), D(str(debt['monthlyPayment']))
+        schedule, left = [], debt_balance  # (payment, interest, owed after) for each month until it is paid
+        while left > 0 and len(schedule) < 1200:
+            accrued = money(left * debt_rate / 1200)
+            payment = min(debt_pay, left + accrued)
+            left -= payment - accrued
+            schedule.append((payment, accrued, left))
+        debt_paid = sum((p for p, _, _ in schedule[:k]), D(0))
+        debt_owed = schedule[k - 1][2] if len(schedule) > k else D(0)
+        without_debt = refinance(dict(request, cashOut=cash_out - debt_balance, debtPayoff=None, homeEquityLoan=None), horizon=k)['newLoanAt']
+        extra_paid = paid_in(new, new_pmi, k) - without_debt['paid']
+        extra_owed = owed_after(new, k) - without_debt['owed']
+        extra_monthly = new['initial'] + first_pmi(new_pmi, new) - without_debt['monthly']
+        keep_cost, pay_cost = debt_paid + debt_owed, extra_paid + extra_owed
+        debt_payoff = {
+            'monthsToPayOff': len(schedule), 'totalInterest': sum((i for _, i, _ in schedule), D(0)),
+            'keepPayments': debt_paid, 'keepOwed': debt_owed, 'keepCost': keep_cost,
+            'extraMonthly': extra_monthly, 'extraPayments': extra_paid, 'extraOwed': extra_owed, 'extraCost': pay_cost,
+            'saved': keep_cost - pay_cost, 'monthlyChange': debt_pay - extra_monthly,
+        }
     # A home-equity loan for the cash, beside the current loan, against refinancing to take it out; both costed over the
     # years kept as what is paid (PMI included) plus what is still owed plus what is paid at closing.
     home_equity = None
@@ -1146,6 +1178,8 @@ def refinance(request):
                   'monthlySaving': without_pts['initial'] - with_pts['initial'], 'interestSaved': points_saved,
                   'netSaving': points_saved - points_cost, 'breakEvenPayment': points_break_even}
     return {
+        'newLoanAt': {'paid': paid_in(new, new_pmi, horizon), 'owed': owed_after(new, horizon), 'monthly': new['initial'] + first_pmi(new_pmi, new)} if horizon else None,
+        'debtPayoff': debt_payoff,
         'points': points,
         'homeEquity': home_equity,
         'currentPayment': current['initial'], 'currentInterest': interest(current), 'currentPayments': len(current['rows']),

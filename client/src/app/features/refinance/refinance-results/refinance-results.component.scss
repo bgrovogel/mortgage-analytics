@@ -108,6 +108,7 @@
 .keep,
 .equity,
 .points,
+.debt,
 .limit {
   background: var(--surface-2);
   box-shadow: none;
@@ -120,7 +121,8 @@
 
 // Borrowing the cash separately, against refinancing for it, or buying points for a lower rate: the verdict first, then the figures.
 .equity,
-.points {
+.points,
+.debt {
   .verdict-line {
     margin: 0 0 0.75rem;
     font-weight: 600;

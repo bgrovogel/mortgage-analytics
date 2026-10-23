@@ -191,6 +191,44 @@ public class RefinanceApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task ADebtPaidOffWithTheCash_IsComparedWithKeepingIt_WhenAskedFor()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            closingCosts = 6_000, cashOut = 50_000, homeValue = 500_000,
+            debtPayoff = new { balance = 20_000, annualInterestRate = 22, monthlyPayment = 600, yearsKept = 7 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze?includePayments=false", request);
+        var debt = (await ReadJsonAsync(response)).GetProperty("debtPayoff");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), "the request is valid");
+            Assert.That(debt.GetProperty("monthsToPayOff").GetInt32(), Is.EqualTo(52), "the card at $600 a month");
+            Assert.That(debt.GetProperty("keepDebt").GetProperty("cost").GetDecimal(), Is.EqualTo(31_192.21m), "keeping it, paid and still owed");
+            Assert.That(debt.GetProperty("payItOff").GetProperty("monthlyPayment").GetDecimal(), Is.EqualTo(119.91m), "what it adds to the mortgage");
+            Assert.That(debt.GetProperty("savedByPayingOff").GetDecimal(), Is.EqualTo(3_191.82m), "the comparison, as the service works it out");
+        });
+    }
+
+    [Test]
+    public async Task ADebtLargerThanTheCashOut_Returns400()
+    {
+        var request = new
+        {
+            currentBalance = 300_000, currentAnnualInterestRate = 7, remainingTermInMonths = 300, newAnnualInterestRate = 6, newTermInMonths = 360,
+            cashOut = 10_000,
+            debtPayoff = new { balance = 20_000, annualInterestRate = 22, monthlyPayment = 600, yearsKept = 7 },
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/v1/refinance/analyze", request);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "the cash out cannot pay off more than it is");
+    }
+
+    [Test]
     public async Task APointsOffer_IsWorkedOutAgainstTheRateWithoutPoints_WhenAskedFor()
     {
         var request = new

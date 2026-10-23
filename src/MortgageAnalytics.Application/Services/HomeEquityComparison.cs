@@ -73,10 +73,10 @@ internal static class HomeEquityComparison
     }
 
     /// <summary>What is paid in the first <paramref name="months"/> payments: principal and interest, extra principal, and the PMI charged with them.</summary>
-    private static decimal Paid(AmortizationSchedule schedule, IEnumerable<decimal> pmi, int months) =>
+    internal static decimal Paid(AmortizationSchedule schedule, IEnumerable<decimal> pmi, int months) =>
         schedule.Payments.Take(months).Sum(p => p.TotalPaid) + pmi.Take(months).Sum();
 
     /// <summary>What is still owed after <paramref name="months"/> payments; nothing once the loan is paid off.</summary>
-    private static decimal OwedAfter(AmortizationSchedule schedule, int months) =>
+    internal static decimal OwedAfter(AmortizationSchedule schedule, int months) =>
         schedule.Payments.Count <= months ? 0m : schedule.Payments[months - 1].RemainingBalance;
 }

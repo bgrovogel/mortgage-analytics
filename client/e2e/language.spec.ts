@@ -129,10 +129,12 @@ test.describe('Spanish, on every page', () => {
     await page.getByTestId('cash-out').fill('50000');
     await page.getByTestId('compare-equity-loan').check();
     await page.getByTestId('equity-kind-line').check(); // a line asks for the most words: its fields, its note and its verdict
+    await page.getByTestId('pay-off-debt').check(); // and a debt: a checkbox, four fields, a hint, a verdict, a table and a note
     await page.getByTestId('buy-points').check(); // and the points: a checkbox, two fields, a hint, a verdict and a table
     await page.getByTestId('close-sheet').click();
     await expect(page.getByTestId('refi-equity-line-note'), 'the home-equity line comparison has arrived').toBeVisible();
     await expect(page.getByTestId('refi-points'), 'the points comparison has arrived').toBeVisible();
+    await expect(page.getByTestId('refi-debt'), 'the debt comparison has arrived').toBeVisible();
     for (const section of await page.locator('details').all()) await section.evaluate((el) => ((el as HTMLDetailsElement).open = true));
 
     await expect.poll(() => englishLines(page), { message: 'no line of the page is left in English' }).toEqual([]);

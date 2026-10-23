@@ -395,6 +395,93 @@ describe('RefinanceFormComponent', () => {
     });
   });
 
+  describe('a debt paid off with the cash out', () => {
+    const askToPayOffADebt = () => {
+      create();
+      controls().cashOut.setValue(50_000);
+      controls().payOffDebt.setValue(true);
+      fixture.detectChanges();
+    };
+
+    it('is offered once cash is taken out, and sends nothing for it until asked', () => {
+      create();
+      expect(el('pay-off-debt')).toBeNull();
+
+      controls().cashOut.setValue(50_000);
+      fixture.detectChanges();
+
+      expect(el('pay-off-debt')).not.toBeNull();
+      expect(el('debt-balance')).toBeNull();
+      expect(last().debtPayoff).toBeUndefined();
+    });
+
+    it('sends the debt once asked: its balance, rate, payment and the years kept', () => {
+      askToPayOffADebt();
+      expect(el('debt-balance')).not.toBeNull();
+
+      controls().debtBalance.setValue(20_000);
+      controls().debtRate.setValue(22);
+      controls().debtPayment.setValue(600);
+      controls().debtYearsKept.setValue(5);
+
+      expect(last().debtPayoff).toEqual({ balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 5 });
+    });
+
+    it('sends nothing while the debt is larger than the cash out, and says so', () => {
+      askToPayOffADebt();
+      const problems: string[][] = [];
+      fixture.componentInstance.problems.subscribe((p) => problems.push(p));
+      const before = emitted.length;
+
+      controls().debtBalance.setValue(60_000);
+      controls().debtPayment.setValue(2_000);
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(before);
+      expect(problems[problems.length - 1]).toContain("Take out at least the debt's balance for the cash to pay it off.");
+    });
+
+    it('sends nothing while the payment would not cover a month of interest, and says so', () => {
+      askToPayOffADebt();
+      const problems: string[][] = [];
+      fixture.componentInstance.problems.subscribe((p) => problems.push(p));
+      controls().debtBalance.setValue(20_000);
+      controls().debtRate.setValue(22);
+      const before = emitted.length;
+
+      controls().debtPayment.setValue(366.67); // a month's interest to the cent: nothing is paid down
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(before);
+      expect(problems[problems.length - 1]).toContain("The payment must be more than a month's interest, or the debt never shrinks.");
+    });
+
+    it('drops the debt again when the cash out goes back to nothing', () => {
+      askToPayOffADebt();
+      expect(last().debtPayoff).toBeDefined();
+
+      controls().cashOut.setValue(0);
+
+      expect(last().debtPayoff).toBeUndefined();
+    });
+
+    it('reopens a saved comparison with its debt, asked for again', () => {
+      const saved: RefinanceRequest = {
+        currentBalance: 300_000, currentAnnualInterestRate: 7, remainingTermInMonths: 300, nextPaymentDate: null,
+        newAnnualInterestRate: 6, newTermInMonths: 360, closingCosts: 6_000, financeClosingCosts: false, cashOut: 50_000,
+        originalLoan: null, currentAdjustableRate: null, newAdjustableRate: null, newBuydown: null,
+        homeValue: 500_000, currentMonthlyPmi: 0, newPmiRate: 0.5,
+        debtPayoff: { balance: 20_000, annualInterestRate: 22, monthlyPayment: 600, yearsKept: 7 },
+      };
+
+      create(saved);
+
+      expect(controls().payOffDebt.value).toBe(true);
+      expect(controls().debtBalance.value).toBe(20_000);
+      expect(emitted).toEqual([saved]);
+    });
+  });
+
   describe('discount points on the new loan', () => {
     const buy = () => {
       controls().buyPoints.setValue(true);
