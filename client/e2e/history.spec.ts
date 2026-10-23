@@ -174,6 +174,40 @@ test.describe('History', () => {
     await expect(page.getByTestId('new-rate'), 'with the saved rate').toHaveValue('5.5');
   });
 
+  test('saves a refinance with a debt, points and a home-equity line, and reopens it with all three', async ({ account, page }) => {
+    expect(account.email, 'signed in').toBeTruthy();
+    const name = `Refi options ${tag}`;
+    await page.goto('/refinance');
+    await expect(page.getByTestId('results'), 'the example has arrived').toHaveAttribute('aria-busy', 'false');
+    await page.getByTestId('section-new-extras').locator('summary').click();
+    await page.getByTestId('cash-out').fill('50000');
+    await page.getByTestId('pay-off-debt').check();
+    await page.getByTestId('debt-balance').fill('20000');
+    await page.getByTestId('debt-payment').fill('600');
+    await page.getByTestId('buy-points').check();
+    await page.getByTestId('points').fill('1.5');
+    await page.getByTestId('compare-equity-loan').check();
+    await page.getByTestId('equity-kind-line').check();
+    await expect(page.getByTestId('refi-equity-line-note'), 'the line is compared').toBeVisible();
+    await page.getByTestId('save-open').click();
+    await page.getByTestId('save-name').fill(name);
+    await page.getByTestId('save-new').click();
+    await expect(page.getByTestId('save-status'), 'the save is confirmed').toContainText(`Saved as “${name}”`);
+
+    await page.goto('/refinance'); // a reload starts over from the worked example
+    await expect(page.getByTestId('refi-debt'), 'the example has no debt').toHaveCount(0);
+    const history = new HistoryPage(page);
+    await history.openFromNav();
+    await history.searchFor(tag);
+    await history.act(name, 'Open');
+
+    await expect(page, 'it opens on the Refinance page').toHaveURL(/\/refinance$/);
+    await expect(page.getByTestId('refi-debt'), 'the debt is compared again').toBeVisible();
+    await expect(page.getByTestId('refi-points-verdict'), 'with the points saved, 1.5 of them').toContainText('Buying 1.5 points');
+    await expect(page.getByTestId('refi-equity-line-note'), 'and the home-equity line').toBeVisible();
+    await expect(page.getByTestId('debt-balance'), 'the debt form is filled in').toHaveValue('20,000');
+  });
+
   test('saves a pay-off-or-invest comparison and reopens it with every setting', async ({ account, page }) => {
     expect(account.email, 'signed in').toBeTruthy();
     const name = `Pay off ${tag}`;

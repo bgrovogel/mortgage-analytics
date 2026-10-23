@@ -19,7 +19,7 @@
 | API integration | 174 | NUnit, `WebApplicationFactory`, NSubstitute | ~2 s |
 | Conventions | 7 | NUnit, Roslyn, regex | < 1 s |
 | Angular unit | 1,496 | Jest, jest-preset-angular | ~10 s |
-| End-to-end | 298 | Playwright (Chromium), axe-core | ~30 s, with the production build |
+| End-to-end | 299 | Playwright (Chromium), axe-core | ~30 s, with the production build |
 
 ---
 
