@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.RentOrBuy;
 
 namespace MortgageAnalytics.Application.Services;
@@ -22,15 +23,28 @@ internal static class RentOrBuyAnalysis
         var assumptions = new RentOrBuyAssumptions(
             renting.MonthlyRent, renting.RentIncreasePercent, renting.InvestmentReturnPercent, renting.MaintenancePercent, renting.SellingCostPercent);
         var tax = renting.OwnerTaxes is { } owner ? new OwnerTaxProfile(StrategyMapper.ToDomain(owner.FilingStatus), owner.MarginalTaxRatePercent, owner.OtherStateAndLocalTaxes, owner.OtherItemizedDeductions) : null;
-        var years = RentOrBuyComparison.Years(
-            assumptions, cashToClose, analysis.Rates.Loan, analysis.Comparison.Baseline, analysis.Comparison.BaselineCosts, analysis.Rates.Buydown,
-            analysis.Valuation, tax);
+        IReadOnlyList<RentOrBuyYear> YearsAt(PropertyValuation valuation) =>
+            RentOrBuyComparison.Years(
+                assumptions, cashToClose, analysis.Rates.Loan, analysis.Comparison.Baseline, analysis.Comparison.BaselineCosts, analysis.Rates.Buydown,
+                valuation, tax);
+
+        static IReadOnlyList<RentOrBuyYearResponse> Respond(IReadOnlyList<RentOrBuyYear> years) =>
+            [.. years.Select(y => new RentOrBuyYearResponse(
+                y.Year, y.OwnershipCost, y.Rent, y.HomeEquity, y.BuyerInvestments, y.BuyerNetWorth, y.RenterNetWorth, y.Advantage, y.TaxSaved))];
+
+        var years = YearsAt(analysis.Valuation);
+
+        // The same comparison with the home's value moving by other yearly rates: the loan, the rent and the housing costs do not depend on it.
+        var scenarios = (renting.ValueChangesPercent ?? [])
+            .Select(change =>
+            {
+                var scenario = YearsAt(new PropertyValuation(request.HomePrice, change));
+                return new RentOrBuyScenarioResponse(change, RentOrBuyComparison.BreakEvenYear(scenario), Respond(scenario));
+            })
+            .ToList();
 
         return new RentOrBuyResponse(
             renting.MonthlyRent, renting.RentIncreasePercent, renting.InvestmentReturnPercent, renting.MaintenancePercent, renting.SellingCostPercent,
-            cashToClose, RentOrBuyComparison.BreakEvenYear(years),
-            [.. years.Select(y => new RentOrBuyYearResponse(
-                y.Year, y.OwnershipCost, y.Rent, y.HomeEquity, y.BuyerInvestments, y.BuyerNetWorth, y.RenterNetWorth, y.Advantage, y.TaxSaved))],
-            tax is not null);
+            cashToClose, RentOrBuyComparison.BreakEvenYear(years), Respond(years), tax is not null, scenarios);
     }
 }

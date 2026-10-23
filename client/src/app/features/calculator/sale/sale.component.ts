@@ -4,6 +4,7 @@ import { decimal, usd } from '../../../core/formatting/format';
 import { SaleOutcome, SaleYear } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
 import { t, tp } from '../../../core/i18n/i18n';
+import { scenarioLabel } from '../price-scenarios';
 
 /** The years the table shows, of those the loan runs. */
 const MILESTONES = [1, 2, 3, 5, 7, 10, 15, 20, 30];
@@ -139,16 +140,10 @@ export class SaleComponent {
     if (scenarios.length === 0) return [];
     const at = (years: SaleYear[]) => years.find((y) => y.year === this.chosen().year) ?? years[years.length - 1];
     return [
-      ...scenarios.map((s) => ({ label: this.scenarioLabel(s.yearlyChangePercent), year: at(s.years) })),
+      ...scenarios.map((s) => ({ label: scenarioLabel(s.yearlyChangePercent), year: at(s.years) })),
       { label: t('As planned'), year: this.chosen() },
     ];
   });
-
-  /** A scenario's name: "Prices fall 3% a year", "Prices stay flat" or "Prices rise 5% a year". */
-  private scenarioLabel(change: number): string {
-    if (change === 0) return t('Prices stay flat');
-    return change < 0 ? t('Prices fall {0} a year', [this.percent(-change)]) : t('Prices rise {0} a year', [this.percent(change)]);
-  }
 
   /** The milestone years in the table. */
   protected readonly milestones = computed(() => this.sale().years.filter((y) => MILESTONES.includes(y.year)));

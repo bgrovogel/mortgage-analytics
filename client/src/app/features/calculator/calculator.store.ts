@@ -8,6 +8,7 @@ import { loanToday, toCents } from '../../core/loans/loan-progress';
 import { wholeYearsOf } from './loan-form/loan-fields';
 import { msg, t } from '../../core/i18n/i18n';
 
+import { USUAL_FALL, changesFor } from './price-scenarios';
 export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 
 /** The seller's offer is weighed over seven years, the usual time a loan is kept, with a quarter point off per point. */
@@ -71,8 +72,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
    */
   override send(request: AmortizationRequest): void {
     if (request.sellerOffer) this.offerSettings.set(request.sellerOffer);
-    if (request.rentOrBuy) this.rentSettings.set(request.rentOrBuy);
     // A save made before value scenarios has none: it gets the usual ones.
+    if (request.rentOrBuy) this.rentSettings.set({ valueChangesPercent: changesFor(USUAL_FALL), ...request.rentOrBuy });
     if (request.sale) this.saleSettings.set({ ...DEFAULT_SALE_SETTINGS, ...request.sale });
     if (request.rental) this.rentalSettings.set(request.rental);
     if (request.secondLoan) this.secondLoanSettings.set(request.secondLoan);

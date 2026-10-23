@@ -174,15 +174,19 @@ public sealed class AmortizationRequestBuilder
     /// <summary>Asks for the most a home could cost for a total monthly payment of <paramref name="monthlyBudget"/>, at the same down payment share.</summary>
     public AmortizationRequestBuilder WithMonthlyBudget(decimal monthlyBudget) => With(r => r with { MonthlyBudget = monthlyBudget });
 
-    /// <summary>Weighs buying against renting a similar home for <paramref name="monthlyRent"/>, with the request's defaults for the rest.</summary>
+    /// <summary>
+    /// Weighs buying against renting a similar home for <paramref name="monthlyRent"/>, with the request's defaults for the rest, and the
+    /// same comparison if the home's value changed by each of <paramref name="valueChanges"/> a year instead.
+    /// </summary>
     public AmortizationRequestBuilder WithRentOrBuy(
-        decimal monthlyRent, decimal rentIncrease = 3.5m, decimal investmentReturn = 7m, decimal maintenance = 1m, decimal selling = 6m) =>
+        decimal monthlyRent, decimal rentIncrease = 3.5m, decimal investmentReturn = 7m, decimal maintenance = 1m, decimal selling = 6m,
+        decimal[]? valueChanges = null) =>
         With(r => r with
         {
             RentOrBuy = new RentOrBuyRequest
             {
                 MonthlyRent = monthlyRent, RentIncreasePercent = rentIncrease, InvestmentReturnPercent = investmentReturn,
-                MaintenancePercent = maintenance, SellingCostPercent = selling,
+                MaintenancePercent = maintenance, SellingCostPercent = selling, ValueChangesPercent = valueChanges,
             },
         });
 

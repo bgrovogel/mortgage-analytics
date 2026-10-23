@@ -8,6 +8,7 @@ import { FILING_STATUSES } from '../../../core/models/filing-statuses';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
 import { t } from '../../../core/i18n/i18n';
+import { USUAL_FALL, changesFor, fallOf } from '../price-scenarios';
 
 /** What a sale costs and how its gain is taxed, with the limits the API enforces (AmortizationRequestValidator). */
 export const SALE_RULES = {
@@ -15,15 +16,6 @@ export const SALE_RULES = {
   gainsTaxRatePercent: { get label() { return t('Tax rate on the gain'); }, unit: '%', min: 0, max: 40, decimals: 2 },
   priceFallPercent: { get label() { return t('If prices fall by (a year)'); }, unit: '%', min: 0, max: 20, decimals: 2 },
 } as const satisfies FieldRules;
-
-/** How far prices fall in the second case the sale is worked out under, when nothing else says: the first is flat prices. */
-const USUAL_FALL = 3;
-
-/** The yearly changes in value the sale is worked out under, for a fall: that fall and flat prices (or flat alone when there is no fall). */
-const changesFor = (fall: number): number[] => (fall > 0 ? [-fall, 0] : [0]);
-
-/** The fall in a settings' value changes: the first of them that is a fall, or none. */
-const fallOf = (settings: SaleInput): number => Math.abs(settings.valueChangesPercent?.find((change) => change < 0) ?? 0);
 
 /**
  * What selling costs and how a gain is taxed, beside the other numbers while the question is what a sale would leave.
@@ -67,7 +59,7 @@ export class SaleSettingsComponent {
     sellingCostPercent: [this.store.saleSettings().sellingCostPercent, validatorsFor(SALE_RULES.sellingCostPercent)],
     gainsTaxRatePercent: [this.store.saleSettings().gainsTaxRatePercent, validatorsFor(SALE_RULES.gainsTaxRatePercent)],
     filingStatus: [this.store.saleSettings().filingStatus],
-    priceFallPercent: [this.store.saleSettings().valueChangesPercent ? fallOf(this.store.saleSettings()) : USUAL_FALL, validatorsFor(SALE_RULES.priceFallPercent)],
+    priceFallPercent: [this.store.saleSettings().valueChangesPercent ? fallOf(this.store.saleSettings().valueChangesPercent) : USUAL_FALL, validatorsFor(SALE_RULES.priceFallPercent)],
   });
 
   constructor() {
@@ -80,7 +72,7 @@ export class SaleSettingsComponent {
     effect(() => {
       const settings = this.store.saleSettings();
       if (JSON.stringify(settings) !== JSON.stringify(this.settings())) {
-        this.form.patchValue({ ...settings, priceFallPercent: settings.valueChangesPercent ? fallOf(settings) : USUAL_FALL }, { emitEvent: false });
+        this.form.patchValue({ ...settings, priceFallPercent: settings.valueChangesPercent ? fallOf(settings.valueChangesPercent) : USUAL_FALL }, { emitEvent: false });
       }
     });
   }

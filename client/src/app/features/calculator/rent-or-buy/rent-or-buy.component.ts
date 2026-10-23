@@ -4,6 +4,7 @@ import { decimal, usd } from '../../../core/formatting/format';
 import { RentOrBuyComparison } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
 import { t } from '../../../core/i18n/i18n';
+import { scenarioLabel } from '../price-scenarios';
 
 /** The years the table shows, of those compared. */
 const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
@@ -38,6 +39,32 @@ const MILESTONES = [1, 3, 5, 7, 10, 15, 20, 30];
       }
     </div>
     <p class="verdict" data-testid="rent-or-buy-verdict">{{ verdict() }}</p>
+    @if (scenarios().length > 0) {
+      <section class="scenarios" data-testid="rent-scenarios" aria-labelledby="rent-scenarios-heading">
+        <h3 id="rent-scenarios-heading" data-testid="rent-scenarios-heading">{{ 'If prices differ' | t }}</h3>
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'Buying and renting if prices differ' | t">
+          <table>
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">{{ 'Buying pulls ahead' | t }}</th>
+                <th scope="col">{{ 'After {0} years' | t: [horizon().year] }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of scenarios(); track s.label) {
+                <tr>
+                  <th scope="row">{{ s.label }}</th>
+                  <td>{{ s.pullsAhead }}</td>
+                  <td [class.buy]="s.advantage >= 0">{{ s.lead }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="note" data-testid="rent-scenarios-note">{{ 'These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers.' | t }} {{ 'The loan, the rent and the housing costs stay as planned.' | t }}</p>
+      </section>
+    }
     <app-scrub-chart [title]="'How far buying is ahead of renting (below zero, renting is ahead)' | t" [spec]="chart()" testId="rent-or-buy-chart" />
     <div class="table-wrap" tabindex="0" [attr.aria-label]="'Buying and renting, year by year' | t">
       <table data-testid="rent-or-buy">
@@ -120,6 +147,31 @@ export class RentOrBuyComponent {
       ten: ten ? standing(ten) : null,
       end: last ? standing(last) : null,
     };
+  });
+
+  /** The year the cases are compared at: ten years, or the last year of a shorter loan. */
+  protected readonly horizon = computed(() => {
+    const { years } = this.comparison();
+    return years.find((y) => y.year === 10) ?? years[years.length - 1];
+  });
+
+  /** Buying against renting if the home's value changed as each scenario says, then as the plan has it; none when none were asked for. */
+  protected readonly scenarios = computed(() => {
+    const { scenarios, breakEvenYear, years } = this.comparison();
+    if (scenarios.length === 0) return [];
+    const row = (label: string, breakEven: number | null, rows: { year: number; advantage: number }[]) => {
+      const at = rows.find((y) => y.year === this.horizon().year) ?? rows[rows.length - 1];
+      return {
+        label,
+        pullsAhead: breakEven === null ? t('Never') : t('Year {0}', [breakEven]),
+        advantage: at.advantage,
+        lead: at.advantage >= 0 ? t('Buy by {0}', [usd(Math.abs(at.advantage))]) : t('Rent by {0}', [usd(Math.abs(at.advantage))]),
+      };
+    };
+    return [
+      ...scenarios.map((s) => row(scenarioLabel(s.yearlyChangePercent), s.breakEvenYear, s.years)),
+      row(t('As planned'), breakEvenYear, years),
+    ];
   });
 
   /** The milestone years compared. */

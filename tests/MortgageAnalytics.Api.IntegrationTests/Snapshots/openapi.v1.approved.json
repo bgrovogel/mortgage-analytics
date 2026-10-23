@@ -3494,6 +3494,14 @@
           },
           "ownerTaxes": {
             "$ref": "#/components/schemas/OwnerTaxesRequest"
+          },
+          "valueChangesPercent": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3539,6 +3547,35 @@
           },
           "countsTaxSavings": {
             "type": "boolean"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RentOrBuyScenarioResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RentOrBuyScenarioResponse": {
+        "type": "object",
+        "properties": {
+          "yearlyChangePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "breakEvenYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RentOrBuyYearResponse"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

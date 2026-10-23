@@ -431,6 +431,29 @@ test.describe('Mortgage calculator', () => {
       .toHaveText(['$45,672', '$35,403', '$154,031', '$151,407', 'Buy by $2,623']);
   });
 
+  test('rent or buy: the same comparison if prices fall or stay flat, ending with the plan, and what a fall of another size would do', async ({ calculator, page }) => {
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('property-tax-rate', 2.2);
+    await calculator.set('homestead-exemption', 50_000);
+    await calculator.set('annual-insurance', 2_400);
+    await calculator.calculate();
+    await calculator.showResults('rent-or-buy');
+    await page.getByTestId('monthly-rent').fill('2400');
+    await calculator.calculate();
+
+    const rows = page.getByTestId('rent-scenarios').locator('tbody tr');
+    await expect(rows, 'a fall, flat prices, and the plan').toHaveCount(3);
+    await expect(rows.nth(0), 'prices falling 3% a year').toContainText('Prices fall 3% a year');
+    await expect(rows.nth(1), 'flat prices').toContainText('Prices stay flat');
+    await expect(rows.nth(2), 'the plan pulls ahead in year 7, as the verdict says').toContainText('As planned');
+    await expect(rows.nth(2).locator('td').first(), 'in the same year as the verdict').toHaveText('Year 7');
+    await expect(rows.nth(0).locator('td').first(), 'a falling market never pulls buying ahead here').toHaveText('Never');
+
+    await page.getByTestId('rent-price-fall').fill('5');
+
+    await expect(rows.nth(0), 'a fall of 5% a year is named').toContainText('Prices fall 5% a year');
+  });
+
   test('rent or buy: counting the federal tax owning saves, which only the ticked box brings in', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
     await calculator.set('property-tax-rate', 2.2);

@@ -271,13 +271,13 @@ describe('result tabs', () => {
 
       button.click();
 
-      expect(store.rentSettings()).toEqual({ monthlyRent: 1_625, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 });
+      expect(store.rentSettings()).toEqual({ monthlyRent: 1_625, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6, valueChangesPercent: [-3, 0] });
     });
 
     it('shows the comparison once it arrives', () => {
       answer({ rentOrBuy: {
         monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6,
-        cashToClose: 48_128.79, breakEvenYear: 1, years: [],
+        cashToClose: 48_128.79, breakEvenYear: 1, years: [], scenarios: [],
       } as RentOrBuyComparison });
 
       expect(render(RentOrBuyTabComponent).nativeElement.querySelector('app-rent-or-buy')).not.toBeNull();

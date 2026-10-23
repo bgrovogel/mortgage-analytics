@@ -136,6 +136,14 @@ public sealed record RentOrBuyRequest
     /// itemize, against the standard deduction. Omit to leave tax out, as the comparison does by default.
     /// </summary>
     public OwnerTaxesRequest? OwnerTaxes { get; init; }
+
+    /// <summary>
+    /// Yearly changes in the home's value, as percentages (up to three, each from -20 to 20), to weigh buying against renting under as
+    /// well as the plan's own: whether buying still pays off if prices fell, or stood still. The loan, the rent and the housing costs
+    /// are the same either way; the home's worth and its upkeep move. Omit for none.
+    /// </summary>
+    /// <example>[-3, 0]</example>
+    public IReadOnlyList<decimal>? ValueChangesPercent { get; init; }
 }
 
 /// <summary>

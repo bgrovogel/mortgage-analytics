@@ -162,6 +162,9 @@ def random_purchase(rng):
         request['rentOrBuy'] = {'monthlyRent': money(rng, int(price / 400), int(price / 120), 25),
                                 'rentIncreasePercent': rng.choice([0, 2.5, 3.5, 5]), 'investmentReturnPercent': rng.choice([4, 7, 10]),
                                 'maintenancePercent': rng.choice([0, 1, 1.5]), 'sellingCostPercent': rng.choice([0, 5, 6, 8])}
+        # Half of those also weigh it if the home's value changed by other yearly rates: one to three of them.
+        if rng.random() < 0.5:
+            request['rentOrBuy']['valueChangesPercent'] = rng.sample([-8, -3, -1.5, 0, 2, 5, 12], rng.randint(1, 3))
         # Some count the federal tax owning saves: any filing status, from a low rate to a high one, with and without other deductions.
         if rng.random() < 0.5:
             request['rentOrBuy']['ownerTaxes'] = {

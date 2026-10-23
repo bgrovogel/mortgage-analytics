@@ -124,6 +124,56 @@ public class RentOrBuyScenarioTests : SociableAnalysisTestBase
     }
 
     [Test]
+    public void ThereAreNoValueScenarios_UnlessAskedFor()
+    {
+        Assert.That(Service.Analyze(TexasPurchase().WithRentOrBuy(1_800m)).RentOrBuy!.Scenarios, Is.Empty, "the plan's own value is the only one");
+    }
+
+    [Test]
+    public void AValueScenario_AtThePlansOwnRate_IsThePlansOwnComparison()
+    {
+        var response = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_800m, valueChanges: [3m])).RentOrBuy!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Scenarios.Select(s => s.YearlyChangePercent), Is.EqualTo(new[] { 3m }), "each with its rate");
+            Assert.That(response.Scenarios[0].Years, Is.EqualTo(response.Years), "the home worth what the plan says gives the plan's years");
+            Assert.That(response.Scenarios[0].BreakEvenYear, Is.EqualTo(response.BreakEvenYear), "and its break-even year");
+        });
+    }
+
+    [Test]
+    public void AValueScenario_ChangesTheHomesWorth_AndItsUpkeep_ButNotWhatIsOwed()
+    {
+        var response = Service.Analyze(TexasPurchase().WithRentOrBuy(1_800m, selling: 6m, valueChanges: [0m]));
+        var flat = response.RentOrBuy!.Scenarios[0].Years;
+        var owed = response.Baseline.Payments[59].RemainingBalance;
+        var payments = response.Baseline.Payments.Skip(12).Take(12).Sum(p => p.TotalOutlay);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(flat[4].HomeEquity, Is.EqualTo(250_000m - owed - 15_000m), "a flat market sells at the price paid, less what is owed and 6%");
+            Assert.That(flat[1].OwnershipCost, Is.EqualTo(payments + 12 * 208.33m), "upkeep stays 1% of $250,000 a year, not of a value that has risen");
+            Assert.That(response.RentOrBuy!.Years[1].OwnershipCost, Is.GreaterThan(flat[1].OwnershipCost), "the plan's rising value costs more to keep up");
+            Assert.That(flat.Select(y => y.Rent), Is.EqualTo(response.RentOrBuy.Years.Select(y => y.Rent)), "the rent does not depend on the price");
+        });
+    }
+
+    [Test]
+    public void TheDearerTheHomeBecomes_TheSoonerBuyingPaysOff()
+    {
+        var response = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_800m, valueChanges: [-3m, 0m, 6m])).RentOrBuy!;
+        var (falling, flat, rising) = (response.Scenarios[0], response.Scenarios[1], response.Scenarios[2]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(falling.Years[9].Advantage, Is.LessThan(flat.Years[9].Advantage), "falling prices leave buying worse off than flat ones");
+            Assert.That(flat.Years[9].Advantage, Is.LessThan(rising.Years[9].Advantage), "and flat ones worse than rising ones");
+            Assert.That(falling.Years.Select(y => y.Year), Is.EqualTo(Enumerable.Range(1, 30)), "a year for each year of the loan, as the plan has");
+        });
+    }
+
+    [Test]
     public void CheapRent_KeepsRentingAhead_AndDearRent_MakesBuyingWinSooner()
     {
         var cheap = Service.Analyze(TexasPurchase().WithClosingCosts().WithRentOrBuy(1_000m)).RentOrBuy!;

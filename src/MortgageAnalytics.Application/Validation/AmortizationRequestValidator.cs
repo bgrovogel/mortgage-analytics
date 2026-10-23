@@ -395,6 +395,10 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(r => r.MaintenancePercent).InclusiveBetween(0, 10).WithName("Upkeep");
             RuleFor(r => r.SellingCostPercent).InclusiveBetween(0, 20).WithName("Selling costs");
             RuleFor(r => r.OwnerTaxes!).SetValidator(new OwnerTaxesValidator()).When(r => r.OwnerTaxes is not null);
+            RuleFor(r => r.ValueChangesPercent).Must(changes => changes!.Count <= 3).When(r => r.ValueChangesPercent is not null)
+                .WithName("Home value scenarios").WithMessage("Give at most three yearly changes in the home's value.");
+            RuleForEach(r => r.ValueChangesPercent!).InclusiveBetween(-20m, 20m).When(r => r.ValueChangesPercent is not null)
+                .WithName("Yearly change in the home's value");
         }
     }
 

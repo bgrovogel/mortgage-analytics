@@ -9,6 +9,7 @@ import { TaxFilingStatus } from '../../../core/models/strategy.models';
 import { CalculatorStore } from '../calculator.store';
 import { TPipe } from '../../../core/i18n/t.pipe';
 import { t } from '../../../core/i18n/i18n';
+import { USUAL_FALL, changesFor, fallOf } from '../price-scenarios';
 
 /** Renting's cost and what money earns, with the limits the API enforces (AmortizationRequestValidator). */
 export const RENT_RULES = {
@@ -17,13 +18,14 @@ export const RENT_RULES = {
   investmentReturnPercent: { get label() { return t('Investments earn'); }, unit: '%', min: -20, max: 30, decimals: 2 },
   maintenancePercent: { get label() { return t('Upkeep'); }, unit: '%', min: 0, max: 10, decimals: 2 },
   sellingCostPercent: { get label() { return t('Selling costs'); }, unit: '%', min: 0, max: 20, decimals: 2 },
+  priceFallPercent: { get label() { return t('If prices fall by (a year)'); }, unit: '%', min: 0, max: 20, decimals: 2 },
   marginalTaxRatePercent: { get label() { return t('Your federal tax rate'); }, unit: '%', min: 0, max: 50, decimals: 2 },
   otherStateAndLocalTaxes: { get label() { return t('Other state and local taxes'); }, unit: '$', min: 0, max: 100_000_000, optional: true },
   otherItemizedDeductions: { get label() { return t('Other itemized deductions'); }, unit: '$', min: 0, max: 100_000_000, optional: true },
 } as const satisfies FieldRules;
 
-/** The usual assumptions: rent up 3.5% a year, investments earning 7%, 1% upkeep, 6% to sell. */
-export const RENT_DEFAULTS = { rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 };
+/** The usual assumptions: rent up 3.5% a year, investments earning 7%, 1% upkeep, 6% to sell; also weighed if prices fall 3% a year, and if they stay flat. */
+export const RENT_DEFAULTS = { rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6, valueChangesPercent: changesFor(USUAL_FALL) };
 
 /** What counting the tax savings starts from: a single filer in the 24% bracket, with nothing else to deduct. */
 export const OWNER_TAX_DEFAULTS = { filingStatus: 'Single' as TaxFilingStatus, marginalTaxRatePercent: 24, otherStateAndLocalTaxes: 0, otherItemizedDeductions: 0 };
@@ -45,6 +47,7 @@ export const OWNER_TAX_DEFAULTS = { filingStatus: 'Single' as TaxFilingStatus, m
         <app-number-field [control]="form.controls.investmentReturnPercent" [rule]="rules.investmentReturnPercent" testId="investment-return" [label]="'Investments earn' | t" />
         <app-number-field [control]="form.controls.maintenancePercent" [rule]="rules.maintenancePercent" testId="maintenance" [label]="'Upkeep of the home' | t" />
         <app-number-field [control]="form.controls.sellingCostPercent" [rule]="rules.sellingCostPercent" testId="selling-costs" [label]="'Cost to sell' | t" />
+        <app-number-field [control]="form.controls.priceFallPercent" [rule]="rules.priceFallPercent" testId="rent-price-fall" [label]="'If prices fall by (a year)' | t" />
       </div>
       <p class="hint">
         {{ "The rent's rise, what investments earn and upkeep are a year; upkeep and selling costs are shares of the home's value." | t }}
@@ -89,6 +92,7 @@ export class RentSettingsComponent {
     investmentReturnPercent: [this.store.rentSettings()?.investmentReturnPercent ?? RENT_DEFAULTS.investmentReturnPercent, validatorsFor(RENT_RULES.investmentReturnPercent)],
     maintenancePercent: [this.store.rentSettings()?.maintenancePercent ?? RENT_DEFAULTS.maintenancePercent, validatorsFor(RENT_RULES.maintenancePercent)],
     sellingCostPercent: [this.store.rentSettings()?.sellingCostPercent ?? RENT_DEFAULTS.sellingCostPercent, validatorsFor(RENT_RULES.sellingCostPercent)],
+    priceFallPercent: [fallOf(this.store.rentSettings()?.valueChangesPercent ?? RENT_DEFAULTS.valueChangesPercent), validatorsFor(RENT_RULES.priceFallPercent)],
     // The tax saving of owning: left out until asked for, then from these.
     countTax: [!!this.store.rentSettings()?.ownerTaxes],
     filingStatus: [this.store.rentSettings()?.ownerTaxes?.filingStatus ?? OWNER_TAX_DEFAULTS.filingStatus],
@@ -101,10 +105,11 @@ export class RentSettingsComponent {
     // Every change in range weighs it again; a rent cleared stops weighing it.
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (!this.form.valid) return;
-      const { monthlyRent, rentIncreasePercent, investmentReturnPercent, maintenancePercent, sellingCostPercent, countTax, ...tax } = this.form.getRawValue();
+      const { monthlyRent, rentIncreasePercent, investmentReturnPercent, maintenancePercent, sellingCostPercent, priceFallPercent, countTax, ...tax } = this.form.getRawValue();
       const settings: RentOrBuyInput | null = monthlyRent
         ? {
             monthlyRent, rentIncreasePercent, investmentReturnPercent, maintenancePercent, sellingCostPercent,
+            valueChangesPercent: changesFor(priceFallPercent),
             // Left out, not null, when not counted: a request without it asks for no tax.
             ...(countTax && { ownerTaxes: { ...tax, otherStateAndLocalTaxes: tax.otherStateAndLocalTaxes ?? 0, otherItemizedDeductions: tax.otherItemizedDeductions ?? 0 } }),
           }
@@ -116,8 +121,10 @@ export class RentSettingsComponent {
     effect(() => {
       const settings = this.store.rentSettings();
       if (settings && settings.monthlyRent !== this.form.controls.monthlyRent.value) {
-        const { ownerTaxes, ...rest } = settings;
-        this.form.patchValue({ ...rest, countTax: !!ownerTaxes, ...(ownerTaxes ?? OWNER_TAX_DEFAULTS) }, { emitEvent: false });
+        const { ownerTaxes, valueChangesPercent, ...rest } = settings;
+        this.form.patchValue(
+          { ...rest, priceFallPercent: valueChangesPercent ? fallOf(valueChangesPercent) : USUAL_FALL, countTax: !!ownerTaxes, ...(ownerTaxes ?? OWNER_TAX_DEFAULTS) },
+          { emitEvent: false });
       }
     });
   }

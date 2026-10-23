@@ -34,20 +34,37 @@ describe('RentSettingsComponent', () => {
     expect(box('investment-return').value).toBe('7');
     expect(box('maintenance').value).toBe('1');
     expect(box('selling-costs').value).toBe('6');
+    expect(box('rent-price-fall').value).toBe('3');
+  });
+
+  it('also weighs it if prices fall by the amount given, and if they stay flat', () => {
+    const { type } = render();
+    type('monthly-rent', '2100');
+
+    type('rent-price-fall', '6');
+    expect(store.rentSettings()?.valueChangesPercent).toEqual([-6, 0]);
+
+    type('rent-price-fall', '0');
+    expect(store.rentSettings()?.valueChangesPercent).toEqual([0]);
+  });
+
+  it('shows the fall of a saved calculation', () => {
+    store.setRentSettings({ monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6, valueChangesPercent: [-5, 0] });
+    expect(render().box('rent-price-fall').value).toBe('5');
   });
 
   it('weighs buying against renting once a rent is given, and stops when it is cleared', () => {
     const { type } = render();
 
     type('monthly-rent', '2100');
-    expect(store.rentSettings()).toEqual({ monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 });
+    expect(store.rentSettings()).toEqual({ monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6, valueChangesPercent: [-3, 0] });
 
     type('monthly-rent', '');
     expect(store.rentSettings()).toBeNull();
   });
 
   describe('the tax savings of owning', () => {
-    const settings = { monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6 };
+    const settings = { monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6, valueChangesPercent: [-3, 0] };
 
     it('are left out until asked for, with their boxes out of the way', () => {
       const { box } = render();

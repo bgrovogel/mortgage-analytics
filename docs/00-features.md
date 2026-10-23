@@ -339,6 +339,12 @@ The answer is how long you must stay for buying to come out ahead, with a chart 
 similar home for **$2,700** a month, buying comes out ahead **if you stay 4 years or more**; at **$2,100**, renting stays
 ahead for all 30 years. Taxes on investment gains and extra payments are left out.
 
+The answer depends on where prices go, which nobody knows, so a small table, **If prices differ**, sets it under three
+cases: prices falling a given amount a year (**3%** to start, set with the other numbers), prices standing still, and the
+plan's own yearly rise. Each row says when buying pulls ahead (or **Never**) and who is ahead after 10 years, and by how
+much. The loan, the rent and the housing costs stay as planned; only the home's worth and its upkeep move. A line under
+the table says the cases are illustrations, not forecasts.
+
 Tick **Count the tax savings of owning** to add the federal income tax owning saves. Give your filing status, your
 tax rate (24% to start) and what else you pay in state and local taxes and deduct (charity and the like); each year, the
 mortgage interest (on up to $750,000 of debt) and this home's property tax, with your other amounts, are weighed against

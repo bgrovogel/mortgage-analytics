@@ -70,6 +70,7 @@ public sealed record InFiveYearsResponse(decimal TotalPaid, decimal PrincipalPai
 /// <param name="BreakEvenYear">The first year from which buying is ahead for good; null when it never is within the years compared.</param>
 /// <param name="Years">Each year, up to 30 (or the loan's term when shorter).</param>
 /// <param name="CountsTaxSavings">True when the buyer's federal income tax saving (the interest and property tax deducted) is counted; false when the comparison leaves tax out.</param>
+/// <param name="Scenarios">The same comparison with the home's value changing by other yearly rates, in the order the request gave them; empty when none were asked for.</param>
 public sealed record RentOrBuyResponse(
     decimal MonthlyRent,
     decimal RentIncreasePercent,
@@ -79,7 +80,18 @@ public sealed record RentOrBuyResponse(
     decimal CashToClose,
     int? BreakEvenYear,
     IReadOnlyList<RentOrBuyYearResponse> Years,
-    bool CountsTaxSavings = false);
+    bool CountsTaxSavings = false,
+    IReadOnlyList<RentOrBuyScenarioResponse>? Scenarios = null)
+{
+    /// <summary>The scenarios, empty when none were asked for.</summary>
+    public IReadOnlyList<RentOrBuyScenarioResponse> Scenarios { get; init; } = Scenarios ?? [];
+}
+
+/// <summary>Buying against renting if the home's value changed by one yearly rate.</summary>
+/// <param name="YearlyChangePercent">The yearly change in the home's value this assumes.</param>
+/// <param name="BreakEvenYear">The first year from which buying is ahead for good under it; null when it never is within the years compared.</param>
+/// <param name="Years">Each year compared, as the plan's own.</param>
+public sealed record RentOrBuyScenarioResponse(decimal YearlyChangePercent, int? BreakEvenYear, IReadOnlyList<RentOrBuyYearResponse> Years);
 
 /// <summary>
 /// A second loan against paying PMI, each the request analyzed again and costed over the years the loans are kept:

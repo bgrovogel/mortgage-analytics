@@ -477,9 +477,13 @@ every year after; one good year followed by a bad one does not count.
   this does not model).
 - On the reference loan ($200,000 at 6%, $1,199.10 a month) with $50,000 to close against $1,200 of rent and nothing
   else, after a year the buyer has **$52,456.01** of equity and **$10.80** invested; the renter has the **$50,000**.
+- **If prices differ** is the same comparison with the home's value moving by another yearly rate: the value, and so the
+  upkeep and the sale price, are price × (1 + rate)^year, and the rest (the loan's schedule, the housing costs, the rent)
+  is the plan's. The request carries up to three yearly changes (−20% to 20% each; the page sends a fall and 0), and each
+  scenario has its own break-even year. A change equal to the plan's own gives the plan's years exactly.
 - The domain is `RentOrBuyComparison` (`Domain/RentOrBuy`), and `RentOrBuyAnalysis` (`Application/Services`). The
-  Python model compares every year its own way: 300 of 300 random purchases match, 125 of them with a rent, 69 of
-  those with the owner's taxes.
+  Python model compares every year its own way: 300 of 300 random purchases match, 123 of them with a rent, 58 of
+  those with the owner's taxes and 69 with value scenarios.
 
 ### If you sell
 

@@ -18,6 +18,18 @@ figure {
   margin: 0;
 }
 
+// Buying against renting if prices differ: a few rows, for the tenth year.
+.scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
 figcaption {
   font-weight: 600;
   margin-bottom: 0.6rem;

@@ -95,6 +95,8 @@ export const ES_CALCB: Record<string, string> = {
   'These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers.': 'Son ilustraciones, no pronósticos: nadie sabe hacia dónde irán los precios. Fija la baja con tus números.',
   'If prices fall by (a year)': 'Si los precios bajan (al año)',
   'The sale if prices differ, for the year chosen': 'La venta si los precios cambian, para el año elegido',
+  'Buying and renting if prices differ': 'Comprar y alquilar si los precios cambian',
+  'The loan, the rent and the housing costs stay as planned.': 'El préstamo, el alquiler y los costos de la vivienda siguen como se planeó.',
   'Prices fall {0} a year': 'Los precios bajan {0} al año',
   'Prices rise {0} a year': 'Los precios suben {0} al año',
   'Prices stay flat': 'Los precios no cambian',

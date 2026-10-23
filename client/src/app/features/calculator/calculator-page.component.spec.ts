@@ -159,7 +159,7 @@ describe('CalculatorPageComponent', () => {
     });
 
     it('says the answer to the question open instead of the savings, on the views that ask another one', async () => {
-      const rentOrBuy = { monthlyRent: 2_700, cashToClose: 48_128.79, breakEvenYear: 4, years: [{ year: 1, advantage: -27_228 }] };
+      const rentOrBuy = { monthlyRent: 2_700, cashToClose: 48_128.79, breakEvenYear: 4, years: [{ year: 1, advantage: -27_228 }], scenarios: [] };
       calculate.mockReturnValue(of(aResponse({ rentOrBuy: rentOrBuy as never })));
 
       await open('/calculator/rent-or-buy');

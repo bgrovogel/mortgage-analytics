@@ -543,7 +543,8 @@ def rent_or_buy(request, out):
     rent, rising each year) invests the difference at the return a year compounded monthly; the renter also invests
     what buying takes to close. The buyer has the home after a sale (its value less what is owed and the selling
     costs) and their investments; the renter, their investments. With an owner's tax profile, the year's federal tax
-    saving is felt a twelfth a month, as owning costing that much less.
+    saving is felt a twelfth a month, as owning costing that much less. The same comparison is made again for each yearly
+    change in the home's value asked for (it moves the upkeep and the sale price; what is owed and the housing costs stay).
     """
     a = request.get('rentOrBuy')
     if not a:
@@ -557,29 +558,39 @@ def rent_or_buy(request, out):
     payments = out['baseline']['payments']
     monthly = 1 + ret / 100 / 12
     owner = a.get('ownerTaxes')
-    buyer, renter, years = D(0), cash, []
-    for year in range(1, min(30, len(payments) // 12) + 1):
-        upkeep = money(grow(price, growth, year - 1) * upkeep_pct / 100 / 12)
-        rent = grow(rent0, rise, year - 1)
-        owned = rented = D(0)
-        saved = tax_saved_by_owning(owner, year, payments) if owner else D(0)
-        for p in payments[(year - 1) * 12:year * 12]:
-            owning = p['totalOutlay'] + upkeep
-            felt = owning - saved / 12
-            buyer = buyer * monthly + max(D(0), rent - felt)
-            renter = renter * monthly + max(D(0), felt - rent)
-            owned += owning
-            rented += rent
-        sold = grow(price, growth, year)
-        equity = sold - payments[year * 12 - 1]['remainingBalance'] - money(sold * selling / 100)
-        b, r = money(buyer), money(renter)
-        years.append({'year': year, 'ownershipCost': owned, 'rent': rented, 'homeEquity': equity, 'buyerInvestments': b,
-                      'buyerNetWorth': equity + b, 'renterNetWorth': r, 'advantage': equity + b - r, 'taxSaved': saved})
-    since = None
-    for y in years:
-        since = (since or y['year']) if y['advantage'] >= 0 else None
+
+    def compare(change):
+        buyer, renter, years = D(0), cash, []
+        for year in range(1, min(30, len(payments) // 12) + 1):
+            upkeep = money(grow(price, change, year - 1) * upkeep_pct / 100 / 12)
+            rent = grow(rent0, rise, year - 1)
+            owned = rented = D(0)
+            saved = tax_saved_by_owning(owner, year, payments) if owner else D(0)
+            for p in payments[(year - 1) * 12:year * 12]:
+                owning = p['totalOutlay'] + upkeep
+                felt = owning - saved / 12
+                buyer = buyer * monthly + max(D(0), rent - felt)
+                renter = renter * monthly + max(D(0), felt - rent)
+                owned += owning
+                rented += rent
+            sold = grow(price, change, year)
+            equity = sold - payments[year * 12 - 1]['remainingBalance'] - money(sold * selling / 100)
+            b, r = money(buyer), money(renter)
+            years.append({'year': year, 'ownershipCost': owned, 'rent': rented, 'homeEquity': equity, 'buyerInvestments': b,
+                          'buyerNetWorth': equity + b, 'renterNetWorth': r, 'advantage': equity + b - r, 'taxSaved': saved})
+        since = None
+        for y in years:
+            since = (since or y['year']) if y['advantage'] >= 0 else None
+        return years, since
+
+    years, since = compare(growth)
+    scenarios = []
+    for c in a.get('valueChangesPercent') or []:
+        scenario_years, scenario_since = compare(D(str(c)))
+        scenarios.append({'yearlyChangePercent': D(str(c)), 'breakEvenYear': scenario_since, 'years': scenario_years})
     return {'monthlyRent': rent0, 'rentIncreasePercent': rise, 'investmentReturnPercent': ret, 'maintenancePercent': upkeep_pct,
-            'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner)}
+            'sellingCostPercent': selling, 'cashToClose': cash, 'breakEvenYear': since, 'years': years, 'countsTaxSavings': bool(owner),
+            'scenarios': scenarios}
 
 
 def second_loan(request, today, out):

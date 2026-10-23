@@ -148,10 +148,16 @@ describe('CalculatorStore', () => {
       expect(store.request()?.rentOrBuy).toBeNull();
     });
 
-    it('takes the rent a saved calculation brings', () => {
+    it('takes the rent a saved calculation brings, with the value scenarios it was made with', () => {
+      store.send({ ...request(), rentOrBuy: { ...rent, valueChangesPercent: [-6, 0] } });
+
+      expect(store.rentSettings()).toEqual({ ...rent, valueChangesPercent: [-6, 0] });
+    });
+
+    it('gives a saved calculation made before value scenarios the usual ones', () => {
       store.send({ ...request(), rentOrBuy: rent });
 
-      expect(store.rentSettings()).toEqual(rent);
+      expect(store.rentSettings()).toEqual({ ...rent, valueChangesPercent: [-3, 0] });
     });
   });
 

@@ -10,7 +10,7 @@ describe('RentOrBuyComponent', () => {
   });
   const comparison = (advantages: number[], breakEvenYear: number | null): RentOrBuyComparison => ({
     monthlyRent: 2_100, rentIncreasePercent: 3.5, investmentReturnPercent: 7, maintenancePercent: 1, sellingCostPercent: 6,
-    cashToClose: 48_128.79, breakEvenYear, years: advantages.map((a, i) => year(i + 1, a)),
+    cashToClose: 48_128.79, breakEvenYear, years: advantages.map((a, i) => year(i + 1, a)), scenarios: [],
   });
   /** Thirty years: renting ahead for six, buying from year 7 on. */
   const typical = comparison([...Array(30).keys()].map((i) => (i + 1 - 7) * 5_000 + (i >= 6 ? 1 : 0)), 7);
@@ -47,6 +47,59 @@ describe('RentOrBuyComponent', () => {
       const short = comparison([-5_000, -2_000, 1_000], 3);
 
       expect(render(short).text('rent-stat-ten')).toBeUndefined();
+    });
+  });
+
+  describe('if prices differ', () => {
+    /** The comparison if the home's value moved by `change` a year: buying ahead by `advantage` in every year. */
+    const scenario = (change: number, advantage: number, breakEvenYear: number | null) => ({
+      yearlyChangePercent: change, breakEvenYear, years: [...Array(30).keys()].map((i) => year(i + 1, advantage)),
+    });
+    const withScenarios = (): RentOrBuyComparison => ({
+      ...typical,
+      scenarios: [scenario(-3, -12_000, null), scenario(0, 4_000, 12)],
+    });
+    const scenarioRows = (root: HTMLElement) => Array.from(root.querySelectorAll('[data-testid="rent-scenarios"] tbody tr'), (tr) =>
+      Array.from(tr.querySelectorAll('th, td'), (c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' | '));
+
+    it('is left out when no value scenarios were asked for', () => {
+      expect(render(typical).text('rent-scenarios')).toBeUndefined();
+    });
+
+    it('sets when buying pulls ahead and where it stands after 10 years under each yearly change, then as the plan has it', () => {
+      const fixture = TestBed.createComponent(RentOrBuyComponent);
+      fixture.componentRef.setInput('comparison', withScenarios());
+      fixture.detectChanges();
+
+      expect(scenarioRows(fixture.nativeElement)).toEqual([
+        'Prices fall 3% a year | Never | Rent by $12,000',
+        'Prices stay flat | Year 12 | Buy by $4,000',
+        'As planned | Year 7 | Buy by $15,001',
+      ]);
+    });
+
+    it('names the horizon by the last year compared when the loan is shorter than ten years', () => {
+      const shortYears = [-5_000, -2_000, 1_000, 3_000, 5_000].map((a, i) => year(i + 1, a));
+      const fixture = TestBed.createComponent(RentOrBuyComponent);
+      fixture.componentRef.setInput('comparison', {
+        ...comparison([-5_000, -2_000, 1_000, 3_000, 5_000], 3),
+        scenarios: [{ yearlyChangePercent: 0, breakEvenYear: 4, years: shortYears.map((y) => ({ ...y, advantage: y.advantage - 1_000 })) }],
+      });
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="rent-scenarios"] thead')!.textContent).toContain('After 5 years');
+      expect(scenarioRows(fixture.nativeElement)[0]).toBe('Prices stay flat | Year 4 | Buy by $4,000');
+    });
+
+    it('says the cases are illustrations, and what stays as planned', () => {
+      const { text } = render(withScenarios());
+
+      expect(text('rent-scenarios-note')).toBe(
+        'These are illustrations, not forecasts: nobody knows where prices will go. Set the fall with your numbers. The loan, the rent and the housing costs stay as planned.');
+    });
+
+    it('says what it is for, in a heading the table is named by', () => {
+      expect(render(withScenarios()).text('rent-scenarios-heading')).toBe('If prices differ');
     });
   });
 

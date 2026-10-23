@@ -283,6 +283,8 @@ export interface RentOrBuyInput {
   sellingCostPercent: number;
   /** How the owner's federal income tax differs from a renter's; left out to leave tax out. */
   ownerTaxes?: OwnerTaxesInput | null;
+  /** Yearly changes in the home's value to weigh buying under as well as the plan's, up to three: for example -3 and 0. */
+  valueChangesPercent?: number[];
 }
 
 /** How a household files and what else it deducts, for the tax owning saves over renting. */
@@ -322,6 +324,16 @@ export interface RentOrBuyComparison extends RentOrBuyInput {
   years: RentOrBuyYear[];
   /** True when the tax owning saves is counted. */
   countsTaxSavings?: boolean;
+  /** The same comparison if the home's value changed by other yearly rates, in the order asked; empty when none were. */
+  scenarios: RentOrBuyScenario[];
+}
+
+/** Buying against renting if the home's value changed by one yearly rate. */
+export interface RentOrBuyScenario {
+  yearlyChangePercent: number;
+  /** The first year from which buying is ahead for good under it; null when it never is. */
+  breakEvenYear: number | null;
+  years: RentOrBuyYear[];
 }
 
 /** What a monthly budget buys: the highest price whose payment fits it, keeping the down payment share, rate and costs. */
