@@ -47,6 +47,8 @@ export const ES_REFINANCE: Record<string, string> = {
   "Payment {0} of {1} is next, with about {2} owed. The comparison starts from that loan's own schedule.": 'El pago {0} de {1} es el siguiente, con unos {2} por pagar. La comparación parte del calendario propio de ese préstamo.',
   'Payment {0} · {1}': 'Pago {0} · {1}',
   'Rate type': 'Tipo de tasa',
+  'Current rate type': 'Tipo de tasa actual',
+  'New rate type': 'Tipo de tasa nueva',
   'Rates ahead': 'Tasas por delante',
   'Refinance comparison': 'Comparación de refinanciamiento',
   'Refinance, keep payment': 'Refinanciar, conservar el pago',

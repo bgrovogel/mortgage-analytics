@@ -39,6 +39,14 @@ describe('RefinanceFormComponent', () => {
     expect(el('step-today')!.classList).not.toContain('step-off');
   });
 
+  it('titles the two rate sections by the loan they are for, so a screen reader can tell them apart', () => {
+    create();
+    const title = (id: string) => el(id)!.querySelector('.section-title')!.textContent!.trim();
+
+    expect(title('section-current-rate')).toBe('Current rate type');
+    expect(title('section-new-rate')).toBe('New rate type');
+  });
+
   it('marks the loan as shared in its heading, and says where it came from only when it was filled in', () => {
     create();
 
