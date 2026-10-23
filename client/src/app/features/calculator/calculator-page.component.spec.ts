@@ -10,6 +10,7 @@ import { AmortizationApiService } from '../../core/services/amortization-api.ser
 import { AuthService } from '../../core/auth/auth.service';
 import { signal } from '@angular/core';
 import { SavedCalculationsApiService } from '../../core/services/saved-calculations-api.service';
+import { chooseLanguage } from '../../core/i18n/i18n';
 import { CalculatorStore, RECALCULATE_DELAY_MS } from './calculator.store';
 
 describe('CalculatorPageComponent', () => {
@@ -46,6 +47,17 @@ describe('CalculatorPageComponent', () => {
     const rent = el('[data-testid="rent-settings"]')!;
     const more = el('[data-testid="more-details"]')!;
     expect(rent.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('names the results region in the page’s language, for a screen reader', async () => {
+    await chooseLanguage('es');
+    try {
+      await open('/calculator');
+
+      expect(el('section.results')!.getAttribute('aria-label')).toBe('Resultados');
+    } finally {
+      await chooseLanguage('en');
+    }
   });
 
   it('sends an old link to the Compare tab to the Compare page', async () => {

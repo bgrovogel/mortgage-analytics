@@ -45,7 +45,7 @@
       @for (profile of riskProfiles; track profile.value) {
         <label>
           <input type="radio" formControlName="riskProfile" [value]="profile.value" [attr.data-testid]="'risk-' + profile.value" />
-          {{ profile.label }}
+          {{ profile.label | t }}
         </label>
       }
     </div>

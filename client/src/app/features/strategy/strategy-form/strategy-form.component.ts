@@ -14,14 +14,14 @@ import { TaxSituation, federalBracket, longTermGainsRate } from './tax-brackets'
 import { RateOptionsComponent } from '../../../shared/rate-options/rate-options.component';
 import { RATE_OPTION_RULES, applySharedRate, keepArmFieldsInStep, rateOptionsForm, rateOptionsRequest, rateSummary, setRateOptions } from '../../../shared/rate-options/rate-options';
 import { TPipe } from '../../../core/i18n/t.pipe';
-import { t } from '../../../core/i18n/i18n';
+import { msg, t } from '../../../core/i18n/i18n';
 
 const rules = STRATEGY_RULES;
 
 export const RISK_PROFILES: readonly { value: InvestorRiskProfile; label: string; margin: number }[] = [
-  { value: 'Conservative', label: 'Conservative', margin: 4 },
-  { value: 'Balanced', label: 'Balanced', margin: 2 },
-  { value: 'Aggressive', label: 'Aggressive', margin: 0 },
+  { value: 'Conservative', label: msg('Conservative'), margin: 4 },
+  { value: 'Balanced', label: msg('Balanced'), margin: 2 },
+  { value: 'Aggressive', label: msg('Aggressive'), margin: 0 },
 ];
 
 /**

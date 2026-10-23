@@ -1,3 +1,4 @@
+import { chooseLanguage } from '../i18n/i18n';
 import { AmortizationRequest } from '../models/amortization.models';
 import { RefinanceRequest } from '../models/refinance.models';
 import { StrategyRequest } from '../models/strategy.models';
@@ -131,5 +132,15 @@ describe('describeRefinance', () => {
 
     expect(describeStrategy(r)).toBe('$300,000 left at 6.5% · $1,000/mo to put to work · Conservative');
     expect(suggestStrategyName(r)).toBe('Pay off or invest: $1,000/mo, 6.5% mortgage');
+  });
+
+  it('names the risk profile in the page’s language', async () => {
+    const r = { currentBalance: 300_000, annualInterestRate: 6.5, monthlyCashToPutToWork: 1_000, riskProfile: 'Conservative' } as StrategyRequest;
+    await chooseLanguage('es');
+    try {
+      expect(describeStrategy(r)).toContain('Conservador');
+    } finally {
+      await chooseLanguage('en');
+    }
   });
 });

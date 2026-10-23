@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { chooseLanguage } from '../../../core/i18n/i18n';
 import { StrategyRequest } from '../../../core/models/strategy.models';
 import { StrategyNumberField } from './strategy-fields';
 import { StrategyFormComponent } from './strategy-form.component';
@@ -209,6 +210,18 @@ describe('StrategyFormComponent', () => {
 
     expect(text(root, 'counting-on')).toContain('counting on 6% a year');
     expect(emitted[emitted.length - 1].riskProfile).toBe('Conservative');
+  });
+
+  it('names the risk profiles in the page’s language', async () => {
+    await chooseLanguage('es');
+    try {
+      const root = render();
+      const labels = [...root.querySelectorAll('[data-testid="risk-profile"] label')].map((l) => l.textContent!.trim());
+
+      expect(labels).toEqual(['Conservador', 'Equilibrado', 'Agresivo']);
+    } finally {
+      await chooseLanguage('en');
+    }
   });
 
   it('summarizes each collapsed section in one line', () => {
