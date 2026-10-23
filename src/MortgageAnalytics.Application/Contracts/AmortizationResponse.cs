@@ -167,8 +167,16 @@ public sealed record RentalYearResponse(
 /// <param name="SellingCostPercent">What selling costs, as a percentage of the home's value then.</param>
 /// <param name="GainsTaxRatePercent">The federal rate on the gain taxed.</param>
 /// <param name="ExclusionPerSale">The gain a sale of this home could shelter from tax once owned two years: $250,000 or $500,000, and nothing for a home that is not lived in.</param>
+/// <param name="Years">Each year the loan runs, up to 30, with the home's value changing as the plan says.</param>
+/// <param name="Scenarios">The same sale with the home's value changing by other yearly rates, in the order the request gave them; empty when none were asked for.</param>
+public sealed record SaleResponse(
+    decimal SellingCostPercent, decimal GainsTaxRatePercent, decimal ExclusionPerSale, IReadOnlyList<SaleYearResponse> Years,
+    IReadOnlyList<SaleScenarioResponse> Scenarios);
+
+/// <summary>The sale of the home had its value changed by one yearly rate instead of the plan's.</summary>
+/// <param name="YearlyChangePercent">The change in the home's value each year, as a percentage; negative for a fall.</param>
 /// <param name="Years">Each year the loan runs, up to 30.</param>
-public sealed record SaleResponse(decimal SellingCostPercent, decimal GainsTaxRatePercent, decimal ExclusionPerSale, IReadOnlyList<SaleYearResponse> Years);
+public sealed record SaleScenarioResponse(decimal YearlyChangePercent, IReadOnlyList<SaleYearResponse> Years);
 
 /// <summary>Selling at the end of one year.</summary>
 /// <param name="Year">The 1-based year.</param>

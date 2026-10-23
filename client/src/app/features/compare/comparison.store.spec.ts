@@ -71,7 +71,7 @@ describe('ComparisonStore', () => {
     expect(store.route).toEqual(['/compare']);
     expect(store.saved()).toEqual({ id: 'c1', name: 'Oak or Elm' });
     expect(store.request()).toEqual({ homes: [first, second, third] });
-    expect(calculator.request()).toEqual({ ...first, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null, secondLoan: null });
+    expect(calculator.request()).toEqual({ ...first, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] }, rental: null, secondLoan: null });
     // The calculator now shows the comparison's first home: Save there makes a new purchase, not a change to another.
     expect(calculator.saved()).toBeNull();
     expect(TestBed.inject(SharedLoanStore).change()?.loan.balance).toBe(377_650);

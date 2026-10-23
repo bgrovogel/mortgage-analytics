@@ -684,17 +684,24 @@ def sale(request, out):
     price = D(str(request['homePrice']))
     growth = D(str((request.get('housingCosts') or {}).get('homeValueGrowthRate', 0)))
     owed = out['accelerated']['payments']
-    years = []
-    for year in range(1, min(30, len(out['baseline']['payments']) // 12) + 1):
-        value = grow(price, growth, year)
-        balance = owed[year * 12 - 1]['remainingBalance'] if year * 12 <= len(owed) else D(0)
-        costs = money(value * selling / 100)
-        gain = value - costs - price
-        free = min(max(gain, D(0)), exclusion) if year >= 2 else D(0)
-        tax = money((max(gain, D(0)) - free) * rate / 100)
-        years.append({'year': year, 'homeValue': value, 'loanBalance': balance, 'sellingCosts': costs, 'gain': gain,
-                      'taxFreeGain': free, 'taxOnGain': tax, 'netProceeds': value - balance - costs - tax})
-    return {'sellingCostPercent': selling, 'gainsTaxRatePercent': rate, 'exclusionPerSale': exclusion, 'years': years}
+
+    def years_at(change):
+        years = []
+        for year in range(1, min(30, len(out['baseline']['payments']) // 12) + 1):
+            value = grow(price, change, year)
+            balance = owed[year * 12 - 1]['remainingBalance'] if year * 12 <= len(owed) else D(0)
+            costs = money(value * selling / 100)
+            gain = value - costs - price
+            free = min(max(gain, D(0)), exclusion) if year >= 2 else D(0)
+            tax = money((max(gain, D(0)) - free) * rate / 100)
+            years.append({'year': year, 'homeValue': value, 'loanBalance': balance, 'sellingCosts': costs, 'gain': gain,
+                          'taxFreeGain': free, 'taxOnGain': tax, 'netProceeds': value - balance - costs - tax})
+        return years
+
+    # The same sale if the home's value changed by other yearly rates than the plan's: the loan owes the same either way.
+    scenarios = [{'yearlyChangePercent': D(str(c)), 'years': years_at(D(str(c)))} for c in a.get('valueChangesPercent') or []]
+    return {'sellingCostPercent': selling, 'gainsTaxRatePercent': rate, 'exclusionPerSale': exclusion, 'years': years_at(growth),
+            'scenarios': scenarios}
 
 
 # Debt-to-income limits, as percentages of gross monthly income: (housing, total). Comfortable is the classic 28/36;

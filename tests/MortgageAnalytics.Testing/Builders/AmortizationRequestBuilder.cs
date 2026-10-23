@@ -202,12 +202,16 @@ public sealed class AmortizationRequestBuilder
             },
         });
 
-    /// <summary>Asks what selling would leave in hand each year, with <paramref name="selling"/>% in costs and a long-term gain taxed at <paramref name="gainsTaxRate"/>% for a seller filing as <paramref name="filingStatus"/>.</summary>
+    /// <summary>
+    /// Asks what selling would leave in hand each year, with <paramref name="selling"/>% in costs and a long-term gain taxed at
+    /// <paramref name="gainsTaxRate"/>% for a seller filing as <paramref name="filingStatus"/>, and the same sale if the home's value
+    /// changed by each of <paramref name="valueChanges"/> a year instead.
+    /// </summary>
     public AmortizationRequestBuilder WithSale(
-        decimal selling = 6m, TaxFilingStatus filingStatus = TaxFilingStatus.Single, decimal gainsTaxRate = 15m) =>
+        decimal selling = 6m, TaxFilingStatus filingStatus = TaxFilingStatus.Single, decimal gainsTaxRate = 15m, decimal[]? valueChanges = null) =>
         With(r => r with
         {
-            Sale = new SaleRequest { SellingCostPercent = selling, FilingStatus = filingStatus, GainsTaxRatePercent = gainsTaxRate },
+            Sale = new SaleRequest { SellingCostPercent = selling, FilingStatus = filingStatus, GainsTaxRatePercent = gainsTaxRate, ValueChangesPercent = valueChanges },
         });
 
     /// <summary>Builds the request.</summary>

@@ -581,6 +581,30 @@ test.describe('Mortgage calculator', () => {
     await expect(page.getByTestId('sale-table').locator('tbody tr'), 'the milestone years').toHaveCount(9);
   });
 
+  test('if you sell: the same sale if prices fall or stay flat, and what a fall of another size would do', async ({ calculator, page }) => {
+    // The same sale as above; the figures were computed independently in Python Decimal: after five years at 3% a year the home
+    // sells for $434,728 and leaves $91,129 (the loan is paid down by the page's $200 a month extra); if it fell 3% a year it would
+    // sell for $322,025 and leave a shortfall; flat, $375,000.
+    await calculator.fillLoan({ homePrice: 375_000, downPayment: 18_750, rate: 5.99, years: 30, firstPayment: '2036-01-01' });
+    await calculator.set('home-value-growth', 3);
+    await calculator.calculate();
+    await calculator.showResults('sale');
+
+    const rows = page.getByTestId('sale-scenarios').locator('tbody tr');
+    await expect(rows, 'a fall, flat prices, and the plan').toHaveCount(3);
+    await expect(rows.nth(0), 'prices falling 3% a year').toContainText('Prices fall 3% a year');
+    await expect(rows.nth(0), 'sell for less, and the sale does not cover the loan').toContainText('$322,025');
+    await expect(rows.nth(0), 'so there is a shortfall to bring').toContainText('-$14,811');
+    await expect(rows.nth(1), 'flat prices leave a little').toContainText('$34,985');
+    await expect(rows.nth(2), 'as planned: 3% a year').toContainText('$91,129');
+
+    await page.getByTestId('sale-price-fall').fill('5');
+
+    await expect(rows.nth(0), 'a fall of 5% a year is named').toContainText('Prices fall 5% a year');
+    await expect(rows.nth(0), 'and sells for less still').toContainText('$290,168');
+    await expect(rows.nth(0), 'with a bigger shortfall').toContainText('-$44,757');
+  });
+
   test('if you sell: a higher cost to sell leaves less', async ({ calculator, page }) => {
     await calculator.fillLoan({ homePrice: 375_000, downPayment: 75_000, rate: 6, years: 30, firstPayment: '2036-01-01' });
     await calculator.calculate();

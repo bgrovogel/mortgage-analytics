@@ -105,6 +105,63 @@ public class SaleScenarioTests : SociableAnalysisTestBase
         });
     }
 
+    // The scenarios below were computed independently in Python Decimal (tools/calculator-check): the same $250,000 purchase,
+    // 6% to sell and 15% on a gain, with the home's value changing by another yearly rate than the plan's 3%.
+    [Test]
+    public void ThereAreNoValueScenarios_UnlessAskedFor()
+    {
+        Assert.That(Service.Analyze(Purchase().WithSale()).Sale!.Scenarios, Is.Empty, "the plan's own value is the only one");
+    }
+
+    [Test]
+    public void AValueScenario_WorksTheSaleOutAgain_WithTheHomeChangingByItsOwnRate()
+    {
+        var sale = Service.Analyze(Purchase().WithSale(valueChanges: [-3m, 0m])).Sale!;
+        var falling = sale.Scenarios[0];
+        var flat = sale.Scenarios[1];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(sale.Scenarios.Select(s => s.YearlyChangePercent), Is.EqualTo(new[] { -3m, 0m }), "in the order asked, each with its rate");
+            Assert.That(falling.Years, Has.Count.EqualTo(30), "a year for each year of the loan, as the plan has");
+            Assert.That(falling.Years[4].HomeValue, Is.EqualTo(214_683.51m), "$250,000 falling 3% a year for 5 years");
+            Assert.That(falling.Years[4].SellingCosts, Is.EqualTo(12_881.01m), "6% of that");
+            Assert.That(falling.Years[4].Gain, Is.EqualTo(-48_197.50m), "a loss, not taxed");
+            Assert.That(falling.Years[4].TaxOnGain, Is.Zero, "a loss is not deductible");
+            Assert.That(falling.Years[4].NetProceeds, Is.EqualTo(-20_523.72m), "the sale does not cover the loan and the costs: 214,683.51 less 222,326.22 owed and 12,881.01");
+            Assert.That(flat.Years[19].HomeValue, Is.EqualTo(250_000m), "a flat market leaves the price as it was");
+            Assert.That(flat.Years[19].NetProceeds, Is.EqualTo(102_794.03m), "250,000 less 132,205.97 owed and 15,000 of costs");
+            Assert.That(sale.Years[4].NetProceeds, Is.EqualTo(50_103.19m), "the plan's own sale is unchanged, at 3% a year");
+        });
+    }
+
+    [Test]
+    public void TheLoanOwesTheSame_WhateverTheHomeIsWorth()
+    {
+        var sale = Service.Analyze(Purchase().WithSale(valueChanges: [-3m, 8m])).Sale!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(sale.Scenarios[0].Years.Select(y => y.LoanBalance), Is.EqualTo(sale.Years.Select(y => y.LoanBalance)), "a falling market does not change the schedule");
+            Assert.That(sale.Scenarios[1].Years.Select(y => y.LoanBalance), Is.EqualTo(sale.Years.Select(y => y.LoanBalance)), "nor a rising one");
+        });
+    }
+
+    [Test]
+    public void AValueScenario_TaxesTheGainPastTheExclusion()
+    {
+        var twentieth = Service.Analyze(Purchase().WithSale(valueChanges: [10m])).Sale!.Scenarios[0].Years[19];
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(twentieth.HomeValue, Is.EqualTo(1_681_874.99m), "$250,000 rising 10% a year for 20 years");
+            Assert.That(twentieth.Gain, Is.EqualTo(1_330_962.49m), "the sale less its 100,912.50 of costs, over the price");
+            Assert.That(twentieth.TaxFreeGain, Is.EqualTo(250_000m), "the exclusion shelters the first $250,000");
+            Assert.That(twentieth.TaxOnGain, Is.EqualTo(162_144.37m), "15% of the rest");
+            Assert.That(twentieth.NetProceeds, Is.EqualTo(1_286_612.15m), "what is left");
+        });
+    }
+
     [Test]
     public void TheFirstYear_HasNoExclusion_EvenForAHomeLivedIn()
     {

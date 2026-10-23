@@ -231,6 +231,8 @@ export interface SaleInput {
   filingStatus: TaxFilingStatus;
   /** The federal rate on a long-term capital gain, as a percentage. */
   gainsTaxRatePercent: number;
+  /** Yearly changes in the home's value to work the sale out under as well as the plan's, up to three: for example -3 and 0. */
+  valueChangesPercent?: number[];
 }
 
 /** Selling at the end of one year. */
@@ -255,6 +257,16 @@ export interface SaleOutcome {
   gainsTaxRatePercent: number;
   /** The gain a sale could shelter from tax after two years: $250,000, $500,000 for a couple filing jointly, nothing for a home not lived in. */
   exclusionPerSale: number;
+  /** Each year of the loan, with the home's value changing as the plan says. */
+  years: SaleYear[];
+  /** The same sale if the home's value changed by other yearly rates, in the order they were asked for; empty when none were. */
+  scenarios: SaleScenario[];
+}
+
+/** The sale with the home's value changing by one yearly rate instead of the plan's. */
+export interface SaleScenario {
+  /** The change in the home's value each year, as a percentage; negative for a fall. */
+  yearlyChangePercent: number;
   years: SaleYear[];
 }
 

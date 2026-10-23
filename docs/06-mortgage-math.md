@@ -505,8 +505,17 @@ investment property gets none, and a head of household has the single filer's. A
   filer: it sells for **$643,076.64**, costs **$38,584.60**, so the gain is $604,492.04 − 300,000 = **$304,492.04**; the
   first $250,000 is tax-free and the other **$54,492.04** pays **$8,173.81**; the seller keeps
   643,076.64 − 250,000 − 38,584.60 − 8,173.81 = **$346,318.23**.
+- **If prices differ** is the same sale with the value moving by another yearly rate: value = price × (1 + rate)^year, to
+  the cent, and everything after it is as above. What is owed does not depend on the value, so the plan's balances serve
+  every case. The request carries up to three yearly changes (−20% to 20% each; the page sends a fall and 0). On the
+  $250,000 purchase with 5% down at 6.5% over 30 years, 6% to sell and 15% on a gain: after 5 years a home falling
+  3% a year is worth **$214,683.51**, costs **$12,881.01** to sell, and leaves **−$20,523.72** against the $222,326.22
+  still owed (a shortfall to bring, and a loss that is not taxed); a flat one, after 20 years, sells for $250,000 and
+  leaves **$102,794.03**; one rising 10% a year, after 20 years, sells for **$1,681,874.99**, the gain is
+  **$1,330,962.49**, the first $250,000 is tax-free and the other $1,080,962.49 pays **$162,144.37**, leaving
+  **$1,286,612.15**.
 - The domain is `HomeSale`, and `SaleAnalysis` (`Application/Services`) feeds it the projection's values and the plan's
-  balances. The Python model works every year its own way: 300 of 300 random purchases match, 126 of them with a sale.
+  balances. The Python model works every year its own way: 300 of 300 random purchases match, 135 of them with a sale and 59 of those with value scenarios.
 
 ### A second loan instead of PMI
 

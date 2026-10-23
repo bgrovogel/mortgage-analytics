@@ -58,7 +58,7 @@ describe('CalculationStores', () => {
 
       expect(store.route).toEqual(route);
       // A purchase is sent weighing a seller's offer the usual way, which the calculator adds to every request.
-      expect(call).toHaveBeenCalledWith(kind === 'Purchase' ? { ...request, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null, secondLoan: null } : request);
+      expect(call).toHaveBeenCalledWith(kind === 'Purchase' ? { ...request, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] }, rental: null, secondLoan: null } : request);
       expect(store.saved()).toEqual({ id: kind, name: `${kind} ${kind}` });
     }
     expect(calls.calculate).toHaveBeenCalledTimes(1); // the other kinds never reached the calculator

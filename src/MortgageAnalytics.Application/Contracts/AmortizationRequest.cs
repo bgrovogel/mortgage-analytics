@@ -198,6 +198,13 @@ public sealed record SaleRequest
     /// <summary>The federal rate on a long-term capital gain, as a percentage: 0, 15 or 20, and 3.8 more at high incomes.</summary>
     /// <example>15</example>
     public decimal GainsTaxRatePercent { get; init; } = 15m;
+
+    /// <summary>
+    /// Yearly changes in the home's value, as percentages (up to three, each from -20 to 20), to work the same sale out under as
+    /// well as the plan's own: what a sale would leave if prices fell, or stood still. The loan owes the same either way. Omit for none.
+    /// </summary>
+    /// <example>[-3, 0]</example>
+    public IReadOnlyList<decimal>? ValueChangesPercent { get; init; }
 }
 
 /// <summary>The tax side of owning against renting: who the owner is, for federal income tax, and what else they deduct.</summary>

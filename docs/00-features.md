@@ -390,6 +390,11 @@ investment property has no tax-free gain, and a loss is not taxed or deducted. T
 sit with the five numbers, under **For this question**. What buying cost besides the price, and any improvements, would
 raise what you paid and lower the gain, so the tax shown leans high; state tax is left out.
 
+The answer depends on what the home is worth then, which nobody knows, so a small table, **If prices differ**, sets the
+chosen year under three cases: prices falling a given amount a year (**3%** to start, set with the other numbers), prices
+standing still, and the plan's own yearly rise. The loan owes the same in each; only the price, the costs, the gain and the
+tax change. A fall can leave a shortfall to bring to closing, which the table shows as a negative amount.
+
 #### The best use of the seller's money
 
 The same money can be taken four ways, and the **Closing** tab weighs them whenever the seller offers some (credits,

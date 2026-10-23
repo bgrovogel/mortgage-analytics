@@ -361,6 +361,19 @@ public class AmortizationRequestValidatorTests : ValidatorTestBase<AmortizationR
     }
 
     [Test]
+    public void SaleValueScenarios_AreFewAndWithinWhatAMarketCouldDo()
+    {
+        Assert.Multiple(() =>
+        {
+            AssertValid(A.Request.WithSale(valueChanges: [-3m, 0m, 20m]), "three yearly changes, to either edge");
+            AssertValid(A.Request.WithSale(valueChanges: [-20m]), "a fall of 20% a year is the other edge");
+            AssertInvalid(A.Request.WithSale(valueChanges: [-3m, 0m, 3m, 5m]), "Sale.ValueChangesPercent", "more than three would flood the page");
+            AssertInvalid(A.Request.WithSale(valueChanges: [20.01m]), "Sale.ValueChangesPercent[0]", "a rise of more than 20% a year");
+            AssertInvalid(A.Request.WithSale(valueChanges: [0m, -20.01m]), "Sale.ValueChangesPercent[1]", "a fall of more than 20% a year");
+        });
+    }
+
+    [Test]
     public void Sale_AtTheEdgesOfItsRanges_IsAccepted()
     {
         AssertValid(A.Request.WithSale(0m, TaxFilingStatus.HeadOfHousehold, 40m), "the edges are assumptions a seller could face");

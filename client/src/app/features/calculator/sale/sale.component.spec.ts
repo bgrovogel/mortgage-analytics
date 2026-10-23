@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { SaleOutcome, SaleYear } from '../../../core/models/amortization.models';
+import { SaleOutcome, SaleScenario, SaleYear } from '../../../core/models/amortization.models';
 import { SaleComponent } from './sale.component';
 
 describe('SaleComponent', () => {
@@ -17,7 +17,11 @@ describe('SaleComponent', () => {
   };
   const years = (overrides: (y: number) => Partial<SaleYear> = () => ({})) => [...Array(30).keys()].map((i) => year(i + 1, overrides(i + 1)));
   const outcome = (overrides: Partial<SaleOutcome> = {}): SaleOutcome => ({
-    sellingCostPercent: 6, gainsTaxRatePercent: 15, exclusionPerSale: 250_000, years: years(), ...overrides,
+    sellingCostPercent: 6, gainsTaxRatePercent: 15, exclusionPerSale: 250_000, years: years(), scenarios: [], ...overrides,
+  });
+  /** The same sale if the home's value moved by `change` a year: its own figures in the years named, the rest as the plan's. */
+  const scenario = (change: number, figures: Record<number, Partial<SaleYear>>): SaleScenario => ({
+    yearlyChangePercent: change, years: years((y) => figures[y] ?? {}),
   });
 
   const render = (sale: SaleOutcome) => {
@@ -37,6 +41,60 @@ describe('SaleComponent', () => {
     const chart = () => (fixture.componentInstance as unknown as { chart: () => { series: { data: number[] }[]; footer?: (i: number) => string } }).chart();
     return { text, rows, pick, chart };
   };
+
+  describe('if prices differ', () => {
+    const withScenarios = () => outcome({
+      scenarios: [
+        scenario(-3, { 5: { homeValue: 250_000, netProceeds: -20_523.72 }, 10: { homeValue: 220_000, netProceeds: -9_000 } }),
+        scenario(0, { 5: { homeValue: 300_000, netProceeds: 20_000 }, 10: { homeValue: 300_000, netProceeds: 45_000 } }),
+        scenario(5, { 5: { homeValue: 330_000, netProceeds: 49_000 }, 10: { homeValue: 400_000, netProceeds: 130_000 } }),
+      ],
+    });
+    const scenarioRows = (root: HTMLElement) => Array.from(root.querySelectorAll('[data-testid="sale-scenarios"] tbody tr'), (tr) =>
+      Array.from(tr.querySelectorAll('th, td'), (c) => c.textContent!.replace(/\s+/g, ' ').trim()).join(' | '));
+
+    it('is left out when no value scenarios were asked for', () => {
+      const { text } = render(outcome());
+
+      expect(text('sale-scenarios')).toBeUndefined();
+    });
+
+    it('sets the chosen year under each yearly change, then as the plan has it', () => {
+      const fixture = TestBed.createComponent(SaleComponent);
+      fixture.componentRef.setInput('sale', withScenarios());
+      fixture.detectChanges();
+
+      expect(scenarioRows(fixture.nativeElement)).toEqual([
+        'Prices fall 3% a year | $250,000 | -$20,524',
+        'Prices stay flat | $300,000 | $20,000',
+        'Prices rise 5% a year | $330,000 | $49,000',
+        'As planned | $400,000 | $116,000',
+      ]);
+    });
+
+    it('follows the year chosen', () => {
+      const fixture = TestBed.createComponent(SaleComponent);
+      fixture.componentRef.setInput('sale', withScenarios());
+      fixture.detectChanges();
+      const select = fixture.nativeElement.querySelector('[data-testid="sale-year"]') as HTMLSelectElement;
+      select.value = '10';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(scenarioRows(fixture.nativeElement)).toEqual([
+        'Prices fall 3% a year | $220,000 | -$9,000',
+        'Prices stay flat | $300,000 | $45,000',
+        'Prices rise 5% a year | $400,000 | $130,000',
+        'As planned | $500,000 | $230,000',
+      ]);
+    });
+
+    it('says what it is for, in a heading the table is named by', () => {
+      const { text } = render(withScenarios());
+
+      expect(text('sale-scenarios-heading')).toBe('If prices differ');
+    });
+  });
 
   it('starts on five years, and shows what a sale then would leave', () => {
     const { text } = render(outcome());

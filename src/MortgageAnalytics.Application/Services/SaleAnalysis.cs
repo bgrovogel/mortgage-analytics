@@ -1,5 +1,6 @@
 using MortgageAnalytics.Application.Contracts;
 using MortgageAnalytics.Application.Mapping;
+using MortgageAnalytics.Domain.HousingCosts;
 using MortgageAnalytics.Domain.Selling;
 
 namespace MortgageAnalytics.Application.Services;
@@ -26,9 +27,16 @@ internal static class SaleAnalysis
         var years = Math.Min(30, analysis.Comparison.Baseline.NumberOfPayments / 12);
         var balances = Enumerable.Range(1, years).Select(year => accelerated.ElementAtOrDefault((year * 12) - 1)?.RemainingBalance ?? 0m).ToList();
 
-        var outcome = HomeSale.Years(request.HomePrice, analysis.Valuation, balances, assumptions);
+        IReadOnlyList<SaleYearResponse> Respond(PropertyValuation valuation) =>
+            [.. HomeSale.Years(request.HomePrice, valuation, balances, assumptions)
+                .Select(y => new SaleYearResponse(y.Year, y.HomeValue, y.LoanBalance, y.SellingCosts, y.Gain, y.TaxFreeGain, y.TaxOnGain, y.NetProceeds))];
+
+        // The same sale with the home's value moving by other yearly rates: what is owed does not depend on what the home is worth.
+        var scenarios = (sale.ValueChangesPercent ?? [])
+            .Select(change => new SaleScenarioResponse(change, Respond(new PropertyValuation(request.HomePrice, change))))
+            .ToList();
         return new SaleResponse(
             sale.SellingCostPercent, sale.GainsTaxRatePercent, HomeSale.ExclusionFor(assumptions.FilingStatus, primary),
-            [.. outcome.Select(y => new SaleYearResponse(y.Year, y.HomeValue, y.LoanBalance, y.SellingCosts, y.Gain, y.TaxFreeGain, y.TaxOnGain, y.NetProceeds))]);
+            Respond(analysis.Valuation), scenarios);
     }
 }

@@ -171,6 +171,9 @@ def random_purchase(rng):
     if rng.random() < 0.4:
         request['sale'] = {'sellingCostPercent': rng.choice([0, 5, 6, 8]), 'gainsTaxRatePercent': rng.choice([0, 15, 20, 23.8]),
                            'filingStatus': rng.choice(['Single', 'MarriedFilingJointly', 'HeadOfHousehold'])}
+        # Half of those also work the sale out if the home's value changed by other yearly rates: one to three of them.
+        if rng.random() < 0.5:
+            request['sale']['valueChangesPercent'] = rng.sample([-8, -3, -1.5, 0, 2, 5, 12], rng.randint(1, 3))
     # Some borrow part as a second loan, against paying PMI: conventional loans only, the second a fraction of what is borrowed.
     if request.get('program') is None and rng.random() < 0.3:
         loan_amount = request['homePrice'] - request['downPayment']

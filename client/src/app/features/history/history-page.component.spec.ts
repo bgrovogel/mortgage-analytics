@@ -327,7 +327,7 @@ describe('HistoryPageComponent', () => {
 
       click(button(items()[0], 'Open'));
 
-      expect(store.request()).toEqual({ ...oak.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null, secondLoan: null });
+      expect(store.request()).toEqual({ ...oak.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] }, rental: null, secondLoan: null });
       expect(store.saved()).toEqual({ id: '1', name: 'Oak St, 20% down' });
       expect(navigate).toHaveBeenCalledWith(['/calculator', 'overview']);
     });

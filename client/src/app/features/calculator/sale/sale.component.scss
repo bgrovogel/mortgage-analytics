@@ -87,6 +87,18 @@
   }
 }
 
+// What a sale would leave if prices differ: a few rows, for the year chosen above.
+.scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
 .table-wrap {
   overflow-x: auto;
   @include scroll-hint.fade-edge;

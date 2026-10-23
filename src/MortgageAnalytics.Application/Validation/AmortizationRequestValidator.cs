@@ -377,6 +377,10 @@ public sealed class AmortizationRequestValidator : AbstractValidator<Amortizatio
             RuleFor(s => s.SellingCostPercent).InclusiveBetween(0, 20).WithName("Selling costs");
             RuleFor(s => s.FilingStatus).IsInEnum();
             RuleFor(s => s.GainsTaxRatePercent).InclusiveBetween(0, SaleAssumptions.MaxGainsTaxRate).WithName("Tax rate on the gain");
+            RuleFor(s => s.ValueChangesPercent).Must(changes => changes!.Count <= 3).When(s => s.ValueChangesPercent is not null)
+                .WithName("Home value scenarios").WithMessage("Give at most three yearly changes in the home's value.");
+            RuleForEach(s => s.ValueChangesPercent!).InclusiveBetween(-20m, 20m).When(s => s.ValueChangesPercent is not null)
+                .WithName("Yearly change in the home's value");
         }
     }
 

@@ -47,6 +47,31 @@ public class AmortizationApiTests : ApiTestBase
     }
 
     [Test]
+    public async Task Calculate_ASaleWithValueScenarios_ReturnsTheSaleAgainForEach()
+    {
+        var json = await ReadJsonAsync(await PostCalculateAsync(A.Request.WithSale(valueChanges: [-3m, 0m]).Build()));
+
+        var sale = json.GetProperty("sale");
+        var scenarios = sale.GetProperty("scenarios");
+        Assert.Multiple(() =>
+        {
+            Assert.That(scenarios.GetArrayLength(), Is.EqualTo(2), "one for each yearly change asked");
+            Assert.That(scenarios[0].GetProperty("yearlyChangePercent").GetDecimal(), Is.EqualTo(-3m), "in the order asked, with its rate");
+            Assert.That(scenarios[0].GetProperty("years").GetArrayLength(), Is.EqualTo(30), "a year for each year of the loan");
+            Assert.That(scenarios[0].GetProperty("years")[4].GetProperty("homeValue").GetDecimal(), Is.LessThan(sale.GetProperty("years")[4].GetProperty("homeValue").GetDecimal()),
+                "a home losing 3% a year is worth less after five years than the plan's, which does not change");
+        });
+    }
+
+    [Test]
+    public async Task Calculate_ASaleWithMoreThanThreeValueScenarios_Returns400()
+    {
+        var response = await PostCalculateAsync(A.Request.WithSale(valueChanges: [-3m, 0m, 3m, 5m]).Build());
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "three scenarios are the most");
+    }
+
+    [Test]
     public async Task Calculate_WithoutAMonthlyBudget_HasNoBudgetAnswer()
     {
         var json = await ReadJsonAsync(await PostCalculateAsync(A.Request.Build()));

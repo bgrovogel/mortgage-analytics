@@ -3583,6 +3583,14 @@
           "gainsTaxRatePercent": {
             "type": "number",
             "format": "double"
+          },
+          "valueChangesPercent": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3599,6 +3607,30 @@
             "format": "double"
           },
           "exclusionPerSale": {
+            "type": "number",
+            "format": "double"
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleYearResponse"
+            },
+            "nullable": true
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleScenarioResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleScenarioResponse": {
+        "type": "object",
+        "properties": {
+          "yearlyChangePercent": {
             "type": "number",
             "format": "double"
           },

@@ -71,7 +71,7 @@ describe('CalculatorStore', () => {
       settle();
 
       // Weighed by the current settings for the seller's offer, which a save made before them leaves out.
-      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 }, rental: null, secondLoan: null };
+      const sent = { ...saved.inputs, sellerOffer: { yearsKept: 7, rateCutPerPoint: 0.25 }, rentOrBuy: null, sale: { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] }, rental: null, secondLoan: null };
       expect(store.request()).toEqual(sent);
       expect(calculate).toHaveBeenCalledWith(sent);
       expect(store.saved()).toEqual({ id: 'abc', name: 'Oak St' });
@@ -220,7 +220,7 @@ describe('CalculatorStore', () => {
     it('asks for a sale with the usual costs and tax rate, so the view always has figures', () => {
       store.send(request());
 
-      expect(store.request()?.sale).toEqual({ sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 });
+      expect(store.request()?.sale).toEqual({ sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] });
     });
 
     it('calculates again with other costs, and keeps them for the requests after', () => {
@@ -234,9 +234,15 @@ describe('CalculatorStore', () => {
     });
 
     it('takes the settings a saved calculation brings', () => {
+      store.send({ ...request(), sale: { ...sale, valueChangesPercent: [-6, 0] } });
+
+      expect(store.saleSettings()).toEqual({ ...sale, valueChangesPercent: [-6, 0] });
+    });
+
+    it('gives a saved calculation made before value scenarios the usual ones', () => {
       store.send({ ...request(), sale });
 
-      expect(store.saleSettings()).toEqual(sale);
+      expect(store.saleSettings()).toEqual({ ...sale, valueChangesPercent: [-3, 0] });
     });
   });
 

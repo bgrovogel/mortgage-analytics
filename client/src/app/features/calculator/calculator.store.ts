@@ -13,8 +13,11 @@ export { RECALCULATE_DELAY_MS } from '../../core/state/latest-request';
 /** The seller's offer is weighed over seven years, the usual time a loan is kept, with a quarter point off per point. */
 export const DEFAULT_OFFER_SETTINGS: SellerOfferInput = { yearsKept: 7, rateCutPerPoint: 0.25 };
 
-/** A sale costs 6% of the price, and its gain is taxed at the usual 15% rate for a single filer. */
-export const DEFAULT_SALE_SETTINGS: SaleInput = { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15 };
+/**
+ * A sale costs 6% of the price, and its gain is taxed at the usual 15% rate for a single filer. It is also worked out if
+ * prices fall 3% a year, and if they stay flat, so the answer is a range and not a single figure.
+ */
+export const DEFAULT_SALE_SETTINGS: SaleInput = { sellingCostPercent: 6, filingStatus: 'Single', gainsTaxRatePercent: 15, valueChangesPercent: [-3, 0] };
 
 /** The calculator's state, shared by the form, the result tabs and other pages. */
 @Injectable({ providedIn: 'root' })
@@ -69,7 +72,8 @@ export class CalculatorStore extends CalculationStore<AmortizationRequest, Amort
   override send(request: AmortizationRequest): void {
     if (request.sellerOffer) this.offerSettings.set(request.sellerOffer);
     if (request.rentOrBuy) this.rentSettings.set(request.rentOrBuy);
-    if (request.sale) this.saleSettings.set(request.sale);
+    // A save made before value scenarios has none: it gets the usual ones.
+    if (request.sale) this.saleSettings.set({ ...DEFAULT_SALE_SETTINGS, ...request.sale });
     if (request.rental) this.rentalSettings.set(request.rental);
     if (request.secondLoan) this.secondLoanSettings.set(request.secondLoan);
     super.send(this.withSettings(request));

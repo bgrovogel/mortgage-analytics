@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { ScrubChartComponent, ScrubChartSpec } from '../../../core/charts/scrub-chart.component';
 import { decimal, usd } from '../../../core/formatting/format';
-import { SaleOutcome } from '../../../core/models/amortization.models';
+import { SaleOutcome, SaleYear } from '../../../core/models/amortization.models';
 import { TPipe } from '../../../core/i18n/t.pipe';
 import { t, tp } from '../../../core/i18n/i18n';
 
@@ -54,6 +54,32 @@ const STARTING_YEAR = 5;
       <div class="total"><dt>{{ chosen().netProceeds < 0 ? ('You bring to closing' | t) : ('You walk away with' | t) }}</dt><dd>{{ usd(abs(chosen().netProceeds)) }}</dd></div>
     </dl>
 
+    @if (scenarios().length > 0) {
+      <section class="scenarios" data-testid="sale-scenarios" aria-labelledby="sale-scenarios-heading">
+        <h3 id="sale-scenarios-heading" data-testid="sale-scenarios-heading">{{ 'If prices differ' | t }}</h3>
+        <div class="table-wrap" tabindex="0" [attr.aria-label]="'The sale if prices differ, for the year chosen' | t">
+          <table>
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">{{ 'Sells for' | t }}</th>
+                <th scope="col">{{ 'You keep' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of scenarios(); track s.label) {
+                <tr>
+                  <th scope="row">{{ s.label }}</th>
+                  <td>{{ usd(s.year.homeValue) }}</td>
+                  <td [class.short]="s.year.netProceeds < 0">{{ usd(s.year.netProceeds) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
     <app-scrub-chart [title]="'What you would walk away with, by the year you sell' | t" [spec]="chart()" testId="sale-chart" />
 
     <div class="table-wrap" tabindex="0" [attr.aria-label]="'What a sale would leave, year by year' | t">
@@ -105,6 +131,23 @@ export class SaleComponent {
     const years = this.sale().years;
     return years.find((y) => y.year === this.year()) ?? years.find((y) => y.year === STARTING_YEAR) ?? years[years.length - 1];
   });
+
+  /** The chosen year if the home's value changed as each scenario says, then as the plan has it; none when no scenarios were asked for. */
+  protected readonly scenarios = computed(() => {
+    const { scenarios } = this.sale();
+    if (scenarios.length === 0) return [];
+    const at = (years: SaleYear[]) => years.find((y) => y.year === this.chosen().year) ?? years[years.length - 1];
+    return [
+      ...scenarios.map((s) => ({ label: this.scenarioLabel(s.yearlyChangePercent), year: at(s.years) })),
+      { label: t('As planned'), year: this.chosen() },
+    ];
+  });
+
+  /** A scenario's name: "Prices fall 3% a year", "Prices stay flat" or "Prices rise 5% a year". */
+  private scenarioLabel(change: number): string {
+    if (change === 0) return t('Prices stay flat');
+    return change < 0 ? t('Prices fall {0} a year', [this.percent(-change)]) : t('Prices rise {0} a year', [this.percent(change)]);
+  }
 
   /** The milestone years in the table. */
   protected readonly milestones = computed(() => this.sale().years.filter((y) => MILESTONES.includes(y.year)));
