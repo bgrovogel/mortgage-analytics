@@ -13,7 +13,7 @@ import { TPipe } from '../../../core/i18n/t.pipe';
   template: `
     <div class="panel flat sale">
       <h2 class="visually-hidden">{{ 'What a sale would leave' | t }}</h2>
-      <p class="intro">{{ 'What you would walk away with if you sold this home: its price then, less the loan, the costs of selling and tax on any gain. The costs and the tax are with your numbers, on the left.' | t }}</p>
+      <p class="intro">{{ 'What you would walk away with if you sold this home: its price then, less the loan, the costs of selling and tax on any gain. The costs and the tax are set with your numbers.' | t }}</p>
       @if (result().sale; as sale) {
         <app-sale [sale]="sale" />
       }

@@ -83,6 +83,12 @@ describe('Spanish translations', () => {
     expect(spelled).toEqual([]);
   });
 
+  it('does not say where the form is on the screen: on a phone it is behind a button, not on the left or above', () => {
+    const placed = /\b(on the (left|right)|to the (left|right)|above the form|below the form)\b/i;
+
+    expect([...used].filter((key) => placed.test(key))).toEqual([]);
+  });
+
   it('has no translation for a message that is no longer used', () => {
     const stale = Object.keys(ES).filter((key) => !used.has(key)).sort();
     expect(stale).toEqual([]);

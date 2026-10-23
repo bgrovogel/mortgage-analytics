@@ -16,7 +16,7 @@ import { TPipe } from '../../../core/i18n/t.pipe';
     <div class="panel flat rental">
       <h2 class="visually-hidden">{{ 'The home as a rental' | t }}</h2>
       @if (result().rental; as rental) {
-        <p class="intro">{{ "What the home would earn if you let it out: the rent, less vacancy, a manager, upkeep and the costs of owning it, against the loan's payments. The rent and what is assumed are with your numbers, on the left." | t }}</p>
+        <p class="intro">{{ "What the home would earn if you let it out: the rent, less vacancy, a manager, upkeep and the costs of owning it, against the loan's payments. The rent and what is assumed are set with your numbers." | t }}</p>
         <app-rental [rental]="rental" />
       } @else {
         <p class="prompt" data-testid="rental-empty">

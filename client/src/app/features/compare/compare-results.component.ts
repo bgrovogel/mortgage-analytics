@@ -143,7 +143,7 @@ interface Row {
           </table>
         </div>
         <p class="note">
-          {{ 'Edit any home with the switch above the form, where you can add one, up to {0}. Under each figure is its difference from Home A, and the best on each line is shaded. The cost of the first {1} years is interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.' | t: [maxHomes, years] }}
+          {{ 'Edit any home with the home switch, where you can add one, up to {0}. Under each figure is its difference from Home A, and the best on each line is shaded. The cost of the first {1} years is interest, taxes, insurance, mortgage insurance and dues, plus the closing costs: what is spent, not saved as equity.' | t: [maxHomes, years] }}
         </p>
       </section>
     }

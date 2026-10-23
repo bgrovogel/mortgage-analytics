@@ -16,7 +16,7 @@ import { TPipe } from '../../../core/i18n/t.pipe';
     <div class="panel flat rent-or-buy">
       @if (result().rentOrBuy; as comparison) {
         <h2 class="visually-hidden">{{ 'Should you rent or buy?' | t }}</h2>
-        <p class="intro">{{ 'Buying this home against renting a similar one: what each would leave you, year by year. The rent and what is assumed are with your numbers, on the left.' | t }}</p>
+        <p class="intro">{{ 'Buying this home against renting a similar one: what each would leave you, year by year. The rent and what is assumed are set with your numbers.' | t }}</p>
         <app-rent-or-buy [comparison]="comparison" />
       } @else {
         <!-- The answer above already asks for the rent; this offers one to try. -->
