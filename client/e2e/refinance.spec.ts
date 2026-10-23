@@ -91,6 +91,8 @@ test.describe('Refinance', () => {
     await expect(page.getByTestId('equity-draw-years'), 'a loan has no draw period to ask for').toHaveCount(0);
 
     await page.getByTestId('equity-kind-line').check();
+    // The form swaps its fields for a line's: wait for them, or the term is typed into the loan's field as it goes.
+    await expect(page.getByTestId('equity-draw-years'), 'a line asks for its draw period').toBeVisible();
     await page.getByTestId('equity-term').fill('20');
     await page.getByTestId('equity-repayment-rate').fill('9');
 
